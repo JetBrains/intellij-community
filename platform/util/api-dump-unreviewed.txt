@@ -31,7 +31,6 @@ f:com.intellij.BundleBase
 - sf:partialMessage(java.util.ResourceBundle,java.lang.String,I,java.lang.Object[]):java.lang.String
 - sf:replaceMnemonicAmpersand(java.lang.String):java.lang.String
 - sf:setTranslationConsumer(java.util.function.BiConsumer):V
-- sf:useDefaultValue(java.util.ResourceBundle,java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.Patches
 - sf:IBM_JDK_DISABLE_COLLECTION_BUG:Z
 - sf:JDK_BUG_ID_21275177:Z

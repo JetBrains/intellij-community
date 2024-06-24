@@ -4,7 +4,6 @@
 package com.intellij
 
 import com.intellij.BundleBase.partialMessage
-import com.intellij.BundleBase.useDefaultValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
@@ -54,14 +53,14 @@ open class AbstractBundle {
     fun messageOrDefault(bundle: ResourceBundle?, key: @NonNls String, defaultValue: @Nls String?, vararg params: Any?): @Nls String? {
       return when {
         bundle == null -> defaultValue
-        !bundle.containsKey(key) -> postprocessValue(bundle = bundle, value = useDefaultValue(bundle, key, defaultValue), params = params)
-        else -> BundleBase.messageOrDefault(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
+        !bundle.containsKey(key) -> postprocessValue(bundle = bundle, value = defaultValue ?: useDefaultValue(bundle, key), params = params)
+        else -> com.intellij.messageOrDefault(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
       }
     }
 
     @JvmStatic
     fun message(bundle: ResourceBundle, key: @NonNls String, vararg params: Any?): @Nls String {
-      return BundleBase.messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)
+      return com.intellij.messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)
     }
 
     @Suppress("HardCodedStringLiteral")
@@ -75,7 +74,7 @@ open class AbstractBundle {
     inline fun resolveResourceBundleWithFallback(
       loader: ClassLoader,
       pathToBundle: String,
-      firstTry: () -> ResourceBundle
+      firstTry: () -> ResourceBundle,
     ): ResourceBundle {
       try {
         return firstTry()
@@ -96,7 +95,7 @@ open class AbstractBundle {
   @Contract(pure = true)
   // open only to preserve compatibility
   open fun getMessage(key: @NonNls String, vararg params: Any?): @Nls String {
-    return BundleBase.messageOrDefault(bundle = resourceBundle, key = key, defaultValue = null, params = params)
+    return com.intellij.messageOrDefault(bundle = resourceBundle, key = key, defaultValue = null, params = params)
   }
 
   /**
@@ -202,7 +201,7 @@ private object IntelliJResourceControl : ResourceBundle.Control() {
     val resourceName = (if (bundleName.contains("://")) null else toResourceName(bundleName, "properties")) ?: return null
     val stream = loader.getResourceAsStream(resourceName) ?: return null
     return stream.use {
-      PropertyResourceBundle(InputStreamReader(it, StandardCharsets.UTF_8))
+      IntelliJResourceBundle(InputStreamReader(it, StandardCharsets.UTF_8))
     }
   }
 }

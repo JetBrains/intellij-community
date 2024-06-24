@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.ex;
 
-import com.intellij.BundleBase;
+import com.intellij.IntelliJResourceBundle;
 import com.intellij.ide.actions.ConfigurablesPatcher;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
@@ -226,7 +226,7 @@ public final class ConfigurableExtensionPointUtil {
         LOG.warn("Use <groupConfigurable> to specify custom configurable group: " + groupId);
         int weight = getInt(bundle, id + ".settings.weight");
         String help = getString(bundle, id + ".settings.help.topic");
-        String name = getName(bundle, id + ".settings.display.name");
+        String name = getString(bundle, id + ".settings.display.name");
         String desc = getString(bundle, id + ".settings.description");
         if (name != null && project != null) {
           if (!project.isDefault() && !name.contains("{")) {
@@ -237,7 +237,7 @@ public final class ConfigurableExtensionPointUtil {
             name = StringUtil.first(MessageFormat.format(name, project.getName()), 30, true);
           }
         }
-        node.myValue = new SortedConfigurableGroup(id, name, desc, help, weight);
+        node.myValue = new SortedConfigurableGroup(id, Objects.requireNonNullElse(name, ""), desc, help, weight);
       }
     }
     if (configurables != null) {
@@ -433,20 +433,17 @@ public final class ConfigurableExtensionPointUtil {
     return null;
   }
 
-  private static @Nls String getString(ResourceBundle bundle, @NonNls String resource) {
-    if (bundle == null) return null;
-    try {
-      return bundle.getString(resource);
-    }
-    catch (MissingResourceException ignored) {
+  private static @Nls @Nullable String getString(ResourceBundle bundle, @NonNls String resource) {
+    if (bundle == null) {
       return null;
     }
-  }
 
-  private static @Nls String getName(ResourceBundle bundle, @NonNls String resource) {
-    if (bundle == null) return null;
+    if (bundle instanceof IntelliJResourceBundle b) {
+      return b.getMessageOrNull(resource);
+    }
+
     try {
-      return BundleBase.messageOrDefault(bundle, resource, null);
+      return bundle.getString(resource);
     }
     catch (MissingResourceException ignored) {
       return null;

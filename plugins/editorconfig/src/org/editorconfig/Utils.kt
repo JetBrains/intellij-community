@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig
 
 import com.intellij.BundleBase
@@ -22,11 +22,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.LineSeparator
 import org.ec4j.core.ResourceProperties
-import org.editorconfig.configmanagement.ConfigEncodingCharsetUtil
-import org.editorconfig.configmanagement.StandardEditorConfigProperties
-import org.editorconfig.configmanagement.indentSizeKey
-import org.editorconfig.configmanagement.indentStyleKey
-import org.editorconfig.configmanagement.tabWidthKey
+import org.editorconfig.configmanagement.*
 import org.editorconfig.language.messages.EditorConfigBundle
 import org.editorconfig.plugincomponents.EditorConfigPropertiesService
 import org.editorconfig.settings.EditorConfigSettings
@@ -81,9 +77,12 @@ object Utils {
 
   fun invalidConfigMessage(project: Project, configValue: String?, configKey: String, filePath: String?) {
     val message = if (configValue != null) {
-      BundleBase.messageOrDefault(EditorConfigBundle.bundle.resourceBundle, "invalid.config.value",
+      BundleBase.messageOrDefault(EditorConfigBundle.bundle.resourceBundle,
+                                  "invalid.config.value",
                                   null,
-                                  configValue, configKey.ifEmpty { "?" }, filePath)
+                                  configValue,
+                                  configKey.ifEmpty { "?" },
+                                  filePath)
     }
     else {
       EditorConfigBundle.message("read.failure")

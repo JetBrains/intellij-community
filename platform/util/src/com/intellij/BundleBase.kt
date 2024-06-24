@@ -1,6 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij
 
+import com.intellij.BundleBase.L10N_MARKER
+import com.intellij.BundleBase.SHOW_LOCALIZED_MESSAGES
+import com.intellij.BundleBase.appendLocalizationSuffix
+import com.intellij.BundleBase.getDefaultMessage
 import com.intellij.BundleBase.replaceMnemonicAmpersand
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -25,13 +31,19 @@ private val SUFFIXES = arrayOf("</body></html>", "</html>")
 private var translationConsumer: BiConsumer<String, String>? = null
 
 private val SHOW_DEFAULT_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.l10n.english")
-// 0: no, 1: show key, 2: only keys
-private val SHOW_KEYS: Int = System.getProperty("idea.l10n.keys").let {
+
+private val getPolicy: GetPolicy = System.getProperty("idea.l10n.keys").let {
   when (it) {
-    "true" -> 1
-    "only" -> 2
-    else -> 0
+    "true" -> GetPolicy.APPEND_KEY
+    "only" -> GetPolicy.ONLY_KEY
+    else -> GetPolicy.VALUE
   }
+}
+
+private enum class GetPolicy {
+  VALUE,
+  APPEND_KEY,
+  ONLY_KEY,
 }
 
 object BundleBase {
@@ -79,43 +91,17 @@ object BundleBase {
 
   @JvmStatic
   fun message(bundle: ResourceBundle, key: String, vararg params: Any): @Nls String {
-    return messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)
+    return com.intellij.messageOrDefault(bundle = bundle, key = key, defaultValue = null, params = params)
   }
 
+  @Suppress("DuplicatedCode")
   @JvmStatic
   fun messageOrDefault(bundle: ResourceBundle?, key: String, defaultValue: @Nls String?, vararg params: Any?): @Nls String {
     if (bundle == null) {
       return defaultValue!!
     }
 
-    var resourceFound = true
-    val value = try {
-      bundle.getString(key)
-    }
-    catch (e: MissingResourceException) {
-      resourceFound = false
-      useDefaultValue(bundle = bundle, key = key, defaultValue = defaultValue)
-    }
-
-    if (SHOW_KEYS == 2) {
-      @Suppress("HardCodedStringLiteral")
-      return key
-    }
-
-    val result = postprocessValue(bundle = bundle, value = value, params = params)
-    translationConsumer?.accept(key, result)
-    return when {
-      !resourceFound -> result
-      SHOW_KEYS == 1 && SHOW_DEFAULT_MESSAGES -> {
-        appendLocalizationSuffix(result = result, suffixToAppend = " ($key=${getDefaultMessage(bundle, key)})")
-      }
-      SHOW_KEYS == 1 -> appendLocalizationSuffix(result = result, suffixToAppend = " ($key)")
-      SHOW_DEFAULT_MESSAGES -> {
-        appendLocalizationSuffix(result = result, suffixToAppend = " (${getDefaultMessage(bundle, key)})")
-      }
-      SHOW_LOCALIZED_MESSAGES -> appendLocalizationSuffix(result = result, suffixToAppend = L10N_MARKER)
-      else -> result
-    }
+    return com.intellij.messageOrDefault(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
   }
 
   @JvmStatic
@@ -142,19 +128,6 @@ object BundleBase {
       }
     }
     return result + suffixToAppend
-  }
-
-  @JvmStatic
-  @Suppress("HardCodedStringLiteral")
-  fun useDefaultValue(bundle: ResourceBundle?, key: String, defaultValue: @Nls String?): @Nls String {
-    if (defaultValue != null) {
-      return defaultValue
-    }
-    if (assertOnMissedKeys) {
-      val bundleName = if (bundle == null) "" else "(${bundle.baseBundleName})"
-      LOG.error("'$key' is not found in $bundle$bundleName")
-    }
-    return "!$key!"
   }
 
   @JvmStatic
@@ -244,20 +217,92 @@ private fun quotePattern(message: String): @NlsSafe String {
 }
 
 @Suppress("HardCodedStringLiteral")
-internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, vararg params: Any?): @Nls String {
-  @Suppress("NAME_SHADOWING") var value = value
-  value = replaceMnemonicAmpersand(value)!!
-  if (params.isEmpty() || !value.contains('{')) {
+internal fun postprocessValue(bundle: ResourceBundle, value: @Nls String, params: Array<out Any?>?): @Nls String {
+  @Suppress("NAME_SHADOWING") val value = replaceMnemonicAmpersand(value)!!
+  if (params.isNullOrEmpty() || !value.contains('{')) {
     return value
   }
 
   val locale = bundle.locale
-  return try {
+  try {
     val format = if (locale == null) MessageFormat(value) else MessageFormat(value, locale)
     OrdinalFormat.apply(format)
-    format.format(params)
+    return format.format(params)
   }
   catch (e: IllegalArgumentException) {
-    "!invalid format: `$value`!"
+    return "!invalid format: `$value`!"
+  }
+}
+
+@Suppress("DuplicatedCode")
+@Internal
+fun messageOrDefault(bundle: ResourceBundle, key: String, defaultValue: @Nls String?, params: Array<out Any?>?): @Nls String {
+  if (bundle !is IntelliJResourceBundle || bundle.parent != null) {
+    @Suppress("HardCodedStringLiteral")
+    return messageOrDefaultForJdkBundle(bundle = bundle, key = key, defaultValue = defaultValue, params = params)
+  }
+
+  return bundle.getMessage(key = key, defaultValue = defaultValue, params = params)
+}
+
+@Suppress("DuplicatedCode")
+private fun messageOrDefaultForJdkBundle(
+  bundle: ResourceBundle,
+  key: String,
+  defaultValue: @Nls String?,
+  params: Array<out Any?>?,
+): String {
+  var resourceFound = true
+  val value = try {
+    bundle.getString(key)
+  }
+  catch (e: MissingResourceException) {
+    resourceFound = false
+    defaultValue ?: useDefaultValue(bundle = bundle, key = key)
+  }
+
+  val result = postprocessValue(bundle = bundle, value = value, params = params)
+  translationConsumer?.accept(key, result)
+  return when {
+    !resourceFound -> result
+    getPolicy == GetPolicy.APPEND_KEY -> {
+      appendLocalizationSuffix(
+        result = result,
+        suffixToAppend = if (SHOW_DEFAULT_MESSAGES) " ($key=${getDefaultMessage(bundle, key)})" else " ($key)",
+      )
+    }
+    SHOW_DEFAULT_MESSAGES -> appendLocalizationSuffix(result = result, suffixToAppend = " (${getDefaultMessage(bundle, key)})")
+    SHOW_LOCALIZED_MESSAGES -> appendLocalizationSuffix(result = result, suffixToAppend = L10N_MARKER)
+    else -> result
+  }
+}
+
+internal fun useDefaultValue(bundle: ResourceBundle, @NlsSafe key: String): @Nls String {
+  if (assertOnMissedKeys) {
+    LOG.error("'$key' is not found (baseBundleName=${bundle.baseBundleName}, bundle=$bundle)")
+  }
+  return "!$key!"
+}
+
+internal fun postProcessResolvedValue(
+  @NlsSafe value: String,
+  key: String,
+  resourceFound: Boolean,
+  bundle: ResourceBundle,
+): String {
+  translationConsumer?.accept(key, value)
+  return when {
+    !resourceFound -> value
+    getPolicy == GetPolicy.ONLY_KEY -> "$key${L10N_MARKER}$value"
+    getPolicy == GetPolicy.APPEND_KEY -> {
+      appendLocalizationSuffix(
+        result = value,
+        suffixToAppend = if (SHOW_DEFAULT_MESSAGES) " ($key=${getDefaultMessage(bundle, key)})" else " ($key)",
+      )
+    }
+    SHOW_DEFAULT_MESSAGES -> appendLocalizationSuffix(result = value,
+                                                                 suffixToAppend = " (${getDefaultMessage(bundle, key)})")
+    SHOW_LOCALIZED_MESSAGES -> appendLocalizationSuffix(result = value, suffixToAppend = L10N_MARKER)
+    else -> value
   }
 }
