@@ -19,7 +19,7 @@ import org.jetbrains.jps.model.serialization.JpsPathMapper;
 
 @ApiStatus.Internal
 public final class JpsLibraryTableSerializer {
-  private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
+  public static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("CLASSES", JpsOrderRootType.COMPILED, true),
     new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true),
     new JpsLibraryRootTypeSerializer("DOCUMENTATION", JpsOrderRootType.DOCUMENTATION, false)
@@ -32,7 +32,7 @@ public final class JpsLibraryTableSerializer {
   public static final String ROOT_TAG = "root";
   public static final String RECURSIVE_ATTRIBUTE = "recursive";
   public static final String LIBRARY_TAG = "library";
-  private static final JpsLibraryPropertiesSerializer<JpsDummyElement> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
+  public static final JpsLibraryPropertiesSerializer<JpsDummyElement> JAVA_LIBRARY_PROPERTIES_SERIALIZER =
     new JpsLibraryPropertiesSerializer<JpsDummyElement>(JpsJavaLibraryType.INSTANCE, null) {
       @Override
       public JpsDummyElement loadProperties(@Nullable Element propertiesElement, @NotNull JpsPathMapper pathMapper) {

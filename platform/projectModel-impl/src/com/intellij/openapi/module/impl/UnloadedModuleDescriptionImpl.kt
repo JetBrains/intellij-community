@@ -24,7 +24,7 @@ import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.util.containers.Interner
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
-import org.jetbrains.jps.model.serialization.JpsGlobalLoader
+import org.jetbrains.jps.model.serialization.JpsGlobalSettingsLoading
 import org.jetbrains.jps.model.serialization.JpsPathMapper
 import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import java.nio.file.Path
@@ -47,7 +47,7 @@ internal class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
   companion object {
     @JvmStatic
     fun createFromPaths(paths: Collection<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
-      val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
+      val pathVariables = JpsGlobalSettingsLoading.computeAllPathVariables(PathManager.getOptionsPath())
       val modules = JpsProjectLoader.loadModules(paths.map { Path.of(it.path) }, null, pathVariables, JpsPathMapper.IDENTITY, null)
       val pathsByName = paths.associateBy { it.moduleName }
       val interner = Interner.createStringInterner()

@@ -29,11 +29,11 @@ import java.util.List;
 public final class JpsSdkTableSerializer {
   private static final Logger LOG = Logger.getInstance(JpsSdkTableSerializer.class);
 
-  private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPE_SERIALIZERS = {
+  public static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPE_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("classPath", JpsOrderRootType.COMPILED, true),
     new JpsLibraryRootTypeSerializer("sourcePath", JpsOrderRootType.SOURCES, true)
   };
-  private static final JpsSdkPropertiesSerializer<JpsDummyElement> JPS_JAVA_SDK_PROPERTIES_LOADER =
+  public static final JpsSdkPropertiesSerializer<JpsDummyElement> JPS_JAVA_SDK_PROPERTIES_LOADER =
     new JpsSdkPropertiesSerializer<JpsDummyElement>("JavaSDK", JpsJavaSdkType.INSTANCE) {
       @NotNull
       @Override

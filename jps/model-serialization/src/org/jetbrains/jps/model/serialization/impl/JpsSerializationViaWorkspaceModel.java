@@ -1,0 +1,28 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.jps.model.serialization.impl;
+
+import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.service.JpsServiceManager;
+
+import java.io.IOException;
+import java.util.Map;
+
+public interface JpsSerializationViaWorkspaceModel {
+  boolean IS_ENABLED = SystemProperties.getBooleanProperty("intellij.jps.use.workspace.model", false);
+  
+  static @Nullable JpsSerializationViaWorkspaceModel getInstance() {
+    if (IS_ENABLED) {
+      return JpsServiceManager.getInstance().getService(JpsSerializationViaWorkspaceModel.class);
+    }
+    return null;
+  }
+
+  @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, boolean loadUnloadedModules) throws IOException;
+
+  @NotNull JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables, 
+                                  boolean loadUnloadedModules) throws IOException;
+}

@@ -61,6 +61,13 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   public static final String CLASSPATH_DIR_ATTRIBUTE = "classpath-dir";
 
   private static final Logger LOG = Logger.getInstance(JpsProjectLoader.class);
+  public static final JpsModulePropertiesSerializer<JpsDummyElement>
+    JAVA_MODULE_PROPERTIES_SERIALIZER = new JpsModulePropertiesSerializer<>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE", null) {
+    @Override
+    public JpsDummyElement loadProperties(@Nullable Element componentElement) {
+      return JpsElementFactory.getInstance().createDummyElement();
+    }
+  };
 
   private final JpsProject myProject;
   private final Map<String, String> myPathVariables;
@@ -537,11 +544,6 @@ public final class JpsProjectLoader extends JpsLoaderBase {
         }
       }
     }
-    return new JpsModulePropertiesSerializer<>(JpsJavaModuleType.INSTANCE, "JAVA_MODULE", null) {
-      @Override
-      public JpsDummyElement loadProperties(@Nullable Element componentElement) {
-        return JpsElementFactory.getInstance().createDummyElement();
-      }
-    };
+    return JAVA_MODULE_PROPERTIES_SERIALIZER;
   }
 }
