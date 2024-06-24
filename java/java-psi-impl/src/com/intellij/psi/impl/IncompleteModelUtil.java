@@ -1,13 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.psi.impl;
 
-import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,14 +14,16 @@ import java.util.*;
 /**
  * Utility class to support the code highlighting in the incomplete dependencies state
  */
-final class IncompleteModelUtil {
+@ApiStatus.Internal
+public final class IncompleteModelUtil {
+
   /**
    * Checks if all the transitive superclasses and superinterfaces of a given {@link PsiClass} is resolved.
    *
    * @param psiClass the PsiClass to check
    * @return {@code true} if the complete class hierarchy is resolved, {@code false} otherwise
    */
-  static boolean isHierarchyResolved(@NotNull PsiClass psiClass) {
+  public static boolean isHierarchyResolved(@NotNull PsiClass psiClass) {
     Set<PsiClass> processed = new HashSet<>();
     Deque<PsiClass> stack = new ArrayDeque<>();
     stack.push(psiClass);
@@ -47,7 +46,7 @@ final class IncompleteModelUtil {
    * @return true if the PsiType is a class type that is not completely resolved
    */
   @Contract("null -> false")
-  static boolean isUnresolvedClassType(@Nullable PsiType psiType) {
+  public static boolean isUnresolvedClassType(@Nullable PsiType psiType) {
     Deque<PsiType> stack = new ArrayDeque<>();
     if (psiType != null) {
       stack.push(psiType);
@@ -57,14 +56,14 @@ final class IncompleteModelUtil {
       if (currentType instanceof PsiLambdaParameterType) {
         return true;
       }
-      if (currentType instanceof PsiIntersectionType intersectionType) {
-        Collections.addAll(stack, intersectionType.getConjuncts());
+      if (currentType instanceof PsiIntersectionType) {
+        Collections.addAll(stack, ((PsiIntersectionType)currentType).getConjuncts());
       }
-      if (currentType instanceof PsiDisjunctionType disjunctionType) {
-        stack.addAll(disjunctionType.getDisjunctions());
+      if (currentType instanceof PsiDisjunctionType) {
+        stack.addAll(((PsiDisjunctionType)currentType).getDisjunctions());
       }
-      if (currentType instanceof PsiClassType classType) {
-        PsiClass resolved = classType.resolve();
+      if (currentType instanceof PsiClassType) {
+        PsiClass resolved = ((PsiClassType)currentType).resolve();
         if (resolved == null || !isHierarchyResolved(resolved)) {
           return true;
         }
@@ -75,11 +74,11 @@ final class IncompleteModelUtil {
 
   /**
    * @param psiType type to check
-   * @return true if the type has any unresolved component. Unlike {@link #isUnresolvedClassType(PsiType)}, this method returns
+   * @return true if the type has any unresolved component. Unlike {@link IncompleteModelUtil#isUnresolvedClassType(PsiType)}, this method returns
    * true, e.g., for {@code List<Foo>} where {@code List} is resolved but {@code Foo} is not.
    */
   @Contract("null -> false")
-  static boolean hasUnresolvedComponent(@Nullable PsiType psiType) {
+  public static boolean hasUnresolvedComponent(@Nullable PsiType psiType) {
     return hasUnresolvedComponentRecursively(psiType, new HashSet<>());
   }
 
@@ -89,77 +88,25 @@ final class IncompleteModelUtil {
     if (isUnresolvedClassType(psiType)) {
       return true;
     }
-    if (type instanceof PsiClassType classType) {
-      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(classType);
+    if (type instanceof PsiClassType) {
+      PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
       if (psiClass != null && !visited.add(psiClass)) {
         return false;
       }
-      for (PsiType parameter : classType.getParameters()) {
+      for (PsiType parameter : ((PsiClassType)type).getParameters()) {
         if (hasUnresolvedComponentRecursively(parameter, visited)) {
           return true;
         }
       }
     }
-    if (type instanceof PsiWildcardType wildcardType) {
-      return hasUnresolvedComponentRecursively(wildcardType.getBound(), visited);
+    if (type instanceof PsiWildcardType) {
+      return hasUnresolvedComponentRecursively(((PsiWildcardType)type).getBound(), visited);
     }
-    if (type instanceof PsiCapturedWildcardType capturedWildcardType) {
-      return hasUnresolvedComponentRecursively(capturedWildcardType.getLowerBound(), visited) ||
-             hasUnresolvedComponentRecursively(capturedWildcardType.getUpperBound(), visited);
+    if (type instanceof PsiCapturedWildcardType) {
+      return hasUnresolvedComponentRecursively(((PsiCapturedWildcardType)type).getLowerBound(), visited) ||
+             hasUnresolvedComponentRecursively(((PsiCapturedWildcardType)type).getUpperBound(), visited);
     }
     return false;
-  }
-
-  /**
-   * @param targetType type to check the convertibility to
-   * @param expression expression to check
-   * @return true, if the result of the expression could be potentially convertible to the targetType, taking into account
-   * the incomplete project model.
-   */
-  static boolean isPotentiallyConvertible(@Nullable PsiType targetType, @NotNull PsiExpression expression) {
-    PsiType rightType = expression.getType();
-    return isPotentiallyConvertible(targetType, expression, rightType, expression);
-  }
-
-  /**
-   * @param leftType first type to check
-   * @param rightType second type to check
-   * @param context context PSI element
-   * @return true, if one of the types could be potentially convertible to another type, taking into account
-   * the incomplete project model.
-   */
-  static boolean isPotentiallyConvertible(@Nullable PsiType leftType, @NotNull PsiType rightType, @NotNull PsiElement context) {
-    return isPotentiallyConvertible(leftType, null, rightType, context);
-  }
-
-  private static boolean isPotentiallyConvertible(@Nullable PsiType leftType, @Nullable PsiExpression rightExpr, @Nullable PsiType rightType, @NotNull PsiElement context) {
-    if (leftType instanceof PsiLambdaParameterType || rightType instanceof PsiLambdaParameterType) return true;
-    boolean pendingLeft = leftType == null || hasUnresolvedComponent(leftType);
-    boolean pendingRight =
-      rightType == null || (rightExpr == null ? hasUnresolvedComponent(rightType) : mayHaveUnknownTypeDueToPendingReference(rightExpr));
-    if (pendingLeft && pendingRight) return true;
-    if (!pendingLeft && !pendingRight) {
-      return leftType.isConvertibleFrom(rightType);
-    }
-    if (pendingLeft && leftType != null) {
-      if (rightType instanceof PsiPrimitiveType primitiveType && primitiveType.getBoxedType(context) != null) return false;
-      PsiClass rightTypeClass = PsiUtil.resolveClassInClassTypeOnly(rightType);
-      if (rightTypeClass != null &&
-          rightTypeClass.hasModifierProperty(PsiModifier.FINAL) &&
-          rightTypeClass.getTypeParameters().length == 0) {
-        return false;
-      }
-    }
-    if (pendingRight && rightType != null) {
-      if (leftType instanceof PsiPrimitiveType primitiveType && primitiveType.getBoxedType(context) != null) return false;
-      PsiClass leftTypeClass = PsiUtil.resolveClassInClassTypeOnly(leftType);
-      if (leftTypeClass != null &&
-          leftTypeClass.hasModifierProperty(PsiModifier.FINAL) &&
-          leftTypeClass.getTypeParameters().length == 0) {
-        return false;
-      }
-    }
-    return true;
   }
 
   /**
@@ -168,28 +115,87 @@ final class IncompleteModelUtil {
    * @param context the context element to find the project for
    * @return {@code true} if the project is in incomplete dependencies state, {@code false} otherwise
    */
-  static boolean isIncompleteModel(@NotNull PsiElement context) {
+  public static boolean isIncompleteModel(@NotNull PsiElement context) {
     return !context.getProject().getService(IncompleteDependenciesService.class).getState().isComplete();
+  }
+
+  /**
+   * @param targetType type to check the convertibility to
+   * @param expression expression to check
+   * @return true, if the result of the expression could be potentially convertible to the targetType, taking into account
+   * the incomplete project model.
+   */
+  public static boolean isPotentiallyConvertible(@Nullable PsiType targetType, @NotNull PsiExpression expression) {
+    PsiType rightType = expression.getType();
+    return isPotentiallyConvertible(targetType, expression, rightType, expression);
+  }
+
+  /**
+   * @param leftType  first type to check
+   * @param rightType second type to check
+   * @param context   context PSI element
+   * @return true, if one of the types could be potentially convertible to another type, taking into account
+   * the incomplete project model.
+   */
+  public static boolean isPotentiallyConvertible(@Nullable PsiType leftType, @NotNull PsiType rightType, @NotNull PsiElement context) {
+    return isPotentiallyConvertible(leftType, null, rightType, context);
+  }
+
+  private static boolean isPotentiallyConvertible(@Nullable PsiType leftType,
+                                                  @Nullable PsiExpression rightExpr,
+                                                  @Nullable PsiType rightType,
+                                                  @NotNull PsiElement context) {
+    if (leftType instanceof PsiLambdaParameterType || rightType instanceof PsiLambdaParameterType) return true;
+    boolean pendingLeft = leftType == null || hasUnresolvedComponent(leftType);
+    boolean pendingRight =
+      rightType == null || (rightExpr == null ? hasUnresolvedComponent(rightType) : mayHaveUnknownTypeDueToPendingReference(rightExpr));
+    if (pendingLeft && pendingRight) return true;
+    if (!pendingLeft && !pendingRight) {
+      return leftType.isConvertibleFrom(rightType);
+    }
+    if (pendingLeft && isStrictlyInconvertible(leftType, rightType, context)) {
+      return false;
+    }
+    if (pendingRight && isStrictlyInconvertible(rightType, leftType, context)) {
+      return false;
+    }
+    return true;
+  }
+
+  private static boolean isStrictlyInconvertible(@Nullable PsiType pendingType,
+                                                 @Nullable PsiType resolvedType,
+                                                 @NotNull PsiElement context) {
+    if (pendingType != null) {
+      if (resolvedType instanceof PsiPrimitiveType && ((PsiPrimitiveType)resolvedType).getBoxedType(context) != null) return true;
+      PsiClass rightTypeClass = PsiUtil.resolveClassInClassTypeOnly(resolvedType);
+      if (rightTypeClass != null &&
+          rightTypeClass.hasModifierProperty(PsiModifier.FINAL) &&
+          rightTypeClass.getTypeParameters().length == 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
    * @param expression expression to check
    * @return true if the expression type could be unknown due to a pending reference which affects it.
    */
-  static boolean mayHaveUnknownTypeDueToPendingReference(@NotNull PsiExpression expression) {
+  public static boolean mayHaveUnknownTypeDueToPendingReference(@NotNull PsiExpression expression) {
     PsiType type = expression.getType();
     if (type != null && !(type instanceof PsiMethodReferenceType)) {
       return hasUnresolvedComponent(type);
     }
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    if (expression instanceof PsiMethodCallExpression call && canBePendingReference(call.getMethodExpression())) {
+    if (expression instanceof PsiMethodCallExpression &&
+        canBePendingReference(((PsiMethodCallExpression)expression).getMethodExpression())) {
       return true;
     }
-    if (expression instanceof PsiReferenceExpression ref && canBePendingReference(ref)) {
+    if (expression instanceof PsiReferenceExpression && canBePendingReference((PsiReferenceExpression)expression)) {
       return true;
     }
-    if (expression instanceof PsiArrayAccessExpression accessExpression) {
-      return mayHaveUnknownTypeDueToPendingReference(accessExpression.getArrayExpression());
+    if (expression instanceof PsiArrayAccessExpression) {
+      return mayHaveUnknownTypeDueToPendingReference(((PsiArrayAccessExpression)expression).getArrayExpression());
     }
     return false;
   }
@@ -198,16 +204,16 @@ final class IncompleteModelUtil {
    * @param ref unresolved reference to find potential imports for
    * @return list of import statements that potentially import the given unresolved reference
    */
-  static List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
+  public static List<PsiImportStatementBase> getPotentialImports(@NotNull PsiJavaCodeReferenceElement ref) {
     PsiElement parent = ref.getParent();
-    if (parent instanceof PsiImportStatementBase || ref.isQualified()) return List.of();
-    boolean maybeClass = canBeClass(ref); 
-    if (!(ref.getContainingFile() instanceof PsiJavaFile file)) return List.of();
-    PsiImportList list = file.getImportList();
+    if (parent instanceof PsiImportStatementBase || ref.isQualified()) return Collections.emptyList();
+    boolean maybeClass = canBeClass(ref);
+    if (!(ref.getContainingFile() instanceof PsiJavaFile)) return Collections.emptyList();
+    PsiImportList list = ((PsiJavaFile)ref.getContainingFile()).getImportList();
     List<PsiImportStatementBase> imports = new ArrayList<>();
     if (list != null) {
       for (PsiImportStatementBase statement : list.getAllImportStatements()) {
-        if (statement instanceof PsiImportStaticStatement staticImport && staticImport.resolveTargetClass() != null) continue;
+        if (statement instanceof PsiImportStaticStatement && ((PsiImportStaticStatement)statement).resolveTargetClass() != null) continue;
         if (!statement.isOnDemand()) {
           PsiJavaCodeReferenceElement reference = statement.getImportReference();
           if (reference == null) continue;
@@ -228,7 +234,7 @@ final class IncompleteModelUtil {
     PsiElement parent = ref.getParent();
     if (parent instanceof PsiMethodCallExpression) return false;
     if (!(ref instanceof PsiReferenceExpression)) return true;
-    if (parent instanceof PsiReferenceExpression parentRef && parentRef.getQualifierExpression() == ref) return true;
+    if (parent instanceof PsiReferenceExpression && ((PsiReferenceExpression)parent).getQualifierExpression() == ref) return true;
     return false;
   }
 
@@ -238,25 +244,25 @@ final class IncompleteModelUtil {
    * once the project dependencies are properly resolved. Not every reference can be pending. E.g., an unresolved method inside
    * the fully resolved class cannot be pending.
    */
-  static boolean canBePendingReference(@NotNull PsiJavaCodeReferenceElement ref) {
-    if (ref instanceof PsiReferenceExpression refExpr) {
-      PsiExpression qualifier = refExpr.getQualifierExpression();
+  public static boolean canBePendingReference(@NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref instanceof PsiReferenceExpression) {
+      PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
       if (qualifier == null) {
-        PsiClass psiClass = ClassUtils.getContainingClass(ref);
+        PsiClass psiClass = PsiUtil.getContainingClass(ref);
         while (psiClass != null) {
           if (!isHierarchyResolved(psiClass)) return true;
-          psiClass = ClassUtils.getContainingClass(psiClass);
+          psiClass = PsiUtil.getContainingClass(psiClass);
         }
         return !getPotentialImports(ref).isEmpty();
       }
-      if (qualifier instanceof PsiReferenceExpression qualifierRef) {
-        PsiElement qualifierTarget = qualifierRef.resolve();
-        if (qualifierTarget == null && canBePendingReference(qualifierRef)) {
+      if (qualifier instanceof PsiReferenceExpression) {
+        PsiElement qualifierTarget = ((PsiReferenceExpression)qualifier).resolve();
+        if (qualifierTarget == null && canBePendingReference((PsiReferenceExpression)qualifier)) {
           return true;
         }
-        if (qualifierTarget instanceof PsiClass cls && isHierarchyResolved(cls)) {
+        if (qualifierTarget instanceof PsiClass && isHierarchyResolved((PsiClass)qualifierTarget)) {
           return false;
-        } 
+        }
       }
       PsiType qualifierType = qualifier.getType();
       if (isUnresolvedClassType(qualifierType) || qualifierType == null && mayHaveUnknownTypeDueToPendingReference(qualifier)) {
@@ -267,14 +273,5 @@ final class IncompleteModelUtil {
       return true;
     }
     return false;
-  }
-
-  /**
-   * @param elementToHighlight element to attach the highlighting
-   * @return HighlightInfo builder that adds a pending reference highlight
-   */
-  static HighlightInfo.@NotNull Builder getPendingReferenceHighlightInfo(@NotNull PsiElement elementToHighlight) {
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.PENDING_REFERENCE).range(elementToHighlight)
-      .descriptionAndTooltip(JavaErrorBundle.message("incomplete.project.state.pending.reference"));
   }
 }

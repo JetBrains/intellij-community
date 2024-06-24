@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -222,7 +223,7 @@ final class ModuleHighlightUtil {
       if (target == null) {
         if (ref.multiResolve(true).length == 0) {
           if (IncompleteModelUtil.isIncompleteModel(statement)) {
-            return IncompleteModelUtil.getPendingReferenceHighlightInfo(refElement);
+            return HighlightUtil.getPendingReferenceHighlightInfo(refElement);
           }
           String message = JavaErrorBundle.message("module.not.found", refElement.getReferenceText());
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refElement).descriptionAndTooltip(message);

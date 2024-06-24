@@ -38,6 +38,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaImplicitClassIndex;
@@ -354,7 +355,7 @@ public final class HighlightUtil {
       lValue = null;
     }
     if (lValue != null && !TypeConversionUtil.isLValue(lValue) && !PsiTreeUtil.hasErrorElements(expression) &&
-        !(IncompleteModelUtil.isIncompleteModel(expression) && 
+        !(IncompleteModelUtil.isIncompleteModel(expression) &&
           PsiUtil.skipParenthesizedExprDown(lValue) instanceof PsiReferenceExpression ref &&
           IncompleteModelUtil.canBePendingReference(ref))) {
       String description = JavaErrorBundle.message("variable.expected");
@@ -3294,6 +3295,15 @@ public final class HighlightUtil {
     return null;
   }
 
+  /**
+   * @param elementToHighlight element to attach the highlighting
+   * @return HighlightInfo builder that adds a pending reference highlight
+   */
+  static HighlightInfo.@NotNull Builder getPendingReferenceHighlightInfo(@NotNull PsiElement elementToHighlight) {
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.PENDING_REFERENCE).range(elementToHighlight)
+      .descriptionAndTooltip(JavaErrorBundle.message("incomplete.project.state.pending.reference"));
+  }
+
   @FunctionalInterface
   interface IncompatibleTypesTooltipComposer {
     @NotNull @NlsContexts.Tooltip
@@ -3530,7 +3540,7 @@ public final class HighlightUtil {
           definitelyIncorrect = true;
         }
         if (!definitelyIncorrect && IncompleteModelUtil.isIncompleteModel(containingFile) && IncompleteModelUtil.canBePendingReference(ref)) {
-          return IncompleteModelUtil.getPendingReferenceHighlightInfo(refName);
+          return getPendingReferenceHighlightInfo(refName);
         }
       }
 

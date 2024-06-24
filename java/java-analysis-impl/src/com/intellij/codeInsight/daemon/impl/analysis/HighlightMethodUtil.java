@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -909,7 +910,7 @@ public final class HighlightMethodUtil {
         if (qualifierExpression == null &&
             IncompleteModelUtil.isIncompleteModel(file) &&
             IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
-          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+          return HighlightUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }
         description = JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), className);
       }
@@ -921,7 +922,7 @@ public final class HighlightMethodUtil {
       }
       else {
         if (IncompleteModelUtil.isIncompleteModel(file) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
-          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+          return HighlightUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }
         description =
           JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
