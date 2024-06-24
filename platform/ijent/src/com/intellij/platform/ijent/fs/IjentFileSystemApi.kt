@@ -163,6 +163,7 @@ sealed interface IjentOpenedFile {
 
   sealed interface SeekError : IjentFsError {
     interface InvalidValue : SeekError, IjentFsError
+    interface FileNotOpened : SeekError, IjentFsError.FileNotOpened
     interface Other : SeekError, IjentFsError.Other
   }
 
@@ -187,6 +188,7 @@ sealed interface IjentOpenedFile {
     }
 
     sealed interface ReadError : IjentFsError {
+      interface FileNotOpened : ReadError, IjentFsError.FileNotOpened
       interface InvalidValue : ReadError, IjentFsError
       interface Other : ReadError, IjentFsError.Other
     }
@@ -203,6 +205,7 @@ sealed interface IjentOpenedFile {
         interface FileSizeExceeded : ResourceExhausted, IjentFsError.Other
         interface NoSpaceLeft : ResourceExhausted, IjentFsError.Other
       }
+      interface FileNotOpened : WriteError, IjentFsError.FileNotOpened
       interface Other : WriteError, IjentFsError.Other
     }
 

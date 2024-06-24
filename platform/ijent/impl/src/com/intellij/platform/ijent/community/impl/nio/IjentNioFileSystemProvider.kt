@@ -10,6 +10,7 @@ import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
+import java.io.IOException
 import java.net.URI
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
@@ -151,10 +152,17 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun createDirectory(dir: Path, vararg attrs: FileAttribute<*>?) {
     ensureIjentNioPath(dir)
-    dir.nioFs.fsBlocking {
-      when (val fsApi = dir.nioFs.ijent.fs) {
-        is IjentFileSystemPosixApi -> fsApi.createDirectory(dir.ijentPath as IjentPath.Absolute, emptyList())
-        is IjentFileSystemWindowsApi -> TODO()
+    try {
+      dir.nioFs.fsBlocking {
+        when (val fsApi = dir.nioFs.ijent.fs) {
+          is IjentFileSystemPosixApi -> fsApi.createDirectory(dir.ijentPath as IjentPath.Absolute, emptyList())
+          is IjentFileSystemWindowsApi -> TODO()
+        }
+      }
+    } catch (e : IjentFileSystemPosixApi.CreateDirectoryException) {
+      when (e) {
+        is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists, is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
+        else -> throw IOException(e)
       }
     }
   }
