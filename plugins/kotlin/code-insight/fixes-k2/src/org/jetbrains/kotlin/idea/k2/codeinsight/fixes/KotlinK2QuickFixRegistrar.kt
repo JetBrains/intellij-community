@@ -278,6 +278,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(ConvertToBlockBodyFixFactory.convertToBlockBodyFixFactory)
         registerFactory(SimplifyComparisonFixFactory.simplifyComparisonFixFactory)
+
+        registerFactory(SpecifyRemainingArgumentsByNameFixFactory.noValueForParameter)
     }
 
     private val whenStatements = KtQuickFixesListBuilder.registerPsiQuickFix {
