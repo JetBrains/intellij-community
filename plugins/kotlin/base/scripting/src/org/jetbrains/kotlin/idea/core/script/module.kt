@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -21,18 +22,23 @@ const val KOTLIN_SCRIPTS_MODULE_NAME = "Kotlin Scripts"
 
 data class KotlinScriptEntitySourceK2(override val virtualFileUrl: VirtualFileUrl) : EntitySource
 
-@Deprecated(level = DeprecationLevel.HIDDEN, message = "createScriptModules(scripts, null)")
-suspend fun Project.createScriptModules(scripts: Set<ScriptModel>) {
-    createScriptModules(scripts, storage = null)
-}
+suspend fun Project.createScriptModules(scripts: Set<ScriptModel>, storage: MutableEntityStorage? = null) {
+    val workspaceModel = workspaceModel
+    val storageSnapshot = workspaceModel.currentSnapshot
+    val tempStorage = MutableEntityStorage.from(storageSnapshot)
 
-suspend fun Project.createScriptModules(scripts: Set<ScriptModel>, storage: MutableEntityStorage?) {
-    val duration = measureTime { createPureScriptModules(this, scripts, storage) }
+    val duration = measureTime { createPureScriptModules(this, scripts, storage ?: tempStorage) }
 
     scriptingDebugLog { "createPureScriptModules duration = $duration" }
+
+    if (storage == null) {
+        workspaceModel.update("Updating kotlin scripts modules") {
+            it.applyChangesFrom(tempStorage)
+        }
+    }
 }
 
-private suspend fun createPureScriptModules(project: Project, scriptPaths: Set<ScriptModel>, storage: MutableEntityStorage?) {
+private fun createPureScriptModules(project: Project, scriptPaths: Set<ScriptModel>, storage: MutableEntityStorage) {
     val projectPath = project.basePath?.let { Path.of(it) } ?: return
 
     val sourcesToUpdate: MutableSet<KotlinScriptEntitySourceK2> = mutableSetOf<KotlinScriptEntitySourceK2>()
@@ -62,17 +68,7 @@ private suspend fun createPureScriptModules(project: Project, scriptPaths: Set<S
         updatedStorage.addEntity(ModuleEntity(moduleName, dependencies, source))
     }
 
-    if (storage == null) {
-        WorkspaceModel.getInstance(project).update("Updating kotlin scripts modules") {
-            it.replaceByScriptSource(sourcesToUpdate, updatedStorage)
-        }
-    } else {
-        storage.replaceByScriptSource(sourcesToUpdate, updatedStorage)
-    }
-}
-
-private fun MutableEntityStorage.replaceByScriptSource(sourcesToUpdate: MutableSet<KotlinScriptEntitySourceK2>, updatedStorage: MutableEntityStorage) {
-    replaceBySource({ entitySource -> entitySource in sourcesToUpdate }, updatedStorage)
+    storage.replaceBySource({ entitySource -> entitySource in sourcesToUpdate }, updatedStorage)
 }
 
 private data class DependenciesFiles(

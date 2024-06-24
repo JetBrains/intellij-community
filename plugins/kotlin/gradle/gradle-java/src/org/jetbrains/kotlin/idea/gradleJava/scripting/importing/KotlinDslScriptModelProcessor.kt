@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.vfs.VfsUtil
-import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.LOG
@@ -20,7 +19,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
 
 
-fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext, storage: MutableEntityStorage) {
+fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
     val task = resolverCtx.externalSystemTaskId
     val tasks = KotlinDslSyncListener.instance?.tasks ?: return
     synchronized(tasks) { tasks[task] }?.let { sync ->
@@ -29,8 +28,6 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext, storage: Mut
 
         synchronized(sync) {
             sync.gradleVersion = resolverCtx.projectGradleVersion
-            sync.storage = storage
-
             sync.javaHome = resolverCtx.buildEnvironment
                 ?.java?.javaHome?.path
                 ?.let { toSystemIndependentName(it) }
@@ -44,6 +41,7 @@ fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext, storage: Mut
 
 fun processScriptModel(
     resolverCtx: ProjectResolverContext,
+    sync: KotlinDslGradleBuildSync?,
     model: KotlinDslScriptsModel,
     projectName: String
 ): Boolean {
@@ -57,8 +55,6 @@ fun processScriptModel(
         val project = task.findProject() ?: return false
         val models = model.toListOfScriptModels(project)
 
-        val tasks = KotlinDslSyncListener.instance?.tasks
-        val sync = tasks?.let { synchronized(tasks) { tasks[task] } }
         if (sync != null) {
             synchronized(sync) {
                 sync.models.addAll(models)
@@ -137,7 +133,6 @@ class KotlinDslGradleBuildSync(val workingDir: String, val taskId: ExternalSyste
     var gradleVersion: String? = null
     var gradleHome: String? = null
     var javaHome: String? = null
-    var storage: MutableEntityStorage? = null
     val projectRoots = mutableSetOf<String>()
     val models = mutableListOf<KotlinDslScriptModel>()
     var failed = false

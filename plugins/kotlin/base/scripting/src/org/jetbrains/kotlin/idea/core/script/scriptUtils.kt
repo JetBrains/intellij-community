@@ -85,6 +85,8 @@ suspend fun configureGradleScriptsK2(
     javaHome: String?,
     storage: MutableEntityStorage? = null,
 ) {
+    if (!KotlinPluginModeProvider.isK2Mode()) return
+
     project.waitForSmartMode()
 
     K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(scripts, javaHome)

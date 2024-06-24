@@ -8,13 +8,8 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.RES
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.projectRoots.JdkUtil
-import com.intellij.openapi.vfs.VirtualFileManager
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
-import org.jetbrains.kotlin.idea.core.script.ScriptModel
-import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsContributor
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
@@ -23,10 +18,9 @@ import org.jetbrains.plugins.gradle.service.GradleInstallationManager
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.nio.file.Path
 import java.util.*
 
-class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystemTaskNotificationListener {
+class KotlinDslSyncListener : ExternalSystemTaskNotificationListener {
     companion object {
         val instance: KotlinDslSyncListener?
             get() =
@@ -82,14 +76,6 @@ class KotlinDslSyncListener(val coroutineScope: CoroutineScope) : ExternalSystem
         if (KotlinPluginModeProvider.isK2Mode()) {
             val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
             GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
-
-            val scripts = sync.models.mapNotNull {
-                val path = Path.of(it.file)
-                VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                    ScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports)
-                }
-            }.toSet()
-            coroutineScope.launch { configureGradleScriptsK2(project, scripts, sync.javaHome, sync.storage) }
         } else {
             @Suppress("DEPRECATION")
             ScriptDefinitionContributor.find<GradleScriptDefinitionsContributor>(project)?.reloadIfNeeded(

@@ -72,6 +72,6 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
             }
         }.toSet()
 
-        configureGradleScriptsK2(project, scripts, root.data.javaHome)
+        configureGradleScriptsK2(project, scripts, root.data.javaHome, storage = null)
     }
 }

@@ -5,8 +5,11 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.importing
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
+import org.jetbrains.kotlin.idea.core.script.ScriptModel
+import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
@@ -14,6 +17,8 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
+import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncProjectConfigurator.project
+import java.nio.file.Path
 
 class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
 
@@ -36,6 +41,11 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
     override val name: String = "Kotlin DSL Script"
 
     override suspend fun onModelFetchCompleted(context: ProjectResolverContext, storage: MutableEntityStorage) {
+        val project = context.project()
+        val taskId = context.externalSystemTaskId
+        val tasks = KotlinDslSyncListener.instance?.tasks
+        val sync = tasks?.let { synchronized(tasks) { tasks[taskId] } }
+
         blockingContext {
             for (buildModel in context.allBuilds) {
                 for (projectModel in buildModel.projects) {
@@ -45,16 +55,26 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
                         if (gradleVersion != null && kotlinDslScriptsModelImportSupported(gradleVersion)) {
                             val model = context.getProjectModel(projectModel, KotlinDslScriptsModel::class.java)
                             if (model != null) {
-                                if (!processScriptModel(context, model, projectIdentifier)) {
+                                if (!processScriptModel(context, sync, model, projectIdentifier)) {
                                     continue
                                 }
                             }
                         }
 
-                        saveGradleBuildEnvironment(context, storage)
+                        saveGradleBuildEnvironment(context)
                     }
                 }
             }
+        }
+
+        if (sync != null) {
+            val scripts = sync.models.mapNotNullTo(mutableSetOf()) {
+                val path = Path.of(it.file)
+                VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
+                    ScriptModel(virtualFile, it.classPath, it.sourcePath, it.imports)
+                }
+            }
+            configureGradleScriptsK2(project, scripts, sync.javaHome, storage)
         }
     }
 }
