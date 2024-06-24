@@ -191,6 +191,11 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
             KotlinTestUtils.runTest(this::doSuperClassHierarchyTest, this, testDataFilePath);
         }
 
+        @TestMetadata("Annotation")
+        public void testAnnotation() throws Exception {
+            runTest("testData/hierarchy/class/super/Annotation/");
+        }
+
         @TestMetadata("JetList")
         public void testJetList() throws Exception {
             runTest("testData/hierarchy/class/super/JetList/");
@@ -223,6 +228,11 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSubClassHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AllFromAnnotation")
+        public void testAllFromAnnotation() throws Exception {
+            runTest("testData/hierarchy/class/sub/AllFromAnnotation/");
         }
 
         @TestMetadata("AllFromClass")

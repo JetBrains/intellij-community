@@ -67,7 +67,7 @@ class KotlinSupertypesHierarchyTreeStructure(project: Project, aClass: KtClassOr
                 }
 
                 if (klass is KtClass && klass.isAnnotation()) {
-                    //todo annotations
+                    return klass.symbol.annotations.mapNotNull { it.constructorSymbol?.containingSymbol?.psi }.toTypedArray()
                 }
 
                 val elements = klassSymbol.superTypes.mapNotNull { it.symbol?.psi }

@@ -24,7 +24,7 @@ import javax.swing.JTree
 
 class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : TypeHierarchyBrowserBase(project, klass) {
     override fun isInterface(psiElement: PsiElement): Boolean {
-        return psiElement is KtClass && psiElement.isInterface()
+        return psiElement is KtClass && (psiElement.isInterface() || psiElement.isAnnotation())
     }
 
     override fun createTrees(trees: MutableMap<in String, in JTree>) {

@@ -4,21 +4,34 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
+import com.intellij.psi.search.searches.AnnotatedElementsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.ArrayUtilRt
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterScope
+import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
+import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.stubindex.KotlinAnnotationsIndex
 import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
     private val myCurrentScopeType: String
@@ -57,13 +70,39 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
 
     companion object {
         private fun searchInheritors(klass: PsiElement, searchScope: SearchScope): Sequence<PsiElement> {
-            //todo annotations
-            val inheritors = KotlinFindUsagesSupport.searchInheritors(klass, searchScope, searchDeeply = false)
             val psiClass = when (klass) {
                 is KtClass -> klass.toLightClass() ?: klass.toFakeLightClass()
                 is PsiClass -> klass
                 else -> null
             }
+
+            if (klass is KtClass && klass.isAnnotation()) {
+                val javaAnnotations = if (psiClass != null) {
+                    AnnotatedElementsSearch.searchPsiClasses(psiClass, searchScope.excludeKotlinSources(klass.project))
+                        .filter { it.isAnnotationType }.asSequence()
+                } else emptySequence()
+
+                val candidates =  when (searchScope) {
+                      is GlobalSearchScope -> {
+                          val name = klass.name
+                          val scope = KotlinSourceFilterScope.everything(searchScope, klass.project)
+                          name?.let { KotlinAnnotationsIndex[name, klass.project, scope] } ?: emptyList()
+                      }
+
+                        else -> (searchScope as LocalSearchScope).scope.flatMap { it.collectDescendantsOfType<KtAnnotationEntry>() }
+                    }
+                return candidates.mapNotNull { entry ->
+                    entry.getStrictParentOfType<KtClass>()?.takeIf {
+                            it.isAnnotation() && it.annotationEntries.contains(entry) && entry.calleeExpression?.constructorReferenceExpression?.mainReference?.resolve() == klass
+                        }
+                }.asSequence() + javaAnnotations
+            }
+
+            if (klass is PsiClass && klass.isAnnotationType) {
+                return AnnotatedElementsSearch.searchPsiClasses(klass, searchScope).filter { it.isAnnotationType }.asSequence()
+            }
+
+            val inheritors = KotlinFindUsagesSupport.searchInheritors(klass, searchScope, searchDeeply = false)
 
             if (psiClass == null || !LambdaUtil.isFunctionalClass(psiClass)) {
                 return inheritors

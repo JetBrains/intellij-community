@@ -433,6 +433,11 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
             KotlinTestUtils.runTest(this::doSuperClassHierarchyTest, this, testDataFilePath);
         }
 
+        @TestMetadata("Annotation")
+        public void testAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/super/Annotation/");
+        }
+
         @TestMetadata("JetList")
         public void testJetList() throws Exception {
             runTest("../../idea/tests/testData/hierarchy/class/super/JetList/");
@@ -465,6 +470,11 @@ public abstract class FirHierarchyTestGenerated extends AbstractFirHierarchyTest
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doSubClassHierarchyTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AllFromAnnotation")
+        public void testAllFromAnnotation() throws Exception {
+            runTest("../../idea/tests/testData/hierarchy/class/sub/AllFromAnnotation/");
         }
 
         @TestMetadata("AllFromClass")
