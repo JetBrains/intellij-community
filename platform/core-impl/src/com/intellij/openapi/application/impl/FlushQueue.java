@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -197,7 +198,7 @@ final class FlushQueue {
     }
   }
 
-  private final Runnable FLUSH_NOW = this::flushNow;
+  private final Runnable FLUSH_NOW = (ContextAwareRunnable)this::flushNow;
 
   boolean isFlushNow(@NotNull Runnable runnable) {
     return runnable == FLUSH_NOW;

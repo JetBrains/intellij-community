@@ -6,6 +6,7 @@ package com.intellij.ide
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.withClientId
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.diagnostic.EventWatcher
 import com.intellij.diagnostic.LoadingState
@@ -860,6 +861,10 @@ class IdeEventQueue private constructor() : EventQueue() {
     // Second, just wrapping PeerEvent into a new InvocationEvent loses the information about priority kept in the former,
     // and changes the overall events' processing order.
     if (event is InvocationEvent && event !is PeerEvent) {
+      val runnable = InvocationUtil.extractRunnable(event)
+      if (runnable is ContextAwareRunnable) {
+        return null
+      }
       val clientId = current
       return InvocationEvent(event.source) { withClientId(clientId).use { dispatchEvent(event) } }
     }

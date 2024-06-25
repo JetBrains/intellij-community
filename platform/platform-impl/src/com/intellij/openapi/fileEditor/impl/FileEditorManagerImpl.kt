@@ -6,7 +6,6 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.asContextElement
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
@@ -259,7 +258,7 @@ open class FileEditorManagerImpl(
 
           val publisher = project.messageBus.syncPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
           // expected in EDT
-          withContext(Dispatchers.EDT + ClientId.current.asContextElement()) {
+          withContext(Dispatchers.EDT) {
             runCatching {
               fireSelectionChanged(
                 newState = state,
