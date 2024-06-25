@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -67,12 +68,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -468,14 +471,34 @@ public final class ExternalSystemUtil {
         }
       };
 
-      LOG.info("External project [" + externalProjectPath + "] resolution task started");
-      var startTS = System.currentTimeMillis();
-      resolveProjectTask.execute(indicator, taskListener);
-      var endTS = System.currentTimeMillis();
-      LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
-      ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncResultProcessing",
-                                              (ignore) -> handleSyncResult(externalProjectPath, importSpec, resolveProjectTask,
-                                                                         eventDispatcher, finishSyncEventSupplier));
+      incompleteDependenciesState(project, resolveProjectTask, () -> {
+        LOG.info("External project [" + externalProjectPath + "] resolution task started");
+        var startTS = System.currentTimeMillis();
+        resolveProjectTask.execute(indicator, taskListener);
+        var endTS = System.currentTimeMillis();
+        LOG.info("External project [" + externalProjectPath + "] resolution task executed in " + (endTS - startTS) + " ms.");
+        ExternalSystemTelemetryUtil.runWithSpan(externalSystemId, "ExternalSystemSyncResultProcessing",
+                                                (ignore) -> handleSyncResult(externalProjectPath, importSpec, resolveProjectTask,
+                                                                             eventDispatcher, finishSyncEventSupplier));
+      });
+    }
+  }
+
+  private static void incompleteDependenciesState(@NotNull Project project, @NotNull Object requestor, @NotNull Runnable runnable) {
+    if (!Registry.is("external.system.incomplete.dependencies.state.during.sync")) {
+      runnable.run();
+    }
+    var incompleteDependenciesService = project.getService(IncompleteDependenciesService.class);
+    var incompleteDependenciesAccessToken = WriteAction.computeAndWait(() -> {
+      return incompleteDependenciesService.enterIncompleteState(requestor);
+    });
+    try {
+      runnable.run();
+    }
+    finally {
+      WriteAction.runAndWait(() -> {
+        incompleteDependenciesAccessToken.finish();
+      });
     }
   }
 
