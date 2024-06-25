@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.SearchTopHitProvider;
@@ -27,6 +27,7 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.text.Matcher;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,7 +132,10 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         provider.consumeTopHits(prefix + pattern, collector, project);
       }
       else if (project != null && provider instanceof OptionsTopHitProvider.ProjectLevelProvidersAdapter) {
-        ((OptionsTopHitProvider.ProjectLevelProvidersAdapter)provider).consumeAllTopHits(pattern, collector, project);
+        ((OptionsTopHitProvider.ProjectLevelProvidersAdapter)provider).consumeAllTopHits(pattern, it -> {
+          collector.accept(it);
+          return Unit.INSTANCE;
+        }, project);
       }
       provider.consumeTopHits(pattern, collector, project);
     }

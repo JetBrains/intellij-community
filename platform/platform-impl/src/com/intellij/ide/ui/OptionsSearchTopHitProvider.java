@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.project.Project;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,10 @@ public interface OptionsSearchTopHitProvider {
     // do not override
     @Override
     default void consumeTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-      OptionsTopHitProvider.Companion.consumeTopHits(this, pattern, collector, project);
+      OptionsTopHitProvider.Companion.consumeTopHits(this, pattern, it -> {
+        collector.accept(it);
+        return Unit.INSTANCE;
+      }, project);
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ProjectLevelProvider
+import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -17,13 +18,19 @@ import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Consumer
 
+@Internal
 abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHitProvider {
   companion object {
     // project level here means not that EP itself in the project area, but that extension applicable for a project only
     @JvmField
     val PROJECT_LEVEL_EP: ExtensionPointName<ProjectLevelProvider> = ExtensionPointName("com.intellij.search.projectOptionsTopHitProvider")
 
-    fun consumeTopHits(provider: OptionsSearchTopHitProvider, rawPattern: String, collector: Consumer<Any>, project: Project?) {
+    fun consumeTopHits(
+      provider: OptionsSearchTopHitProvider,
+      rawPattern: String,
+      collector: (OptionDescription) -> Unit,
+      project: Project?,
+    ) {
       val pattern = checkPattern(rawPattern) ?: return
       val parts = pattern.split(' ')
       if (!parts.isEmpty()) {
@@ -46,7 +53,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
   }
 
   override fun consumeTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
-    consumeTopHits(provider = this, rawPattern = pattern, collector = collector, project = project)
+    consumeTopHits(provider = this, rawPattern = pattern, collector = { collector.accept(it) }, project = project)
   }
 
   abstract override fun getId(): String
@@ -74,11 +81,17 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
       }
 
       for (provider in PROJECT_LEVEL_EP.extensionList) {
-        doConsumeTopHits(provider, checkedPattern, parts[0], collector, project)
+        doConsumeTopHits(
+          provider = provider,
+          rawPattern = checkedPattern,
+          id = parts[0],
+          collector = { collector.accept(it) },
+          project = project,
+        )
       }
     }
 
-    fun consumeAllTopHits(pattern: String, collector: Consumer<Any>, project: Project?) {
+    fun consumeAllTopHits(pattern: String, collector: (OptionDescription) -> Unit, project: Project?) {
       val matcher = buildMatcher(pattern)
       for (provider in PROJECT_LEVEL_EP.extensionList) {
         consumeTopHitsForApplicableProvider(provider = provider, matcher = matcher, collector = collector, project = project)
@@ -90,7 +103,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
 private fun doConsumeTopHits(provider: OptionsSearchTopHitProvider,
                              rawPattern: String,
                              id: String,
-                             collector: Consumer<Any>,
+                             collector: (OptionDescription) -> Unit,
                              project: Project?) {
   var pattern = rawPattern
   if (provider.id.startsWith(id) || pattern.startsWith(" ")) {
@@ -107,7 +120,7 @@ private fun doConsumeTopHits(provider: OptionsSearchTopHitProvider,
 private fun consumeTopHitsForApplicableProvider(
   provider: OptionsSearchTopHitProvider,
   matcher: Matcher,
-  collector: Consumer<Any>,
+  collector: (OptionDescription) -> Unit,
   project: Project?,
 ) {
   val cache = if (project == null || provider is ApplicationLevelProvider) {
@@ -119,7 +132,7 @@ private fun consumeTopHitsForApplicableProvider(
   for (option in cache.getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
     val optionValue = option.option ?: continue
     if (matcher.matches(optionValue)) {
-      collector.accept(option)
+      collector(option)
     }
   }
 }

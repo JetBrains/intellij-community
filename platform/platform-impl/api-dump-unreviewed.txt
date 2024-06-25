@@ -8887,22 +8887,6 @@ com.intellij.ide.ui.OptionsSearchTopHitProvider$ApplicationLevelProvider
 com.intellij.ide.ui.OptionsSearchTopHitProvider$ProjectLevelProvider
 - com.intellij.ide.ui.OptionsSearchTopHitProvider
 - a:getOptions(com.intellij.openapi.project.Project):java.util.Collection
-a:com.intellij.ide.ui.OptionsTopHitProvider
-- com.intellij.ide.SearchTopHitProvider
-- com.intellij.ide.ui.OptionsSearchTopHitProvider
-- sf:Companion:com.intellij.ide.ui.OptionsTopHitProvider$Companion
-- sf:PROJECT_LEVEL_EP:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- consumeTopHits(java.lang.String,java.util.function.Consumer,com.intellij.openapi.project.Project):V
-- a:getId():java.lang.String
-- sf:messageApp(java.lang.String):java.lang.String
-- sf:messageIde(java.lang.String):java.lang.String
-f:com.intellij.ide.ui.OptionsTopHitProvider$Companion
-- f:buildMatcher(java.lang.String):com.intellij.util.text.Matcher
-- f:consumeTopHits(com.intellij.ide.ui.OptionsSearchTopHitProvider,java.lang.String,java.util.function.Consumer,com.intellij.openapi.project.Project):V
-- f:messageApp(java.lang.String):java.lang.String
-- f:messageIde(java.lang.String):java.lang.String
-com.intellij.ide.ui.OptionsTopHitProvider$CoveredByToggleActions
 f:com.intellij.ide.ui.PluginBooleanOptionDescriptor
 - com.intellij.ide.ui.search.BooleanOptionDescription
 - com.intellij.ide.ui.search.BooleanOptionDescription$RequiresRebuild
