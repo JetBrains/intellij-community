@@ -176,6 +176,7 @@
     "org.jetbrains.plugins.go:app:Go.suggestParametersNames",
     "org.jetbrains.plugins.go:app:GoFoldingSettings.*",
     "org.jetbrains.plugins.ruby:app:RubyCodeinsightSettings.preselectFirstCompletionElement",
+    "org.jetbrains.plugins.ruby:app:RubyDuplocatorSettings.*",
     "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myCloseSessionOnLogout",
     "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myHighlightHyperlinks",
     "org.jetbrains.plugins.terminal:app:TerminalOptionsProvider.myOverrideIdeShortcuts",
