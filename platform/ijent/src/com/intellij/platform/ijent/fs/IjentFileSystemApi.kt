@@ -104,6 +104,7 @@ sealed interface IjentFileSystemApi {
     FileReaderError>
 
   sealed interface FileReaderError : IjentFsError {
+    interface AlreadyExists : FileReaderError, IjentFsError.AlreadyExists
     interface DoesNotExist : FileReaderError, IjentFsError.DoesNotExist
     interface PermissionDenied : FileReaderError, IjentFsError.PermissionDenied
     interface NotDirectory : FileReaderError, IjentFsError.NotDirectory
@@ -125,6 +126,7 @@ sealed interface IjentFileSystemApi {
 
   sealed interface FileWriterError : IjentFsError {
     interface DoesNotExist : FileWriterError, IjentFsError.DoesNotExist
+    interface AlreadyExists : FileWriterError, IjentFsError.AlreadyExists
     interface PermissionDenied : FileWriterError, IjentFsError.PermissionDenied
     interface NotDirectory : FileWriterError, IjentFsError.NotDirectory
     interface NotFile : FileWriterError, IjentFsError.NotFile

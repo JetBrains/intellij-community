@@ -190,7 +190,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
   override fun copy(source: Path, target: Path, vararg options: CopyOption) {
     if (StandardCopyOption.ATOMIC_MOVE in options) {
-      throw UnsupportedOperationException("Atomic move is not supported yet")
+      throw UnsupportedOperationException("Unsupported copy option")
     }
     ensureIjentNioPath(source)
     ensureIjentNioPath(target)
