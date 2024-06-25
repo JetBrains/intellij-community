@@ -45,8 +45,6 @@
 
         <multipleRunLocationsProvider implementation="org.jetbrains.kotlin.idea.run.multiplatform.KotlinMultiplatformRunLocationsProvider"/>
 
-        <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.configuration.KotlinSetupEnvironmentNotificationProvider"/>
-
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
 
         <consoleFilterProvider implementation="org.jetbrains.kotlin.idea.run.KotlinConsoleFilterProvider"/>
@@ -89,10 +87,6 @@
                    description="Enable bytecode instrumentation for Kotlin classes"
                    defaultValue="false"
                    restartRequired="false"/>
-
-      <registryKey key="kotlin.not.configured.show.notification"
-                   defaultValue="true"
-                   description="Show notification about Kotlin missing configuration"/>
     </extensions>
 
     <extensions defaultExtensionNs="org.jetbrains.uast">
