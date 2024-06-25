@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.types.KotlinTypeHierarchyNodeDescriptor.Companion.createTypeHierarchyDescriptor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 class KotlinTypeHierarchyTreeStructure(project: Project, aClass: KtClassOrObject, currentScopeType: String) :
     KotlinSubtypesHierarchyTreeStructure(project, buildHierarchyElement(project, aClass), currentScopeType) {
@@ -41,48 +42,28 @@ class KotlinTypeHierarchyTreeStructure(project: Project, aClass: KtClassOrObject
         }
 
         private fun createSuperClasses(aClass: KtClassOrObject): Array<PsiElement> {
-            if (!aClass.isValid()) return emptyArray()
-            if ((aClass as? KtClass)?.isInterface() == true) return emptyArray()
-            val className = aClass.name ?: return emptyArray()
+            if (!aClass.isValid()) return PsiElement.EMPTY_ARRAY
+            if ((aClass as? KtClass)?.isInterface() == true) return PsiElement.EMPTY_ARRAY
+            val className = aClass.name ?: return PsiElement.EMPTY_ARRAY
 
-            val superClasses = mutableSetOf<PsiElement>()
-            analyzeInModalWindow(aClass,
-                                 KotlinBundle.message("dialog.title.build.super.types.hierarchy", className)
+            return analyzeInModalWindow(
+                aClass, KotlinBundle.message("dialog.title.build.super.types.hierarchy", className)
             ) {
-                var currentClass: PsiElement? = aClass
-                while (currentClass != null) {
-                    val superClass = when (currentClass) {
-                        is KtClassOrObject -> {
-
-                            ((currentClass as KtClassOrObject).symbol as? KaClassSymbol)?.superTypes?.firstOrNull { superType ->
-                                val psi = superType.symbol?.psi ?: return@firstOrNull false
-                                when (psi) {
-                                    is KtClass -> !psi.isInterface()
-                                    is PsiClass -> !psi.isInterface
-                                    else -> false
-                                }
-                            }?.symbol?.psi
-
+                val superClasses = mutableSetOf<PsiElement>()
+                var currentClassSymbol: KaClassSymbol? = aClass.namedClassSymbol
+                val superSymbols = mutableSetOf<KaClassSymbol>()
+                while (currentClassSymbol != null) {
+                    currentClassSymbol = currentClassSymbol.superTypes.map { it.symbol }.filterIsInstance<KaClassSymbol>()
+                        .firstOrNull { it.classKind != KaClassKind.INTERFACE }
+                    if (currentClassSymbol != null) {
+                        if (!superSymbols.add(currentClassSymbol)) {
+                            break
                         }
-
-                        is PsiClass -> {
-                            currentClass.superClass
-                        }
-
-                        else -> null
+                        superClasses.addIfNotNull(currentClassSymbol.psi)
                     }
-                    if (superClass == null) {
-                        break
-                    }
-
-                    if (!superClasses.add(superClass)) {
-                        break
-                    }
-                    currentClass = superClass
                 }
+                superClasses.toTypedArray()
             }
-
-            return superClasses.toTypedArray()
         }
     }
 }
