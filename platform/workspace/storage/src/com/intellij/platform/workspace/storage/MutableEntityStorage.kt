@@ -83,7 +83,7 @@ import org.jetbrains.annotations.ApiStatus
  * ## Batch operations
  * Besides operation with individual entities, [MutableEntityStorage] supports two batch operations: [applyChangesFrom] and [replaceBySource].
  * 
- * ### Add Diff
+ * ### Apply Changes From
  * Each instance of [MutableEntityStorage] records changes made in it: addition, modification and removal of entities. Such changes made
  * in one instance may be applied to a different instance by calling [applyChangesFrom] function.
  *
