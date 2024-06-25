@@ -3,15 +3,15 @@ package org.jetbrains.idea.devkit.apiDump
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.FileIconProvider
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.idea.devkit.util.PsiUtil
 import javax.swing.Icon
 
 internal class ApiDumpFileIconProvider : FileIconProvider {
 
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? {
-    if (!PsiUtil.isIdeaProject(project)) return null
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) return null
 
     when {
       ApiDumpUtil.isApiDumpFile(file) -> return AllIcons.Ide.HectorOn

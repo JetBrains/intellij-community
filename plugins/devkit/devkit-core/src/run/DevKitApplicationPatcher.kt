@@ -8,6 +8,7 @@ import com.intellij.execution.application.ApplicationConfiguration
 import com.intellij.execution.configurations.*
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.PlatformUtils
@@ -16,7 +17,6 @@ import com.intellij.util.system.CpuArch
 import org.jetbrains.ide.BuiltInServerManager
 import org.jetbrains.idea.devkit.requestHandlers.CompileHttpRequestHandlerToken
 import org.jetbrains.idea.devkit.requestHandlers.passDataAboutBuiltInServer
-import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -28,7 +28,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
                                                                   javaParameters: JavaParameters,
                                                                   runnerSettings: RunnerSettings?) {
     val project = configuration.project
-    if (!PsiUtil.isIdeaProject(project)) {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       return
     }
     if (configuration !is JavaRunConfigurationBase) {

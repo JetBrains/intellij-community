@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.Key;
@@ -30,7 +31,6 @@ import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.requestHandlers.BuiltInServerConnectionData;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -52,7 +52,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (PsiUtil.isIdeaProject(project)) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       BuiltInServerConnectionData.passDataAboutBuiltInServer(javaParameters, project);
       
       if (!vm.hasProperty(SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {

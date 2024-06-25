@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.smartUpdate.SmartUpdateBundle
 import com.intellij.smartUpdate.StepOption
@@ -11,7 +12,6 @@ import com.intellij.smartUpdate.beforeRestart
 import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.PsiUtil
 import javax.swing.JComponent
 
 internal class UpdateFromSourcesStep: StepOption {
@@ -28,7 +28,7 @@ internal class UpdateFromSourcesStep: StepOption {
     updateFromSources(project, ::beforeRestart, { Notification("Update from Sources", it, NotificationType.ERROR) }, true)
   }
 
-  override fun isAvailable(project: Project) = PsiUtil.isIdeaProject(project)
+  override fun isAvailable(project: Project) = IntelliJProjectUtil.isIntelliJPlatformProject(project)
 
   override fun getDetailsComponent(project: Project): JComponent {
     return panel {

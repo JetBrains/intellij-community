@@ -7,8 +7,8 @@ import com.intellij.execution.filters.OpenFileHyperlinkInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 private val ModulePattern = """(intellij|kotlin|fleet|android)(.[-\w]+)+""".toRegex()
 
@@ -23,7 +23,7 @@ internal class ModulePathFilterProvider : ConsoleFilterProvider {
   }
 
   override fun getDefaultFilters(project: Project): Array<Filter> =
-    if (PsiUtil.isIdeaProject(project))
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project))
       arrayOf(ModulePathFilter(project))
     else
       emptyArray()

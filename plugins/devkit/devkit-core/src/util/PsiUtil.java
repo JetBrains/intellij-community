@@ -96,7 +96,12 @@ public final class PsiUtil {
     return ObjectUtils.notNull(AnnotationUtil.getBooleanAttributeValue(annotation, name), Boolean.FALSE);
   }
 
+  /**
+   * @deprecated Use {@linkplain IntelliJProjectUtil#isIntelliJPlatformProject(Project)} instead
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @ApiStatus.Internal
+  @Deprecated
   public static boolean isIdeaProject(@Nullable Project project) {
     return IntelliJProjectUtil.isIntelliJPlatformProject(project);
   }

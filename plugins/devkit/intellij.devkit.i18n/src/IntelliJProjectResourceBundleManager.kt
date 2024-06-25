@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.i18n
 
 import com.intellij.lang.properties.psi.I18nizedTextGenerator
 import com.intellij.lang.properties.psi.PropertiesFile
 import com.intellij.lang.properties.psi.ResourceBundleManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClass
@@ -14,11 +15,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.util.PathUtil
 import org.jetbrains.idea.devkit.actions.generateDefaultBundleName
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal class IntelliJProjectResourceBundleManager(project: Project) : ResourceBundleManager(project) {
   override fun isActive(context: PsiFile): Boolean {
-    return PsiUtil.isIdeaProject(myProject)
+    return IntelliJProjectUtil.isIntelliJPlatformProject(myProject)
   }
 
   override fun escapeValue(value: String): String {

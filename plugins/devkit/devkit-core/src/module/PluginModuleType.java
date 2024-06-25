@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -19,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration;
 import org.jetbrains.idea.devkit.build.PluginBuildUtil;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
@@ -108,7 +108,7 @@ public final class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   }
 
   public static List<Module> getCandidateModules(Module module) {
-    if (PsiUtil.isIdeaProject(module.getProject())) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
       Set<Module> dependents = new HashSet<>();
       ModuleUtilCore.collectModulesDependsOn(module, dependents);
       return new ArrayList<>(dependents);

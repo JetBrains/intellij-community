@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.ui.Messages
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal sealed class UpdateIdeFromSourcesActionBase(private val forceShowSettings: Boolean = false) : DumbAwareAction() {
 
@@ -38,7 +38,7 @@ internal sealed class UpdateIdeFromSourcesActionBase(private val forceShowSettin
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && PsiUtil.isIdeaProject(project)
+    e.presentation.isEnabledAndVisible = project != null && IntelliJProjectUtil.isIntelliJPlatformProject(project)
   }
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,6 +10,7 @@ import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageP
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -345,7 +346,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
     private void processStateAnnoClasses(PairProcessor<PsiClass, String> processor) {
       final Project project = myElement.getProject();
-      final GlobalSearchScope searchScope = PsiUtil.isIdeaProject(project) ?
+      final GlobalSearchScope searchScope = IntelliJProjectUtil.isIntelliJPlatformProject(project) ?
                                             GlobalSearchScopesCore.projectProductionScope(project) : getElement().getResolveScope();
       final PsiClass statePsiClass = JavaPsiFacade.getInstance(project).findClass(State.class.getName(), searchScope);
       if (statePsiClass == null) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.BuildNumber;
@@ -54,7 +55,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.text.ParseException;
@@ -259,7 +259,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static void annotateListeners(Listeners listeners, DomElementAnnotationHolder holder) {
     final Module module = listeners.getModule();
-    if (module == null || PsiUtil.isIdeaProject(module.getProject())) return;
+    if (module == null || IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) return;
 
     PluginPlatformInfo platformInfo = PluginPlatformInfo.forDomElement(listeners);
     final PluginPlatformInfo.PlatformResolveStatus resolveStatus = platformInfo.getResolveStatus();
@@ -379,7 +379,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
 
-    boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
+    boolean isNotIdeaProject = !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject());
 
     if (isNotIdeaProject &&
         !DomUtil.hasXml(ideaPlugin.getVersion()) &&
@@ -399,7 +399,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
-    if (!PsiUtil.isIdeaProject(module.getProject())) return;
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) return;
 
     if (DomUtil.hasXml(ideaPlugin.getUrl())) {
       String url = ideaPlugin.getUrl().getStringValue();
@@ -572,9 +572,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     // skip some known offenders in IJ project
     if (name != null
         && (StringUtil.startsWith(name, "Pythonid.") ||
-            StringUtil.startsWith(name, "DevKit.")) // NON-NLS
-        && PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
-      return true;
+            StringUtil.startsWith(name, "DevKit."))) {
+      if (IntelliJProjectUtil.isIntelliJPlatformProject(nameAttrValue.getManager().getProject())) {
+        return true;
+      }
     }
 
     if (StringUtil.isEmpty(name) ||
@@ -799,9 +800,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         highlightExperimental(extension, holder);
       }
     }
-    else if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
-             module != null && !PsiUtil.isIdeaProject(module.getProject())) {
-      highlightInternal(extension, holder);
+    else {
+      if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
+          module != null && !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
+          highlightInternal(extension, holder);
+      }
     }
   }
 
@@ -857,7 +860,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         highlightExperimental(attributeValue, holder);
       }
       else if (psiField.hasAnnotation(ApiStatus.Internal.class.getCanonicalName()) &&
-               module != null && !PsiUtil.isIdeaProject(module.getProject())) {
+               module != null && !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
         highlightInternal(attributeValue, holder);
       }
       else if (psiField.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {

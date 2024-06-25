@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.uiDesigner
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -14,13 +15,12 @@ import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.uiDesigner.editor.UIFormEditor
 import com.intellij.util.ui.JBUI
-import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.function.Function
 import javax.swing.JComponent
 
 internal class ConvertFormNotificationProvider : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
-    if (!PsiUtil.isIdeaProject(project)) {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       return null
     }
     val formPsiFile = PsiManager.getInstance(project).findFile(file) ?: return null

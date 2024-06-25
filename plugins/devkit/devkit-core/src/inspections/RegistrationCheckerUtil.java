@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -24,7 +25,6 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.ActionType;
 import org.jetbrains.idea.devkit.util.ComponentType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.util.*;
 
@@ -55,7 +55,7 @@ final class RegistrationCheckerUtil {
 
     final RegistrationTypeFinder finder = new RegistrationTypeFinder(psiClass, registrationType);
 
-    if (PsiUtil.isIdeaProject(project)) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       return checkIdeaProject(project, finder);
     }
 

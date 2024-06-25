@@ -5,6 +5,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -36,7 +37,7 @@ public final class DevKitInspectionUtil {
     if (vFile == null) return false;
     if (TestSourcesFilter.isTestSources(vFile, file.getProject())) return false;
 
-    if (PsiUtil.isIdeaProject(file.getProject())) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(file.getProject())) {
       return predicate.test(file);
     }
 
