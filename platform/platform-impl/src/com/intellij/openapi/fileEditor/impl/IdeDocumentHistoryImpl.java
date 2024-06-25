@@ -64,7 +64,8 @@ import java.util.*;
 import java.util.function.Predicate;
 
 @State(name = "IdeDocumentHistory", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), reportStatistic = false)
-public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
+public class IdeDocumentHistoryImpl extends IdeDocumentHistory
+  implements Disposable, PersistentStateComponent<IdeDocumentHistoryImpl.RecentlyChangedFilesState> {
   private static final Logger LOG = Logger.getInstance(IdeDocumentHistoryImpl.class);
 
   private static final int BACK_QUEUE_LIMIT = Registry.intValue("editor.navigation.history.stack.size");
@@ -129,7 +130,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
       public void documentChanged(@NotNull DocumentEvent e) {
         Document document = e.getDocument();
         VirtualFile file = getFileDocumentManager().getFile(document);
-        if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
+        if (file != null &&
+            !(file instanceof LightVirtualFile) &&
+            !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
           ThreadingAssertions.assertEventDispatchThread();
           currentCommandHasChanges = true;
           myChangedFilesInCurrentCommand.add(file);
@@ -568,11 +571,22 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     return currentIndex < changePlaces.size();
   }
 
-  private static boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
-    return backPlaces.removeIf(info -> (info.myFile instanceof SkipFromDocumentHistory) || !info.myFile.isValid());
+  private boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
+    return backPlaces
+      .removeIf(info -> (info.myFile instanceof OptionallyIncluded &&
+                         !((OptionallyIncluded)info.myFile).isIncludedInDocumentHistory()) ||
+                        !info.myFile.isValid());
   }
 
-  public interface SkipFromDocumentHistory {
+  public interface OptionallyIncluded {
+    boolean isIncludedInDocumentHistory(@NotNull Project project);
+  }
+
+  public interface SkipFromDocumentHistory extends OptionallyIncluded {
+    @Override
+    default boolean isIncludedInDocumentHistory(@NotNull Project project) {
+      return false;
+    }
   }
 
   @Override
@@ -620,6 +634,12 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Dispos
     FileEditorManagerEx editorManager = getFileEditorManager();
     VirtualFile file = fileEditor.getFile();
     LOG.assertTrue(file != null, fileEditor.getClass().getName() + " getFile() returned null");
+
+    if (file instanceof SkipFromDocumentHistory &&
+        file instanceof OptionallyIncluded && !((OptionallyIncluded)file).isIncludedInDocumentHistory(project)) {
+      return null;
+    }
+
     FileEditorState state = fileEditor.getState(FileEditorStateLevel.NAVIGATION);
 
     EditorWindow window = editorManager == null ? null : editorManager.getCurrentWindow();

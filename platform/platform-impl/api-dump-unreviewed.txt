@@ -15330,6 +15330,8 @@ c:com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 - removeBackPlace(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo):V
 - removeChangePlace(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo):V
 - setCurrentCommandHasMoves():V
+com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$OptionallyIncluded
+- a:isIncludedInDocumentHistory(com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo
 - <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditorState,java.lang.String,com.intellij.openapi.fileEditor.impl.EditorWindow,com.intellij.openapi.editor.RangeMarker):V
 - <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.fileEditor.FileEditorState,java.lang.String,com.intellij.openapi.fileEditor.impl.EditorWindow,Z,com.intellij.openapi.editor.RangeMarker,J):V
@@ -15346,6 +15348,8 @@ com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener
 - recentPlaceAdded(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo,Z,java.lang.Object):V
 - a:recentPlaceRemoved(com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$PlaceInfo,Z):V
 com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$SkipFromDocumentHistory
+- com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$OptionallyIncluded
+- isIncludedInDocumentHistory(com.intellij.openapi.project.Project):Z
 f:com.intellij.openapi.fileEditor.impl.IdeScriptEngineUsageCollector
 - sf:INSTANCE:com.intellij.openapi.fileEditor.impl.IdeScriptEngineUsageCollector
 - getGroup():com.intellij.internal.statistic.eventLog.EventLogGroup
