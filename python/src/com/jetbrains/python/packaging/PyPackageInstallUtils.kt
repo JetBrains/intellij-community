@@ -65,10 +65,25 @@ object PyPackageInstallUtils {
   }
 
   fun getPackageVersion(project: Project, sdk: Sdk, packageName: String): Version? {
-    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
-    val pythonPackage = pythonPackageManager.installedPackages.firstOrNull { it.name == packageName }
+    val pythonPackage = getPackage(project, sdk, packageName)
     val version = pythonPackage?.version ?: return null
     return Version.parseVersion(version)
+  }
+
+  private fun getPackage(
+    project: Project,
+    sdk: Sdk,
+    packageName: String,
+  ): PythonPackage? {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val pythonPackage = pythonPackageManager.installedPackages.firstOrNull { it.name == packageName }
+    return pythonPackage
+  }
+
+  suspend fun uninstall(project: Project, sdk: Sdk, libName: String) {
+    val pythonPackageManager = PythonPackageManager.forSdk(project, sdk)
+    val pythonPackage = getPackage(project, sdk, libName) ?: return
+    pythonPackageManager.uninstallPackage(pythonPackage)
   }
 
   private class ConfirmPackageInstallationDoNotAskOption : DoNotAskOption.Adapter() {

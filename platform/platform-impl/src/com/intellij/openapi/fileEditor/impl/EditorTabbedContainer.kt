@@ -63,6 +63,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.TimedDeadzone
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
@@ -282,7 +283,8 @@ class EditorTabbedContainer internal constructor(
   }
 }
 
-internal class DockableEditor @JvmOverloads constructor(
+@ApiStatus.Internal
+class DockableEditor @JvmOverloads constructor(
   @JvmField val img: Image?,
   @JvmField val file: VirtualFile,
   private val presentation: Presentation,
@@ -319,6 +321,7 @@ private fun doProcessDoubleClick(e: MouseEvent, editorTabs: JBTabsImpl, window: 
   }
 
   val actionManager = ActionManager.getInstance()
+
   @Suppress("DEPRECATION")
   val context = DataManager.getInstance().dataContext
   var isEditorMaximized: Boolean? = null
