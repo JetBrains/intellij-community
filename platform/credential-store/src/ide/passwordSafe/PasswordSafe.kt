@@ -11,7 +11,7 @@ import org.jetbrains.concurrency.Promise
  * [See the documentation](https://plugins.jetbrains.com/docs/intellij/persisting-sensitive-data.html).
  */
 @Suppress("DEPRECATION", "removal")
-abstract class PasswordSafe : PasswordStorage, CredentialStore {
+abstract class PasswordSafe : CredentialStore, PasswordStorage {
   companion object {
     @JvmStatic
     val instance: PasswordSafe
