@@ -1,5 +1,8 @@
 package org.jetbrains.jsonProtocol;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public final class StringIntPair {
   public final String name;
   public final int value;

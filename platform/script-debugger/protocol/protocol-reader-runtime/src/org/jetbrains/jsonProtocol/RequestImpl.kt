@@ -15,6 +15,9 @@
  */
 package org.jetbrains.jsonProtocol
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 abstract class RequestImpl<T> : OutMessage(), Request<T> {
   private var argumentsObjectStarted = false
 
