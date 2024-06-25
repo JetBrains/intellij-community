@@ -175,10 +175,11 @@
                  restartRequired="false"
                  description="Set initial Linux tty size to 100x100 for WSL processes not attached to Windows PTY (workaround for https://github.com/microsoft/WSL/issues/10701)"
                  defaultValue="true"/>
-    <registryKey key="ide.redesigned.inspector"
-                 restartRequired="false"
-                 description="New inspection widget with pencils functionality"
-                 defaultValue="false"/>
+    <experimentalFeature id="ide.redesigned.inspector" percentOfUsers="50">
+      <description>
+        Enable new inspection widget experiment
+      </description>
+    </experimentalFeature>
     <registryKey key="ide.welcome.screen.branch.name"
                  restartRequired="true"
                  description="New inspection widget with pencils functionality"
