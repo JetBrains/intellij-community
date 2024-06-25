@@ -74,6 +74,8 @@
                  description="Provide assignment of groupId/artifactId/version for JPS modules"/>
     <registryKey key="external.system.pause.indexing.during.sync" defaultValue="false"
                  description="Suspend indexing and scanning during sync with external build system"/>
+    <registryKey key="external.system.incomplete.dependencies.state.during.sync" defaultValue="true"
+                 description="Indicates project state as incomplete during sync with external build system"/>
 
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
