@@ -54,6 +54,7 @@ class EditorCellInput(
       toggleTextFolding()
       inputComponentFactory(this, _component)
     }
+    invalidate()
   }
 
   private fun toggleTextFolding() {
