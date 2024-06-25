@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.ApiVersion.Companion.KOTLIN_1_8
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
 import org.jetbrains.kotlin.j2k.Nullability.NotNull
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.conversions.ReplaceType.REPLACE_SELECTOR
@@ -424,13 +425,13 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
         Method("java.util.Map.Entry.getKey") convertTo Field("kotlin.collections.Map.Entry.key"),
         Method("java.util.Map.Entry.getValue") convertTo Field("kotlin.collections.Map.Entry.value"),
 
-        Method("java.util.Set.of") convertTo Method("kotlin.collections.setOf") withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::setOfFilter,
-        Method("java.util.List.of") convertTo Method("kotlin.collections.listOf") withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::listOfFilter,
-        Method("java.util.Collections.singletonList") convertTo Method("kotlin.collections.listOf") withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.singleton") convertTo Method("kotlin.collections.setOf") withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptyList") convertTo Method("kotlin.collections.emptyList") withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptySet") convertTo Method("kotlin.collections.emptySet") withReplaceType REPLACE_WITH_QUALIFIER,
-        Method("java.util.Collections.emptyMap") convertTo Method("kotlin.collections.emptyMap") withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Set.of") convertTo Method(setOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::setOfFilter,
+        Method("java.util.List.of") convertTo Method(listOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER withByArgumentsFilter ::listOfFilter,
+        Method("java.util.Collections.singletonList") convertTo Method(listOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.singleton") convertTo Method(setOfFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.emptyList") convertTo Method(emptyListFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.emptySet") convertTo Method(emptySetFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
+        Method("java.util.Collections.emptyMap") convertTo Method(emptyMapFqName()) withReplaceType REPLACE_WITH_QUALIFIER,
     )
 
     // For now, these conversions only mark that the last lambda can be moved outside parentheses
@@ -935,4 +936,22 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
 
     private fun List<JKLiteralExpression>.containsNull(): Boolean =
         any { it.isNull() }
+
+    // TODO: before mutability inference is implemented in K2 (KTIJ-29148),
+    //   use mutable versions of collection creation functions
+
+    private fun setOfFqName(): String =
+        if (isK1Mode()) "kotlin.collections.setOf" else "kotlin.collections.mutableSetOf"
+
+    private fun listOfFqName(): String =
+        if (isK1Mode()) "kotlin.collections.listOf" else "kotlin.collections.mutableListOf"
+
+    private fun emptyListFqName(): String =
+        if (isK1Mode()) "kotlin.collections.emptyList" else "kotlin.collections.mutableListOf"
+
+    private fun emptySetFqName(): String =
+        if (isK1Mode()) "kotlin.collections.emptySet" else "kotlin.collections.mutableSetOf"
+
+    private fun emptyMapFqName(): String =
+        if (isK1Mode()) "kotlin.collections.emptyMap" else "kotlin.collections.mutableMapOf"
 }
