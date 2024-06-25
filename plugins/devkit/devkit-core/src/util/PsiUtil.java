@@ -16,10 +16,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.jetbrains.uast.*;
 
 import java.io.File;
@@ -99,6 +96,7 @@ public final class PsiUtil {
     return ObjectUtils.notNull(AnnotationUtil.getBooleanAttributeValue(annotation, name), Boolean.FALSE);
   }
 
+  @ApiStatus.Internal
   public static boolean isIdeaProject(@Nullable Project project) {
     return IntelliJProjectUtil.isIntelliJPlatformProject(project);
   }
@@ -163,6 +161,7 @@ public final class PsiUtil {
     return isPluginProject(element.getProject()) && DescriptorUtil.isPluginXml(element.getContainingFile());
   }
 
+  @ApiStatus.Internal
   public static boolean isPathToIntelliJIdeaSources(String path) {
     for (String file : IDEA_PROJECT_MARKER_FILES) {
       if (new File(path, file).isFile()) return true;
