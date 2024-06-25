@@ -71,7 +71,7 @@ open class KotlinSubtypesHierarchyTreeStructure : HierarchyTreeStructure {
     companion object {
         private fun searchInheritors(klass: PsiElement, searchScope: SearchScope): Sequence<PsiElement> {
             val psiClass = when (klass) {
-                is KtClass -> klass.toLightClass() ?: klass.toFakeLightClass()
+                is KtClass -> klass.toLightClass()
                 is PsiClass -> klass
                 else -> null
             }
