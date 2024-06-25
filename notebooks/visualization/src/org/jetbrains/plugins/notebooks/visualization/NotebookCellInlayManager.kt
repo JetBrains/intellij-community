@@ -216,12 +216,7 @@ class NotebookCellInlayManager private constructor(
       it.view?.postInitInlays()
     }
 
-    val foldingModel = editor.foldingModel
-    foldingModel.runBatchFoldingOperation({
-                                            _cells.forEach { cell ->
-                                              cell.view?.configureFoldings()
-                                            }
-                                          }, true, false)
+    updateCellsFolding(_cells)
 
     cellEventListeners.multicaster.onEditorCellEvents(_cells.map { CellCreated(it) })
     inlaysChanged()
@@ -250,12 +245,26 @@ class NotebookCellInlayManager private constructor(
     keepScrollingPositionWhile(editor) {
       val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
 
-      for (interval in matchingIntervals) {
-        _cells[interval.ordinal].update(force)
+      val matchingCells = matchingIntervals.map {
+        _cells[it.ordinal]
       }
+      matchingCells.forEach {
+        it.update(force)
+      }
+
+      updateCellsFolding(matchingCells)
 
       inlaysChanged()
     }
+  }
+
+  private fun updateCellsFolding(editorCells: List<EditorCell>) {
+    val foldingModel = editor.foldingModel
+    foldingModel.runBatchFoldingOperation({
+                                            editorCells.forEach { cell ->
+                                              cell.view?.configureFoldings()
+                                            }
+                                          }, true, false)
   }
 
   private fun NotebookCellLines.getMatchingCells(logicalLines: IntRange): List<NotebookCellLines.Interval> =
