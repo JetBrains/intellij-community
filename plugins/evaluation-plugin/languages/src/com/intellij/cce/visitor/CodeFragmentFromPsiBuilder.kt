@@ -36,7 +36,7 @@ open class CodeFragmentFromPsiBuilder(private val project: Project, val language
   }
 
   private fun getFileTokens(visitor: EvaluationVisitor, psi: PsiElement): CodeFragment {
-    if (visitor !is PsiElementVisitor) throw IllegalArgumentException("Visitor must implement PsiElementVisitor")
+    if (visitor !is PsiElementVisitor) throw IllegalArgumentException("Visitor ${visitor.javaClass.simpleName} must implement PsiElementVisitor")
     dumbService.runReadActionInSmartMode {
       assert(!dumbService.isDumb) { "Generating actions during indexing." }
       psi.accept(visitor)
