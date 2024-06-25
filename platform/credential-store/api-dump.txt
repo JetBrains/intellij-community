@@ -86,6 +86,10 @@ a:com.intellij.ide.passwordSafe.PasswordSafe
 - a:setRememberPasswordByDefault(Z):V
 f:com.intellij.ide.passwordSafe.PasswordSafe$Companion
 - f:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
+c:com.intellij.ide.passwordSafe.PasswordSafeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
 com.intellij.ide.passwordSafe.PasswordStorage
 - a:get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
 - getPassword(com.intellij.openapi.project.Project,java.lang.Class,java.lang.String):java.lang.String
