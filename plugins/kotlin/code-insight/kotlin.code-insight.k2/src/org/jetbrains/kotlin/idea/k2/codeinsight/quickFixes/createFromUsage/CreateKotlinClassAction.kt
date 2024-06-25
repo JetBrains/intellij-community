@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
@@ -96,16 +95,10 @@ class CreateKotlinClassAction(
             isInsideInnerOrLocalClass(targetParent), null
         )
         declaration.typeParameterList?.delete()
-        //val declarationInPlace:KtClass = targetParent.add(declaration) as KtClass
-
-        //val declarationToEdit = declarationInPlace.primaryConstructor ?: declarationInPlace
-        val pointerToContainer = targetParent.createSmartPointer()
-        val editor = CreateKotlinCallablePsiEditor(
-            file.project, callableInfo,
-        )
+        val editor = CreateKotlinCallablePsiEditor(file.project, callableInfo)
         val anchor = element; //element.getParentOfType<KtClassOrObject>(false) ?: element
         val insertContainer: PsiElement = targetParent
-        editor.showEditor(declaration, anchor, false, null, insertContainer)
+        editor.showEditor(declaration, anchor, false, targetParent, insertContainer)
     }
     private fun isInsideInnerOrLocalClass(containingElement: PsiElement): Boolean {
         val classOrObject = containingElement.getNonStrictParentOfType<KtClassOrObject>()

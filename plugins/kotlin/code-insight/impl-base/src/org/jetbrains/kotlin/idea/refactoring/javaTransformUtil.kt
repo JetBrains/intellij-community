@@ -144,10 +144,12 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind
         else -> throw AssertionError("Unexpected class kind: ${klass.getElementTextWithContext()}")
     }
     val javaClass = (targetClass?.add(javaClassToAdd) ?: javaClassToAdd) as PsiClass
-
-    val template = klass.toLightClass() ?: throw AssertionError("Can't generate light class: ${klass.getElementTextWithContext()}")
+    val template = klass.toLightClass() ?: KotlinAsJavaSupport.getInstance(klass.project).getFakeLightClass(klass)
 
     copyModifierListItems(template.modifierList!!, javaClass.modifierList!!)
+    if (targetClass?.parent is PsiFile) {
+        javaClass.modifierList!!.setModifierProperty(PsiModifier.STATIC, true)
+    }
     if (template.isInterface) {
         javaClass.modifierList!!.setModifierProperty(PsiModifier.ABSTRACT, false)
     }
