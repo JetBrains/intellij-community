@@ -84,7 +84,7 @@ internal class TerminalPromptView(
   private val toolbarSizeInitializedFuture: CompletableFuture<*>
 
   init {
-    val editorTextField = createPromptTextField(session)
+    val editorTextField = createPromptTextField()
     editor = editorTextField.getEditor(true) as EditorImpl
     controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
@@ -154,7 +154,7 @@ internal class TerminalPromptView(
     }
   }
 
-  private fun createPromptTextField(session: BlockTerminalSession): LanguageTextField {
+  private fun createPromptTextField(): LanguageTextField {
     val textField = object : LanguageTextField(TerminalPromptLanguage, project, "", false) {
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method
