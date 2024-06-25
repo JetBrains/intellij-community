@@ -159,7 +159,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private lateinit var mainClass: String
     private lateinit var javaExePath: String
     private lateinit var sourceSetName: String
-    private var javaModuleName: String? = null
 
     fun build(): GradleInitScriptParameters {
       return GradleInitScriptParametersImpl(configuration,
@@ -170,8 +169,8 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                             runAppTaskName,
                                             mainClass,
                                             javaExePath,
-                                            sourceSetName,
-                                            javaModuleName)
+                                            sourceSetName
+      )
     }
 
     fun withWorkingDirectory(workingDirectory: String?): GradleInitScriptParametersBuilder {
@@ -208,11 +207,6 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
       this.sourceSetName = sourceSetName
       return this
     }
-
-    fun withJavaModuleName(javaModuleName: String?): GradleInitScriptParametersBuilder {
-      this.javaModuleName = javaModuleName
-      return this
-    }
   }
 
   private class GradleInitScriptParametersImpl(
@@ -225,6 +219,5 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     override val mainClass: String,
     override val javaExePath: String,
     override val sourceSetName: String,
-    override val javaModuleName: String?,
   ) : GradleInitScriptParameters
 }

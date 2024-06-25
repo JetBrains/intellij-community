@@ -58,7 +58,6 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
     def javaExePath = '${params.javaExePath}'
     def _workingDir = ${if (params.workingDirectory.isNullOrEmpty()) "null\n" else "'${params.workingDirectory}'\n"}
     def sourceSetName = '${params.sourceSetName}'
-    def javaModuleName = ${if (params.javaModuleName == null) "null\n" else "'${params.javaModuleName}'\n"}
 
     allprojects {
         afterEvaluate { project ->
@@ -82,16 +81,6 @@ internal fun generateInitScript(params: GradleInitScriptParameters): String? {
                     ${params.params}
                     if(_workingDir) workingDir = _workingDir
                     standardInput = System.in
-                    if(javaModuleName) {
-                        inputs.property('moduleName', javaModuleName)
-                        doFirst {
-                            jvmArgs += [
-                                    '--module-path', classpath.asPath,
-                                    '--module', javaModuleName + '/' + mainClass
-                            ]
-                            classpath = files()
-                        }
-                    }
                 }
             }
         }

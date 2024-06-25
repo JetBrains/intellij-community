@@ -180,7 +180,6 @@ fun loadApplicationInitScript(
   javaExePath: String,
   sourceSetName: String,
   params: String?,
-  javaModuleName: String?,
   intelliJRtPath: String?,
   workingDirectory: String?,
   useManifestJar: Boolean,
@@ -197,7 +196,6 @@ fun loadApplicationInitScript(
         "MAIN_CLASS_TO_RUN" to mainClassToRun.toGroovyStringLiteral(),
         "JAVA_EXE_PATH" to "mapPath(${javaExePath.toGroovyStringLiteral()})",
         "SOURCE_SET_NAME" to sourceSetName.toGroovyStringLiteral(),
-        "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "null" else javaModuleName.toGroovyStringLiteral(),
         "INTELLIJ_RT_PATH" to if (intelliJRtPath.isNullOrEmpty()) "null" else "mapPath(${intelliJRtPath.toGroovyStringLiteral()})",
         "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
         // params should be kept as is; they will be embedded into the init-script directly

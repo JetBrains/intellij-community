@@ -38,7 +38,6 @@ open class GradleApplicationEnvironmentProvider : GradleBaseApplicationEnvironme
       javaExePath = params.javaExePath,
       sourceSetName = params.sourceSetName,
       params = params.params,
-      javaModuleName = params.javaModuleName,
       intelliJRtPath = intelliJRtPath,
       workingDirectory = params.workingDirectory,
       useManifestJar = useManifestJar,
