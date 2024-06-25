@@ -169,6 +169,7 @@ public final class HintUtil {
     return fillInformationComponent(new SimpleColoredComponent());
   }
 
+  @ApiStatus.Internal
   public static @NotNull SimpleColoredComponent fillInformationComponent(SimpleColoredComponent component) {
     component.setTransparentIconBackground(true);
     return installInformationProperties(component);

@@ -323,6 +323,7 @@ public abstract class AbstractValueHint {
     return myHintHidden;
   }
 
+  @ApiStatus.Internal
   protected SimpleColoredComponent fillSimpleColoredComponent(SimpleColoredComponent component,
                                                               Icon icon,
                                                               final SimpleColoredText text,
@@ -335,6 +336,14 @@ public abstract class AbstractValueHint {
     return component;
   }
 
+  protected JComponent createExpandableHintComponent(@Nullable Icon icon,
+                                                                 final SimpleColoredText text,
+                                                                 final Runnable expand,
+                                                                 @Nullable XFullValueEvaluator evaluator) {
+    return createExpandableHintComponent(icon, text, expand, evaluator, null);
+  }
+
+  @ApiStatus.Internal
   protected SimpleColoredComponent createExpandableHintComponent(@Nullable Icon icon,
                                                                  final SimpleColoredText text,
                                                                  final Runnable expand,
@@ -518,6 +527,7 @@ public abstract class AbstractValueHint {
     myEditorMouseEvent = editorMouseEvent;
   }
 
+  @ApiStatus.Internal
   protected void resizePopup(int widthDelta, int hightDelta) {
     final Window popupWindow = SwingUtilities.windowForComponent(myCurrentPopup.getContent());
     if (popupWindow == null) return;

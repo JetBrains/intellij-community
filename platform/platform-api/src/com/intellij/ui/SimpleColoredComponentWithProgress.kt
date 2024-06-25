@@ -1,10 +1,12 @@
 package com.intellij.ui
 
 import com.intellij.util.ui.AsyncProcessIcon
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class SimpleColoredComponentWithProgress : SimpleColoredComponent() {
   private var progressIcon: AsyncProcessIcon = RightCentered("loading").also {
     isVisible = true

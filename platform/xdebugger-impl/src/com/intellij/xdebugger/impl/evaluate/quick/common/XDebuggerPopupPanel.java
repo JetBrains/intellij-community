@@ -71,7 +71,7 @@ public abstract class XDebuggerPopupPanel {
     }, disposable);
   }
 
-  public static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
+  protected static void updatePopupBounds(@NotNull Window popupWindow, int newWidth, int newHeight) {
     final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(popupWindow);
 
     // shift the x coordinate if there is not enough space on the right
