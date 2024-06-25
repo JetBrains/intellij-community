@@ -131,7 +131,7 @@ fun getRepositoryForVersion(version: IdeKotlinVersion): RepositoryDescription? =
 
 fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
     return allConfigurators().any {
-        it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED
+        it.isApplicable(moduleSourceRootGroup.baseModule) && it.getStatus(moduleSourceRootGroup) == ConfigureKotlinStatus.CONFIGURED
     }
 }
 
