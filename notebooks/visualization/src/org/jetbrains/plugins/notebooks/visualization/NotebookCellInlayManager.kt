@@ -322,6 +322,22 @@ class NotebookCellInlayManager private constructor(
     }
     cellEventListeners.multicaster.onEditorCellEvents(events)
     inlaysChanged()
+
+    checkInlayOffsets()
+  }
+
+  private fun checkInlayOffsets() {
+    val inlaysOffsets = buildSet {
+      for (cell in _cells) {
+        add(editor.document.getLineStartOffset(cell.interval.lines.first))
+        add(editor.document.getLineEndOffset(cell.interval.lines.last))
+      }
+    }
+    val wronglyPlacedInlays = editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
+      .filter { it.offset !in inlaysOffsets }
+    if (wronglyPlacedInlays.isNotEmpty()) {
+      error("Expected offsets: $inlaysOffsets. Wrongly placed inlays: $wronglyPlacedInlays")
+    }
   }
 
   private fun fixInlaysOffsetsAfterNewCellInsert(change: NotebookIntervalPointersEvent.OnInserted) {
