@@ -13,27 +13,34 @@ import java.util.logging.Logger
  * Provides a current JBR SDK
  */
 object JdkDownloader {
-  fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, infoLog: (String) -> Unit): Path {
+  fun blockingGetJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     return runBlocking(Dispatchers.IO) {
-      getJdkHome(communityRoot, jdkBuildNumber, infoLog)
+      getJdkHome(communityRoot, jdkBuildNumber, variation, infoLog)
     }
   }
 
-  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, infoLog: (String) -> Unit): Path {
+  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null, infoLog: (String) -> Unit): Path {
     val os = OS.current
     val arch = Arch.current
-    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber)
+    return getJdkHome(communityRoot = communityRoot, os = os, arch = arch, infoLog = infoLog, jdkBuildNumber = jdkBuildNumber, variation = variation)
   }
 
   @JvmStatic
-  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null): Path {
-    return blockingGetJdkHome(communityRoot, jdkBuildNumber) {
+  fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, jdkBuildNumber: String? = null, variation: String? = null): Path {
+    return blockingGetJdkHome(communityRoot, jdkBuildNumber, variation) {
       Logger.getLogger(JdkDownloader::class.java.name).info(it)
     }
   }
 
-  suspend fun getJdkHome(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, jdkBuildNumber: String? = null, infoLog: (String) -> Unit): Path {
-    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, jdkBuildNumber = jdkBuildNumber)
+  suspend fun getJdkHome(
+    communityRoot: BuildDependenciesCommunityRoot,
+    os: OS,
+    arch: Arch,
+    jdkBuildNumber: String? = null,
+    variation: String? = null,
+    infoLog: (String) -> Unit,
+  ): Path {
+    val jdkUrl = getUrl(communityRoot = communityRoot, os = os, arch = arch, jdkBuildNumber = jdkBuildNumber, variation = variation)
     val jdkArchive = downloadFileToCacheLocation(url = jdkUrl.toString(), communityRoot = communityRoot)
     val jdkExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot = communityRoot,
                                                                               archiveFile = jdkArchive,
@@ -54,7 +61,7 @@ object JdkDownloader {
     throw IllegalStateException("No java executables were found under $jdkHome")
   }
 
-  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, jdkBuildNumber: String? = null): URI {
+  private fun getUrl(communityRoot: BuildDependenciesCommunityRoot, os: OS, arch: Arch, jdkBuildNumber: String? = null, variation: String? = null): URI {
     val ext = ".tar.gz"
     val osString: String = when (os) {
       OS.WINDOWS -> "windows"
@@ -66,6 +73,8 @@ object JdkDownloader {
       Arch.ARM64 -> "aarch64"
     }
 
+    val variationSuffix = if (variation == null) "" else "_$variation"
+
     val jdkBuild = if (jdkBuildNumber == null) {
       val dependencyProperties = BuildDependenciesDownloader.getDependencyProperties(communityRoot)
       dependencyProperties.property("jdkBuild")
@@ -76,7 +85,8 @@ object JdkDownloader {
     check(jdkBuildSplit.size == 2) { "Malformed jdkBuild property: $jdkBuild" }
     val version = jdkBuildSplit[0]
     val build = "b" + jdkBuildSplit[1]
-    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk-" +
+    return URI.create("https://cache-redirector.jetbrains.com/intellij-jbr/jbrsdk" +
+                      variationSuffix + "-" +
                       version + "-" + osString + "-" +
                       archString + "-" + build + ext)
   }
