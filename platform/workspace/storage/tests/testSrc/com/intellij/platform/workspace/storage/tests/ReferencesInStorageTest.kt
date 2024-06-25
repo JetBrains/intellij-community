@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.assertConsistency
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
@@ -182,5 +183,40 @@ class ReferencesInStorageTest {
     builder.assertConsistency()
     assertEquals(emptyList(), builder.entities(XChildEntity::class.java).toList())
     assertEquals(emptyList(), builder.entities(XParentEntity::class.java).toList())
+  }
+
+  @Test
+  fun `removing a parent with a child that has optional parent`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity XParentEntity("Parent", MySource) {
+      this.optionalChildren = listOf(
+        XChildWithOptionalParentEntity("child", MySource),
+      )
+    }
+
+    target.removeEntity(parent)
+
+    // Child entity is cascade removed
+    val optionalChildren = target.entities<XChildWithOptionalParentEntity>().toList()
+    assertEquals(0, optionalChildren.size)
+  }
+
+  @Test
+  fun `removing a parent with a child that has optional parent but preserve the child`() {
+    val target = createEmptyBuilder()
+    val parent = target addEntity XParentEntity("Parent", MySource) {
+      this.optionalChildren = listOf(
+        XChildWithOptionalParentEntity("child", MySource),
+      )
+    }
+
+    target.modifyXChildWithOptionalParentEntity(parent.optionalChildren.single()) {
+      this.optionalParent = null
+    }
+    target.removeEntity(parent)
+
+    // Child entity is cascade removed
+    val optionalChildren = target.entities<XChildWithOptionalParentEntity>().toList()
+    assertEquals(1, optionalChildren.size)
   }
 }
