@@ -8,7 +8,6 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.intellij.build.BuildOptions.Companion.BUILD_STEPS_TO_SKIP_PROPERTY
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
@@ -317,11 +316,6 @@ data class BuildOptions(
      */
     const val IJENT_EXECUTABLE_DOWNLOADING: String = "ijent.executable.downloading"
 
-    val IJENT_WSL_FILE_SYSTEM_VMOPTIONS: Collection<String> = listOf(
-      "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
-      "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
-      "-Didea.io.use.nio2=true",
-    )
     private fun parseBooleanValue(text: String): Boolean = when {
       text.toBoolean() -> true
       text.equals(false.toString(), ignoreCase = true) -> false
