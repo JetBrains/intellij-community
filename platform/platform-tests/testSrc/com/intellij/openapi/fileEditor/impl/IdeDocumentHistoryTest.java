@@ -182,6 +182,37 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     assertFalse(myHistory.isForwardAvailable());
   }
 
+  public void testRemoveOptionallyIncludedFiles() {
+    var file = new MyOptionallyIncludedFile();
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertTrue(myHistory.isBackAvailable());
+
+    file.myIsIncludedInDocumentHistory = false;
+    myHistory.removeInvalidFilesFromStacks();
+
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testOptionallyExcludedFileIsNotPushed() {
+    var file = new MyOptionallyIncludedFile();
+    file.myIsIncludedInDocumentHistory = false;
+    mySelectedFile = file;
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
+
+  public void testExcludedFileIsNotPushed() {
+    mySelectedFile = new MyAlwaysExcludedFile();
+
+    pushTwoStates();
+    assertFalse(myHistory.isBackAvailable());
+    assertFalse(myHistory.isForwardAvailable());
+  }
 
   private void pushTwoStates() {
     myState1 = new MyState(false, "state1");
@@ -230,6 +261,18 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
 
     public String toString() {
       return myName;
+    }
+  }
+
+  private static final class MyAlwaysExcludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.SkipFromDocumentHistory {
+  }
+
+  private static final class MyOptionallyIncludedFile extends Mock.MyVirtualFile implements IdeDocumentHistoryImpl.OptionallyIncluded {
+    boolean myIsIncludedInDocumentHistory = true;
+
+    @Override
+    public boolean isIncludedInDocumentHistory() {
+      return myIsIncludedInDocumentHistory;
     }
   }
 }
