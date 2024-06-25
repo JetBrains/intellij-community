@@ -4,11 +4,10 @@ package org.jetbrains.plugins.gitlab.notification
 import com.intellij.collaboration.auth.findAccountOrNull
 import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.branch.GitBranchUtil
+import git4idea.GitRemoteBranch
 import git4idea.push.*
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
@@ -19,6 +18,7 @@ import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabProjectConnectionManager
+import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.request.findProject
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -33,9 +33,6 @@ import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 private val LOG = logger<GitLabPushNotificationCustomizer>()
 
 internal class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
-  private val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
-  private val apiManager: GitLabApiManager = service<GitLabApiManager>()
-
   override suspend fun getActions(
     repository: GitRepository,
     pushResult: GitPushRepoResult,
@@ -65,53 +62,64 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
       )
     } ?: return emptyList()
 
+    val canCreate = canCreateReview(projectMapping, account, remoteBranch)
+    if (!canCreate) return emptyList()
+
+    return listOf(GitLabMergeRequestOpenCreateTabNotificationAction(project, projectMapping, account))
+  }
+
+  private suspend fun canCreateReview(projectMapping: GitLabProjectMapping, account: GitLabAccount, branch: GitRemoteBranch): Boolean {
+    val accountManager = serviceAsync<GitLabAccountManager>()
+    val token = accountManager.findCredentials(account) ?: return false
+    val api = serviceAsync<GitLabApiManager>().getClient(account.server, token)
+
+    val repository = projectMapping.repository
+    val repositoryInfo = getRepositoryInfo(api, repository) ?: run {
+      LOG.warn("Repository not found $repository")
+      return false
+    }
+
+    val remoteBranchName = branch.nameForRemoteOperations
+    if (repositoryInfo.rootRef == remoteBranchName) {
+      return false
+    }
+
+    if (findExistingMergeRequests(api, repository, remoteBranchName).isNotEmpty()) {
+      return false
+    }
+
+    return true
+  }
+
+  private suspend fun getRepositoryInfo(api: GitLabApi, project: GitLabProjectCoordinates) =
     try {
-      val exists = doesReviewExist(pushResult, projectMapping, account)
-      if (exists) return emptyList()
+      api.graphQL.findProject(project).body()?.repository
     }
     catch (ce: CancellationException) {
       throw ce
     }
     catch (e: Exception) {
-      LOG.warn("Failed to lookup an existing merge request for $pushResult", e)
-      return emptyList()
+      LOG.warn("Failed to lookup a repository $project", e)
+      null
     }
 
-    return listOf(GitLabMergeRequestOpenCreateTabNotificationAction(project, projectMapping, account))
-  }
-
-  private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GitLabProjectMapping, account: GitLabAccount): Boolean {
-    val token = accountManager.findCredentials(account) ?: return false
-    val api = apiManager.getClient(account.server, token)
-    val mrBranch = getReviewBranch(api, pushResult, projectMapping) ?: return false
-    val mergeRequest = getMergeRequest(api, projectMapping, mrBranch)
-
-    return mergeRequest != null
-  }
-
-  private suspend fun getReviewBranch(
+  private suspend fun findExistingMergeRequests(
     api: GitLabApi,
-    pushResult: GitPushRepoResult,
-    projectMapping: GitLabProjectMapping
-  ): String? {
-    val defaultBranch = withContext(Dispatchers.IO) {
-      api.graphQL.findProject(projectMapping.repository).body()?.repository?.rootRef
-    }
-    val targetBranch = GitBranchUtil.stripRefsPrefix(pushResult.targetBranch)
-    if (defaultBranch != null && targetBranch.endsWith(defaultBranch)) return null
-
-    return targetBranch.removePrefix("${projectMapping.gitRemote.name}/")
-  }
-
-  private suspend fun getMergeRequest(
-    api: GitLabApi,
-    projectMapping: GitLabProjectMapping,
-    mrBranch: String
-  ): GitLabMergeRequestByBranchDTO? {
-    return withContext(Dispatchers.IO) {
-      val targetProjectPath = projectMapping.repository.projectPath.fullPath()
-      val mrs = api.graphQL.findMergeRequestsByBranch(projectMapping.repository, GitLabMergeRequestState.OPENED, mrBranch).body()!!.nodes
-      mrs.find { it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath }
+    project: GitLabProjectCoordinates,
+    remoteBranchName: String,
+  ): List<GitLabMergeRequestByBranchDTO> =
+    withContext(Dispatchers.IO) {
+      val targetProjectPath = project.projectPath.fullPath()
+      try {
+        val mrs = api.graphQL.findMergeRequestsByBranch(project, GitLabMergeRequestState.OPENED, remoteBranchName).body()!!.nodes
+        mrs.filter { it.targetProject.fullPath == targetProjectPath && it.sourceProject?.fullPath == targetProjectPath }
+      }
+      catch (ce: CancellationException) {
+        throw ce
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to lookup an existing merge request for $remoteBranchName in $project", e)
+        emptyList()
     }
   }
 }
