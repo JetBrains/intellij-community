@@ -64,6 +64,18 @@ fun <T> waitFor(
   }
 }
 
+fun <T> retryWithFallback(
+  fallbackAction: () -> T,
+  mainAction: () -> T,
+): T {
+  return try {
+    mainAction()
+  } catch (_: Exception) {
+    fallbackAction()
+    mainAction()
+  }
+}
+
 fun <T> withRetries(times: Int, onError: () -> Unit = {}, f: () -> T): T {
   require(times > 0)
   var lastException: Exception? = null
