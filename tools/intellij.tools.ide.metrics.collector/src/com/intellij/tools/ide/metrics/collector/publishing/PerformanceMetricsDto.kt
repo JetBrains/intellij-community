@@ -32,7 +32,6 @@ data class IJPerfMetricsDto<T: Number>(
   val productCode: String,
   val methodName: String,
   val metrics: List<ApplicationMetricDto<T>>,
-  val systemMetrics: Map<String, List<MetricGroup>>,
   val tcInfo: CIServerBuildInfo
 ) {
   companion object {
@@ -75,7 +74,6 @@ data class IJPerfMetricsDto<T: Number>(
       productCode = buildNumber.productCode,
       metrics = metrics,
       methodName = methodName,
-      systemMetrics = mapOf(),
       tcInfo = buildInfo,
       projectDescription = projectDescription
     )
