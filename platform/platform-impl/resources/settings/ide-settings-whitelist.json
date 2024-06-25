@@ -187,6 +187,7 @@
     "Pythonid:app:AppPyDocumentationSettings.analyzeDoctest",
     "Pythonid:app:AppPyDocumentationSettings.renderExternalDocumentation",
     "Pythonid:app:AppReSTService.*",
+    "Pythonid:app:Jinja2CodeInsightSettings.*",
     "Pythonid:app:PyCodeInsightSettings.insert_self_for_methods",
     "Pythonid:app:PyCodeInsightSettings.insert_type_docstub",
     "Pythonid:app:PyCodeInsightSettings.parenthesise_on_enter",
