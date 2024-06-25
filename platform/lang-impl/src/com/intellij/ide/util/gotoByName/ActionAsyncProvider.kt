@@ -232,11 +232,18 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     return channelFlow {
       val collector = Consumer<Any> { item ->
         launch {
-          val item = (item as? AnAction)?.let { wrapAnAction(action = it, presentation = presentationProvider(it)) } ?: item
-          val matchedValue = matchItem(item = item, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT)
+          val obj = (item as? AnAction)?.let { wrapAnAction(action = it, presentation = presentationProvider(it)) } ?: item
+          val matchedValue = matchItem(item = obj, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT)
           send(matchedValue)
         }
       }
+
+      val optionSender: (OptionDescription) -> Unit = {
+        launch {
+          send(matchItem(item = it, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT))
+        }
+      }
+
       for (provider in SearchTopHitProvider.EP_NAME.extensionList) {
         @Suppress("DEPRECATION")
         if (provider is com.intellij.ide.ui.OptionsTopHitProvider.CoveredByToggleActions) {
@@ -248,7 +255,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
           provider.consumeTopHits(pattern = prefix + pattern, collector = collector, project = project)
         }
         else if (project != null && provider is ProjectLevelProvidersAdapter) {
-          provider.consumeAllTopHits(pattern = pattern, collector = collector, project = project)
+          provider.consumeAllTopHits(pattern = pattern, collector = optionSender, project = project)
         }
         provider.consumeTopHits(pattern, collector, project)
       }
