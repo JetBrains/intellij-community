@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.jetbrains.performancePlugin.commands.AwaitCompleteProjectConfigurationCommand;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
@@ -59,7 +60,11 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
   protected Promise<Object> _execute(@NotNull PlaybackContext context) {
     ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     runWhenGradleImportAndIndexingFinished(context, actionCallback);
-    return Promises.toPromise(actionCallback);
+    return Promises.toPromise(actionCallback)
+      .then(data -> {
+      AwaitCompleteProjectConfigurationCommand.Companion.awaitCompleteProjectConfiguration(context.getProject());
+      return data;
+    });
   }
 
   private void runWhenGradleImportAndIndexingFinished(@NotNull PlaybackContext context, @NotNull ActionCallback callback) {
@@ -148,7 +153,10 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
               if (!projectsPaths.contains(projectPath)) return;
               connection.disconnect();
               if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
-                ApplicationManager.getApplication().invokeLater(() -> promise.setResult(null));
+
+                ApplicationManager.getApplication().invokeLater(() -> {
+                  promise.setResult(null);
+                });
               }
             }
           });
