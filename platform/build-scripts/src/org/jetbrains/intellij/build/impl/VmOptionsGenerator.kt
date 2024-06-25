@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.OsFamily
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
@@ -45,20 +44,8 @@ private const val CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY = "intellij.plugins
 
 @Suppress("IdentifierGrammar")
 object VmOptionsGenerator {
-  fun computeVmOptions(context: BuildContext, osFamily: OsFamily): List<String> {
+  fun computeVmOptions(context: BuildContext): List<String> {
     var additionalVmOptions = context.productProperties.additionalVmOptions
-
-    val osSpecificFmOptions = when (osFamily) {
-      OsFamily.WINDOWS -> context.windowsDistributionCustomizer?.additionalWindowsVmOptions
-      OsFamily.MACOS, OsFamily.LINUX -> {
-        // Please implement when required.
-        null
-      }
-    }
-    if (osSpecificFmOptions != null) {
-      additionalVmOptions = additionalVmOptions.addAll(osSpecificFmOptions)
-    }
-
     val customPluginRepositoryUrl = computeCustomPluginRepositoryUrl(context)
     if (customPluginRepositoryUrl != null) {
       additionalVmOptions = additionalVmOptions.add("-D$CUSTOM_BUILT_IN_PLUGIN_REPOSITORY_PROPERTY=$customPluginRepositoryUrl")

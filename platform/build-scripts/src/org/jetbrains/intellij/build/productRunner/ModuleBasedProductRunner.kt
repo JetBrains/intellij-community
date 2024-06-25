@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.productRunner
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.VmProperties
 import org.jetbrains.intellij.build.impl.VmOptionsGenerator
 import kotlin.io.path.pathString
@@ -26,17 +24,12 @@ internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: 
 
     val loaderModule = context.originalModuleRepository.repository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader"))
     val ideClasspath = loaderModule.moduleClasspath.map { it.pathString }
-    val osFamily = when {
-      SystemInfoRt.isWindows -> OsFamily.WINDOWS
-      SystemInfoRt.isMac -> OsFamily.MACOS
-      else -> OsFamily.LINUX
-    }
     runApplicationStarter(
       context = context,
       classpath = ideClasspath,
       args = args,
       vmProperties = systemProperties + additionalVmProperties,
-      vmOptions = VmOptionsGenerator.computeVmOptions(context, osFamily) +
+      vmOptions = VmOptionsGenerator.computeVmOptions(context) +
                   //we need to unset 'jna.nounpack' (see IJ-CR-125211), otherwise the process will fail to load JNA on macOS (IJPL-150094)
                   context.productProperties.additionalIdeJvmArguments.filterNot { it == "-Djna.nounpack=true" } +
                   context.productProperties.getAdditionalContextDependentIdeJvmArguments(context),
