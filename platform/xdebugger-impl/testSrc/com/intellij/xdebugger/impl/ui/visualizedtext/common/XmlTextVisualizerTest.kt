@@ -1,0 +1,32 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.xdebugger.impl.ui.visualizedtext.common
+
+class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer()) {
+
+  fun testSomeValidXml() {
+    checkPositive(
+      """<note><to>Tove</to><from>Jani</from><heading type="reminder">Reminder</heading><body priority="high">Don't forget our meeting tomorrow!</body></note>""",
+      """
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <note>
+            <to>Tove</to>
+            <from>Jani</from>
+            <heading type="reminder">Reminder</heading>
+            <body priority="high">Don't forget our meeting tomorrow!</body>
+        </note>
+
+      """.trimIndent())
+  }
+
+  fun testNotSoValidXml() {
+    checkNegative("<p>Hello, <b>world</b>!")
+  }
+
+  fun testNotXml() {
+    checkNegative("Hello, world!")
+  }
+
+  fun testNotStandaloneXml() {
+    checkNegative("Hello, <b>world</b>!")
+  }
+}

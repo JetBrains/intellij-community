@@ -31,6 +31,10 @@ internal class UrlEncodedTextVisualizer : TextValueVisualizer {
   }
 
   private fun tryParse(value: String): String? {
+    if (!value.contains('%')) {
+      // Not-URL or URL with only spaces, not so interesting but very annoying (i.e., no need to decode "123+456").
+      return null
+    }
     val decoded = try {
       URLDecoder.decode(value, Charsets.UTF_8)
     } catch (_: IllegalArgumentException) {
