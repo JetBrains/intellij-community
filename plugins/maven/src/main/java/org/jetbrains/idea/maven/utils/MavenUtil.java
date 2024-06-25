@@ -136,7 +136,10 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
-  protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
+  @Deprecated
+  private static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
+  public static final String MAVEN_REPO_LOCAL = "maven.repo.local";
+
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
@@ -945,11 +948,21 @@ public class MavenUtil {
 
   @NotNull
   public static File resolveDefaultLocalRepository() {
+    String mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
+
+    if (mavenRepoLocal != null) {
+      MavenLog.LOG.info("using " + MAVEN_REPO_LOCAL + "=" + mavenRepoLocal + " as maven home");
+      return new File(mavenRepoLocal);
+    }
+
     String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
     if (forcedM2Home != null) {
+      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead");
       return new File(forcedM2Home);
     }
+
     File result = doResolveLocalRepository(resolveUserSettingsFile(null), null);
+
     if (result == null) {
       result = new File(resolveM2Dir(), REPOSITORY_DIR);
     }
@@ -968,10 +981,17 @@ public class MavenUtil {
                                             @Nullable String overriddenUserSettingsFile) {
     String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
     if (forcedM2Home != null) {
+      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead");
       return new File(forcedM2Home);
     }
     File result = null;
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
+
+    String localRepoHome = System.getProperty(MAVEN_REPO_LOCAL);
+    if (localRepoHome != null) {
+      MavenLog.LOG.debug("Using " + MAVEN_REPO_LOCAL + "=" + localRepoHome);
+      return new File(localRepoHome);
+    }
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
                                         resolveGlobalSettingsFile(mavenHomeType));
