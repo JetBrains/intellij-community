@@ -537,6 +537,16 @@
     <declarationSearcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.jvm.KotlinDeclarationSearcher"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <intentionAction>
+      <!--TODO move to intentions-shared after NestedLambdaShadowedImplicitParameterInspection is migrated -->
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ReplaceItWithExplicitFunctionLiteralParamIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+  </extensions>
+
   <actions>
     <action id="Kotlin.NewFile" class="org.jetbrains.kotlin.idea.actions.NewKotlinFileAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.FILE">
