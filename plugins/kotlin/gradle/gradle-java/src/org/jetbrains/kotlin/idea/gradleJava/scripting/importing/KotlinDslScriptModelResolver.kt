@@ -8,9 +8,12 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptModel
 import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
+import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
+import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptDefinitionsSource
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptAdditionalTask
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
@@ -67,7 +70,10 @@ class KotlinDslScriptSyncContributor : GradleSyncContributor {
             }
         }
 
-        if (sync != null) {
+        if (sync != null && KotlinPluginModeProvider.isK2Mode()) {
+            val definitions = loadGradleDefinitions(sync.workingDir, sync.gradleHome, sync.javaHome, project)
+            GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
+
             val scripts = sync.models.mapNotNullTo(mutableSetOf()) {
                 val path = Path.of(it.file)
                 VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
