@@ -22598,10 +22598,6 @@ c:com.intellij.remote.RemoteMappingsManager$Mappings
 c:com.intellij.remote.RemoteMappingsManager$State
 - <init>():V
 - getList():java.util.List
-com.intellij.remote.RemoteProcessControl
-- com.intellij.remote.ProcessControlWithMappings
-- a:getLocalTunnel(I):com.google.common.net.HostAndPort
-- a:getRemoteSocket(I):com.intellij.openapi.util.Pair
 f:com.intellij.remote.RemoteProcessUtil
 - <init>():V
 - s:buildRemoteCommand(com.intellij.util.AbstractPathMapper,java.util.Collection):java.lang.String[]
