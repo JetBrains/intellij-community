@@ -981,7 +981,7 @@ public class PyStubsTest extends PyTestCase {
 
     assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
     assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
-    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertNull(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
 
     assertNotParsed(file);
   }
@@ -991,7 +991,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass cls = file.findTopLevelClass("Foo");
 
-    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertNull(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
 
@@ -1111,7 +1111,7 @@ public class PyStubsTest extends PyTestCase {
 
     assertTrue(file.findTopLevelClass("Foo1").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
     assertFalse(file.findTopLevelClass("Foo2").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
-    assertFalse(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
+    assertNull(file.findTopLevelClass("Foo3").getStub().getCustomStub(PyDataclassStub.class).kwOnly());
 
     assertNotParsed(file);
   }
@@ -1121,7 +1121,7 @@ public class PyStubsTest extends PyTestCase {
     final PyFile file = getTestFile();
     final PyClass cls = file.findTopLevelClass("Foo");
 
-    assertFalse(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
+    assertNull(cls.findClassAttribute("bar1", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertTrue(cls.findClassAttribute("bar2", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
     assertFalse(cls.findClassAttribute("bar3", false, null).getStub().getCustomStub(PyDataclassFieldStub.class).kwOnly());
 
@@ -1159,7 +1159,81 @@ public class PyStubsTest extends PyTestCase {
     assertNotNull(typeAliasStatement);
     doTestTypeParameterStub(typeAliasStatement, file);
   }
+  
+  // PY-54560
+  public void testDataclassTransformDecoratorStub() {
+    PyFile file = getTestFile();
+    PyFunction decoratedFunction = file.findTopLevelFunction("func");
+    assertNotNull(decoratedFunction);
+    PyDecorator decorator = assertOneElement(decoratedFunction.getDecoratorList().getDecorators());
+    PyDataclassTransformDecoratorStub customStub = decorator.getStub().getCustomStub(PyDataclassTransformDecoratorStub.class);
+    assertNotNull(customStub);
+    assertFalse(customStub.getEqDefault());
+    assertTrue(customStub.getOrderDefault());
+    assertFalse(customStub.getKwOnlyDefault());
+    assertFalse(customStub.getFrozenDefault());
+    assertEquals(
+      List.of(
+        QualifiedName.fromDottedString("field1"),
+        QualifiedName.fromDottedString("mod2.field2"),
+        QualifiedName.fromDottedString("field3")
+      ),
+      customStub.getFieldSpecifiers());
+    assertNotParsed(file);
+  }
 
+  // PY-54560
+  public void testDataclassFieldSpecifierStub() {
+    PyFile file = getTestFile();
+    @Nullable PyClass dataclass = file.findTopLevelClass("Customer");
+    assertNotNull(dataclass);
+    @Nullable PyTargetExpression attribute = dataclass.findClassAttribute("attr", false, TypeEvalContext.codeAnalysis(myFixture.getProject(), myFixture.getFile()));
+    assertNotNull(attribute);
+    PyDataclassFieldStub dataclassFieldStub = attribute.getStub().getCustomStub(PyDataclassFieldStub.class);
+    assertNotNull(dataclassFieldStub);
+    assertFalse(dataclassFieldStub.hasDefault());
+    assertTrue(dataclassFieldStub.hasDefaultFactory());
+    assertFalse(dataclassFieldStub.initValue());
+    assertFalse(dataclassFieldStub.kwOnly());
+    assertEquals(dataclassFieldStub.getAlias(), "alias");
+    assertNotParsed(file);
+  }
+
+  // PY-54560
+  public void testDataclassStubForClassDecoratedWithDataclassTransformFactoryFunction() {
+    PyFile file = getTestFile();
+    PyClass modelClass = file.findTopLevelClass("CustomerModel");
+    assertNotNull(modelClass);
+    PyDataclassStub customStub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(customStub);
+    assertEquals("DATACLASS_TRANSFORM", customStub.getType());
+    assertNull(customStub.initValue());
+    assertNull(customStub.reprValue());
+    assertNull(customStub.eqValue());
+    assertNull(customStub.orderValue());
+    assertNull(customStub.unsafeHashValue());
+    assertTrue(customStub.frozenValue());
+    assertFalse(customStub.kwOnly());
+    assertNotParsed(file);
+  }
+
+  // PY-54560
+  public void testDataclassStubForClassExtendingDataclassTransformFactoryBase() {
+    PyFile file = getTestFile();
+    PyClass modelClass = file.findTopLevelClass("CustomerModel");
+    assertNotNull(modelClass);
+    PyDataclassStub customStub = modelClass.getStub().getCustomStub(PyDataclassStub.class);
+    assertNotNull(customStub);
+    assertEquals("DATACLASS_TRANSFORM", customStub.getType());
+    assertFalse(customStub.initValue());
+    assertNull(customStub.reprValue());
+    assertFalse(customStub.eqValue());
+    assertFalse(customStub.orderValue());
+    assertNull(customStub.unsafeHashValue());
+    assertTrue(customStub.frozenValue());
+    assertNull(customStub.kwOnly());
+    assertNotParsed(file);
+  }
 
   private void doTestTypingTypedDictArguments() {
     doTestTypedDict("name", Arrays.asList("x", "y"), Arrays.asList("str", "int"), QualifiedName.fromComponents("TypedDict"));

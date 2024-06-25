@@ -342,4 +342,16 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testFunctoolsWrapsMultiFile() {
     doMultiFileTest();
   }
+
+  public void testInitByDataclassTransformOnDecorator() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnBaseClass() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnMetaClass() {
+    doMultiFileTest();
+  }
 }

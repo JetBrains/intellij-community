@@ -5518,6 +5518,192 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  public void testDataclassTransformConstructorSignature() {
+    doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
+      from typing import dataclass_transform
+      
+      @dataclass_transform()
+      def deco(cls):
+          ...
+      
+      @deco
+      class MyClass:
+           id: int
+           name: str
+      
+      MyCl<caret>ass()
+      """);
+  }
+
+  public void testDataclassTransformConstructorSignatureDecoratedBaseClassAttributeExcluded() {
+    doTestExpressionUnderCaret("(id: int, name: str) -> SubSub", """
+      from typing import dataclass_transform
+      
+      @dataclass_transform()
+      class Base:
+          excluded: int
+      
+      class Sub(Base):
+          id: int
+      
+      class SubSub(Sub):
+           name: str
+      
+      Sub<caret>Sub()
+      """);
+  }
+
+  public void testDataclassTransformConstructorSignatureMetaClassBaseClassAttributeNotExcluded() {
+    doTestExpressionUnderCaret("(included: int, id: int, name: str) -> SubSub", """
+      from typing import dataclass_transform
+     
+      @dataclass_transform()
+      class Meta(type):
+          pass
+      
+      class Base(metaclass=Meta):
+          included: int
+      
+      class Sub(Base):
+          id: int
+      
+      class SubSub(Sub):
+          name: str
+
+      Sub<caret>Sub()
+      """);
+  }
+
+  public void testDataclassTransformOverloads() {
+    doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
+      from typing import dataclass_transform, overload
+      
+      @overload
+      def deco(name: str):
+          ...
+      
+      
+      @dataclass_transform()
+      @overload
+      def deco(cls: type):
+          ...
+      
+      @overload
+      def deco():
+          ...
+      
+      def deco(*args, **kwargs):
+          ...
+      
+      @deco
+      class MyClass:
+           id: int
+           name: str
+      
+      MyCl<caret>ass()
+      """);
+  }
+
+  public void testDataclassTransformOwnKwOnlyOmittedAndTakenFromKwOnlyDefault() {
+    doTestExpressionUnderCaret("(Any, id: int, name: str) -> MyClass", """
+      from typing import dataclass_transform, Callable
+      
+      
+      @dataclass_transform(kw_only_default=True)
+      def deco(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      
+      @deco(frozen=True)
+      class MyClass:
+          id: int
+          name: str
+      
+      
+      My<caret>Class()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnly() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass(kw_only=True)
+      class Order:
+          id: str = my_field()
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnlyDefault() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(kw_only_default=True, field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass()
+      class Order:
+          id: str = my_field()
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnly() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass(kw_only=True)
+      class Order:
+          id: str = my_field(kw_only=False)
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnlyDefault() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(kw_only_default=True, field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass()
+      class Order:
+          id: str = my_field(kw_only=False)
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -5543,6 +5729,15 @@ public class PyTypingTest extends PyTestCase {
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
+  }
+
+  private void doTestExpressionUnderCaret(@NotNull String expectedType, @NotNull String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PyExpression.class);
+    TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }

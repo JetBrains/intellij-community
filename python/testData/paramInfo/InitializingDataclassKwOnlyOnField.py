@@ -30,3 +30,10 @@ class Derived3(Base3):
 
 Derived3(<arg3>)
 Base3(<arg4>)
+
+@dataclass(kw_only=True)
+class Base4:
+    a: int = field(kw_only=False)
+    b: int
+
+Base4(<arg5>)
