@@ -85,11 +85,6 @@ open class AbstractBundle {
         return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
       }
     }
-
-    @ApiStatus.Internal
-    fun resolveBundle(loader: ClassLoader, locale: @NonNls Locale, pathToBundle: @NonNls String): ResourceBundle {
-      return ResourceBundle.getBundle(pathToBundle, locale, loader, IntelliJResourceControl)
-    }
   }
 
   @Contract(pure = true)
@@ -187,6 +182,12 @@ open class AbstractBundle {
   }
 }
 
+@Suppress("FunctionName")
+@ApiStatus.Internal
+fun _doResolveBundle(loader: ClassLoader, locale: @NonNls Locale, pathToBundle: @NonNls String): ResourceBundle {
+  return ResourceBundle.getBundle(pathToBundle, locale, loader, IntelliJResourceControl)
+}
+
 // UTF-8 control for Java <= 1.8.
 // Before java9 ISO-8859-1 was used, in java 9 and above UTF-8.
 // See https://docs.oracle.com/javase/9/docs/api/java/util/PropertyResourceBundle.html and
@@ -201,7 +202,7 @@ private object IntelliJResourceControl : ResourceBundle.Control() {
     val resourceName = (if (bundleName.contains("://")) null else toResourceName(bundleName, "properties")) ?: return null
     val stream = loader.getResourceAsStream(resourceName) ?: return null
     return stream.use {
-      IntelliJResourceBundle(InputStreamReader(it, StandardCharsets.UTF_8))
+      IntelliJResourceBundle(reader = InputStreamReader(it, StandardCharsets.UTF_8))
     }
   }
 }

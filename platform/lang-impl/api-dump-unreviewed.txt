@@ -17847,11 +17847,6 @@ c:com.intellij.ide.todo.nodes.TodoTreeHelper
 - getProject():com.intellij.openapi.project.Project
 - getSelectedElement(java.lang.Object):com.intellij.psi.PsiElement
 - skipDirectory(com.intellij.psi.PsiDirectory):Z
-f:com.intellij.ide.ui.search.TraverseUIStarterKt
-- sf:buildSearchableOptions(java.nio.file.Path,Z,kotlin.coroutines.Continuation):java.lang.Object
-- bs:buildSearchableOptions$default(java.nio.file.Path,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
-- sf:doBuildSearchableOptions(java.util.Map,java.nio.file.Path,Z,kotlin.coroutines.Continuation):java.lang.Object
-- bs:doBuildSearchableOptions$default(java.util.Map,java.nio.file.Path,Z,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 a:com.intellij.ide.util.AbstractTreeClassChooserDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.ide.util.TreeChooser

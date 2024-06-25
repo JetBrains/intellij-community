@@ -11,7 +11,6 @@ import com.intellij.openapi.options.ConfigurableGroup
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.Strings
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
 import com.intellij.ui.TabbedPaneWrapper.TabbedPaneHolder
@@ -22,7 +21,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Color
 import java.awt.Component
-import java.util.function.Function
 import java.util.regex.Pattern
 import javax.swing.*
 import javax.swing.border.TitledBorder
@@ -70,11 +68,11 @@ object SearchUtil {
     }
   }
 
-  private fun getSelection(tabIdx: String, tabCount: Int, titleGetter: Function<in Int, String>): Int {
+  private fun getSelection(tabIndex: String, tabCount: Int, titleGetter: (Int) -> String?): Int {
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     for (i in 0 until tabCount) {
-      val pathWords = searchableOptionsRegistrar.getProcessedWords(tabIdx)
-      val title = titleGetter.apply(i)
+      val pathWords = searchableOptionsRegistrar.getProcessedWords(tabIndex)
+      val title = titleGetter(i) ?: ""
       if (!pathWords.isEmpty()) {
         val titleWords = searchableOptionsRegistrar.getProcessedWords(title)
         pathWords.removeAll(titleWords)
@@ -82,7 +80,7 @@ object SearchUtil {
           return i
         }
       }
-      else if (tabIdx.equals(title, ignoreCase = true)) { //e.g., only stop words
+      else if (tabIndex.equals(title, ignoreCase = true)) { //e.g., only stop words
         return i
       }
     }
@@ -97,7 +95,7 @@ object SearchUtil {
   ): Boolean {
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null)
 
-    if (option == null || option.trim { it <= ' ' }.isEmpty()) {
+    if (option.isNullOrBlank()) {
       return false
     }
 
@@ -106,7 +104,8 @@ object SearchUtil {
       for (each in label) {
         if (isComponentHighlighted(each, option, force, configurable)) {
           highlightComponent(rootComponent, option)
-          return true // do not visit children of a highlighted component
+          // do not visit children of a highlighted component
+          return true
         }
       }
     }
@@ -121,8 +120,8 @@ object SearchUtil {
     else if (rootComponent is JTabbedPane) {
       val paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option)
       for (path in paths) {
-        val index = getSelection(path, rootComponent.tabCount) { i: Int? ->
-          rootComponent.getTitleAt(i!!)
+        val index = getSelection(path, rootComponent.tabCount) { i ->
+          rootComponent.getTitleAt(i)
         }
         if (index > -1 && index < rootComponent.tabCount) {
           if (rootComponent.getTabComponentAt(index) is JComponent) {
@@ -135,8 +134,8 @@ object SearchUtil {
       val tabbedPaneWrapper = rootComponent.tabbedPaneWrapper
       val paths = SearchableOptionsRegistrar.getInstance().getInnerPaths(configurable, option)
       for (path in paths) {
-        val index = getSelection(path, tabbedPaneWrapper.tabCount) { i: Int? ->
-          tabbedPaneWrapper.getTitleAt(i!!)
+        val index = getSelection(path, tabbedPaneWrapper.tabCount) { i ->
+          tabbedPaneWrapper.getTitleAt(i)
         }
         if (index > -1 && index < tabbedPaneWrapper.tabCount) {
           highlightComponent(tabbedPaneWrapper.getTabComponentAt(index) as JComponent, option)
@@ -169,14 +168,14 @@ object SearchUtil {
     val words = searchableOptionsRegistrar.getProcessedWords(option)
     val options = if (configurable == null) words else searchableOptionsRegistrar.replaceSynonyms(words, configurable)
     if (options.isEmpty()) {
-      return text.lowercase().contains(Strings.toLowerCase(option))
+      return text.lowercase().contains(option.lowercase())
     }
 
     val tokens = searchableOptionsRegistrar.getProcessedWords(text)
     if (!force) {
       options.retainAll(tokens)
       val highlight = !options.isEmpty()
-      return highlight || text.lowercase().contains(Strings.toLowerCase(option))
+      return highlight || text.lowercase().contains(option.lowercase())
     }
     else {
       options.removeAll(tokens)
@@ -279,7 +278,7 @@ object SearchUtil {
     val result = StringBuilder()
     var beg = 0
     var idx: Int
-    while ((Strings.indexOfIgnoreCase(textToMarkup, option, beg).also { idx = it }) != -1) {
+    while ((textToMarkup.indexOf(option, beg, ignoreCase = true).also { idx = it }) != -1) {
       val prefix = textToMarkup.substring(beg, idx)
       val toMark = textToMarkup.substring(idx, idx + option.length)
       if (insideHtmlTagPattern.matcher(prefix).matches()) {
@@ -371,7 +370,7 @@ object SearchUtil {
       for (stripped in quoted) {
         var beg = 0
         var idx: Int
-        while ((Strings.indexOfIgnoreCase(text, stripped, beg).also { idx = it }) != -1) {
+        while ((text.indexOf(stripped, beg, ignoreCase = true).also { idx = it }) != -1) {
           indexToString.put(idx, text.substring(idx, idx + stripped.length))
           beg = idx + stripped.length
         }
@@ -711,7 +710,7 @@ private fun getItemsFromComboBox(comboBox: JComboBox<*>): List<String> {
 
 @Serializable
 @Internal
-data class SearchableOptionEntry (
+data class SearchableOptionEntry(
   @JvmField val hit: String,
   @JvmField val path: String? = null,
 ) : Comparable<SearchableOptionEntry> {
@@ -732,14 +731,13 @@ fun collectSearchItemsForComponentWithLabel(
   configurable: SearchableConfigurable,
   configurableOptions: MutableSet<SearchableOptionEntry>,
   component: JComponent,
-  i18n: Boolean,
 ) {
-  processUiLabel(title = configurable.displayName, configurableOptions = null, rawList = configurableOptions, path = null, i18n = i18n)
+  processUiLabel(title = configurable.displayName, configurableOptions = null, rawList = configurableOptions, path = null, i18n = false)
   collectSearchItemsForComponent(
     component = component,
     configurableOptions = null,
     path = null,
-    i18n = i18n,
+    i18n = false,
     rawList = configurableOptions,
   )
 }
