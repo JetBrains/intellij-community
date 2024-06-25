@@ -692,6 +692,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
         public void testKotlin_unaffectedQualifiedReferences_UnaffectedQualifiedReferences() throws Exception {
             runTest("testData/refactoring/moveTopLevel/kotlin/unaffectedQualifiedReferences/unaffectedQualifiedReferences.test");
         }
+
+        @TestMetadata("kotlin/unaryOperatorReference/unaryOperatorReference.test")
+        public void testKotlin_unaryOperatorReference_UnaryOperatorReference() throws Exception {
+            runTest("testData/refactoring/moveTopLevel/kotlin/unaryOperatorReference/unaryOperatorReference.test");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

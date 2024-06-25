@@ -816,6 +816,11 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
                 runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/UnQualified.kt");
             }
 
+            @TestMetadata("UnaryOperator.kt")
+            public void testUnaryOperator() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/UnaryOperator.kt");
+            }
+
             @TestMetadata("WithRegularCall.kt")
             public void testWithRegularCall() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/bindToElement/operationReference/WithRegularCall.kt");
