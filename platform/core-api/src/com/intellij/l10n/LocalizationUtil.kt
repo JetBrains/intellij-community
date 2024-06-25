@@ -23,8 +23,6 @@ object LocalizationUtil {
   private const val LOCALIZATION_FOLDER_NAME: String = "localization"
   @Internal
   const val LOCALIZATION_KEY: String = "i18n.locale"
-  @Internal
-  val l10nPluginIdToLanguageTag: Map<String, String> = mapOf("com.intellij.ja" to "ja", "com.intellij.ko" to "ko", "com.intellij.zh" to "zh-CN")
 
   @Internal
   fun getForcedLocale(): String? {
