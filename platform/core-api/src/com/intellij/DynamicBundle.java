@@ -100,7 +100,7 @@ public class DynamicBundle extends AbstractBundle {
     List<ResourceBundle> resourceBundles = new ArrayList<>();
     for (Path path : paths) {
       try {
-        ResourceBundle resourceBundle = Companion.resolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
+        ResourceBundle resourceBundle = AbstractBundleKt._doResolveBundle(loader, locale, FileUtil.toSystemIndependentName(path.toString()));
         resourceBundles.add(resourceBundle);
       }
       catch (MissingResourceException ignored) { }
@@ -280,7 +280,7 @@ public class DynamicBundle extends AbstractBundle {
   }
 
   private static @NotNull BiFunction<@NotNull ClassLoader, @NotNull Locale, @NotNull ResourceBundle> bundleResolver(@NonNls @NotNull String pathToBundle) {
-    return (loader, locale) -> Companion.resolveBundle(loader, locale, pathToBundle);
+    return (loader, locale) -> AbstractBundleKt._doResolveBundle(loader, locale, pathToBundle);
   }
 
   /**

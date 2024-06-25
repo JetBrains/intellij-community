@@ -4,6 +4,7 @@
 package com.intellij.ide.ui.search
 
 import com.dynatrace.hash4j.hashing.Hashing
+import com.intellij.BundleBase.L10N_MARKER
 import com.intellij.application.options.OptionsContainingConfigurable
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.ShowSettingsUtilImpl
@@ -32,18 +33,14 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ReflectionUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
-import kotlinx.coroutines.withContext
-import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
 import org.jdom.IllegalDataException
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.VisibleForTesting
+import java.nio.CharBuffer
+import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
@@ -63,7 +60,6 @@ private class TraverseUIStarter : ModernApplicationStarter() {
       doBuildSearchableOptions(
         options = LinkedHashMap(),
         outputPath = Path.of(args[1]).toAbsolutePath().normalize(),
-        i18n = java.lang.Boolean.getBoolean("intellij.searchableOptions.i18n.enabled"),
       )
       exitProcess(0)
     }
@@ -125,7 +121,18 @@ private data class SearchableOptionFile(@JvmField val module: OptionSetId, @JvmF
 @Serializable
 private data class SearchableOptionSetIndexItem(@JvmField val file: String, @JvmField val hash: Long, @JvmField val size: Long)
 
-@OptIn(ExperimentalCoroutinesApi::class, ExperimentalSerializationApi::class)
+private fun getKeyByMessage(s: String): String {
+  val matches = INDEX_ENTRY_REGEXP.findAll(s)
+  if (matches.none()) {
+    return s
+  }
+
+  // we don't need to build the correct message if multiple keys were used, we stem it in any case, so, use `;` as a separator
+  //println("MULTIPLE ($s): " + list.joinToString { it.value })
+  return matches.joinToString(separator = ";") { it.value }
+}
+
+@OptIn(ExperimentalCoroutinesApi::class)
 private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<ConfigurableEntry>>) {
   println("save to $outDir")
   val fileDescriptors = withContext(Dispatchers.IO.limitedParallelism(4)) {
@@ -148,14 +155,42 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
         val fileName = (if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}") +
                        "-" + SearchableOptionsRegistrar.getSearchableOptionsName() + ".json"
         val file = outDir.resolve(fileName)
-        Files.newBufferedWriter(file).use { writer ->
-          hash.putInt(value.size)
-          for (entry in value) {
-            val encoded = Json.encodeToString(serializer, entry)
-            hash.putString(encoded)
-            writer.write(encoded)
-            writer.append('\n')
+        try {
+          Files.newBufferedWriter(file).use { writer ->
+            hash.putInt(value.size)
+            for (entry in value) {
+              val modifiedEntry = entry.copy(
+                id = getKeyByMessage(entry.id),
+                name = getKeyByMessage(entry.name),
+                entries = entry.entries.mapTo(mutableListOf()) { optionEntry ->
+                  optionEntry.copy(
+                    hit = getKeyByMessage(optionEntry.hit),
+                    path = optionEntry.path?.let { getKeyByMessage(it) },
+                  )
+                },
+              )
+              val encoded = Json.encodeToString(serializer, modifiedEntry)
+
+              require(!encoded.contains(L10N_MARKER)) {
+                "Searchable options index contains unexpected L10N marker: $encoded"
+              }
+
+              val encodeError = checkUtf8(encoded)
+              require(encodeError == null) {
+                "Cannot encode string: (error=$encodeError, entry=$entry)"
+              }
+
+              hash.putString(encoded)
+              writer.write(encoded)
+              writer.append('\n')
+            }
           }
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          throw RuntimeException("Cannot write $file", e)
         }
 
         SearchableOptionFile(
@@ -167,29 +202,31 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
   }.map { it.getCompleted() }
 
   withContext(Dispatchers.IO) {
-    val contentFile = outDir.resolve("content.json")
-    val existing: Map<String, List<SearchableOptionSetIndexItem>> = if (Files.exists(contentFile)) {
-      Files.newInputStream(contentFile).use {
-        Json.decodeFromStream(it)
-      }
-    }
-    else {
-      emptyMap()
-    }
-
-    Files.writeString(contentFile, Json.encodeToString(
+    Files.writeString(outDir.resolve("content.json"), Json.encodeToString(
       fileDescriptors
         .groupBy(keySelector = { it.module.moduleName ?: it.module.pluginId.idString })
         .mapValues { entry ->
           val item = entry.value.single().item
-          setOf(SearchableOptionSetIndexItem(file = item.file, hash = item.hash, size = item.size))
-            .plus(existing.get(entry.key) ?: emptyList()).toList()
+          listOf(SearchableOptionSetIndexItem(file = item.file, hash = item.hash, size = item.size))
         }
     ))
   }
 
   for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
     extension.afterResultsAreSaved()
+  }
+}
+
+private fun checkUtf8(s: String): CharacterCodingException? {
+  val encoder = Charsets.UTF_8.newEncoder()
+  encoder.onMalformedInput(CodingErrorAction.REPORT)
+  encoder.onUnmappableCharacter(CodingErrorAction.REPORT)
+  try {
+    encoder.encode(CharBuffer.wrap(s))
+    return null
+  }
+  catch (e: CharacterCodingException) {
+    return e
   }
 }
 
@@ -307,30 +344,9 @@ private fun getSetIdByPluginDescriptor(pluginDescriptor: PluginDescriptor): Opti
   }
 }
 
-@VisibleForTesting
-suspend fun buildSearchableOptions(outputPath: Path, i18n: Boolean = false) {
-  val options = LinkedHashMap<SearchableConfigurable, Set<SearchableOptionEntry>>()
-  try {
-    doBuildSearchableOptions(options = options, outputPath = outputPath, i18n = i18n)
-  }
-  finally {
-    if (!options.isEmpty()) {
-      withContext(Dispatchers.EDT) {
-        blockingContext {
-          for (configurable in options.keys) {
-            configurable.disposeUIResources()
-          }
-        }
-      }
-    }
-  }
-}
-
-@VisibleForTesting
-suspend fun doBuildSearchableOptions(
+private suspend fun doBuildSearchableOptions(
   options: MutableMap<SearchableConfigurable, Set<SearchableOptionEntry>>,
   outputPath: Path,
-  i18n: Boolean = false,
 ) {
   assert(AppMode.isHeadless())
 
@@ -349,7 +365,6 @@ suspend fun doBuildSearchableOptions(
           checkNonDefaultProject = false,
         ),
         options = options,
-        i18n = i18n,
       )
     }
   }
@@ -373,7 +388,6 @@ suspend fun doBuildSearchableOptions(
 private fun processConfigurables(
   configurables: Sequence<Configurable>,
   options: MutableMap<SearchableConfigurable, Set<SearchableOptionEntry>>,
-  i18n: Boolean,
 ) {
   for (configurable in configurables) {
     if (configurable !is SearchableConfigurable) {
@@ -393,13 +407,11 @@ private fun processConfigurables(
         configurable = configurable,
         configurableOptions = configurableOptions,
         component = configurable.master,
-        i18n = i18n,
       )
       collectSearchItemsForComponentWithLabel(
         configurable = configurable,
         configurableOptions = configurableOptions,
         component = configurable.details.component,
-        i18n = i18n,
       )
     }
     else {
@@ -408,14 +420,14 @@ private fun processConfigurables(
           title = configurable.displayName,
           configurableOptions = null,
           path = null,
-          i18n = i18n,
+          i18n = false,
           rawList = configurableOptions,
         )
         collectSearchItemsForComponent(
           component = component,
           configurableOptions = null,
           path = null,
-          i18n = i18n,
+          i18n = false,
           rawList = configurableOptions,
         )
       }
@@ -433,7 +445,7 @@ private fun processConfigurables(
               title = child.displayName,
               configurableOptions = null,
               path = null,
-              i18n = i18n,
+              i18n = false,
               rawList = childConfigurableOptions,
             )
           }
@@ -442,7 +454,7 @@ private fun processConfigurables(
               component = component,
               configurableOptions = null,
               path = null,
-              i18n = i18n,
+              i18n = false,
               rawList = childConfigurableOptions,
             )
           }

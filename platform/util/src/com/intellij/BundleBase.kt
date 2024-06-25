@@ -34,8 +34,8 @@ private val SHOW_DEFAULT_MESSAGES: Boolean = java.lang.Boolean.getBoolean("idea.
 
 private val getPolicy: GetPolicy = System.getProperty("idea.l10n.keys").let {
   when (it) {
-    "true" -> GetPolicy.APPEND_KEY
     "only" -> GetPolicy.ONLY_KEY
+    "true" -> GetPolicy.APPEND_KEY
     else -> GetPolicy.VALUE
   }
 }
@@ -55,6 +55,7 @@ object BundleBase {
 
   const val L10N_MARKER: String = "🔅"
 
+  @Internal
   fun assertOnMissedKeys(doAssert: Boolean) {
     assertOnMissedKeys = doAssert
   }
@@ -288,12 +289,15 @@ internal fun postProcessResolvedValue(
   @NlsSafe value: String,
   key: String,
   resourceFound: Boolean,
-  bundle: ResourceBundle,
+  bundle: IntelliJResourceBundle,
 ): String {
   translationConsumer?.accept(key, value)
   return when {
     !resourceFound -> value
-    getPolicy == GetPolicy.ONLY_KEY -> "$key${L10N_MARKER}$value"
+    getPolicy == GetPolicy.ONLY_KEY -> {
+      // UI Designer produces old names using '/' instead of '.'
+      "|b|${bundle.baseBundleName.replace('/', '.')}|k|$key|$value"
+    }
     getPolicy == GetPolicy.APPEND_KEY -> {
       appendLocalizationSuffix(
         result = value,

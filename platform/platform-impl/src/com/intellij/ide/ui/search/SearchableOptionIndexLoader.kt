@@ -3,6 +3,9 @@
 
 package com.intellij.ide.ui.search
 
+import com.intellij.DynamicBundle
+import com.intellij.IntelliJResourceBundle
+import com.intellij._doResolveBundle
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -116,11 +119,36 @@ data class ConfigurableEntry(
   @JvmField val entries: MutableList<SearchableOptionEntry> = mutableListOf(),
 )
 
+@Internal
+val INDEX_ENTRY_REGEXP = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
+
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 
-private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
-  val names = SearchableOptionsRegistrar.getSearchableOptionsNames()
+private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: Locale): String {
+  val matches = INDEX_ENTRY_REGEXP.findAll(s)
+  if (matches.none()) {
+    return s
+  }
 
+  val result = StringBuilder()
+  for (match in matches) {
+    val groups = match.groups
+    val bundlePath = groups[1]!!.value
+    val messageKey = groups[2]!!.value
+    val bundle = try {
+      _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath) as IntelliJResourceBundle
+    }
+    catch (_: MissingResourceException) {
+      continue
+    }
+
+    val resolvedMessage = bundle.getMessageOrNull(messageKey) ?: continue
+    result.append(resolvedMessage)
+  }
+  return result.toString()
+}
+
+private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
   val visited = Collections.newSetFromMap(IdentityHashMap<ClassLoader, Boolean>())
   val serializer = ConfigurableEntry.serializer()
   for (module in getPluginSet().getEnabledModules()) {
@@ -131,63 +159,68 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
 
     val classifier = if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}"
 
-    for (name in names) {
-      val data = classLoader.getResourceAsBytes("$classifier-$name.json", false)
-      if (data != null) {
-        try {
-          for (item in decodeFromJsonFormat(data, serializer)) {
-            for (entry in item.entries) {
-              processor.putOptionWithHelpId(words = Iterable {
-                SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(entry.hit).iterator()
-              }, id = item.id, groupName = item.name, hit = entry.hit, path = entry.path)
-            }
+    val fileName = "$classifier-${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.json"
+    val data = classLoader.getResourceAsBytes(fileName, false)
+    if (data != null) {
+      val locale = DynamicBundle.getLocale()
+      try {
+        for (item in decodeFromJsonFormat(data, serializer)) {
+          for (entry in item.entries) {
+            val resolvedHit = getMessageByCoordinate(entry.hit, classLoader, locale).lowercase(locale)
+            processor.putOptionWithHelpId(
+              words = Iterable {
+                SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(resolvedHit).iterator()
+              },
+              id = getMessageByCoordinate(item.id, classLoader, locale),
+              groupName = getMessageByCoordinate(item.name, classLoader, locale),
+              hit = getMessageByCoordinate(entry.hit, classLoader, locale),
+              path = entry.path?.let { getMessageByCoordinate(it, classLoader, locale) },
+            )
           }
         }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
-        }
-        // if the data is found in JSON format, there's no need to search in XML
-        continue
       }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        throw RuntimeException("Can't parse searchable options $fileName for plugin ${module.pluginId}", e)
+      }
+      // if the data is found in JSON format, there's no need to search in XML
+      continue
+    }
 
-      val xmlName = "$name.xml"
-      classLoader.processResources("search", Predicate { it.endsWith(xmlName) }) { _, stream ->
-        try {
-          readInXml(root = readXmlAsModel(stream), processor)
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          throw RuntimeException("Can't parse searchable options $name for plugin ${module.pluginId}", e)
-        }
+    val xmlName = "${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.xml"
+    classLoader.processResources("search", Predicate { it.endsWith(xmlName) }) { _, stream ->
+      try {
+        readInXml(root = readXmlAsModel(stream), processor)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        throw RuntimeException("Can't parse searchable options $fileName for plugin ${module.pluginId}", e)
       }
     }
   }
 
   // process additional locations
-  for (name in names) {
-    val xmlName = "$name.xml"
-    LOCATION_EP_NAME.forEachExtensionSafe { provider ->
-      val additionalLocation = provider.additionalLocation ?: return@forEachExtensionSafe
-      if (Files.isDirectory(additionalLocation)) {
-        Files.list(additionalLocation).use { stream ->
-          stream.forEach { file ->
-            val fileName = file.fileName.toString()
-            try {
-              if (fileName.endsWith(xmlName)) {
-                readInXml(root = readXmlAsModel(file), processor = processor)
-              }
+  val xmlName = "${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.xml"
+  LOCATION_EP_NAME.forEachExtensionSafe { provider ->
+    val additionalLocation = provider.additionalLocation ?: return@forEachExtensionSafe
+    if (Files.isDirectory(additionalLocation)) {
+      Files.list(additionalLocation).use { stream ->
+        stream.forEach { file ->
+          val fileName = file.fileName.toString()
+          try {
+            if (fileName.endsWith(xmlName)) {
+              readInXml(root = readXmlAsModel(file), processor = processor)
             }
-            catch (e: CancellationException) {
-              throw e
-            }
-            catch (e: Throwable) {
-              throw RuntimeException("Can't parse searchable options $name", e)
-            }
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            throw RuntimeException("Can't parse searchable options $xmlName", e)
           }
         }
       }

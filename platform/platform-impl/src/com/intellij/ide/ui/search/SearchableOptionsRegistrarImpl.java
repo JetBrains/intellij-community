@@ -443,34 +443,39 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
   @Override
   public @NotNull Set<@NotNull String> getInnerPaths(SearchableConfigurable configurable, String option) {
     initialize();
-    final Set<String> words = getProcessedWordsWithoutStemming(option);
-    final Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+    Set<String> words = getProcessedWordsWithoutStemming(option);
+    Set<OptionDescription> path = getOptionDescriptionsByWords(configurable, words);
+
+    if (path == null || path.isEmpty()) {
+      return Collections.emptySet();
+    }
 
     Set<String> resultSet = new HashSet<>();
-    if (path != null && !path.isEmpty()) {
-      OptionDescription theOnlyResult = null;
-      for (OptionDescription description : path) {
-        final String hit = description.getHit();
-        if (hit != null) {
-          boolean theBest = true;
-          for (String word : words) {
-            if (!StringUtil.containsIgnoreCase(hit, word)) {
-              theBest = false;
-              break;
-            }
-          }
-          if (theBest) {
-            String p = description.getPath();
-            if (p != null) {
-              resultSet.add(p);
-            }
+    OptionDescription theOnlyResult = null;
+    for (OptionDescription description : path) {
+      String hit = description.getHit();
+      if (hit != null) {
+        boolean theBest = true;
+        for (String word : words) {
+          if (!StringUtil.containsIgnoreCase(hit, word)) {
+            theBest = false;
+            break;
           }
         }
-        theOnlyResult = description;
+        if (theBest) {
+          String p = description.getPath();
+          if (p != null) {
+            resultSet.add(p);
+          }
+        }
       }
+      theOnlyResult = description;
+    }
 
-      if (resultSet.isEmpty()) {
-        resultSet.add(theOnlyResult.getPath());
+    if (resultSet.isEmpty()) {
+      String p = theOnlyResult.getPath();
+      if (p != null) {
+        resultSet.add(p);
       }
     }
 
@@ -507,7 +512,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   @ApiStatus.Internal
   public static Stream<String> splitToWordsWithoutStemmingAndStopWords(@NotNull String text) {
-    return WORD_SEPARATOR_CHARS.splitAsStream(text.toLowerCase(Locale.ENGLISH));
+    return WORD_SEPARATOR_CHARS.splitAsStream(text);
   }
 
   @Override

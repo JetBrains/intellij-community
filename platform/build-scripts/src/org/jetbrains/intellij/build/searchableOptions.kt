@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
 
 @Internal
 @Serializable
@@ -97,7 +96,7 @@ internal suspend fun buildSearchableOptions(
   // It'll process all UI elements in the `Settings` dialog and build an index for them.
   productRunner.runProduct(
     args = listOf("traverseUI", targetDirectory.toString(), "true"),
-    additionalVmProperties = systemProperties + getSystemPropertiesForSearchableOptions(Locale.ENGLISH.toLanguageTag()),
+    additionalVmProperties = systemProperties + VmProperties(mapOf("idea.l10n.keys" to "only")),
     timeout = DEFAULT_TIMEOUT,
   )
 
@@ -106,16 +105,4 @@ internal suspend fun buildSearchableOptions(
   span.setAttribute(AttributeKey.stringArrayKey("modulesWithSearchableOptions"), index.index.keys.toList())
 
   return index
-}
-
-private fun getSystemPropertiesForSearchableOptions(langTag: String): VmProperties {
-  if (Locale.ENGLISH.toLanguageTag().equals(langTag)) {
-    return VmProperties(emptyMap())
-  }
-  else {
-    return VmProperties(mapOf(
-      "intellij.searchableOptions.i18n.enabled" to "true",
-      "i18n.locale" to langTag
-    ))
-  }
 }
