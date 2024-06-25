@@ -229,6 +229,9 @@ class EditorCellOutputs(
       override fun componentResized(e: ComponentEvent) {
         invalidate()
       }
+      override fun componentMoved(e: ComponentEvent?) {
+        invalidate()
+      }
     })
     Disposer.register(it) {
       onInlayDisposed(this)

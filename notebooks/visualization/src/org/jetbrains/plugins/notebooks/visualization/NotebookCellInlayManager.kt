@@ -47,6 +47,8 @@ class NotebookCellInlayManager private constructor(
 
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
 
+  private val invalidationListeners = mutableListOf<Runnable>()
+
   private var valid = false
 
   override fun dispose() {}
@@ -352,7 +354,10 @@ class NotebookCellInlayManager private constructor(
   }
 
   fun invalidateCells() {
-    valid = false
+    if (valid) {
+      valid = false
+      invalidationListeners.forEach { it.run() }
+    }
   }
 
   fun validateCells() {
@@ -365,5 +370,9 @@ class NotebookCellInlayManager private constructor(
       }
       valid = true
     }
+  }
+
+  fun onInvalidate(function: () -> Unit) {
+    invalidationListeners.add(function)
   }
 }

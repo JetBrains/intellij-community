@@ -38,11 +38,11 @@ class EditorCellOutput internal constructor(
     .also {
       component.addComponentListener(object : ComponentAdapter() {
         override fun componentMoved(e: ComponentEvent) {
-          invalidate()
+          updateFoldingPosition(calculateBounds())
         }
 
         override fun componentResized(e: ComponentEvent) {
-          invalidate()
+          updateFoldingPosition(calculateBounds())
         }
       })
     }
@@ -104,6 +104,11 @@ class EditorCellOutput internal constructor(
   }
 
   override fun doLayout() {
-    folding.updatePosition(bounds.y, bounds.height)
+    updateFoldingPosition(bounds)
   }
+
+  private fun updateFoldingPosition(b: Rectangle) {
+    folding.updatePosition(b.y, b.height)
+  }
+
 }
