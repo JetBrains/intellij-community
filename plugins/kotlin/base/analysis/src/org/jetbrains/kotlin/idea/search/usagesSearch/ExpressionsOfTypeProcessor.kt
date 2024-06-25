@@ -120,7 +120,7 @@ class ExpressionsOfTypeProcessor(
         val usePlainSearch = when (mode) {
             Mode.ALWAYS_SMART -> false
             Mode.ALWAYS_PLAIN -> true
-            Mode.PLAIN_WHEN_NEEDED -> searchScope is LocalSearchScope // for local scope it's faster to use plain search
+            Mode.PLAIN_WHEN_NEEDED -> searchScope is LocalSearchScope && searchScope.virtualFiles.size < 2 // for local scope it's faster to use plain search
         }
         if (usePlainSearch || classToSearch == null) {
             possibleMatchesInScopeHandler(searchScope)
