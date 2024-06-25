@@ -71,13 +71,18 @@ object VisualizedTextPopup {
       return evaluator.show(event, project, editor)
     }
 
-    val panel = TextPanel(project)
+    val panel = PopupPanel(project)
     val callback = EvaluationCallback(project, panel)
-    showValuePopup(event, project, editor, panel, callback::setObsolete)
+    showValuePopup(event, project, editor, panel.component, callback::setObsolete)
     evaluator.startEvaluation(callback) // to make it really cancellable
   }
 
-  private class TextPanel(private val project: Project) : JPanel(CardLayout()) {
+  private class PopupPanel(private val project: Project)  {
+    private val base = JPanel(CardLayout())
+
+    val component: JComponent
+      get() = base
+
     init {
       showOnlyText(XDebuggerUIConstants.getEvaluatingExpressionMessage())
     }
@@ -85,16 +90,19 @@ object VisualizedTextPopup {
     fun showOnlyText(value: String, format: (TextViewer) -> Unit = {}) {
       val textArea = DebuggerUIUtil.createTextViewer(value, project)
       format(textArea)
+      showComponent(textArea)
+    }
 
-      removeAll()
-      add(textArea)
-      revalidate()
-      repaint()
+    fun showComponent(component: JComponent) {
+      base.removeAll()
+      base.add(component)
+      base.revalidate()
+      base.repaint()
     }
 
   }
 
-  private class EvaluationCallback(private val project: Project, private val panel: TextPanel) : XFullValueEvaluator.XFullValueEvaluationCallback {
+  private class EvaluationCallback(private val project: Project, private val panel: PopupPanel) : XFullValueEvaluator.XFullValueEvaluationCallback {
     private val obsolete = AtomicBoolean(false)
 
     private var lastFullValueHashCode: Int? = null
@@ -110,10 +118,7 @@ object VisualizedTextPopup {
 
       AppUIUtil.invokeOnEdt {
         try {
-          panel.removeAll()
-          panel.add(createComponent(fullValue))
-          panel.revalidate()
-          panel.repaint()
+          panel.showComponent(createComponent(fullValue))
         }
         catch (e: Exception) {
           errorOccurred(e.toString())
@@ -141,7 +146,7 @@ object VisualizedTextPopup {
       val tabs = collectVisualizedTabs(project, fullValue)
       assert(tabs.isNotEmpty()) { "at least one raw tab is expected to be provided by fallback visualizer" }
       if (tabs.size > 1) {
-        return createTabbedPane(tabs, fullValue)
+        return createTabbedPane(tabs)
       }
 
       val (tab, component) = tabs.first()
@@ -149,7 +154,7 @@ object VisualizedTextPopup {
       return component
     }
 
-    private fun createTabbedPane(tabsAndComponents: List<Pair<VisualizedContentTab, JComponent>>, fullValue: String): JComponent {
+    private fun createTabbedPane(tabsAndComponents: List<Pair<VisualizedContentTab, JComponent>>): JComponent {
       assert(tabsAndComponents.isNotEmpty())
 
       val panel = JBTabbedPane()

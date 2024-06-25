@@ -14,7 +14,7 @@ import com.intellij.xdebugger.ui.VisualizedContentTab
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-internal class JWTTextVisualizer : TextValueVisualizer {
+internal class JwtTextVisualizer : TextValueVisualizer {
   override fun visualize(value: @NlsSafe String): List<VisualizedContentTab> {
     val jwt = tryParse(value)
     if (jwt == null) return emptyList()
@@ -23,7 +23,7 @@ internal class JWTTextVisualizer : TextValueVisualizer {
       override val name
         get() = XDebuggerBundle.message("xdebugger.visualized.text.name.jwt")
       override val id
-        get() = JWTTextVisualizer::class.qualifiedName!!
+        get() = JwtTextVisualizer::class.qualifiedName!!
       override val contentTypeForStats
         get() = TextVisualizerContentType.JWT
       override fun formatText() =
