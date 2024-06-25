@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.gradle.service.syncContributor
 
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
+import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
@@ -36,9 +38,14 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
 
     val contentRootEntities = storage.entities<ContentRootEntity>()
-    if (contentRootEntities.all { !isConflictedContentRootEntity(it, linkedProjectEntitySource) }) {
-      configureProjectRoot(storage, linkedProjectEntitySource)
+    if (contentRootEntities.any { isConflictedContentRootEntity(it, linkedProjectEntitySource) }) {
+      return
     }
+    if (isUnloadedModule(project, linkedProjectEntitySource)) {
+      return
+    }
+
+    configureProjectRoot(storage, linkedProjectEntitySource)
   }
 
   private fun isConflictedContentRootEntity(
@@ -47,6 +54,16 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
   ): Boolean {
     return contentRootEntity.entitySource == entitySource ||
            contentRootEntity.url == entitySource.projectRootUrl
+  }
+
+  private fun isUnloadedModule(
+    project: Project,
+    entitySource: GradleLinkedProjectEntitySource,
+  ): Boolean {
+    val unloadedModulesListStorage = UnloadedModulesListStorage.getInstance(project)
+    val unloadedModuleNameHolder = unloadedModulesListStorage.unloadedModuleNameHolder
+    val moduleName = resolveModuleName(entitySource)
+    return unloadedModuleNameHolder.isUnloaded(moduleName)
   }
 
   private fun configureProjectRoot(
@@ -61,8 +78,9 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     storage: MutableEntityStorage,
     entitySource: GradleLinkedProjectEntitySource,
   ): ModuleEntity.Builder {
+    val moduleName = resolveModuleName(entitySource)
     val moduleEntity = ModuleEntity(
-      name = entitySource.projectRootUrl.fileName,
+      name = moduleName,
       entitySource = entitySource,
       dependencies = listOf(
         InheritedSdkDependency,
@@ -85,5 +103,9 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     ) {
       module = moduleEntity
     }
+  }
+
+  private fun resolveModuleName(entitySource: GradleLinkedProjectEntitySource): String {
+    return entitySource.projectRootUrl.fileName
   }
 }

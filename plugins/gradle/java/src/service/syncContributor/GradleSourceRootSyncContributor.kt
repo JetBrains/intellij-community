@@ -10,7 +10,9 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.IExternalSystemSourceType
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.NumericNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
@@ -92,9 +94,14 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
           val contentRoots = resolveContentRoots(virtualFileUrlManager, projectModel, sourceSet, contentRootWeightMap)
           val sourceRootData = GradleSourceRootData(sourceSet, projectModuleEntity, sourceSetEntitySource, contentRoots)
 
-          if (moduleEntities.all { !isConflictedModuleEntity(it, sourceRootData) }) {
-            sourceRootsToAdd[sourceSetEntitySource] = sourceRootData
+          if (moduleEntities.any { isConflictedModuleEntity(it, sourceRootData) }) {
+            continue
           }
+          if (isUnloadedModule(project, sourceRootData)) {
+            continue
+          }
+
+          sourceRootsToAdd[sourceSetEntitySource] = sourceRootData
         }
       }
     }
@@ -121,6 +128,20 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
   ): Boolean {
     return moduleEntity.entitySource == sourceRootData.entitySource ||
            moduleEntity.contentRoots.any { it.url in sourceRootData.contentRootUrls }
+  }
+
+  private fun isUnloadedModule(
+    project: Project,
+    sourceRootData: GradleSourceRootData,
+  ): Boolean {
+    val unloadedModulesListStorage = UnloadedModulesListStorage.getInstance(project)
+    val unloadedModuleNameHolder = unloadedModulesListStorage.unloadedModuleNameHolder
+    for (moduleName in generateModuleNames(sourceRootData)) {
+      if (unloadedModuleNameHolder.isUnloaded(moduleName)) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun configureSourceRoot(
