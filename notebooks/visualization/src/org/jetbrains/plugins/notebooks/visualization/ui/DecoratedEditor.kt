@@ -142,7 +142,7 @@ internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
 
 class EditorComponentWrapper(
   private val editor: Editor,
-  editorComponent: EditorComponentImpl,
+  private val editorComponent: EditorComponentImpl,
   private val manager: NotebookCellInlayManager,
 ) : JComponent() {
   init {
@@ -151,18 +151,19 @@ class EditorComponentWrapper(
   }
 
   override fun doLayout() {
+    super.doLayout()
     // EditorEmbeddedComponentManager breaks the Swing layout model as it expect that subcomponents will define their own bounds themselves.
     // Here we invoke FullEditorWidthRenderer#validate to place inlay components correctly after doLayout.
-    components.asSequence()
+    editorComponent.components.asSequence()
       .filterIsInstance<FullEditorWidthRenderer>()
       .forEach {
         it.validate()
       }
+    manager.validateCells()
   }
 
   override fun validateTree() {
     keepScrollingPositionWhile(editor) {
-      manager.validateCells()
       super.validateTree()
     }
   }
