@@ -3,11 +3,13 @@
 
 package com.intellij.ide.ui.search
 
-import com.intellij.DynamicBundle
 import com.intellij.IntelliJResourceBundle
 import com.intellij._doResolveBundle
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar.AdditionalLocationProvider
+import com.intellij.l10n.LocalizationUtil
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.ArrayUtil
@@ -29,6 +31,9 @@ import java.nio.file.Files
 import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.function.Predicate
+import java.util.stream.Stream
+
+private val LOG = logger<MySearchableOptionProcessor>()
 
 internal class MySearchableOptionProcessor(private val stopWords: Set<String>) : SearchableOptionProcessor() {
   private val cache = HashSet<String>()
@@ -136,9 +141,15 @@ private fun getMessageByCoordinate(s: String, classLoader: ClassLoader, locale: 
     val bundlePath = groups[1]!!.value
     val messageKey = groups[2]!!.value
     val bundle = try {
-      _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath) as IntelliJResourceBundle
+      _doResolveBundle(loader = classLoader, locale = locale, pathToBundle = bundlePath)
     }
     catch (_: MissingResourceException) {
+      continue
+    }
+
+    if (bundle !is IntelliJResourceBundle) {
+      // todo we should fix resolveResourceBundleWithFallback and do not try to load bundle if we cannot find it in localization plugin
+      LOG.debug { "Unexpected bundle type due to fallback: ${bundle.javaClass.name}" }
       continue
     }
 
@@ -162,21 +173,17 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
     val fileName = "$classifier-${SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME}.json"
     val data = classLoader.getResourceAsBytes(fileName, false)
     if (data != null) {
-      val locale = DynamicBundle.getLocale()
+      val locale = LocalizationUtil.getLocaleOrNullForDefault()
+      val localeSpecificLoader = LocalizationUtil.getPluginClassLoader()
       try {
         for (item in decodeFromJsonFormat(data, serializer)) {
-          for (entry in item.entries) {
-            val resolvedHit = getMessageByCoordinate(entry.hit, classLoader, locale).lowercase(locale)
-            processor.putOptionWithHelpId(
-              words = Iterable {
-                SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(resolvedHit).iterator()
-              },
-              id = getMessageByCoordinate(item.id, classLoader, locale),
-              groupName = getMessageByCoordinate(item.name, classLoader, locale),
-              hit = getMessageByCoordinate(entry.hit, classLoader, locale),
-              path = entry.path?.let { getMessageByCoordinate(it, classLoader, locale) },
-            )
-          }
+          doRegisterIndex(
+            item = item,
+            classLoader = classLoader,
+            locale = locale,
+            processor = processor,
+            localeSpecificLoader = localeSpecificLoader,
+          )
         }
       }
       catch (e: CancellationException) {
@@ -225,6 +232,35 @@ private fun processSearchableOptions(processor: MySearchableOptionProcessor) {
         }
       }
     }
+  }
+}
+
+private fun doRegisterIndex(
+  item: ConfigurableEntry,
+  classLoader: ClassLoader,
+  locale: Locale?,
+  processor: MySearchableOptionProcessor,
+  localeSpecificLoader: ClassLoader?,
+) {
+  for (entry in item.entries) {
+    processor.putOptionWithHelpId(
+      words = Iterable {
+        val h1 = getMessageByCoordinate(entry.hit, classLoader, Locale.ROOT).lowercase(Locale.ROOT)
+        val s1 = SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(h1)
+        if (locale == null) {
+          s1.iterator()
+        }
+        else {
+          val h2 = getMessageByCoordinate(entry.hit, localeSpecificLoader!!, locale).lowercase(locale)
+          val s2 = SearchableOptionsRegistrarImpl.splitToWordsWithoutStemmingAndStopWords(h2)
+          Stream.concat(s2, s1).iterator()
+        }
+      },
+      id = getMessageByCoordinate(item.id, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
+      groupName = getMessageByCoordinate(item.name, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
+      hit = getMessageByCoordinate(entry.hit, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT),
+      path = entry.path?.let { getMessageByCoordinate(it, localeSpecificLoader ?: classLoader, locale ?: Locale.ROOT) },
+    )
   }
 }
 
