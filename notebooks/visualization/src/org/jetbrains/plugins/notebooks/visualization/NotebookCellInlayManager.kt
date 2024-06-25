@@ -311,9 +311,13 @@ class NotebookCellInlayManager private constructor(
           }
         }
         is NotebookIntervalPointersEvent.OnSwapped -> {
-          val first = _cells[change.firstOrdinal].intervalPointer
-          _cells[change.firstOrdinal].intervalPointer = _cells[change.secondOrdinal].intervalPointer
-          _cells[change.secondOrdinal].intervalPointer = first
+          val firstCell = _cells[change.firstOrdinal]
+          val first = firstCell.intervalPointer
+          val secondCell = _cells[change.secondOrdinal]
+          firstCell.intervalPointer = secondCell.intervalPointer
+          secondCell.intervalPointer = first
+          firstCell.update(force = false)
+          secondCell.update(force = false)
         }
       }
     }
