@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.onboarding.k2.satisfaction.survey
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -12,9 +11,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
+import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import java.time.Duration
 import java.time.Instant
-import java.util.concurrent.Callable
 
 internal const val K2_SINCE_NOT_DEFINED = -1L
 
@@ -98,9 +97,7 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
         if (forUnitTests) {
             projectContainsNonScriptKotlinFile = true
         } else {
-            ReadAction.nonBlocking(Callable {
-                projectContainsNonScriptKotlinFile = project.containsNonScriptKotlinFile()
-            })
+            project.runReadActionInSmartMode { projectContainsNonScriptKotlinFile = project.containsNonScriptKotlinFile() }
         }
         if (!projectContainsNonScriptKotlinFile) return false
 
