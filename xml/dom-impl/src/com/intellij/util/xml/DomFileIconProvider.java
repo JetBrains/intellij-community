@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.ide.IconProvider;
@@ -57,8 +57,8 @@ final class DomFileIconProvider extends IconProvider {
 
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    if (element instanceof XmlFile) {
-      DomTag tag = DOM_FILE_DESCRIPTION.getFileData((PsiFile)element);
+    if (element instanceof XmlFile xmlFile) {
+      DomTag tag = DOM_FILE_DESCRIPTION.getFileData(xmlFile);
       if (tag == null) return null;
 
       DomFileDescription<?> restored = restoreDomFileDescription(tag);
@@ -66,7 +66,7 @@ final class DomFileIconProvider extends IconProvider {
         return null;
       }
 
-      Icon fileIcon = restored.getFileIcon(flags);
+      Icon fileIcon = restored.getFileIcon(xmlFile, flags);
       if (fileIcon != null) {
         return IconManager.getInstance().createLayeredIcon(element, fileIcon, ElementBase.transformFlags(element, flags));
       }

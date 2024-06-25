@@ -27,6 +27,12 @@ public interface IdeaPlugin extends DomElement {
     return pluginId != null && !pluginId.equals(PluginManagerCore.CORE_PLUGIN_ID);
   }
 
+  default boolean isV2Descriptor() {
+    return DomUtil.hasXml(getPackage()) ||
+           DomUtil.hasXml(getContent()) ||
+           DomUtil.hasXml(getDependencies());
+  }
+
   @SubTag("product-descriptor")
   @NotNull ProductDescriptor getProductDescriptor();
 
