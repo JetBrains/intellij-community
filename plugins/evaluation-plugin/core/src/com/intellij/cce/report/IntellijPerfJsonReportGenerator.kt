@@ -3,11 +3,11 @@ package com.intellij.cce.report
 
 import com.google.gson.GsonBuilder
 import com.intellij.cce.metric.MetricInfo
-import com.intellij.cce.report.ijmetric.AiApplicationMetricDto
 import com.intellij.cce.report.ijmetric.AiPerformanceMetricsDto
 import com.intellij.cce.util.isUnderTeamCity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
 import java.nio.file.Path
 import java.time.ZonedDateTime
@@ -67,9 +67,9 @@ class IntellijPerfJsonReportGenerator(
   }.create()
 }
 
-private fun MetricInfo.toPerfMetric(namePrefix: String = ""): AiApplicationMetricDto {
+private fun MetricInfo.toPerfMetric(namePrefix: String = ""): ApplicationMetricDto<Double> {
   val metricName = "${namePrefix}${name}"
-  return AiApplicationMetricDto(metricName, value)
+  return ApplicationMetricDto(metricName, c=value)
 }
 
 

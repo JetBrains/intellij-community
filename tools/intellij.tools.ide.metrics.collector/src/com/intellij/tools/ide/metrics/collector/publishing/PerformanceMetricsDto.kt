@@ -10,12 +10,14 @@ import com.intellij.util.system.OS
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
+
+typealias PerformanceMetricsDto = IJPerfMetricsDto<Long>
 /**
  * A JSON schema used to report indexing performance metrics to display on https://ij-perf.jetbrains.com [IDEA-251676].
  * The generated .json files will be collected by https://github.com/JetBrains/ij-perf-report-aggregator.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-data class PerformanceMetricsDto(
+data class IJPerfMetricsDto<T: Number>(
   val version: String,
   val generated: String,
   val project: String,
@@ -29,7 +31,7 @@ data class PerformanceMetricsDto(
   val branch: String,
   val productCode: String,
   val methodName: String,
-  val metrics: List<ApplicationMetricDto>,
+  val metrics: List<ApplicationMetricDto<T>>,
   val systemMetrics: Map<String, List<MetricGroup>>,
   val tcInfo: CIServerBuildInfo
 ) {
@@ -46,7 +48,19 @@ data class PerformanceMetricsDto(
       metrics: Collection<PerformanceMetrics.Metric>,
       buildInfo: CIServerBuildInfo,
       generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
-    ) = PerformanceMetricsDto(
+    ) = create(projectName, projectURL, projectDescription, methodName, buildNumber, metrics.map { it.toJson() }, buildInfo, generated)
+
+    @JvmStatic
+    fun <T: Number> create(
+      projectName: String,
+      projectURL: String,
+      projectDescription: String,
+      methodName: String,
+      buildNumber: BuildNumber,
+      metrics: List<ApplicationMetricDto<T>>,
+      buildInfo: CIServerBuildInfo,
+      generated: String = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME)
+    ) = IJPerfMetricsDto(
       version = VERSION,
       generated = generated,
       project = projectName,
@@ -59,7 +73,7 @@ data class PerformanceMetricsDto(
       // the 'buildDate' field is required for https://ij-perf.jetbrains.com; use any value here
       buildDate = ZonedDateTime.now().format(DateTimeFormatter.RFC_1123_DATE_TIME),
       productCode = buildNumber.productCode,
-      metrics = metrics.map { it.toJson() },
+      metrics = metrics,
       methodName = methodName,
       systemMetrics = mapOf(),
       tcInfo = buildInfo,
