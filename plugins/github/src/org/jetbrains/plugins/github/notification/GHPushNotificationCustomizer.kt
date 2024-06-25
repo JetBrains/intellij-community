@@ -6,14 +6,16 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.branch.GitBranchUtil
+import git4idea.GitRemoteBranch
 import git4idea.push.*
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
+import org.jetbrains.plugins.github.api.GithubApiRequests.Repos.PullRequests
+import org.jetbrains.plugins.github.api.data.GithubIssueState
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRestIdOnly
 import org.jetbrains.plugins.github.api.executeSuspend
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -23,6 +25,7 @@ import org.jetbrains.plugins.github.pullrequest.action.GHPRCreatePullRequestNoti
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
+import java.util.concurrent.CancellationException
 
 private val LOG = logger<GHPushNotificationCustomizer>()
 
@@ -50,58 +53,62 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
       project.serviceAsync<GithubProjectDefaultAccountHolder>().account
     ) ?: return emptyList()
 
-
-    val canCreate = canCreateReview(pushResult, projectMapping, account)
+    val canCreate = canCreateReview(projectMapping, account, remoteBranch)
     if (!canCreate) return emptyList()
 
     return listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
   }
 
-  private suspend fun canCreateReview(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {
-    try {
-      val accountManager: GHAccountManager = serviceAsync<GHAccountManager>()
-      val token = accountManager.findCredentials(account) ?: return false
-      val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
-      val prBranch = getReviewBranch(executor, pushResult, projectMapping, account) ?: return false
-      val pullRequest = findPullRequest(executor, projectMapping, prBranch)
+  private suspend fun canCreateReview(repositoryMapping: GHGitRepositoryMapping, account: GithubAccount, branch: GitRemoteBranch): Boolean {
+    val accountManager = serviceAsync<GHAccountManager>()
+    val token = accountManager.findCredentials(account) ?: return false
+    val executor = GithubApiRequestExecutor.Factory.getInstance().create(account.server, token)
 
-      return pullRequest == null
-    }
-    catch (e: Exception) {
-      LOG.warn("Failed to lookup an existing pull request for $pushResult", e)
+    val repository = repositoryMapping.repository
+    val repositoryInfo = getRepositoryInfo(executor, repository) ?: run {
+      LOG.warn("Repository not found $repository")
       return false
     }
-  }
 
-  private suspend fun getReviewBranch(
-    executor: GithubApiRequestExecutor,
-    pushResult: GitPushRepoResult,
-    projectMapping: GHGitRepositoryMapping,
-    account: GithubAccount
-  ): String? {
-    val repositoryInfoRequest = GHGQLRequests.Repo.find(GHRepositoryCoordinates(account.server, projectMapping.repository.repositoryPath))
-    val repositoryInfo = executor.executeSuspend(repositoryInfoRequest) ?: return null
-    val defaultBranch = repositoryInfo.defaultBranch
-    val targetBranch = GitBranchUtil.stripRefsPrefix(pushResult.targetBranch)
-    if (defaultBranch != null && targetBranch.endsWith(defaultBranch)) return null
-
-    return targetBranch.removePrefix("${projectMapping.gitRemote.name}/")
-  }
-
-  private suspend fun findPullRequest(
-    executor: GithubApiRequestExecutor,
-    projectMapping: GHGitRepositoryMapping,
-    prBranch: String,
-  ): GHPullRequest? {
-    val findPullRequestByBranchesRequest = GHGQLRequests.PullRequest.findByBranches(
-      repository = projectMapping.repository,
-      baseBranch = null,
-      headBranch = prBranch
-    )
-    val targetProjectPath = projectMapping.repository.repositoryPath.toString()
-    return executor.executeSuspend(findPullRequestByBranchesRequest).nodes.find {
-      it.baseRepository?.nameWithOwner == targetProjectPath &&
-      it.headRepository?.nameWithOwner == targetProjectPath
+    val remoteBranchName = branch.nameForRemoteOperations
+    if (repositoryInfo.defaultBranch == remoteBranchName) {
+      return false
     }
+
+    if (findExistingPullRequests(executor, repository, remoteBranchName).isNotEmpty()) {
+      return false
+    }
+
+    return true
+  }
+
+  private suspend fun getRepositoryInfo(executor: GithubApiRequestExecutor, repository: GHRepositoryCoordinates) =
+    try {
+      executor.executeSuspend(GHGQLRequests.Repo.find(repository))
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to lookup a repository $repository", e)
+      null
+    }
+
+  private suspend fun findExistingPullRequests(
+    executor: GithubApiRequestExecutor,
+    repository: GHRepositoryCoordinates,
+    remoteBranchName: String,
+  ): List<GHPullRequestRestIdOnly> = try {
+    executor.executeSuspend(PullRequests.find(repository,
+                                              GithubIssueState.open,
+                                              null,
+                                              repository.repositoryPath.owner + ":" + remoteBranchName)).items
+  }
+  catch (ce: CancellationException) {
+    throw ce
+  }
+  catch (e: Exception) {
+    LOG.warn("Failed to lookup an existing pull request for $remoteBranchName in $repository", e)
+    emptyList()
   }
 }
