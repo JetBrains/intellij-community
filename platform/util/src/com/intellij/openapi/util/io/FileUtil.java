@@ -13,10 +13,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.io.URLUtil;
+import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -1525,5 +1529,41 @@ public class FileUtil {
   @SuppressWarnings("unused")
   public static boolean isJarOrZip(@NotNull File file) {
     return FileUtilRt.isJarOrZip(file, true);
+  }
+
+  /**
+   * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
+   * Please don't remove -- KTIJ-29067 JPS: "NoSuchFieldError: FILE_HASHING_STRATEGY" caused by Maven project with 1.6
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  @ApiStatus.Internal
+  @SuppressWarnings("all")
+  public final static TObjectHashingStrategy<File> FILE_HASHING_STRATEGY;
+
+  static {
+      Object FILE_HASHING_STRATEGY_temp = null;
+      try {
+        // If there is no trove4j library in the classpath, we will fail with ClassNotFoundException
+        // and FILE_HASHING_STRATEGY will not be initialized
+        Class<?> clazz = Class.forName("gnu.trove.TObjectHashingStrategy");
+
+        FILE_HASHING_STRATEGY_temp = new TObjectHashingStrategy<File>() {
+          @Override
+          public int computeHashCode(File object) {
+            return fileHashCode(object);
+          }
+
+          @Override
+          public boolean equals(File o1, File o2) {
+            return filesEqual(o1, o2);
+          }
+        };
+      }
+      catch (ClassNotFoundException e) {
+        // Do nothing
+      } finally {
+        FILE_HASHING_STRATEGY = (TObjectHashingStrategy<File>)FILE_HASHING_STRATEGY_temp;
+      }
   }
 }
