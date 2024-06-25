@@ -473,6 +473,12 @@ open class JBTabsImpl internal constructor(
     scrollBarChangeListener = ChangeListener { updateTabsOffsetFromScrollBar() }
   }
 
+  @Internal
+  protected fun resetScrollBarActivity() {
+    relayoutAlarm.cancelAllRequests()
+    isRecentlyActive = false
+  }
+
   private fun setRecentlyActive() {
     relayoutAlarm.cancelAllRequests()
     isRecentlyActive = true

@@ -642,6 +642,7 @@ private class EditorTabs(
     val newActive = UIUtil.isFocusAncestor(this)
     if (newActive != isActive) {
       isActive = newActive
+      resetScrollBarActivity()
       revalidateAndRepaint()
     }
   }
