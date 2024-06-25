@@ -171,7 +171,7 @@
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentAvailabilityService"
                         serviceImplementation="com.intellij.execution.wsl.DummyWslIjentAvailabilityService"/>
 
-    <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
+    <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType" os="windows"/>
     <registryKey key="wsl.obtain.windows.host.ip.alternatively" os="windows" defaultValue="true" restartRequired="true"
                  description="Obtain Windows host machine IP alternatively (not using the recommended 'cat /etc/resolv.conf | grep nameserver')."/>
 
