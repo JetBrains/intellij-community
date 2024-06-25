@@ -9,15 +9,12 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 /**
- * Extension point for visualization or formatting of plain text values obtained from debuggee's string-like entities.
+ * Extension point `xdebugger.textValueVisualizer` is used to visualize or format plain text values * obtained
+ * from debuggee's string-like entities.
  * E.g., JSON might be pretty-printed with syntax highlighting, HTML might be rendered in a browser and can be pretty-printed as XML.
  */
 @ApiStatus.Experimental // until we consider collection visualizers
 interface TextValueVisualizer {
-
-  companion object {
-    val EP: ExtensionPointName<TextValueVisualizer> = ExtensionPointName.create("com.intellij.xdebugger.textValueVisualizer")
-  }
 
   /**
    * Returns whether this extension can visualize the given value.
