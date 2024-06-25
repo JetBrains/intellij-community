@@ -5,17 +5,18 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
-import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
@@ -446,7 +447,7 @@ class LinuxDistributionBuilder(
     val vmOptionsPath = distBinDir.resolve("${context.productProperties.baseFileName}64.vmoptions")
 
     @Suppress("SpellCheckingInspection")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context, OsFamily.LINUX) + listOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
+    val vmOptions = VmOptionsGenerator.computeVmOptions(context) + listOf("-Dsun.tools.attach.tmp.only=true", "-Dawt.lock.fair=true")
     writeVmOptions(vmOptionsPath, vmOptions, separator = "\n")
 
     return vmOptionsPath

@@ -63,11 +63,6 @@ abstract class WindowsDistributionCustomizer {
   var useXPlatLauncher = true
 
   /**
-   * Adds VM Options into a Windows distribution after adding options from [ProductProperties.additionalVmOptions].
-   */
-  var additionalWindowsVmOptions: PersistentList<String> = persistentListOf()
-
-  /**
    * Name of the root directory in Windows .zip archive
    * (the method is overridden in [AndroidStudioProperties.groovy](https://bit.ly/3heXKlQ)).
    */
