@@ -186,12 +186,16 @@ internal class WorkspaceModuleImporter(
     assert(MavenConstants.SCOPE_SYSTEM != artifact.scope)
     val libraryRootsProvider = {
       val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
-      val sources = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")
       val javadoc = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "javadoc", "jar")
+      val sources = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, "sources", "jar")
+
+      // Keep the list of roots sorted by url to avoid extra "roots changed" events after loading the `.iml` files.
+      // The `.iml` files keep the order of roots sorted.
+      // This rule can be relaxed when the maven projects will not generate any `.iml` files.
       listOf(
         LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(classes), LibraryRootTypeId.COMPILED),
-        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(sources), LibraryRootTypeId.SOURCES),
         LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(javadoc), JAVADOC_TYPE),
+        LibraryRoot(virtualFileUrlManager.getOrCreateFromUrl(sources), LibraryRootTypeId.SOURCES),
       )
     }
     return createLibraryDependency(artifact.libraryName,
