@@ -93,7 +93,6 @@ public interface MutableEntityStorageInstrumentation : MutableEntityStorage, Ent
    * The old children of the parent will be removed from the storage if they have a not-null reference to the parent
    *
    *   If the reference to the parent is nullable, they'll remain in the storage but with null as parent.
-   *   ^^^ This behaviour is questionable. See IDEA-307409
    *
    * If any of child already has a parent, the link to this child will be removed from the old parent and added to the new one.
    *
