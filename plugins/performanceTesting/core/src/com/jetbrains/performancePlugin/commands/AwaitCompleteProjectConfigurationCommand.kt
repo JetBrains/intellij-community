@@ -21,13 +21,11 @@ class AwaitCompleteProjectConfigurationCommand(text: String, line: Int) : Perfor
     const val NAME = "awaitCompleteProjectConfiguration"
     const val PREFIX = "$CMD_PREFIX$NAME"
 
-    fun awaitCompleteProjectConfiguration(project: Project) {
-      runBlocking {
+    suspend fun awaitCompleteProjectConfiguration(project: Project) {
         val result = project.awaitCompleteProjectConfiguration { str -> LOG.info(str) }
         if (result is ConfigurationResult.Failure) {
           LOG.error(result.message)
         }
-      }
     }
   }
 
