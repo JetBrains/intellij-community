@@ -143,7 +143,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <!--suppress PluginXmlValidity -->
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.execution.console.ConsoleHistoryCopyHandler"/>
 
-    <editor.backspaceModeOverride language="Python" implementationClass="com.intellij.codeInsight.editorActions.SmartBackspaceDisabler"/>
     <sdkType implementation="com.jetbrains.python.sdk.PythonSdkType"/>
     <gotoClassContributor implementation="com.jetbrains.python.PyGotoClassContributor"/>
     <gotoSymbolContributor implementation="com.jetbrains.python.PyGotoSymbolContributor"/>
