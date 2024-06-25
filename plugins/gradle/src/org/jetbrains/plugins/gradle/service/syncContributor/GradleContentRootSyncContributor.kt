@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.service.syncContributor
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.service.project.nameGenerator.ModuleNameGenerator
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.progress.checkCanceled
+import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -71,9 +73,14 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
 
         val contentRootData = GradleContentRootData(buildModel, projectModel, projectEntitySource)
 
-        if (contentRootEntities.all { !isConflictedContentRootEntity(it, contentRootData) }) {
-          contentRootsToAdd[projectEntitySource] = contentRootData
+        if (contentRootEntities.any { isConflictedContentRootEntity(it, contentRootData) }) {
+          continue
         }
+        if (isUnloadedModule(context, project, contentRootData)) {
+          continue
+        }
+
+        contentRootsToAdd[projectEntitySource] = contentRootData
       }
     }
 
@@ -92,6 +99,21 @@ class GradleContentRootSyncContributor : GradleSyncContributor {
     val entitySource = contentRootData.entitySource
     return contentRootEntity.entitySource == entitySource ||
            contentRootEntity.url == entitySource.projectRootUrl
+  }
+
+  private fun isUnloadedModule(
+    context: ProjectResolverContext,
+    project: Project,
+    contentRootData: GradleContentRootData,
+  ): Boolean {
+    val unloadedModulesListStorage = UnloadedModulesListStorage.getInstance(project)
+    val unloadedModuleNameHolder = unloadedModulesListStorage.unloadedModuleNameHolder
+    for (moduleName in generateModuleNames(context, contentRootData)) {
+      if (unloadedModuleNameHolder.isUnloaded(moduleName)) {
+        return true
+      }
+    }
+    return false
   }
 
   private fun configureContentRoot(

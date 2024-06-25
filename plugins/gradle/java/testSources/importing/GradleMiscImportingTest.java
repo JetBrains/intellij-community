@@ -188,11 +188,11 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
     );
     assertModules("project", "project.main", "project.test");
 
-    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(Collections.singletonList("project.main")));
-    assertModules("project", "project.test");
+    edt(() -> ModuleManager.getInstance(myProject).setUnloadedModulesSync(List.of("project", "project.main")));
+    assertModules("project.test");
 
     importProject();
-    assertModules("project", "project.test");
+    assertModules("project.test");
   }
 
   @Test
