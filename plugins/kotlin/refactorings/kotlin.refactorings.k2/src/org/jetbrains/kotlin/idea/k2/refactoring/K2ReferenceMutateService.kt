@@ -228,7 +228,15 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         val isInfix = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaNamedFunctionSymbol)?.isInfix == true }
         val isOperator = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaNamedFunctionSymbol)?.isOperator == true }
         val replacedExpr = if (isOperator) {
-            replaced(psiFactory.createOperationName(OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[Name.identifier(shortName)] ?: shortName))
+            val identifier = Name.identifier(shortName)
+            val isUnary = OperatorNameConventions.UNARY_OPERATION_NAMES.contains(identifier)
+            val operator = OperatorNameConventions.TOKENS_BY_OPERATOR_NAME[identifier] ?: shortName
+            val newOperator = if (isUnary) {
+                (psiFactory.createExpression("${operator}0") as KtUnaryExpression).operationReference
+            } else {
+                psiFactory.createOperationName(operator)
+            }
+            replaced(newOperator)
         } else if (isInfix) {
             replaced(psiFactory.createOperationName(shortName))
         } else {

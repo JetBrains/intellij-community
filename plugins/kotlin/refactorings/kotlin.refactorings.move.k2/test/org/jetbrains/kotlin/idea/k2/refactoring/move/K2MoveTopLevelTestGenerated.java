@@ -449,4 +449,9 @@ public class K2MoveTopLevelTestGenerated extends AbstractK2MoveTopLevelTest {
     public void testKotlin_unaffectedQualifiedReferences_UnaffectedQualifiedReferences() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/unaffectedQualifiedReferences/unaffectedQualifiedReferences.test");
     }
+
+    @TestMetadata("kotlin/unaryOperatorReference/unaryOperatorReference.test")
+    public void testKotlin_unaryOperatorReference_UnaryOperatorReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveTopLevel/kotlin/unaryOperatorReference/unaryOperatorReference.test");
+    }
 }
