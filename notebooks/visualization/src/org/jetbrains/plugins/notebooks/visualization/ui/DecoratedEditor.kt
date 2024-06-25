@@ -5,6 +5,8 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
+import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager.FullEditorWidthRenderer
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.FileEditorStateLevel
 import com.intellij.openapi.fileEditor.TextEditor
@@ -12,10 +14,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import java.awt.AWTEvent
-import java.awt.BorderLayout
-import java.awt.GraphicsEnvironment
-import java.awt.Point
+import java.awt.*
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLayer
@@ -33,6 +32,9 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
       setupScrollPaneListener()
     }
     setupScrollingPositionKeeper()
+    manager.onInvalidate {
+      component.revalidate()
+    }
   }
 
   private fun setupScrollPaneListener() {
@@ -56,19 +58,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     val editorEx = original.editor as EditorEx
     val scrollPane = editorEx.scrollPane
     val view = scrollPane.viewport.view
-    scrollPane.viewport.view = object : JComponent() {
-      init {
-        layout = BorderLayout()
-        add(view, BorderLayout.CENTER)
-      }
-
-      override fun validateTree() {
-        keepScrollingPositionWhile(editor) {
-          super.validateTree()
-          manager.validateCells()
-        }
-      }
-    }
+    scrollPane.viewport.view = EditorComponentWrapper(editorEx, view as EditorComponentImpl, manager)
   }
 
   override fun getComponent(): JComponent = component
@@ -147,5 +137,37 @@ internal fun keepScrollingPositionWhile(editor: Editor, task: Runnable) {
       task.run()
       keeper.restorePosition(false)
     }
+  }
+}
+
+class EditorComponentWrapper(
+  private val editor: Editor,
+  editorComponent: EditorComponentImpl,
+  private val manager: NotebookCellInlayManager,
+) : JComponent() {
+  init {
+    layout = BorderLayout()
+    add(editorComponent, BorderLayout.CENTER)
+  }
+
+  override fun doLayout() {
+    // EditorEmbeddedComponentManager breaks the Swing layout model as it expect that subcomponents will define their own bounds themselves.
+    // Here we invoke FullEditorWidthRenderer#validate to place inlay components correctly after doLayout.
+    components.asSequence()
+      .filterIsInstance<FullEditorWidthRenderer>()
+      .forEach {
+        it.validate()
+      }
+  }
+
+  override fun validateTree() {
+    keepScrollingPositionWhile(editor) {
+      manager.validateCells()
+      super.validateTree()
+    }
+  }
+
+  override fun paintComponent(g: Graphics?) {
+    super.paintComponent(g)
   }
 }
