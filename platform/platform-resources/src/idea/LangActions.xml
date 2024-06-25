@@ -651,6 +651,8 @@
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="GoToMenu"/>
     </group>
 
+    <action id="ConfigureInspectionsAction" class="com.intellij.codeInsight.daemon.impl.ConfigureInspectionsAction"/>
+
     <group id="ParameterNameHints">
       <action id="ShowSettingsWithAddedPattern" class="com.intellij.codeInsight.hints.ShowSettingsWithAddedPattern"/>
       <action id="ToggleInlineHintsAction" class="com.intellij.codeInsight.hints.ToggleInlineHintsAction"/>

@@ -3,16 +3,24 @@ package com.intellij.openapi.editor.impl.inspector
 
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.hints.InlayHintsSwitch
+import com.intellij.codeInspection.InspectionsBundle
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.markup.AnalyzerStatus
 import com.intellij.openapi.editor.markup.InspectionsFUS
 import com.intellij.openapi.editor.markup.InspectionsLevel
 import com.intellij.openapi.editor.markup.LanguageHighlightLevel
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 
 class InspectionsSettingContent(val analyzerGetter: () -> AnalyzerStatus, project: Project, fusTabId: Int) {
+  private var link: ActionLink? = null
   val panel: DialogPanel = panel {
     panel {
       row { label(DaemonBundle.message("iw.inspection.popup.title")) }
@@ -33,10 +41,16 @@ class InspectionsSettingContent(val analyzerGetter: () -> AnalyzerStatus, projec
           }
         }
         row {
-          link(DaemonBundle.message("iw.inspection.popup.configure")) {
+          link = link(DaemonBundle.message("iw.inspection.popup.configure")) { event ->
             InspectionsFUS.signal(project, fusTabId, InspectionsFUS.InspectionsEvent.TOGGLE_PROBLEMS_VIEW)
-            analyzerGetter().controller.toggleProblemsView()
-          }
+            link?.let {
+              val ev = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, null, DataManager.getInstance().getDataContext(it))
+
+              ActionManager.getInstance().getAction("ConfigureInspectionsAction")?.actionPerformed(ev) ?: run {
+                ShowSettingsUtil.getInstance().showSettingsDialog(project, InspectionsBundle.message("inspection.root.node.title"))
+              }
+            }
+          }.component
         }
       }
     }
