@@ -5,6 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.DimensionService
 import com.intellij.openapi.util.text.StringUtil
@@ -26,13 +27,17 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-private const val SELECTED_TAB_KEY_PREFIX = "DEBUGGER_VISUALIZED_TEXT_SELECTED_TAB#"
-private val logger = Logger.getInstance(VisualizedTextPopup.javaClass)
-
 /**
  * Provides tools to show a text-like value that might be formatted for better readability (JSON, XML, HTML, etc.).
  */
 internal object VisualizedTextPopup {
+
+  private const val SELECTED_TAB_KEY_PREFIX = "DEBUGGER_VISUALIZED_TEXT_SELECTED_TAB#"
+
+  private val LOG = Logger.getInstance(VisualizedTextPopup.javaClass)
+
+  private val extensionPoint: ExtensionPointName<TextValueVisualizer> =
+    ExtensionPointName.create("com.intellij.xdebugger.textValueVisualizer")
 
   fun showValuePopup(event: MouseEvent, project: Project, editor: Editor?, component: JComponent, cancelCallback: Runnable?) {
     var size = DimensionService.getInstance().getSize(DebuggerUIUtil.FULL_VALUE_POPUP_DIMENSION_KEY, project)
@@ -137,7 +142,7 @@ internal object VisualizedTextPopup {
           return createTabbedPane(tabs, fullValue)
         }
         catch (e: Exception) {
-          logger.error("failed to visualize value", e, Attachment("value.txt", fullValue))
+          LOG.error("failed to visualize value", e, Attachment("value.txt", fullValue))
           // Fallback to the default visualizer, which provided the last tab.
         }
       }
@@ -190,31 +195,33 @@ internal object VisualizedTextPopup {
   }
 
   private fun collectVisualizedTabs(fullValue: String): List<VisualizedContentTab> {
-    return TextValueVisualizer.EP.extensionList.flatMap { viz ->
-      try {
-        viz.visualize(fullValue)
-      }
-      catch (t: Throwable) {
-        logger.error("failed to visualize value ($viz)", t, Attachment("value.txt", fullValue))
-        emptyList()
-      }
-    } +
-      // Explicitly add the fallback raw visualizer to make it the last one.
-      FallbackTextVisualizer.visualize(fullValue)
+    return extensionPoint.extensionList
+             .flatMap { viz ->
+               try {
+                 viz.visualize(fullValue)
+               }
+               catch (t: Throwable) {
+                 LOG.error("failed to visualize value ($viz)", t, Attachment("value.txt", fullValue))
+                 emptyList()
+               }
+             } +
+           // Explicitly add the fallback raw visualizer to make it the last one.
+           FallbackTextVisualizer.visualize(fullValue)
   }
 
   fun isVisualizable(fullValue: String): Boolean {
     // text with line breaks would be nicely rendered by the raw visualizer
     return StringUtil.containsLineBreak(fullValue) ||
-      TextValueVisualizer.EP.extensionList.any { viz ->
-        try {
-          viz.canVisualize(fullValue)
-        }
-        catch (t: Throwable) {
-          logger.error("failed to check visualization of value ($viz)", t, Attachment("value.txt", fullValue))
-          false
-        }
-      }
+           extensionPoint.extensionList
+             .any { viz ->
+               try {
+                 viz.canVisualize(fullValue)
+               }
+               catch (t: Throwable) {
+                 LOG.error("failed to check visualization of value ($viz)", t, Attachment("value.txt", fullValue))
+                 false
+               }
+             }
   }
 
 }
