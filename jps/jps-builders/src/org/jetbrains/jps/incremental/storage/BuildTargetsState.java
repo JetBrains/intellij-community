@@ -4,10 +4,12 @@ package org.jetbrains.jps.incremental.storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
@@ -26,6 +28,15 @@ public final class BuildTargetsState {
   private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final JpsModel myModel;
   private final BuildRootIndex myBuildRootIndex;
+
+  /**
+   * @deprecated temporary available to enable kotlin tests running. Should be removed eventually
+   */
+  @Deprecated
+  @ApiStatus.Internal
+  public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {
+    this(dataPaths, model, (BuildRootIndex)buildRootIndex);
+  }
 
   public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndex buildRootIndex) {
     myDataPaths = dataPaths;
