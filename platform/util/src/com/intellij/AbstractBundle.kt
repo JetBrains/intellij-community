@@ -71,7 +71,7 @@ open class AbstractBundle {
     }
 
     @ApiStatus.Internal
-    inline fun resolveResourceBundleWithFallback(
+    fun resolveResourceBundleWithFallback(
       loader: ClassLoader,
       pathToBundle: String,
       firstTry: () -> ResourceBundle,
@@ -139,7 +139,9 @@ open class AbstractBundle {
     val isDefault = DefaultBundleService.isDefaultBundle()
     var bundle = getBundle(isDefault)
     if (bundle == null) {
-      bundle = resolveResourceBundle(pathToBundle, classLoader)
+      bundle = resolveResourceBundleWithFallback(loader = classLoader, pathToBundle = pathToBundle) {
+        findBundle(pathToBundle = pathToBundle, loader = classLoader, control = IntelliJResourceControl)
+      }
       val ref = SoftReference(bundle)
       if (isDefault) {
         defaultBundle = ref
@@ -153,12 +155,6 @@ open class AbstractBundle {
 
   @ApiStatus.Internal
   protected open fun getBundle(isDefault: Boolean): ResourceBundle? = (if (isDefault) defaultBundle else bundle)?.get()
-
-  private fun resolveResourceBundle(pathToBundle: String, loader: ClassLoader): ResourceBundle {
-    return resolveResourceBundleWithFallback(loader = loader, pathToBundle = pathToBundle) {
-      findBundle(pathToBundle = pathToBundle, loader = loader, control = IntelliJResourceControl)
-    }
-  }
 
   protected open fun findBundle(pathToBundle: @NonNls String, loader: ClassLoader, control: ResourceBundle.Control): ResourceBundle {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control)

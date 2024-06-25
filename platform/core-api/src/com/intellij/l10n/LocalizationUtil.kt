@@ -53,21 +53,14 @@ object LocalizationUtil {
 
   fun getLocaleOrNullForDefault(): Locale? {
     val locale = getLocale()
-    if (Locale.ENGLISH.language == locale.language) {
-      return null
-    }
-    return locale
+    return if (locale.language == Locale.ENGLISH.language) null else locale
   }
 
   @Internal
   @JvmOverloads
   fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
-    val langBundle = findLanguageBundle()
-    if (langBundle == null) {
-      return null
-    }
-    val pluginDescriptor = langBundle.pluginDescriptor
-    return pluginDescriptor?.classLoader ?: defaultLoader
+    val langBundle = findLanguageBundle() ?: return null
+    return langBundle.pluginDescriptor?.classLoader ?: defaultLoader
   }
 
   private fun Path.convertToLocalizationFolderUsage(locale: Locale, withRegion: Boolean): Path {
