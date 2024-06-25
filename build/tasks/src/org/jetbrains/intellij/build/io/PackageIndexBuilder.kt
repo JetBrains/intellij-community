@@ -33,7 +33,10 @@ class PackageIndexBuilder {
     val sortedDirsToRegister = dirsToRegister.sorted()
 
     val stream = zipCreator.resultStream
+/* Android Studio (b/233762164): always add directory entries because we cannot use the index.
     if (addDirEntriesMode == AddDirEntriesMode.NONE) {
+*/
+    if (false) {
       for (dirName in sortedDirsToRegister) {
         val nameBytes = dirName.encodeToByteArray()
         indexWriter.add(indexWriter.entry(key = Xxh3.hash(nameBytes), offset = 0, size = -1))
