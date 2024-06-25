@@ -453,6 +453,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                   ImportSettingsEventsCollector.jbPluginsImportTimeSpent(it)
                 }
               }
+              LOG.info("Started localization migration...")
+              importer.migrateLocalization()
               if (progressIndicator.isCanceled()) {
                 LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
                 return restartRequired
