@@ -131,53 +131,6 @@ public class XValueHint extends AbstractValueHint {
     disposeVisibleHint();
   }
 
-  public class CompositeIcon implements Icon {
-    private final Icon icon1;
-    private final Icon icon2;
-    private final boolean horizontal;
-
-    public CompositeIcon(Icon icon1, Icon icon2, boolean horizontal) {
-      this.icon1 = icon1;
-      this.icon2 = icon2;
-      this.horizontal = horizontal;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      icon1.paintIcon(c, g, x, y);
-      if (horizontal) {
-        icon2.paintIcon(c, g, x + icon1.getIconWidth(), y);
-      } else {
-        icon2.paintIcon(c, g, x, y + icon1.getIconHeight());
-      }
-    }
-
-    @Override
-    public int getIconWidth() {
-      return horizontal ? icon1.getIconWidth() + icon2.getIconWidth() : Math.max(icon1.getIconWidth(), icon2.getIconWidth());
-    }
-
-    @Override
-    public int getIconHeight() {
-      return horizontal ? Math.max(icon1.getIconHeight(), icon2.getIconHeight()) : icon1.getIconHeight() + icon2.getIconHeight();
-    }
-  }
-
-  public static class SimpleColoredTextEx extends SimpleColoredText {
-    private Icon myIcon;
-
-    @Override
-    public void setIcon(@Nullable Icon icon) {
-      myIcon = icon;
-    }
-
-    @Override
-    public void appendToComponent(@NotNull ColoredTextContainer component) {
-      super.appendToComponent(component);
-      component.setIcon(myIcon);
-    }
-  }
-
   @Override
   protected void evaluateAndShowHint() {
     AtomicBoolean showEvaluating = new AtomicBoolean(true);
