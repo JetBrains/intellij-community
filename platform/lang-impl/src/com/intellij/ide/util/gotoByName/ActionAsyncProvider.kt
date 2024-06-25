@@ -238,12 +238,6 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
         }
       }
 
-      val optionSender: (OptionDescription) -> Unit = {
-        launch {
-          send(matchItem(item = it, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT))
-        }
-      }
-
       for (provider in SearchTopHitProvider.EP_NAME.extensionList) {
         @Suppress("DEPRECATION")
         if (provider is com.intellij.ide.ui.OptionsTopHitProvider.CoveredByToggleActions) {
@@ -255,7 +249,13 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
           provider.consumeTopHits(pattern = prefix + pattern, collector = collector, project = project)
         }
         else if (project != null && provider is ProjectLevelProvidersAdapter) {
-          provider.consumeAllTopHits(pattern = pattern, collector = optionSender, project = project)
+          provider.consumeAllTopHits(
+            pattern = pattern,
+            collector = {
+              send(matchItem(item = it, matcher = matcher, pattern = pattern, matchType = MatchedValueType.TOP_HIT))
+            },
+            project = project,
+          )
         }
         provider.consumeTopHits(pattern, collector, project)
       }
