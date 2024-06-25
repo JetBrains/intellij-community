@@ -8,12 +8,14 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.io.JsonReaderEx;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class JsonReaders {
   public static final ObjectFactory<String> STRING_OBJECT_FACTORY = new ObjectFactory<>() {
     @Override

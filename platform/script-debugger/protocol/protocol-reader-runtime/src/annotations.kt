@@ -15,18 +15,24 @@
  */
 package org.jetbrains.jsonProtocol
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 annotation class JsonField(
   val allowAnyPrimitiveValue: Boolean = false, // read any primitive value as String (true as true, number as string - don't try to parse)
   val allowAnyPrimitiveValueAndMap: Boolean = false,
   val primitiveValue: String = "")
 
+@ApiStatus.Internal
 @Target(AnnotationTarget.CLASS)
 annotation class JsonType
 
+@ApiStatus.Internal
 @Target(AnnotationTarget.FUNCTION)
 annotation class JsonSubtypeCasting(val reinterpret: Boolean = false)
 
+@ApiStatus.Internal
 @Target(AnnotationTarget.FUNCTION)
 annotation class JsonParseMethod
 
@@ -34,8 +40,10 @@ annotation class JsonParseMethod
  * For field-reading method specifies that the field is optional and may safely be absent in
  * JSON object. By default fields are not optional.
  */
+@ApiStatus.Internal
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 annotation class Optional(val default: String = "")
 
+@ApiStatus.Internal
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 annotation class ProtocolName(val name: String)

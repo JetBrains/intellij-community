@@ -4,12 +4,14 @@
 
 package org.jetbrains.jsonProtocol;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.io.JsonReaderEx;
 
 /**
  * Optional base interface for JSON type interface. Underlying JSON object becomes available
  * to user this way.
  */
+@ApiStatus.Internal
 public interface JsonObjectBased {
   JsonReaderEx getDeferredReader();
 }
