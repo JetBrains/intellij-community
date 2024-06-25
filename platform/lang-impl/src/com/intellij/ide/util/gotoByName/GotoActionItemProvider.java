@@ -132,7 +132,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
         provider.consumeTopHits(prefix + pattern, collector, project);
       }
       else if (project != null && provider instanceof OptionsTopHitProvider.ProjectLevelProvidersAdapter) {
-        ((OptionsTopHitProvider.ProjectLevelProvidersAdapter)provider).consumeAllTopHits(pattern, it -> {
+        ((OptionsTopHitProvider.ProjectLevelProvidersAdapter)provider).blockingConsumeAllTopHits(pattern, it -> {
           collector.accept(it);
           return Unit.INSTANCE;
         }, project);

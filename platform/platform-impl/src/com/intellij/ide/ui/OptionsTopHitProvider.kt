@@ -91,10 +91,30 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
       }
     }
 
-    fun consumeAllTopHits(pattern: String, collector: (OptionDescription) -> Unit, project: Project?) {
+    fun blockingConsumeAllTopHits(pattern: String, collector: (OptionDescription) -> Unit, project: Project?) {
       val matcher = buildMatcher(pattern)
       for (provider in PROJECT_LEVEL_EP.extensionList) {
         consumeTopHitsForApplicableProvider(provider = provider, matcher = matcher, collector = collector, project = project)
+      }
+    }
+
+    suspend fun consumeAllTopHits(pattern: String, collector: suspend (OptionDescription) -> Unit, project: Project?) {
+      val matcher = buildMatcher(pattern)
+      var appLevelCache: TopHitCache? = null
+      var projectLevelCache: TopHitCache? = null
+      for (provider in PROJECT_LEVEL_EP.extensionList) {
+        val cache = if (project == null || provider is ApplicationLevelProvider) {
+          appLevelCache ?: TopHitCache.getInstanceAsync().also { appLevelCache = it }
+        }
+        else {
+          projectLevelCache ?: TopHitCache.getInstanceAsync(project).also { projectLevelCache = it }
+        }
+        for (option in cache.getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
+          val optionValue = option.option ?: continue
+          if (matcher.matches(optionValue)) {
+            collector(option)
+          }
+        }
       }
     }
   }
