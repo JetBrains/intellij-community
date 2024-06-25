@@ -6,12 +6,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.account.AccountUtil
-import git4idea.account.RepoAndAccount
 import git4idea.branch.GitBranchUtil
-import git4idea.push.GitPushNotificationCustomizer
-import git4idea.push.GitPushRepoResult
-import git4idea.push.isSuccessful
+import git4idea.push.*
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import org.jetbrains.plugins.github.api.GHGQLRequests
@@ -34,37 +30,31 @@ internal class GHPushNotificationCustomizer(private val project: Project) : GitP
   override suspend fun getActions(
     repository: GitRepository,
     pushResult: GitPushRepoResult,
-    customParams: Map<String, VcsPushOptionValue>
+    customParams: Map<String, VcsPushOptionValue>,
   ): List<AnAction> {
     if (!pushResult.isSuccessful) return emptyList()
-    val (projectMapping, account) = findRepoAndAccount(repository, pushResult) ?: return emptyList()
+    val remoteBranch = pushResult.findRemoteBranch(repository) ?: return emptyList()
+
+    val connection = project.serviceAsync<GHRepositoryConnectionManager>().connectionState.value
+    if (connection != null && (connection.repo.gitRepository != repository || connection.repo.gitRemote != remoteBranch.remote)) {
+      return emptyList()
+    }
+
+    val (projectMapping, account) = connection?.let {
+      it.repo to it.account
+    } ?: GitPushNotificationUtil.findRepositoryAndAccount(
+      project.serviceAsync<GHHostedRepositoriesManager>().knownRepositories,
+      repository, remoteBranch.remote,
+      serviceAsync<GHAccountManager>().accountsState.value,
+      project.serviceAsync<GithubPullRequestsProjectUISettings>().selectedUrlAndAccount?.second,
+      project.serviceAsync<GithubProjectDefaultAccountHolder>().account
+    ) ?: return emptyList()
+
+
     val canCreate = canCreateReview(pushResult, projectMapping, account)
     if (!canCreate) return emptyList()
 
-    val connection = project.serviceAsync<GHRepositoryConnectionManager>().connectionState.value
-    if (connection?.account != account || connection.repo != projectMapping) return emptyList()
-
     return listOf(GHPRCreatePullRequestNotificationAction(project, projectMapping, account))
-  }
-
-  private suspend fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GHGitRepositoryMapping, GithubAccount>? {
-    val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
-    val projectsManager = project.serviceAsync<GHHostedRepositoriesManager>()
-    val (url, account) = settings.selectedUrlAndAccount ?: return null
-    val projectMapping = projectsManager.knownRepositories.find { mapping: GHGitRepositoryMapping ->
-      mapping.remote.url == url
-    } ?: return null
-
-    AccountUtil.selectPersistedRepoAndAccount(targetRepository, pushResult, projectMapping to account)?.let {
-      return it
-    }
-    val accountManager = serviceAsync<GHAccountManager>()
-    val defaultAccountHolder = project.serviceAsync<GithubProjectDefaultAccountHolder>()
-    AccountUtil.selectSingleAccount(projectsManager, accountManager, targetRepository, pushResult, defaultAccountHolder.account)?.let {
-      return it
-    }
-
-    return null
   }
 
   private suspend fun canCreateReview(pushResult: GitPushRepoResult, projectMapping: GHGitRepositoryMapping, account: GithubAccount): Boolean {

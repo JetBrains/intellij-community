@@ -1,18 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.notification
 
+import com.intellij.collaboration.auth.findAccountOrNull
 import com.intellij.dvcs.push.VcsPushOptionValue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import git4idea.account.AccountUtil
-import git4idea.account.RepoAndAccount
 import git4idea.branch.GitBranchUtil
-import git4idea.push.GitPushNotificationCustomizer
-import git4idea.push.GitPushRepoResult
-import git4idea.push.isSuccessful
+import git4idea.push.*
+import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -30,15 +28,11 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestByBra
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.create.action.GitLabMergeRequestOpenCreateTabNotificationAction
-import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestsUtil.repoAndAccountState
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 
 private val LOG = logger<GitLabPushNotificationCustomizer>()
 
 internal class GitLabPushNotificationCustomizer(private val project: Project) : GitPushNotificationCustomizer {
-  private val preferences: GitLabMergeRequestsPreferences = project.service<GitLabMergeRequestsPreferences>()
-  private val projectsManager: GitLabProjectsManager = project.service<GitLabProjectsManager>()
-  private val defaultAccountHolder: GitLabProjectDefaultAccountHolder = project.service<GitLabProjectDefaultAccountHolder>()
   private val accountManager: GitLabAccountManager = service<GitLabAccountManager>()
   private val apiManager: GitLabApiManager = service<GitLabApiManager>()
 
@@ -48,7 +42,29 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
     customParams: Map<String, VcsPushOptionValue>
   ): List<AnAction> {
     if (!pushResult.isSuccessful) return emptyList()
-    val (projectMapping, account) = findRepoAndAccount(repository, pushResult) ?: return emptyList()
+    val remoteBranch = pushResult.findRemoteBranch(repository) ?: return emptyList()
+
+    val connection = project.serviceAsync<GitLabProjectConnectionManager>().connectionState.value
+    if (connection != null && (connection.repo.gitRepository != repository || connection.repo.gitRemote != remoteBranch.remote)) {
+      return emptyList()
+    }
+
+    val (projectMapping, account) = connection?.let {
+      it.repo to it.account
+    } ?: run {
+      val accountManager = serviceAsync<GitLabAccountManager>()
+      val savedAccount = project.serviceAsync<GitLabMergeRequestsPreferences>().selectedUrlAndAccountId?.second?.let { savedId ->
+        accountManager.findAccountOrNull { it.id == savedId }
+      }
+      GitPushNotificationUtil.findRepositoryAndAccount(
+        project.serviceAsync<GitLabProjectsManager>().knownRepositories,
+        repository, remoteBranch.remote,
+        accountManager.accountsState.value,
+        savedAccount,
+        project.serviceAsync<GitLabProjectDefaultAccountHolder>().account
+      )
+    } ?: return emptyList()
+
     try {
       val exists = doesReviewExist(pushResult, projectMapping, account)
       if (exists) return emptyList()
@@ -61,27 +77,7 @@ internal class GitLabPushNotificationCustomizer(private val project: Project) : 
       return emptyList()
     }
 
-    val connection = project.serviceAsync<GitLabProjectConnectionManager>().connectionState.value
-    if (connection?.account != account || connection.repo != projectMapping) return emptyList()
-
     return listOf(GitLabMergeRequestOpenCreateTabNotificationAction(project, projectMapping, account))
-  }
-
-  private fun findRepoAndAccount(targetRepository: GitRepository, pushResult: GitPushRepoResult): RepoAndAccount<GitLabProjectMapping, GitLabAccount>? {
-    AccountUtil.selectPersistedRepoAndAccount(
-      targetRepository,
-      pushResult,
-      repoAndAccountState(projectsManager.knownRepositoriesState,
-                          accountManager.accountsState,
-                          preferences.selectedUrlAndAccountId).value
-    )?.let {
-      return it
-    }
-    AccountUtil.selectSingleAccount(projectsManager, accountManager, targetRepository, pushResult, defaultAccountHolder.account)?.let {
-      return it
-    }
-
-    return null
   }
 
   private suspend fun doesReviewExist(pushResult: GitPushRepoResult, projectMapping: GitLabProjectMapping, account: GitLabAccount): Boolean {
