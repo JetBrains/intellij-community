@@ -74,6 +74,7 @@
     "com.intellij.database:app:SqlEditorOptions.tableQualification",
     "com.intellij.database:app:SqlFoldingSettings.*",
     "com.intellij:app:BaseRefactoringSettings.*",
+    "com.intellij:app:ConsoleFoldingSettings.*",
     "com.intellij:app:EditorSettings.custom_soft_wrap_indent",
     "com.intellij:app:EditorSettings.insert_parentheses_automatically",
     "com.intellij:app:EditorSettings.is_ensure_newline_at_eof",
