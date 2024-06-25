@@ -13,6 +13,7 @@ import java.net.SocketAddress
 import java.net.URI
 import java.net.URL
 import java.util.Collections
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
@@ -82,7 +83,10 @@ class IdeProxySelector(
         return NO_PROXY_LIST
       }
     }
-    catch (e: Throwable) {
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
       logger.error("$uri: no proxy, failed to select using PAC/autodetect", e)
       return NO_PROXY_LIST
     }
