@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.impl;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -6,7 +6,6 @@ import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CustomTaskState;
 import com.intellij.tasks.TaskRepository;
@@ -72,21 +71,6 @@ public abstract class BaseRepository extends TaskRepository {
       loadPassword();
     }
     return myPassword;
-  }
-
-  @Tag("password")
-  public String getEncodedPassword() {
-    return null;
-  }
-
-  @SuppressWarnings("unused")
-  public void setEncodedPassword(String password) {
-    try {
-      setPassword(PasswordUtil.decodePassword(password));
-    }
-    catch (NumberFormatException e) {
-      // do nothing
-    }
   }
 
   private void loadPassword() {
