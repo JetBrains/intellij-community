@@ -151,8 +151,12 @@ public interface MutableEntityStorage : EntityStorage {
   public fun <M : WorkspaceEntity.Builder<out T>, T : WorkspaceEntity> modifyEntity(clazz: Class<M>, e: T, change: M.() -> Unit): T
 
   /**
-   * Remove the entity from the storage if it's present. All child entities of the entity with non-null reference to the parent entity are
-   * also removed.
+   * Remove the entity from the storage if it's present.
+   *
+   * All children of the entity will be cascade removed.
+   * If the child entities are not supposed to be removed, they should be modified by setting `null` to the parent of the
+   *   child entities. This can be done only for children with a nullable parent.
+   *
    * @return `true` if the entity was removed, `false` if the entity was not in the storage
    */
   public fun removeEntity(e: WorkspaceEntity): Boolean
