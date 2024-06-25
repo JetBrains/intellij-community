@@ -166,6 +166,10 @@ public abstract class JsonSchemaObject {
 
   public abstract @Nullable JsonSchemaObject getSchemaDependencyByName(@NotNull String name);
 
+  // custom metadata provided by schemas, can be used in IDE features
+  // the format in the schema is a key with either a single string value or an array of string values
+  public abstract @Nullable List<JsonSchemaMetadataEntry> getMetadata();
+
   // also remove?
   public abstract @Nullable List<? extends JsonSchemaObject> getAllOf();
 

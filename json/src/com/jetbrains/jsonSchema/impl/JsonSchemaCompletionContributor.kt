@@ -41,7 +41,7 @@ import com.intellij.util.ThreeState
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker
-import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionHandlerProvider
+import com.jetbrains.jsonSchema.extension.JsonSchemaCompletionCustomizer
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider
 import com.jetbrains.jsonSchema.extension.JsonSchemaNestedCompletionsTreeProvider.Companion.getNestedCompletionsData
 import com.jetbrains.jsonSchema.extension.SchemaType
@@ -178,10 +178,13 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                adapter: JsonPropertyAdapter?,
                                knownNames: MutableSet<String>,
                                completionPath: SchemaPath?) {
+      val customHandlers = JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
+        .filter { it.isApplicable(originalPosition.containingFile) }
       StreamEx.of(schema.propertyNames)
         .filter { name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name == adapter.name }
         .forEach { name ->
           knownNames.add(name)
+          if (customHandlers.size == 1 && !customHandlers[0].acceptsPropertyCompletionItem(schema, name, completionPath?.accessor(), originalPosition)) return@forEach
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
           addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
         }
@@ -194,7 +197,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
       if (schema.enum != null && completionPath == null) {
         // custom insert handlers are currently applicable only to enum values but can be extended later to cover more cases
-        val customHandlers = JsonSchemaCompletionHandlerProvider.EXTENSION_POINT_NAME.extensionList
+        val customHandlers = JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
+          .filter { it.isApplicable(originalPosition.containingFile) }
         val metadata = schema.enumMetadata
         val isEnumOrderSensitive = schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE).toBoolean()
         val anEnum = schema.enum
@@ -867,3 +871,8 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
     }
   }
 }
+
+class JsonSchemaMetadataEntry(
+  val key: String,
+  val values: List<String>
+)

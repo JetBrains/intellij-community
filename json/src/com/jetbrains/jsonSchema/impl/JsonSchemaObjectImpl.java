@@ -55,6 +55,8 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   public @Nullable String myLanguageInjectionPrefix;
   public @Nullable String myLanguageInjectionPostfix;
 
+  public @Nullable List<JsonSchemaMetadataEntry> myMetadataEntries;
+
   public @Nullable JsonSchemaType myType;
   public @Nullable Object myDefault;
   public @Nullable Map<String, Object> myExample;
@@ -218,6 +220,15 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   @Override
   public @Nullable VirtualFile getRawFile() {
     return myRawFile;
+  }
+
+  @Override
+  public @Nullable List<JsonSchemaMetadataEntry> getMetadata() {
+    return myMetadataEntries;
+  }
+
+  public void setMetadata(@Nullable List<JsonSchemaMetadataEntry> entries) {
+    myMetadataEntries = entries;
   }
 
   public void setLanguageInjection(@Nullable String injection) {

@@ -193,6 +193,8 @@ public final class JsonSchemaReader {
                     (element, object, queue, virtualFile) -> readInjectionMetadata(element, object));
     READERS_MAP.put(X_INTELLIJ_ENUM_METADATA,
                     (element, object, queue, virtualFile) -> readEnumMetadata(element, object));
+    READERS_MAP.put(X_INTELLIJ_METADATA,
+                    (element, object, queue, virtualFile) -> readCustomMetadata(element, object));
     READERS_MAP.put(X_INTELLIJ_CASE_INSENSITIVE, (element, object, queue, virtualFile) -> {
       if (element.isBooleanLiteral()) object.setForceCaseInsensitive(getBoolean(element));
     });
@@ -257,6 +259,29 @@ public final class JsonSchemaReader {
     READERS_MAP.put("else", createFromObject("else", (object, schema) -> object.setElse(schema)));
     READERS_MAP.put("instanceof", ((element, object, queue, virtualFile) -> object.setShouldValidateAgainstJSType(true)));
     READERS_MAP.put("typeof", ((element, object, queue, virtualFile) -> object.setShouldValidateAgainstJSType(true)));
+  }
+
+  private static void readCustomMetadata(JsonValueAdapter element, JsonSchemaObjectImpl object) {
+    if (!(element instanceof JsonObjectValueAdapter)) return;
+    List<JsonSchemaMetadataEntry> filters = new ArrayList<>();
+    for (JsonPropertyAdapter adapter : ((JsonObjectValueAdapter)element).getPropertyList()) {
+      String name = adapter.getName();
+      if (name == null) continue;
+      Collection<JsonValueAdapter> values = adapter.getValues();
+      if (values.size() != 1) continue;
+      JsonValueAdapter valueAdapter = values.iterator().next();
+      if (valueAdapter.isStringLiteral()) {
+        filters.add(new JsonSchemaMetadataEntry(name, Collections.singletonList(getString(valueAdapter))));
+      }
+      else if (valueAdapter.isArray()) {
+        filters.add(new JsonSchemaMetadataEntry(name,
+                                                Objects.requireNonNull(valueAdapter.getAsArray()).getElements().stream()
+          .filter(v -> v.isStringLiteral())
+          .map(v -> getString(v))
+          .toList()));
+      }
+    }
+    object.setMetadata(filters);
   }
 
   private static void readEnumMetadata(JsonValueAdapter element, JsonSchemaObjectImpl object) {

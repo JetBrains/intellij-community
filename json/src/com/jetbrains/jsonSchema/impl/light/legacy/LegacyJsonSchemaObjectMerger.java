@@ -85,7 +85,8 @@ public class LegacyJsonSchemaObjectMerger implements JsonSchemaObjectMerger {
     if (other.getMinProperties() != null) base.setMinProperties(other.getMinProperties());
     if (other.getEnum() != null) base.setEnum(other.getEnum());
     if (other.getNot() != null) base.setNot(other.getNot());
-    if (other.getLanguageInjection() == null) base.setLanguageInjection(other.getLanguageInjection());
+    if (other.getLanguageInjection() != null) base.setLanguageInjection(other.getLanguageInjection());
+    if (other.getMetadata() != null) base.setMetadata(other.getMetadata());
 
     //computed together because influence each other
     var mergedExclusionAndType = computeMergedExclusionAndType(base.getType(), other.getType(), other.getTypeVariants());
