@@ -278,15 +278,6 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         }
 
         override fun visitParameterRaw(parameter: JKParameter) {
-            renderParameter(parameter)
-        }
-
-        private fun renderParameter(parameter: JKParameter, renderType: Boolean = true) {
-            if (parameter is JKKtDestructuringDeclaration) {
-                visitDestructuringDeclarationRaw(parameter)
-                return
-            }
-
             renderModifiersList(parameter)
             parameter.annotationList.accept(this)
             if (parameter.isVarArgs) {
@@ -299,7 +290,7 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
                 printer.printWithSurroundingSpaces("val")
             }
 
-            renderVariableDeclarationNameAndType(parameter, renderType)
+            renderVariableDeclarationNameAndType(parameter)
             if (parameter.initializer !is JKStubExpression) {
                 printer.printWithSurroundingSpaces("=")
                 parameter.initializer.accept(this)
@@ -316,9 +307,9 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
             renderVariableDeclarationNameAndType(destructuringDeclarationEntry)
         }
 
-        private fun renderVariableDeclarationNameAndType(variable: JKVariable, renderType: Boolean = true) {
+        private fun renderVariableDeclarationNameAndType(variable: JKVariable) {
             variable.name.accept(this)
-            if (renderType && variable.type.isPresent() && variable.type.type !is JKContextType) {
+            if (variable.type.isPresent() && variable.type.type !is JKContextType) {
                 printer.print(": ")
                 variable.type.accept(this)
             }
@@ -837,14 +828,7 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
                 val isMultiStatement = lambdaExpression.statement.statements.size > 1
                 if (isMultiStatement) printer.println()
 
-                for ((i, parameter) in lambdaExpression.parameters.withIndex()) {
-                    printLeftNonCodeElements(parameter)
-                    val renderType = isK1Mode()
-                    renderParameter(parameter, renderType)
-                    if (i < lambdaExpression.parameters.lastIndex) printer.print(", ")
-                    printRightNonCodeElements(parameter)
-                }
-
+                printer.renderList(lambdaExpression.parameters) { it.accept(this) }
                 if (lambdaExpression.parameters.isNotEmpty()) {
                     printer.printWithSurroundingSpaces("->")
                 }
