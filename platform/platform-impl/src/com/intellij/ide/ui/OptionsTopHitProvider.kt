@@ -119,7 +119,7 @@ private fun consumeTopHitsForApplicableProvider(
   for (option in cache.getCachedOptions(provider = provider, project = project, pluginDescriptor = null)) {
     val optionValue = option.option ?: continue
     if (matcher.matches(optionValue)) {
-      collector.accept(optionValue)
+      collector.accept(option)
     }
   }
 }
