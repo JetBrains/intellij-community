@@ -29,9 +29,21 @@ class ProjectGradleSettingsListener(val project: Project, private val cs: Corout
                 writeAction {
                     val newRoot = buildRootsManager.loadLinkedRoot(it)
                     buildRootsManager.add(newRoot)
+                }
+            }
+        }
+    }
 
-                    if (newRoot is Imported && KotlinPluginModeProvider.isK2Mode()) {
-                        launch { loadScriptConfigurations(newRoot, it) }
+    override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
+        if (KotlinPluginModeProvider.isK2Mode()) {
+            settings.forEach {
+                cs.launch(Dispatchers.IO) {
+                    writeAction {
+                        val newRoot = buildRootsManager.loadLinkedRoot(it)
+
+                        if (newRoot is Imported) {
+                            launch { loadScriptConfigurations(newRoot, it) }
+                        }
                     }
                 }
             }
