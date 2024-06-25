@@ -40,12 +40,16 @@ data class CredentialAttributes(
  * @param user Account name ("John") or path to SSH key file ("/Users/john/.ssh/id_rsa").
  * @param password Can be empty.
  */
-class Credentials(user: String?, val password: OneTimeString? = null) {
+class Credentials(user: String?, val password: OneTimeString?) {
+  constructor(user: String?) : this(user, password = null as OneTimeString?)
   constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
-
   constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
-
   constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
+
+  @Deprecated("use one of (user, password) constructors")
+  @Suppress("unused")
+  constructor(user: String?, password: OneTimeString?, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker) :
+    this(user, password)
 
   val userName: @NlsSafe String? = user.nullize()
 
