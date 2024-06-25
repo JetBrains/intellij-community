@@ -749,6 +749,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("BacktickedPackageName.kt")
+            public void testBacktickedPackageName() throws Exception {
+                runTest("testData/intentions/addFullQualifier/callExpressions/BacktickedPackageName.kt");
+            }
+
+            @TestMetadata("BacktickedPackageNameAndClass.kt")
+            public void testBacktickedPackageNameAndClass() throws Exception {
+                runTest("testData/intentions/addFullQualifier/callExpressions/BacktickedPackageNameAndClass.kt");
+            }
+
             @TestMetadata("ClassConstructorInRoot.kt")
             public void testClassConstructorInRoot() throws Exception {
                 runTest("testData/intentions/addFullQualifier/callExpressions/ClassConstructorInRoot.kt");

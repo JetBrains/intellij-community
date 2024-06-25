@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
+import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
+import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import java.lang.RuntimeException
 
 object AddQualifiersUtil {
@@ -148,7 +150,18 @@ object AddQualifiersUtil {
         referenceExpression: KtNameReferenceExpression,
         fqName: FqName
     ): KtElement {
-        val expressionWithQualifier = psiFactory.createExpression(fqName.asString())
+        val fqNameUnsafe = fqName.toUnsafe()
+        val shortName = fqNameUnsafe.shortName().asString().quoteIfNeeded()
+        val parent = fqNameUnsafe.parent()
+        val parentQuotedIfNeeded =
+            if (parent.isRoot) {
+                ""
+            } else {
+                val quotesAreNeeded = parent.pathSegments().any { !it.identifier.isIdentifier() }
+                val asString = parent.asString()
+                "${if (quotesAreNeeded) asString.quoteIfNeeded() else asString}."
+            }
+        val expressionWithQualifier = psiFactory.createExpression(parentQuotedIfNeeded + shortName)
         return referenceExpression.replace(expressionWithQualifier) as KtElement
     }
 }

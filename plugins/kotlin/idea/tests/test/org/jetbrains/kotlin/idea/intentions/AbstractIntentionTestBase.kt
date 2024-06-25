@@ -26,6 +26,7 @@ import junit.framework.TestCase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -159,9 +160,11 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     protected open fun checkForErrorsAfter(fileText: String) {
         val file = this.file
 
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
         if (file is KtFile &&
             isApplicableDirective(fileText) &&
-            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER")
+            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_AFTER") &&
+            !InTextDirectivesUtils.isDirectiveDefined(fileText, disableTestDirective)
         ) {
             if (!InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_WARNINGS_AFTER")) {
                 DirectiveBasedActionUtils.checkForUnexpectedWarnings(
@@ -178,7 +181,11 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
     protected open fun checkForErrorsBefore(fileText: String) {
         val file = this.file
 
-        if (file is KtFile && !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE")) {
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
+        if (file is KtFile &&
+            !InTextDirectivesUtils.isDirectiveDefined(fileText, "// SKIP_ERRORS_BEFORE") &&
+            !InTextDirectivesUtils.isDirectiveDefined(fileText, disableTestDirective)
+        ) {
             DirectiveBasedActionUtils.checkForUnexpectedErrors(file)
         }
     }

@@ -1,0 +1,8 @@
+// IGNORE_K1
+package foo.`b ar`
+
+object `Cla zz` {
+    val foo = 0
+}
+
+fun `Cla zz`.foo() = `foo.b ar`.`Cla zz`.foo
