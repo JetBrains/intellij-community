@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -59,6 +59,7 @@ public class ContainerUtilTest extends TestCase {
     assertEquals(4, (int)l.get(3));
 
     try {
+      //noinspection ResultOfMethodCallIgnored
       l.get(-1);
       fail();
     }
@@ -66,6 +67,7 @@ public class ContainerUtilTest extends TestCase {
     }
 
     try {
+      //noinspection ResultOfMethodCallIgnored
       l.get(4);
       fail();
     }
@@ -84,6 +86,7 @@ public class ContainerUtilTest extends TestCase {
 
     try {
       a1.clear();
+      //noinspection ResultOfMethodCallIgnored
       l.get(3);
       fail();
     }
