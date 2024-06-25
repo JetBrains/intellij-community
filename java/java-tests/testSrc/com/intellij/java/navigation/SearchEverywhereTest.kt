@@ -187,10 +187,11 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     try {
       abbreviationManager.register("cp", "CloseProject")
       val future = ui.findElementsForPattern("cp")
-      val firstItem = waitForFuture(future, SEARCH_TIMEOUT)[0]
+      val firstItem = waitForFuture(future, SEARCH_TIMEOUT).firstOrNull()
       val matchedAction = GotoActionTest.createMatchedAction(actionManager.getAction("CloseProject"), "cp")
       assertEquals(matchedAction, firstItem)
-    } finally {
+    }
+    finally {
       abbreviationManager.remove("cp", "CloseProject")
     }
 
