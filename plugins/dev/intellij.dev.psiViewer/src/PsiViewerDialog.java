@@ -173,7 +173,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   public PsiViewerDialog(@NotNull Project project, @Nullable Editor selectedEditor) {
     super(project, true, IdeModalityType.MODELESS);
     myPsiTreePanel = new JPanel(new BorderLayout());
-    myPsiTreeSeparator = new TitledSeparator("P&SI Tree");
+    myPsiTreeSeparator = new TitledSeparator(DevPsiViewerBundle.message("separator.psi.tree"));
     myPsiTree = new Tree();
     myProject = project;
     myExternalDocument = selectedEditor != null;
@@ -1035,7 +1035,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
-  private @NotNull PsiElement getElementToChooseInPsiTree(@NotNull PsiElement element) {
+  private static @NotNull PsiElement getElementToChooseInPsiTree(@NotNull PsiElement element) {
     if (element.getFirstChild() != null) {
       return element;
     }

@@ -36,6 +36,7 @@ import com.intellij.util.SlowOperationCanceledException
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.event.*
@@ -70,7 +71,7 @@ object ActionUtil {
 
   @JvmField
   @Suppress("DEPRECATION", "removal")
-  val SECONDARY_TEXT: Key<String> = Presentation.PROP_VALUE
+  val SECONDARY_TEXT: Key<@Nls String> = Presentation.PROP_VALUE
 
   @JvmField
   val SEARCH_TAG: Key<String?> = Key.create<@NonNls String?>("SEARCH_TAG")

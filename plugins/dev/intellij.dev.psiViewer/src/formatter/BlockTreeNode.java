@@ -4,6 +4,7 @@ package com.intellij.dev.psiViewer.formatter;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.templateLanguages.DataLanguageBlockWrapper;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.SimpleNode;
@@ -32,10 +33,10 @@ public final class BlockTreeNode extends SimpleNode {
 
   @Override
   protected void update(@NotNull PresentationData presentation) {
-    String name = myBlock.getDebugName();
+    @NlsSafe String name = myBlock.getDebugName();
     if (name == null) name = myBlock.getClass().getSimpleName();
-    if (myBlock instanceof DataLanguageBlockWrapper) {
-      name += " (" + ((DataLanguageBlockWrapper)myBlock).getOriginal().getClass().getSimpleName() + ")";
+    if (myBlock instanceof DataLanguageBlockWrapper wrapper) {
+      name += " (" + wrapper.getOriginal().getClass().getSimpleName() + ")";
     }
     presentation.addText(name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

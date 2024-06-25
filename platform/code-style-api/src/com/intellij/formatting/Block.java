@@ -15,6 +15,7 @@
  */
 package com.intellij.formatting;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -133,7 +134,7 @@ public interface Block {
    * @return debug name, or null for default one.
    */
   @Nullable
-  default String getDebugName() {
+  default @NlsSafe String getDebugName() {
     return null;
   }
 }

@@ -17,6 +17,7 @@ import com.intellij.ui.components.*
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -297,7 +298,7 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun link(@LinkLabel text: String,
+  fun link(text: @LinkLabel String,
            style: UIUtil.ComponentStyle? = null,
            action: () -> Unit): CellBuilder<JComponent> {
     val result = Link(text, style, action)
@@ -306,14 +307,14 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun browserLink(@LinkLabel text: String, url: String): CellBuilder<JComponent> {
+  fun browserLink(text: @LinkLabel String, url: String): CellBuilder<JComponent> {
     val result = BrowserLink(text, url)
     return component(result)
   }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun button(@Button text: String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
+  fun button(text: @Button String, actionListener: (event: ActionEvent) -> Unit): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener(actionListener)
     return component(button)
@@ -321,9 +322,9 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  inline fun checkBox(@Checkbox text: String,
+  inline fun checkBox(text: @Checkbox String,
                       isSelected: Boolean = false,
-                      @DetailedDescription comment: String? = null,
+                      comment: @DetailedDescription String? = null,
                       crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): CellBuilder<JBCheckBox> {
     return checkBox(text, isSelected, comment)
       .applyToComponent {
@@ -364,9 +365,9 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun checkBox(@Checkbox text: String,
+  fun checkBox(text: @Checkbox String,
                property: GraphProperty<Boolean>,
-               @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
+               comment: @DetailedDescription String? = null): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, property.get())
     return component(comment = comment).withGraphProperty(property).applyToComponent { component.bind(property) }
   }
@@ -429,7 +430,7 @@ abstract class Cell : BaseBuilder {
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
-  fun textField(binding: PropertyBinding<String>, columns: Int? = null): CellBuilder<JBTextField> {
+  fun textField(binding: PropertyBinding<@Nls String>, columns: Int? = null): CellBuilder<JBTextField> {
     return component(JBTextField(binding.get(), columns ?: 0))
       .withBindingInt(JTextComponent::getText, JTextComponent::setText, binding)
   }

@@ -52,7 +52,7 @@ interface RowBuilder : BaseBuilder {
    */
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  fun noteRow(@Nls text: String, linkHandler: ((url: String) -> Unit)? = null) {
+  fun noteRow(text: @Nls String, linkHandler: ((url: String) -> Unit)? = null) {
     createNoteOrCommentRow(noteComponent(text, linkHandler))
   }
 
