@@ -17,6 +17,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
@@ -146,6 +147,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         return getKtModuleByModuleInfo(moduleInfo ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile))
     }
 
+    @OptIn(KaImplementationDetail::class)
     private fun computeBuiltinKtModule(virtualFile: VirtualFile, psiElement: PsiElement): KaBuiltinsModule? {
         if (virtualFile in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
             val ktElement = psiElement.parentOfType<KtElement>(withSelf = true)
