@@ -366,11 +366,11 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     return (externalProjectConfigDir == null || externalProjectConfigDir.isBlank()) ? null : Path.of(externalProjectConfigDir, subDirName);
   }
 
-  public static @NotNull List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
-                                                     @Nullable JpsSdkType<?> projectSdkType,
-                                                     @NotNull Map<String, String> pathVariables,
-                                                     @NotNull JpsPathMapper pathMapper,
-                                                     @Nullable Executor executor) {
+  private static @NotNull List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
+                                                      @Nullable JpsSdkType<?> projectSdkType,
+                                                      @NotNull Map<String, String> pathVariables,
+                                                      @NotNull JpsPathMapper pathMapper,
+                                                      @Nullable Executor executor) {
     if (executor == null) {
       executor = DefaultExecutorHolder.threadPool;
     }
