@@ -1,5 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VfsUtil
@@ -19,7 +21,7 @@ class DebugToggleBreakpointCommand(text: String, line: Int) : AbstractCallbackBa
   override fun execute(callback: ActionCallback, context: PlaybackContext) {
     logger.debug("Breakpoint toggle start")
 
-    val (virtualFile, line) = getArguments()
+    val (virtualFile, line) = getArguments(context.project)
 
     val utils = XDebuggerUtilImpl.getInstance() as XDebuggerUtilImpl
     utils.toggleAndReturnLineBreakpoint(context.project, virtualFile, line, false)
@@ -35,9 +37,17 @@ class DebugToggleBreakpointCommand(text: String, line: Int) : AbstractCallbackBa
     logger.info("Breakpoint toggle finish")
   }
 
-  private fun getArguments(): Pair<VirtualFile, Int> {
+  private fun getArguments(project: Project): Pair<VirtualFile, Int> {
     val (fileString, lineString) = extractCommandList(PREFIX, ",")
-    val virtualFile = VfsUtil.findFileByIoFile(File(fileString), true) ?: error("Can't find $fileString on disk")
+    val virtualFile = findFile(project, fileString)
     return Pair(virtualFile, lineString.toInt())
+  }
+
+  private fun findFile(project: Project, filePath: String): VirtualFile {
+    val absolutePath = VfsUtil.findFileByIoFile(File(filePath), true)
+    if (absolutePath != null) return absolutePath
+
+    val relativePath = project.getBaseDirectories().firstNotNullOfOrNull { it.findFileByRelativePath(filePath) }
+    return relativePath ?: error("Can't find $filePath on disk")
   }
 }
