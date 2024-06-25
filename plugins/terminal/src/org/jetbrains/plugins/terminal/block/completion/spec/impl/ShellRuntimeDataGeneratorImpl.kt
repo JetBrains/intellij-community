@@ -2,11 +2,6 @@
 package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
-import com.intellij.terminal.completion.spec.ShellRuntimeDataGenerator
-
-internal interface ShellCacheableDataGenerator<T> : ShellRuntimeDataGenerator<T> {
-  fun getCacheKey(context: ShellRuntimeContext): String?
-}
 
 internal class ShellRuntimeDataGeneratorImpl<T>(
   private val debugName: String?,
