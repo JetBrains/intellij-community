@@ -40,7 +40,8 @@ internal fun <T, E : IjentFsError> IjentFsResult<T, E>.getOrThrowFileSystemExcep
 @Throws(FileSystemException::class)
 internal fun IjentFsError.throwFileSystemException(): Nothing {
   throw when (this) {
-    is IjentFsError.DoesNotExist, is IjentFsError.NotFile -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsError.DoesNotExist -> NoSuchFileException(where.toString(), null, message.nullize())
+    is IjentFsError.NotFile -> FileSystemException(where.toString(), null, "Is a directory")
     is IjentFsError.PermissionDenied -> AccessDeniedException(where.toString(), null, message.nullize())
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
     is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())

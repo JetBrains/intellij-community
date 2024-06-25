@@ -32,6 +32,10 @@ object IjentFsResultImpl {
     IjentFileSystemApi.StatError.DoesNotExist,
     IjentFileSystemApi.CanonicalizeError.DoesNotExist
 
+  data class AlreadyExists(override val where: IjentPath.Absolute, override val message: String) :
+    IjentFileSystemApi.FileReaderError.AlreadyExists,
+    IjentFileSystemApi.FileWriterError.AlreadyExists
+
   class PermissionDenied(override val where: IjentPath.Absolute, override val message: String) :
     IjentFileSystemApi.CanonicalizeError.PermissionDenied,
     IjentFileSystemApi.FileReaderError.PermissionDenied,
