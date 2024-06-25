@@ -283,7 +283,7 @@ public class WSLDistribution implements AbstractWslDistribution {
             project,
             IdeBundle.message("wsl.enter.root.password.dialog.title"),
             IdeBundle.message("wsl.sudo.password.for.root.label", getPresentableName()),
-            new CredentialAttributes("WSL", "root", WSLDistribution.class),
+            new CredentialAttributes("WSL", "root"),
             true
           );
           if (password != null) {

@@ -325,8 +325,8 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   private CredentialAttributes createAttributes(boolean memoryOnly) {
-    String serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + '(' + CREDENTIAL_ATTRIBUTES_QUALIFIERS.get(myAuthType) + ')';
-    return new CredentialAttributes(serviceName, getUserName(), null, memoryOnly);
+    var serviceName = SERVICE_NAME_PREFIX + getCredentialsString(this) + '(' + CREDENTIAL_ATTRIBUTES_QUALIFIERS.get(myAuthType) + ')';
+    return new CredentialAttributes(serviceName, getUserName(), memoryOnly);
   }
 
   @Override

@@ -52,8 +52,8 @@ class PasswordSafeKeePassTest {
                                         isMemoryOnlyNew: Boolean,
                                         rewriteWithNull: Boolean) {
     val id = "test checkCredentialsRewritten $isMemoryOnlyOld $isMemoryOnlyNew $rewriteWithNull"
-    val attributesMemoryOnly = CredentialAttributes(id, null, null, true)
-    val attributesSaved = CredentialAttributes(id, null, null, false)
+    val attributesMemoryOnly = CredentialAttributes(id, userName = null, isPasswordMemoryOnly = true)
+    val attributesSaved = CredentialAttributes(id, userName = null, isPasswordMemoryOnly = false)
 
     val description = "Parameters isMemoryOnlyOld=$isMemoryOnlyOld isMemoryOnlyNew=$isMemoryOnlyNew rewriteWithNull=$rewriteWithNull"
     val oldPassword = "oldPassword"
