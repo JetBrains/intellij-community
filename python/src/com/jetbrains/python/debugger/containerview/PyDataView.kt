@@ -86,7 +86,7 @@ class PyDataView(private val project: Project) : DumbAware {
   private fun showInToolWindow(value: PyDebugValue) {
     val window = ToolWindowManager.getInstance(project).getToolWindow(DATA_VIEWER_ID)
     if (window == null) {
-      LOG.error("Tool window '$DATA_VIEWER_ID' is not found")
+      thisLogger().error("Tool window '$DATA_VIEWER_ID' is not found")
       return
     }
     window.contentManager.getReady(this).doWhenDone {
@@ -241,8 +241,6 @@ class PyDataView(private val project: Project) : DumbAware {
   }
 
   companion object {
-    private val LOG by lazy { thisLogger() }
-
     private const val DATA_VIEWER_ID = "SciView"
 
     const val COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault"
