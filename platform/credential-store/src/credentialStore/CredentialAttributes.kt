@@ -24,14 +24,29 @@ fun generateServiceName(subsystem: String, key: String): String = "${SERVICE_NAM
  */
 data class CredentialAttributes(
   val serviceName: String,
-  val userName: String? = null,
-  val requestor: Class<*>? = null,
-  val isPasswordMemoryOnly: Boolean = false,
-  val cacheDeniedItems: Boolean = true
+  val userName: String?,
+  val requestor: Class<*>?,
+  val isPasswordMemoryOnly: Boolean,
+  val cacheDeniedItems: Boolean
 ) {
-  @JvmOverloads
-  constructor(serviceName: String, userName: String? = null, requestor: Class<*>? = null, isPasswordMemoryOnly: Boolean = false)
+  constructor(serviceName: String)
+    : this(serviceName, userName = null, requestor = null, isPasswordMemoryOnly = false, cacheDeniedItems = true)
+  constructor(serviceName: String, userName: String?)
+    : this(serviceName, userName, requestor = null, isPasswordMemoryOnly = false, cacheDeniedItems = true)
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?)
+    : this(serviceName, userName, requestor, isPasswordMemoryOnly = false, cacheDeniedItems = true)
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean)
     : this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems = true)
+
+  @Deprecated("use one of (service name [, ...]) constructors")
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker)
+    : this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems = true)
+
+  @Deprecated("use one of (service name [, ...]) constructors")
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, cacheDeniedItems: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker) :
+    this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems)
 }
 
 /**

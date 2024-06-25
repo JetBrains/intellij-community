@@ -97,7 +97,7 @@ class PasswordSafeKeePassTest {
     val ps = TestPasswordSafeImpl(settings, createKeePassStore())
 
     val id = "test PasswordSafeTest.credentials with empty username"
-    val attributes = CredentialAttributes(id, isPasswordMemoryOnly = true)
+    val attributes = CredentialAttributes(id).copy(isPasswordMemoryOnly = true)
     try {
       val credentials = Credentials(null, "passphrase")
       ps.set(attributes, credentials)

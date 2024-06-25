@@ -130,7 +130,7 @@ internal class CredentialStoreTest {
     val pass = randomString()
     val userName = randomString()
     val serviceName = randomString()
-    store.set(CredentialAttributes(serviceName, userName, isPasswordMemoryOnly = true), Credentials(userName, pass))
+    store.set(CredentialAttributes(serviceName, userName).copy(isPasswordMemoryOnly = true), Credentials(userName, pass))
 
     val credentials = store.get(CredentialAttributes(serviceName, userName))
     assertThat(credentials).isNotNull()
