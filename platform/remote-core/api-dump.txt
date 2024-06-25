@@ -95,7 +95,6 @@ com.intellij.remote.RemoteCredentials
 - shouldUseOpenSshConfig():Z
 c:com.intellij.remote.RemoteCredentialsHolder
 - com.intellij.remote.MutableRemoteCredentials
-- sf:ANONYMOUS:java.lang.String
 - sf:HOST:java.lang.String
 - sf:PASSPHRASE:java.lang.String
 - sf:PASSWORD:java.lang.String
