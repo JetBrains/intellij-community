@@ -72,8 +72,7 @@ class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
   override fun handleBeforeChangeEvents(event: VersionedStorageChange) { }
 
   override fun handleChangedEvents(event: VersionedStorageChange) {
-    // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
-    val changes = event.getChanges(SdkEntity::class.java).orderToRemoveReplaceAdd()
+    val changes = event.getChanges(SdkEntity::class.java)
     if (changes.isEmpty()) return
 
     for (change in changes) {

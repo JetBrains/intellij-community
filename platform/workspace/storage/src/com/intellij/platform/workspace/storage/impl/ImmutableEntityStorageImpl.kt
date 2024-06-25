@@ -29,7 +29,6 @@ import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -396,6 +395,12 @@ internal class MutableEntityStorageImpl(
   override fun collectChanges(): Map<Class<*>, List<EntityChange<*>>> = collectChangesTimeMs.addMeasuredTime {
     val res = HashMap<Class<*>, MutableList<EntityChange<*>>>()
 
+    // We keep the Removed-Replaced-Added ordering of the events
+    //
+    // This implemented by adding Removed events at the start, Added events at the end, and Replaced before the Added events.
+    // To know when the Added events are located, we keep track of the index of the first Added event.
+    val firstAddedIndex: HashMap<Class<*>, Int> = hashMapOf()
+
     try {
       lockWrite()
 
@@ -403,18 +408,30 @@ internal class MutableEntityStorageImpl(
         when (change) {
           is ChangeEntry.AddEntity -> {
             val addedEntity = change.entityData.createEntity(this).asBase()
-            res.getOrPut(entityId.clazz.findWorkspaceEntity()) { ArrayList() }.add(EntityChange.Added(addedEntity))
+            val entityInterface = entityId.clazz.findWorkspaceEntity()
+            res.getOrPut(entityInterface) { ArrayList() }.apply {
+              this.add(EntityChange.Added(addedEntity))
+              if (entityInterface !in firstAddedIndex) firstAddedIndex[entityInterface] = this.size - 1
+            }
           }
           is ChangeEntry.RemoveEntity -> {
             val removedData = originalSnapshot.entityDataById(change.id) ?: continue
             val removedEntity = removedData.createEntity(originalSnapshot).asBase()
-            res.getOrPut(entityId.clazz.findWorkspaceEntity()) { ArrayList() }.add(EntityChange.Removed(removedEntity))
+            val entityInterface = entityId.clazz.findWorkspaceEntity()
+            res.getOrPut(entityInterface) { ArrayList() }.apply {
+              this.add(0, EntityChange.Removed(removedEntity)) // Add Removed at the start of the list
+              if (entityInterface in firstAddedIndex) firstAddedIndex[entityInterface] = firstAddedIndex.getValue(entityInterface) + 1
+            }
           }
           is ChangeEntry.ReplaceEntity -> {
             val oldData = originalSnapshot.entityDataById(entityId) ?: continue
             val replacedData = oldData.createEntity(originalSnapshot).asBase()
             val replaceToData = this.entityDataByIdOrDie(entityId).createEntity(this)
-            res.getOrPut(entityId.clazz.findWorkspaceEntity()) { ArrayList() }.add(EntityChange.Replaced(replacedData, replaceToData))
+            val entityInterface = entityId.clazz.findWorkspaceEntity()
+            res.getOrPut(entityInterface) { ArrayList() }.apply {
+              add(firstAddedIndex.getOrDefault(entityInterface, size), EntityChange.Replaced(replacedData, replaceToData))
+              if (entityInterface in firstAddedIndex) firstAddedIndex[entityInterface] = firstAddedIndex.getValue(entityInterface) + 1
+            }
           }
         }
       }

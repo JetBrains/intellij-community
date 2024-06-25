@@ -97,7 +97,6 @@ class ProjectLibraryTableBridgeImpl(
         if (!beforeCalled) return
         beforeCalled = false
         val changes = event.getChanges(LibraryEntity::class.java).filterProjectLibraryChanges()
-          .orderToRemoveReplaceAdd() // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
         if (changes.isEmpty()) return
 
         for (change in changes) {
