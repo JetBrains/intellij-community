@@ -1,5 +1,5 @@
 // "Create class 'X'" "true"
-
+// IGNORE_K2
 class Foo(x: X)
 
 class X {

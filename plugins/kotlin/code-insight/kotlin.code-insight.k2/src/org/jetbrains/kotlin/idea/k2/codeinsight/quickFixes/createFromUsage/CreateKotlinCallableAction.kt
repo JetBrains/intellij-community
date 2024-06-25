@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
+import org.jetbrains.kotlin.idea.refactoring.getContainer
+import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -98,14 +100,35 @@ internal class CreateKotlinCallableAction(
                 parameterCandidates,
                 candidatesOfRenderedReturnType,
                 containerClassFqName,
-                isForCompanion
+                isForCompanion,
+                listOf(), listOf()
             )
 
             val call = call
             require(call != null)
-            CreateKotlinCallablePsiEditor(
-                project, pointerToContainer, callableInfo,
-            ).execute(call, isExtension, requestTargetClassPointer?.element)
+            val createKotlinCallablePsiEditor = CreateKotlinCallablePsiEditor(
+                project, callableInfo,
+            )
+            val function = KtPsiFactory(project).createFunction(
+                callableInfo.definitionAsString
+            )
+            val passedContainerElement = pointerToContainer.element ?: return
+            val anchor = call
+            val shouldComputeContainerFromAnchor =
+                if (passedContainerElement is PsiFile) passedContainerElement == anchor.containingFile && !isExtension
+                else passedContainerElement.getContainer() == anchor.getContainer()
+            val insertContainer: PsiElement = if (shouldComputeContainerFromAnchor) {
+                (anchor.getExtractionContainers().firstOrNull() ?:return)
+            } else {
+                passedContainerElement
+            }
+            createKotlinCallablePsiEditor.showEditor(
+                function,
+                call,
+                isExtension,
+                requestTargetClassPointer?.element,
+                insertContainer,
+            )
         }
     }
 

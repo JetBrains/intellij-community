@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.isAncestor
@@ -25,7 +26,7 @@ object CreateFromUsageUtil {
       declaration: D,
       container: PsiElement,
       anchor: PsiElement,
-      fileToEdit: KtFile = container.containingFile as KtFile
+      fileToEdit: PsiFile = container.containingFile
     ): D {
         val psiFactory = KtPsiFactory(container.project)
         val newLine = psiFactory.createNewLine()
@@ -83,7 +84,7 @@ object CreateFromUsageUtil {
 
         val declarationInPlace = when {
             declaration is KtPrimaryConstructor -> {
-                (container as KtClass).createPrimaryConstructorIfAbsent().replaced(declaration)
+                (container as? KtClass)?.createPrimaryConstructorIfAbsent()?.replaced(declaration) ?: declaration
             }
 
             declaration is KtProperty && container !is KtBlockExpression -> {

@@ -2,10 +2,12 @@
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage
 
 import com.intellij.ide.util.DirectoryChooserUtil
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import org.jetbrains.annotations.Nls
@@ -22,11 +24,11 @@ import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElem
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
+import org.jetbrains.kotlin.psi.psiUtil.isDotReceiver
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
@@ -53,7 +55,7 @@ object CreateClassUtil {
         inner: Boolean,
         isInsideInnerOrLocalClass: Boolean,
         primaryConstructorName: String?
-    ): KtNamedDeclaration {
+    ): KtClassOrObject {
         val psiFactory = KtPsiFactory(project)
         val classBody = when (kind) {
             ClassKind.ANNOTATION_CLASS, ClassKind.ENUM_ENTRY -> ""
@@ -79,7 +81,7 @@ object CreateClassUtil {
                     else -> ""
                 }
                 val ctor = primaryConstructorName?.let { " $it constructor" } ?: ""
-                psiFactory.createDeclaration<KtClassOrObject>(
+                psiFactory.createDeclaration(
                     "$openMod$innerMod${kind.keyword} $safeName$typeParamList$ctor$paramList$returnTypeString $classBody"
                 )
             }
@@ -168,26 +170,27 @@ object CreateClassUtil {
             }
         }
 
-        runWriteAction {
+        WriteCommandAction.runWriteCommandAction(file.project, Computable {
             val targetParent =
                 when (targetFile) {
                     is KtElement, is PsiClass -> targetFile
                     is PsiPackage -> createFileByPackage(className, targetFile as PsiPackage, file)
                     else -> throw KotlinExceptionWithAttachments("Unexpected element: ${targetFile::class.java}")
                         .withPsiAttachment("selectedParent", targetFile)
-                } ?: return@runWriteAction
-
-            runCreateClassBuilder(targetParent)
-        }
+                }
+            if (targetParent != null) {
+                runCreateClassBuilder(targetParent)
+            }
+        })
     }
 
     private fun ClassKind.toIdeaClassKind() = com.intellij.codeInsight.daemon.impl.quickfix.ClassKind { description.capitalize() }
 
-    fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
+    private fun PsiDirectory.getPackage(): PsiPackage? = JavaDirectoryService.getInstance()!!.getPackage(this)
 
     private fun PsiDirectory.getNonRootFqNameOrNull(): FqName? = getPackage()?.qualifiedName?.let(::FqName)
 
-    fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
+    private fun PsiDirectory.getFqNameWithImplicitPrefix(): FqName? {
         val packageFqName = getNonRootFqNameOrNull() ?: return null
         sourceRoot?.takeIf { !it.hasExplicitPackagePrefix(project) }?.let { sourceRoot ->
             val implicitPrefix = PerModulePackageCacheService.getInstance(project).getImplicitPackagePrefix(sourceRoot)
@@ -199,8 +202,7 @@ object CreateClassUtil {
     private fun VirtualFile.hasExplicitPackagePrefix(project: Project): Boolean =
         toPsiDirectory(project)?.getPackage()?.qualifiedName?.isNotEmpty() == true
 
-    @JvmOverloads
-    fun getOrCreateKotlinFile(
+    private fun getOrCreateKotlinFile(
         fileName: String,
         targetDir: PsiDirectory,
         packageName: String? = targetDir.getFqNameWithImplicitPrefix()?.asString()
@@ -226,7 +228,9 @@ object CreateClassUtil {
         originalFile: KtFile
     ): KtFile? {
         val directories = psiPackage.directories.filter { it.canRefactorElement() }
-        assert(directories.isNotEmpty()) { "Package '${psiPackage.qualifiedName}' must be refactorable" }
+        assert(directories.isNotEmpty()) {
+            "Package '${psiPackage.qualifiedName}' must be refactorable"
+        }
 
         val currentModule = ModuleUtilCore.findModuleForPsiElement(originalFile)
         val preferredDirectory =
@@ -243,4 +247,20 @@ object CreateClassUtil {
         val targetFile = getOrCreateKotlinFile(fileName, targetDirectory)
         return targetFile
     }
+
+    fun getFullCallExpression(element: KtSimpleNameExpression): KtExpression? {
+        return element.parent.let {
+            when {
+                it is KtCallExpression && it.calleeExpression == element -> return null
+                it is KtQualifiedExpression && it.selectorExpression == element -> it
+                else -> element
+            }
+        }
+    }
+    fun isQualifierExpected(element: KtSimpleNameExpression): Boolean =
+        element.isDotReceiver() || ((element.parent as? KtDotQualifiedExpression)?.isDotReceiver() ?: false)
+    fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUpperCase(first())
+
+
+
 }
