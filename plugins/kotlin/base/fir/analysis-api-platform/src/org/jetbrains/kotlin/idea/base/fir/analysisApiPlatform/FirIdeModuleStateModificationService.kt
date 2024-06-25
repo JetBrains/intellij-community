@@ -77,7 +77,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 // To ensure that no cached psi with stale stubs/virtual files,
                 // it's required to clear caches manually,
                 // otherwise opening file which referred the old builtins would let to PIEAE exceptions
-                if (file in BuiltinsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()) {
+                if (file in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
                     runWriteAction {
                         PsiManager.getInstance(project).dropPsiCaches()
                         //todo clear builtins on global module state modification KT-69247
