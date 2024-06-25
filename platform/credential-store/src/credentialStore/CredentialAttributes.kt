@@ -38,12 +38,12 @@ data class CredentialAttributes(
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean)
     : this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems = true)
 
-  @Deprecated("use one of (service name [, ...]) constructors")
+  @Deprecated("use one of (service name [, ...]) constructors", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker)
     : this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems = true)
 
-  @Deprecated("use one of (service name [, ...]) constructors")
+  @Deprecated("use one of (service name [, ...]) constructors", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, cacheDeniedItems: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker) :
     this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems)
@@ -61,7 +61,7 @@ class Credentials(user: String?, val password: OneTimeString?) {
   constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
   constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
-  @Deprecated("use one of (user, password) constructors")
+  @Deprecated("use one of (user, password) constructors", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(user: String?, password: OneTimeString?, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker) :
     this(user, password)
