@@ -12,15 +12,21 @@ internal class MergeStatisticsAggregator(
   var unresolved: Int = -1
   val initialTimestamp: Long = System.currentTimeMillis()
 
+  private val edited = mutableSetOf<Int>()
   private val resolvedByAiChanges = mutableSetOf<Int>()
   private val rolledBackAfterAI = mutableSetOf<Int>()
   private val undoneAfterAi = mutableSetOf<Int>()
   private val editedAfterAi = mutableSetOf<Int>()
 
+  fun edited(): Int = edited.size
   fun resolvedByAi(): Int = resolvedByAiChanges.size
   fun rolledBackAfterAI(): Int = rolledBackAfterAI.size
   fun undoneAfterAI(): Int = undoneAfterAi.size
   fun editedAfterAI(): Int = editedAfterAi.size
+
+  fun wasEdited(index: Int) {
+    edited.add(index)
+  }
 
   fun wasResolvedByAi(index: Int) {
     resolvedByAiChanges.add(index)
