@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
-import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener;
-import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl;
-import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId;
 import org.jetbrains.plugins.gradle.service.project.open.GradleProjectImportUtil;
 import org.jetbrains.plugins.gradle.settings.GradleDefaultProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -46,7 +43,6 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices.suggestGradleVersion;
@@ -126,7 +122,6 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
     List<String> projectsPaths = ContainerUtil.map(projectsSettings, ExternalProjectSettings::getExternalProjectPath);
     AtomicInteger gradleProjectsToRefreshCount = new AtomicInteger(projectsSettings.size());
     StringBuilder projectsWithResolveErrors = new StringBuilder();
-    var hasAnnotations = subscribeAnnotationsProcessing(promise);
     for (GradleProjectSettings settings : projectsSettings) {
       ImportSpecBuilder importSpecBuilder = new ImportSpecBuilder(project, GradleConstants.SYSTEM_ID);
       importSpecBuilder.callback(new ExternalProjectRefreshCallback() {
@@ -152,11 +147,8 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
             private void _onImportFinished(String projectPath) {
               if (!projectsPaths.contains(projectPath)) return;
               connection.disconnect();
-              if (gradleProjectsToRefreshCount.decrementAndGet() == 0 && !hasAnnotations.get()) {
-                ApplicationManager.getApplication().invokeLater(() -> {
-
-                  promise.setResult(null);
-                });
+              if (gradleProjectsToRefreshCount.decrementAndGet() == 0) {
+                ApplicationManager.getApplication().invokeLater(() -> promise.setResult(null));
               }
             }
           });
@@ -184,27 +176,6 @@ public final class ImportGradleProjectCommand extends AbstractCommand {
       });
       ExternalSystemUtil.refreshProject(settings.getExternalProjectPath(), importSpecBuilder);
     }
-  }
-
-  private static @NotNull AtomicBoolean subscribeAnnotationsProcessing(@NotNull AsyncPromise<Void> promise) {
-    var annotationsCount = new AtomicInteger(0);
-    var hasAnnotations = new AtomicBoolean(false);
-    var annotationsListener = new ExternalAnnotationsProgressNotificationListener() {
-      @Override
-      public void onStartResolve(ExternalAnnotationsTaskId id) {
-        hasAnnotations.set(true);
-        annotationsCount.incrementAndGet();
-      }
-
-      @Override
-      public void onFinishResolve(ExternalAnnotationsTaskId id) {
-        if (annotationsCount.decrementAndGet() == 0) {
-          promise.setResult(null);
-        }
-      }
-    };
-    ExternalAnnotationsProgressNotificationManagerImpl.Companion.getInstanceImpl().addNotificationListener(annotationsListener);
-    return hasAnnotations;
   }
 
   public static Promise<Void> linkGradleProjectIfNeeded(@NotNull Project project,
