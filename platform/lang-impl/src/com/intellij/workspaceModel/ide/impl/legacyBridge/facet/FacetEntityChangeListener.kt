@@ -17,7 +17,10 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.jps.JpsMetrics
 import com.intellij.platform.workspace.jps.entities.*
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
@@ -79,9 +82,6 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
   ) = processBeforeChangeEventsMs.addMeasuredTime {
     event
       .getChanges(workspaceFacetContributor.rootEntityType)
-      // There are no actual implementations of the facet listener that care about the order of fireFacet* events,
-      //   but since the listener is not deprecated, it will be better to keep the order of events.
-      .orderToRemoveReplaceAdd()
       .forEach { change ->
         when (change) {
           is EntityChange.Added -> {
@@ -120,9 +120,6 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     }
 
     event.getChanges(workspaceFacetContributor.rootEntityType)
-      // There are no actual implementations of the facet listener that care about the order of fireFacet* events,
-      //   but since the listener is not deprecated, it will be better to keep the order of events.
-      .orderToRemoveReplaceAdd()
       .forEach { change ->
         when (change) {
           is EntityChange.Added -> {
@@ -175,7 +172,7 @@ internal class FacetEntityChangeListener(private val project: Project, coroutine
     }
 
     workspaceFacetContributor.childEntityTypes.forEach { entityType ->
-      event.getChanges(entityType).orderToRemoveReplaceAdd().forEach { change ->
+      event.getChanges(entityType).forEach { change ->
         when (change) {
           is EntityChange.Added -> {
             // We shouldn't fire `facetConfigurationChanged` for newly added spring settings

@@ -339,13 +339,62 @@ class CollectChangesInBuilderTest {
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
 
+  @Test
+  fun `check ordering of changelog by making operations on different entities`() {
+    // Since the changelog collects changelog by entityId, operations on different entities should produce different order of the
+    //   changelog. However, this ordering has to be sorted.
+    // Also, we change the order of the operations
+    val parent1 = builder addEntity ParentEntity("Parent1", MySource)
+    val parent2 = builder addEntity ParentEntity("Parent2", MySource)
+    val builder1 = builder.toSnapshot().toBuilder()
+
+    builder1.removeEntity(parent1)
+    builder1.modifyParentEntity(parent2) {
+      this.entitySource = AnotherSource
+    }
+
+    assertChangelogSize(2, builder1)
+
+    val tempBuilder = createEmptyBuilder()
+
+    val parent12 = tempBuilder addEntity ParentEntity("Parent1", MySource)
+    val parent22 = tempBuilder addEntity ParentEntity("Parent2", MySource)
+    val builder2 = tempBuilder.toSnapshot().toBuilder()
+
+    builder2.modifyParentEntity(parent12) {
+      this.entitySource = AnotherSource
+    }
+    builder2.removeEntity(parent22)
+
+    assertChangelogSize(2, builder2)
+  }
+
   private fun assertChangelogSize(
     size: Int,
     myBuilder: MutableEntityStorage = builder
   ): Map<Class<*>, List<EntityChange<*>>> {
     val changes = (myBuilder as MutableEntityStorageInstrumentation).collectChanges()
+    assertChangelogOrdering(changes)
     assertEquals(size, changes.values.flatten().size)
     return changes
+  }
+
+  private fun assertChangelogOrdering(changes: Map<Class<*>, List<EntityChange<*>>>) {
+    changes.values.forEach { changeList ->
+      val removeIndex = changeList.indexOfFirst { it is EntityChange.Removed }
+      val replaceIndex = changeList.indexOfFirst { it is EntityChange.Replaced }
+      val addIndex = changeList.indexOfFirst { it is EntityChange.Added }
+
+      if (removeIndex != -1 && replaceIndex != -1) {
+        assert(removeIndex < replaceIndex) { "Replaced changes should occur after Removed ones" }
+      }
+      if (replaceIndex != -1 && addIndex != -1) {
+        assert(replaceIndex < addIndex) { "Added changes should occur after Replaced ones" }
+      }
+      if (removeIndex != -1 && addIndex != -1) {
+        assert(removeIndex < addIndex) { "Added changes should occur after Removed ones" }
+      }
+    }
   }
 
   private fun collectSampleEntityChanges(): List<EntityChange<SampleEntity>> {

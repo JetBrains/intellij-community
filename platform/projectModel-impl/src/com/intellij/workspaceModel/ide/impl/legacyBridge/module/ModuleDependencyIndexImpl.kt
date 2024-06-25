@@ -25,7 +25,6 @@ import com.intellij.platform.workspace.jps.serialization.impl.LibraryNameGenerat
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.orderToRemoveReplaceAdd
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.containers.MultiMap
@@ -132,7 +131,7 @@ class ModuleDependencyIndexImpl(private val project: Project): ModuleDependencyI
     val removedLibrariesCollector = mutableSetOf<LibraryId>()
     val removeLibraryLevels = MultiSet<String>()
     // Roots changed event should be fired for the global libraries linked with module
-    val moduleChanges = event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()
+    val moduleChanges = event.getChanges(ModuleEntity::class.java)
     for (change in moduleChanges) {
       when (change) {
         is EntityChange.Added -> {

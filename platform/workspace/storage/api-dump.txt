@@ -130,8 +130,6 @@ com.intellij.platform.workspace.storage.SymbolicEntityId
 - a:getPresentableName():java.lang.String
 - resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - a:toString():java.lang.String
-f:com.intellij.platform.workspace.storage.VersionedEntityStorageKt
-- sf:orderToRemoveReplaceAdd(java.util.Collection):java.util.List
 com.intellij.platform.workspace.storage.VersionedStorageChange
 - a:getAllChanges():kotlin.sequences.Sequence
 - a:getChanges(java.lang.Class):java.util.List

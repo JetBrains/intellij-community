@@ -131,7 +131,7 @@ abstract class ModuleManagerBridgeImpl(private val project: Project,
 
       busConnection.subscribe(WorkspaceModelTopics.UNLOADED_ENTITIES_CHANGED, object : WorkspaceModelUnloadedStorageChangeListener {
         override fun changed(event: VersionedStorageChange) {
-          for (change in event.getChanges(ModuleEntity::class.java).orderToRemoveReplaceAdd()) {
+          for (change in event.getChanges(ModuleEntity::class.java)) {
             change.oldEntity?.name?.let { moduleNameToUnloadedModuleDescription.remove(it) }
             change.newEntity?.let {
               moduleNameToUnloadedModuleDescription[it.name] = UnloadedModuleDescriptionBridge.createDescription(it)

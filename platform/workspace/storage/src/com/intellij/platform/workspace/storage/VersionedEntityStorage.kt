@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage
 
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 /**
  * Provides access to instance of [EntityStorage] which can be replaced by newer versions. 
@@ -48,10 +47,8 @@ public class CachedValue<R>(public val source: (EntityStorage) -> R)
 public class CachedValueWithParameter<P, R>(public val source: (EntityStorage, P) -> R)
 
 /**
- * Change containing a set of changes. Instances of this class are passed to [WorkspaceModelChangeListener][com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
- * and [com.intellij.platform.backend.workspace.WorkspaceModel.changesEventFlow] when you subscribe to changes in the IDE process.
- *
- * As this is not a list of change operations, but a list of changes, the order of events is not defined.
+ * Change containing a set of changes. Instances of this class are passed to
+ * [com.intellij.platform.backend.workspace.WorkspaceModel.eventLog] when you subscribe to changes in the IDE process.
  */
 public interface VersionedStorageChange {
   public val storageBefore: ImmutableEntityStorage
@@ -60,23 +57,9 @@ public interface VersionedStorageChange {
   /**
    * Get changes for some type of entity.
    *
-   * There is no order in this set of changes. You can sort them using [orderToRemoveReplaceAdd] function or manually, if needed.
+   * The events are ordered: Removed -> Replaced -> Added
    */
   public fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
 
   public fun getAllChanges(): Sequence<EntityChange<*>>
-}
-
-/**
- * Function to sort change events to removed -> replaced -> added.
- */
-public fun <T : WorkspaceEntity, K : EntityChange<out T>> Collection<K>.orderToRemoveReplaceAdd(): List<K> {
-  return this.sortedBy {
-    when (it) {
-      is EntityChange.Removed<*> -> 0
-      is EntityChange.Replaced<*> -> 1
-      is EntityChange.Added<*> -> 2
-      else -> error("Unexpected type of entity change")
-    }
-  }
 }

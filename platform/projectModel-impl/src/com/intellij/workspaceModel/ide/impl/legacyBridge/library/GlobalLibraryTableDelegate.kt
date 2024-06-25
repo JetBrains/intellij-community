@@ -105,8 +105,6 @@ internal class GlobalLibraryTableDelegate(private val libraryTable: LibraryTable
 
   internal fun handleChangedEvents(event: VersionedStorageChange) {
     val changes = event.getChanges(LibraryEntity::class.java).filterLibraryChanges(libraryTableId)
-      // Since the listener is not deprecated, it will be better to keep the order of events as remove -> replace -> add
-      .orderToRemoveReplaceAdd()
     if (changes.isEmpty()) return
 
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage
