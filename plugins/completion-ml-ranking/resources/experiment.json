@@ -196,19 +196,19 @@
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 36, 22, 24],
+      "includeGroups": [28, 22, 24],
       "shouldLogElementFeatures": false
     },
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 36, 22, 24],
+      "includeGroups": [28, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 36, 22, 24],
+      "includeGroups": [28, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
