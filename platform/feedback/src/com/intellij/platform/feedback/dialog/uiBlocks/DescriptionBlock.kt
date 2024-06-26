@@ -6,7 +6,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
 
-open class DescriptionBlock(@NlsContexts.Label private val myLabel: String) : FeedbackBlock, TextDescriptionProvider {
+class DescriptionBlock(@NlsContexts.Label private val myLabel: String) : FeedbackBlock, TextDescriptionProvider {
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
