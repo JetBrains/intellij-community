@@ -21,10 +21,12 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
     @AllGradleVersionsSource("""
         taskName : 'project.tasks.register("taskName") {}',
         taskName : 'tasks.register("taskName") {}',
+        taskName : 'tasks.register<Task>("taskName") {}',
         taskName : 'getTasks().register("taskName") {}',
         taskName : 'project.task("taskName") {}',
         taskName : 'task("taskName") {}',
         taskName : 'tasks.create("taskName") {}',
+        taskName : 'tasks.create<Task>("taskName") {}',
         help     : 'tasks.named("help") {}'
     """)
     fun testTaskHasConfiguration(gradleVersion: GradleVersion, taskName: String, taskDefinition: String) {
