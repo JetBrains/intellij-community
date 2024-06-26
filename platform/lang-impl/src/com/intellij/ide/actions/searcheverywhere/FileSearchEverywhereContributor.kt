@@ -15,17 +15,25 @@ import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.DirtyUI
 import com.intellij.util.Processor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.event.InputEvent
@@ -109,19 +117,21 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
         return super.processSelectedItem(selected, modifiers, searchText)
       }
 
-      val pos = getLineAndColumn(searchText)
-      val descriptor = OpenFileDescriptor(myProject, file, pos.first, pos.second)
+      val lineAndColumn = getLineAndColumn(searchText)
+      val descriptor = OpenFileDescriptor(myProject, file, lineAndColumn.first, lineAndColumn.second)
       if (descriptor.canNavigate()) {
-        ApplicationManager.getApplication().invokeLater {
-          @Suppress("DEPRECATION")
-          if ((modifiers and InputEvent.SHIFT_MASK) != 0) {
-            openInRightSplit(project = myProject, file = file, element = descriptor, requestFocus = true)
+        myProject.service<FileSearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
+          withContext(Dispatchers.EDT) {
+            @Suppress("DEPRECATION")
+            if ((modifiers and InputEvent.SHIFT_MASK) != 0) {
+              openInRightSplit(project = myProject, file = file, element = descriptor, requestFocus = true)
+            }
+            else {
+              descriptor.navigate(true)
+            }
           }
-          else {
-            descriptor.navigate(true)
-          }
-          if (pos.first > 0) {
-            FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line")
+          if (lineAndColumn.first > 0) {
+            serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
           }
         }
         return true
@@ -154,6 +164,11 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
   override fun isEmptyPatternSupported(): Boolean = true
 
   override fun createExtendedInfo(): @Nls ExtendedInfo? = createPsiExtendedInfo()
+}
+
+@Service(Service.Level.PROJECT)
+private class FileSearchEverywhereContributorCoroutineScopeHolder(coroutineScope: CoroutineScope) {
+  @JvmField val coroutineScope: CoroutineScope = coroutineScope.childScope("FileSearchEverywhereContributor")
 }
 
 @Internal
