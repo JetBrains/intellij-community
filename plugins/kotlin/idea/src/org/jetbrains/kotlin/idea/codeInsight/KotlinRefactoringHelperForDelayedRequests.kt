@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.prepareDelayedRequests
 
 class KotlinRefactoringHelperForDelayedRequests : RefactoringHelper<Any> {
     override fun prepareOperation(
-        usages: Array<out UsageInfo>,
-        elements: List<PsiElement>
+      usages: Array<out UsageInfo>,
+      elements: List<PsiElement>
     ): Any? {
         if (usages.isNotEmpty()) {
             val project = usages[0].project
