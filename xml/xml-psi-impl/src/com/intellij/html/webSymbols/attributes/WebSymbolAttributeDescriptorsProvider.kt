@@ -65,7 +65,7 @@ class WebSymbolAttributeDescriptorsProvider : XmlAttributeDescriptorsProvider {
     this
       .asSafely<WebSymbolsHtmlQueryConfigurator.HtmlAttributeDescriptorBasedSymbol>()
       ?.descriptor
-    ?: WebSymbolHtmlAttributeInfo.create(attributeName, registry, this)
+    ?: WebSymbolHtmlAttributeInfo.create(attributeName, registry, this, context)
       .toAttributeDescriptor(context)
 
 }
