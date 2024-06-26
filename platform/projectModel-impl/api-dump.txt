@@ -488,10 +488,8 @@ f:com.intellij.util.modules.CircularModuleDependenciesDetector
 - a:getRoot():com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 *:com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
-- a:registerExcludedRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerExcludedRoot(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerExcludedRoot(com.intellij.platform.workspace.storage.url.VirtualFileUrl,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity):V
-- a:registerExclusionCondition(com.intellij.openapi.vfs.VirtualFile,kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerExclusionCondition(com.intellij.platform.workspace.storage.url.VirtualFileUrl,kotlin.jvm.functions.Function1,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerExclusionPatterns(com.intellij.platform.workspace.storage.url.VirtualFileUrl,java.util.List,com.intellij.platform.workspace.storage.WorkspaceEntity):V
 - a:registerFileSet(com.intellij.openapi.vfs.VirtualFile,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind,com.intellij.platform.workspace.storage.WorkspaceEntity,com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData):V

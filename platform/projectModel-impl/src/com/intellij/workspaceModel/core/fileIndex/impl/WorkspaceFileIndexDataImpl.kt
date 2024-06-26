@@ -461,18 +461,12 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
       val file = excludedRoot.virtualFile
       if (file != null) {
-        registerExcludedRoot(file, excludedFrom, entity)
+        val mask = if (excludedFrom == WorkspaceFileKind.EXTERNAL) WorkspaceFileKindMask.EXTERNAL else excludedFrom.toMask()
+        fileSets.putValue(file, ExcludedFileSet.ByFileKind(mask, entity.createPointer(), storageKind))
       }
       else {
         nonExistingFilesRegistry.registerUrl(excludedRoot, entity, storageKind, if (excludedFrom.isContent) NonExistingFileSetKind.EXCLUDED_FROM_CONTENT else NonExistingFileSetKind.EXCLUDED_OTHER)
       }
-    }
-
-    override fun registerExcludedRoot(excludedRoot: VirtualFile,
-                                      excludedFrom: WorkspaceFileKind,
-                                      entity: WorkspaceEntity) {
-      val mask = if (excludedFrom == WorkspaceFileKind.EXTERNAL) WorkspaceFileKindMask.EXTERNAL else excludedFrom.toMask()
-      fileSets.putValue(excludedRoot, ExcludedFileSet.ByFileKind(mask, entity.createPointer(), storageKind))
     }
 
     override fun registerExclusionPatterns(root: VirtualFileUrl,
@@ -492,17 +486,11 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
       val rootFile = root.virtualFile
       if (rootFile != null) {
-        registerExclusionCondition(rootFile, condition, entity)
+        fileSets.putValue(rootFile, ExcludedFileSet.ByCondition(rootFile, condition, entity.createPointer(), storageKind))
       }
       else {
         nonExistingFilesRegistry.registerUrl(root, entity, storageKind, NonExistingFileSetKind.EXCLUDED_OTHER)
       }
-    }
-
-    override fun registerExclusionCondition(root: VirtualFile,
-                                            condition: (VirtualFile) -> Boolean,
-                                            entity: WorkspaceEntity) {
-      fileSets.putValue(root, ExcludedFileSet.ByCondition(root, condition, entity.createPointer(), storageKind))
     }
   }
 
@@ -556,17 +544,11 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
       val excludedRootFile = excludedRoot.virtualFile
       if (excludedRootFile != null) {
-        registerExcludedRoot(excludedRootFile, excludedFrom, entity)
+        fileSets.removeValueIf(excludedRootFile) { it is ExcludedFileSet && it.entityPointer.isPointerTo(entity) }
       }
       else {
         nonExistingFilesRegistry.unregisterUrl(excludedRoot, entity, storageKind)
       }
-    }
-
-    override fun registerExcludedRoot(excludedRoot: VirtualFile,
-                                      excludedFrom: WorkspaceFileKind,
-                                      entity: WorkspaceEntity) {
-      fileSets.removeValueIf(excludedRoot) { it is ExcludedFileSet && it.entityPointer.isPointerTo(entity) }
     }
 
     override fun registerExclusionPatterns(root: VirtualFileUrl,
@@ -584,18 +566,13 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
       val rootFile = root.virtualFile
       if (rootFile != null) {
-        registerExclusionCondition(rootFile, condition, entity)
+        fileSets.removeValueIf(rootFile) { it is ExcludedFileSet.ByCondition && it.entityPointer.isPointerTo(entity) }
       }
       else {
         nonExistingFilesRegistry.unregisterUrl(root, entity, storageKind)
       }
     }
 
-    override fun registerExclusionCondition(root: VirtualFile,
-                                            condition: (VirtualFile) -> Boolean,
-                                            entity: WorkspaceEntity) {
-      fileSets.removeValueIf(root) { it is ExcludedFileSet.ByCondition && it.entityPointer.isPointerTo(entity) }
-    }
   }
 }
 

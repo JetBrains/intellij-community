@@ -164,13 +164,6 @@ interface WorkspaceFileSetRegistrar {
    * Excludes [excludedRoot] and all files under it from [excludedFrom] kind of files. 
    * This is a temporary solution to keep behavior of old code. 
    */
-  @ApiStatus.Obsolete
-  fun registerExcludedRoot(excludedRoot: VirtualFile, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity)
-  
-  /**
-   * Excludes [excludedRoot] and all files under it from [excludedFrom] kind of files. 
-   * This is a temporary solution to keep behavior of old code. 
-   */
   fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity)
 
   /**
@@ -197,11 +190,4 @@ interface WorkspaceFileSetRegistrar {
                                   kind: WorkspaceFileKind,
                                   entity: WorkspaceEntity,
                                   customData: WorkspaceFileSetData?)
-
-  /**
-   * A variant of [registerExclusionCondition] function which takes [VirtualFile] instead of [VirtualFileUrl].
-   * This function is considered as a temporary solution until all contributors to [WorkspaceFileIndex] are migrated to Workspace Model.
-   */
-  @ApiStatus.Obsolete
-  fun registerExclusionCondition(root: VirtualFile, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity)
 }
