@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.project.DumbService;
@@ -19,6 +20,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.util.WaitFor;
 import kotlinx.coroutines.CoroutineScopeKt;
 import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.NotNull;
@@ -26,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @NeedsIndex.SmartMode(reason = "The module descriptors generator is not supported in the dumb mode")
 public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTestCase {
   private MultiModuleProjectDescriptor myDescriptor;
+  private final AtomicInteger myLock = new AtomicInteger(0);
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
@@ -41,7 +45,11 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
                                           new DumbServiceImpl(projectModel.getProject(), CoroutineScopeKt.CoroutineScope(JobKt.Job(null))) {
                                             @Override
                                             public void smartInvokeLater(@NotNull Runnable runnable) {
-                                              runnable.run();
+                                              myLock.incrementAndGet();
+                                              ReadAction.compute(() -> {
+                                                runnable.run();
+                                                return myLock.decrementAndGet();
+                                              });
                                             }
                                           }, projectModel.getProject());
       ServiceContainerUtil.replaceService(projectModel.getProject(), CompilerManager.class, new CompilerManagerImpl(projectModel.getProject()) {
@@ -101,6 +109,13 @@ public class Java9GenerateModuleDescriptorsActionTest extends LightMultiFileTest
     // CHECK
     final MultiModuleProjectDescriptor descriptor = (MultiModuleProjectDescriptor)getProjectDescriptor();
 
+    //noinspection ResultOfObjectAllocationIgnored
+    new WaitFor() {
+      @Override
+      protected boolean condition() {
+        return myLock.get() == 0;
+      }
+    };
     PlatformTestUtil.assertDirectoriesEqual(LocalFileSystem.getInstance().findFileByNioFile(descriptor.getAfterPath()),
                                             LocalFileSystem.getInstance().findFileByNioFile(descriptor.getProjectPath()));
   }
