@@ -1297,8 +1297,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     boolean multiSelectMode = e.isShiftDown() || UIUtil.isControlKeyDown(e);
     boolean isPreviewDoubleClick = !isPreviewActive() || !hasPreviewProvider(myHeader.getSelectedTab()) || e.getClickCount() == 2;
     int selectedIndex = myResultsList.locationToIndex(e.getPoint());
-    if (myListModel.getElementAt(selectedIndex) instanceof SearchListModel.ResultsNotificationElement) {
-      int listSize = myListModel.getSize();
+    int listSize = myListModel.getSize();
+    if (selectedIndex > 0 && selectedIndex < listSize
+        && myListModel.getElementAt(selectedIndex) instanceof SearchListModel.ResultsNotificationElement) {
       if (prevSelectedIndex == (selectedIndex - 1 + listSize) % listSize) {
         myResultsList.setSelectedIndex(selectedIndex + 1);
         ScrollingUtil.ensureIndexIsVisible(myResultsList, selectedIndex + 1, 0);

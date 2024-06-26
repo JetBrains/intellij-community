@@ -74,7 +74,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
 
   private final SearchScope myEverywhereScope;
   private final SearchScope myProjectScope;
-  protected boolean isScopeDefaultAndAutoSet = true;
+  protected boolean isScopeDefaultAndAutoSet;
 
   protected final SmartPsiElementPointer<PsiElement> myPsiContext;
 
@@ -87,6 +87,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     myEverywhereScope = findEverywhereScope(scopeDescriptors);
     myProjectScope = findProjectScope(scopeDescriptors, myEverywhereScope);
     myScopeDescriptor = getInitialSelectedScope(scopeDescriptors);
+    isScopeDefaultAndAutoSet = StringUtil.isEmpty(getSelectedScopes(myProject).get(getClass().getSimpleName()));
 
     myProject.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
