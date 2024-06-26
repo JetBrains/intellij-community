@@ -174,18 +174,8 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
 
       if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && afterArrowInCase(leaf) &&
           iterator.getTokenType() != JavaTokenType.LBRACKET) {
-        ASTNode rule = BasicJavaAstTreeUtil.getParentOfType(leaf.getNode(), BASIC_SWITCH_LABELED_RULE);
-        if (rule != null) {
-          int firstOffset = editor.getCaretModel().getOffset();
-          editor.getDocument().insertString(firstOffset, "{\n");
-          editor.getCaretModel().moveToOffset(firstOffset + 1);
-          int secondOffset = rule.getTextRange().getEndOffset() + 2;
-          editor.getDocument().insertString(secondOffset, "\n}");
-          PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-          CodeStyleManager.getInstance(project).adjustLineIndent(file, secondOffset + 1);
-          CodeStyleManager.getInstance(project).adjustLineIndent(file, firstOffset + 2);
-          return Result.STOP;
-        }
+        Result stop = processOpenBraceInOneLineCaseRule(project, editor, file, leaf);
+        if (stop != null) return stop;
       }
 
       if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_CODE_BLOCK, false, MEMBER_SET) != null &&
@@ -197,6 +187,51 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     }
 
     return Result.CONTINUE;
+  }
+
+  private static @Nullable Result processOpenBraceInOneLineCaseRule(@NotNull Project project,
+                                                                    @NotNull Editor editor,
+                                                                    @NotNull PsiFile file,
+                                                                    @NotNull PsiElement leaf) {
+    ASTNode rule = BasicJavaAstTreeUtil.getParentOfType(leaf.getNode(), BASIC_SWITCH_LABELED_RULE);
+    if(rule != null) {
+      while (true) {
+        ASTNode next = rule.getTreeNext();
+        if (next.getElementType() == TokenType.WHITE_SPACE) {
+          next = next.getTreeNext();
+        }
+        if(BasicJavaAstTreeUtil.is(next, BASIC_THROW_STATEMENT) ||
+           BasicJavaAstTreeUtil.is(next, BASIC_EXPRESSION_STATEMENT)) {
+          rule = next;
+          continue;
+        }
+        break;
+      }
+    }
+    if (rule != null) {
+      int firstOffset = editor.getCaretModel().getOffset();
+      editor.getDocument().insertString(firstOffset, "{");
+      boolean hasFirstBreakLine = true;
+      int expectedIndex = firstOffset - leaf.getTextRange().getStartOffset();
+      if (expectedIndex >= 0 && expectedIndex < leaf.getText().length()) {
+        String text = leaf.getText().substring(expectedIndex);
+        if (!text.contains("\n") &&
+            !text.contains("\r")) {
+          hasFirstBreakLine = false;
+          editor.getDocument().insertString(firstOffset + 1, "\n");
+        }
+      }
+      editor.getCaretModel().moveToOffset(firstOffset + 1);
+      int secondOffset = rule.getTextRange().getEndOffset() + (hasFirstBreakLine ? 1 : 2);
+      editor.getDocument().insertString(secondOffset, "\n}");
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, secondOffset + 1);
+      if (!hasFirstBreakLine) {
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, firstOffset + 2);
+      }
+      return Result.STOP;
+    }
+    return null;
   }
 
   private static boolean afterArrowInCase(@Nullable PsiElement leaf) {
