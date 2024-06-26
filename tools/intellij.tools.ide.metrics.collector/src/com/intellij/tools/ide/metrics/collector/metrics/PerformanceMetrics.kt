@@ -1,7 +1,6 @@
 package com.intellij.tools.ide.metrics.collector.metrics
 
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.tools.ide.metrics.collector.analysis.CompareSetting
 import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
 import java.time.OffsetDateTime
 
@@ -29,23 +28,22 @@ data class PerformanceMetrics(
   }
 
   data class Metric private constructor(@JvmField val id: MetricId,
-                                        @JvmField val value: Long,
-                                        @JvmField val compareSetting: CompareSetting = CompareSetting.notComparing) {
+                                        @JvmField val value: Long) {
     companion object {
       /**
        * Creates instance of the Counter metric type.
        * @see com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
        */
-      fun newCounter(name: String, value: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric {
-        return Metric(id = MetricId.Counter(name), value = value, compareSetting)
+      fun newCounter(name: String, value: Long): Metric {
+        return Metric(id = MetricId.Counter(name), value = value)
       }
 
       /**
        * Creates instance of the Duration metric type.
        * @see com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
        */
-      fun newDuration(name: String, durationMillis: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric {
-        return Metric(id = MetricId.Duration(name), value = durationMillis, compareSetting)
+      fun newDuration(name: String, durationMillis: Long): Metric {
+        return Metric(id = MetricId.Duration(name), value = durationMillis)
       }
     }
   }
@@ -54,14 +52,14 @@ data class PerformanceMetrics(
     /**
      * Shortcut for [com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter]
      */
-    fun newCounter(name: String, value: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric =
-      Metric.newCounter(name, value, compareSetting)
+    fun newCounter(name: String, value: Long): Metric =
+      Metric.newCounter(name, value)
 
     /**
      * Shortcut for [com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration]
      */
-    fun newDuration(name: String, durationMillis: Long, compareSetting: CompareSetting = CompareSetting.notComparing): Metric =
-      Metric.newDuration(name, durationMillis, compareSetting)
+    fun newDuration(name: String, durationMillis: Long): Metric =
+      Metric.newDuration(name, durationMillis)
   }
 }
 
