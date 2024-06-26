@@ -21,9 +21,9 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -33,6 +33,7 @@ import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
@@ -42,9 +43,12 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IntPair
 import com.intellij.util.Processor
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.FindSymbolParameters
 import it.unimi.dsi.fastutil.ints.IntArrayList
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.*
@@ -367,21 +371,25 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         return true
       }
 
-      ReadAction.nonBlocking<Runnable> {
-        val psiElement = preparePsi(selected, searchText)
-        val extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers)
-        val file = PsiUtilCore.getVirtualFile(psiElement)
-        @Suppress("DEPRECATION")
-        val command = if ((modifiers and InputEvent.SHIFT_MASK) != 0 && file != null) {
-          Runnable { openInRightSplit(myProject, file, extNavigatable, true) }
+      myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
+        val command = readAction {
+          val psiElement = preparePsi(selected, searchText)
+          val extNavigatable = createExtendedNavigatable(psi = psiElement, searchText = searchText, modifiers = modifiers)
+          val file = PsiUtilCore.getVirtualFile(psiElement)
+
+          @Suppress("DEPRECATION")
+          if ((modifiers and InputEvent.SHIFT_MASK) != 0 && file != null) {
+            Runnable { openInRightSplit(project = myProject, file = file, element = extNavigatable, requestFocus = true) }
+          }
+          else {
+            Runnable { doNavigate(psiElement, extNavigatable) }
+          }
         }
-        else {
-          Runnable { doNavigate(psiElement, extNavigatable) }
+
+        withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+          command.run()
         }
-        command
       }
-        .finishOnUiThread(ModalityState.nonModal()) { obj: Runnable -> obj.run() }
-        .submit(AppExecutorUtil.getAppExecutorService())
     }
     else {
       EditSourceUtil.navigate((selected as NavigationItem), true, false)
@@ -490,6 +498,11 @@ private fun getLineAndColumnRegexpGroup(text: String, groupNumber: Int): Int {
   }
 
   return -1
+}
+
+@Service(Service.Level.PROJECT)
+internal class SearchEverywhereContributorCoroutineScopeHolder(coroutineScope: CoroutineScope) {
+  @JvmField val coroutineScope: CoroutineScope = coroutineScope.childScope("SearchEverywhereContributorCoroutineScopeHolder")
 }
 
 private fun pathToAnonymousClass(searchedText: String): String? {
