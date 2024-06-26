@@ -55,7 +55,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
 
   @Nullable
   @Override
-  public PyTypingAliasStub createStub(PyTargetExpression psi) {
+  public PyTypingAliasStub createStub(@NotNull PyTargetExpression psi) {
     final PyExpression value = getAssignedValueIfTypeAliasLike(psi, true);
     return value != null ? new PyTypingTypeAliasStubImpl(value.getText()) : null;
   }
@@ -155,7 +155,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
 
   @Nullable
   @Override
-  public PyTypingAliasStub deserializeStub(StubInputStream stream) throws IOException {
+  public PyTypingAliasStub deserializeStub(@NotNull StubInputStream stream) throws IOException {
     String ref = stream.readNameString();
     return ref != null ? new PyTypingTypeAliasStubImpl(ref) : null;
   }

@@ -46,7 +46,7 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
   }
 
   @Override
-  public void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(@NotNull StubOutputStream stream) throws IOException {
     stream.writeName(myText);
   }
 

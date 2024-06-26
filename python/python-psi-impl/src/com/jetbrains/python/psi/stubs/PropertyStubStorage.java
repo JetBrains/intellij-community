@@ -50,7 +50,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
   }
 
   @Override
-  public void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(@NotNull StubOutputStream stream) throws IOException {
     writeOne(myGetter, stream);
     writeOne(mySetter, stream);
     writeOne(myDeleter, stream);
