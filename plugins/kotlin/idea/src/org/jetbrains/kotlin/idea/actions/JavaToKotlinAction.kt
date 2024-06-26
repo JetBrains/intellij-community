@@ -83,7 +83,8 @@ class JavaToKotlinAction : AnAction() {
                         javaFiles,
                         postProcessor,
                         progressIndicator,
-                        preprocessorExtensions = J2kPreprocessorExtension.EP_NAME.extensionList
+                        preprocessorExtensions = J2kPreprocessorExtension.EP_NAME.extensionList,
+                        postprocessorExtensions = J2kPostprocessorExtension.EP_NAME.extensionList
                     )
                 }
                 val linesCount = runReadAction {

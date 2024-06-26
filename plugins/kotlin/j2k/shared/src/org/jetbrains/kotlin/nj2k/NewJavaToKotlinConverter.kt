@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
-import org.jetbrains.kotlin.nj2k.PreprocessorExtensionsRunner
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -44,15 +43,18 @@ class NewJavaToKotlinConverter(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         progressIndicator: ProgressIndicator,
-        preprocessorExtensions: List<J2kPreprocessorExtension>
-    ): FilesResult = filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null, preprocessorExtensions)
+        preprocessorExtensions: List<J2kPreprocessorExtension>,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
+    ): FilesResult =
+        filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null, preprocessorExtensions, postprocessorExtensions)
 
     fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         progressIndicator: ProgressIndicator,
         bodyFilter: ((PsiElement) -> Boolean)?,
-        preprocessorExtensions: List<J2kPreprocessorExtension>
+        preprocessorExtensions: List<J2kPreprocessorExtension>,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
     ): FilesResult {
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
@@ -72,6 +74,9 @@ class NewJavaToKotlinConverter(
             postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
                 withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
             }
+
+            PostprocessorExtensionsRunner.runProcessors(project, kotlinFiles, postprocessorExtensions)
+
             FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
         }
     }

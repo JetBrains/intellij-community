@@ -1,7 +1,7 @@
 // INCLUDE_J2K_PREPROCESSOR_EXTENSIONS
 class Main {
     private var mCount = 0
-    fun bar() {
+    fun prebar() {
         mCount++
     }
 

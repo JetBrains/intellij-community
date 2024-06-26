@@ -80,6 +80,10 @@
             qualifiedName="org.jetbrains.kotlin.j2kPreprocessorExtension"
             interface="org.jetbrains.kotlin.j2k.J2kPreprocessorExtension"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.j2kPostprocessorExtension"
+            interface="org.jetbrains.kotlin.j2k.J2kPostprocessorExtension"
+            dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.kotlin.buildSystemDependencyManager"
                     interface="org.jetbrains.kotlin.idea.configuration.KotlinBuildSystemDependencyManager"
                     area="IDEA_PROJECT"

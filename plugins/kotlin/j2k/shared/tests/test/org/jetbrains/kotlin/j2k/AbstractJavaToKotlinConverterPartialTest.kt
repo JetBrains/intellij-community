@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
 
 abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinConverterSingleFileTest() {
-    override fun fileToKotlin(text: String, settings: ConverterSettings, preprocessorExtensions: List<J2kPreprocessorExtension>): String {
+    override fun fileToKotlin(text: String, settings: ConverterSettings, preprocessorExtensions: List<J2kPreprocessorExtension>, postprocessorExtensions: List<J2kPostprocessorExtension>): String {
         val file = createJavaFile(text)
         val element = myFixture.elementAtCaret
 
@@ -20,7 +20,7 @@ abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinCo
             listOf(file),
             postProcessor,
             EmptyProgressIndicator(),
-        { it == element }, preprocessorExtensions = emptyList()
+        { it == element }, preprocessorExtensions = emptyList(), postprocessorExtensions = emptyList()
         ).results.single()
     }
 }
