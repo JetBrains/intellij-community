@@ -50,13 +50,12 @@ internal class InlineCompletionNestedEventInvocationTest : InlineCompletionTestC
     val onSuccessUpdate: () -> Unit = { updateCounter.incrementAndGet() }
     InlineCompletionHandler.registerTestHandler(CustomProvider(onSuccessUpdate), testRootDisposable)
     callInlineCompletion()
-    typeChar(':')
     delay()
     typeChar(':')
     assertInlineRender("Test")
     insert()
     assertInlineHidden()
-    assertFileContent("::Test<caret>")
+    assertFileContent(":Test<caret>")
 
     assertEquals(updateCounter.get(), 1)
   }
