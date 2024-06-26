@@ -16,7 +16,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -24,13 +23,11 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.DirtyUI
 import com.intellij.util.Processor
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -120,7 +117,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
       val lineAndColumn = getLineAndColumn(searchText)
       val descriptor = OpenFileDescriptor(myProject, file, lineAndColumn.first, lineAndColumn.second)
       if (descriptor.canNavigate()) {
-        myProject.service<FileSearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
+        myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
           withContext(Dispatchers.EDT) {
             @Suppress("DEPRECATION")
             if ((modifiers and InputEvent.SHIFT_MASK) != 0) {
@@ -162,11 +159,6 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
   override fun isEmptyPatternSupported(): Boolean = true
 
   override fun createExtendedInfo(): @Nls ExtendedInfo? = createPsiExtendedInfo()
-}
-
-@Service(Service.Level.PROJECT)
-private class FileSearchEverywhereContributorCoroutineScopeHolder(coroutineScope: CoroutineScope) {
-  @JvmField val coroutineScope: CoroutineScope = coroutineScope.childScope("FileSearchEverywhereContributor")
 }
 
 @Internal
