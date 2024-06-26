@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.databind.type.TypeFactory
+import com.intellij.DynamicBundle.LanguageBundleEP
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveProjectsAndApp
@@ -22,7 +23,6 @@ import com.intellij.ide.ui.TopHitCache
 import com.intellij.ide.ui.UIThemeProvider
 import com.intellij.ide.util.TipAndTrickManager
 import com.intellij.idea.IdeaLogger
-import com.intellij.l10n.LocalizationUtil
 import com.intellij.lang.Language
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
@@ -101,7 +101,6 @@ object DynamicPlugins {
   fun allowLoadUnloadWithoutRestart(descriptor: IdeaPluginDescriptorImpl,
                                     baseDescriptor: IdeaPluginDescriptorImpl? = null,
                                     context: List<IdeaPluginDescriptorImpl> = emptyList()): Boolean {
-    if (LocalizationUtil.isInactiveLocalizationPlugin(descriptor)) return true
     val reason = checkCanUnloadWithoutRestart(module = descriptor, parentModule = baseDescriptor, context = context)
     if (reason != null) {
       LOG.info(reason)
@@ -359,7 +358,7 @@ object DynamicPlugins {
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
     val extensions = (module.epNameToExtensions.takeIf { it.isNotEmpty() } ?: module.appContainerDescriptor.extensions)
-    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name }) {
+    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name || it.key == LanguageBundleEP.EP_NAME.name}) {
       return false
     }
     return checkNoComponentsOrServiceOverrides(module) == null && module.actions.isEmpty()
