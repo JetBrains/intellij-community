@@ -4,6 +4,7 @@ package com.jetbrains.performancePlugin.remotedriver.dataextractor
 
 import com.intellij.driver.model.TextData
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProcessCanceledException
 import org.assertj.swing.edt.GuiActionRunner
 import org.assertj.swing.edt.GuiTask
 import java.awt.Component
@@ -54,6 +55,9 @@ object TextParser {
       override fun executeInEDT() {
         try {
           component.paint(g)
+        }
+        catch (ce: ProcessCanceledException){
+          throw ce
         }
         catch (e: Exception) {
           logger.error("Text parsing error. Can't do paint on ${component::class.java.simpleName}", e)
