@@ -41,7 +41,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             "org.gradle.api.Project.uri(path)",
             "jvmArgs(arguments)",
             "org.gradle.kotlin.dsl.DependencyHandlerScope.*(notation)",
-            "org.gradle.kotlin.dsl.PluginDependenciesSpecScope.alias(notation)",
+            "org.gradle.kotlin.dsl.PluginDependenciesSpecScope.*(*)",
             "org.gradle.kotlin.dsl.*(dependencyNotation)",
             "org.gradle.api.tasks.util.*include(includes)",
             "org.gradle.api.tasks.util.*exclude(excludes)",
