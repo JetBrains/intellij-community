@@ -18,6 +18,22 @@ class XmlTextVisualizerTest : FormattedTextVisualizerTestCase(XmlTextVisualizer(
       """.trimIndent())
   }
 
+  fun testLFvsCRLF() {
+    val input =
+      "<foo>\n<bar>Hello</bar></foo>"
+    val output = """
+        <?xml version="1.0" encoding="UTF-8" standalone="no"?>
+        <foo>
+            
+            <bar>Hello</bar>
+        </foo>
+        
+      """.trimIndent()
+
+    checkPositive(input, output)
+    checkPositive(input.replace("\n", "\r\n"), output)
+  }
+
   fun testNotSoValidXml() {
     checkNegative("<p>Hello, <b>world</b>!")
   }

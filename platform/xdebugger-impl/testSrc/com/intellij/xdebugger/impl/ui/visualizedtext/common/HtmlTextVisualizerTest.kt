@@ -7,6 +7,10 @@ class HtmlTextVisualizerTest : TextVisualizerTestCase(HtmlTextVisualizer()) {
     checkPositive(" <p>Hello, world!</p> ")
   }
 
+  fun testSomeValidHtmlWithCRLF() {
+    checkPositive("<p>\r\nHello, world!\r\n</p>")
+  }
+
   fun testNotSoValidButOkHtml() {
     checkPositive("<p>Hello, <b>world</b>!")
   }

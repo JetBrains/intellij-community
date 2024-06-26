@@ -14,6 +14,17 @@ class JsonTextVisualizerTest : FormattedTextVisualizerTestCase(JsonTextVisualize
       """.trimIndent())
   }
 
+  fun testSomeJsonOnWindows() {
+    checkPositive(
+      "{\r\n\"a\": 37,\r\n\"b\": \"foo\"\r\n}",
+      """
+        {
+          "a" : 37,
+          "b" : "foo"
+        }
+      """.trimIndent())
+  }
+
   fun testNotJson() {
     checkNegative("Hello, world!")
   }
