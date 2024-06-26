@@ -85,14 +85,6 @@ object K2CreateClassFromUsageBuilder {
 
     context (KaSession)
     private fun getPossibleClassKindsAndParents(element: KtSimpleNameExpression): Pair<List<ClassKind>,List<PsiElement>> {
-        fun isEnum(element: PsiElement): Boolean {
-            return when (element) {
-                is KtClass -> element.isEnum()
-                is PsiClass -> element.isEnum
-                else -> false
-            }
-        }
-
         val name = element.getReferencedName()
 
         val fullCallExpr = getFullCallExpression(element) ?: return Pair(emptyList(), emptyList())
@@ -107,10 +99,6 @@ object K2CreateClassFromUsageBuilder {
             val targetParents = getTargetParentsByQualifier(element, receiverSelector != null, qualifierDescriptor)
                 .ifEmpty { return Pair(emptyList(), emptyList()) }
 
-            //targetParents.forEach {
-            //    if (element.getCreatePackageFixIfApplicable(it) != null) return emptyList()
-            //}
-
             if (!name.checkClassName()) return Pair(emptyList(), emptyList())
 
             val classKinds = ClassKind.entries.filter {
@@ -123,16 +111,37 @@ object K2CreateClassFromUsageBuilder {
             return Pair(classKinds, targetParents)
         }
 
+        val fullParent = fullCallExpr.parent
+        val receiver = if (fullCallExpr is KtQualifiedExpression) fullCallExpr.receiverExpression.resolveExpression()
+                             else if (fullParent is KtUserType) fullParent.qualifier?.referenceExpression?.resolveExpression()
+                             else null
         val targetParents =
-        when (val receiver = (fullCallExpr as? KtQualifiedExpression)?.receiverExpression?.resolveExpression()) {
+        when (receiver) {
             null -> getTargetParentsByQualifier(fullCallExpr, false, null)
             else -> getTargetParentsByQualifier(fullCallExpr, true, receiver)
         }
 
         if (targetParents.isEmpty()) return Pair(emptyList(), emptyList())
         val parent = element.parent
-        if (parent is KtClassLiteralExpression && parent.receiverExpression == element) {
-            return Pair(listOf(ClassKind.PLAIN_CLASS, ClassKind.ENUM_CLASS, ClassKind.INTERFACE, ClassKind.ANNOTATION_CLASS, ClassKind.OBJECT), targetParents)
+        val typeReference = parent.getNonStrictParentOfType<KtTypeReference>()
+        if (parent is KtClassLiteralExpression && parent.receiverExpression == element || typeReference != null) {
+            val hasTypeArguments = ((fullParent as? KtUserType)?.getTypeArgumentsAsTypes() ?: emptyList()).isNotEmpty()
+            val isQualifier = (fullParent.parent as? KtUserType)?.qualifier == fullParent
+            val inTypeBound = typeReference != null && (
+              (typeReference.parent as? KtTypeParameter)?.extendsBound == typeReference ||
+              (typeReference.parent as? KtTypeConstraint)?.boundTypeReference == typeReference)
+            val possibleKinds = ClassKind.entries.filter {
+                                        when (it) {
+                                            ClassKind.OBJECT -> !hasTypeArguments && isQualifier || parent is KtClassLiteralExpression
+                                            ClassKind.ANNOTATION_CLASS -> !hasTypeArguments && !isQualifier && !inTypeBound
+                                            ClassKind.ENUM_ENTRY -> false
+                                            ClassKind.DEFAULT -> false
+                                            ClassKind.ENUM_CLASS -> !hasTypeArguments && !inTypeBound
+                                            else -> true
+                                        }
+                                    }
+
+            return Pair(possibleKinds, targetParents)
         }
 
         val allKinds = listOf(ClassKind.OBJECT, ClassKind.ENUM_ENTRY)
@@ -150,6 +159,14 @@ object K2CreateClassFromUsageBuilder {
                 }
             }
             return Pair(classKinds,targetParents)
+        }
+    }
+
+    private fun isEnum(element: PsiElement): Boolean {
+        return when (element) {
+            is KtClass -> element.isEnum()
+            is PsiClass -> element.isEnum
+            else -> false
         }
     }
 

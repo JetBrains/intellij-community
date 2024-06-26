@@ -1,4 +1,5 @@
 // "Create class 'A'" "true"
+// K2 TODO: improve generated class type arguments when "expected type" is fixed
 package p
 
 fun foo(): A<Int, String> = throw Throwable("")

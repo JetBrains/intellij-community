@@ -16,5 +16,5 @@ abstract class K2CreateClassFromUsageTest : K2AbstractCreateFromUsageTest("creat
         //class Kt21515: K2CreateClassFromUsageTest()
     }
     class ReferenceExpression : K2CreateClassFromUsageTest()
-    //class TypeReference : K2CreateClassFromUsageTest()
+    class TypeReference : K2CreateClassFromUsageTest()
 }
