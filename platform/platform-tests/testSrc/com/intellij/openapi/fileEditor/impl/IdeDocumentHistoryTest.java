@@ -5,6 +5,7 @@ import com.intellij.mock.Mock;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.HeavyPlatformTestCase;
@@ -271,7 +272,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     boolean myIsIncludedInDocumentHistory = true;
 
     @Override
-    public boolean isIncludedInDocumentHistory() {
+    public boolean isIncludedInDocumentHistory(@NotNull Project project) {
       return myIsIncludedInDocumentHistory;
     }
   }

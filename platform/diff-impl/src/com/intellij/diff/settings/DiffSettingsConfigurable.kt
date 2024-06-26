@@ -8,9 +8,9 @@ import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.*
 import javax.swing.JLabel
-import javax.swing.ListCellRenderer
 
 internal class DiffSettingsConfigurable : BoundSearchableConfigurable(
   message("configurable.DiffSettingsConfigurable.display.name"),
@@ -38,8 +38,15 @@ internal class DiffSettingsConfigurable : BoundSearchableConfigurable(
             .bindSelected(diffSettings::isGoToNextFileOnNextDifference)
         }
         row {
-          checkBox(message("settings.diff-included-in-history"))
-            .bindSelected(diffSettings::isIncludedInNavigationHistory)
+          label(message("settings.diffIncludedInHistory"))
+          comboBox(IncludeInNavigationHistory.entries, SimpleListCellRenderer.create("") { option ->
+            when (option) {
+              IncludeInNavigationHistory.Always -> message("settings.diffIncludedInHistory.always")
+              IncludeInNavigationHistory.OnlyIfOpen -> message("settings.diffIncludedInHistory.onlyIfOpen")
+              IncludeInNavigationHistory.Never -> message("settings.diffIncludedInHistory.never")
+              null -> ""
+            }
+          }).bindItem(diffSettings::isIncludedInNavigationHistory.toNullableProperty())
         }
       }
       group(message("settings.merge.text")) {
