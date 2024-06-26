@@ -545,6 +545,8 @@
         <separator/>
         <reference ref="CallInlineCompletionAction"/>
         <reference ref="InsertInlineCompletionAction"/>
+        <reference ref="InsertInlineCompletionWordAction"/>
+        <reference ref="InsertInlineCompletionLineAction"/>
       </group>
 
       <group id="InspectCodeInCodeMenuGroup">
