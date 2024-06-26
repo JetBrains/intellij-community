@@ -549,8 +549,9 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   }
 
   static boolean isCefBrowserCreated(@NotNull CefBrowser cefBrowser) {
-    if (getCefDelegate() != null) {
-      return true;
+    CefDelegate delegate = getCefDelegate();
+    if (delegate != null) {
+      return delegate.isInitialized(cefBrowser);
     }
     if (cefBrowser instanceof CefNativeAdapter)
       return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0; // [tav] todo: this can be thread race prone
@@ -589,7 +590,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   boolean isCefBrowserCreateStarted() {
     synchronized (myIsCreateStarted) {
-      return myIsCreateStarted.get() || getCefDelegate() == null && isCefBrowserCreated();
+      return myIsCreateStarted.get() || isCefBrowserCreated();
     }
   }
 
