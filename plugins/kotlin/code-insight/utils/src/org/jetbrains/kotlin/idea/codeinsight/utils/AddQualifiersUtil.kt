@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
-import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import java.lang.RuntimeException
 
@@ -91,7 +90,7 @@ object AddQualifiersUtil {
                 is KtCallableReferenceExpression -> addOrReplaceQualifier(psiFactory, parent, qualifier)
                 is KtCallExpression -> replaceExpressionWithDotQualifier(psiFactory, parent, qualifier)
                 is KtUserType -> addQualifierToType(psiFactory, parent, qualifier)
-                else -> replaceExpressionWithQualifier(psiFactory, referenceExpression, fqName)
+                else -> replaceExpressionWithQualifier(psiFactory, referenceExpression, qualifier, fqName)
             }
         }
         if (referenceExpression.isPhysical) {
@@ -148,20 +147,13 @@ object AddQualifiersUtil {
     private fun replaceExpressionWithQualifier(
         psiFactory: KtPsiFactory,
         referenceExpression: KtNameReferenceExpression,
+        packageQualifier: String,
         fqName: FqName
     ): KtElement {
         val fqNameUnsafe = fqName.toUnsafe()
         val shortName = fqNameUnsafe.shortName().asString().quoteIfNeeded()
-        val parent = fqNameUnsafe.parent()
-        val parentQuotedIfNeeded =
-            if (parent.isRoot) {
-                ""
-            } else {
-                val quotesAreNeeded = parent.pathSegments().any { !it.identifier.isIdentifier() }
-                val asString = parent.asString()
-                "${if (quotesAreNeeded) asString.quoteIfNeeded() else asString}."
-            }
-        val expressionWithQualifier = psiFactory.createExpression(parentQuotedIfNeeded + shortName)
+        val packageSeparator = ".".takeUnless { packageQualifier.isEmpty() } ?: ""
+        val expressionWithQualifier = psiFactory.createExpression(packageQualifier + packageSeparator + shortName)
         return referenceExpression.replace(expressionWithQualifier) as KtElement
     }
 }

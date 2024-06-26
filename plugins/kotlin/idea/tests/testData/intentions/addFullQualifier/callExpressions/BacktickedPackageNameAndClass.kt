@@ -2,7 +2,7 @@
 package foo.`b ar`
 
 object `Cla zz` {
-    val foo = 0
+    val zoo = 0
 }
 
-fun `Cla zz`.foo() = <caret>`Cla zz`.foo
+fun `Cla zz`.zoo() = <caret>`Cla zz`.zoo
