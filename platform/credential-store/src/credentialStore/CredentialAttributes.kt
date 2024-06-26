@@ -33,17 +33,17 @@ data class CredentialAttributes(
   constructor(serviceName: String, userName: String?, isPasswordMemoryOnly: Boolean)
     : this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems = true)
 
-  @Deprecated("use `Credentials(serviceName, userName)`")
+  @Deprecated("use `Credentials(serviceName, userName)`", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(serviceName: String, userName: String?, requestor: Class<*>?)
     : this(serviceName, userName, isPasswordMemoryOnly = false, cacheDeniedItems = true)
 
-  @Deprecated("use `Credentials(serviceName, userName, isPasswordMemoryOnly)`")
+  @Deprecated("use `Credentials(serviceName, userName, isPasswordMemoryOnly)`", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean)
     : this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems = true)
 
-  @Deprecated("use `Credentials(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems)`")
+  @Deprecated("use `Credentials(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems)`", level = DeprecationLevel.ERROR)
   @Suppress("unused")
   constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, cacheDeniedItems: Boolean) :
     this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems)
