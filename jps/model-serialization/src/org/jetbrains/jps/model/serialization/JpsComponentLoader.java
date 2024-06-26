@@ -19,13 +19,13 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
 @ApiStatus.Internal
-public abstract class JpsLoaderBase {
-  private static final Logger LOG = Logger.getInstance(JpsLoaderBase.class);
+public class JpsComponentLoader {
+  private static final Logger LOG = Logger.getInstance(JpsComponentLoader.class);
   private static final int MAX_ATTEMPTS = 5;
   protected final @Nullable Path myExternalConfigurationDirectory;
   private final JpsMacroExpander myMacroExpander;
 
-  protected JpsLoaderBase(JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory) {
+  public JpsComponentLoader(JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory) {
     myMacroExpander = macroExpander;
     myExternalConfigurationDirectory = externalConfigurationDirectory;
   }
@@ -33,7 +33,7 @@ public abstract class JpsLoaderBase {
   /**
    * Returns null if file doesn't exist
    */
-  protected @Nullable Element loadRootElement(@NotNull Path file) {
+  public @Nullable Element loadRootElement(@NotNull Path file) {
     return loadRootElement(file, myMacroExpander);
   }
 

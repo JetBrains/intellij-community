@@ -5,14 +5,16 @@ import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
-import org.jetbrains.jps.model.serialization.JpsLoaderBase
+import org.jetbrains.jps.model.serialization.JpsComponentLoader
 import org.jetbrains.jps.model.serialization.JpsMacroExpander
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.io.path.Path
 
-internal class DirectJpsFileContentReader(private val macroExpander: JpsMacroExpander) : JpsLoaderBase(macroExpander, null), JpsFileContentReader {
+internal class DirectJpsFileContentReader(private val macroExpander: JpsMacroExpander) : JpsFileContentReader {
+  private val componentLoader = JpsComponentLoader(macroExpander, null)
+  
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
-    val rootElement = loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl))) ?: return null
+    val rootElement = componentLoader.loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl))) ?: return null
     return JDomSerializationUtil.findComponent(rootElement, componentName)
   }
 

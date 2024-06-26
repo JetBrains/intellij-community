@@ -7,14 +7,12 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModelTestCase;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -86,10 +84,5 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   @NotNull
   protected Path getTestDataAbsoluteFile(@NotNull String relativePath) {
     return Paths.get(getTestDataFileAbsolutePath(relativePath));
-  }
-
-  protected static Element loadModuleRootTag(@NotNull Path imlFile) {
-    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.emptyMap(), imlFile);
-    return JpsLoaderBase.loadRootElement(imlFile, expander);
   }
 }

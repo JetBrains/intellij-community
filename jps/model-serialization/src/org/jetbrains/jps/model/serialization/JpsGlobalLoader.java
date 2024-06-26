@@ -16,15 +16,16 @@ import org.jetbrains.jps.model.serialization.impl.JpsPathVariablesConfigurationI
 import java.nio.file.Path;
 
 @ApiStatus.Internal
-public class JpsGlobalLoader extends JpsLoaderBase {
+public class JpsGlobalLoader {
   public static final JpsElementChildRole<JpsPathVariablesConfiguration> PATH_VARIABLES_ROLE = JpsElementChildRoleBase.create("path variables");
   public static final JpsGlobalExtensionSerializer FILE_TYPES_SERIALIZER = new FileTypesSerializer();
   private static final Logger LOG = Logger.getInstance(JpsGlobalLoader.class);
   private final JpsGlobal myGlobal;
   private final JpsGlobalExtensionSerializer @NotNull [] myBundledSerializers;
+  private final JpsComponentLoader myComponentLoader;
 
   public JpsGlobalLoader(JpsMacroExpander macroExpander, JpsGlobal global, JpsGlobalExtensionSerializer @NotNull [] bundledSerializers) {
-    super(macroExpander, null);
+    myComponentLoader = new JpsComponentLoader(macroExpander, null);
     myGlobal = global;
     myBundledSerializers = bundledSerializers;
   }
@@ -49,7 +50,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   }
 
   protected void loadGlobalComponents(@NotNull Path optionsDir, @NotNull Path defaultConfigFile, JpsGlobalExtensionSerializer serializer) {
-    loadComponents(optionsDir, defaultConfigFile.getParent(), serializer, myGlobal);
+    myComponentLoader.loadComponents(optionsDir, defaultConfigFile.getParent(), serializer, myGlobal);
   }
 
   public static final class PathVariablesSerializer extends JpsGlobalExtensionSerializer {
