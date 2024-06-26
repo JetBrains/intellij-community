@@ -1,0 +1,7 @@
+// "Convert to 'fold'" "true"
+// WITH_STDLIB
+fun test(list: List<String>) {
+    list.fold("") { acc, s ->
+        acc + s
+    }
+}

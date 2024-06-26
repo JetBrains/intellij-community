@@ -15,10 +15,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.getOrCreateParameterList
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -29,7 +27,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
 ) {
     override fun applicabilityRange(element: KtCallExpression): TextRange? {
         val callee = element.calleeExpression ?: return null
-        val (functionFqName, newFunctionName) = functions[callee.text] ?: return null
+        val (functionFqName, newFunctionName) = indexedFunctions[callee.text] ?: return null
         if (element.singleLambdaArgumentExpression() == null) return null
         val context = element.analyze(BodyResolveMode.PARTIAL)
         if (functionFqName != element.getResolvedCall(context)?.resultingDescriptor?.fqNameOrNull()) return null
@@ -39,25 +37,14 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
 
     override fun applyTo(element: KtCallExpression, editor: Editor?) {
         val functionName = element.calleeExpression?.text ?: return
-        val (_, newFunctionName) = functions[functionName] ?: return
+        val (_, newFunctionName) = indexedFunctions[functionName] ?: return
         val functionLiteral = element.singleLambdaArgumentExpression()?.functionLiteral ?: return
-        val psiFactory = KtPsiFactory(element.project)
         val context = element.analyze(BodyResolveMode.PARTIAL)
+        functionLiteral.collectLabeledReturnExpressions(functionName, context).forEach {
+            it.setLabel(newFunctionName)
+        }
 
-        functionLiteral
-            .collectDescendantsOfType<KtReturnExpression> {
-                it.getLabelName() == functionName && it.getTargetFunction(context) == functionLiteral
-            }
-            .forEach {
-                val value = it.returnedExpression
-                val newLabeledReturn = if (value != null) {
-                    psiFactory.createExpressionByPattern("return@$newFunctionName $0", value)
-                } else {
-                    psiFactory.createExpression("return@$newFunctionName")
-                }
-                it.replace(newLabeledReturn)
-            }
-
+        val psiFactory = KtPsiFactory(element.project)
         val parameterList = functionLiteral.getOrCreateParameterList()
         val parameters = parameterList.parameters
         val nameValidator = CollectingNameValidator(
@@ -83,7 +70,7 @@ class ConvertToIndexedFunctionCallIntention : SelfTargetingRangeIntention<KtCall
 
 private const val indexed: String = "Indexed"
 
-private val functions: Map<String, Pair<FqName, String>> = listOf(
+private val functions: List<Pair<String, String>> = listOf(
     Pair("filter", "filter$indexed"),
     Pair("filterTo", "filter${indexed}To"),
     Pair("fold", "fold$indexed"),
@@ -102,6 +89,12 @@ private val functions: Map<String, Pair<FqName, String>> = listOf(
     Pair("runningReduce", "runningReduce$indexed"),
     Pair("scan", "scan$indexed"),
     Pair("scanReduce", "scanReduce$indexed"),
-).associate { (functionName, indexedFunctionName) ->
+)
+
+private val indexedFunctions = functions.associate { (functionName, indexedFunctionName) ->
     functionName to (FqName("kotlin.collections.$functionName") to indexedFunctionName)
+}
+
+val nonIndexedFunctions = functions.associate { (functionName, indexedFunctionName) ->
+    indexedFunctionName to (FqName("kotlin.collections.$indexedFunctionName") to functionName)
 }
