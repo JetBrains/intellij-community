@@ -1,47 +1,42 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.progress;
+package com.intellij.platform.ide.progress
 
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.Contract
 
-import static com.intellij.openapi.util.NlsContexts.Button;
-import static com.intellij.openapi.util.NlsContexts.Tooltip;
+sealed interface TaskCancellation {
 
-public sealed interface TaskCancellation
-  permits TaskCancellation.NonCancellable,
-          TaskCancellation.Cancellable {
+  sealed interface NonCancellable : TaskCancellation
 
-  /**
-   * @return a cancellation instance, which means that the cancel button should not be displayed in the UI
-   */
-  @Contract(pure = true)
-  static @NotNull NonCancellable nonCancellable() {
-    return NonCancellableTaskCancellation.INSTANCE;
-  }
-
-  sealed interface NonCancellable extends TaskCancellation
-    permits NonCancellableTaskCancellation {
-  }
-
-  /**
-   * The returned instance can optionally be customized with button text and/or tooltip text.
-   * If {@link Cancellable#withButtonText the button text} is not specified,
-   * then {@link com.intellij.CommonBundle#getCancelButtonText the default text} is used.
-   *
-   * @return a cancellation instance, which means that the cancel button should be displayed in the UI
-   */
-  @Contract(pure = true)
-  static @NotNull Cancellable cancellable() {
-    return CancellableTaskCancellation.DEFAULT;
-  }
-
-  sealed interface Cancellable extends TaskCancellation
-    permits CancellableTaskCancellation {
+  sealed interface Cancellable : TaskCancellation {
+    @Contract(value = "_ -> new", pure = true)
+    fun withButtonText(buttonText: @NlsContexts.Button String): Cancellable
 
     @Contract(value = "_ -> new", pure = true)
-    @NotNull Cancellable withButtonText(@Button @NotNull String buttonText);
+    fun withTooltipText(tooltipText: @NlsContexts.Tooltip String): Cancellable
+  }
 
-    @Contract(value = "_ -> new", pure = true)
-    @NotNull Cancellable withTooltipText(@Tooltip @NotNull String tooltipText);
+  companion object {
+    /**
+     * @return a cancellation instance, which means that the cancel button should not be displayed in the UI
+     */
+    @Contract(pure = true)
+    @JvmStatic
+    fun nonCancellable(): NonCancellable {
+      return NonCancellableTaskCancellation
+    }
+
+    /**
+     * The returned instance can optionally be customized with button text and/or tooltip text.
+     * If [the button text][Cancellable.withButtonText] is not specified,
+     * then [the default text][com.intellij.CommonBundle.getCancelButtonText] is used.
+     *
+     * @return a cancellation instance, which means that the cancel button should be displayed in the UI
+     */
+    @Contract(pure = true)
+    @JvmStatic
+    fun cancellable(): Cancellable {
+      return CancellableTaskCancellation.DEFAULT
+    }
   }
 }

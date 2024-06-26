@@ -1,43 +1,24 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.progress;
+package com.intellij.platform.ide.progress
 
-import com.intellij.openapi.util.NlsContexts.Button;
-import com.intellij.openapi.util.NlsContexts.Tooltip;
-import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.util.NlsContexts
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
-public final class CancellableTaskCancellation implements TaskCancellation.Cancellable {
-
-  static final Cancellable DEFAULT = new CancellableTaskCancellation(null, null);
-
-  private final @Button @Nullable String buttonText;
-  private final @Tooltip @Nullable String tooltipText;
-
-  private CancellableTaskCancellation(
-    @Button @Nullable String buttonText,
-    @Tooltip @Nullable String tooltipText
-  ) {
-    this.buttonText = buttonText;
-    this.tooltipText = tooltipText;
+@ApiStatus.Internal
+class CancellableTaskCancellation private constructor(
+  val buttonText: @NlsContexts.Button String?,
+  val tooltipText: @NlsContexts.Tooltip String?
+) : TaskCancellation.Cancellable {
+  override fun withButtonText(@NlsContexts.Button buttonText: String): TaskCancellation.Cancellable {
+    return CancellableTaskCancellation(buttonText, this.tooltipText)
   }
 
-  public @Button @Nullable String getButtonText() {
-    return buttonText;
+  override fun withTooltipText(@NlsContexts.Tooltip tooltipText: String): TaskCancellation.Cancellable {
+    return CancellableTaskCancellation(this.buttonText, tooltipText)
   }
 
-  public @Tooltip @Nullable String getTooltipText() {
-    return tooltipText;
-  }
-
-  @Override
-  public @NotNull Cancellable withButtonText(@NotNull String buttonText) {
-    return new CancellableTaskCancellation(buttonText, this.tooltipText);
-  }
-
-  @Override
-  public @NotNull Cancellable withTooltipText(@NotNull String tooltipText) {
-    return new CancellableTaskCancellation(this.buttonText, tooltipText);
+  companion object {
+    @JvmStatic
+    val DEFAULT: TaskCancellation.Cancellable = CancellableTaskCancellation(null, null)
   }
 }
