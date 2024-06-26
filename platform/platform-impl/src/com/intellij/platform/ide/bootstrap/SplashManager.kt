@@ -56,7 +56,7 @@ private var SPLASH_WINDOW: Splash? = null
 // if hideSplash requested before we show splash, we should not try to show splash
 private val splashJob = AtomicReference<Job>(CompletableDeferred<Unit>())
 
-private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "false").toBoolean()
+private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "true").toBoolean()
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
@@ -135,14 +135,16 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
         return@span
       }
 
-      // Hide if splash was deactivated because of focusing some other window in the OS (not IDE Frame).
-      splash.addWindowListener(object : WindowAdapter() {
-        override fun windowDeactivated(e: WindowEvent?) {
-          if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
-            hideSplash()
+      if (SHOW_SPLASH_LONGER) {
+        // Hide if splash was deactivated because of focusing some other window in the OS (not IDE Frame).
+        splash.addWindowListener(object : WindowAdapter() {
+          override fun windowDeactivated(e: WindowEvent?) {
+            if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
+              hideSplash()
+            }
           }
-        }
-      })
+        })
+      }
 
       StartUpMeasurer.addInstantEvent("splash shown")
       try {
