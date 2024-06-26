@@ -5,7 +5,6 @@ import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
 import com.intellij.testFramework.junit5.TestApplication
 import io.kotest.assertions.withClue
 import io.kotest.matchers.be
-import io.kotest.matchers.collections.beEmpty
 import io.kotest.matchers.should
 import org.junit.jupiter.api.Test
 
@@ -21,72 +20,72 @@ class IjentWslNioFsTogglerTest {
 
   @Test
   fun `enable when no options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, vmOptionsReader(""))
+    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf(
-      "-Didea.io.use.nio2=true",
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
       "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
+      "-Dwsl.use.remote.agent.for.nio.filesystem=true",
     )
   }
 
   @Test
   fun `enable when no options set in unit test mode`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = false, vmOptionsReader(""))
+    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = false, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf(
-      "-Didea.io.use.nio2=true",
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
       "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
+      "-Dwsl.use.remote.agent.for.nio.filesystem=true",
       "-Xbootclasspath/a:out/tests/classes/production/intellij.platform.core.nio.fs",
     )
   }
 
   @Test
   fun `disable when no options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, vmOptionsReader(""))
-    changedOptions should beEmpty()
+    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
+    changedOptions shouldMatch listOf()
   }
 
   @Test
   fun `enable when disabling options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, vmOptionsReader("""
+    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
       -Didea.force.default.filesystem=true
-      -Didea.io.use.nio2=false
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
       -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
+      -Dwsl.use.remote.agent.for.nio.filesystem=false
     """.trimIndent()))
 
     changedOptions shouldMatch listOf(
       "-Didea.force.default.filesystem=false",
-      "-Didea.io.use.nio2=true",
+      "-Dwsl.use.remote.agent.for.nio.filesystem=true",
     )
   }
 
   @Test
   fun `disable when enabling options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, vmOptionsReader("""
-      -Didea.io.use.nio2=true
+    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
       -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
+      -Dwsl.use.remote.agent.for.nio.filesystem=true
     """.trimIndent()))
 
     changedOptions shouldMatch listOf(
       "-Didea.force.default.filesystem=true",
-      "-Didea.io.use.nio2=false",
+      "-Dwsl.use.remote.agent.for.nio.filesystem=false"
     )
   }
 
   @Test
   fun `disable when enabling options set and forcing unset`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, vmOptionsReader("""
+    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
         -Didea.force.default.filesystem=false
-        -Didea.io.use.nio2=true
         -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
         -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
+        -Dwsl.use.remote.agent.for.nio.filesystem=true
       """.trimIndent()))
 
     changedOptions shouldMatch listOf(
       "-Didea.force.default.filesystem=true",
-      "-Didea.io.use.nio2=false",
+      "-Dwsl.use.remote.agent.for.nio.filesystem=false",
     )
   }
 

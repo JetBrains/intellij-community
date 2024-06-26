@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationResult
 import com.jetbrains.plugin.structure.base.plugin.PluginCreationSuccess
 import com.jetbrains.plugin.structure.base.problems.InvalidDescriptorProblem
@@ -24,7 +25,7 @@ abstract class JetBrainsProductProperties : ProductProperties() {
     sbomOptions.license = SoftwareBillOfMaterials.Options.DistributionLicense.JETBRAINS
 
     productLayout.addPlatformSpec { layout, _ ->
-      layout.withModule("intellij.platform.core.nio.fs", PLATFORM_CORE_NIO_FS)
+      layout.withModule(IJENT_BOOT_CLASSPATH_MODULE, PLATFORM_CORE_NIO_FS)
       xBootClassPathJarNames += PLATFORM_CORE_NIO_FS
     }
   }

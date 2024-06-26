@@ -141,5 +141,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.io.storages" />
     <orderEntry type="module" module-name="intellij.platform.core.nio.fs" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
   </component>
 </module>

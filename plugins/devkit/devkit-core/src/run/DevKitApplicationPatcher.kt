@@ -10,6 +10,9 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.ijent.community.buildConstants.ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
+import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
@@ -86,6 +89,11 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
     }
     if (vmParametersAsList.none { it.startsWith("-XX:ReservedCodeCacheSize") }) {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
+    }
+
+    if (isIjentWslFsEnabledByDefaultForProduct(vmParameters.getPropertyValue("idea.platform.prefix"))) {
+      vmParameters.addAll(ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS)
+      vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
     }
 
     if (isDevBuild) {

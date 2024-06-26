@@ -78,5 +78,6 @@
     <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.platform.builtInServer" />
     <orderEntry type="library" name="caffeine" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
   </component>
 </module>

@@ -4,10 +4,11 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 
 internal class IjentWslNioFsRegistryListener : RegistryValueListener {
   override fun afterValueChanged(value: RegistryValue) {
-    if (value.key == "wsl.use.remote.agent.for.nio.filesystem") {
+    if (value.key == IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY) {
       service<IjentWslNioFsToggler>().ensureInVmOptions()
     }
   }

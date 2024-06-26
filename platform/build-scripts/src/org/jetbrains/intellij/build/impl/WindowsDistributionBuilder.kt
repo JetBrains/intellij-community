@@ -5,18 +5,19 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.ijent.community.buildConstants.ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import com.jetbrains.plugin.structure.base.utils.exists
-import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.NativeBinaryDownloader
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.client.ADDITIONAL_EMBEDDED_CLIENT_VM_OPTIONS
 import org.jetbrains.intellij.build.impl.client.createJetBrainsClientContextForLaunchers
 import org.jetbrains.intellij.build.impl.productInfo.*
+import org.jetbrains.intellij.build.impl.qodana.generateQodanaLaunchData
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
 import java.nio.file.Files
@@ -414,7 +415,10 @@ internal class WindowsDistributionBuilder(
 
   private fun writeWindowsVmOptions(distBinDir: Path, context: BuildContext): Path {
     val vmOptionsFile = distBinDir.resolve("${context.productProperties.baseFileName}64.exe.vmoptions")
-    val vmOptions = VmOptionsGenerator.computeVmOptions(context)
+    var vmOptions = VmOptionsGenerator.computeVmOptions(context)
+    if (isIjentWslFsEnabledByDefaultForProduct(context.productProperties.platformPrefix)) {
+      vmOptions = vmOptions + ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
+    }
     writeVmOptions(vmOptionsFile, vmOptions, separator = "\r\n")
     return vmOptionsFile
   }
