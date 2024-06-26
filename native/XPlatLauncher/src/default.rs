@@ -293,7 +293,7 @@ impl DefaultLaunchConfiguration {
     ///
     /// Distribution options come first, so users can override default options with their own ones.
     /// This works because JVM processes arguments first-to-last, so the last one wins.
-    /// The only exception is setting a garbage collector, so when a user sets one,
+    /// Exceptions: garbage collector and RAM percentage options, so when a user sets one,
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
         debug!("[1] Reading main VM options file: {:?}", self.vm_options_path);
@@ -311,13 +311,19 @@ impl DefaultLaunchConfiguration {
             }
         };
 
-        let has_user_gc = user_vm_options.iter().any(|l| is_gc_vm_option(l));
-        if has_user_gc {
-            vm_options.extend(dist_vm_options.into_iter().filter(|l| !is_gc_vm_option(l)))
-        } else {
-            vm_options.extend(dist_vm_options);
+        let mut filters: Vec<fn(&str) -> bool> = vec![];
+        for line in &user_vm_options {
+            if line.starts_with("-XX:+") && line.ends_with("GC") {
+                filters.push(|l| l.starts_with("-XX:+") && l.ends_with("GC"));
+            }
+            if line.starts_with("-XX:InitialRAMPercentage=") {
+                filters.push(|l| l.starts_with("-Xms"));
+            }
+            if line.starts_with("-XX:MinRAMPercentage=") || line.starts_with("-XX:MaxRAMPercentage=") {
+                filters.push(|l| l.starts_with("-Xmx"));
+            }
         }
-
+        vm_options.extend(dist_vm_options.into_iter().filter(|l| !filters.iter().any(|filter| filter(l))));
         vm_options.extend(user_vm_options);
 
         vm_options.push(jvm_property!("jb.vmOptionsFile", vm_options_path.to_string_checked()?));
@@ -376,10 +382,6 @@ fn read_vm_options(path: &Path) -> Result<Vec<String>> {
     debug!("{} line(s)", vm_options.len());
 
     Ok(vm_options)
-}
-
-fn is_gc_vm_option(s: &str) -> bool {
-    s.starts_with("-XX:+") && s.ends_with("GC")
 }
 
 pub fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
