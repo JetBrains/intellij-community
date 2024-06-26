@@ -218,7 +218,7 @@ public final class ClassUtils {
   }
 
   public static boolean isInnerClass(PsiClass aClass) {
-    final PsiClass parentClass = getContainingClass(aClass);
+    final PsiClass parentClass = PsiUtil.getContainingClass(aClass);
     return parentClass != null;
   }
 
@@ -235,7 +235,7 @@ public final class ClassUtils {
   public static PsiClass getOutermostContainingClass(PsiClass aClass) {
     PsiClass outerClass = aClass;
     while (true) {
-      final PsiClass containingClass = getContainingClass(outerClass);
+      final PsiClass containingClass = PsiUtil.getContainingClass(outerClass);
       if (containingClass != null) {
         outerClass = containingClass;
       }

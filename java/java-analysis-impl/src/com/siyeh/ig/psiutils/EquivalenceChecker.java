@@ -900,12 +900,12 @@ public class EquivalenceChecker {
     PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ref.getQualifierExpression());
     if (qualifier instanceof PsiQualifiedExpression) {
       PsiJavaCodeReferenceElement classRef = ((PsiQualifiedExpression)qualifier).getQualifier();
-      return classRef != null ? tryCast(classRef.resolve(), PsiClass.class) : ClassUtils.getContainingClass(ref);
+      return classRef != null ? tryCast(classRef.resolve(), PsiClass.class) : PsiUtil.getContainingClass(ref);
     }
     if (qualifier == null) {
       PsiMember member = tryCast(ref.resolve(), PsiMember.class);
       if (member != null) {
-        PsiClass currentClass = ClassUtils.getContainingClass(ref);
+        PsiClass currentClass = PsiUtil.getContainingClass(ref);
         PsiClass memberClass = member.getContainingClass();
         if (memberClass != null && currentClass != null) {
           return currentClass == memberClass || InheritanceUtil.isInheritorOrSelf(currentClass, memberClass, true) ?

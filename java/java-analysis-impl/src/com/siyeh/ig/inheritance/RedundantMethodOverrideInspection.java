@@ -23,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.migration.TryWithIdenticalCatchesInspection;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TrackingEquivalenceChecker;
 import one.util.streamex.StreamEx;
@@ -219,7 +218,7 @@ public final class RedundantMethodOverrideInspection extends BaseInspection {
         @Override
         protected PsiClass getQualifierTarget(PsiReferenceExpression ref) {
           PsiClass target = super.getQualifierTarget(ref);
-          if (target == method.getContainingClass() && target == ClassUtils.getContainingClass(ref)) {
+          if (target == method.getContainingClass() && target == PsiUtil.getContainingClass(ref)) {
             return finalSuperMethod.getContainingClass();
           }
           return target;

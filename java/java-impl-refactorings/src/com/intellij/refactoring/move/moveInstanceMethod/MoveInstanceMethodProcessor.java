@@ -31,7 +31,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -528,7 +527,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
           }
           if (myTargetVariable.equals(resolved)) {
             PsiThisExpression thisExpression = RefactoringChangeUtil.createThisExpression(
-              manager, PsiTreeUtil.isAncestor(myMethod, ClassUtils.getContainingClass(expression), true) ? myTargetClass : null);
+              manager, PsiTreeUtil.isAncestor(myMethod, PsiUtil.getContainingClass(expression), true) ? myTargetClass : null);
             replaceMap.put(expression, thisExpression);
             return;
           }

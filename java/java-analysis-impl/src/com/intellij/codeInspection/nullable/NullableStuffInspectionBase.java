@@ -36,7 +36,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -924,8 +923,8 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     if (hasNullability(nullableManager, superParameter)) return false;
     PsiType type = superParameter.getType();
     if (TypeUtils.isTypeParameter(type)) {
-      PsiClass childClass = ClassUtils.getContainingClass(parameter);
-      PsiClass superClass = ClassUtils.getContainingClass(superParameter);
+      PsiClass childClass = PsiUtil.getContainingClass(parameter);
+      PsiClass superClass = PsiUtil.getContainingClass(superParameter);
       if (superClass != null && childClass != null) {
         PsiType substituted =
           TypeConversionUtil.getSuperClassSubstitutor(superClass, childClass, PsiSubstitutor.EMPTY).substitute(type);

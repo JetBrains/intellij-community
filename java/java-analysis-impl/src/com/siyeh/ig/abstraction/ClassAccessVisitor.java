@@ -18,7 +18,7 @@ package com.siyeh.ig.abstraction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,7 +77,7 @@ class ClassAccessVisitor extends JavaRecursiveElementWalkingVisitor {
         return;
       }
       lexicallyEnclosingClass =
-        ClassUtils.getContainingClass(lexicallyEnclosingClass);
+        PsiUtil.getContainingClass(lexicallyEnclosingClass);
     }
     final Map<PsiClass, Integer> accessCounts = m_accessCounts;
     final Integer count = accessCounts.get(calledClass);

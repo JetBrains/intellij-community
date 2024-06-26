@@ -24,7 +24,6 @@ import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -112,7 +111,7 @@ public final class JavaDfaValueFactory {
         target = tryCast(qualifier.resolve(), PsiClass.class);
       }
       else {
-        target = ClassUtils.getContainingClass(expression);
+        target = PsiUtil.getContainingClass(expression);
       }
       return target == null
              ? factory.fromDfType(DfTypes.typedObject(expression.getType(), Nullability.NOT_NULL))
@@ -152,7 +151,7 @@ public final class JavaDfaValueFactory {
     if (qualifierExpression == null) {
       PsiElement element = refExpr.resolve();
       if (element instanceof PsiMember && !((PsiMember)element).hasModifierProperty(PsiModifier.STATIC)) {
-        PsiClass currentClass = ClassUtils.getContainingClass(refExpr);
+        PsiClass currentClass = PsiUtil.getContainingClass(refExpr);
         PsiClass memberClass = ((PsiMember)element).getContainingClass();
         if (memberClass != null && currentClass != null) {
           PsiClass target;

@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
@@ -235,7 +234,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       if (!isSuitableClass(containingClass)) return null;
       return method;
     }
-    PsiClass containingClass = ClassUtils.getContainingClass(element);
+    PsiClass containingClass = PsiUtil.getContainingClass(element);
     if (!isSuitableClass(containingClass)) return null;
     PsiElement lBrace = containingClass.getLBrace();
     if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;

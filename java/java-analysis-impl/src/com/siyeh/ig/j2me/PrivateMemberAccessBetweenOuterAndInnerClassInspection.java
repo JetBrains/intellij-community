@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NonNls;
@@ -247,7 +246,7 @@ public final class PrivateMemberAccessBetweenOuterAndInnerClassInspection extend
     }
 
     private static boolean isInnerClassAccess(PsiExpression reference, PsiClass targetClass) {
-      final PsiClass sourceClass = ClassUtils.getContainingClass(reference);
+      final PsiClass sourceClass = PsiUtil.getContainingClass(reference);
       return sourceClass != null &&
              targetClass != null &&
              sourceClass != targetClass &&

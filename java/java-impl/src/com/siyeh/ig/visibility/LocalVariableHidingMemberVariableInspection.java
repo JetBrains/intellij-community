@@ -18,6 +18,7 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -69,7 +70,7 @@ public final class LocalVariableHidingMemberVariableInspection extends BaseInspe
   static @Nullable PsiClass findSurroundingClassWithHiddenField(PsiVariable variable,
                                                                 boolean ignoreInvisibleFields,
                                                                 boolean ignoreStaticHidingInstance) {
-    PsiClass aClass = ClassUtils.getContainingClass(variable);
+    PsiClass aClass = PsiUtil.getContainingClass(variable);
     final String variableName = variable.getName();
     if (variableName == null) {
       return null;
@@ -84,7 +85,7 @@ public final class LocalVariableHidingMemberVariableInspection extends BaseInspe
           }
         }
       }
-      aClass = ClassUtils.getContainingClass(aClass);
+      aClass = PsiUtil.getContainingClass(aClass);
     }
     return null;
   }

@@ -15,6 +15,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.extractMethod.ControlFlowWrapper;
 import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
@@ -25,7 +26,6 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -89,7 +89,7 @@ public final class ExtractToMethodReferenceIntention extends BaseElementAtCaretI
     if (lambdaExpression != null) {
       PsiCodeBlock body = CommonJavaRefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
 
-      PsiClass targetClass = ClassUtils.getContainingClass(lambdaExpression);
+      PsiClass targetClass = PsiUtil.getContainingClass(lambdaExpression);
       if (targetClass == null) return;
       PsiElement[] elements = body.getStatements();
 

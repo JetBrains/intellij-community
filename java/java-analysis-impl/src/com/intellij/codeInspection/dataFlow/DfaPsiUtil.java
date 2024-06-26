@@ -48,7 +48,6 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -264,7 +263,7 @@ public final class DfaPsiUtil {
   }
 
   private static boolean shouldIgnoreAnnotation(PsiAnnotation annotation) {
-    PsiClass containingClass = ClassUtils.getContainingClass(annotation);
+    PsiClass containingClass = PsiUtil.getContainingClass(annotation);
     if (containingClass == null || !containingClass.isValid()) return false;
     String qualifiedName = containingClass.getQualifiedName();
     // We deliberately ignore nullability annotations on Guava functional interfaces to avoid noise warnings

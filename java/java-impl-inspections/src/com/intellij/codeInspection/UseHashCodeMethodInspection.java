@@ -32,7 +32,7 @@ public final class UseHashCodeMethodInspection extends AbstractBaseJavaLocalInsp
       public void visitTypeCastExpression(@NotNull PsiTypeCastExpression expression) {
         HashCodeModel model = getHashCodeModel(expression);
         if (model != null) {
-          PsiClass containingClass = ClassUtils.getContainingClass(expression);
+          PsiClass containingClass = PsiUtil.getContainingClass(expression);
           if (containingClass != null && containingClass.getQualifiedName() != null &&
               containingClass.getQualifiedName().startsWith("java.lang.")) {
             // Avoid suggesting inside JDK sources

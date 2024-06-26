@@ -17,10 +17,10 @@ package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -96,7 +96,7 @@ public final class ThreadStartInConstructionInspection extends BaseInspection {
           return;
         }
         final PsiClass containingClass =
-          ClassUtils.getContainingClass(expression);
+          PsiUtil.getContainingClass(expression);
         if (containingClass == null ||
             containingClass.hasModifierProperty(
               PsiModifier.FINAL)) {

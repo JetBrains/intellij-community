@@ -9,7 +9,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -314,7 +313,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   @Override
   public void visitReferenceElement(@NotNull PsiJavaCodeReferenceElement reference) {
     super.visitReferenceElement(reference);
-    final PsiElement parentClass = ClassUtils.getContainingClass(reference);
+    final PsiElement parentClass = PsiUtil.getContainingClass(reference);
     if (reference.getParent() instanceof PsiTypeElement) {
       return;
     }
@@ -323,7 +322,7 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
       return;
     }
     final PsiClass elementParentClass =
-      ClassUtils.getContainingClass(element);
+      PsiUtil.getContainingClass(element);
     if (elementParentClass == null ||
         !elementParentClass.equals(clazz) ||
         element.equals(parentClass)) {
@@ -342,20 +341,20 @@ public final class SerialVersionUIDBuilder extends JavaRecursiveElementVisitor {
   public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     super.visitReferenceExpression(expression);
     final PsiElement element = expression.resolve();
-    final PsiElement elementParentClass = ClassUtils.getContainingClass(element);
-    final PsiElement expressionParentClass = ClassUtils.getContainingClass(expression);
+    final PsiElement elementParentClass = PsiUtil.getContainingClass(element);
+    final PsiElement expressionParentClass = PsiUtil.getContainingClass(expression);
     if (expressionParentClass == null || expressionParentClass
       .equals(elementParentClass)) {
       return;
     }
-    PsiElement parentOfParentClass = ClassUtils.getContainingClass(expressionParentClass);
+    PsiElement parentOfParentClass = PsiUtil.getContainingClass(expressionParentClass);
     while (parentOfParentClass != null &&
            !parentOfParentClass.equals(clazz)) {
       if (!(expressionParentClass instanceof PsiAnonymousClass)) {
         getAccessMethodIndex(expressionParentClass);
       }
       getAccessMethodIndex(parentOfParentClass);
-      parentOfParentClass = ClassUtils.getContainingClass(parentOfParentClass);
+      parentOfParentClass = PsiUtil.getContainingClass(parentOfParentClass);
     }
     if (element instanceof PsiField field) {
       if (field.hasModifierProperty(PsiModifier.PRIVATE)) {

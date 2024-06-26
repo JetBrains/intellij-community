@@ -19,7 +19,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspectionVisitor {
@@ -46,7 +45,7 @@ class NonFinalStaticVariableUsedInClassInitializationVisitor extends BaseInspect
   private static boolean isInClassInitialization(
     PsiExpression expression) {
     final PsiClass expressionClass =
-      ClassUtils.getContainingClass(expression);
+      PsiUtil.getContainingClass(expression);
     final PsiMember member =
       PsiTreeUtil.getParentOfType(expression,
                                   PsiClassInitializer.class, PsiField.class);

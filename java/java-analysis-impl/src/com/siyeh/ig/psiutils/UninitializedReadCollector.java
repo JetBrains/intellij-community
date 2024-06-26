@@ -491,7 +491,7 @@ public class UninitializedReadCollector {
     if (!checkedMethods.add(methodSignature)) {
       return false;
     }
-    final PsiClass containingClass = ClassUtils.getContainingClass(callExpression);
+    final PsiClass containingClass = PsiUtil.getContainingClass(callExpression);
     final PsiClass calledClass = method.getContainingClass();
 
     // Can remark out this block to continue chase outside of of

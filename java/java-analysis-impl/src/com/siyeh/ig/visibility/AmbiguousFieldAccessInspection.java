@@ -11,12 +11,12 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +62,7 @@ public final class AmbiguousFieldAccessInspection extends BaseInspection impleme
       if (fieldClass == null) {
         return;
       }
-      PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      PsiClass containingClass = PsiUtil.getContainingClass(expression);
       if (containingClass == null) {
         return;
       }
@@ -151,7 +151,7 @@ public final class AmbiguousFieldAccessInspection extends BaseInspection impleme
     }
 
     private static @Nullable PsiVariable getApparentlyAccessedVariable(Project project, PsiElement element) {
-      PsiClass containingClass = ClassUtils.getContainingClass(element);
+      PsiClass containingClass = PsiUtil.getContainingClass(element);
       if (containingClass == null) return null;
       final PsiElement parent = containingClass.getParent();
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(project).getResolveHelper();

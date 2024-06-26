@@ -4,7 +4,10 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
@@ -12,9 +15,9 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -49,7 +52,7 @@ class StaticInheritanceFix extends ModCommandQuickFix {
     assert iface != null;
     final PsiField[] allFields = iface.getAllFields();
 
-    final PsiClass implementingClass = ClassUtils.getContainingClass(referenceElement);
+    final PsiClass implementingClass = PsiUtil.getContainingClass(referenceElement);
     assert implementingClass != null;
     final PsiFile file = implementingClass.getContainingFile();
 

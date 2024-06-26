@@ -11,7 +11,7 @@ import com.intellij.debugger.streams.wrapper.TerminatorStreamCall;
 import com.intellij.debugger.streams.wrapper.impl.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.intellij.psi.util.PsiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +51,7 @@ public class JavaChainTransformerImpl implements ChainTransformer.Java {
 
   @NotNull
   private static GenericType getGenericTypeOfThis(PsiExpression expression) {
-    final PsiClass klass = ClassUtils.getContainingClass(expression);
+    final PsiClass klass = PsiUtil.getContainingClass(expression);
 
     return klass == null ? JavaTypes.INSTANCE.getANY()
                          : JavaTypes.INSTANCE.fromPsiClass(klass);

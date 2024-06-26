@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +93,7 @@ public final class ClassReferencesSubclassInspection extends BaseInspection {
         return;
       }
       final PsiClass parentClass =
-        ClassUtils.getContainingClass(typeElement);
+        PsiUtil.getContainingClass(typeElement);
       if (!isSubclass(aClass, parentClass)) {
         return;
       }

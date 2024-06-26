@@ -17,6 +17,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -410,7 +411,7 @@ public final class InitializationUtils {
     if (!checkedMethods.add(methodSignature)) {
       return false;
     }
-    final PsiClass containingClass = ClassUtils.getContainingClass(callExpression);
+    final PsiClass containingClass = PsiUtil.getContainingClass(callExpression);
     final PsiClass calledClass = method.getContainingClass();
     if (calledClass == null || !calledClass.equals(containingClass)) {
       return false;

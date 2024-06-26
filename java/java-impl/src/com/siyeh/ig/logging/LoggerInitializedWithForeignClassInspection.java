@@ -23,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -205,9 +204,9 @@ public final class LoggerInitializedWithForeignClassInspection extends BaseInspe
       if (expressions.length != 1) {
         return;
       }
-      PsiClass containingClass = ClassUtils.getContainingClass(expression);
+      PsiClass containingClass = PsiUtil.getContainingClass(expression);
       while (containingClass instanceof PsiAnonymousClass) {
-        containingClass = ClassUtils.getContainingClass(containingClass);
+        containingClass = PsiUtil.getContainingClass(containingClass);
       }
       if (containingClass == null) {
         return;
