@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -9,9 +9,11 @@ import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.util.NlsContexts.Label
 import com.intellij.openapi.util.text.Strings
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 
+@Internal
 const val APPEARANCE_ID: String = "appearance"
 
 internal val uiOptionGroupName: @Nls String
@@ -61,7 +63,6 @@ internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.App
   }
 
   internal object Options {
-    @JvmStatic
     fun option(@Label option: String, propertyName: String, configurableId: String): BooleanOptionDescription {
       return object : PublicMethodBasedOptionDescription(option, configurableId,
                                                          "get" + Strings.capitalize(propertyName),
@@ -71,8 +72,8 @@ internal class AppearanceOptionsTopHitProvider : OptionsSearchTopHitProvider.App
       }
     }
 
-    @JvmStatic
-    fun appearance(@Label option: String, propertyName: String): BooleanOptionDescription = option(option, propertyName,
-                                                                                                   "preferences.lookFeel")
+    fun appearance(@Label option: String, propertyName: String): BooleanOptionDescription {
+      return option(option, propertyName, "preferences.lookFeel")
+    }
   }
 }
