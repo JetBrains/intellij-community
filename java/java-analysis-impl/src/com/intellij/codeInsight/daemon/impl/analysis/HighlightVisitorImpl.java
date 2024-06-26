@@ -178,7 +178,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         highlight.run();
         ProgressManager.checkCanceled();
         if (document != null) {
-          new PostHighlightingVisitor(file, document).collectHighlights(holder);
+          new UnusedImportsVisitor(file, document).collectHighlights(holder);
         }
       }
       else {
