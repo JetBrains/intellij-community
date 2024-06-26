@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -27,9 +28,11 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
@@ -67,6 +70,11 @@ internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : Performanc
       }
     }
     checkingJob.join()
+    // WaitForFinishedCodeAnalysisFileEditorListener.fileOpenedSync works on EDT,
+    // so this is to ensure the reopened editor from startup would be caught by the listener before we ask ListenerState to wait
+    withContext(Dispatchers.EDT) {
+      // do nothing
+    }
     context.project.service<ListenerState>().waitAnalysisToFinish()
   }
 
