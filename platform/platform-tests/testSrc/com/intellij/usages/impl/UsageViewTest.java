@@ -37,6 +37,7 @@ import com.intellij.testFramework.common.TestApplicationKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
+import com.intellij.usages.impl.rules.UsageType;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
@@ -271,7 +272,7 @@ public class UsageViewTest extends BasePlatformTestCase {
 
     JComponent component = usageView.getComponent();
     DataProvider provider = DataManagerImpl.getDataProviderEx(component);
-    ExclusionHandler exclusionHandler = (ExclusionHandler)provider.getData(ExclusionHandler.EXCLUSION_HANDLER.getName());
+    ExclusionHandler exclusionHandler = ExclusionHandler.EXCLUSION_HANDLER.getData(provider);
     exclusionHandler.excludeNode(nodeToExclude);
     UIUtil.dispatchAllInvocationEvents();
 
@@ -324,15 +325,15 @@ public class UsageViewTest extends BasePlatformTestCase {
     UIUtil.dispatchAllInvocationEvents();
 
     assertTrue(usage.isValid());
-    usage.getElement();
-    usage.canNavigateToSource();
-    usage.canNavigate();
-    usage.getUsageInfo();
-    usage.getFile();
-    usage.getMergedInfos();
+    assertSame(psiFile, usage.getElement());
+    assertTrue(usage.canNavigateToSource());
+    assertTrue(usage.canNavigate());
+    assertEquals(psiFile, usage.getUsageInfo().getElement());
+    assertEquals(psiFile.getVirtualFile(), usage.getFile());
+    assertEquals(1, usage.getMergedInfos().length);
     usage.getPresentation();
-    usage.getPlainText();
-    usage.getUsageType();
+    assertEquals("Psi Binary File Impl X.jar", usage.getPlainText());
+    assertEquals(UsageType.UNCLASSIFIED, usage.getUsageType());
     usage.getText();
     usage.getIcon();
     usage.getLocation();
