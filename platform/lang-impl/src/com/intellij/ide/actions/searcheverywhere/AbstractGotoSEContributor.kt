@@ -1,553 +1,500 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions.searcheverywhere;
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.actions.GotoActionBase;
-import com.intellij.ide.actions.OpenInRightSplitAction;
-import com.intellij.ide.actions.QualifiedNameProviderUtil;
-import com.intellij.ide.actions.SearchEverywherePsiRenderer;
-import com.intellij.ide.plugins.DynamicPluginListener;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.util.EditSourceUtil;
-import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.util.gotoByName.*;
-import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
-import com.intellij.ide.util.scopeChooser.ScopeOption;
-import com.intellij.ide.util.scopeChooser.ScopeService;
-import com.intellij.navigation.AnonymousElementProvider;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.IntPair;
-import com.intellij.util.Processor;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
-import com.intellij.util.indexing.FindSymbolParameters;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide.actions.searcheverywhere
 
-import javax.swing.*;
-import java.awt.event.InputEvent;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
+import com.intellij.ide.actions.GotoActionBase
+import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
+import com.intellij.ide.actions.QualifiedNameProviderUtil
+import com.intellij.ide.actions.SearchEverywherePsiRenderer
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.util.EditSourceUtil
+import com.intellij.ide.util.ElementsChooser
+import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.util.scopeChooser.ScopeDescriptor
+import com.intellij.ide.util.scopeChooser.ScopeOption
+import com.intellij.ide.util.scopeChooser.ScopeService
+import com.intellij.navigation.AnonymousElementProvider
+import com.intellij.navigation.NavigationItem
+import com.intellij.navigation.PsiElementNavigationItem
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbService.Companion.isDumb
+import com.intellij.openapi.project.DumbService.Companion.isDumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.SearchScope
+import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.IntPair
+import com.intellij.util.Processor
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.indexing.FindSymbolParameters
+import org.jetbrains.annotations.ApiStatus
+import java.awt.event.InputEvent
+import java.util.*
+import java.util.regex.Pattern
+import javax.swing.ListCellRenderer
 
-public abstract class AbstractGotoSEContributor implements WeightedSearchEverywhereContributor<Object>, ScopeSupporting,
-                                                           SearchEverywhereExtendedInfoProvider {
-  protected static final Pattern ourPatternToDetectAnonymousClasses = Pattern.compile("([.\\w]+)((\\$[\\d]+)*(\\$)?)");
-  private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
-  private static final Key<Map<String, String>> SE_SELECTED_SCOPES = Key.create("SE_SELECTED_SCOPES");
+private val LOG = logger<AbstractGotoSEContributor>()
+private val SE_SELECTED_SCOPES = Key.create<MutableMap<String, String?>>("SE_SELECTED_SCOPES")
 
-  private static final Pattern ourPatternToDetectLinesAndColumns = Pattern.compile(
-    "(.+?)" + // name, non-greedy matching
-    "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" + // separator
-    "(\\d+)?(?:\\W(\\d+)?)?" + // line + column
-    "[)\\]]?" // possible closing paren/brace
-  );
+private val ourPatternToDetectLinesAndColumns: Pattern = Pattern.compile(
+  "(.+?)" +  // name, non-greedy matching
+  "(?::|@|,| |#|#L|\\?l=| on line | at line |:line |:?\\(|:?\\[)" +  // separator
+  "(\\d+)?(?:\\W(\\d+)?)?" +  // line + column
+  "[)\\]]?" // possible closing paren/brace
+)
 
-  protected final Project myProject;
-  protected ScopeDescriptor myScopeDescriptor;
+abstract class AbstractGotoSEContributor protected constructor(event: AnActionEvent) : WeightedSearchEverywhereContributor<Any?>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
+  @JvmField
+  protected val myProject: Project = event.getRequiredData(CommonDataKeys.PROJECT)
+  @JvmField
+  protected var myScopeDescriptor: ScopeDescriptor
 
-  private final SearchScope myEverywhereScope;
-  private final SearchScope myProjectScope;
-  protected boolean isScopeDefaultAndAutoSet;
+  private val myEverywhereScope: SearchScope
+  private val myProjectScope: SearchScope
+  @JvmField
+  protected var isScopeDefaultAndAutoSet: Boolean = true
 
-  protected final SmartPsiElementPointer<PsiElement> myPsiContext;
+  @JvmField
+  protected val myPsiContext: SmartPsiElementPointer<PsiElement?>?
 
-  protected AbstractGotoSEContributor(@NotNull AnActionEvent event) {
-    myProject = event.getRequiredData(CommonDataKeys.PROJECT);
-    PsiElement context = GotoActionBase.getPsiContext(event);
-    myPsiContext = context != null ? SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context) : null;
+  init {
+    val context = GotoActionBase.getPsiContext(event)
+    myPsiContext = if (context == null) null else SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(context)
 
-    List<ScopeDescriptor> scopeDescriptors = createScopes();
-    myEverywhereScope = findEverywhereScope(scopeDescriptors);
-    myProjectScope = findProjectScope(scopeDescriptors, myEverywhereScope);
-    myScopeDescriptor = getInitialSelectedScope(scopeDescriptors);
-    isScopeDefaultAndAutoSet = StringUtil.isEmpty(getSelectedScopes(myProject).get(getClass().getSimpleName()));
+    @Suppress("LeakingThis")
+    val scopeDescriptors = createScopes()
+    @Suppress("LeakingThis")
+    myEverywhereScope = findEverywhereScope(scopeDescriptors)
+    @Suppress("LeakingThis")
+    myProjectScope = findProjectScope(scopeDescriptors, myEverywhereScope)
+    myScopeDescriptor = getInitialSelectedScope(scopeDescriptors)
 
-    myProject.getMessageBus().connect(this).subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      @Override
-      public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        myScopeDescriptor = getInitialSelectedScope(createScopes());
+    @Suppress("LeakingThis")
+    myProject.messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+      override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+        myScopeDescriptor = getInitialSelectedScope(createScopes())
       }
-    });
+    })
   }
 
-  @ApiStatus.Internal
-  protected @NotNull SearchScope findProjectScope(@NotNull List<ScopeDescriptor> scopeDescriptors, @NotNull SearchScope everywhereScope) {
-    SearchScope projectScope = GlobalSearchScope.projectScope(myProject);
-    if (everywhereScope.equals(projectScope)) {
-      // just get the second scope, i.e. Attached Directories in DataGrip
-      ScopeDescriptor secondScope = JBIterable.from(scopeDescriptors)
-        .filter(o -> !o.scopeEquals(everywhereScope) && !o.scopeEquals(null))
-        .first();
-      projectScope = secondScope != null ? secondScope.getScope() : everywhereScope;
-      if (projectScope == null) projectScope = everywhereScope;
+  companion object {
+    @JvmField
+    protected val ourPatternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]+)((\\$\\d+)*(\\$)?)")
+
+    fun createContext(project: Project?, psiContext: SmartPsiElementPointer<PsiElement?>?): DataContext {
+      val parentContext = if (project == null) null else SimpleDataContext.getProjectContext(project)
+      val context = psiContext?.element
+      val file = context?.containingFile
+
+      return SimpleDataContext.builder()
+        .setParent(parentContext)
+        .add(CommonDataKeys.PSI_ELEMENT, context)
+        .add(CommonDataKeys.PSI_FILE, file)
+        .build()
     }
-    return projectScope;
-  }
 
-  @ApiStatus.Internal
-  protected @NotNull SearchScope findEverywhereScope(@NotNull List<ScopeDescriptor> scopeDescriptors) {
-    return GlobalSearchScope.everythingScope(myProject);
-  }
-
-  protected List<ScopeDescriptor> createScopes() {
-    return myProject.getService(ScopeService.class)
-      .createModel(EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
-      .getScopesImmediately(createContext(myProject, myPsiContext))
-      .getScopeDescriptors();
-  }
-
-  @NotNull
-  public static DataContext createContext(Project project, @Nullable SmartPsiElementPointer<PsiElement> psiContext) {
-    DataContext parentContext = project == null ? null : SimpleDataContext.getProjectContext(project);
-    PsiElement context = psiContext != null ? psiContext.getElement() : null;
-    PsiFile file = context == null ? null : context.getContainingFile();
-
-    return SimpleDataContext.builder()
-      .setParent(parentContext)
-      .add(CommonDataKeys.PSI_ELEMENT, context)
-      .add(CommonDataKeys.PSI_FILE, file)
-      .build();
-  }
-
-  @NotNull
-  @Override
-  public String getSearchProviderId() {
-    return getClass().getSimpleName();
-  }
-
-  @Override
-  public boolean isShownInSeparateTab() {
-    return true;
-  }
-
-  @NotNull
-  protected <T> List<AnAction> doGetActions(@Nullable PersistentSearchEverywhereContributorFilter<T> filter,
-                                            @Nullable ElementsChooser.StatisticsCollector<T> statisticsCollector,
-                                            @NotNull Runnable onChanged) {
-    if (myProject == null || filter == null) return Collections.emptyList();
-    ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new ScopeChooserAction() {
-      final boolean canToggleEverywhere = !myEverywhereScope.equals(myProjectScope);
-
-      @Override
-      protected void onScopeSelected(@NotNull ScopeDescriptor o) {
-        setSelectedScope(o);
-        onChanged.run();
+    private fun getSelectedScopes(project: Project): MutableMap<String, String?> {
+      var map = SE_SELECTED_SCOPES.get(project)
+      if (map == null) {
+        SE_SELECTED_SCOPES.set(project, HashMap<String, String?>(3).also { map = it })
       }
-
-      @NotNull
-      @Override
-      protected ScopeDescriptor getSelectedScope() {
-        return myScopeDescriptor;
-      }
-
-      @Override
-      protected void onProjectScopeToggled() {
-        setEverywhere(!myScopeDescriptor.scopeEquals(myEverywhereScope));
-      }
-
-      @Override
-      protected boolean processScopes(@NotNull Processor<? super ScopeDescriptor> processor) {
-        return ContainerUtil.process(createScopes(), processor);
-      }
-
-      @Override
-      public boolean isEverywhere() {
-        return myScopeDescriptor.scopeEquals(myEverywhereScope);
-      }
-
-      @Override
-      public void setEverywhere(boolean everywhere) {
-        setSelectedScope(new ScopeDescriptor(everywhere ? myEverywhereScope : myProjectScope));
-        onChanged.run();
-      }
-
-      @Override
-      public boolean canToggleEverywhere() {
-        if (!canToggleEverywhere) return false;
-        return myScopeDescriptor.scopeEquals(myEverywhereScope) ||
-               myScopeDescriptor.scopeEquals(myProjectScope);
-      }
-
-      @Override
-      public void setScopeIsDefaultAndAutoSet(boolean scopeDefaultAndAutoSet) {
-        isScopeDefaultAndAutoSet = scopeDefaultAndAutoSet;
-      }
-    });
-    result.add(new PreviewAction());
-    result.add(new SearchEverywhereFiltersAction<>(filter, onChanged, statisticsCollector));
-    return result;
-  }
-
-  @NotNull
-  private ScopeDescriptor getInitialSelectedScope(List<? extends ScopeDescriptor> scopeDescriptors) {
-    String selectedScope = myProject == null ? null : getSelectedScopes(myProject).get(getClass().getSimpleName());
-    if (StringUtil.isNotEmpty(selectedScope)) {
-      for (ScopeDescriptor descriptor : scopeDescriptors) {
-        if (!selectedScope.equals(descriptor.getDisplayName()) || descriptor.scopeEquals(null)) continue;
-        return descriptor;
-      }
+      return map
     }
-    return new ScopeDescriptor(myProjectScope);
-  }
 
-  private void setSelectedScope(@NotNull ScopeDescriptor o) {
-    myScopeDescriptor = o;
-    getSelectedScopes(myProject).put(
-      getClass().getSimpleName(),
-      o.scopeEquals(myEverywhereScope) || o.scopeEquals(myProjectScope) ? null : o.getDisplayName());
-  }
-
-  @NotNull
-  private static Map<String, String> getSelectedScopes(@NotNull Project project) {
-    Map<String, String> map = SE_SELECTED_SCOPES.get(project);
-    if (map == null) SE_SELECTED_SCOPES.set(project, map = new HashMap<>(3));
-    return map;
-  }
-
-  @Override
-  public void fetchWeightedElements(@NotNull String pattern,
-                                    @NotNull ProgressIndicator progressIndicator,
-                                    @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
-    if (myProject == null) return; //nowhere to search
-
-    if (!isEmptyPatternSupported() && pattern.isEmpty()) return;
-
-    Runnable fetchRunnable = () -> {
-      if (!isDumbAware() && DumbService.isDumb(myProject)) return;
-
-      FilteringGotoByModel<?> model = createModel(myProject);
-      if (progressIndicator.isCanceled()) return;
-
-      PsiElement context = myPsiContext != null ? myPsiContext.getElement() : null;
-      ChooseByNameItemProvider provider = ChooseByNameModelEx.getItemProvider(model, context);
-      GlobalSearchScope scope = (GlobalSearchScope)Objects.requireNonNull(myScopeDescriptor.getScope());
-
-      boolean everywhere = scope.isSearchInLibraries();
-      ChooseByNameViewModel viewModel = new MyViewModel(myProject, model);
-
-      if (provider instanceof ChooseByNameInScopeItemProvider) {
-        FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, scope);
-        ((ChooseByNameInScopeItemProvider)provider).filterElementsWithWeights(viewModel, parameters, progressIndicator,
-                                                                              item -> processElement(progressIndicator, consumer, model,
-                                                                                                     item.getItem(), item.getWeight())
-        );
+    protected fun applyPatternFilter(str: String, regex: Pattern): String {
+      val matcher = regex.matcher(str)
+      if (matcher.matches()) {
+        return matcher.group(1)
       }
-      else if (provider instanceof ChooseByNameWeightedItemProvider) {
-        ((ChooseByNameWeightedItemProvider)provider).filterElementsWithWeights(viewModel, pattern, everywhere, progressIndicator,
-                                                                               item -> processElement(progressIndicator, consumer, model,
-                                                                                                      item.getItem(), item.getWeight())
-        );
+
+      return str
+    }
+
+    private fun doNavigate(psiElement: PsiElement, extNavigatable: Navigatable?) {
+      if (extNavigatable != null && extNavigatable.canNavigate()) {
+        extNavigatable.navigate(true)
       }
       else {
-        provider.filterElements(viewModel, pattern, everywhere, progressIndicator,
-                                element -> processElement(progressIndicator, consumer, model, element,
-                                                          getElementPriority(element, pattern))
-        );
-      }
-    };
-
-
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() && application.isDispatchThread()) {
-      fetchRunnable.run();
-    }
-    else {
-      ProgressIndicatorUtils.yieldToPendingWriteActions();
-      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator);
-    }
-  }
-  protected boolean processElement(@NotNull ProgressIndicator progressIndicator,
-                                   @NotNull Processor<? super FoundItemDescriptor<Object>> consumer,
-                                   FilteringGotoByModel<?> model, Object element, int degree) {
-    if (progressIndicator.isCanceled()) return false;
-
-    if (element == null) {
-      LOG.error("Null returned from " + model + " in " + this);
-      return true;
-    }
-
-    return consumer.process(new FoundItemDescriptor<>(element, degree));
-  }
-
-  @Override
-  public ScopeDescriptor getScope() {
-    return myScopeDescriptor;
-  }
-
-  @Override
-  public void setScope(ScopeDescriptor scope) {
-    setSelectedScope(scope);
-  }
-
-  protected boolean isEverywhere() { return myScopeDescriptor.scopeEquals(myEverywhereScope); }
-
-  @Override
-  public List<ScopeDescriptor> getSupportedScopes() {
-    return createScopes();
-  }
-
-  @NotNull
-  protected abstract FilteringGotoByModel<?> createModel(@NotNull Project project);
-
-  @NotNull
-  @Override
-  public String filterControlSymbols(@NotNull String pattern) {
-    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") ||
-        pattern.contains(" line ") ||
-        pattern.contains("?l=")) { // quick test if reg exp should be used
-      return applyPatternFilter(pattern, ourPatternToDetectLinesAndColumns);
-    }
-
-    return pattern;
-  }
-
-  protected static String applyPatternFilter(String str, Pattern regex) {
-    Matcher matcher = regex.matcher(str);
-    if (matcher.matches()) {
-      return matcher.group(1);
-    }
-
-    return str;
-  }
-
-  @Override
-  public boolean showInFindResults() {
-    return true;
-  }
-
-  @Override
-  public boolean processSelectedItem(@NotNull Object selected, int modifiers, @NotNull String searchText) {
-    if (selected instanceof PsiElement) {
-      if (!((PsiElement)selected).isValid()) {
-        LOG.warn("Cannot navigate to invalid PsiElement");
-        return true;
-      }
-
-      ReadAction.nonBlocking(() -> {
-          PsiElement psiElement = preparePsi((PsiElement)selected, modifiers, searchText);
-          Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
-          VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
-          Runnable command = (modifiers & InputEvent.SHIFT_MASK) != 0 && file != null
-                             ? () -> OpenInRightSplitAction.Companion.openInRightSplit(myProject, file, extNavigatable, true)
-                             : () -> doNavigate(psiElement, extNavigatable);
-          return command;
-        })
-        .finishOnUiThread(ModalityState.nonModal(), Runnable::run)
-        .submit(AppExecutorUtil.getAppExecutorService());
-    }
-    else {
-      EditSourceUtil.navigate(((NavigationItem)selected), true, false);
-    }
-
-    return true;
-  }
-
-  private static void doNavigate(PsiElement psiElement, Navigatable extNavigatable) {
-    if (extNavigatable != null && extNavigatable.canNavigate()) {
-      extNavigatable.navigate(true);
-    }
-    else {
-      NavigationUtil.activateFileWithPsiElement(psiElement, true);
-    }
-  }
-
-  @Override
-  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      if (element instanceof PsiElement) {
-        return element;
-      }
-      if (element instanceof DataProvider) {
-        return ((DataProvider)element).getData(dataId);
-      }
-      if (element instanceof PsiElementNavigationItem) {
-        return ((PsiElementNavigationItem)element).getTargetElement();
+        activateFileWithPsiElement(psiElement, true)
       }
     }
-    return null;
-  }
 
-  @Nullable
-  @Override
-  public String getItemDescription(@NotNull Object element) {
-    return element instanceof PsiElement && ((PsiElement)element).isValid()
-           ? QualifiedNameProviderUtil.getQualifiedName((PsiElement) element)
-           : null;
-  }
+    protected fun getLineAndColumn(text: String): IntPair {
+      var line = getLineAndColumnRegexpGroup(text, 2)
+      val column = getLineAndColumnRegexpGroup(text, 3)
 
-  @Override
-  public boolean isMultiSelectionSupported() {
-    return true;
-  }
+      if (line == -1 && column != -1) {
+        line = 0
+      }
 
-  @Override
-  public boolean isDumbAware() {
-    return DumbService.isDumbAware(createModel(myProject));
-  }
-
-  @NotNull
-  @Override
-  public ListCellRenderer<Object> getElementsRenderer() {
-    return new SearchEverywherePsiRenderer(this);
-  }
-
-  @Override
-  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
-    return 50;
-  }
-
-  @Nullable
-  protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
-    VirtualFile file = PsiUtilCore.getVirtualFile(psi);
-    IntPair position = getLineAndColumn(searchText);
-    boolean positionSpecified = position.first >= 0 || position.second >= 0;
-    if (file != null && positionSpecified) {
-      return new OpenFileDescriptor(psi.getProject(), file, position.first, position.second);
+      return IntPair(line, column)
     }
 
-    return null;
-  }
-
-  protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
-    String path = pathToAnonymousClass(searchText);
-    if (path != null) {
-      psiElement = getElement(psiElement, path);
-    }
-    return psiElement.getNavigationElement();
-  }
-
-  protected static IntPair getLineAndColumn(String text) {
-    int line = getLineAndColumnRegexpGroup(text, 2);
-    int column = getLineAndColumnRegexpGroup(text, 3);
-
-    if (line == -1 && column != -1) {
-      line = 0;
-    }
-
-    return new IntPair(line, column);
-  }
-
-  private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {
-    final Matcher matcher = ourPatternToDetectLinesAndColumns.matcher(text);
-    if (matcher.matches()) {
-      try {
-        if (groupNumber <= matcher.groupCount()) {
-          final String group = matcher.group(groupNumber);
-          if (group != null) return Integer.parseInt(group) - 1;
+    private fun getLineAndColumnRegexpGroup(text: String, groupNumber: Int): Int {
+      val matcher = ourPatternToDetectLinesAndColumns.matcher(text)
+      if (matcher.matches()) {
+        try {
+          if (groupNumber <= matcher.groupCount()) {
+            val group = matcher.group(groupNumber)
+            if (group != null) return group.toInt() - 1
+          }
+        }
+        catch (ignored: NumberFormatException) {
         }
       }
-      catch (NumberFormatException ignored) {
-      }
+
+      return -1
     }
 
-    return -1;
+    private fun pathToAnonymousClass(searchedText: String): String? {
+      return ClassSearchEverywhereContributor.pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText))
+    }
+
+    fun getElement(element: PsiElement, path: String): PsiElement {
+      val classes = path.split("\\$".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+      val indexes: MutableList<Int> = ArrayList()
+      for (cls in classes) {
+        if (cls.isEmpty()) continue
+        try {
+          indexes.add(cls.toInt() - 1)
+        }
+        catch (e: Exception) {
+          return element
+        }
+      }
+      var current = element
+      for (index in indexes) {
+        val anonymousClasses = getAnonymousClasses(current)
+        if (index >= 0 && index < anonymousClasses.size) {
+          current = anonymousClasses[index]
+        }
+        else {
+          return current
+        }
+      }
+      return current
+    }
   }
 
-  private static String pathToAnonymousClass(String searchedText) {
-    return ClassSearchEverywhereContributor.pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText));
+  @ApiStatus.Internal
+  protected open fun findProjectScope(scopeDescriptors: List<ScopeDescriptor>, everywhereScope: SearchScope): SearchScope {
+    val projectScope: SearchScope = GlobalSearchScope.projectScope(myProject)
+    if (everywhereScope != projectScope) {
+      return projectScope
+    }
+
+    // get the second scope, i.e., Attached Directories in DataGrip
+    return scopeDescriptors.firstOrNull { !it.scopeEquals(everywhereScope) && !it.scopeEquals(null) }?.scope ?: everywhereScope
   }
 
-  @NotNull
-  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
-    final String[] classes = path.split("\\$");
-    List<Integer> indexes = new ArrayList<>();
-    for (String cls : classes) {
-      if (cls.isEmpty()) continue;
-      try {
-        indexes.add(Integer.parseInt(cls) - 1);
-      }
-      catch (Exception e) {
-        return element;
-      }
-    }
-    PsiElement current = element;
-    for (int index : indexes) {
-      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-      if (index >= 0 && index < anonymousClasses.length) {
-        current = anonymousClasses[index];
-      }
-      else {
-        return current;
-      }
-    }
-    return current;
+  @ApiStatus.Internal
+  protected open fun findEverywhereScope(scopeDescriptors: List<ScopeDescriptor>): SearchScope {
+    return GlobalSearchScope.everythingScope(myProject)
   }
 
-  private static PsiElement @NotNull [] getAnonymousClasses(@NotNull PsiElement element) {
-    for (AnonymousElementProvider provider : AnonymousElementProvider.EP_NAME.getExtensionList()) {
-      final PsiElement[] elements = provider.getAnonymousElements(element);
-      if (elements.length > 0) {
-        return elements;
+  protected open fun createScopes(): List<ScopeDescriptor> {
+    @Suppress("DEPRECATION")
+    return myProject.getService(ScopeService::class.java)
+      .createModel(EnumSet.of(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
+      .getScopesImmediately(createContext(myProject, myPsiContext))
+      .scopeDescriptors
+  }
+
+  override fun getSearchProviderId(): String {
+    return javaClass.simpleName
+  }
+
+  override fun isShownInSeparateTab(): Boolean {
+    return true
+  }
+
+  protected fun <T> doGetActions(
+    filter: PersistentSearchEverywhereContributorFilter<T>?,
+    statisticsCollector: ElementsChooser.StatisticsCollector<T>?,
+    onChanged: Runnable
+  ): List<AnAction> {
+    if (filter == null) {
+      return emptyList()
+    }
+
+    val result = ArrayList<AnAction>()
+    result.add(object : ScopeChooserAction() {
+      val canToggleEverywhere: Boolean = myEverywhereScope != myProjectScope
+
+      override fun onScopeSelected(o: ScopeDescriptor) {
+        setSelectedScope(o)
+        onChanged.run()
+      }
+
+      override fun getSelectedScope(): ScopeDescriptor {
+        return myScopeDescriptor
+      }
+
+      override fun onProjectScopeToggled() {
+        isEverywhere = !myScopeDescriptor.scopeEquals(myEverywhereScope)
+      }
+
+      override fun processScopes(processor: Processor<in ScopeDescriptor>): Boolean {
+        return ContainerUtil.process(createScopes(), processor)
+      }
+
+      override fun isEverywhere(): Boolean {
+        return myScopeDescriptor.scopeEquals(myEverywhereScope)
+      }
+
+      override fun setEverywhere(everywhere: Boolean) {
+        setSelectedScope(ScopeDescriptor(if (everywhere) myEverywhereScope else myProjectScope))
+        onChanged.run()
+      }
+
+      override fun canToggleEverywhere(): Boolean {
+        if (!canToggleEverywhere) return false
+        return myScopeDescriptor.scopeEquals(myEverywhereScope) ||
+               myScopeDescriptor.scopeEquals(myProjectScope)
+      }
+
+      override fun setScopeIsDefaultAndAutoSet(scopeDefaultAndAutoSet: Boolean) {
+        isScopeDefaultAndAutoSet = scopeDefaultAndAutoSet
+      }
+    })
+    result.add(PreviewAction())
+    result.add(SearchEverywhereFiltersAction(filter, onChanged, statisticsCollector))
+    return result
+  }
+
+  private fun getInitialSelectedScope(scopeDescriptors: List<ScopeDescriptor>): ScopeDescriptor {
+    val selectedScope = getSelectedScopes(myProject).get(javaClass.simpleName)
+    if (!selectedScope.isNullOrEmpty()) {
+      for (descriptor in scopeDescriptors) {
+        if (selectedScope == descriptor.displayName && !descriptor.scopeEquals(null)) {
+          return descriptor
+        }
       }
     }
-    return PsiElement.EMPTY_ARRAY;
+    return ScopeDescriptor(myProjectScope)
   }
 
-  private static final class MyViewModel implements ChooseByNameViewModel {
-    private final Project myProject;
-    private final ChooseByNameModel myModel;
+  private fun setSelectedScope(o: ScopeDescriptor) {
+    myScopeDescriptor = o
+    getSelectedScopes(myProject).put(javaClass.simpleName, if (o.scopeEquals(myEverywhereScope) || o.scopeEquals(myProjectScope)) null
+    else o.displayName)
+  }
 
-    private MyViewModel(Project project, ChooseByNameModel model) {
-      myProject = project;
-      myModel = model;
+  override fun fetchWeightedElements(
+    pattern: String,
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in FoundItemDescriptor<Any?>>,
+  ) {
+    if (!isEmptyPatternSupported && pattern.isEmpty()) {
+      return
     }
 
-    @Override
-    public Project getProject() {
-      return myProject;
+    val fetchRunnable = Runnable {
+      if (!isDumbAware && isDumb(myProject)) {
+        return@Runnable
+      }
+
+      val model = createModel(myProject)
+      if (progressIndicator.isCanceled) {
+        return@Runnable
+      }
+
+      val context = myPsiContext?.element
+      val provider = ChooseByNameModelEx.getItemProvider(model, context)
+      val scope = myScopeDescriptor.scope as GlobalSearchScope
+
+      val everywhere = scope.isSearchInLibraries
+      val viewModel = MyViewModel(myProject, model)
+      when (provider) {
+        is ChooseByNameInScopeItemProvider -> {
+          val parameters = FindSymbolParameters.wrap(pattern, scope)
+          provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
+          ) { item: FoundItemDescriptor<*> ->
+            processElement(progressIndicator, consumer, model, item.item, item.weight)
+          }
+        }
+        is ChooseByNameWeightedItemProvider -> {
+          provider.filterElementsWithWeights(viewModel, pattern, everywhere, progressIndicator
+          ) { item: FoundItemDescriptor<*> ->
+            processElement(progressIndicator, consumer, model, item.item, item.weight)
+          }
+        }
+        else -> {
+          provider.filterElements(viewModel, pattern, everywhere, progressIndicator) { element: Any ->
+            processElement(progressIndicator, consumer, model, element, getElementPriority(element, pattern))
+          }
+        }
+      }
     }
 
-    @Override
-    public @NotNull ChooseByNameModel getModel() {
-      return myModel;
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode && application.isDispatchThread) {
+      fetchRunnable.run()
     }
-
-    @Override
-    public boolean isSearchInAnyPlace() {
-      return myModel.useMiddleMatching();
-    }
-
-    @Override
-    public @NotNull String transformPattern(@NotNull String pattern) {
-      return ChooseByNamePopup.getTransformedPattern(pattern, myModel);
-    }
-
-    @Override
-    public boolean canShowListForEmptyPattern() {
-      return false;
-    }
-
-    @Override
-    public int getMaximumListSizeLimit() {
-      return 0;
+    else {
+      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
+      ProgressIndicatorUtils.yieldToPendingWriteActions()
+      @Suppress("UsagesOfObsoleteApi", "DEPRECATION")
+      ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(fetchRunnable, progressIndicator)
     }
   }
+
+  protected open fun processElement(
+    progressIndicator: ProgressIndicator,
+    consumer: Processor<in FoundItemDescriptor<Any?>>,
+    model: FilteringGotoByModel<*>, element: Any?, degree: Int
+  ): Boolean {
+    if (progressIndicator.isCanceled) {
+      return false
+    }
+
+    if (element == null) {
+      LOG.error("Null returned from $model in $this")
+      return true
+    }
+
+    return consumer.process(FoundItemDescriptor(element, degree))
+  }
+
+  override fun getScope(): ScopeDescriptor = myScopeDescriptor
+
+  override fun setScope(scope: ScopeDescriptor) {
+    setSelectedScope(scope)
+  }
+
+  protected val isEverywhere: Boolean
+    get() = myScopeDescriptor.scopeEquals(myEverywhereScope)
+
+  override fun getSupportedScopes(): List<ScopeDescriptor> = createScopes()
+
+  protected abstract fun createModel(project: Project): FilteringGotoByModel<*>
+
+  override fun filterControlSymbols(pattern: String): String {
+    if (StringUtil.containsAnyChar(pattern, ":,;@[( #") ||
+        pattern.contains(" line ") ||
+        pattern.contains("?l=")
+    ) { // quick test if regexp should be used
+      return applyPatternFilter(pattern, ourPatternToDetectLinesAndColumns)
+    }
+
+    return pattern
+  }
+
+  override fun showInFindResults(): Boolean = true
+
+  override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
+    if (selected is PsiElement) {
+      if (!selected.isValid) {
+        LOG.warn("Cannot navigate to invalid PsiElement")
+        return true
+      }
+
+      ReadAction.nonBlocking<Runnable> {
+        val psiElement = preparePsi(selected, searchText)
+        val extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers)
+        val file = PsiUtilCore.getVirtualFile(psiElement)
+        @Suppress("DEPRECATION")
+        val command = if ((modifiers and InputEvent.SHIFT_MASK) != 0 && file != null) {
+          Runnable { openInRightSplit(myProject, file, extNavigatable, true) }
+        }
+        else {
+          Runnable { doNavigate(psiElement, extNavigatable) }
+        }
+        command
+      }
+        .finishOnUiThread(ModalityState.nonModal()) { obj: Runnable -> obj.run() }
+        .submit(AppExecutorUtil.getAppExecutorService())
+    }
+    else {
+      EditSourceUtil.navigate((selected as NavigationItem), true, false)
+    }
+
+    return true
+  }
+
+  override fun getDataForItem(element: Any, dataId: String): Any? {
+    if (CommonDataKeys.PSI_ELEMENT.`is`(dataId)) {
+      when (element) {
+        is PsiElement -> return element
+        is DataProvider -> return element.getData(dataId)
+        is PsiElementNavigationItem -> return element.targetElement
+      }
+    }
+    return null
+  }
+
+  override fun getItemDescription(element: Any): String? {
+    return if (element is PsiElement && element.isValid) QualifiedNameProviderUtil.getQualifiedName(element) else null
+  }
+
+  override fun isMultiSelectionSupported(): Boolean = true
+
+  override fun isDumbAware(): Boolean = isDumbAware(createModel(myProject))
+
+  override fun getElementsRenderer(): ListCellRenderer<in Any?> = SearchEverywherePsiRenderer(this)
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun getElementPriority(element: Any, searchPattern: String): Int = 50
+
+  protected open fun createExtendedNavigatable(psi: PsiElement, searchText: String, modifiers: Int): Navigatable? {
+    val file = PsiUtilCore.getVirtualFile(psi)
+    val position = getLineAndColumn(searchText)
+    val positionSpecified = position.first >= 0 || position.second >= 0
+    if (file != null && positionSpecified) {
+      return OpenFileDescriptor(psi.project, file, position.first, position.second)
+    }
+    return null
+  }
+
+  protected fun preparePsi(psiElement: PsiElement, searchText: String): PsiElement {
+    @Suppress("NAME_SHADOWING")
+    var psiElement = psiElement
+    val path = pathToAnonymousClass(searchText)
+    if (path != null) {
+      psiElement = getElement(psiElement, path)
+    }
+    return psiElement.navigationElement
+  }
+}
+
+private class MyViewModel(private val myProject: Project, private val myModel: ChooseByNameModel) : ChooseByNameViewModel {
+  override fun getProject(): Project = myProject
+
+  override fun getModel(): ChooseByNameModel = myModel
+
+  override fun isSearchInAnyPlace(): Boolean = myModel.useMiddleMatching()
+
+  override fun transformPattern(pattern: String): String = ChooseByNamePopup.getTransformedPattern(pattern, myModel)
+
+  override fun canShowListForEmptyPattern(): Boolean = false
+
+  override fun getMaximumListSizeLimit(): Int = 0
+}
+
+private fun getAnonymousClasses(element: PsiElement): Array<PsiElement> {
+  for (provider in AnonymousElementProvider.EP_NAME.extensionList) {
+    val elements = provider.getAnonymousElements(element)
+    if (elements.isNotEmpty()) {
+      return elements
+    }
+  }
+  return PsiElement.EMPTY_ARRAY
 }
