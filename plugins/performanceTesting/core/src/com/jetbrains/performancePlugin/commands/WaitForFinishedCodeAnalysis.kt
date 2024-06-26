@@ -97,6 +97,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
 
   private fun ensureLockedIfNeeded() {
     synchronized(stateLock) {
+      @Suppress("UsePropertyAccessSyntax") // inhibit weak warning, for property access is a warning
       if (!sessions.isEmpty() && !locked) {
         LOG.info("Highlighting began with ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
         highlightingFinishedEverywhere.acquire()
@@ -111,6 +112,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
         return
       }
 
+      @Suppress("UsePropertyAccessSyntax")  // inhibit weak warning, for property access is a warning
       if (sessions.isEmpty()) {
         LOG.info("Highlighting done")
         LOG.info("Total opening time is : ${Duration.ofNanos(System.nanoTime() - StartUpMeasurer.getStartTime()).toMillis()}")
@@ -118,9 +120,9 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
         locked = false
       }
       else {
-        //Printing additional information to get information why huglighting was stucked
+        //Printing additional information to get information why highlighting was stuck
         sessions.forEach {
-          printCodeAnalyzerStatistis(it.key.editor)
+          printCodeAnalyzerStatistic(it.key.editor)
           printFileStatus(it.key.editor)
         }
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
@@ -253,7 +255,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  private fun printCodeAnalyzerStatistis(editor: Editor) {
+  private fun printCodeAnalyzerStatistic(editor: Editor) {
     try {
       ReadAction.run<Throwable> {
         LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).daemonCodeAnalyzerStatus}")
@@ -271,7 +273,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
         .toString(editor.document)
       LOG.info("File status map $fileStatus")
     }
-    catch (throwable: Throwable) {
+    catch (_: Throwable) {
       LOG.warn("Print Analyzer status map failed")
     }
   }
