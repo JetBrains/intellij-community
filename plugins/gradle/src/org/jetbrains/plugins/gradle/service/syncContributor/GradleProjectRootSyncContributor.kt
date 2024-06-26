@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncContributor
 
+import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.impl.UnloadedModulesListStorage
 import com.intellij.openapi.project.Project
@@ -26,6 +27,14 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
   override suspend fun onResolveProjectInfoStarted(context: ProjectResolverContext, storage: MutableEntityStorage) {
     if (context.isPhasedSyncEnabled) {
       configureProjectRoot(context, storage)
+    }
+  }
+
+  override suspend fun onModelFetchPhaseCompleted(context: ProjectResolverContext, storage: MutableEntityStorage, phase: GradleModelFetchPhase) {
+    if (context.isPhasedSyncEnabled) {
+      if (phase == GradleModelFetchPhase.PROJECT_LOADED_PHASE) {
+        removeProjectRoot(context, storage)
+      }
     }
   }
 
@@ -107,5 +116,23 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
 
   private fun resolveModuleName(entitySource: GradleLinkedProjectEntitySource): String {
     return entitySource.projectRootUrl.fileName
+  }
+
+  /**
+   * The [GradleContentRootSyncContributor] has the complete information to configure the accurate build roots.
+   * They will be used as project roots in the result project model.
+   */
+  private suspend fun removeProjectRoot(context: ProjectResolverContext, storage: MutableEntityStorage) {
+    val project = context.project()
+    val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
+
+    val linkedProjectRootPath = Path.of(context.projectPath)
+    val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
+    val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
+
+    val linkedProjectEntities = storage.entitiesBySource { it == linkedProjectEntitySource }
+    for (linkedProjectEntity in linkedProjectEntities.toList()) {
+      storage.removeEntity(linkedProjectEntity)
+    }
   }
 }
