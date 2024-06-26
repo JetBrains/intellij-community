@@ -75,11 +75,13 @@ internal class InlineCompletionTextRenderManager private constructor(
     }
 
     override fun dispose() {
-      suffixInlay?.let { Disposer.dispose(it) }
-      suffixInlay = null
-      for (blockInlay in blockLineInlays) {
-        Disposer.dispose(blockInlay)
+      editor.inlayModel.execute(true) {
+        suffixInlay?.let { Disposer.dispose(it) }
+        for (blockInlay in blockLineInlays) {
+          Disposer.dispose(blockInlay)
+        }
       }
+      suffixInlay = null
       blockLineInlays.clear()
     }
 
