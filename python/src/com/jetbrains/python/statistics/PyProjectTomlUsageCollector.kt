@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.search.FileTypeIndex
-import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.ProjectScope
 import com.jetbrains.python.packaging.PyRequirementParser
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -98,7 +98,7 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
 
         return@processFiles true
       },
-      GlobalSearchScope.allScope(project))
+      ProjectScope.getContentScope(project))
 
     val metrics = mutableSetOf<MetricEvent>()
     tools.forEach { name ->
