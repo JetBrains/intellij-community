@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -34,9 +35,9 @@ internal fun isTaskNameCandidate(element: PsiElement): Boolean =
         ?.parent is KtCallExpression
 
 internal fun findTaskNameAround(element: PsiElement): String? {
-    val referenceExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
-    return analyze(referenceExpression) {
-        val resolveCall = referenceExpression.resolveCallOld() ?: return null
+    val callExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
+    return analyze(callExpression) {
+        val resolveCall = callExpression.resolveToCall() ?: return null
         val functionCall = resolveCall.singleFunctionCallOrNull() ?: return null
         if (!doesCustomizeTask(functionCall)) return null
         val nameArgument = functionCall.argumentMapping
@@ -51,10 +52,18 @@ internal fun findTaskNameAround(element: PsiElement): String? {
 
 private fun doesCustomizeTask(functionCall: KaFunctionCall<*>): Boolean {
     val callableId = functionCall.partiallyAppliedSymbol.symbol.callableId ?: return false
-    val fqOutermostClass = callableId.classId?.outermostClassId?.asSingleFqName() ?: return false
     val methodName = callableId.callableName.identifier
-    return isMethodOfTaskContainer(methodName, fqOutermostClass)
-            || isMethodOfProject(methodName, fqOutermostClass)
+    val classFqName = getReceiverClassFqName(functionCall)
+        ?: callableId.classId?.asSingleFqName()
+        ?: return false
+    return isMethodOfTaskContainer(methodName, classFqName)
+            || isMethodOfProject(methodName, classFqName)
+}
+
+private fun getReceiverClassFqName(functionCall: KaFunctionCall<*>): FqName? {
+    val type = functionCall.partiallyAppliedSymbol.extensionReceiver?.type
+        ?: functionCall.partiallyAppliedSymbol.dispatchReceiver?.type
+    return type?.symbol?.classId?.asSingleFqName()
 }
 
 
