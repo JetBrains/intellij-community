@@ -14,7 +14,7 @@ interface SettingsSyncIdeMediator {
   /**
    * @param settings if not null, SettingsSync settings will be taken from this object rather than snapshot
    */
-  suspend fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?)
+  fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?)
 
   fun activateStreamProvider()
 

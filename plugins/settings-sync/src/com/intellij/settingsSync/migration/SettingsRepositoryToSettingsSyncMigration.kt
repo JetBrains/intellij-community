@@ -18,8 +18,6 @@ import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.Setting
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
 import com.intellij.settingsSync.plugins.PluginManagerProxy
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,7 +42,7 @@ private val OS_PREFIXES = listOf(
   "_unix" to "unix"
 )
 
-internal class SettingsRepositoryToSettingsSyncMigration(private val coroutineScope: CoroutineScope) {
+internal class SettingsRepositoryToSettingsSyncMigration {
   fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot? {
     return processLocalData(appConfigDir) { path ->
       readLocalData(path)
@@ -105,13 +103,11 @@ internal class SettingsRepositoryToSettingsSyncMigration(private val coroutineSc
   }
 }
 
-private fun showNotificationAboutUnbundling(coroutineScope: CoroutineScope, executorService: ScheduledExecutorService) {
+private fun showNotificationAboutUnbundling(executorService: ScheduledExecutorService) {
   val installOldPluginAction = NotificationAction.createSimpleExpiring(
     @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
     SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
-    coroutineScope.launch {
-      PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
-    }
+    PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
     SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(INSTALL_SETTINGS_REPOSITORY)
   }
   val useNewSettingsSyncAction = NotificationAction.createSimpleExpiring(
@@ -133,12 +129,12 @@ private fun showNotificationAboutUnbundling(coroutineScope: CoroutineScope, exec
     .notify(null)
 }
 
-internal suspend fun migrateIfNeeded(coroutineScope: CoroutineScope, executorService: ScheduledExecutorService) {
+internal fun migrateIfNeeded(executorService: ScheduledExecutorService) {
   if (PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
     return
   }
 
-  val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration(coroutineScope)
+  val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration()
   if (settingsRepositoryMigration.isLocalDataAvailable(PathManager.getConfigDir())) {
     LOG.info("Migrating from the Settings Repository")
     val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir())
@@ -148,7 +144,7 @@ internal suspend fun migrateIfNeeded(coroutineScope: CoroutineScope, executorSer
 
       SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
                                   PathManager.getConfigDir()) { false }.applyToIde(snapshot, null)
-      showNotificationAboutUnbundling(coroutineScope, executorService)
+      showNotificationAboutUnbundling(executorService)
       SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
     }
   }

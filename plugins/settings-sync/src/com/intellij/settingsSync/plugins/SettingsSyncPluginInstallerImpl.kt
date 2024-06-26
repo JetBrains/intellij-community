@@ -12,13 +12,15 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.NOTIFICATION_GROUP
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Boolean) : SettingsSyncPluginInstaller {
   companion object {
     val LOG = logger<SettingsSyncPluginInstallerImpl>()
   }
 
-  override suspend fun installPlugins(pluginsToInstall: List<PluginId>) {
+  @RequiresBackgroundThread
+  override fun installPlugins(pluginsToInstall: List<PluginId>) {
     if (pluginsToInstall.isEmpty())
       return
     val pluginInstallation = object : Task.Backgroundable(null, SettingsSyncBundle.message("installing.plugins.indicator"), true) {
@@ -89,6 +91,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
 
     private val collectedInstallers = ArrayList<PluginDownloader>()
 
+    @RequiresBackgroundThread
     override fun run() {
       pluginIds.forEach {
         prepareToInstall(it, indicator)
@@ -96,6 +99,7 @@ internal open class SettingsSyncPluginInstallerImpl(private val notifyErrors: Bo
       }
     }
 
+    @RequiresBackgroundThread
     private fun prepareToInstall(pluginId: PluginId, indicator: ProgressIndicator) {
       dwnldPreparer(pluginId, indicator) ?.also {
           collectedInstallers.add(it)

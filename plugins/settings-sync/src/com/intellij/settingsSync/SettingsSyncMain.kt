@@ -10,7 +10,6 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.util.SystemProperties
-import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -26,7 +25,7 @@ internal const val SETTINGS_SYNC_STORAGE_FOLDER: String = "settingsSync"
 
 @ApiStatus.Internal
 @Service
-class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
+class SettingsSyncMain : Disposable {
   val controls: SettingsSyncControls
 
   init {
@@ -35,8 +34,7 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
     val ideMediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = appConfigPath, enabledCondition = {
       isSettingsSyncEnabledByKey() && isAvailable() && isSettingsSyncEnabledInSettings()
     })
-    controls = init(coroutineScope,
-                    parentDisposable = this,
+    controls = init(parentDisposable = this,
                     settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER),
                     appConfigPath = appConfigPath,
                     remoteCommunicator = CloudConfigServerCommunicator(),
@@ -60,21 +58,18 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
     fun getInstance(): SettingsSyncMain = service<SettingsSyncMain>()
 
     // Extracted to simplify testing, otherwise it is fast and is called from the service initializer
-    internal fun init(
-      coroutineScope: CoroutineScope,
-      parentDisposable: Disposable,
-      settingsSyncStorage: Path,
-      appConfigPath: Path,
-      remoteCommunicator: SettingsSyncRemoteCommunicator,
-      ideMediator: SettingsSyncIdeMediator,
-    ): SettingsSyncControls {
+    internal fun init(parentDisposable: Disposable,
+                      settingsSyncStorage: Path,
+                      appConfigPath: Path,
+                      remoteCommunicator: SettingsSyncRemoteCommunicator,
+                      ideMediator: SettingsSyncIdeMediator): SettingsSyncControls {
       val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable,
                                        SettingsSyncAuthService.getInstance()::getUserData,
                                        initialSnapshotProvider = { currentSnapshot ->
                                          ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot)
                                        })
       val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
-      val bridge = SettingsSyncBridge(coroutineScope, parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
+      val bridge = SettingsSyncBridge(parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
       return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
   }

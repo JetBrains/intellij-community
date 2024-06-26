@@ -2,8 +2,6 @@ package com.intellij.settingsSync
 
 import com.intellij.ide.GeneralSettings
 import com.intellij.testFramework.registerExtension
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -49,18 +47,15 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `settings from provider changed on another client should be applied`() = runTest {
+  fun `settings from provider changed on another client should be applied`() {
     val state = TestState("Server value")
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       provided(settingsProvider.id, state)
     })
 
-
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
-
-    fireSettingsChangeAndRunCurrent()
-
-    waitForAllExecutedAndRunCurrent()
+    fireSettingsChanged()
+    bridge.waitForAllExecuted()
 
     val expectedContent = TestSettingsProvider().serialize(state)
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
@@ -80,23 +75,13 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
       provided(settingsProvider.id, localState)
     }))
 
-    fireSettingsChangeAndRunCurrent()
-    waitForAllExecutedAndRunCurrent()
+    fireSettingsChanged()
+    bridge.waitForAllExecuted()
 
     val expectedState = TestState(property = "Server value", foo = "Local value")
     assertFileWithContent(TestSettingsProvider().serialize(expectedState),
                           settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
     assertEquals(expectedState, settingsProvider.settings, "Settings were not applied")
-  }
-
-  private fun waitForAllExecutedAndRunCurrent() {
-    bridge.waitForAllExecuted()
-    testScope.runCurrent()
-  }
-
-  private fun fireSettingsChangeAndRunCurrent() {
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
-    testScope.runCurrent()
   }
 
   @Serializable

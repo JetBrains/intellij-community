@@ -59,7 +59,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     return roamingType.isRoamable
   }
 
-  override suspend fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?) {
+  override fun applyToIde(snapshot: SettingsSnapshot, settings: SettingsSyncState?) {
     // 1. update SettingsSyncSettings first to apply changes in categories
     val settingsSyncFileState = snapshot.fileStates.find { it.file == "$OPTIONS_DIRECTORY/${SettingsSyncSettings.FILE_SPEC}" }
     if (settings != null) {

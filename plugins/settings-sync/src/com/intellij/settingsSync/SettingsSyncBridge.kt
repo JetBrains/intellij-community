@@ -8,104 +8,73 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
+import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.*
+import com.intellij.util.ui.update.MergingUpdateQueue
+import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.time.Instant
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.locks.ReentrantLock
 
 /**
  * Handles events about settings change both from the current IDE, and from the server, merges the settings, logs them,
  * and provides the combined data to clients: both to the IDE and to the server.
  */
 @ApiStatus.Internal
-class SettingsSyncBridge(
-  private val coroutineScope: CoroutineScope,
-  parentDisposable: Disposable,
-  private val appConfigPath: Path,
-  private val settingsLog: SettingsLog,
-  private val ideMediator: SettingsSyncIdeMediator,
-  private val remoteCommunicator: SettingsSyncRemoteCommunicator,
-  private val updateChecker: SettingsSyncUpdateChecker,
-) {
+class SettingsSyncBridge(parentDisposable: Disposable,
+                         private val appConfigPath: Path,
+                         private val settingsLog: SettingsLog,
+                         private val ideMediator: SettingsSyncIdeMediator,
+                         private val remoteCommunicator: SettingsSyncRemoteCommunicator,
+                         private val updateChecker: SettingsSyncUpdateChecker) {
 
-  private val pendingExclusiveEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.ExclusiveEvent>()
   private val pendingEvents = ContainerUtil.createConcurrentList<SyncSettingsEvent.StandardEvent>()
 
-  @Volatile
-  private var queueJob: Job? = null
+  private val queue = MergingUpdateQueue("SettingsSyncBridge", 1000, false, null, parentDisposable, null,
+                                         Alarm.ThreadToUse.POOLED_THREAD).apply {
+    setRestartTimerOnAdd(true)
+  }
 
-  private val eventsLock = ReentrantLock()
+  private val updateObject = object : Update(1) { // all requests are always merged
+    override fun run() {
+      processPendingEvents()
+      // todo what if here a new event is added; probably synchronization is needed between pPE and adding to the queue
+    }
+  }
 
-  private val settingsChangeListener = object : SettingsSyncEventListener {
+  private val settingsChangeListener = object: SettingsSyncEventListener {
     override fun settingChanged(event: SyncSettingsEvent) {
       LOG.debug("Adding settings changed event $event to the queue")
       if (event is SyncSettingsEvent.ExclusiveEvent) { // such events will be processed separately from all others
-        pendingExclusiveEvents.add(event)
-        coroutineScope.launch {
-          var locked = false
-          try {
-            do {
-              locked = eventsLock.tryLock(1, TimeUnit.SECONDS)
-              if (!locked) {
-                LOG.info("Couldn't obtain event lock in 1 second")
-              }
-            }
-            while (!locked)
-            processExclusiveEvent(event)
-          }
-          catch (th: Throwable) {
-            LOG.error("An error occurred while obtaining lock for exclusive event")
-          }
-          finally {
-            if (locked) {
-              eventsLock.unlock()
-            }
-          }
-        }
+        queue.queue(Update.create(event) {
+          processExclusiveEvent(event)
+        })
       }
-      else if (event is SyncSettingsEvent.StandardEvent) {
-        pendingEvents.addIfAbsent(event)
+      else {
+        pendingEvents.add(event as SyncSettingsEvent.StandardEvent)
+        queue.queue(updateObject)
       }
     }
   }
 
+  @RequiresBackgroundThread
   internal fun initialize(initMode: InitMode) {
-    coroutineScope.launch {
-      try {
-        settingsLog.initialize()
+    try {
+      settingsLog.initialize()
 
-        // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-        SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
-        ideMediator.activateStreamProvider()
+      // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
+      SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
+      ideMediator.activateStreamProvider()
 
-        applyInitialChanges(initMode)
+      applyInitialChanges(initMode)
 
-        startQueue()
-      }
-      catch (ex: Exception) {
-        stopSyncingAndRollback(null, ex)
-      }
-    }
-  }
-
-  private fun startQueue() {
-    queueJob = coroutineScope.launch {
-      while (true) {
-        processPendingEvents()
-        try {
-          delay(1000)
-        }
-        catch (_: CancellationException) {
-          queueJob = null
-          LOG.info("queue processing was cancelled")
-          break;
-        }
-      }
+      queue.activate()
+    } catch (ex: Exception) {
+      stopSyncingAndRollback(null, ex)
     }
   }
 
@@ -115,7 +84,7 @@ class SettingsSyncBridge(
     }
   }
 
-  private suspend fun applyInitialChanges(initMode: InitMode) {
+  private fun applyInitialChanges(initMode: InitMode) {
     val previousState = collectCurrentState()
 
     settingsLog.logExistingSettings()
@@ -132,7 +101,7 @@ class SettingsSyncBridge(
     }
   }
 
-  private suspend fun applySnapshotFromServer(cloudEvent: SyncSettingsEvent.CloudChange) {
+  private fun applySnapshotFromServer(cloudEvent: SyncSettingsEvent.CloudChange) {
     settingsLog.advanceMaster() // merge (preserve) 'ide' changes made by logging existing settings
 
     val masterPosition = settingsLog.forceWriteToMaster(cloudEvent.snapshot, "Remote changes to initialize settings by data from cloud")
@@ -144,7 +113,7 @@ class SettingsSyncBridge(
     SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = cloudEvent.serverVersionId
   }
 
-  private suspend fun migrateFromOldStorage(migration: SettingsSyncMigration) {
+  private fun migrateFromOldStorage(migration: SettingsSyncMigration) {
     TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
     val migrationSnapshot = migration.getLocalDataIfAvailable(appConfigPath)
     if (migrationSnapshot != null) {
@@ -204,7 +173,7 @@ class SettingsSyncBridge(
     object PushToServer : InitMode()
   }
 
-  private suspend fun processExclusiveEvent(event: SyncSettingsEvent.ExclusiveEvent) {
+  private fun processExclusiveEvent(event: SyncSettingsEvent.ExclusiveEvent) {
     when (event) {
       is SyncSettingsEvent.CrossIdeSyncStateChanged -> {
         LOG.info("Cross-ide sync state changed to: " + event.isCrossIdeSyncEnabled)
@@ -229,59 +198,48 @@ class SettingsSyncBridge(
     }
   }
 
-  private suspend fun processPendingEvents() {
-    val locked = eventsLock.tryLock()
-    try {
-      if (locked) {
-        val previousState = collectCurrentState()
-        try {
-          var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
-          var mergeAndPushAfterProcessingEvents = true
-          while (pendingEvents.isNotEmpty()) {
-            val event = pendingEvents.removeAt(0)
-            LOG.debug("Processing event $event")
-            when (event) {
-              is SyncSettingsEvent.IdeChange -> {
-                settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
-              }
-              is SyncSettingsEvent.CloudChange -> {
-                settingsLog.applyCloudState(event.snapshot, "Remote changes")
-                SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
-              }
-              is SyncSettingsEvent.LogCurrentSettings -> {
-                settingsLog.logExistingSettings()
-              }
-              is SyncSettingsEvent.MustPushRequest -> {
-                pushRequestMode = MUST_PUSH
-              }
-              is SyncSettingsEvent.DeleteServerData -> {
-                mergeAndPushAfterProcessingEvents = false
-                stopSyncingAndRollback(previousState)
-                deleteServerData(event.afterDeleting)
-              }
-              SyncSettingsEvent.DeletedOnCloud -> {
-                mergeAndPushAfterProcessingEvents = false
-                stopSyncingAndRollback(previousState)
-              }
-            }
-          }
+  @RequiresBackgroundThread
+  private fun processPendingEvents() {
+    val previousState = collectCurrentState()
 
-          if (mergeAndPushAfterProcessingEvents) {
-            mergeAndPush(previousState.idePosition, previousState.cloudPosition, pushRequestMode)
+    try {
+      var pushRequestMode: PushRequestMode = PUSH_IF_NEEDED
+      var mergeAndPushAfterProcessingEvents = true
+      while (pendingEvents.isNotEmpty()) {
+        val event = pendingEvents.removeAt(0)
+        LOG.debug("Processing event $event")
+        when (event) {
+          is SyncSettingsEvent.IdeChange -> {
+            settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
+          }
+          is SyncSettingsEvent.CloudChange -> {
+            settingsLog.applyCloudState(event.snapshot, "Remote changes")
+            SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = event.serverVersionId
+          }
+          is SyncSettingsEvent.LogCurrentSettings -> {
+            settingsLog.logExistingSettings()
+          }
+          is SyncSettingsEvent.MustPushRequest -> {
+            pushRequestMode = MUST_PUSH
+          }
+          is SyncSettingsEvent.DeleteServerData -> {
+            mergeAndPushAfterProcessingEvents = false
+            stopSyncingAndRollback(previousState)
+            deleteServerData(event.afterDeleting)
+          }
+          SyncSettingsEvent.DeletedOnCloud -> {
+            mergeAndPushAfterProcessingEvents = false
+            stopSyncingAndRollback(previousState)
           }
         }
-        catch (exception: Throwable) {
-          stopSyncingAndRollback(previousState, exception)
-        }
+      }
+
+      if (mergeAndPushAfterProcessingEvents) {
+        mergeAndPush(previousState.idePosition, previousState.cloudPosition, pushRequestMode)
       }
     }
-    catch (th: Throwable) {
-      LOG.error("Error occurred while processing pending events", th)
-    }
-    finally {
-      if (locked) {
-        eventsLock.unlock()
-      }
+    catch (exception: Throwable) {
+      stopSyncingAndRollback(previousState, exception)
     }
   }
 
@@ -327,7 +285,7 @@ class SettingsSyncBridge(
     val masterPosition: SettingsLog.Position,
     val idePosition: SettingsLog.Position,
     val cloudPosition: SettingsLog.Position,
-    val knownServerId: String?,
+    val knownServerId: String?
   ) {
     override fun toString(): String {
       return "CurrentState(masterPosition=$masterPosition, idePosition=$idePosition, cloudPosition=$cloudPosition, knownServerId=$knownServerId)"
@@ -358,9 +316,7 @@ class SettingsSyncBridge(
     if (previousState != null) {
       rollback(previousState)
     }
-
-    // for tests it is important to have it the last statement, otherwise waitForAllExecuted can finish before rollback
-    queueJob?.cancel()
+    queue.deactivate() // for tests it is important to have it the last statement, otherwise waitForAllExecuted can finish before rollback
   }
 
   private fun rollback(previousState: CurrentState) {
@@ -378,11 +334,9 @@ class SettingsSyncBridge(
     }
   }
 
-  private suspend fun mergeAndPush(
-    previousIdePosition: SettingsLog.Position,
-    previousCloudPosition: SettingsLog.Position,
-    pushRequestMode: PushRequestMode,
-  ) {
+  private fun mergeAndPush(previousIdePosition: SettingsLog.Position,
+                           previousCloudPosition: SettingsLog.Position,
+                           pushRequestMode: PushRequestMode) {
     val newIdePosition = settingsLog.getIdePosition()
     val newCloudPosition = settingsLog.getCloudPosition()
     val masterPosition: SettingsLog.Position
@@ -462,17 +416,26 @@ class SettingsSyncBridge(
     }
   }
 
-  private suspend fun pushToIde(settingsSnapshot: SettingsSnapshot, targetPosition: SettingsLog.Position, syncSettings: SettingsSyncState?) {
+  private fun pushToIde(settingsSnapshot: SettingsSnapshot, targetPosition: SettingsLog.Position, syncSettings: SettingsSyncState?) {
     ideMediator.applyToIde(settingsSnapshot, syncSettings)
     settingsLog.setIdePosition(targetPosition)
     LOG.info("Applied settings to the IDE.")
   }
 
   @TestOnly
-  fun waitForAllExecuted() {
-    runBlocking {
-      processPendingEvents()
-    }
+  fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
+    queue.flush()
+    queue.waitForAllExecuted(timeout, timeUnit)
+  }
+
+  @VisibleForTesting
+  internal fun suspendEventProcessing() {
+    queue.suspend()
+  }
+
+  @VisibleForTesting
+  internal fun resumeEventProcessing() {
+    queue.resume()
   }
 
   companion object {
