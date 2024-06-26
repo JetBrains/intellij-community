@@ -14503,14 +14503,6 @@ f:com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
 - sf:getInstance():com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
 f:com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager$Companion
 - f:getInstance():com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager
-f:com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent
-- sf:Companion:com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent$Companion
-- f:component:javax.swing.JPanel
-- <init>(com.intellij.openapi.project.Project,com.intellij.ide.actions.searcheverywhere.ExtendedInfo):V
-- f:getAdvertisement():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-- f:getProject():com.intellij.openapi.project.Project
-- f:updateElement(java.lang.Object,com.intellij.openapi.Disposable):V
-f:com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoComponent$Companion
 f:com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImpl
 - com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - <init>(java.util.List):V
@@ -14520,11 +14512,6 @@ f:com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt
 - sf:createPsiExtendedInfo(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1):com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - bs:createPsiExtendedInfo$default(kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createTextExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-f:com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoOpenInRightSplitAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>(com.intellij.openapi.actionSystem.DataContext):V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- f:getSplit():com.intellij.ide.actions.OpenInRightSplitAction
 c:com.intellij.ide.actions.searcheverywhere.footer.RecentSet
 - java.util.LinkedHashSet
 - <init>():V
