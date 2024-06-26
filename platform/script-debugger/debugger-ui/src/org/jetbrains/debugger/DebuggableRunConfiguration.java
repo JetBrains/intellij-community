@@ -34,6 +34,10 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
+/**
+ * @deprecated legacy API, not intended to be used.
+ */
+@Deprecated
 public interface DebuggableRunConfiguration extends RunConfiguration {
   @NotNull
   default InetSocketAddress computeDebugAddress(RunProfileState state) throws ExecutionException {
