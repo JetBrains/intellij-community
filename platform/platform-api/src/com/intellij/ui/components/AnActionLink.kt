@@ -16,8 +16,12 @@ import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.SwingUtilities
 
-open class AnActionLink(@Nls text: String, anAction: AnAction, @NonNls place: String)
-  : UiCompatibleDataProvider, ActionLink(text, { invokeAction(anAction, it.source as AnActionLink, place, null, null) }) {
+open class AnActionLink(@Nls text: String,
+                        private val anAction: AnAction,
+                        @NonNls place: String
+) : UiCompatibleDataProvider, ActionLink(text, {
+  invokeAction(anAction, it.source as AnActionLink, place, null, null)
+}) {
 
   constructor(@Nls text: String, anAction: AnAction) : this(text, anAction, UNKNOWN)
   constructor(anAction: AnAction, @NonNls place: String) : this(anAction.templateText ?: "", anAction, place)
@@ -34,8 +38,8 @@ open class AnActionLink(@Nls text: String, anAction: AnAction, @NonNls place: St
     }
     sink[PlatformDataKeys.CONTEXT_MENU_POINT] =
       Point(0, height.coerceAtMost(preferredSize.height))
-    DataSink.uiDataSnapshot(sink, action)
-    if (action !== dataProvider) {
+    DataSink.uiDataSnapshot(sink, anAction)
+    if (anAction !== dataProvider) {
       DataSink.uiDataSnapshot(sink, dataProvider)
     }
   }
