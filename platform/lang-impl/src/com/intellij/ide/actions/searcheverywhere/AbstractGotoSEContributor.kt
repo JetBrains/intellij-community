@@ -43,8 +43,8 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.IntPair
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.FindSymbolParameters
+import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.*
@@ -61,16 +61,19 @@ private val ourPatternToDetectLinesAndColumns: Pattern = Pattern.compile(
   "[)\\]]?" // possible closing paren/brace
 )
 
-abstract class AbstractGotoSEContributor protected constructor(event: AnActionEvent) : WeightedSearchEverywhereContributor<Any?>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
+internal val patternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]+)((\\$\\d+)*(\\$)?)")
+
+abstract class AbstractGotoSEContributor protected constructor(event: AnActionEvent)
+  : WeightedSearchEverywhereContributor<Any>, ScopeSupporting, SearchEverywhereExtendedInfoProvider {
   @JvmField
   protected val myProject: Project = event.getRequiredData(CommonDataKeys.PROJECT)
   @JvmField
   protected var myScopeDescriptor: ScopeDescriptor
 
-  private val myEverywhereScope: SearchScope
-  private val myProjectScope: SearchScope
+  private val everywhereScope: SearchScope
+  private val projectScope: SearchScope
   @JvmField
-  protected var isScopeDefaultAndAutoSet: Boolean = true
+  protected var isScopeDefaultAndAutoSet: Boolean
 
   @JvmField
   protected val myPsiContext: SmartPsiElementPointer<PsiElement?>?
@@ -82,10 +85,11 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     @Suppress("LeakingThis")
     val scopeDescriptors = createScopes()
     @Suppress("LeakingThis")
-    myEverywhereScope = findEverywhereScope(scopeDescriptors)
+    everywhereScope = findEverywhereScope(scopeDescriptors)
     @Suppress("LeakingThis")
-    myProjectScope = findProjectScope(scopeDescriptors, myEverywhereScope)
+    projectScope = findProjectScope(scopeDescriptors, everywhereScope)
     myScopeDescriptor = getInitialSelectedScope(scopeDescriptors)
+    isScopeDefaultAndAutoSet = getSelectedScopes(myProject).get(javaClass.getSimpleName()).isNullOrEmpty()
 
     @Suppress("LeakingThis")
     myProject.messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
@@ -96,9 +100,6 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   }
 
   companion object {
-    @JvmField
-    protected val ourPatternToDetectAnonymousClasses: Pattern = Pattern.compile("([.\\w]+)((\\$\\d+)*(\\$)?)")
-
     fun createContext(project: Project?, psiContext: SmartPsiElementPointer<PsiElement?>?): DataContext {
       val parentContext = if (project == null) null else SimpleDataContext.getProjectContext(project)
       val context = psiContext?.element
@@ -111,32 +112,13 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         .build()
     }
 
-    private fun getSelectedScopes(project: Project): MutableMap<String, String?> {
-      var map = SE_SELECTED_SCOPES.get(project)
-      if (map == null) {
-        SE_SELECTED_SCOPES.set(project, HashMap<String, String?>(3).also { map = it })
-      }
-      return map
-    }
-
+    @JvmStatic
     protected fun applyPatternFilter(str: String, regex: Pattern): String {
       val matcher = regex.matcher(str)
-      if (matcher.matches()) {
-        return matcher.group(1)
-      }
-
-      return str
+      return if (matcher.matches()) matcher.group(1) else str
     }
 
-    private fun doNavigate(psiElement: PsiElement, extNavigatable: Navigatable?) {
-      if (extNavigatable != null && extNavigatable.canNavigate()) {
-        extNavigatable.navigate(true)
-      }
-      else {
-        activateFileWithPsiElement(psiElement, true)
-      }
-    }
-
+    @JvmStatic
     protected fun getLineAndColumn(text: String): IntPair {
       var line = getLineAndColumnRegexpGroup(text, 2)
       val column = getLineAndColumnRegexpGroup(text, 3)
@@ -148,40 +130,26 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       return IntPair(line, column)
     }
 
-    private fun getLineAndColumnRegexpGroup(text: String, groupNumber: Int): Int {
-      val matcher = ourPatternToDetectLinesAndColumns.matcher(text)
-      if (matcher.matches()) {
-        try {
-          if (groupNumber <= matcher.groupCount()) {
-            val group = matcher.group(groupNumber)
-            if (group != null) return group.toInt() - 1
-          }
-        }
-        catch (ignored: NumberFormatException) {
-        }
-      }
-
-      return -1
-    }
-
-    private fun pathToAnonymousClass(searchedText: String): String? {
-      return ClassSearchEverywhereContributor.pathToAnonymousClass(ourPatternToDetectAnonymousClasses.matcher(searchedText))
-    }
-
     fun getElement(element: PsiElement, path: String): PsiElement {
-      val classes = path.split("\\$".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
-      val indexes: MutableList<Int> = ArrayList()
-      for (cls in classes) {
-        if (cls.isEmpty()) continue
+      val classes = path.split('$').dropLastWhile { it.isEmpty() }
+      val indexes = IntArrayList()
+      for (aClass in classes) {
+        if (aClass.isEmpty()) {
+          continue
+        }
+
         try {
-          indexes.add(cls.toInt() - 1)
+          indexes.add(aClass.toInt() - 1)
         }
         catch (e: Exception) {
           return element
         }
       }
+
       var current = element
-      for (index in indexes) {
+      val iterator = indexes.intIterator()
+      while (iterator.hasNext()) {
+        val index = iterator.nextInt()
         val anonymousClasses = getAnonymousClasses(current)
         if (index >= 0 && index < anonymousClasses.size) {
           current = anonymousClasses[index]
@@ -218,18 +186,14 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
       .scopeDescriptors
   }
 
-  override fun getSearchProviderId(): String {
-    return javaClass.simpleName
-  }
+  override fun getSearchProviderId(): String = javaClass.simpleName
 
-  override fun isShownInSeparateTab(): Boolean {
-    return true
-  }
+  override fun isShownInSeparateTab(): Boolean = true
 
   protected fun <T> doGetActions(
     filter: PersistentSearchEverywhereContributorFilter<T>?,
     statisticsCollector: ElementsChooser.StatisticsCollector<T>?,
-    onChanged: Runnable
+    onChanged: Runnable,
   ): List<AnAction> {
     if (filter == null) {
       return emptyList()
@@ -237,38 +201,34 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
     val result = ArrayList<AnAction>()
     result.add(object : ScopeChooserAction() {
-      val canToggleEverywhere: Boolean = myEverywhereScope != myProjectScope
+      val canToggleEverywhere = everywhereScope != projectScope
 
       override fun onScopeSelected(o: ScopeDescriptor) {
         setSelectedScope(o)
         onChanged.run()
       }
 
-      override fun getSelectedScope(): ScopeDescriptor {
-        return myScopeDescriptor
-      }
+      override fun getSelectedScope(): ScopeDescriptor = myScopeDescriptor
 
       override fun onProjectScopeToggled() {
-        isEverywhere = !myScopeDescriptor.scopeEquals(myEverywhereScope)
+        isEverywhere = !myScopeDescriptor.scopeEquals(everywhereScope)
       }
 
       override fun processScopes(processor: Processor<in ScopeDescriptor>): Boolean {
-        return ContainerUtil.process(createScopes(), processor)
+        return createScopes().all { processor.process(it) }
       }
 
-      override fun isEverywhere(): Boolean {
-        return myScopeDescriptor.scopeEquals(myEverywhereScope)
-      }
+      override fun isEverywhere(): Boolean = myScopeDescriptor.scopeEquals(everywhereScope)
 
       override fun setEverywhere(everywhere: Boolean) {
-        setSelectedScope(ScopeDescriptor(if (everywhere) myEverywhereScope else myProjectScope))
+        setSelectedScope(ScopeDescriptor(if (everywhere) everywhereScope else projectScope))
         onChanged.run()
       }
 
       override fun canToggleEverywhere(): Boolean {
         if (!canToggleEverywhere) return false
-        return myScopeDescriptor.scopeEquals(myEverywhereScope) ||
-               myScopeDescriptor.scopeEquals(myProjectScope)
+        return myScopeDescriptor.scopeEquals(everywhereScope) ||
+               myScopeDescriptor.scopeEquals(projectScope)
       }
 
       override fun setScopeIsDefaultAndAutoSet(scopeDefaultAndAutoSet: Boolean) {
@@ -289,19 +249,19 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         }
       }
     }
-    return ScopeDescriptor(myProjectScope)
+    return ScopeDescriptor(projectScope)
   }
 
   private fun setSelectedScope(o: ScopeDescriptor) {
     myScopeDescriptor = o
-    getSelectedScopes(myProject).put(javaClass.simpleName, if (o.scopeEquals(myEverywhereScope) || o.scopeEquals(myProjectScope)) null
+    getSelectedScopes(myProject).put(javaClass.simpleName, if (o.scopeEquals(everywhereScope) || o.scopeEquals(projectScope)) null
     else o.displayName)
   }
 
   override fun fetchWeightedElements(
     pattern: String,
     progressIndicator: ProgressIndicator,
-    consumer: Processor<in FoundItemDescriptor<Any?>>,
+    consumer: Processor<in FoundItemDescriptor<Any>>,
   ) {
     if (!isEmptyPatternSupported && pattern.isEmpty()) {
       return
@@ -359,8 +319,8 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
   protected open fun processElement(
     progressIndicator: ProgressIndicator,
-    consumer: Processor<in FoundItemDescriptor<Any?>>,
-    model: FilteringGotoByModel<*>, element: Any?, degree: Int
+    consumer: Processor<in FoundItemDescriptor<Any>>,
+    model: FilteringGotoByModel<*>, element: Any?, degree: Int,
   ): Boolean {
     if (progressIndicator.isCanceled) {
       return false
@@ -381,7 +341,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   }
 
   protected val isEverywhere: Boolean
-    get() = myScopeDescriptor.scopeEquals(myEverywhereScope)
+    get() = myScopeDescriptor.scopeEquals(everywhereScope)
 
   override fun getSupportedScopes(): List<ScopeDescriptor> = createScopes()
 
@@ -497,4 +457,41 @@ private fun getAnonymousClasses(element: PsiElement): Array<PsiElement> {
     }
   }
   return PsiElement.EMPTY_ARRAY
+}
+
+private fun getSelectedScopes(project: Project): MutableMap<String, String?> {
+  var map = SE_SELECTED_SCOPES.get(project)
+  if (map == null) {
+    SE_SELECTED_SCOPES.set(project, HashMap<String, String?>(3).also { map = it })
+  }
+  return map
+}
+
+private fun doNavigate(psiElement: PsiElement, extNavigatable: Navigatable?) {
+  if (extNavigatable != null && extNavigatable.canNavigate()) {
+    extNavigatable.navigate(true)
+  }
+  else {
+    activateFileWithPsiElement(element = psiElement, searchForOpen = true)
+  }
+}
+
+private fun getLineAndColumnRegexpGroup(text: String, groupNumber: Int): Int {
+  val matcher = ourPatternToDetectLinesAndColumns.matcher(text)
+  if (matcher.matches()) {
+    try {
+      if (groupNumber <= matcher.groupCount()) {
+        val group = matcher.group(groupNumber)
+        if (group != null) return group.toInt() - 1
+      }
+    }
+    catch (ignored: NumberFormatException) {
+    }
+  }
+
+  return -1
+}
+
+private fun pathToAnonymousClass(searchedText: String): String? {
+  return ClassSearchEverywhereContributor.pathToAnonymousClass(patternToDetectAnonymousClasses.matcher(searchedText))
 }
