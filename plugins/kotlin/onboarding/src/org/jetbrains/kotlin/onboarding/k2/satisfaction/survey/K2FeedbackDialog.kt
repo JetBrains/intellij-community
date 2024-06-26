@@ -7,7 +7,7 @@ import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
-import org.jetbrains.kotlin.onboarding.DescriptionBlockWithComment
+import org.jetbrains.kotlin.onboarding.DescriptionBlockWithHint
 import org.jetbrains.kotlin.onboarding.FeedbackBundle
 
 class K2FeedbackDialog(
@@ -37,9 +37,9 @@ class K2FeedbackDialog(
     override val myTitle: String = FeedbackBundle.message("dialog.k2.satisfaction.top.title")
     override val myBlocks: List<FeedbackBlock> = listOf(
         TopLabelBlock(FeedbackBundle.message("dialog.k2.satisfaction.title")),
-        DescriptionBlockWithComment(
+        DescriptionBlockWithHint(
             myLabel = FeedbackBundle.message("dialog.k2.satisfaction.description"),
-            commentText = FeedbackBundle.message("dialog.k2.satisfaction.description.hint")
+            myHint = FeedbackBundle.message("dialog.k2.satisfaction.description.hint")
         ),
         RatingBlock(
             FeedbackBundle.message("dialog.k2.satisfaction.performance.rating.label"),
