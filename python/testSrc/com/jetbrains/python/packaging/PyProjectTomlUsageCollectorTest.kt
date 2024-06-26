@@ -29,7 +29,7 @@ class PyProjectTomlStatsTest : PyTestCase() {
     val text = """
       some abradackadabra
       tools.autoflake
-      backend=autoflake
+      requires=autoflake
         """.trimIndent()
 
     doTest(text, emptySet(), emptySet())
@@ -90,6 +90,19 @@ class PyProjectTomlStatsTest : PyTestCase() {
     """.trimIndent()
 
     doTest(text, emptySet(), setOf("hatchling", "flit"))
+  }
+
+  fun testCommentedBuilds() {
+    val text = """
+      [build-system]
+      requires = [
+        "hatchling >= 61",
+        # "flit",
+       ]
+      build-backend = "xxxxyyy.build"
+    """.trimIndent()
+
+    doTest(text, emptySet(), setOf("hatchling"))
   }
 
   fun testNormalizeBuilds() {
