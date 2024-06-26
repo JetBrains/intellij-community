@@ -93,11 +93,8 @@ class K2UserTracker : PersistentStateComponent<K2UserTrackerState> {
             state.userSawSurvey = false // We reset this state for manual testing to be able to see the survey more than once
         }
 
-        var projectContainsNonScriptKotlinFile = false
-        if (forUnitTests) {
-            projectContainsNonScriptKotlinFile = true
-        } else {
-            project.runReadActionInSmartMode { projectContainsNonScriptKotlinFile = project.containsNonScriptKotlinFile() }
+        val projectContainsNonScriptKotlinFile = forUnitTests || project.runReadActionInSmartMode {
+            project.containsNonScriptKotlinFile()
         }
         if (!projectContainsNonScriptKotlinFile) return false
 
