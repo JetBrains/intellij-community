@@ -11,6 +11,8 @@ private class InlineCompletionActionsPromoter : ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     val editor = CommonDataKeys.EDITOR.getData(context) ?: return emptyList()
 
+    actions.filterIsInstance<CallInlineCompletionAction>().takeIf { it.isNotEmpty() }?.let { return it }
+
     if (InlineCompletionContext.getOrNull(editor) == null) {
       return emptyList()
     }
