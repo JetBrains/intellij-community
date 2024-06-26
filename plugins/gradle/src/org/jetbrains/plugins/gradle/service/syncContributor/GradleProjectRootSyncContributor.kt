@@ -4,7 +4,9 @@ package org.jetbrains.plugins.gradle.service.syncContributor
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.InheritedSdkDependency
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.jps.entities.ModuleSourceDependency
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
@@ -62,7 +64,10 @@ class GradleProjectRootSyncContributor : GradleSyncContributor {
     val moduleEntity = ModuleEntity(
       name = entitySource.projectRootUrl.fileName,
       entitySource = entitySource,
-      dependencies = emptyList()
+      dependencies = listOf(
+        InheritedSdkDependency,
+        ModuleSourceDependency
+      )
     )
     storage addEntity moduleEntity
     return moduleEntity

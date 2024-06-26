@@ -144,7 +144,10 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
     val moduleEntity = ModuleEntity(
       name = moduleName,
       entitySource = entitySource,
-      dependencies = emptyList()
+      dependencies = listOf(
+        InheritedSdkDependency,
+        ModuleSourceDependency
+      )
     )
     storage addEntity moduleEntity
     return moduleEntity
