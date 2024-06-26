@@ -181,7 +181,7 @@ mod tests {
     }
 
     #[test]
-    fn vm_options_overriding_test() {
+    fn vm_options_gc_overriding_test() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-Xmx512m\n-XX:+UseZGC\n-Dsun.io.useCanonCaches=true\n");
 
@@ -190,6 +190,16 @@ mod tests {
         assert_eq!(dump.systemProperties["__MAX_HEAP"], "512");
         assert_eq!(dump.systemProperties["__GC"], "ZGC");
         assert_eq!(dump.systemProperties["sun.io.useCanonCaches"], "true");
+    }
+
+    #[test]
+    fn vm_options_mx_overriding_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-XX:MaxRAMPercentage=50\n");
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_ne!(dump.systemProperties["__MAX_HEAP"], "256");
     }
 
     #[test]
