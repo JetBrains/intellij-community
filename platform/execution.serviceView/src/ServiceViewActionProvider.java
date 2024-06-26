@@ -14,7 +14,6 @@ import com.intellij.platform.execution.serviceView.ServiceModel.ServiceViewItem;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.tabs.JBTabs;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -118,10 +117,6 @@ final class ServiceViewActionProvider {
 
   static @Nullable ServiceView getSelectedView(@NotNull DataContext dataContext) {
     return getSelectedView(dataContext.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT));
-  }
-
-  static @Nullable ServiceView getSelectedView(@NotNull DataProvider provider) {
-    return getSelectedView(ObjectUtils.tryCast(provider.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT.getName()), Component.class));
   }
 
   static @NotNull List<ServiceViewItem> getSelectedItems(@NotNull AnActionEvent e) {

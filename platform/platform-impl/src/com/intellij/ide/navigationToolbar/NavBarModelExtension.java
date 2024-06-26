@@ -3,6 +3,8 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.DataSnapshot;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -49,8 +51,24 @@ public interface NavBarModelExtension {
   @NotNull
   Collection<VirtualFile> additionalRoots(Project project);
 
+  default void uiDataSnapshot(@NotNull DataSink sink, @NotNull DataSnapshot snapshot) {
+  }
+
+  /**
+   * @noinspection unused
+   * @deprecated Unused. Use {@link #uiDataSnapshot} instead
+   */
+  @Deprecated(forRemoval = true)
   default @Nullable Object getData(@NotNull String dataId, @NotNull DataProvider provider) { return null; }
 
+  /** @noinspection LambdaUnfriendlyMethodOverload*/
+  default @Nullable String getPopupMenuGroup(@NotNull DataContext dataContext) { return null; }
+
+  /**
+   * @noinspection LambdaUnfriendlyMethodOverload, unused
+   * @deprecated Unused. Use {@link #uiDataSnapshot} instead
+   */
+  @Deprecated(forRemoval = true)
   default @Nullable String getPopupMenuGroup(@NotNull DataProvider provider) { return null; }
 
   default PsiElement getLeafElement(@NotNull DataContext dataContext) {
