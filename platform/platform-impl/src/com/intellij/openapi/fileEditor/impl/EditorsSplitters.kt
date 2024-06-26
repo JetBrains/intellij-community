@@ -733,7 +733,11 @@ open class EditorsSplitters internal constructor(
       if (component !== window.component) {
         // reuse
         windows.find { SwingUtilities.isDescendingFrom(component, it.component) }?.let { rightSplitWindow ->
-          manager.openFile(file = file, window = rightSplitWindow, options = FileEditorOpenOptions(requestFocus = requestFocus))
+          manager.openFile(
+            file = file,
+            window = rightSplitWindow,
+            options = FileEditorOpenOptions(requestFocus = requestFocus, waitForCompositeOpen = false),
+          )
           return rightSplitWindow
         }
       }

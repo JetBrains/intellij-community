@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere.footer
 
 import com.intellij.find.impl.SearchEverywhereItem
@@ -35,7 +35,7 @@ import javax.swing.JPanel
 @NlsSafe
 private val DEFAULT_TEXT = "<html><br></html>"
 
-class ExtendedInfoComponent(val project: Project?, val advertisement: ExtendedInfo) {
+internal class ExtendedInfoComponent(private val project: Project?, private val advertisement: ExtendedInfo) {
   private val text = JBLabel()
     .apply {
       font = RelativeFont.NORMAL
@@ -181,7 +181,7 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   return ExtendedInfo(path, split)
 }
 
-class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataContext) : AnAction() {
+private class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataContext) : AnAction() {
   val split = OpenInRightSplitAction()
 
   init {
