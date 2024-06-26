@@ -52,6 +52,19 @@ fun getPythonSpecificInfo(sdk: Sdk): List<EventPair<*>> {
   return data
 }
 
+fun normalizePackageName(packageName: String): String {
+  var name = packageName
+  if (!name.startsWith("_")) {
+    // for cases such as __future__, etc
+    name = name.replace('_', '-')
+  }
+
+  return name
+    .replace(".", "-")
+    .replace("\"", "")
+    .lowercase()
+}
+
 @Deprecated("""
   It makes no sense to add a Python version or something similar to the event.
   If you need to get an event with a specific execution type, interpreter type, or whatsoever, please use the corresponding segment in the analytics platform.
@@ -92,16 +105,16 @@ enum class InterpreterTarget(val value: String) {
 }
 
 val EXECUTION_TYPE = EventFields.String("executionType", listOf(
-    LOCAL.value,
-    REMOTE_DOCKER.value,
-    REMOTE_DOCKER_COMPOSE.value,
-    REMOTE_WSL.value,
-    REMOTE_NULL.value,
-    THIRD_PARTY.value,
-    REMOTE_SSH_CREDENTIALS.value,
-    REMOTE_VAGRANT.value,
-    REMOTE_WEB_DEPLOYMENT.value,
-    REMOTE_UNKNOWN.value))
+  LOCAL.value,
+  REMOTE_DOCKER.value,
+  REMOTE_DOCKER_COMPOSE.value,
+  REMOTE_WSL.value,
+  REMOTE_NULL.value,
+  THIRD_PARTY.value,
+  REMOTE_SSH_CREDENTIALS.value,
+  REMOTE_VAGRANT.value,
+  REMOTE_WEB_DEPLOYMENT.value,
+  REMOTE_UNKNOWN.value))
 
 enum class InterpreterType(val value: String) {
   PIPENV("pipenv"),
@@ -120,15 +133,15 @@ enum class InterpreterCreationMode(val value: String) {
 }
 
 val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value,
-                                                                          CONDAVENV.value,
-                                                                          VIRTUALENV.value,
-                                                                          REGULAR.value,
-                                                                          POETRY.value,
-                                                                          PYENV.value))
+                                                                    CONDAVENV.value,
+                                                                    VIRTUALENV.value,
+                                                                    REGULAR.value,
+                                                                    POETRY.value,
+                                                                    PYENV.value))
 
 val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", listOf(SIMPLE.value,
-                                                                                     CUSTOM.value,
-                                                                                     NA.value))
+                                                                                       CUSTOM.value,
+                                                                                       NA.value))
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
