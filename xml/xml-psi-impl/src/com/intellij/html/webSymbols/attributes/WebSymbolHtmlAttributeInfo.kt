@@ -88,8 +88,9 @@ interface WebSymbolHtmlAttributeInfo {
     @JvmStatic
     fun create(name: String,
                queryExecutor: WebSymbolsQueryExecutor,
-               symbol: WebSymbol): WebSymbolHtmlAttributeInfo =
-      WebSymbolHtmlAttributeInfoImpl.create(name, queryExecutor, symbol)
+               symbol: WebSymbol,
+               context: PsiElement): WebSymbolHtmlAttributeInfo =
+      WebSymbolHtmlAttributeInfoImpl.create(name, queryExecutor, symbol, context)
 
     @JvmStatic
     fun create(

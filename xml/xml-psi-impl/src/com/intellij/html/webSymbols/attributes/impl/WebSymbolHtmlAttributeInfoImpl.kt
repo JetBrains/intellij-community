@@ -3,6 +3,7 @@ package com.intellij.html.webSymbols.attributes.impl
 
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeInfo
 import com.intellij.html.webSymbols.attributes.WebSymbolHtmlAttributeValueTypeSupport
+import com.intellij.psi.PsiElement
 import com.intellij.util.ThreeState
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
@@ -81,9 +82,12 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
          priority = priority)
 
   companion object {
-    fun create(name: String,
-               queryExecutor: WebSymbolsQueryExecutor,
-               symbol: WebSymbol): WebSymbolHtmlAttributeInfo {
+    fun create(
+      name: String,
+      queryExecutor: WebSymbolsQueryExecutor,
+      symbol: WebSymbol,
+      context: PsiElement,
+    ): WebSymbolHtmlAttributeInfo {
       val typeSupport = symbol.origin.typeSupport as? WebSymbolHtmlAttributeValueTypeSupport
       val attrValue = symbol.attributeValue
       val kind = attrValue?.kind ?: WebSymbolHtmlAttributeValue.Kind.PLAIN
@@ -113,7 +117,7 @@ internal data class WebSymbolHtmlAttributeInfoImpl(
         if (type == WebSymbolHtmlAttributeValue.Type.BOOLEAN)
           ThreeState.YES
         else
-          typeSupport?.isBoolean(symbol, langType) ?: ThreeState.YES
+          typeSupport?.isBoolean(symbol, langType, context) ?: ThreeState.YES
       else
         ThreeState.NO
       val valueRequired = attrValue?.required != false && isHtmlBoolean == ThreeState.NO && kind != WebSymbolHtmlAttributeValue.Kind.NO_VALUE

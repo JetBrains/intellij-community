@@ -78,7 +78,7 @@ class WebSymbolAttributeNameCompletionProvider : WebSymbolsCompletionProviderBas
             val fullName = name.substring(0, item.offset) + item.name
             val match = freshRegistry.runNameMatchQuery(NAMESPACE_HTML, KIND_HTML_ATTRIBUTES, fullName)
                           .asSingleSymbol() ?: return@withInsertHandlerAdded
-            val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match)
+            val info = WebSymbolHtmlAttributeInfo.create(fullName, freshRegistry, match, insertionContext.file)
             if (info.acceptsValue && !info.acceptsNoValue) {
               XmlAttributeInsertHandler.INSTANCE.handleInsert(insertionContext, lookupItem)
             }
