@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.io.path.Path
 
-internal class DirectJpsFileContentReader(private val macroExpander: JpsMacroExpander) : JpsLoaderBase(macroExpander), JpsFileContentReader {
+internal class DirectJpsFileContentReader(private val macroExpander: JpsMacroExpander) : JpsLoaderBase(macroExpander, null), JpsFileContentReader {
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     val rootElement = loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl))) ?: return null
     return JDomSerializationUtil.findComponent(rootElement, componentName)

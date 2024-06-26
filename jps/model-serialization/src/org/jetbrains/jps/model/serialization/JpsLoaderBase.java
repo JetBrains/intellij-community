@@ -14,6 +14,7 @@ import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.model.JpsElement;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 
@@ -21,10 +22,12 @@ import java.nio.file.Path;
 public abstract class JpsLoaderBase {
   private static final Logger LOG = Logger.getInstance(JpsLoaderBase.class);
   private static final int MAX_ATTEMPTS = 5;
+  protected final @Nullable Path myExternalConfigurationDirectory;
   private final JpsMacroExpander myMacroExpander;
 
-  protected JpsLoaderBase(JpsMacroExpander macroExpander) {
+  protected JpsLoaderBase(JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory) {
     myMacroExpander = macroExpander;
+    myExternalConfigurationDirectory = externalConfigurationDirectory;
   }
 
   /**
@@ -51,8 +54,36 @@ public abstract class JpsLoaderBase {
     timingLog.run();
   }
 
-  protected @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
-    return JDomSerializationUtil.findComponent(loadRootElement(configFile), serializer.getComponentName());
+  private @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
+    String componentName = serializer.getComponentName();
+    Element component = JDomSerializationUtil.findComponent(loadRootElement(configFile), componentName);
+    if (!(serializer instanceof JpsProjectExtensionWithExternalDataSerializer) || myExternalConfigurationDirectory == null) {
+      return component;
+    }
+    JpsProjectExtensionWithExternalDataSerializer externalDataSerializer = (JpsProjectExtensionWithExternalDataSerializer)serializer;
+    Path externalConfigFile = myExternalConfigurationDirectory.resolve(externalDataSerializer.getExternalConfigFilePath());
+    if (!Files.exists(externalConfigFile)) {
+      return component;
+    }
+    
+    Element externalData = null;
+    String externalComponentName = externalDataSerializer.getExternalComponentName();
+    for (Element child : JDOMUtil.getChildren(loadRootElement(externalConfigFile))) {
+      // be ready to handle both original name and prefixed
+      if (child.getName().equals(externalComponentName) || JDomSerializationUtil.isComponent(externalComponentName, child) ||
+          child.getName().equals(componentName) || JDomSerializationUtil.isComponent(componentName, child)) {
+        externalData = child;
+        break;
+      }
+    }
+    if (externalData == null) {
+      return component;
+    }
+    if (component == null) {
+      return externalData;
+    }
+    externalDataSerializer.mergeExternalData(component, externalData);
+    return component;
   }
 
   /**

@@ -24,7 +24,7 @@ public class JpsGlobalLoader extends JpsLoaderBase {
   private final JpsGlobalExtensionSerializer @NotNull [] myBundledSerializers;
 
   public JpsGlobalLoader(JpsMacroExpander macroExpander, JpsGlobal global, JpsGlobalExtensionSerializer @NotNull [] bundledSerializers) {
-    super(macroExpander);
+    super(macroExpander, null);
     myGlobal = global;
     myBundledSerializers = bundledSerializers;
   }

@@ -44,8 +44,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
-import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL;
-
 /**
  * Use {@link JpsSerializationManager} to load a project.
  */
@@ -73,7 +71,6 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   private final Map<String, String> myPathVariables;
   private final JpsPathMapper myPathMapper;
   private final boolean myLoadUnloadedModules;
-  private final @Nullable Path myExternalConfigurationDirectory;
 
   private JpsProjectLoader(JpsProject project,
                            Map<String, String> pathVariables,
@@ -81,11 +78,10 @@ public final class JpsProjectLoader extends JpsLoaderBase {
                            @NotNull Path baseDir,
                            @Nullable Path externalConfigurationDirectory, 
                            boolean loadUnloadedModules) {
-    super(createProjectMacroExpander(pathVariables, baseDir));
+    super(createProjectMacroExpander(pathVariables, baseDir), externalConfigurationDirectory);
     myProject = project;
     myPathVariables = pathVariables;
     myPathMapper = pathMapper;
-    myExternalConfigurationDirectory = externalConfigurationDirectory;
     myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
     myLoadUnloadedModules = loadUnloadedModules;
   }
@@ -156,36 +152,6 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   public static @NotNull String getDirectoryBaseProjectName(@NotNull Path dir) {
     String name = JpsPathUtil.readProjectName(dir);
     return name != null ? name : JpsPathUtil.getDefaultProjectName(dir);
-  }
-
-  @Override
-  protected @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
-    Path externalConfigDir = myExternalConfigurationDirectory != null ? myExternalConfigurationDirectory.resolve("project") : null;
-    Element data = super.loadComponentData(serializer, configFile);
-    String componentName = serializer.getComponentName();
-    if (externalConfigDir == null || !(componentName.equals("CompilerConfiguration"))) {
-      return data;
-    }
-
-    String prefixedComponentName = "External" + componentName;
-    Element externalData = null;
-    for (Element child : JDOMUtil.getChildren(loadRootElement(externalConfigDir.resolve(configFile.getFileName())))) {
-      // be ready to handle both original name and prefixed
-      if (child.getName().equals(prefixedComponentName) || JDomSerializationUtil.isComponent(prefixedComponentName, child) ||
-          child.getName().equals(componentName) || JDomSerializationUtil.isComponent(componentName, child)) {
-        externalData = child;
-        break;
-      }
-    }
-    return deepMergeCompilerConfigurations(data, externalData);
-  }
-
-  private static @Nullable Element deepMergeCompilerConfigurations(@Nullable Element data, @Nullable Element externalData) {
-    if (data == null) return externalData;
-    if (externalData == null) return data;
-    JDOMUtil.deepMerge(data, externalData);
-    JDOMUtil.reduceChildren(BYTECODE_TARGET_LEVEL, data);
-    return data;
   }
 
   private void loadFromDirectory(@NotNull Path dir, @NotNull Executor executor) {
