@@ -40,7 +40,7 @@ public class RemoveAllUnusedImportsFix implements ModCommandAction {
     DaemonCodeAnalyzerEx.processHighlights(javaFile.getViewProvider().getDocument(), context.project(), HighlightSeverity.INFORMATION, 
                                            importList.getTextRange().getStartOffset(), 
                                            importList.getTextRange().getEndOffset(), info -> {
-      if (PostHighlightingVisitor.isUnusedImportHighlightInfo(javaFile, info)) {
+      if (UnusedImportsVisitor.isUnusedImportHighlightInfo(javaFile, info)) {
         PsiImportStatement importStatement = PsiTreeUtil.findElementOfClassAtOffset(javaFile, info.getActualStartOffset(), PsiImportStatement.class, false);
         if (importStatement != null) {
           importStatements.add(importStatement);

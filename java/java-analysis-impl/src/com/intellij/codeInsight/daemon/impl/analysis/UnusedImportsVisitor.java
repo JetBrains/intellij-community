@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.function.Function;
 
-class PostHighlightingVisitor extends JavaElementVisitor {
+class UnusedImportsVisitor extends JavaElementVisitor {
   private final LocalRefUseInfo myRefCountHolder;
   @NotNull private final Project myProject;
   private final PsiFile myFile;
@@ -43,7 +43,7 @@ class PostHighlightingVisitor extends JavaElementVisitor {
   private int myCurrentEntryIndex = -1;
   private boolean errorFound;
 
-  PostHighlightingVisitor(@NotNull PsiFile file, @NotNull Document document) throws ProcessCanceledException {
+  UnusedImportsVisitor(@NotNull PsiFile file, @NotNull Document document) throws ProcessCanceledException {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myProject = file.getProject();
