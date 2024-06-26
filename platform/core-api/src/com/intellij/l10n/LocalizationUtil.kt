@@ -211,8 +211,6 @@ object LocalizationUtil {
     val list = ArrayList<Locale>()
     val map = HashMap<Locale, String>()
 
-    list.add(Locale.ENGLISH)
-
     for (bundleEP in getAllLanguageBundleExtensions()) {
       val locale = Locale.forLanguageTag(bundleEP.locale)
       list.add(locale)
@@ -223,7 +221,10 @@ object LocalizationUtil {
       }
     }
 
-    return list to map
+    return buildList<Locale> {
+      add(Locale.ENGLISH)
+      addAll(list.sortedBy { map[it] ?: it.getDisplayLanguage(Locale.ENGLISH) })
+    } to map
   }
 
   @Internal
