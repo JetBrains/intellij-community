@@ -147,11 +147,15 @@ abstract class FileEditorManagerEx : FileEditorManager() {
       .toTypedArray()
   }
 
+  final override fun requestOpenFile(file: VirtualFile) {
+    openFile(file = file, window = null, options = FileEditorOpenOptions(waitForCompositeOpen = false))
+  }
+
   final override fun openFile(file: VirtualFile): List<FileEditor> {
     return openFile(file = file, window = null, options = FileEditorOpenOptions(requestFocus = false)).allEditors
   }
 
-  override fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor> {
+  final override fun openFile(file: VirtualFile, focusEditor: Boolean, searchForOpen: Boolean): Array<FileEditor> {
     return openFile(
       file = file,
       window = null,

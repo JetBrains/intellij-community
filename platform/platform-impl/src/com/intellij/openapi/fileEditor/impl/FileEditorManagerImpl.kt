@@ -72,6 +72,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.fileEditor.FileEntry
+import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.platform.util.coroutines.flow.zipWithNext
 import com.intellij.pom.Navigatable
@@ -1093,10 +1094,15 @@ open class FileEditorManagerImpl(
     if (EDT.isCurrentThreadEdt()) {
       val composite = open()
       if (composite is EditorComposite) {
-        blockingWaitForCompositeFileOpen(composite)
-        if (composite.providerSequence.none()) {
-          closeFile(window = window, composite = composite, runChecks = false)
-          return FileEditorComposite.EMPTY
+        if (options.waitForCompositeOpen) {
+          blockingWaitForCompositeFileOpen(composite)
+          if (composite.providerSequence.none()) {
+            closeFile(window = window, composite = composite, runChecks = false)
+            return FileEditorComposite.EMPTY
+          }
+        }
+        else {
+          scheduleCloseIfEmpty(window, composite)
         }
       }
       return composite
@@ -1106,16 +1112,39 @@ open class FileEditorManagerImpl(
         val composite = withContext(Dispatchers.EDT) {
           open()
         }
-        if (composite is EditorComposite) {
-          composite.waitForAvailable()
-          if (composite.providerSequence.none()) {
-            withContext(Dispatchers.EDT) {
-              closeFile(window = window, composite = composite, runChecks = false)
+        if ( composite is EditorComposite) {
+          if (options.waitForCompositeOpen) {
+            composite.waitForAvailable()
+            if (composite.providerSequence.none()) {
+              withContext(Dispatchers.EDT) {
+                closeFile(window = window, composite = composite, runChecks = false)
+              }
+              return@runBlockingCancellable FileEditorComposite.EMPTY
             }
-            return@runBlockingCancellable FileEditorComposite.EMPTY
+          }
+          else {
+            scheduleCloseIfEmpty(window, composite)
           }
         }
         composite
+      }
+    }
+  }
+
+  private fun scheduleCloseIfEmpty(
+    window: EditorWindow,
+    composite: EditorComposite,
+  ) {
+    window.coroutineScope.launch {
+      composite.waitForAvailable()
+      if (composite.providerSequence.none()) {
+        attachAsChildTo(composite.coroutineScope)
+        LOG.warn("Composite is closed because empty (composite=$composite)")
+        withContext(Dispatchers.EDT) {
+          if (composite.providerSequence.none()) {
+            closeFile(window = window, composite = composite, runChecks = false)
+          }
+        }
       }
     }
   }

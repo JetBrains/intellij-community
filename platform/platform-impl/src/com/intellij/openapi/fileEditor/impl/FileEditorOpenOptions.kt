@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl
 
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 
 @ApiStatus.Internal
@@ -14,7 +15,8 @@ data class FileEditorOpenOptions(
   @JvmField val pin: Boolean = false,
   @JvmField val index: Int = -1,
   @JvmField val isExactState: Boolean = false,
-  @Experimental @JvmField val openMode: FileEditorManagerImpl.OpenMode? = null,
+  @Internal @JvmField val openMode: FileEditorManagerImpl.OpenMode? = null,
+  @Internal @JvmField val waitForCompositeOpen: Boolean = true,
 ) {
   @Contract(pure = true)
   // no arg copying for Java

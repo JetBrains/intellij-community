@@ -3159,6 +3159,7 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - a:removeBottomComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V
 - removeFileEditorManagerListener(com.intellij.openapi.fileEditor.FileEditorManagerListener):V
 - a:removeTopComponent(com.intellij.openapi.fileEditor.FileEditor,javax.swing.JComponent):V
+- *:requestOpenFile(com.intellij.openapi.vfs.VirtualFile):V
 - a:runWhenLoaded(com.intellij.openapi.editor.Editor,java.lang.Runnable):V
 - a:setSelectedEditor(com.intellij.openapi.vfs.VirtualFile,java.lang.String):V
 - updateFileColor(com.intellij.openapi.vfs.VirtualFile):V

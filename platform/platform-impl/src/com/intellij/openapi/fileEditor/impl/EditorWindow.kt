@@ -617,17 +617,17 @@ class EditorWindow internal constructor(
     owner.removeWindow(this)
   }
 
-  fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
+  internal fun hasClosedTabs(): Boolean = !removedTabs.isEmpty()
 
-  fun restoreClosedTab() {
-    assert(hasClosedTabs()) { "Nothing to restore" }
-    val info = removedTabs.last()
+  @RequiresEdt
+  internal fun restoreClosedTab() {
+    val info = removedTabs.removeLastOrNull() ?: return
     val file = VirtualFileManager.getInstance().findFileByUrl(info.first) ?: return
     manager.openFileImpl(
       window = this,
       _file = file,
       entry = null,
-      options = info.second.copy(selectAsCurrent = true, requestFocus = true),
+      options = info.second.copy(selectAsCurrent = true, requestFocus = true, waitForCompositeOpen = false),
     )
   }
 
