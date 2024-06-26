@@ -4,6 +4,7 @@ package com.intellij.codeInsight;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +108,7 @@ public class UnhandledExceptions {
     else if (element instanceof PsiCodeBlock &&
              element.getParent() instanceof PsiMethod &&
              ((PsiMethod)element.getParent()).isConstructor() &&
-             !firstStatementIsConstructorCall((PsiCodeBlock)element)) {
+             JavaPsiConstructorUtil.findThisOrSuperCallInConstructor((PsiMethod)element.getParent()) == null) {
       // there is implicit parent constructor call
       final PsiMethod constructor = (PsiMethod)element.getParent();
       final PsiClass aClass = constructor.getContainingClass();
@@ -169,17 +170,6 @@ public class UnhandledExceptions {
     if (list == null || !list.isEmpty()) return false;
     PsiJavaCodeReferenceElement reference = newExpression.getClassReference();
     return reference != null && reference.resolve() instanceof PsiClass;
-  }
-
-  private static boolean firstStatementIsConstructorCall(@NotNull PsiCodeBlock constructorBody) {
-    final PsiStatement[] statements = constructorBody.getStatements();
-    if (statements.length == 0) return false;
-    if (!(statements[0] instanceof PsiExpressionStatement)) return false;
-
-    final PsiExpression expression = ((PsiExpressionStatement)statements[0]).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    final PsiMethod method = (PsiMethod)((PsiMethodCallExpression)expression).getMethodExpression().resolve();
-    return method != null && method.isConstructor();
   }
 
   /**
