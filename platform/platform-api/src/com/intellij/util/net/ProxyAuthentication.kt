@@ -23,9 +23,10 @@ interface ProxyAuthentication {
     @JvmStatic
     fun getInstance(): ProxyAuthentication = defaultPlatformProxyAuth
 
-    private val defaultPlatformProxyAuth by lazy {
-      PlatformProxyAuthentication(ProxyCredentialStore.getInstance(), DisabledProxyAuthPromptsManager.getInstance())
-    }
+    private val defaultPlatformProxyAuth = PlatformProxyAuthentication(
+      getCredentialStore = ProxyCredentialStore::getInstance,
+      getDisabledPromptsManager = DisabledProxyAuthPromptsManager::getInstance,
+    )
   }
 
   /**
@@ -93,12 +94,12 @@ interface DisabledProxyAuthPromptsManager {
 
 @ApiStatus.Internal
 class PlatformProxyAuthentication(
-  private val credentialStore: ProxyCredentialStore,
-  private val disabledPromptsManager: DisabledProxyAuthPromptsManager
+  private val getCredentialStore: () -> ProxyCredentialStore,
+  private val getDisabledPromptsManager: () -> DisabledProxyAuthPromptsManager
 ) : ProxyAuthentication {
 
   override fun getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? {
-    val knownCredentials = credentialStore.getCredentials(host, port)
+    val knownCredentials = getCredentialStore().getCredentials(host, port)
     if (knownCredentials != null) {
       return knownCredentials
     }
@@ -124,6 +125,7 @@ class PlatformProxyAuthentication(
       logger.debug { "prompted auth for $host:$port: prompted auth was cancelled " }
       return null
     }
+    val credentialStore = getCredentialStore()
     var result: Credentials? = null
     val login: String = credentialStore.getCredentials(host, port)?.userName ?: ""
     runAboveAll {
@@ -146,7 +148,7 @@ class PlatformProxyAuthentication(
         result = credentials
       }
       else {
-        disabledPromptsManager.disablePromptedAuthentication(host, port)
+        getDisabledPromptsManager().disablePromptedAuthentication(host, port)
       }
     }
     logger.debug { "prompted auth for $host:$port: input=$result" }
@@ -154,11 +156,11 @@ class PlatformProxyAuthentication(
   }
 
   override fun isPromptedAuthenticationCancelled(host: String, port: Int): Boolean {
-    return disabledPromptsManager.isPromptedAuthenticationDisabled(host, port)
+    return getDisabledPromptsManager().isPromptedAuthenticationDisabled(host, port)
   }
 
   override fun enablePromptedAuthentication(host: String, port: Int) {
-    return disabledPromptsManager.enablePromptedAuthentication(host, port)
+    return getDisabledPromptsManager().enablePromptedAuthentication(host, port)
   }
 
   private companion object {

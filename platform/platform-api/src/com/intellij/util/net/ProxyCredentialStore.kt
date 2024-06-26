@@ -13,7 +13,7 @@ interface ProxyCredentialStore {
     fun getInstance(): ProxyCredentialStore = platformCredentialStore
 
     @Suppress("DEPRECATION", "removal")
-    private val platformCredentialStore by lazy { (HttpConfigurable::getInstance).asProxyCredentialStore() }
+    private val platformCredentialStore = (HttpConfigurable::getInstance).asProxyCredentialStore()
   }
 
   /**
