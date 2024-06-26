@@ -4,9 +4,9 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -16,6 +16,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
+import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
+import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
@@ -37,9 +40,18 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
     fun ensureInVmOptionsImpl(
       isEnabled: Boolean,
       forceProductionOptions: Boolean,
+      isEnabledByDefault: Boolean = isIjentWslFsEnabledByDefaultForProduct(ApplicationNamesInfo.getInstance().scriptName),
       getOptionByPrefix: (String) -> String?,
     ): Collection<Pair<String, String?>> {
       val changedOptions = mutableListOf<Pair<String, String?>>()
+
+      run {
+        val prefix = "-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}="
+        val actualValue = getOptionByPrefix(prefix)?.toBooleanStrictOrNull() ?: false
+        if (actualValue != isEnabled || isEnabledByDefault && !isEnabled) {
+          changedOptions += prefix to isEnabled.toString()
+        }
+      }
 
       var forceDefaultFs = false
       run {
@@ -59,22 +71,13 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
         }
       }
 
-      run {
-        //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
-        val testSubdir = when {
-          forceProductionOptions || !isEnabled -> null
-          ApplicationManager.getApplication().isUnitTestMode -> "/tests"
-          PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> ""
-          else -> null
-        }
+      //see idea/nativeHelpers/buildTypes/ijent/performance/IJentWslBenchmarkTests.kt:38
+      if (!forceProductionOptions && isEnabled && ApplicationManager.getApplication().isUnitTestMode) {
+        val prefix = "-Xbootclasspath/a:out/tests/classes/production/$IJENT_BOOT_CLASSPATH_MODULE"
+        val actualValue = getOptionByPrefix(prefix)
 
-        if (testSubdir != null) {
-          val prefix = "-Xbootclasspath/a:out${testSubdir}/classes/production/intellij.platform.core.nio.fs"
-          val actualValue = getOptionByPrefix(prefix)
-
-          if (actualValue != "") {
-            changedOptions += prefix to ""
-          }
+        if (actualValue != "") {
+          changedOptions += prefix to ""
         }
       }
 
@@ -91,20 +94,6 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
           // It's not always possible to remove a VM Option (if an option is defined in a product-level vmoptions file).
           // However, CoreBootstrapSecurityManager does nothing potentially harmful.
           // The option is kept as is.
-        }
-      }
-
-      run {
-        val prefix = "-Didea.io.use.nio2="
-        val actualValue = getOptionByPrefix(prefix)
-
-        if (isEnabled) {
-          if (actualValue != "true") {
-            changedOptions += prefix to "true"
-          }
-        }
-        else if (actualValue != null && actualValue != "false") {
-          changedOptions += prefix to "false"
         }
       }
 
