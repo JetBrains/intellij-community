@@ -2,7 +2,6 @@
 package com.intellij.diff.util
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -28,7 +27,7 @@ object DiffBalloons {
                        hyperlinkHandler: Runnable) {
     createAndShowBalloon(
       title, message,
-      if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else null,
+      if (ExperimentalUI.isNewUI()) AllIcons.Status.Success else null,
       JBUI.CurrentTheme.Editor.Tooltip.SUCCESS_BACKGROUND,
       JBUI.CurrentTheme.Editor.Tooltip.SUCCESS_BORDER,
       point,
@@ -45,7 +44,7 @@ object DiffBalloons {
   ) {
     createAndShowBalloon(
       title, message,
-      if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Warning else AllIcons.General.Warning,
+      AllIcons.General.Warning,
       JBUI.CurrentTheme.Editor.Tooltip.WARNING_BACKGROUND,
       JBUI.CurrentTheme.Editor.Tooltip.WARNING_BORDER,
       point,

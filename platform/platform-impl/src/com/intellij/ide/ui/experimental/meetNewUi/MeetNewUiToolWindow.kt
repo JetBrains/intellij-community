@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.experimental.meetNewUi
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
@@ -85,13 +85,13 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           themes += Theme(null, false, null, null)
           val appInfo = ApplicationInfoEx.getInstanceEx()
           findLafReference(appInfo.defaultLightLaf ?: "Light")?.let { lafReference ->
-            themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.LightTheme, ExpUiIcons.MeetNewUi.LightThemeSelected)
+            themes += Theme(lafReference, false, AllIcons.MeetNewUi.LightTheme, AllIcons.MeetNewUi.LightThemeSelected)
           }
           findLafReference(appInfo.defaultDarkLaf ?: "Dark")?.let { lafReference ->
-            themes += Theme(lafReference, false, ExpUiIcons.MeetNewUi.DarkTheme, ExpUiIcons.MeetNewUi.DarkThemeSelected)
+            themes += Theme(lafReference, false, AllIcons.MeetNewUi.DarkTheme, AllIcons.MeetNewUi.DarkThemeSelected)
           }
           if (LafManager.getInstance().autodetectSupported) {
-            themes += Theme(null, true, ExpUiIcons.MeetNewUi.SystemTheme, ExpUiIcons.MeetNewUi.SystemThemeSelected)
+            themes += Theme(null, true, AllIcons.MeetNewUi.SystemTheme, AllIcons.MeetNewUi.SystemThemeSelected)
           }
 
           val gap = JBUI.scale(8)
@@ -109,10 +109,10 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
           label(IdeBundle.message("meetnewui.toolwindow.density"))
         }.customize(UnscaledGapsY(bottom = 8))
         row {
-          cleanDensity = density(ExpUiIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), UnscaledGaps(right = 8),
+          cleanDensity = density(AllIcons.MeetNewUi.DensityDefault, IdeBundle.message("meetnewui.toolwindow.clean"), UnscaledGaps(right = 8),
                                  false)
 
-          compactDensity = density(ExpUiIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
+          compactDensity = density(AllIcons.MeetNewUi.DensityCompact, IdeBundle.message("meetnewui.toolwindow.compact"), UnscaledGaps.EMPTY, true)
 
           cell() // Deny right component to shrink
         }.customize(UnscaledGapsY(bottom = 20))

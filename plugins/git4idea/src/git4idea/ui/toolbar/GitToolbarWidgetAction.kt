@@ -2,7 +2,7 @@
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.repo.VcsRepositoryManager
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
@@ -37,7 +37,7 @@ import javax.swing.JComponent
 private val GIT_WIDGET_STATE_KEY = Key.create<GitWidgetState>("git-widget-state")
 private val SYNC_STATUS_KEY = Key.create<GitBranchSyncStatus>("git-widget-branch-sync-status")
 
-private val WIDGET_ICON: Icon = ExpUiIcons.General.Vcs
+private val WIDGET_ICON: Icon = AllIcons.General.Vcs
 
 private const val GIT_WIDGET_PLACEHOLDER_KEY = "git-widget-placeholder"
 

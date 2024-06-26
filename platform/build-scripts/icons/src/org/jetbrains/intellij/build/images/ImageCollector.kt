@@ -142,6 +142,7 @@ internal class ImageCollector(
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
   private val mergeRoots: MutableSet<String> = ContainerUtil.newConcurrentSet()
+  private val mergeAdd = ConcurrentHashMap<String, List<String>>()
   private val usedIconRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
   private var mappingFile: Path? = null
 
@@ -240,6 +241,10 @@ internal class ImageCollector(
         if (childRobotData.mergeToRoot) {
           childRobotData.mergeToRoot = false
           mergeRoots.add(childPrefix)
+          if (childRobotData.mergeAdd.isNotEmpty()) {
+            mergeAdd[childPrefix] = childRobotData.mergeAdd.toList()
+            childRobotData.mergeAdd.clear()
+          }
         }
         processDirectory(file, rootDir, sourceRoot, childRobotData, childPrefix, level + 1)
 
@@ -352,19 +357,30 @@ internal class ImageCollector(
           allImages.add(image)
         }
         else {
-          for (entry in mappings.entries) {
-            if (image.sourceCodeParameterName == entry.value && images.find { it.sourceCodeParameterName == entry.key } != null) {
-              continue@mainLoop
+          val addElement = mergeAdd[root].orEmpty().find { image.sourceCodeParameterName == if (it.startsWith("/")) it.substring(1) else it }
+          val addNew = addElement != null
+          if (!addNew) {
+            for (entry in mappings.entries) {
+              if (image.sourceCodeParameterName == entry.value && images.find { it.sourceCodeParameterName == entry.key } != null) {
+                continue@mainLoop
+              }
             }
           }
           val equalOldName = image.id.substring(root.length)
           val equalOldImage = images.find { it.id == equalOldName }
           if (equalOldImage != null) {
             mappings[equalOldImage.sourceCodeParameterName] = image.sourceCodeParameterName
-            continue@mainLoop
+            if (!addNew) {
+              continue@mainLoop
+            }
           }
 
-          allImages.add(image.trimPrefix(root))
+          if (addElement != null && addElement.startsWith("/")) {
+            allImages.add(image)
+          }
+          else {
+            allImages.add(image.trimPrefix(root))
+          }
         }
       }
 
@@ -433,6 +449,7 @@ internal class IconRobotsData(
   private val forceSync = ArrayList<Pattern>()
 
   var mergeToRoot = false
+  var mergeAdd = ArrayList<String>()
 
   private val ownDeprecatedIcons = ArrayList<OwnDeprecatedIcon>()
 
@@ -471,6 +488,7 @@ internal class IconRobotsData(
     parse(robots,
           RobotFileHandler("skip:") { value -> answer.skip.add(compilePattern(dir, root, value)) },
           RobotFileHandler("used:") { value -> answer.used.add(compilePattern(dir, root, value)) },
+          RobotFileHandler("mergeAdd:") { value -> answer.mergeAdd.add(value.trim()) },
           RobotFileHandler("merge") { answer.mergeToRoot = true },
           RobotFileHandler("deprecated:") { value ->
             val comment = value.substringAfter(";", "").trim().takeIf { it.isNotEmpty() }

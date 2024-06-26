@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
-import com.intellij.icons.ExpUiIcons;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -20,7 +20,7 @@ final class GitRebaseAbort extends GitAbstractRebaseAction {
 
   @Override
   public @NotNull Icon getMainToolbarIcon() {
-    return ExpUiIcons.Vcs.Abort;
+    return AllIcons.Vcs.Abort;
   }
 
   @Override

@@ -5,7 +5,6 @@ package com.intellij.openapi.fileEditor
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.ui.UISettings
@@ -135,7 +134,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
 
     fun getEditorWithPreviewIcon(isVerticalSplit: Boolean): Icon {
       return if (isNewUI()) {
-        if (isVerticalSplit) ExpUiIcons.General.EditorPreviewVertical else ExpUiIcons.General.EditorPreview
+        if (isVerticalSplit) AllIcons.General.EditorPreviewVertical else AllIcons.General.LayoutEditorPreview
       }
       else {
         if (isVerticalSplit) AllIcons.Actions.PreviewDetailsVertically else AllIcons.Actions.PreviewDetails

@@ -3,7 +3,6 @@ package com.intellij.platform.lvcs.impl.ui
 
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
@@ -13,7 +12,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
-import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
@@ -48,7 +46,7 @@ internal object ActivityToolWindow {
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
       stripeTitle = LocalHistoryBundle.messagePointer("activity.toolwindow.title"),
-      icon = if (ExperimentalUI.isNewUI()) ExpUiIcons.General.History else AllIcons.Vcs.History
+      icon = AllIcons.Vcs.History
     ))
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
     return toolWindow

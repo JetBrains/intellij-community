@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -41,6 +41,7 @@ import java.awt.Dimension
 import java.awt.event.ActionEvent
 import java.awt.event.HierarchyEvent
 import java.awt.event.KeyEvent
+import java.lang.Runnable
 import javax.swing.*
 
 private val LOG = logger<MainMenuButton>()
@@ -157,7 +158,7 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
   @ApiStatus.Internal
   inner class ShowMenuAction : LightEditCompatible, DumbAwareAction(
     IdeBundle.messagePointer("main.toolbar.menu.button"),
-    ExpUiIcons.General.WindowsMenu_20x20) {
+    AllIcons.General.WindowsMenu_20x20) {
 
     override fun actionPerformed(e: AnActionEvent) {
       if (expandableMenu?.isEnabled() == true) {

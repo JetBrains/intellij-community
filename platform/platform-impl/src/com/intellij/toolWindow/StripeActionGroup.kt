@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowsGroup
@@ -252,8 +252,8 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
     super.update(e)
     val pinned = Toggleable.isSelected(e.presentation)
     e.presentation.isMultiChoice = true
-    e.presentation.icon = if (!pinned) ExpUiIcons.General.Pin else ExpUiIcons.General.PinSelected
-    e.presentation.selectedIcon = if (!pinned) ExpUiIcons.General.PinHovered else ExpUiIcons.General.PinSelectedHovered
+    e.presentation.icon = if (!pinned) AllIcons.General.Pin else AllIcons.General.PinSelected
+    e.presentation.selectedIcon = if (!pinned) AllIcons.General.PinHovered else AllIcons.General.PinSelectedHovered
     e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
   }
 }
