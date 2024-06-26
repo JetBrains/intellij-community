@@ -144,7 +144,7 @@ class KotlinGradleFUSLogger(private val project: Project, private val coroutineS
     fun populateGradleUserDir(path: String) {
         val currentState = gradleUserDirs
 
-        if (path in currentState && obsoleteGradleUserDirs != null) return
+        if (path in currentState && obsoleteGradleUserDirs == null) return
 
         gradleUserDirs = (listOf(path) + currentState)
             .filter { Path(it).exists() }
