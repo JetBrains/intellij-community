@@ -47,6 +47,11 @@ class LanguageAndRegionUi {
         val model = CollectionComboBoxModel(locales.first, LocalizationUtil.getLocale())
         val languageBox = comboBox(model).accessibleName(IdeBundle.message("combobox.language")).widthGroup(comboGroup)
 
+        if (forcedLocale == null) {
+          languageBox.gap(RightGap.SMALL)
+          comment(IdeBundle.message("ide.restart.required.comment"))
+        }
+
         if (forcedLocale != null) {
           languageBox.enabled(false)
             .comment(IdeBundle.message("combobox.language.disable.comment", LocalizationUtil.LOCALIZATION_KEY, forcedLocale))
