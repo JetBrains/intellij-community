@@ -3,6 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.cef.CefClient;
+import org.cef.browser.CefBrowser;
 import org.cef.browser.CefMessageRouter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -22,5 +23,6 @@ public interface CefDelegate {
 
   boolean isCefSupported();
   @NotNull CefClient createClient();
+  boolean isInitialized(@NotNull CefBrowser browser);
   @NotNull CefMessageRouter createMessageRouter(@Nullable CefMessageRouter.CefMessageRouterConfig config);
 }
