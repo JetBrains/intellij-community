@@ -44,9 +44,10 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
     private const val CUSTOM_THEME_INDEX = 0
 
-    private val BANNER = IconLoader.getIcon("expui/meetNewUi/banner.png", MeetNewUiToolWindow::class.java.classLoader)
+    private val BANNER = IconLoader.getIcon("expui/meetNewUi/newUIOnboardingToolWindow.png", MeetNewUiToolWindow::class.java.classLoader)
 
-    private val BANNER_BACKGROUND = Gray.x01
+    private val BANNER_DARK_BACKGROUND = Gray.x01
+    private val BANNER_LIGHT_BACKGROUND = JBUI.CurrentTheme.ToolWindow.background()
     private const val BANNER_HEIGHT = 231
   }
 
@@ -59,9 +60,8 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       row {
         val scale = JBUI.scale(BANNER_HEIGHT).toFloat() / BANNER.iconHeight
         cell(object : JLabel(IconUtil.scale(BANNER, WindowManager.getInstance().getFrame(project), scale)) {
-          override fun setBackground(bg: Color?) {
-            // Deny changing background by the tool window framework
-            super.setBackground(BANNER_BACKGROUND)
+          override fun getBackground(): Color {
+            return if (LafManager.getInstance().lookAndFeelReference.name == "Dark") BANNER_DARK_BACKGROUND else BANNER_LIGHT_BACKGROUND
           }
         })
           .align(AlignX.FILL)
