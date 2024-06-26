@@ -678,8 +678,10 @@ f:com.intellij.codeInsight.intention.preview.IntentionPreviewInfo$CustomDiff
 - <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,java.lang.String):V
 - <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,java.lang.String,java.lang.String):V
 - <init>(com.intellij.openapi.fileTypes.FileType,java.lang.String,java.lang.String,java.lang.String,Z):V
+- equals(java.lang.Object):Z
 - fileName():java.lang.String
 - fileType():com.intellij.openapi.fileTypes.FileType
+- hashCode():I
 - modifiedText():java.lang.String
 - originalText():java.lang.String
 - showLineNumbers():Z
@@ -2683,9 +2685,24 @@ f:com.intellij.modcommand.ModCopyToClipboard
 f:com.intellij.modcommand.ModCreateFile
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
-- <init>(com.intellij.modcommand.FutureVirtualFile,java.lang.String):V
+- <init>(com.intellij.modcommand.FutureVirtualFile,com.intellij.modcommand.ModCreateFile$Content):V
+- content():com.intellij.modcommand.ModCreateFile$Content
 - f:equals(java.lang.Object):Z
 - file():com.intellij.modcommand.FutureVirtualFile
+- f:hashCode():I
+f:com.intellij.modcommand.ModCreateFile$Binary
+- java.lang.Record
+- com.intellij.modcommand.ModCreateFile$Content
+- <init>(B[]):V
+- bytes():B[]
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+com.intellij.modcommand.ModCreateFile$Content
+f:com.intellij.modcommand.ModCreateFile$Text
+- java.lang.Record
+- com.intellij.modcommand.ModCreateFile$Content
+- <init>(java.lang.String):V
+- f:equals(java.lang.Object):Z
 - f:hashCode():I
 - text():java.lang.String
 f:com.intellij.modcommand.ModDeleteFile

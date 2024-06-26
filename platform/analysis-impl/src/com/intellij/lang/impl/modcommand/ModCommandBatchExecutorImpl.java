@@ -155,11 +155,16 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     try {
       return WriteAction.compute(() -> {
         VirtualFile newFile = parent.createChildData(this, file.getName());
-        PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
-        if (psiFile == null) return AnalysisBundle.message("modcommand.executor.unable.to.find.the.new.file", file.getName());
-        Document document = psiFile.getViewProvider().getDocument();
-        document.setText(create.text());
-        PsiDocumentManager.getInstance(project).commitDocument(document);
+        if (create.content() instanceof ModCreateFile.Text text) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(newFile);
+          if (psiFile == null) return AnalysisBundle.message("modcommand.executor.unable.to.find.the.new.file", file.getName());
+          Document document = psiFile.getViewProvider().getDocument();
+          document.setText(text.text());
+          PsiDocumentManager.getInstance(project).commitDocument(document);
+        }
+        else if (create.content() instanceof ModCreateFile.Binary binary) {
+          newFile.setBinaryContent(binary.bytes());
+        }
         return null;
       });
     }
@@ -251,10 +256,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       }
       else if (command instanceof ModCreateFile createFile) {
         VirtualFile vFile = createFile.file();
+        String content =
+          createFile.content() instanceof ModCreateFile.Text text ? text.text() : AnalysisBundle.message("preview.binary.content");
         customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
                                                                getFileNamePresentation(project, vFile),
                                                                "",
-                                                               createFile.text(),
+                                                               content,
                                                                true));
       }
       else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
@@ -275,7 +282,8 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
       else if (command instanceof ModDisplayMessage message) {
         if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
           return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
-            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(), IntentionPreviewInfo.InfoKind.ERROR);
+            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(),
+                                               IntentionPreviewInfo.InfoKind.ERROR);
         }
         else if (navigateInfo == IntentionPreviewInfo.EMPTY) {
           navigateInfo = new IntentionPreviewInfo.Html(message.messageText());

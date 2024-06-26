@@ -281,7 +281,8 @@ final class PsiUpdateImpl {
             documentManager.commitDocument(document);
             documentManager.doPostponedOperationsAndUnblockDocument(document);
             return new ModCreateFile(new FutureVirtualFile(directory().getOriginalFile(),
-                                                           vf.getName(), vf.getFileType()), psiFile.getText());
+                                                           vf.getName(), vf.getFileType()),
+                                     new ModCreateFile.Text(psiFile.getText()));
           });
       }
     }
