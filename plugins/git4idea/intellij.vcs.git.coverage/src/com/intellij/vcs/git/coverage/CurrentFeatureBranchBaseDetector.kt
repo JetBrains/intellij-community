@@ -3,10 +3,13 @@ package com.intellij.vcs.git.coverage
 
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.getOrCreateUserData
 import com.intellij.vcs.git.coverage.CurrentFeatureBranchBaseDetector.Status
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
+import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.utils.BfsWalk
 import com.intellij.vcs.log.graph.utils.DfsWalk
@@ -18,6 +21,12 @@ import git4idea.GitRemoteBranch
 import git4idea.config.GitSharedSettings
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.WeakHashMap
+
+private val CACHE_KEY = Key<MutableMap<GitRepository, CachedResult>>(CurrentFeatureBranchBaseDetector::class.java.name)
+
+private data class CachedResult(val status: Status, val state: CachedState)
+private data class CachedState(val headHash: String, val protectedBranchHashes: List<Pair<String, String>>)
 
 internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepository) {
 
@@ -44,10 +53,36 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
       branch to branchHash
     }
 
+    val currentState = CachedState(headHash.asString(), protectedBranchHashes.map { (branch, hash) ->
+      branch.fullName to hash.asString()
+    })
+
+    val cache = project.getOrCreateUserData(CACHE_KEY) { WeakHashMap() }
+    val cachedResult = cache[repository]
+    return if (cachedResult == null || cachedResult.state != currentState) {
+      val (status, canCache) = computeStatus(headHash, permanentCommitsInfo, protectedBranchHashes)
+      if (canCache) {
+        cache[repository] = CachedResult(status, currentState)
+      }
+      else {
+        cache.remove(repository)
+      }
+      status
+    }
+    else {
+      cachedResult.status
+    }
+  }
+
+  private fun computeStatus(
+    headHash: Hash,
+    permanentCommitsInfo: PermanentCommitsInfo<Int>,
+    protectedBranchHashes: List<Pair<GitRemoteBranch, Hash>>,
+  ): Pair<Status, Boolean> {
     val headNodeId = getCommitIndex(headHash)
                        ?.let { permanentCommitsInfo.getNodeId(it) }
                        ?.takeIf { it >= 0 }
-                     ?: return Status.GitDataNotFound
+                     ?: return Status.GitDataNotFound to false
     val protectedBranchIndexes = protectedBranchHashes.mapNotNull { (branch, hash) ->
       val commitIndex = storage?.getCommitIndex(hash, repository.root) ?: return@mapNotNull null
       commitIndex to branch
@@ -60,20 +95,21 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
       nodeId to branch
     }.toMap()
 
-    if (protectedNodeIds.isEmpty()) return Status.GitDataNotFound
+    val completeGitData = protectedNodeIds.size == protectedBranchHashes.size
+    if (protectedNodeIds.isEmpty()) return Status.GitDataNotFound to false
 
-    val linearGraph = permanentGraph.linearGraph
+    val linearGraph = permanentGraph?.linearGraph ?: return Status.GitDataNotFound to false
     return when (val status = findBaseCommit(linearGraph, headNodeId, protectedNodeIds.keys)) {
       is Status.InternalSuccess -> {
         val commits = status.commits.map { (commitId, protectedBranchId) ->
-          val hash = getHash(commitId) ?: return Status.GitDataNotFound
-          val branch = protectedNodeIds[protectedBranchId] ?: return Status.GitDataNotFound
+          val hash = getHash(commitId) ?: return Status.GitDataNotFound to false
+          val branch = protectedNodeIds[protectedBranchId] ?: return Status.GitDataNotFound to false
           BaseCommitAndBranch(hash, branch)
         }
         Status.Success(commits)
       }
       else -> status
-    }
+    } to completeGitData
   }
 
   private fun getHeadHash(): Hash? {
