@@ -1,14 +1,12 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
+import javax.swing.*;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import javax.swing.AbstractListModel;
-import javax.swing.ComboBoxModel;
 
 class MonthComboBoxModel extends AbstractListModel implements
     ComboBoxModel {
@@ -82,6 +80,7 @@ class MonthComboBoxModel extends AbstractListModel implements
 
   public Object getElementAt(int index) {
     Calendar c = Calendar.getInstance(locale);
+    c.setTimeZone(zone);
     c.setTime(calendar.getTime());
 
     c.set(Calendar.MONTH, 0);
