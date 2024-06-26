@@ -48,4 +48,4 @@ internal fun <T> withKnownProxyCredentials(host: String, port: Int, credentials:
   }
 }
 
-internal fun createResetPlatformAuthenticator(): Authenticator = IdeProxyAuthenticator(PlatformProxyAuthentication(ProxyCredentialStore.getInstance(), DisabledProxyAuthPromptsManager.getInstance()))
+internal fun createResetPlatformAuthenticator(): Authenticator = IdeProxyAuthenticator(PlatformProxyAuthentication(ProxyCredentialStore::getInstance, DisabledProxyAuthPromptsManager::getInstance))
