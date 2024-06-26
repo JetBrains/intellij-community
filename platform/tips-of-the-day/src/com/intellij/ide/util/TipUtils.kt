@@ -197,7 +197,6 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
       val fallbackIdeCode = productCodeTipMap.getOrDefault(ideCode, ideCode)
       //tips from language plugin
       listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc").forEach { retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, it)) }
-      retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, ""))
     }
     //tips from locally placed localization
     retrievers.addAll(getLocalizationTipRetrievers(defaultLoader))
