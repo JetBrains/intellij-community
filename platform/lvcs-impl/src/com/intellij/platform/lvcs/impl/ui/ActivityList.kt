@@ -12,12 +12,14 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.hover.ListHoverListener
 import com.intellij.ui.speedSearch.FilteringListModel
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.util.*
 
-internal class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : JBList<ActivityItem>() {
+@ApiStatus.Internal
+class ActivityList(presentationFunction: (item: ActivityItem) -> ActivityPresentation?) : JBList<ActivityItem>() {
   private val eventDispatcher = EventDispatcher.create(Listener::class.java)
 
   private var data = ActivityData.EMPTY
