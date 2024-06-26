@@ -574,7 +574,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory
   private boolean removeInvalidFilesFrom(@NotNull List<PlaceInfo> backPlaces) {
     return backPlaces
       .removeIf(info -> (info.myFile instanceof OptionallyIncluded &&
-                         !((OptionallyIncluded)info.myFile).isIncludedInDocumentHistory()) ||
+                         !((OptionallyIncluded)info.myFile).isIncludedInDocumentHistory(project)) ||
                         !info.myFile.isValid());
   }
 

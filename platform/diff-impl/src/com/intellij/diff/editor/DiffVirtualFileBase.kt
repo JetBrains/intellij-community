@@ -2,9 +2,12 @@
 package com.intellij.diff.editor
 
 import com.intellij.diff.impl.DiffSettingsHolder
+import com.intellij.diff.impl.DiffSettingsHolder.IncludeInNavigationHistory
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithoutContent
@@ -22,8 +25,13 @@ abstract class DiffVirtualFileBase(name: String) :
     turnOffReopeningWindow()
   }
 
-  override fun isIncludedInDocumentHistory(): Boolean =
-    settings.isIncludedInNavigationHistory
+  override fun isIncludedInDocumentHistory(project: Project): Boolean =
+    when (settings.isIncludedInNavigationHistory) {
+      IncludeInNavigationHistory.Never -> false
+      IncludeInNavigationHistory.Always -> true
+      IncludeInNavigationHistory.OnlyIfOpen ->
+        FileEditorManager.getInstance(project).isFileOpen(this) // TODO: Check performance
+    }
 
   override fun isWritable(): Boolean = false
 

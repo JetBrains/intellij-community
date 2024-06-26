@@ -43,7 +43,7 @@ open class DiffEditorViewerFileEditor(
   }
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
-    if (!settings.isIncludedInNavigationHistory) {
+    if (settings.isIncludedInNavigationHistory == DiffSettingsHolder.IncludeInNavigationHistory.Never) {
       return FileEditorState.INSTANCE
     }
 
@@ -51,7 +51,9 @@ open class DiffEditorViewerFileEditor(
   }
 
   override fun setState(state: FileEditorState) {
-    if (!settings.isIncludedInNavigationHistory) return
+    if (settings.isIncludedInNavigationHistory == DiffSettingsHolder.IncludeInNavigationHistory.Never) {
+      return
+    }
 
     editorViewer.setState(state)
   }

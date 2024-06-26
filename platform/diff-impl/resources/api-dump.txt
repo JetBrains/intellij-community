@@ -317,7 +317,6 @@ f:com.intellij.diff.editor.DiffEditorViewerFileEditor$Companion
 a:com.intellij.diff.editor.DiffFileEditorBase
 - com.intellij.diff.util.FileEditorBase
 - sf:Companion:com.intellij.diff.editor.DiffFileEditorBase$Companion
-- sf:DIFF_IN_NAVIGATION_HISTORY_KEY:java.lang.String
 - <init>(com.intellij.openapi.vfs.VirtualFile,javax.swing.JComponent,com.intellij.openapi.util.CheckedDisposable):V
 - getComponent():javax.swing.JComponent
 - getFile():com.intellij.openapi.vfs.VirtualFile
@@ -354,13 +353,16 @@ a:com.intellij.diff.editor.DiffVirtualFile
 - a:createProcessor(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffRequestProcessor
 - createViewer(com.intellij.openapi.project.Project):com.intellij.diff.impl.DiffEditorViewer
 a:com.intellij.diff.editor.DiffVirtualFileBase
-- com.intellij.testFramework.LightVirtualFile
 - com.intellij.diff.editor.DiffContentVirtualFile
+- com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$OptionallyIncluded
 - com.intellij.openapi.vfs.VirtualFileWithoutContent
+- com.intellij.testFramework.LightVirtualFile
 - sf:Companion:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - sf:ESCAPE_HANDLER:com.intellij.openapi.util.Key
 - <init>(java.lang.String):V
 - createEscapeHandler():com.intellij.openapi.actionSystem.AnAction
+- isIncludedInDocumentHistory(com.intellij.openapi.project.Project):Z
+- isIncludedInEditorHistory(com.intellij.openapi.project.Project):Z
 - isWritable():Z
 f:com.intellij.diff.editor.DiffVirtualFileBase$Companion
 - f:turnOffReopeningWindow(com.intellij.openapi.vfs.VirtualFile):V
@@ -542,13 +544,23 @@ f:com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - sf:getSettings():com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - sf:getSettings(java.lang.String):com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - f:isGoToNextFileOnNextDifference():Z
+- f:isIncludedInNavigationHistory():com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
 - f:isSyncBinaryEditorSettings():Z
 - f:setDiffToolsOrder(java.util.List):V
 - f:setGoToNextFileOnNextDifference(Z):V
+- f:setIncludedInNavigationHistory(com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory):V
 - f:setSyncBinaryEditorSettings(Z):V
 f:com.intellij.diff.impl.DiffSettingsHolder$DiffSettings$Companion
 - f:getSettings():com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
 - f:getSettings(java.lang.String):com.intellij.diff.impl.DiffSettingsHolder$DiffSettings
+e:com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
+- java.lang.Enum
+- sf:Always:com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
+- sf:Never:com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
+- sf:OnlyIfOpen:com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
+- s:values():com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory[]
 f:com.intellij.diff.impl.DiffSettingsHolder$PlaceSettings
 - <init>():V
 - <init>(java.util.List,Z):V
@@ -565,15 +577,18 @@ f:com.intellij.diff.impl.DiffSettingsHolder$PlaceSettings
 - f:setSYNC_BINARY_EDITOR_SETTINGS(Z):V
 f:com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
 - <init>():V
-- <init>(Z):V
-- b:<init>(Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(Z,com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory):V
+- b:<init>(Z,com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:component1():Z
-- f:copy(Z):com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
-- bs:copy$default(com.intellij.diff.impl.DiffSettingsHolder$SharedSettings,Z,I,java.lang.Object):com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
+- f:component2():com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
+- f:copy(Z,com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory):com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
+- bs:copy$default(com.intellij.diff.impl.DiffSettingsHolder$SharedSettings,Z,com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory,I,java.lang.Object):com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
 - equals(java.lang.Object):Z
 - f:getGO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE():Z
+- f:getIS_INCLUDED_IN_NAVIGATION_HISTORY():com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory
 - hashCode():I
 - f:setGO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE(Z):V
+- f:setIS_INCLUDED_IN_NAVIGATION_HISTORY(com.intellij.diff.impl.DiffSettingsHolder$IncludeInNavigationHistory):V
 f:com.intellij.diff.impl.DiffSettingsHolder$State
 - PLACES_MAP:java.util.TreeMap
 - SHARED_SETTINGS:com.intellij.diff.impl.DiffSettingsHolder$SharedSettings
