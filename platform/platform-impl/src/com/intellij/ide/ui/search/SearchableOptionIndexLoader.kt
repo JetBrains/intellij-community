@@ -264,11 +264,13 @@ private fun doRegisterIndex(
   }
 }
 
+private val json = Json { ignoreUnknownKeys = true }
+
 @Internal
 @VisibleForTesting
 @OptIn(ExperimentalSerializationApi::class)
 fun decodeFromJsonFormat(data: ByteArray, serializer: KSerializer<ConfigurableEntry>): Sequence<ConfigurableEntry> {
-  return Json.decodeToSequence(ByteArrayInputStream(data), serializer, DecodeSequenceMode.WHITESPACE_SEPARATED)
+  return json.decodeToSequence(ByteArrayInputStream(data), serializer, DecodeSequenceMode.WHITESPACE_SEPARATED)
 }
 
 private fun readInXml(root: XmlElement, processor: MySearchableOptionProcessor) {
