@@ -20,8 +20,6 @@ internal class SerializationContextImpl(
   
   override val isJavaPluginPresent: Boolean
     get() = true //todo?
-  override val isOrphanageEnabled: Boolean
-    get() = false //todo?
   override val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
     get() = emptyList() //todo
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>

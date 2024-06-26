@@ -29566,7 +29566,6 @@ a:com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationCon
 - getCustomModuleComponentSerializers():java.util.List
 - getCustomModuleRootsSerializers():java.util.List
 - isJavaPluginPresent():Z
-- isOrphanageEnabled():Z
 f:com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext$Companion
 - f:getCUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP():com.intellij.openapi.extensions.ExtensionPointName
 - f:getCUSTOM_MODULE_ROOTS_SERIALIZER_EP():com.intellij.openapi.extensions.ExtensionPointName

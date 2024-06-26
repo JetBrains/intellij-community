@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -9,14 +9,11 @@ import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEnt
 import com.intellij.platform.workspace.jps.serialization.SerializationContext
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import com.intellij.workspaceModel.ide.EntitiesOrphanage
 
 abstract class BaseIdeSerializationContext : SerializationContext {
   override val isJavaPluginPresent: Boolean
     get() = PluginManagerCore.getPlugin(PluginId.findId("com.intellij.java")) != null
   
-  override val isOrphanageEnabled: Boolean
-    get() = true
   override val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
     get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>

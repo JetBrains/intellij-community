@@ -79,15 +79,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           createFacetSerializer().loadFacetEntities(moduleLoadedInfo.moduleEntity, reader)
         }
 
-        if (context.isOrphanageEnabled) {
-          newModuleEntity = loadAdditionalContents(reader,
-                                                   virtualFileManager,
-                                                   moduleLoadedInfo.moduleEntity,
-                                                   exceptionsCollector)
-        }
-        else {
-          newModuleEntity = moduleLoadedInfo.moduleEntity
-        }
+        newModuleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
       }
       else newModuleEntity = null
     }
@@ -109,19 +101,14 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
                            true, moduleLibrariesCollector)
         }
 
-        if (context.isOrphanageEnabled) {
-          moduleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
-        }
-        else {
-          moduleEntity = tmpModuleEntity
-        }
+        moduleEntity = loadAdditionalContents(reader, virtualFileManager, moduleLoadedInfo.moduleEntity, exceptionsCollector)
       }
       else {
         val localModule = loadModuleEntity(reader, errorReporter, virtualFileManager, moduleLibrariesCollector, exceptionsCollector)
 
         var tmpModule = localModule?.moduleEntity
 
-        if (context.isOrphanageEnabled && tmpModule != null) {
+        if (tmpModule != null) {
           tmpModule = loadAdditionalContents(reader, virtualFileManager, tmpModule, exceptionsCollector)
         }
         moduleEntity = tmpModule
@@ -611,7 +598,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       saveModuleEntities(module, entities, storage, writer)
     }
     else {
-      val targetComponent = if (context.isOrphanageEnabled) ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME else MODULE_ROOT_MANAGER_COMPONENT_NAME
+      val targetComponent = ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME
       if (ContentRootEntity::class.java in entities || SourceRootEntity::class.java in entities || ExcludeUrlEntity::class.java in entities) {
         val contentEntities = entities[ContentRootEntity::class.java] as? List<ContentRootEntity> ?: emptyList()
         val sourceRootEntities = (entities[SourceRootEntity::class.java] as? List<SourceRootEntity>)?.toMutableSet() ?: mutableSetOf()
@@ -638,9 +625,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
               .forEach { (contentRoot, sourceRoots) ->
                 val contentRootTag = Element(CONTENT_TAG)
                 contentRootTag.setAttribute(URL_ATTRIBUTE, contentRoot.url.url)
-                if (context.isOrphanageEnabled) {
-                  contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
-                }
+                contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
                 saveSourceRootEntities(sourceRoots, contentRootTag, contentRoot.getSourceRootsComparator())
                 excludes[contentRoot.url]?.let {
                   saveExcludeUrls(contentRootTag, it)
@@ -653,27 +638,21 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           excludes.toSortedMap(compareBy { it.url }).forEach { (url, exclude) ->
             val contentRootTag = Element(CONTENT_TAG)
             contentRootTag.setAttribute(URL_ATTRIBUTE, url.url)
-            if (context.isOrphanageEnabled) {
-              contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
-            }
+            contentRootTag.setAttribute(DUMB_ATTRIBUTE, true.toString())
             saveExcludeUrls(contentRootTag, exclude)
             rootElement.addContent(contentRootTag)
             writer.saveComponent(fileUrl.url, targetComponent, rootElement)
           }
         }
 
-        if (context.isOrphanageEnabled) {
-          // Component to save additional roots before introducing AdditionalModuleElements.
-          // It's not used for this function anymore and should be cleared
-          writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
-        }
+        // Component to save additional roots before introducing AdditionalModuleElements.
+        // It's not used for this function anymore and should be cleared
+        writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
       }
       else {
         writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, null)
         writer.saveComponent(fileUrl.url, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
-        if (context.isOrphanageEnabled) {
-          writer.saveComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, null)
-        }
+        writer.saveComponent(fileUrl.url, ADDITIONAL_MODULE_ELEMENTS_COMPONENT_NAME, null)
       }
     }
 
