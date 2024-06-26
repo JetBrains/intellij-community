@@ -6,8 +6,8 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl.Companion.getInstanceImpl
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
-import com.intellij.testFramework.waitUntil
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
