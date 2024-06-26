@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
@@ -233,7 +234,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
       WorkspaceModelTopics.CHANGED,
       object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
-          val iterator = event.getAllChanges().iterator()
+          val iterator = (event as VersionedStorageChangeInternal).getAllChanges().iterator()
           val getName: Function<WorkspaceEntity?, String> = Function { entity ->
             if (entity is WorkspaceEntityWithSymbolicId) {
               entity.symbolicId.presentableName

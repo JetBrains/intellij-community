@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf
@@ -72,7 +73,7 @@ class WorkspaceModelAsyncTest {
       workspaceModel.eventLog
         .drop(1) // Drop the first event form the previous update
         .collect { event ->
-          val entityChange = event.getAllChanges().single()
+          val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
           assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
           collectedEventsCount.incrementAndGet()
         }
@@ -104,7 +105,7 @@ class WorkspaceModelAsyncTest {
         workspaceModel.eventLog
           .drop(1) // Drop the first event form the previous update
           .collect { event ->
-            val entityChange = event.getAllChanges().single()
+            val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
             assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
             collectedEventsCount.incrementAndGet()
           }
@@ -135,7 +136,7 @@ class WorkspaceModelAsyncTest {
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         assertEquals(true, application.isWriteAccessAllowed)
-        val entityChange = event.getAllChanges().single()
+        val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
 
         assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
       }
@@ -156,7 +157,7 @@ class WorkspaceModelAsyncTest {
     projectModel.project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         assertEquals(true, application.isWriteAccessAllowed)
-        val entityChange = event.getAllChanges().single()
+        val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
 
         assertInstanceOf<EntityChange.Added<ModuleEntity>>(entityChange)
         assertEquals(moduleName, (entityChange.newEntity as ModuleEntity).name)
@@ -186,7 +187,7 @@ class WorkspaceModelAsyncTest {
       workspaceModel.eventLog
         .drop(1) // Drop the first event form the previous update
         .collect { event ->
-          val entityChange = event.getAllChanges().single()
+          val entityChange = (event as VersionedStorageChangeInternal).getAllChanges().single()
           assertContains(moduleNames, (entityChange.newEntity as ModuleEntity).name)
           collectedEventsCount.incrementAndGet()
         }

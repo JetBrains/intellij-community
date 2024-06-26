@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.reactive
 
+import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
 import com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 import com.intellij.platform.workspace.storage.impl.cache.cache
@@ -13,7 +14,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.withIndex
 import org.jetbrains.annotations.ApiStatus
 
 @OptIn(EntityStorageInstrumentationApi::class)
@@ -28,7 +28,7 @@ class WmReactive(private val workspaceModel: WorkspaceModelImpl) {
           emit(res.value)
         }
         else {
-          val changes = ChangeOnVersionedChange(event.getAllChanges())
+          val changes = ChangeOnVersionedChange((event as VersionedStorageChangeInternal).getAllChanges ())
           val newCache = cache()
           newCache.pullCache(event.storageAfter, cache, changes)
           val cachedValue = newCache.cached(query,
@@ -54,7 +54,7 @@ class WmReactive(private val workspaceModel: WorkspaceModelImpl) {
           }
         }
         else {
-          val changes = ChangeOnVersionedChange(event.getAllChanges())
+          val changes = ChangeOnVersionedChange((event as VersionedStorageChangeInternal).getAllChanges())
           val newCache = cache()
           newCache.pullCache(event.storageAfter, cache, changes)
           val cachedValue = newCache.diff(query,
@@ -74,7 +74,7 @@ class WmReactive(private val workspaceModel: WorkspaceModelImpl) {
     return flow {
       var cache = cache()
       workspaceModel.eventLog.collectIndexed { index, event ->
-        val changes = ChangeOnVersionedChange(event.getAllChanges())
+        val changes = ChangeOnVersionedChange((event as VersionedStorageChangeInternal).getAllChanges())
         if (index == 0) {
           val res = cache.diff(query, event.storageAfter as ImmutableEntityStorageInstrumentation, null)
           emit(res.value)

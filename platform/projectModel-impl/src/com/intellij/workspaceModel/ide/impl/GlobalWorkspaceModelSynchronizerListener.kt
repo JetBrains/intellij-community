@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LegacyCustomLibraryEntitySource
 
 internal class GlobalWorkspaceModelSynchronizerListener(private val project: Project) : WorkspaceModelChangeListener {
@@ -19,7 +20,7 @@ internal class GlobalWorkspaceModelSynchronizerListener(private val project: Pro
   }
 
   private fun isContainingGlobalEntities(event: VersionedStorageChange): Boolean {
-    return event.getAllChanges().any {
+    return (event as VersionedStorageChangeInternal).getAllChanges().any {
       val entity = it.newEntity ?: it.oldEntity!!
       entity.entitySource is JpsGlobalFileEntitySource || entity.entitySource is LegacyCustomLibraryEntitySource
     }
