@@ -39,7 +39,7 @@ object ScrollPaneWithStickyHeaders {
 
     val scrolledBody = NonOpaquePanel(VerticalFlowLayout(0, 0))
 
-    val scrollPane = JBScrollPane(scrolledBody)
+    val scrollPane = JBScrollPane(scrolledBody, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER)
 
     val stickyElements = mutableMapOf<Component, StickyElement>()
 
