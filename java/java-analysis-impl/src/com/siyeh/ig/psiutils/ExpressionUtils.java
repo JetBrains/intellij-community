@@ -951,12 +951,11 @@ public final class ExpressionUtils {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
       }
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-        if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
-        containingClass = PsiUtil.getContainingClass(containingClass);
-        while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+        do {
           if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
           containingClass = PsiUtil.getContainingClass(containingClass);
         }
+        while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
         if (containingClass != null) {
           String thisQualifier = containingClass.getQualifiedName();
           if (thisQualifier == null) {
