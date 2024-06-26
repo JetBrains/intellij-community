@@ -8852,8 +8852,6 @@ f:com.intellij.ide.trustedProjects.impl.UntrustedProjectNotificationProvider
 - com.intellij.ui.EditorNotificationProvider
 - <init>():V
 - collectNotificationData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Function
-f:com.intellij.ide.ui.AppearanceOptionsTopHitProviderKt
-- sf:APPEARANCE_ID:java.lang.String
 f:com.intellij.ide.ui.ColorBlindnessInternalAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V

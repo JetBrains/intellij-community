@@ -35,6 +35,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.BiPredicate;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey");
   private static final Comparator<MatchedValue> MATCH_COMPARATOR = MatchedValue::compareWeights;
@@ -294,13 +296,21 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     List<String> patterns = List.of("support screen readers", "show line numbers", "tab placement");
 
     List<Object> errors = new ArrayList<>();
-    patterns.forEach(pattern -> {
+    for (String pattern : patterns) {
       List<?> elements = ChooseByNameTest.calcContributorElements(contributor, pattern);
-      if (!ContainerUtil.exists(elements, matchedValue -> isNavigableOption(((MatchedValue)matchedValue).value))) {
+      boolean result = false;
+      for (Object t : elements) {
+        if (isNavigableOption(((MatchedValue)t).value)) {
+          result = true;
+          break;
+        }
+      }
+      if (!result) {
         errors.add("Failure for pattern '" + pattern + "' - " + elements);
       }
-    });
-    assertTrue(errors.isEmpty());
+    }
+
+    assertThat(errors).isEmpty();
   }
 
   public void testUseUpdatedPresentationForMatching() {

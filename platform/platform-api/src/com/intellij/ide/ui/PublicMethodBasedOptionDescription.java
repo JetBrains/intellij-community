@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -13,8 +13,8 @@ import java.util.function.Supplier;
 
 public class PublicMethodBasedOptionDescription extends BooleanOptionDescription {
   private static final Logger LOG = Logger.getInstance(PublicMethodBasedOptionDescription.class);
-  private final String myGetterName;
-  private final String mySetterName;
+  private final String getterName;
+  private final String setterName;
   private final Supplier<Object> instanceProducer;
 
   public PublicMethodBasedOptionDescription(@NlsContexts.Label String option,
@@ -23,8 +23,8 @@ public class PublicMethodBasedOptionDescription extends BooleanOptionDescription
                                             String setterName,
                                             @NotNull Supplier<@NotNull Object> instanceProducer) {
     super(option, configurableId);
-    myGetterName = getterName;
-    mySetterName = setterName;
+    this.getterName = getterName;
+    this.setterName = setterName;
     this.instanceProducer = instanceProducer;
   }
 
@@ -40,11 +40,11 @@ public class PublicMethodBasedOptionDescription extends BooleanOptionDescription
     Object instance = getInstance();
     try {
       return (boolean)MethodHandles.publicLookup()
-        .findVirtual(instance.getClass(), myGetterName, MethodType.methodType(boolean.class))
+        .findVirtual(instance.getClass(), getterName, MethodType.methodType(boolean.class))
         .invoke(instance);
     }
     catch (Throwable exception) {
-      LOG.error(String.format("Boolean getter '%s' not found in %s", myGetterName, instance), exception);
+      LOG.error(String.format("Boolean getter '%s' not found in %s", getterName, instance), exception);
     }
     return false;
   }
@@ -54,11 +54,11 @@ public class PublicMethodBasedOptionDescription extends BooleanOptionDescription
     Object instance = getInstance();
     try {
       MethodHandles.publicLookup()
-              .findVirtual(instance.getClass(), mySetterName, MethodType.methodType(void.class, boolean.class))
+              .findVirtual(instance.getClass(), setterName, MethodType.methodType(void.class, boolean.class))
         .invoke(instance, enabled);
     }
     catch (Throwable exception) {
-      LOG.error(String.format("Boolean setter '%s' not found in %s", mySetterName, instance), exception);
+      LOG.error(String.format("Boolean setter '%s' not found in %s", setterName, instance), exception);
     }
     fireUpdated();
   }
