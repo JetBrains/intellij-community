@@ -38,7 +38,7 @@ public abstract class SplitAction extends AnAction implements DumbAware, ActionR
       return;
     }
 
-    VirtualFile file = window.getSelectedFile();
+    VirtualFile file = window.getContextFile();
     if (closeSource && file != null) {
       file.putUserData(EditorWindow.Companion.getDRAG_START_PINNED_KEY$intellij_platform_ide_impl(), window.isFilePinned(file));
       window.closeFile(file, false, false);
@@ -50,7 +50,7 @@ public abstract class SplitAction extends AnAction implements DumbAware, ActionR
   @Override
   public void update(@NotNull AnActionEvent event) {
     EditorWindow window = event.getData(EditorWindow.DATA_KEY);
-    VirtualFile selectedFile = window == null ? null : window.getSelectedFile();
+    VirtualFile selectedFile = window == null ? null : window.getContextFile();
 
     boolean enabled = isEnabled(selectedFile, window);
     event.getPresentation().setEnabledAndVisible(enabled);

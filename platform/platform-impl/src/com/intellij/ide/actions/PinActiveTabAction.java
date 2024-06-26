@@ -111,7 +111,7 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
   }
 
   private static @NotNull Handler createHandler(final EditorWindow window, final VirtualFile selectedFile) {
-    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getSelectedFile())) {
+    return new Handler(window.isFilePinned(selectedFile), selectedFile.equals(window.getContextFile())) {
       @Override
       void setPinned(boolean value) {
         window.setFilePinned(selectedFile, value);
@@ -152,7 +152,7 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
   }
 
   private static @Nullable VirtualFile getFileInWindow(@NotNull EditorWindow window) {
-    VirtualFile file = window.getSelectedFile();
+    VirtualFile file = window.getContextFile();
     return file != null && window.isFileOpen(file) ? file : null;
   }
 
@@ -172,7 +172,7 @@ public class PinActiveTabAction extends DumbAwareAction implements ActionRemoteB
   static final class EW extends PinActiveTabAction {
     @Override
     protected @Nullable VirtualFile getFileFromEvent(@NotNull AnActionEvent e, @NotNull EditorWindow window) {
-      return window.getSelectedFile();
+      return window.getContextFile();
     }
 
     @Override
