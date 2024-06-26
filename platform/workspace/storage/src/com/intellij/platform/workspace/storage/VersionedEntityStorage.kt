@@ -60,6 +60,12 @@ public interface VersionedStorageChange {
    * The events are ordered: Removed -> Replaced -> Added
    */
   public fun <T : WorkspaceEntity> getChanges(entityClass: Class<T>): List<EntityChange<T>>
+}
 
+@ApiStatus.Internal
+public interface VersionedStorageChangeInternal : VersionedStorageChange {
+  /** Use [getChanges] to process changes of the specific entities. */
+  @ApiStatus.Internal
+  @ApiStatus.Obsolete
   public fun getAllChanges(): Sequence<EntityChange<*>>
 }

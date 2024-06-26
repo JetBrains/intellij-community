@@ -15,6 +15,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
@@ -190,7 +191,7 @@ class GradleAttachSourcesProviderTest : GradleImportingTestCase() {
     myProject.messageBus.connect(testRootDisposable)
       .subscribe(WorkspaceModelTopics.CHANGED, object : WorkspaceModelChangeListener {
         override fun changed(event: VersionedStorageChange) {
-          for (change in event.getAllChanges()) {
+          for (change in (event as VersionedStorageChangeInternal).getAllChanges()) {
             if (change is EntityChange.Replaced && change.component2() is LibraryEntity) {
               val modifiedComponent = change.component2() as LibraryEntity
               if (modifiedComponent.name == libraryName && modifiedComponent.roots.any { it.type === LibraryRootTypeId.SOURCES }) {

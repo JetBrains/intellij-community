@@ -38,10 +38,7 @@ import com.intellij.platform.workspace.jps.*
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectEntitiesLoader.createProjectSerializers
-import com.intellij.platform.workspace.storage.DummyParentEntitySource
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -312,7 +309,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val listener = object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
-        for (change in event.getAllChanges()) {
+        for (change in (event as VersionedStorageChangeInternal).getAllChanges()) {
           change.oldEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
           change.newEntity?.entitySource?.let { if (it !is JpsGlobalFileEntitySource) sourcesToSave.add(it) }
         }

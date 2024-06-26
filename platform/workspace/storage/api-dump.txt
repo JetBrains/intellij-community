@@ -131,7 +131,6 @@ com.intellij.platform.workspace.storage.SymbolicEntityId
 - resolve(com.intellij.platform.workspace.storage.EntityStorage):com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 - a:toString():java.lang.String
 com.intellij.platform.workspace.storage.VersionedStorageChange
-- a:getAllChanges():kotlin.sequences.Sequence
 - a:getChanges(java.lang.Class):java.util.List
 - a:getStorageAfter():com.intellij.platform.workspace.storage.ImmutableEntityStorage
 - a:getStorageBefore():com.intellij.platform.workspace.storage.ImmutableEntityStorage
