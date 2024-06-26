@@ -27,9 +27,11 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -45,19 +47,24 @@ import com.intellij.openapi.project.isNotificationSilentMode
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.bootstrap.getAndUnsetSplashProjectFrame
+import com.intellij.platform.ide.bootstrap.hideSplash
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiManager
 import com.intellij.toolWindow.computeToolWindowBeans
 import com.intellij.ui.ScreenUtil
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.messages.SimpleMessageBusConnection
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
@@ -184,7 +191,19 @@ internal class ProjectUiFrameAllocator(
       val startOfWaitingForReadyFrame = AtomicLong(-1)
 
       val rawProjectDeferred = projectInitObserver.rawProjectDeferred
-      val reopeningEditorJob = outOfLoadingScope.launch {
+
+      // Wait for opening editor or any tool window in the outer scope, to not block the completion of the loading scope.
+      val hideSplashTask = outOfLoadingScope.launch {
+        val project = rawProjectDeferred.await()
+        val connection = project.messageBus.connect(this)
+        hideSplashWhenEditorOrToolWindowShown(connection)
+      }
+      // Stop waiting for opening editor or any tool window if loading is finished to not block outer scope completion.
+      loadingScope.coroutineContext.job.invokeOnCompletion {
+        hideSplashTask.cancel()
+      }
+
+      val reopeningEditorJob = launch {
         val project = rawProjectDeferred.await()
         span("restoreEditors") {
           val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerImpl
@@ -344,6 +363,28 @@ internal class ProjectUiFrameAllocator(
       }
     }
   }
+}
+
+private suspend fun hideSplashWhenEditorOrToolWindowShown(connection: SimpleMessageBusConnection) {
+  val splashHiddenDeferred = CompletableDeferred<Unit>()
+
+  fun hideSplashAndComplete() {
+    hideSplash()
+    connection.disconnect()
+    splashHiddenDeferred.complete(Unit)
+  }
+
+  connection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+    override fun toolWindowShown(toolWindow: ToolWindow) {
+      hideSplashAndComplete()
+    }
+  })
+  connection.subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
+    override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
+      hideSplashAndComplete()
+    }
+  })
+  splashHiddenDeferred.await()
 }
 
 private fun CoroutineScope.scheduleInitFrame(
