@@ -4,6 +4,7 @@ package com.intellij.platform.ide.navigation
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -18,6 +19,9 @@ interface NavigationService {
   }
 
   suspend fun navigate(dataContext: DataContext, options: NavigationOptions)
+
+  @Internal
+  suspend fun navigate(request: NavigationRequest, options: NavigationOptions = NavigationOptions.defaultOptions())
 
   @Internal // compatibility function
   suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean

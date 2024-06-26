@@ -83,13 +83,17 @@ private class IdeNavigationService(private val project: Project) : NavigationSer
     return semaphore.withPermit {
       val request = readAction {
         navigatable.navigationRequest()
-      }
-      if (request == null) {
-        false
-      }
-      else {
-        navigateToSource(project = project, request = request, options = options as NavigationOptions.Impl, dataContext = null)
-      }
+      } ?: return@withPermit false
+      navigate(project = project, requests = listOf(request), options = options, dataContext = null)
+    }
+  }
+
+  override suspend fun navigate(request: NavigationRequest, options: NavigationOptions) {
+    if (request is SourceNavigationRequest) {
+      navigateToSource(project = project, request = request, options = options as NavigationOptions.Impl, dataContext = null)
+    }
+    else {
+      navigate(project = project, requests = listOf(request), options = options, dataContext = null)
     }
   }
 }
@@ -100,7 +104,7 @@ private val LOG: Logger = Logger.getInstance("#com.intellij.platform.ide.navigat
  * Navigates to all sources from [requests], or navigates to first non-source request.
  */
 private suspend fun navigate(project: Project, requests: List<NavigationRequest>, options: NavigationOptions, dataContext: DataContext?): Boolean {
-  val maxSourceRequests = Registry.intValue("ide.source.file.navigation.limit", 100)
+  val maxSourceRequests = if (requests.size == 1) Int.MAX_VALUE else Registry.intValue("ide.source.file.navigation.limit", 100)
   var nonSourceRequest: NavigationRequest? = null
 
   options as NavigationOptions.Impl

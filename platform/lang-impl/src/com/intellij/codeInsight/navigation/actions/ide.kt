@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -15,6 +15,7 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileEditor.FileNavigator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
 import com.intellij.openapi.project.Project
@@ -24,6 +25,7 @@ import com.intellij.platform.backend.navigation.impl.DirectoryNavigationRequest
 import com.intellij.platform.backend.navigation.impl.RawNavigationRequest
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
@@ -56,8 +58,8 @@ internal fun navigateRequestLazy(project: Project, requestor: NavigationRequesto
   }
 }
 
-
 @Internal
+@RequiresEdt
 fun navigateRequest(project: Project, request: NavigationRequest) {
   EDT.assertIsEdt()
   IdeDocumentHistory.getInstance(project).includeCurrentCommandAsNavigation()
@@ -69,7 +71,7 @@ fun navigateRequest(project: Project, request: NavigationRequest) {
       if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
         openFileDescriptor.isUsePreviewTab = true
       }
-      openFileDescriptor.navigate(true)
+      FileNavigator.getInstance().navigate(openFileDescriptor, true)
     }
     is DirectoryNavigationRequest -> {
       PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, true)

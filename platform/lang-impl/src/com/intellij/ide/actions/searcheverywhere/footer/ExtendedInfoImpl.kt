@@ -113,7 +113,7 @@ internal class ExtendedInfoComponent(private val project: Project?, private val 
   }
 }
 
-class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) : ExtendedInfo() {
+internal class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) : ExtendedInfo() {
   private val list = contributors.filterIsInstance<SearchEverywhereExtendedInfoProvider>().mapNotNull { it.createExtendedInfo() }
 
   init {
@@ -122,7 +122,7 @@ class ExtendedInfoImpl(val contributors: List<SearchEverywhereContributor<*>>) :
   }
 }
 
-fun createTextExtendedInfo(): ExtendedInfo {
+internal fun createTextExtendedInfo(): ExtendedInfo {
   val psiElement: (Any) -> PsiElement? = { (it as? SearchEverywhereItem)?.usage?.element }
   val virtualFile: (Any) -> VirtualFile? = { (it as? SearchEverywhereItem)?.usage?.file }
   val project: (Any) -> Project? = { (it as? SearchEverywhereItem)?.usage?.usageInfo?.project }
@@ -130,7 +130,7 @@ fun createTextExtendedInfo(): ExtendedInfo {
   return createPsiExtendedInfo(project, virtualFile, psiElement)
 }
 
-fun createPsiExtendedInfo(): ExtendedInfo {
+internal fun createPsiExtendedInfo(): ExtendedInfo {
   val psiElement: (Any) -> PsiElement? = {
     val item = (it as? PsiItemWithSimilarity<*>)?.value ?: it
     (item as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.item
