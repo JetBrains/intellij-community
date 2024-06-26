@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.util.ThrowableRunnable
@@ -14,14 +15,27 @@ import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K2
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtParameter
 import java.io.File
 import java.util.regex.Pattern
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
+import com.intellij.psi.impl.PsiImplUtil.setName
+import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.searches.ReferencesSearch
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.J2K_POSTPROCESSOR_EXTENSIONS
+import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension.Companion.j2kWriteAction
+import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 
 private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statement|method)\n")
 
 private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
 private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
 private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
+private const val J2K_POSTPROCESSOR_EXTENSIONS_DIRECTIVE = "J2K_POSTPROCESSOR_EXTENSIONS"
 
 abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotlinConverterTest() {
     override fun setUp() {
@@ -55,7 +69,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         addDependencies(directives)
 
         val settings = configureSettings(directives)
-        val convertedText = convertJavaToKotlin(prefix, javaCode, settings)
+        val convertedText = convertJavaToKotlin(prefix, javaCode, settings, directives)
         val expectedFile = getExpectedFile(javaFile)
 
         val actualText = if (prefix == "file") {
@@ -138,26 +152,49 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
             }
         }
 
-    private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings): String =
+    private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings, directives: Directives): String =
         when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
             "statement" -> statementToKotlin(javaCode, settings)
             "method" -> methodToKotlin(javaCode, settings)
-            "file" -> fileToKotlin(javaCode, settings)
+            "file" -> fileToKotlin(javaCode, settings, postprocessorExtensions = if (directives.contains(J2K_POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(dummyEP) else emptyList())
             else -> error("Specify what it is: method, statement or expression using the first line of test data file")
         }
 
-    open fun fileToKotlin(text: String, settings: ConverterSettings): String {
+    private val dummyEP = object : J2kPostprocessorExtension {
+        override suspend fun processFiles(
+            project: Project,
+            files: List<KtFile>,
+        ) {
+            for (file in files) {
+                val firstNamedParameter = readAction {
+                    file.findDescendantOfType<KtParameter> { it.nameIdentifier != null && it.name != "foo" }
+                } ?: continue
+
+                val references = ReferencesSearch.search(firstNamedParameter, LocalSearchScope(file)).findAll()
+                j2kWriteAction {
+                    setName(checkNotNull(firstNamedParameter.nameIdentifier), "bar")
+                }
+                for (reference in references) {
+                    j2kWriteAction {
+                        setName(reference.element, "bar")
+                    }
+                }
+            }
+        }
+    }
+
+    open fun fileToKotlin(text: String, settings: ConverterSettings, postprocessorExtensions: List<J2kPostprocessorExtension>): String {
         val file = createJavaFile(text)
         val j2kKind = if (isFirPlugin) K2 else K1_NEW
         val extension = J2kConverterExtension.extension(j2kKind)
         val converter = extension.createJavaToKotlinConverter(project, module, settings)
         val postProcessor = extension.createPostProcessor()
-        return converter.filesToKotlin(listOf(file), postProcessor).results.single()
+        return converter.filesToKotlin(listOf(file), postProcessor, EmptyProgressIndicator(), postprocessorExtensions).results.single()
     }
 
     private fun methodToKotlin(text: String, settings: ConverterSettings): String {
-        val result = fileToKotlin("final class C {$text}", settings)
+        val result = fileToKotlin("final class C {$text}", settings, emptyList())
         return result
             .substringBeforeLast("}")
             .replace("internal class C {", "\n")

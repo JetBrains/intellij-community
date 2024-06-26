@@ -115,9 +115,11 @@ object IgnoreTests {
         additionalFiles: List<Path>,
         test: (isTestEnabled: Boolean) -> Unit
     ) {
-        check(!
-              (directive is EnableOrDisableTestDirective.Enable && (
-                     directive.directiveText == DIRECTIVES.FIR_IDENTICAL || directive.directiveText == DIRECTIVES.FIR_COMPARISON))) {
+        check(
+            !
+            (directive is EnableOrDisableTestDirective.Enable && (
+                    directive.directiveText == DIRECTIVES.FIR_IDENTICAL || directive.directiveText == DIRECTIVES.FIR_COMPARISON))
+        ) {
             "It's not allowed to run runTestIfEnabledByDirective with FIR_IDENTICAL or FIR_COMPARISON"
         }
         if (ALWAYS_CONSIDER_TEST_AS_PASSING) {
@@ -165,6 +167,7 @@ object IgnoreTests {
                 is EnableOrDisableTestDirective.Disable -> {
                     testFile.removeDirectivesFromFileAndAdditionalFiles(directive, additionalFiles)
                 }
+
                 is EnableOrDisableTestDirective.Enable -> {
                     testFile.insertDirectivesToFileAndAdditionalFile(directive, additionalFiles, directivePosition)
                 }
@@ -267,6 +270,7 @@ object IgnoreTests {
     object DIRECTIVES {
         @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_COMPARISON: String = "// FIR_COMPARISON"
+
         @Deprecated(message = "use IGNORE_K2 instead")
         const val FIR_COMPARISON_MULTILINE_COMMENT: String = "/* FIR_COMPARISON */"
 
@@ -275,6 +279,7 @@ object IgnoreTests {
 
         @Deprecated(message = "use IGNORE_K2 instead")
         const val IGNORE_FIR: String = "// IGNORE_FIR"
+
         @Deprecated(message = "use IGNORE_K2_MULTILINE_COMMENT instead")
         const val IGNORE_FIR_MULTILINE_COMMENT: String = "/* IGNORE_FIR */"
 
@@ -285,6 +290,8 @@ object IgnoreTests {
         const val IGNORE_FE10_BINDING_BY_FIR: String = "// IGNORE_FE10_BINDING_BY_FIR"
 
         const val IGNORE_K1: String = "// IGNORE_K1"
+
+        const val J2K_POSTPROCESSOR_EXTENSIONS: String = "// J2K_POSTPROCESSOR_EXTENSIONS"
 
         fun of(mode: KotlinPluginMode): String = if (mode == KotlinPluginMode.K2) IGNORE_K2 else IGNORE_K1
     }

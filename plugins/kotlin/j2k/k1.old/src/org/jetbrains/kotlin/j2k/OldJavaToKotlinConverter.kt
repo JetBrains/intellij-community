@@ -35,7 +35,8 @@ class OldJavaToKotlinConverter(
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progressIndicator: ProgressIndicator
+        progressIndicator: ProgressIndicator,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
     ): FilesResult {
         val withProgressProcessor = OldWithProgressProcessor(progressIndicator, files)
         val (results, externalCodeProcessing) = ApplicationManager.getApplication().runReadAction(Computable {

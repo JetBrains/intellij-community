@@ -42,14 +42,16 @@ class NewJavaToKotlinConverter(
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progressIndicator: ProgressIndicator
-    ): FilesResult = filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null)
+        progressIndicator: ProgressIndicator,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
+    ): FilesResult = filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null, postprocessorExtensions)
 
     fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         progressIndicator: ProgressIndicator,
         bodyFilter: ((PsiElement) -> Boolean)?,
+        postprocessorExtensions: List<J2kPostprocessorExtension>
     ): FilesResult {
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
@@ -68,6 +70,9 @@ class NewJavaToKotlinConverter(
             postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
                 withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
             }
+
+            PostprocessorExtensionsRunner.runRegisteredPostprocessors(project, kotlinFiles, postprocessorExtensions)
+
             FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
         }
     }
