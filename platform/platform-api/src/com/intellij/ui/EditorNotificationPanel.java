@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -377,7 +376,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   private static @NotNull Icon getCloseIcon() {
     if (CLOSE_ICON == null) {
-      CLOSE_ICON = ExpUiIcons.General.Close;
+      CLOSE_ICON = AllIcons.General.Close;
     }
     return CLOSE_ICON;
   }

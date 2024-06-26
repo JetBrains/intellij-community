@@ -8,7 +8,6 @@ import com.intellij.find.impl.SearchEverywhereItem;
 import com.intellij.find.impl.TextSearchRightActionAction;
 import com.intellij.find.impl.UsageAdaptersKt;
 import com.intellij.icons.AllIcons;
-import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
@@ -138,7 +137,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public static final int MULTIPLE_CONTRIBUTORS_ELEMENTS_LIMIT = 15;
 
   private static Icon getShowInFindToolWindowIcon() {
-    return ExperimentalUI.isNewUI() ? ExpUiIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
+    return ExperimentalUI.isNewUI() ? AllIcons.General.OpenInToolWindow : AllIcons.General.Pin_tab;
   }
 
   private final SEResultsListFactory myListFactory;

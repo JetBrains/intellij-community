@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.tabActions
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -177,7 +176,7 @@ private class DotIcon(private val color: Color) : Icon {
  }
 
 private val CLOSE_ICON: Icon
-  get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmall else AllIcons.Actions.Close
+  get() = AllIcons.Actions.Close
 
 private val CLOSE_HOVERED_ICON: Icon
-  get() = (if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmallHovered else AllIcons.Actions.CloseHovered)
+  get() = AllIcons.Actions.CloseHovered

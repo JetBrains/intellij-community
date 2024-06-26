@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.codereview.avatar.Avatar
 import com.intellij.collaboration.ui.codereview.details.data.ReviewRequestState
 import com.intellij.collaboration.ui.codereview.details.data.ReviewState
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ExperimentalUI
 import org.jetbrains.annotations.Nls
@@ -34,9 +33,9 @@ object ReviewDetailsUIUtil {
   }
 
   fun getReviewStateIcon(reviewState: ReviewState): Icon = when (reviewState) {
-    ReviewState.ACCEPTED -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
-    ReviewState.WAIT_FOR_UPDATES -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Error else AllIcons.RunConfigurations.TestError
-    ReviewState.NEED_REVIEW -> if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Warning else AllIcons.RunConfigurations.TestFailed
+    ReviewState.ACCEPTED -> if (ExperimentalUI.isNewUI()) AllIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+    ReviewState.WAIT_FOR_UPDATES -> if (ExperimentalUI.isNewUI()) AllIcons.General.Error else AllIcons.RunConfigurations.TestError
+    ReviewState.NEED_REVIEW -> if (ExperimentalUI.isNewUI()) AllIcons.General.Warning else AllIcons.RunConfigurations.TestFailed
   }
 
   fun getReviewStateText(reviewState: ReviewState, reviewer: String): @Nls String = when (reviewState) {

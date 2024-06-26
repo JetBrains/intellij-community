@@ -2,7 +2,6 @@
 package com.intellij.collaboration.ui.icon
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ui.ExperimentalUI
 import javax.swing.Icon
 
@@ -23,7 +22,7 @@ object CIBuildStatusIcons {
     get() = AllIcons.Status.FailedInProgress
 
   val warning: Icon
-    get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Warning else AllIcons.General.Warning
+    get() = AllIcons.General.Warning
 
   val skipped: Icon
     get() = AllIcons.RunConfigurations.TestSkipped
@@ -32,8 +31,8 @@ object CIBuildStatusIcons {
     get() = AllIcons.RunConfigurations.TestPaused
 
   val info: Icon
-    get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Info else AllIcons.RunConfigurations.TestPassed
+    get() = if (ExperimentalUI.isNewUI()) AllIcons.General.Information else AllIcons.RunConfigurations.TestPassed
 
   val success: Icon
-    get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
+    get() = if (ExperimentalUI.isNewUI()) AllIcons.Status.Success else AllIcons.RunConfigurations.TestPassed
 }

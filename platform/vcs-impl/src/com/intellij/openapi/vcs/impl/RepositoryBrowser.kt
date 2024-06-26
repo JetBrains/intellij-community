@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
@@ -76,7 +76,7 @@ object RepositoryBrowser {
     return toolWindow
   }
 
-  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) ExpUiIcons.Toolwindow.Repositories else null
+  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindow.Repositories else null
 }
 
 class RepositoryBrowserPanel(

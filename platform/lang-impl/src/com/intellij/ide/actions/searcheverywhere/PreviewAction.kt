@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
-import com.intellij.icons.ExpUiIcons
+import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.SEHeaderActionListener.Companion.SE_HEADER_ACTION_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI.isPreviewEnabled
@@ -22,7 +22,7 @@ const val PREVIEW_ACTION_ID = "Search.Everywhere.Preview"
 
 class PreviewAction : DumbAwareToggleAction(Supplier { IdeBundle.message("search.everywhere.preview.action.text") },
                                             Supplier { IdeBundle.message("search.everywhere.preview.action.description") },
-                                            ExpUiIcons.General.PreviewHorizontally) {
+                                            AllIcons.General.PreviewHorizontally) {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {

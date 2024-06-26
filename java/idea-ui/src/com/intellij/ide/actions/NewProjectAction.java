@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
-import com.intellij.icons.ExpUiIcons;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.projectWizard.NewProjectWizard;
@@ -45,7 +45,7 @@ public class NewProjectAction extends AnAction implements DumbAware, NewProjectO
       NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
     }
     else if (ExperimentalUI.isNewUI() && ActionPlaces.PROJECT_WIDGET_POPUP.equals(e.getPlace())) {
-      e.getPresentation().setIcon(ExpUiIcons.General.Add);
+      e.getPresentation().setIcon(AllIcons.General.Add);
     }
   }
 

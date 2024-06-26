@@ -2,7 +2,6 @@
 package com.intellij.platform.navbar.frontend.ui
 
 import com.intellij.icons.AllIcons
-import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -215,7 +214,7 @@ internal class NavBarItemComponent(
 
   private fun effectiveIcon(presentation: NavBarItemPresentationData): Icon? {
     return when {
-      ExperimentalUI.isNewUI() && presentation.isModuleContentRoot -> ExpUiIcons.Nodes.Module8x8
+      ExperimentalUI.isNewUI() && presentation.isModuleContentRoot -> AllIcons.Nodes.Module8x8
       Registry.`is`("navBar.show.icons") || vm.isLast || presentation.hasContainingFile -> presentation.icon
       else -> null
     }
@@ -251,7 +250,7 @@ internal class NavBarItemComponent(
       }
       else {
         offset += ipad.left
-        icon.paintIcon(this, g, offset, rect.y + (rect.height - icon.iconHeight) / 2 + if (icon == ExpUiIcons.Nodes.Module8x8) JBUI.scale(
+        icon.paintIcon(this, g, offset, rect.y + (rect.height - icon.iconHeight) / 2 + if (icon == AllIcons.Nodes.Module8x8) JBUI.scale(
           1)
         else 0)
         offset += icon.iconWidth
