@@ -26,6 +26,10 @@ public final class FinalUtils {
     if (variable instanceof PsiField && !HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction((PsiField)variable)) {
       return false;
     }
+    return checkIfElementViolatesFinality(variable);
+  }
+
+  private static boolean checkIfElementViolatesFinality(@NotNull PsiVariable variable) {
     PsiElement scope = variable instanceof PsiField
                        ? PsiUtil.getTopLevelClass(variable)
                        : PsiUtil.getVariableCodeBlock(variable, null);
@@ -33,21 +37,39 @@ public final class FinalUtils {
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new HashMap<>();
     Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems = new HashMap<>();
     PsiElementProcessor<PsiElement> elementDoesNotViolateFinality = e -> {
-      if (!(e instanceof PsiReferenceExpression ref)) return true;
-      if (!ref.isReferenceTo(variable)) return true;
-      HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
-        .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
-      if (highlightInfo != null) return false;
-      if (!PsiUtil.isAccessedForWriting(ref)) return true;
-      if (!LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(ref)) return false;
-      if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
-      if (variable instanceof PsiField) {
-        if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
-        PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, ref);
-        if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
-      }
-      return HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems) == null;
+      return checkElementDoesNotViolateFinality(e, variable, uninitializedVarProblems, finalVarProblems);
     };
     return PsiTreeUtil.processElements(scope, elementDoesNotViolateFinality);
+  }
+
+  /**
+   * Checks whether a given PsiElement causes the PsiVariable to violate finality conditions
+   *
+   * @param e expression where "variable" may be defined
+   * @param variable variable we are checking for finality
+   * @param uninitializedVarProblems maps variables to places where they were potentially used before initialization
+   * @param finalVarProblems maps variables to places where they have already been defined
+   * @return true if element does not violate finality
+   */
+  public static boolean checkElementDoesNotViolateFinality(PsiElement e,
+                                                            PsiVariable variable,
+                                                            Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems,
+                                                            Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems) {
+    if (!(e instanceof PsiReferenceExpression ref)) return true;
+    if (!ref.isReferenceTo(variable)) return true;
+    HighlightInfo.Builder highlightInfo = HighlightControlFlowUtil
+      .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
+    if (highlightInfo != null) return false;
+    if (!PsiUtil.isAccessedForWriting(ref)) return true;
+    if (!LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(ref)) return false;
+    if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
+    if (variable instanceof PsiField) {
+      if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;
+      PsiElement innerScope = HighlightControlFlowUtil.getElementVariableReferencedFrom(variable, ref);
+      if (innerScope != null && innerScope != ((PsiField)variable).getContainingClass()) return false;
+    }
+    HighlightInfo.Builder random =
+      HighlightControlFlowUtil.checkFinalVariableMightAlreadyHaveBeenAssignedTo(variable, ref, finalVarProblems);
+    return random == null;
   }
 }
