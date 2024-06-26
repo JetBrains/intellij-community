@@ -16,16 +16,31 @@ import java.util.List;
 public abstract class GeneratedSourcesFilter {
   public static final ExtensionPointName<GeneratedSourcesFilter> EP_NAME = ExtensionPointName.create("com.intellij.generatedSourcesFilter");
 
+  /**
+   * Checks whether the given files is considered a generated source file in the context of the given project.
+   *
+   * This method can block, if a write action is currently pending.
+   *
+   * @return {@code true} if the file is considered a generated source, {@code false} otherwise.
+   */
   public static boolean isGeneratedSourceByAnyFilter(@NotNull VirtualFile file, @NotNull Project project) {
-    return ReadAction.compute(() -> {
-      if (project.isDisposed() || !file.isValid()) return false;
-      for (GeneratedSourcesFilter filter : EP_NAME.getExtensionList()) {
-        if (filter.isGeneratedSource(file, project)) {
-          return true;
-        }
-      }
-      return false;
-    });
+    return ReadAction.compute(() -> findFirstMatchingFilterNonBlocking(file, project) != null);
+  }
+
+  /**
+   * Returns the first source filter (in order of generated source filter extension traversal order) that considers this file
+   * to be generated. This method is non-blocking.
+   *
+   * @return the first {@code GeneratedSourcesFilter} that considered this file to be generated.
+   */
+  public static GeneratedSourcesFilter findFirstMatchingFilterNonBlocking(@NotNull VirtualFile file, @NotNull Project project) {
+    if (project.isDisposed() || !file.isValid()) return null;
+
+    for (GeneratedSourcesFilter filter : EP_NAME.getExtensionList()) {
+      if (filter.isGeneratedSource(file, project)) return filter;
+    }
+
+    return null;
   }
 
   public abstract boolean isGeneratedSource(@NotNull VirtualFile file, @NotNull Project project);
