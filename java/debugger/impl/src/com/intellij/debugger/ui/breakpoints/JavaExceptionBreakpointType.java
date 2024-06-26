@@ -82,21 +82,18 @@ public final class JavaExceptionBreakpointType extends JavaBreakpointTypeBase<Ja
     }
   }
 
-  @Nullable
   @Override
-  public JavaExceptionBreakpointProperties createProperties() {
+  public @NotNull JavaExceptionBreakpointProperties createProperties() {
     return new JavaExceptionBreakpointProperties();
   }
 
-  @Nullable
   @Override
-  public XBreakpointCustomPropertiesPanel<XBreakpoint<JavaExceptionBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
+  public @NotNull XBreakpointCustomPropertiesPanel<XBreakpoint<JavaExceptionBreakpointProperties>> createCustomPropertiesPanel(@NotNull Project project) {
     return new ExceptionBreakpointPropertiesPanel();
   }
 
-  @Nullable
   @Override
-  public XBreakpoint<JavaExceptionBreakpointProperties> createDefaultBreakpoint(@NotNull XBreakpointCreator<JavaExceptionBreakpointProperties> creator) {
+  public @NotNull XBreakpoint<JavaExceptionBreakpointProperties> createDefaultBreakpoint(@NotNull XBreakpointCreator<JavaExceptionBreakpointProperties> creator) {
     return creator.createBreakpoint(new JavaExceptionBreakpointProperties());
   }
 
