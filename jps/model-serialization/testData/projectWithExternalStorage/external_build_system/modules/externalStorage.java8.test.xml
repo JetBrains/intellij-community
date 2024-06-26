@@ -1,0 +1,23 @@
+<module>
+  <component name="DeprecatedModuleOptionManager">
+    <option key="type" value="JAVA_MODULE" />
+  </component>
+  <component name="ExternalSystem" externalSystem="GRADLE" externalSystemModuleGroup="org.example" externalSystemModuleType="sourceSet" externalSystemModuleVersion="unspecified" linkedProjectId=":java8:test" linkedProjectPath="$MODULE_DIR$/../../../java8" rootProjectPath="$MODULE_DIR$/../../.." />
+  <component name="NewModuleRootManager">
+    <output-test url="file://$MODULE_DIR$/../../../java8/build/classes/java/test" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../../java8/src/test" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="externalStorage.java8.main" />
+    <orderEntry type="library" name="Gradle: org.junit.jupiter:junit-jupiter:5.9.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.junit.jupiter:junit-jupiter-params:5.9.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.junit.jupiter:junit-jupiter-api:5.9.1" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.apiguardian:apiguardian-api:1.1.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.junit.platform:junit-platform-commons:1.9.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.opentest4j:opentest4j:1.2.0" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.jupiter:junit-jupiter-engine:5.9.1" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="Gradle: org.junit.platform:junit-platform-engine:1.9.1" level="project" />
+  </component>
+  <component name="TestModuleProperties" production-module="externalStorage.java8.main" />
+</module>

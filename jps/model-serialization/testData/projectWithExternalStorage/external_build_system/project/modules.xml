@@ -1,0 +1,12 @@
+<project>
+  <component name="ExternalProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/externalStorage.iml" filepath="$PROJECT_DIR$/.idea/modules/externalStorage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/java8/externalStorage.java8.iml" filepath="$PROJECT_DIR$/.idea/modules/java8/externalStorage.java8.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/java8/externalStorage.java8.main.iml" filepath="$PROJECT_DIR$/.idea/modules/java8/externalStorage.java8.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/java8/externalStorage.java8.test.iml" filepath="$PROJECT_DIR$/.idea/modules/java8/externalStorage.java8.test.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/externalStorage.main.iml" filepath="$PROJECT_DIR$/.idea/modules/externalStorage.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/externalStorage.test.iml" filepath="$PROJECT_DIR$/.idea/modules/externalStorage.test.iml" />
+    </modules>
+  </component>
+</project>

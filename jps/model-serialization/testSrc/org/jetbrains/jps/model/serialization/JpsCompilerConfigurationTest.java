@@ -63,6 +63,15 @@ public class JpsCompilerConfigurationTest extends JpsSerializationTestCase {
     assertTrue(validationConfiguration.isValidatorEnabled("JPA Validator"));
   }
 
+  public void testMergeDataFromExternalDirectory() {
+    loadProject("jps/model-serialization/testData/projectWithExternalStorage/project", 
+                "jps/model-serialization/testData/projectWithExternalStorage/external_build_system");
+    JpsJavaCompilerConfiguration configuration = JpsJavaExtensionService.getInstance().getCompilerConfiguration(myProject);
+    assertNotNull(configuration);
+    assertEquals("1.8", configuration.getByteCodeTargetLevel("externalStorage.java8.main"));
+    assertEquals("11", configuration.getByteCodeTargetLevel("jpsModule"));
+  }
+
   private boolean isExcluded(JpsCompilerExcludes excludes, final String path) {
     return excludes.isExcluded(JpsPathUtil.urlToFile(getUrl(path)));
   }

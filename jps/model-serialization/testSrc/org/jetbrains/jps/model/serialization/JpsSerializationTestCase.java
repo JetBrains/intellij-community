@@ -24,14 +24,25 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   protected void loadProject(final String relativePath) {
     loadProjectByAbsolutePath(getTestDataFileAbsolutePath(relativePath));
   }
+  
+  protected void loadProject(@NotNull String relativePath, @NotNull String externalStorageRelativePath) {
+    loadProjectByAbsolutePath(getTestDataFileAbsolutePath(relativePath), Paths.get(getTestDataFileAbsolutePath(externalStorageRelativePath)));
+  }
 
   protected void loadProjectByAbsolutePath(String path) {
+    loadProjectByAbsolutePath(path, null);
+  }
+
+  protected final void loadProjectByAbsolutePath(String path, Path externalConfigurationDirectory) {
     myProjectHomePath = FileUtilRt.toSystemIndependentName(path);
     if (myProjectHomePath.endsWith(".ipr")) {
       myProjectHomePath = PathUtil.getParentPath(myProjectHomePath);
     }
     try {
-      JpsProjectLoader.loadProject(myProject, getPathVariables(), Paths.get(path));
+      Map<String, String> pathVariables = getPathVariables();
+      Path projectPath = Paths.get(path);
+      JpsProjectLoader.loadProject(myProject, pathVariables, JpsPathMapper.IDENTITY, projectPath, externalConfigurationDirectory,
+                                   Runnable::run, false);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -73,16 +73,19 @@ public final class JpsProjectLoader extends JpsLoaderBase {
   private final Map<String, String> myPathVariables;
   private final JpsPathMapper myPathMapper;
   private final boolean myLoadUnloadedModules;
+  private final @Nullable Path myExternalConfigurationDirectory;
 
   private JpsProjectLoader(JpsProject project,
                            Map<String, String> pathVariables,
                            @NotNull JpsPathMapper pathMapper,
-                           Path baseDir,
+                           @NotNull Path baseDir,
+                           @Nullable Path externalConfigurationDirectory, 
                            boolean loadUnloadedModules) {
     super(createProjectMacroExpander(pathVariables, baseDir));
     myProject = project;
     myPathVariables = pathVariables;
     myPathMapper = pathMapper;
+    myExternalConfigurationDirectory = externalConfigurationDirectory;
     myProject.getContainer().setChild(JpsProjectSerializationDataExtensionImpl.ROLE, new JpsProjectSerializationDataExtensionImpl(baseDir));
     myLoadUnloadedModules = loadUnloadedModules;
   }
@@ -116,8 +119,21 @@ public final class JpsProjectLoader extends JpsLoaderBase {
                                  Path projectPath,
                                  @NotNull Executor executor,
                                  boolean loadUnloadedModules) throws IOException {
+    String externalProjectConfigDir = System.getProperty("external.project.config");
+    Path externalConfigurationDirectory = externalProjectConfigDir != null && !externalProjectConfigDir.isBlank() 
+                                          ? Path.of(externalProjectConfigDir) : null;
+    loadProject(project, pathVariables, pathMapper, projectPath, externalConfigurationDirectory, executor, loadUnloadedModules);
+  }
+
+  public static void loadProject(JpsProject project,
+                                 Map<String, String> pathVariables,
+                                 @NotNull JpsPathMapper pathMapper,
+                                 @NotNull Path projectPath,
+                                 @Nullable Path externalConfigurationDirectory,
+                                 @NotNull Executor executor,
+                                 boolean loadUnloadedModules) throws IOException {
     if (Files.isRegularFile(projectPath) && projectPath.toString().endsWith(".ipr")) {
-      new JpsProjectLoader(project, pathVariables, pathMapper, projectPath.getParent(), loadUnloadedModules)
+      new JpsProjectLoader(project, pathVariables, pathMapper, projectPath.getParent(), null, loadUnloadedModules)
         .loadFromIpr(projectPath, executor);
     }
     else {
@@ -132,7 +148,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       else {
         throw new IOException("Cannot find IntelliJ IDEA project files at " + projectPath);
       }
-      new JpsProjectLoader(project, pathVariables, pathMapper, directory.getParent(), loadUnloadedModules)
+      new JpsProjectLoader(project, pathVariables, pathMapper, directory.getParent(), externalConfigurationDirectory, loadUnloadedModules)
         .loadFromDirectory(directory, executor);
     }
   }
@@ -144,7 +160,7 @@ public final class JpsProjectLoader extends JpsLoaderBase {
 
   @Override
   protected @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
-    Path externalConfigDir = resolveExternalProjectConfig("project");
+    Path externalConfigDir = myExternalConfigurationDirectory != null ? myExternalConfigurationDirectory.resolve("project") : null;
     Element data = super.loadComponentData(serializer, configFile);
     String componentName = serializer.getComponentName();
     if (externalConfigDir == null || !(componentName.equals("CompilerConfiguration"))) {
@@ -182,9 +198,13 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       }
     }
 
-    Path externalConfigDir = resolveExternalProjectConfig("project");
-    if (externalConfigDir != null) {
+    Path externalConfigDir;
+    if (myExternalConfigurationDirectory != null) {
+      externalConfigDir = myExternalConfigurationDirectory.resolve("project");
       LOG.info("External project config dir is used: " + externalConfigDir);
+    }
+    else {
+      externalConfigDir = null;
     }
 
     Element moduleData = JDomSerializationUtil.findComponent(loadRootElement(dir.resolve("modules.xml")), MODULE_MANAGER_COMPONENT);
@@ -361,25 +381,24 @@ public final class JpsProjectLoader extends JpsLoaderBase {
     timingLog.run();
   }
 
-  private static @Nullable Path resolveExternalProjectConfig(@NotNull String subDirName) {
-    String externalProjectConfigDir = System.getProperty("external.project.config");
-    return (externalProjectConfigDir == null || externalProjectConfigDir.isBlank()) ? null : Path.of(externalProjectConfigDir, subDirName);
-  }
-
-  private static @NotNull List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
-                                                      @Nullable JpsSdkType<?> projectSdkType,
-                                                      @NotNull Map<String, String> pathVariables,
-                                                      @NotNull JpsPathMapper pathMapper,
-                                                      @Nullable Executor executor) {
+  private @NotNull List<JpsModule> loadModules(@NotNull List<? extends Path> moduleFiles,
+                                               @Nullable JpsSdkType<?> projectSdkType,
+                                               @NotNull Map<String, String> pathVariables,
+                                               @NotNull JpsPathMapper pathMapper,
+                                               @Nullable Executor executor) {
     if (executor == null) {
       executor = DefaultExecutorHolder.threadPool;
     }
 
     List<JpsModule> modules = new ArrayList<>();
     List<CompletableFuture<Pair<Path, Element>>> futureModuleFilesContents = new ArrayList<>();
-    Path externalModuleDir = resolveExternalProjectConfig("modules");
-    if (externalModuleDir != null) {
+    Path externalModuleDir;
+    if (myExternalConfigurationDirectory != null) {
+      externalModuleDir = myExternalConfigurationDirectory.resolve("modules");
       LOG.info("External project config dir is used for modules: " + externalModuleDir);
+    }
+    else {
+      externalModuleDir = null;
     }
 
     for (Path file : moduleFiles) {
