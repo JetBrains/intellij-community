@@ -14024,9 +14024,10 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
+- sf:Companion:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Companion
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-- s:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
+- sf:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - getActions(java.lang.Runnable):java.util.List
 - getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
@@ -14038,10 +14039,8 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - isEmptyPatternSupported():Z
 - p:processElement(com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor,com.intellij.ide.util.gotoByName.FilteringGotoByModel,java.lang.Object,I):Z
 - processSelectedItem(java.lang.Object,I,java.lang.String):Z
-f:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Factory
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
-- <init>():V
-- createContributor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+f:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor$Companion
+- f:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 a:com.intellij.ide.actions.searcheverywhere.FixedTabsListCustomizationStrategy
 - <init>(java.util.List):V
 - getSeparateTabContributors(java.util.List):java.util.List
