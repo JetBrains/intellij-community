@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.l10n.LocalizationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -411,10 +410,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     Ref<Boolean> allowInstallWithoutRestart = Ref.create(true);
-    if (LocalizationUtil.INSTANCE.isInactiveLocalizationPlugin(descriptor)) {
-      allowInstallWithoutRestart.set(true);
-    }
-    else if (isUpdate) {
+    if (isUpdate) {
       IdeaPluginDescriptorImpl installedPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
       if (installedPluginDescriptor.isBundled()) {
         allowInstallWithoutRestart.set(

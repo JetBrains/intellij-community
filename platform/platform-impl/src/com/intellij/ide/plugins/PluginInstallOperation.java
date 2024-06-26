@@ -258,10 +258,10 @@ public final class PluginInstallOperation {
       }
 
       boolean allowNoRestart = myAllowInstallWithoutRestart &&
-                               (DynamicPlugins.allowLoadUnloadWithoutRestart(
+                               DynamicPlugins.allowLoadUnloadWithoutRestart(
                                  descriptor, null,
                                  ContainerUtil.map(myPendingDynamicPluginInstalls, pluginInstall -> pluginInstall.getPluginDescriptor())
-                               )|| descriptor.epNameToExtensions.containsKey("com.intellij.languageBundle"));
+                               );
       if (allowNoRestart) {
         myPendingDynamicPluginInstalls.add(new PendingDynamicPluginInstall(downloader.getFilePath(), descriptor));
         InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
