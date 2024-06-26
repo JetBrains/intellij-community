@@ -219,14 +219,6 @@ internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyRefsSubtreeHo
   )
 }
 
-internal fun matchBranches(
-  matcher: MinusculeMatcher?,
-  branches: Collection<GitBranch>,
-  exceptBranchFilter: (GitBranch) -> Boolean = { false }
-): MatchResult<GitBranch> {
-  return match(matcher, branches, GitBranch::getName, exceptBranchFilter)
-}
-
 internal fun <N> match(
   matcher: MinusculeMatcher?,
   nodes: Collection<N>,
