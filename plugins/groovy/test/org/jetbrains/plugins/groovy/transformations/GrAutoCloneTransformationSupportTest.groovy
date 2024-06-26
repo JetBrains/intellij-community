@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.transformations
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -78,7 +78,7 @@ class Pojo extends Pogo {
   void foo() {
     Pogo pogo = new Pogo(); 
     <error descr="Unhandled exception: java.lang.CloneNotSupportedException">cloneOrCopyMembers</error>(pogo);
-    cloneOrCopyMembers<error descr="'cloneOrCopyMembers(Pogo)' in 'Pogo' cannot be applied to '()'">()</error>;
+    cloneOrCopyMembers<error descr="Expected 1 argument but found 0">()</error>;
   }
 }
 '''

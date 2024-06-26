@@ -4,7 +4,7 @@ import static java.util.Objects.toString;
 class Foo {
 
   String go() {
-    return toString<error descr="'toString()' in 'Foo' cannot be applied to '(java.lang.String)'">("foo")</error>;
+    return toString<error descr="Expected no arguments but found 1">("foo")</error>;
   }
 
   public String toString() {

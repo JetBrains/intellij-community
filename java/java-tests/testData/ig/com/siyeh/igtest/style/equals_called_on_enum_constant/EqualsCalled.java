@@ -9,7 +9,7 @@ public class EqualsCalled {
     void one() {
         E.A.<warning descr="'equals()' called on enum value">equals</warning>(E.C);
         E.B.<warning descr="'equals()' called on enum value">equals</warning>(new Object());
-        E.C.equals<error descr="'equals(java.lang.Object)' in 'java.lang.Enum' cannot be applied to '()'">()</error>;
+        E.C.equals<error descr="Expected 1 argument but found 0">()</error>;
         final Object A = new Object();
         A.equals(1);
     }
