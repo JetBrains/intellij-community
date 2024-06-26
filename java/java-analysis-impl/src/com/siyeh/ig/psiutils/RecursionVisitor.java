@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,8 +37,7 @@ class RecursionVisitor extends JavaRecursiveElementWalkingVisitor {
   }
 
   @Override
-  public void visitMethodCallExpression(
-    @NotNull PsiMethodCallExpression call) {
+  public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
     if (recursive) {
       return;
     }
@@ -48,12 +47,11 @@ class RecursionVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
     final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    final String calledMethodName = methodExpression.getReferenceName();
-    if (!methodName.equals(calledMethodName)) {
+    if (!methodName.equals(methodExpression.getReferenceName())) {
       return;
     }
-    final PsiMethod calledMethod = call.resolveMethod();
-    if (!method.equals(calledMethod)) {
+    JavaResolveResult resolveResult = call.resolveMethodGenerics();
+    if (!resolveResult.isValidResult() || !method.equals(resolveResult.getElement())) {
       return;
     }
     if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.PRIVATE)) {

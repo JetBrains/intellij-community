@@ -177,6 +177,10 @@ class IndirectRecursion2 {
 
 class IndirectRecursionNoWarning {
 
+  void brokenCode(int i) {
+    brokenCode<error descr="Expected 1 argument but found 2">(1, 2)</error>;
+  }
+
   int i = 1;
   @Override
   public int hashCode() {
