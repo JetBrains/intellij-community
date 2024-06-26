@@ -101,8 +101,11 @@
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabSilentHttpAuthDataProvider"/>
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
+    <GitHttpAuthDataProvider id="GitLab.Silent"
+                             implementation="org.jetbrains.plugins.gitlab.git.http.GitLabSilentHttpAuthDataProvider"
+                             order="before GitLab"/>
+    <GitHttpAuthDataProvider id="GitLab"
+                             implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
     <gitCurrentBranchPresenter
       implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$BranchPresenter"/>
     <gitPushNotificationCustomizer implementation="org.jetbrains.plugins.gitlab.notification.GitLabPushNotificationCustomizer"/>
