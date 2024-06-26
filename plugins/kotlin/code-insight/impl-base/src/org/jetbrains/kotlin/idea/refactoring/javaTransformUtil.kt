@@ -147,7 +147,7 @@ fun createJavaClass(klass: KtClass, targetClass: PsiClass?, classKind: ClassKind
     val template = klass.toLightClass() ?: KotlinAsJavaSupport.getInstance(klass.project).getFakeLightClass(klass)
 
     copyModifierListItems(template.modifierList!!, javaClass.modifierList!!)
-    if (targetClass?.parent is PsiFile) {
+    if (targetClass?.parent is PsiFile && classKind == ClassKind.CLASS) {
         javaClass.modifierList!!.setModifierProperty(PsiModifier.STATIC, true)
     }
     if (template.isInterface) {

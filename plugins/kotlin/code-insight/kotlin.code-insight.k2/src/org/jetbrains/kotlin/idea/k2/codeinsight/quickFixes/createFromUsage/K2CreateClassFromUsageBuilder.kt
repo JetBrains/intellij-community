@@ -30,12 +30,8 @@ import org.jetbrains.kotlin.utils.ifEmpty
 
 object K2CreateClassFromUsageBuilder {
     fun generateCreateClassActions(element: KtElement): List<IntentionAction> {
-        //if (true) return listOf()
         val refExpr = element.findParentOfType<KtNameReferenceExpression>(strict = false) ?: return listOf()
-        //if (refExpr.getQualifiedElement() != refExpr) return listOf()
         if (refExpr.getParentOfTypeAndBranch<KtCallableReferenceExpression> { callableReference } != null) return listOf()
-        //val targetParents = mutableListOf<PsiElement>()
-        val qualifiedElement = refExpr.getQualifiedElement()
 
         var expectedType: ExpectedKotlinType?
         var superClassName:String?
@@ -49,27 +45,6 @@ object K2CreateClassFromUsageBuilder {
             val isAny = superClassName == StandardClassIds.Any.shortClassName.asString()
             paramList = renderParamList(superClass, isAny)
             returnTypeString = if (superClass == null || superClassName == null || isAny) "" else if (superClass!!.isInterface()) ": $superClassName" else ": $superClassName()"
-
-            //if (qualifiedElement == refExpr) {
-            //    // not qualified
-            //    targetParents.addAll(element.parents.filterIsInstance<KtClassOrObject>().toList())
-            //    targetParents += element.containingFile
-            //}
-            //else {
-            //    val receiver =
-            //        when (qualifiedElement) {
-            //            is KtQualifiedExpression -> qualifiedElement.receiverExpression.resolveExpression()
-            //            is KtUserType -> null
-            //            else -> null
-            //        }
-            //
-            //    receiver?.psi?.let { targetParents += it }
-            //}
-
-            //if (targetParents.isEmpty()) {
-            //    targetParents += element.containingFile
-            //}
-            //if (getContainer(refExpr) == null) return null
 
             val (classKinds, targetParents) = getPossibleClassKindsAndParents(refExpr)
             return classKinds.map { kind ->

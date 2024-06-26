@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
+import K2CreateClassFromUsageBuilder
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -8,6 +10,8 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixesList
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtImportDirective
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
@@ -56,6 +60,21 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
         KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.ComponentFunctionMissing ->
             listOfNotNull(K2CreateParameterFromUsageBuilder.generateCreateParameterActionForComponentFunctionMissing(diagnostic.psi, diagnostic.destructingType))
         }
+    private val createClassFromUsageForUnresolvedImport: KotlinQuickFixFactory.IntentionBased<KaFirDiagnostic.UnresolvedImport> =
+        KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.UnresolvedImport ->
+            createClassFromUsageForUnresolvedImport(diagnostic)
+        }
+
+    private fun createClassFromUsageForUnresolvedImport(diagnostic: KaFirDiagnostic.UnresolvedImport): List<IntentionAction> {
+        val unresolvedName = diagnostic.reference
+        val simpleReferences = (diagnostic.psi as KtImportDirective).importedReference?.children ?: emptyArray()
+        for (simpleReference in simpleReferences) {
+            if (unresolvedName == simpleReference.text) {
+                return K2CreateClassFromUsageBuilder.generateCreateClassActions(simpleReference as KtElement)
+            }
+        }
+        return listOf()
+    }
 
     override val list: KotlinQuickFixesList = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(createFunctionForArgumentTypeMismatch)
@@ -64,5 +83,6 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(createVariableForExpressionExpectedPackageFound)
         registerFactory(createParameterForNamedParameterNotFound)
         registerFactory(createParameterForComponentFunctionMissing)
+        registerFactory(createClassFromUsageForUnresolvedImport)
     }
 }
