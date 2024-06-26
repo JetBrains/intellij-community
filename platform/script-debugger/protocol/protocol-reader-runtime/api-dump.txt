@@ -32,7 +32,6 @@ c:org.jetbrains.jsonProtocol.OutMessage
 - f:writeString(java.lang.String,java.lang.String):V
 - f:writeStringList(java.lang.String,java.util.Collection):V
 f:org.jetbrains.jsonProtocol.OutMessageKt
-- sf:doWriteRaw(org.jetbrains.jsonProtocol.OutMessage,java.lang.String):V
 - sf:prepareWriteRaw(org.jetbrains.jsonProtocol.OutMessage,java.lang.String):V
 - sf:writeBoolean(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,java.lang.Boolean):V
 - sf:writeBoolean(org.jetbrains.jsonProtocol.OutMessage,java.lang.String,Z,Z):V
