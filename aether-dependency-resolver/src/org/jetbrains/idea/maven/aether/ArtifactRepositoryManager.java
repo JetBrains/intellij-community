@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.aether;
 
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.Cancellation;
 import com.intellij.util.ArrayUtil;
 import org.apache.maven.repository.internal.MavenRepositorySystemUtils;
 import org.eclipse.aether.*;
@@ -52,17 +51,11 @@ import java.util.stream.Collectors;
  * all necessary params like a path to local repo should be passed in constructor
  */
 public final class ArtifactRepositoryManager {
+  private static final Logger LOG = Logger.getInstance(ArtifactRepositoryManager.class);
+  
   private static final VersionScheme ourVersioning = new GenericVersionScheme();
   private static final JreProxySelector ourProxySelector = new JreProxySelector();
-  private static final Logger LOG = Logger.getInstance(ArtifactRepositoryManager.class);
   private final RepositorySystemSessionFactory mySessionFactory;
-
-  private static final RemoteRepository MAVEN_CENTRAL_REPOSITORY = Cancellation.forceNonCancellableSectionInClassInitializer(
-    () -> createRemoteRepository("central", "https://repo1.maven.org/maven2/")
-  );
-  private static final RemoteRepository JBOSS_COMMUNITY_REPOSITORY = createRemoteRepository(
-    "jboss.community", "https://repository.jboss.org/nexus/content/repositories/public/"
-  );
 
   private static final RepositorySystem ourSystem;
   static {
@@ -574,7 +567,17 @@ public final class ArtifactRepositoryManager {
 
   @NotNull
   public static List<RemoteRepository> createDefaultRemoteRepositories() {
-    return Arrays.asList(createRemoteRepository(MAVEN_CENTRAL_REPOSITORY), createRemoteRepository(JBOSS_COMMUNITY_REPOSITORY));
+    return List.of(
+      // Maven Central Repository
+      createRemoteRepository(
+        "central", "https://repo1.maven.org/maven2/"
+      ),
+
+      // JBoss Community Repository
+      createRemoteRepository(
+        "jboss.community", "https://repository.jboss.org/nexus/content/repositories/public/"
+      )
+    );
   }
 
   private CollectRequest createCollectRequest(String groupId, String artifactId, Collection<VersionConstraint> versions, Set<ArtifactKind> kinds) {
