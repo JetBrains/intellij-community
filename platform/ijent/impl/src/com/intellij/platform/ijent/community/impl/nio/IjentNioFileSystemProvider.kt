@@ -167,9 +167,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
           is IjentFileSystemWindowsApi -> TODO()
         }
       }
-    } catch (e : IjentFileSystemPosixApi.CreateDirectoryException) {
+    }
+    catch (e : IjentFileSystemPosixApi.CreateDirectoryException) {
       when (e) {
         is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists, is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
+        is IjentFileSystemPosixApi.CreateDirectoryException.ParentNotFound -> throw NoSuchFileException(dir.toString(), null, "Parent directory not found")
         else -> throw IOException(e)
       }
     }
