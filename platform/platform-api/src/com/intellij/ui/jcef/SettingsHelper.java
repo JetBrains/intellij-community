@@ -206,7 +206,7 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
     }
 
-    args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required");
+    args = ArrayUtil.mergeArrays(args, "--autoplay-policy=no-user-gesture-required", "--disable-component-update");
 
     if (isOffScreenRenderingModeEnabled()) {
       args = ArrayUtil.mergeArrays(args, "--disable-gpu-compositing");
