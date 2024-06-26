@@ -11695,6 +11695,7 @@ f:com.intellij.find.editorHeaderActions.SelectAllAction
 c:com.intellij.find.editorHeaderActions.ShowFilterPopupGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.actionSystem.ShortcutProvider
+- com.intellij.openapi.project.DumbAware
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
