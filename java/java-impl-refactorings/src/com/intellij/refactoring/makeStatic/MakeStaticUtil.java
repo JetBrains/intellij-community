@@ -18,7 +18,10 @@ public final class MakeStaticUtil {
   public static InternalUsageInfo[] findClassRefsInMember(PsiTypeParameterListOwner member, boolean includeSelf) {
     PsiClass containingClass = member.getContainingClass();
     ArrayList<InternalUsageInfo> classRefs = new ArrayList<>();
-    addClassRefs(member, classRefs, containingClass, member, includeSelf);
+    PsiTreeUtil.processElements(member, e -> {
+      addClassRefs(member, classRefs, containingClass, e, includeSelf);
+      return true;
+    });
     return classRefs.toArray(new InternalUsageInfo[0]);
   }
 
@@ -84,11 +87,6 @@ public final class MakeStaticUtil {
           }
         }
       }
-    }
-
-    PsiElement[] children = element.getChildren();
-    for (PsiElement child : children) {
-      addClassRefs(originalMember, classRefs, containingClass, child, includeSelf);
     }
   }
 
