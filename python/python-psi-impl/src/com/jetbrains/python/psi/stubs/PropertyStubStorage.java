@@ -45,7 +45,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
 
   @NotNull
   @Override
-  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+  public Class<PropertyStubType> getTypeClass() {
     return PropertyStubType.class;
   }
 

@@ -22,7 +22,7 @@ class PyTypedDictStubImpl private constructor(private val myCalleeName: Qualifie
                                               override val fields: List<PyTypedDictFieldStub>,
                                               override val isRequired: Boolean = true) : PyTypedDictStub {
 
-  override fun getTypeClass(): Class<out CustomTargetExpressionStubType<*>> {
+  override fun getTypeClass(): Class<PyTypedDictStubType> {
     return PyTypedDictStubType::class.java
   }
 

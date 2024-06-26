@@ -53,7 +53,7 @@ class PyDataclassStubImpl private constructor(private val type: String,
     }
   }
 
-  override fun getTypeClass(): Class<out PyCustomClassStubType<out PyCustomClassStub>> = PyDataclassStubType::class.java
+  override fun getTypeClass(): Class<PyDataclassStubType> = PyDataclassStubType::class.java
 
   override fun serialize(stream: StubOutputStream) {
     stream.writeName(type)

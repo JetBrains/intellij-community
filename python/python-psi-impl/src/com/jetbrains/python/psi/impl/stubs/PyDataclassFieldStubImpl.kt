@@ -93,7 +93,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
     }
   }
 
-  override fun getTypeClass(): Class<out CustomTargetExpressionStubType<out CustomTargetExpressionStub>> {
+  override fun getTypeClass(): Class<PyDataclassFieldStubType> {
     return PyDataclassFieldStubType::class.java
   }
 

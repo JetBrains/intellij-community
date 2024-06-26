@@ -41,7 +41,7 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
 
   @NotNull
   @Override
-  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+  public Class<PyTypingAliasStubType> getTypeClass() {
     return PyTypingAliasStubType.class;
   }
 
