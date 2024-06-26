@@ -7,18 +7,16 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.MAX_LINE_LENGTH_WORD_WRAP
 import com.intellij.ui.dsl.builder.Panel
 
-class DescriptionBlockWithComment(
+class DescriptionBlockWithHint(
     @NlsContexts.Label private val myLabel: String,
-    @NlsContexts.Label private val commentText: String
+    @NlsContexts.Label private val myHint: String
 ) : DescriptionBlock(myLabel) {
 
     override fun addToPanel(panel: Panel) {
         panel.apply {
             row {
-                text(myLabel, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
-            }
-            row {
-                comment(commentText, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP)
+                text(myLabel, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP).validationRequestor { validate -> validate() }
+                rowComment(myHint)
             }.bottomGap(BottomGap.SMALL)
         }
     }
