@@ -1,9 +1,10 @@
 package com.michaelbaranov.microba.gradienteditor.ui;
 
+import com.michaelbaranov.microba.gradient.GradientBar;
+import com.michaelbaranov.microba.gradienteditor.GradientEditor;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-
-import com.michaelbaranov.microba.gradienteditor.GradientEditor;
 
 public class GradientEditorListener implements PropertyChangeListener {
 
@@ -17,8 +18,9 @@ public class GradientEditorListener implements PropertyChangeListener {
     this.ui = ui;
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
-    if (GradientEditor.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
+    if (GradientBar.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
 
     }
 

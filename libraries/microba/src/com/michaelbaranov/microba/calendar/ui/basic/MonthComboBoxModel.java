@@ -15,7 +15,7 @@ class MonthComboBoxModel extends AbstractListModel implements
 
   public static final String PROPERTY_NAME_DATE = "date";
 
-  private PropertyChangeSupport changeSupport = new PropertyChangeSupport(
+  private final PropertyChangeSupport changeSupport = new PropertyChangeSupport(
       this);
 
   private Calendar calendar;
@@ -24,7 +24,7 @@ class MonthComboBoxModel extends AbstractListModel implements
 
   private TimeZone zone;
 
-  public MonthComboBoxModel(Date date, Locale locale, TimeZone zone) {
+  MonthComboBoxModel(Date date, Locale locale, TimeZone zone) {
     super();
     this.locale = locale;
     this.zone = zone;
@@ -65,19 +65,23 @@ class MonthComboBoxModel extends AbstractListModel implements
     fireContentsChanged(this, 0, getSize() - 1);
   }
 
+  @Override
   public void setSelectedItem(Object anItem) {
     Date aDate = (Date) anItem;
     setDate(aDate);
   }
 
+  @Override
   public Object getSelectedItem() {
     return calendar.getTime();
   }
 
+  @Override
   public int getSize() {
     return calendar.getActualMaximum(Calendar.MONTH) + 1;
   }
 
+  @Override
   public Object getElementAt(int index) {
     Calendar c = Calendar.getInstance(locale);
     c.setTimeZone(zone);

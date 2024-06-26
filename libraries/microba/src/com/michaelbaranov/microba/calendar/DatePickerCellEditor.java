@@ -1,14 +1,12 @@
 package com.michaelbaranov.microba.calendar;
 
-import java.beans.PropertyVetoException;
-import java.util.Date;
+import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
 
-import javax.swing.DefaultCellEditor;
-import javax.swing.JCheckBox;
+import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.tree.TreeCellEditor;
-
-import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
+import java.beans.PropertyVetoException;
+import java.util.Date;
 
 /**
  * This class in a concrete implementation of {@link TableCellEditor} and
@@ -52,22 +50,26 @@ public class DatePickerCellEditor extends DefaultCellEditor {
 
     // replace delegate with own
     this.delegate = new EditorDelegate() {
+      @Override
       public void setValue(Object value) {
         try {
           ((DatePicker) editorComponent).setDate((Date) value);
-        } catch (PropertyVetoException e) {
+        } catch (PropertyVetoException ignored) {
         }
       }
 
+      @Override
       public Object getCellEditorValue() {
         return ((DatePicker) editorComponent).getDate();
       }
 
+      @Override
       public void cancelCellEditing() {
         ((DatePicker) editorComponent).commitOrRevert();
         super.cancelCellEditing();
       }
 
+      @Override
       public boolean stopCellEditing() {
         ((DatePicker) editorComponent).commitOrRevert();
         return super.stopCellEditing();

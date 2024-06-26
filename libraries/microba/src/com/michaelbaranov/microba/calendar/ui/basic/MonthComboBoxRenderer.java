@@ -1,13 +1,11 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.awt.Component;
+import javax.swing.*;
+import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.JList;
 
 class MonthComboBoxRenderer extends DefaultListCellRenderer {
 
@@ -17,15 +15,16 @@ class MonthComboBoxRenderer extends DefaultListCellRenderer {
 
   private SimpleDateFormat dateFormat;
 
-  public MonthComboBoxRenderer(Locale locale, TimeZone zone) {
+  MonthComboBoxRenderer(Locale locale, TimeZone zone) {
     // this.locale = locale;
     this.zone = zone;
     dateFormat = new SimpleDateFormat("MMMM", locale);
     dateFormat.setTimeZone(zone);
   }
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value,
-      int index, boolean isSelected, boolean cellHasFocus) {
+                                                int index, boolean isSelected, boolean cellHasFocus) {
     super.getListCellRendererComponent(list, value, index, isSelected,
         cellHasFocus);
 
@@ -35,6 +34,7 @@ class MonthComboBoxRenderer extends DefaultListCellRenderer {
     return this;
   }
 
+  @Override
   public void setLocale(Locale locale) {
     // this.locale = locale;
     dateFormat = new SimpleDateFormat("MMMM", locale);

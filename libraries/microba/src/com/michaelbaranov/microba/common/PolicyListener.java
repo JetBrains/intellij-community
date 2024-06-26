@@ -12,8 +12,6 @@ public interface PolicyListener extends EventListener {
 
   /**
    * Called when a {@link PolicyEvent} is fired.
-   * 
-   * @param event
    */
-  public void policyChanged(PolicyEvent event);
+  void policyChanged(PolicyEvent event);
 }

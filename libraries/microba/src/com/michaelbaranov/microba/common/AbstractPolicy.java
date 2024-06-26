@@ -10,12 +10,14 @@ import javax.swing.event.EventListenerList;
  * 
  */
 public abstract class AbstractPolicy implements Policy {
-  private EventListenerList vetoPolicyListenerList = new EventListenerList();
+  private final EventListenerList vetoPolicyListenerList = new EventListenerList();
 
+  @Override
   public void addVetoPolicyListener(PolicyListener listener) {
     vetoPolicyListenerList.add(PolicyListener.class, listener);
   }
 
+  @Override
   public void removeVetoPolicyListener(PolicyListener listener) {
     vetoPolicyListenerList.remove(PolicyListener.class, listener);
 

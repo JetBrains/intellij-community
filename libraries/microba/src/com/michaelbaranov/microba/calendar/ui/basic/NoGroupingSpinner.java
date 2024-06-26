@@ -1,14 +1,9 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.text.NumberFormat;
-
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JSpinner;
-import javax.swing.SpinnerModel;
-import javax.swing.SpinnerNumberModel;
+import javax.swing.*;
 import javax.swing.text.DefaultFormatterFactory;
 import javax.swing.text.NumberFormatter;
+import java.text.NumberFormat;
 
 class NoGroupingSpinner extends JSpinner {
 
@@ -27,10 +22,11 @@ class NoGroupingSpinner extends JSpinner {
 
   }
 
-  public NoGroupingSpinner(SpinnerModel spinnerModel) {
+  NoGroupingSpinner(SpinnerModel spinnerModel) {
     super(spinnerModel);
   }
 
+  @Override
   protected JComponent createEditor(SpinnerModel model) {
     if (model instanceof SpinnerNumberModel)
       return new NoGroupingNumberEditor(this, model);

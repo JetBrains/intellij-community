@@ -1,8 +1,8 @@
 package com.michaelbaranov.microba.calendar;
 
-import java.util.Calendar;
-
 import com.michaelbaranov.microba.common.Policy;
+
+import java.util.Calendar;
 
 /**
  * This interface is used by {@link CalendarPane} and {@link DatePicker} to
@@ -24,7 +24,7 @@ public interface HolidayPolicy extends Policy {
    * @return <code>true</code> if given <code>date</code> is a holliday
    *         <code>false</code> otherwise
    */
-  public boolean isHolliday(Object source, Calendar date);
+  boolean isHolliday(Object source, Calendar date);
 
   /**
    * This method is used to check if a date is a weekend date. Implementation
@@ -37,7 +37,7 @@ public interface HolidayPolicy extends Policy {
    * @return <code>true</code> if given <code>date</code> is weekend date
    *         <code>false</code> otherwise
    */
-  public boolean isWeekend(Object source, Calendar date);
+  boolean isWeekend(Object source, Calendar date);
 
   /**
    * This method is used to query a description for a holliday date. Note,
@@ -50,6 +50,6 @@ public interface HolidayPolicy extends Policy {
    *            a holliday date to get the description for
    * @return a localized name (a description) for a holliday
    */
-  public String getHollidayName(Object source, Calendar date);
+  String getHollidayName(Object source, Calendar date);
 
 }

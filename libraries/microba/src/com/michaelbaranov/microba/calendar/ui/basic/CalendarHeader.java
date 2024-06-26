@@ -1,23 +1,17 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.GridLayout;
+import com.michaelbaranov.microba.Microba;
+import com.michaelbaranov.microba.calendar.CalendarColors;
+import com.michaelbaranov.microba.calendar.CalendarPane;
+import com.michaelbaranov.microba.calendar.HolidayPolicy;
+
+import javax.swing.*;
+import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-
-import com.michaelbaranov.microba.Microba;
-import com.michaelbaranov.microba.calendar.CalendarPane;
-import com.michaelbaranov.microba.calendar.HolidayPolicy;
 
 class CalendarHeader extends JPanel {
 
@@ -29,39 +23,39 @@ class CalendarHeader extends JPanel {
 
   private HolidayPolicy holidayPolicy;
 
-  private Color backgroundColorActive;
+  private final Color backgroundColorActive;
 
-  private Color backgroundColorInactive;
+  private final Color backgroundColorInactive;
 
-  private Color foregroundColorActive;
+  private final Color foregroundColorActive;
 
-  private Color foregroundColorInactive;
+  private final Color foregroundColorInactive;
 
-  private Color foregroundColorWeekendEnabled;
+  private final Color foregroundColorWeekendEnabled;
 
-  private Color foregroundColorWeekendDisabled;
+  private final Color foregroundColorWeekendDisabled;
 
-  public CalendarHeader(CalendarPane peer, Date date, Locale locale,
-      TimeZone zone, HolidayPolicy holidayPolicy) {
+  CalendarHeader(CalendarPane peer, Date date, Locale locale,
+                 TimeZone zone, HolidayPolicy holidayPolicy) {
     super();
 
     backgroundColorActive = Microba.getOverridenColor(
-        CalendarPane.COLOR_CALENDAR_HEADER_BACKGROUND_ENABLED, peer,
-        UIManager.getColor("activeCaption"));
+      CalendarColors.COLOR_CALENDAR_HEADER_BACKGROUND_ENABLED, peer,
+      UIManager.getColor("activeCaption"));
     backgroundColorInactive = Microba.getOverridenColor(
-        CalendarPane.COLOR_CALENDAR_HEADER_BACKGROUND_DISABLED, peer,
-        UIManager.getColor("inactiveCaption"));
+      CalendarColors.COLOR_CALENDAR_HEADER_BACKGROUND_DISABLED, peer,
+      UIManager.getColor("inactiveCaption"));
     foregroundColorActive = Microba.getOverridenColor(
-        CalendarPane.COLOR_CALENDAR_HEADER_FOREGROUND_ENABLED, peer,
-        UIManager.getColor("controlText"));
+      CalendarColors.COLOR_CALENDAR_HEADER_FOREGROUND_ENABLED, peer,
+      UIManager.getColor("controlText"));
     foregroundColorInactive = Microba.getOverridenColor(
-        CalendarPane.COLOR_CALENDAR_HEADER_FOREGROUND_DISABLED, peer,
-        UIManager.getColor("textInactiveText"));
+      CalendarColors.COLOR_CALENDAR_HEADER_FOREGROUND_DISABLED, peer,
+      UIManager.getColor("textInactiveText"));
     foregroundColorWeekendEnabled = Microba.getOverridenColor(
-        CalendarPane.COLOR_CALENDAR_HEADER_FOREGROUND_WEEKEND_ENABLED,
+      CalendarColors.COLOR_CALENDAR_HEADER_FOREGROUND_WEEKEND_ENABLED,
         peer, Color.RED);
     foregroundColorWeekendDisabled = Microba.getOverridenColor(
-        CalendarPane.COLOR_CALENDAR_HEADER_FOREGROUND_WEEKEND_DISABLED,
+      CalendarColors.COLOR_CALENDAR_HEADER_FOREGROUND_WEEKEND_DISABLED,
         peer, foregroundColorInactive);
 
     this.locale = locale;
@@ -103,12 +97,12 @@ class CalendarHeader extends JPanel {
       label.setFont(boldFont);
       add(label);
 
-      boolean isHolliday = false;
+      boolean isHoliday = false;
       if (holidayPolicy != null) {
-        isHolliday = holidayPolicy.isWeekend(this, cal);
+        isHoliday = holidayPolicy.isWeekend(this, cal);
       }
 
-      if (isHolliday)
+      if (isHoliday)
         label.setForeground(isEnabled() ? foregroundColorWeekendEnabled
             : foregroundColorWeekendDisabled);
 
@@ -120,6 +114,7 @@ class CalendarHeader extends JPanel {
 
   }
 
+  @Override
   public void setLocale(Locale locale) {
     this.locale = locale;
     reflectData();
@@ -145,6 +140,7 @@ class CalendarHeader extends JPanel {
 
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     reflectData();

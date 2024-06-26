@@ -1,20 +1,14 @@
 package com.michaelbaranov.microba.gradient.ui.basic;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Insets;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.JComponent;
-import javax.swing.SwingConstants;
-import javax.swing.plaf.ComponentUI;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.gradient.GradientBar;
 import com.michaelbaranov.microba.gradient.ui.GradientListener;
 import com.michaelbaranov.microba.gradient.ui.GradientUI;
+
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import java.awt.*;
+import java.beans.PropertyChangeListener;
 
 public class BasicGradientUI extends GradientUI {
 
@@ -101,8 +95,8 @@ public class BasicGradientUI extends GradientUI {
       g.fillRect(viewRect.x, viewRect.y, viewRect.width, viewRect.height);
       break;
     default:
-      PreparedColorPoint pts[] = prepareColorPoints(colorModel,
-          colorPositionColumn, colorColumn);
+      PreparedColorPoint[] pts = prepareColorPoints(colorModel,
+                                                    colorPositionColumn, colorColumn);
       // PreparedAlphaPoint apts[] = prepareAlphaPoints(alphaModel,
       // colorPositionColumn, colorColumn);
 

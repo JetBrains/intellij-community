@@ -14,12 +14,12 @@ public interface CalendarResources {
   /**
    * A key for "today" word
    */
-  public static final String KEY_TODAY = "key.today";
+  String KEY_TODAY = "key.today";
 
   /**
    * A key for "none" word
    */
-  public static final String KEY_NONE = "key.none";
+  String KEY_NONE = "key.none";
 
   /**
    * This method is used to query tring resources for {@link CalendarPane} and
@@ -31,5 +31,5 @@ public interface CalendarResources {
    *            a {@link Locale}
    * @return localized string resource for a given key
    */
-  public String getResource(String key, Locale locale);
+  String getResource(String key, Locale locale);
 }

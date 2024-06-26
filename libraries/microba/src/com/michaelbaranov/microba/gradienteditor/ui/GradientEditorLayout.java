@@ -1,42 +1,42 @@
 package com.michaelbaranov.microba.gradienteditor.ui;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Insets;
-import java.awt.LayoutManager;
-
-import javax.swing.SwingConstants;
-
 import com.michaelbaranov.microba.gradient.GradientBar;
 import com.michaelbaranov.microba.gradienteditor.GradientEditor;
 import com.michaelbaranov.microba.marker.MarkerBar;
 
+import javax.swing.*;
+import java.awt.*;
+
 public class GradientEditorLayout implements LayoutManager {
 
-  private MarkerBar bar;
+  private final MarkerBar bar;
 
-  private GradientBar gradient;
+  private final GradientBar gradient;
 
   public GradientEditorLayout(MarkerBar bar, GradientBar gradient) {
     this.bar = bar;
     this.gradient = gradient;
   }
 
+  @Override
   public void addLayoutComponent(String name, Component comp) {
   }
 
+  @Override
   public void removeLayoutComponent(Component comp) {
   }
 
+  @Override
   public Dimension preferredLayoutSize(Container parent) {
     return parent.getPreferredSize();
   }
 
+  @Override
   public Dimension minimumLayoutSize(Container parent) {
     return parent.getMinimumSize();
   }
 
+  @Override
   public void layoutContainer(Container parent) {
     GradientEditor e = (GradientEditor) parent;
     Insets i = parent.getInsets();

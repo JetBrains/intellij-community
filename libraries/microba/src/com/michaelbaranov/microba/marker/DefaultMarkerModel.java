@@ -1,11 +1,10 @@
 package com.michaelbaranov.microba.marker;
 
+import com.michaelbaranov.microba.common.AbstractBoundedTableModelWithSelection;
+
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.ListSelectionModel;
-
-import com.michaelbaranov.microba.common.AbstractBoundedTableModelWithSelection;
 
 /**
  * A basic implementation of <code>BoundedRangeModel</code>,
@@ -143,6 +142,7 @@ public class DefaultMarkerModel extends AbstractBoundedTableModelWithSelection
    *            marker index.
    * @see #addMarkAtPosition(int)
    */
+  @Override
   public void removeMarkerAtIndex(int index) {
     if (isSelectedIndex(index)) {
       removeSelectionInterval(index, index);
@@ -162,6 +162,7 @@ public class DefaultMarkerModel extends AbstractBoundedTableModelWithSelection
    * @return index of added mark.
    * @see #removeMarkerAtIndex(int)
    */
+  @Override
   public int addMarkAtPosition(int position) {
     data.add(new Integer(position));
     int row = data.size() - 1;
@@ -175,6 +176,7 @@ public class DefaultMarkerModel extends AbstractBoundedTableModelWithSelection
    * @inheritDoc
    * @see #setLowerBound(int)
    */
+  @Override
   public int getLowerBound() {
     return lowerBound;
   }
@@ -183,6 +185,7 @@ public class DefaultMarkerModel extends AbstractBoundedTableModelWithSelection
    * @inheritDoc
    * @see #setUpperBound(int)
    */
+  @Override
   public int getUpperBound() {
     return upperBound;
   }

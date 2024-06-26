@@ -1,15 +1,12 @@
 package com.michaelbaranov.microba.gradient.ui;
 
-import java.awt.Color;
-import java.awt.Insets;
-import java.awt.Rectangle;
-import java.util.Arrays;
-import java.util.Comparator;
-
-import javax.swing.plaf.ComponentUI;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.gradient.GradientBar;
+
+import javax.swing.plaf.ComponentUI;
+import java.awt.*;
+import java.util.Arrays;
+import java.util.Comparator;
 
 public class GradientUI extends ComponentUI {
 
@@ -17,9 +14,9 @@ public class GradientUI extends ComponentUI {
 
   protected static Rectangle viewRect = new Rectangle();
 
-  private PreparedColorPoint colorPoints[] = new PreparedColorPoint[0];
+  private PreparedColorPoint[] colorPoints = new PreparedColorPoint[0];
 
-  private PreparedAlphaPoint alphaPoints[] = new PreparedAlphaPoint[0];
+  private PreparedAlphaPoint[] alphaPoints = new PreparedAlphaPoint[0];
 
   protected void calculateViewRect(GradientBar gradient) {
     Insets insets = gradient.getInsets();
@@ -91,14 +88,11 @@ public class GradientUI extends ComponentUI {
     }
 
     private static class PtComparator implements Comparator {
+      @Override
       public int compare(Object o1, Object o2) {
         PreparedColorPoint cp1 = (PreparedColorPoint) o1;
         PreparedColorPoint cp2 = (PreparedColorPoint) o2;
-        if (cp1.position < cp2.position)
-          return -1;
-        if (cp1.position > cp2.position)
-          return 1;
-        return 0;
+        return Integer.compare(cp1.position, cp2.position);
       }
     }
   }
@@ -114,14 +108,11 @@ public class GradientUI extends ComponentUI {
     }
 
     private static class PtComparator implements Comparator {
+      @Override
       public int compare(Object o1, Object o2) {
         PreparedColorPoint cp1 = (PreparedColorPoint) o1;
         PreparedColorPoint cp2 = (PreparedColorPoint) o2;
-        if (cp1.position < cp2.position)
-          return -1;
-        if (cp1.position > cp2.position)
-          return 1;
-        return 0;
+        return Integer.compare(cp1.position, cp2.position);
       }
     }
   }

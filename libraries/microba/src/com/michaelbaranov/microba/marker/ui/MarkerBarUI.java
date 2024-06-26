@@ -1,14 +1,11 @@
 package com.michaelbaranov.microba.marker.ui;
 
-import java.awt.Insets;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-
-import javax.swing.SwingConstants;
-import javax.swing.plaf.ComponentUI;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.marker.MarkerBar;
+
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import java.awt.*;
 
 public class MarkerBarUI extends ComponentUI {
 
@@ -38,8 +35,8 @@ public class MarkerBarUI extends ComponentUI {
       // grow shared polygon array
       polys = new Polygon[count * 2];
       for (int i = 0; i < polys.length; i++) {
-        int xx[] = new int[5];
-        int yy[] = new int[5];
+        int[] xx = new int[5];
+        int[] yy = new int[5];
         Polygon p = new Polygon(xx, yy, 5);
         polys[i] = p;
       }
@@ -53,8 +50,8 @@ public class MarkerBarUI extends ComponentUI {
 
       int baselineOffset = logicalOffsetToBaselineOffset(logicalOffset,
           model);
-      int xx[] = polys[i].xpoints;
-      int yy[] = polys[i].ypoints;
+      int[] xx = polys[i].xpoints;
+      int[] yy = polys[i].ypoints;
 
       if (bar.getOrientation() == SwingConstants.HORIZONTAL) {
 

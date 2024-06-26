@@ -1,27 +1,24 @@
 package com.michaelbaranov.microba.gradient.ui;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.gradient.GradientBar;
 import com.michaelbaranov.microba.gradient.ui.basic.BasicGradientUI;
 
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 public class GradientListener implements TableModelListener,
     PropertyChangeListener {
 
-  private final BasicGradientUI gradientUI;
-
-  private GradientBar gradient;
+  private final GradientBar gradient;
 
   public GradientListener(BasicGradientUI gradientUI, GradientBar gradient) {
-    this.gradientUI = gradientUI;
     this.gradient = gradient;
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (GradientBar.PROPERTY_DATA_MODEL.equals(evt.getPropertyName())) {
       BoundedTableModel oldModel = (BoundedTableModel) evt.getOldValue();
@@ -49,6 +46,7 @@ public class GradientListener implements TableModelListener,
     }
   }
 
+  @Override
   public void tableChanged(TableModelEvent e) {
     gradient.repaint();
 

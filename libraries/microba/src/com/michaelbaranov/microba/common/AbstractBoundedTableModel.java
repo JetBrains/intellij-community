@@ -1,10 +1,9 @@
 package com.michaelbaranov.microba.common;
 
+import javax.swing.table.AbstractTableModel;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-
-import javax.swing.table.AbstractTableModel;
 
 /**
  * A simple abstract implementation of <code>BoundedTableModel</code>. A
@@ -15,12 +14,14 @@ import javax.swing.table.AbstractTableModel;
 public abstract class AbstractBoundedTableModel extends AbstractTableModel
     implements BoundedTableModel {
   
-  private PropertyChangeSupport propertySupport=new PropertyChangeSupport(this);
+  private final PropertyChangeSupport propertySupport = new PropertyChangeSupport(this);
 
+  @Override
   public void addPropertyChangeListener(PropertyChangeListener listener) {
     propertySupport.addPropertyChangeListener(listener);
   }
 
+  @Override
   public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
     propertySupport.addPropertyChangeListener(propertyName, listener);
   }
@@ -53,10 +54,12 @@ public abstract class AbstractBoundedTableModel extends AbstractTableModel
     return propertySupport.hasListeners(propertyName);
   }
 
+  @Override
   public void removePropertyChangeListener(PropertyChangeListener listener) {
     propertySupport.removePropertyChangeListener(listener);
   }
 
+  @Override
   public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
     propertySupport.removePropertyChangeListener(propertyName, listener);
   }

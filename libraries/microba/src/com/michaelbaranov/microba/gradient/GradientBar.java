@@ -1,14 +1,13 @@
 package com.michaelbaranov.microba.gradient;
 
-import java.awt.Color;
-
-import javax.swing.SwingConstants;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.common.MicrobaComponent;
 
+import javax.swing.*;
+import java.awt.*;
+
 /**
- * IMPORTANT: alpha featre not implemented. Stubs only.
+ * IMPORTANT: alpha feature not implemented. Stubs only.
  * <p>
  * 
  * A concrete implementation of JComponent. Displays an area filled with
@@ -27,7 +26,7 @@ import com.michaelbaranov.microba.common.MicrobaComponent;
  * {@link Number} with floating-point precision ranging form 0.0f (transparent)
  * to 1.0f (opaque) and position values of type {@link Number} with integer
  * precision.
- * 
+ * <p> 
  * Example:
  * 
  * <pre>
@@ -52,7 +51,7 @@ public class GradientBar extends MicrobaComponent {
   public static final String PROPERTY_DATA_MODEL = "dataModel";
 
   /**
-   * The name of a "alphaModel" property.
+   * The name of an "alphaModel" property.
    */
   public static final String PROPERTY_ALPHA_MODEL = "alphaModel";
 
@@ -77,7 +76,7 @@ public class GradientBar extends MicrobaComponent {
   public static final String PROPERTY_ALPHA_COLUMN = "alphaColumn";
 
   /**
-   * The name of a "orientation" property.
+   * The name of an "orientation" property.
    */
   public static final String PROPERTY_ORIENTATION = "orientation";
 
@@ -97,6 +96,7 @@ public class GradientBar extends MicrobaComponent {
 
   protected int orientation = SwingConstants.HORIZONTAL;
 
+  @Override
   public String getUIClassID() {
     return uiClassID;
   }
@@ -179,7 +179,7 @@ public class GradientBar extends MicrobaComponent {
   }
 
   /**
-   * Regturns the current data model. The data model provides key points for
+   * Returns the current data model. The data model provides key points for
    * interpolation (position & color).
    * 
    * @return current data model
@@ -206,7 +206,7 @@ public class GradientBar extends MicrobaComponent {
   }
 
   /**
-   * Regturns the current alpha model. The data model provides alpha key
+   * Returns the current alpha model. The data model provides alpha key
    * points for interpolation (position & alpha).
    * 
    * @return current alpha model
@@ -252,8 +252,6 @@ public class GradientBar extends MicrobaComponent {
    * <li>SwingConstants.HORIZONTAL
    * <li>SwingConstants.VERTICAL
    * </ul>
-   * 
-   * @param orientation
    */
   public void setOrientation(int orientation) {
     int old = this.orientation;

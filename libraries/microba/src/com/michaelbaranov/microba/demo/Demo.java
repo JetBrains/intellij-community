@@ -1,42 +1,26 @@
 package com.michaelbaranov.microba.demo;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.beans.PropertyVetoException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.swing.JApplet;
-import javax.swing.JColorChooser;
-import javax.swing.JComponent;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.SwingConstants;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-
-import com.michaelbaranov.microba.calendar.CalendarPane;
-import com.michaelbaranov.microba.calendar.DatePicker;
-import com.michaelbaranov.microba.calendar.DatePickerCellEditor;
-import com.michaelbaranov.microba.calendar.HolidayPolicy;
+import com.michaelbaranov.microba.calendar.*;
 import com.michaelbaranov.microba.common.AbstractPolicy;
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.gradient.GradientBar;
 import com.michaelbaranov.microba.gradienteditor.GradientEditor;
 import com.michaelbaranov.microba.marker.MarkerBar;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.beans.PropertyVetoException;
+import java.text.DateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Demo extends JApplet {
 
@@ -44,20 +28,15 @@ public class Demo extends JApplet {
 
   static BoundedTableModel model;
 
-  private static JFrame frame;
-
   private static JPanel panel;
 
   public static void main(String[] s) {
-
-    Demo demo = new Demo();
-    demo.run();
-
+    run();
   }
 
-  private void run() {
-    frame = new JFrame();
-    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+  private static void run() {
+    JFrame frame = new JFrame();
+    frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.getContentPane().setLayout(new BorderLayout());
 
     JTabbedPane tabs = new JTabbedPane();
@@ -89,40 +68,45 @@ public class Demo extends JApplet {
   // this.setContentPane(panel);
   // }
 
+  @Override
   public void start() {
     System.out.println("start");
     super.start();
   }
 
+  @Override
   public void stop() {
     System.out.println("stop");
     super.stop();
   }
 
-  private class Hol extends AbstractPolicy implements HolidayPolicy {
+  private static class Hol extends AbstractPolicy implements HolidayPolicy {
 
+    @Override
     public String getHollidayName(Object source, Calendar date) {
       return null;
     }
 
+    @Override
     public boolean isHolliday(Object source, Calendar date) {
       return false;
     }
 
+    @Override
     public boolean isWeekend(Object source, Calendar date) {
       return date.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY;
     }
 
   }
 
-  private JComponent buildCalendarPaneTab() {
+  private static JComponent buildCalendarPaneTab() {
     JPanel panel = new JPanel();
     final CalendarPane calendarPane = new CalendarPane();
 
 //    calendarPane.setEnabled(false);
     calendarPane.setHolidayPolicy(new Hol());
 
-    Map ov = new HashMap();
+    Map<String, Color> ov = new HashMap<>();
 
     ov.put(CalendarPane.COLOR_CALENDAR_GRID_FOREGROUND_ENABLED,
         Color.ORANGE);
@@ -137,7 +121,7 @@ public class Demo extends JApplet {
     }
 
     calendarPane.addActionListener(new ActionListener() {
-
+      @Override
       public void actionPerformed(ActionEvent e) {
         System.out.println("CalendarPane:" + calendarPane.getDate());
 
@@ -153,11 +137,11 @@ public class Demo extends JApplet {
 
   }
 
-  private JComponent buildDatePickerTab() {
+  private static JComponent buildDatePickerTab() {
     JPanel panel = new JPanel();
     final DatePicker datePicker = new DatePicker();
     // datePicker.setDateFormat(new SimpleDateFormat("HH dd yyyy"));
-    datePicker.setDateFormat(SimpleDateFormat.getDateTimeInstance());
+    datePicker.setDateFormat(DateFormat.getDateTimeInstance());
     // datePicker.setStripTime(false);
     datePicker.setEnabled(false);
     datePicker.setKeepTime(true);
@@ -169,10 +153,10 @@ public class Demo extends JApplet {
     // datePicker.setToolTipText("hello!!!!");
     // datePicker.setShowNumberOfWeek(true);
     
-    Map ov = new HashMap();
+    Map<String, Color> ov = new HashMap<>();
 
-    ov.put(CalendarPane.COLOR_CALENDAR_GRID_FOREGROUND_ENABLED,
-        Color.ORANGE);
+    ov.put(CalendarColors.COLOR_CALENDAR_GRID_FOREGROUND_ENABLED,
+           Color.ORANGE);
     
     datePicker.setColorOverrideMap(ov);
 
@@ -183,6 +167,7 @@ public class Demo extends JApplet {
 
     datePicker.addActionListener(new ActionListener() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         System.out.println("DatePicker:" + datePicker.getDate());
 
@@ -193,7 +178,7 @@ public class Demo extends JApplet {
 
   }
 
-  private JComponent buildCellEditorTab() {
+  private static JComponent buildCellEditorTab() {
     JPanel panel = new JPanel();
     DatePicker datePicker = new DatePicker();
 
@@ -216,7 +201,7 @@ public class Demo extends JApplet {
 
   }
 
-  private JComponent buildGradientTab() {
+  private static JComponent buildGradientTab() {
     JPanel panel = new JPanel();
     GradientBar gradient;
 
@@ -246,11 +231,11 @@ public class Demo extends JApplet {
   private static class ColorAdaptor implements ChangeListener,
       ListSelectionListener {
 
-    private GradientEditor editor;
+    private final GradientEditor editor;
 
-    private JColorChooser chooser;
+    private final JColorChooser chooser;
 
-    public ColorAdaptor(GradientEditor editor, JColorChooser chooser) {
+    private ColorAdaptor(GradientEditor editor, JColorChooser chooser) {
       super();
       this.editor = editor;
       this.chooser = chooser;
@@ -259,18 +244,16 @@ public class Demo extends JApplet {
       chooser.getSelectionModel().addChangeListener(this);
     }
 
+    @Override
     public void valueChanged(ListSelectionEvent e) {
       int index = editor.getColorSelectionModel().getLeadSelectionIndex();
-      // System.out.println(index);
-      // System.out.println(e.getFirstIndex());
-      // System.out.println(e.getLastIndex());
-      // System.out.println("-------");
 
       Color c = (Color) editor.getDataModel().getValueAt(index,
           editor.getColorColumn());
       chooser.setColor(c);
     }
 
+    @Override
     public void stateChanged(ChangeEvent e) {
 
       if (!editor.getColorSelectionModel().isSelectionEmpty()) {

@@ -1,7 +1,17 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.awt.BorderLayout;
-import java.awt.Insets;
+import com.michaelbaranov.microba.calendar.*;
+import com.michaelbaranov.microba.calendar.resource.Resource;
+import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
+import com.michaelbaranov.microba.common.CommitEvent;
+import com.michaelbaranov.microba.common.CommitListener;
+
+import javax.swing.*;
+import javax.swing.JFormattedTextField.AbstractFormatter;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.text.DateFormatter;
+import javax.swing.text.DefaultFormatterFactory;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
@@ -13,31 +23,6 @@ import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
-import javax.swing.InputMap;
-import javax.swing.JButton;
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JPopupMenu;
-import javax.swing.JTextField;
-import javax.swing.KeyStroke;
-import javax.swing.JFormattedTextField.AbstractFormatter;
-import javax.swing.plaf.ComponentUI;
-import javax.swing.text.DateFormatter;
-import javax.swing.text.DefaultFormatterFactory;
-
-import com.michaelbaranov.microba.calendar.CalendarPane;
-import com.michaelbaranov.microba.calendar.CalendarResources;
-import com.michaelbaranov.microba.calendar.DatePicker;
-import com.michaelbaranov.microba.calendar.HolidayPolicy;
-import com.michaelbaranov.microba.calendar.VetoPolicy;
-import com.michaelbaranov.microba.calendar.resource.Resource;
-import com.michaelbaranov.microba.calendar.ui.DatePickerUI;
-import com.michaelbaranov.microba.common.CommitEvent;
-import com.michaelbaranov.microba.common.CommitListener;
 
 public class BasicDatePickerUI extends DatePickerUI implements
     PropertyChangeListener {
@@ -60,6 +45,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
     return new BasicDatePickerUI();
   }
 
+  @Override
   public void installUI(JComponent c) {
     peer = (DatePicker) c;
     installComponents();
@@ -67,6 +53,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
     installKeyboardActions();
   }
 
+  @Override
   public void uninstallUI(JComponent c) {
     uninstallKeyboardActions();
     uninstallListeners();
@@ -83,6 +70,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
 
     peer.getActionMap().put(POPUP_KEY, new AbstractAction() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         showPopup(true);
       }
@@ -183,6 +171,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
     peerDateChanged(peer.getDate());
   }
 
+  @Override
   public void setSimpeLook(boolean b) {
     if (b) {
       field.setBorder(BorderFactory.createEmptyBorder());
@@ -197,6 +186,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
 
   }
 
+  @Override
   public void showPopup(boolean visible) {
     if (visible) {
 
@@ -224,55 +214,56 @@ public class BasicDatePickerUI extends DatePickerUI implements
     }
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (JComponent.TOOL_TIP_TEXT_KEY.equals(evt.getPropertyName())) {
       field.setToolTipText((String) evt.getNewValue());
       button.setToolTipText((String) evt.getNewValue());
-    } else if (evt.getPropertyName().equals(DatePicker.PROPERTY_NAME_DATE)) {
+    } else if (evt.getPropertyName().equals(CalendarPane.PROPERTY_NAME_DATE)) {
       Date newValue = (Date) evt.getNewValue();
       peerDateChanged(newValue);
     } else if (evt.getPropertyName().equals(
         DatePicker.PROPERTY_NAME_FIELD_EDITABLE)) {
       field.setEditable(peer.isFieldEditable());
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_FOCUS_LOST_BEHAVIOR)) {
+      CalendarPane.PROPERTY_NAME_FOCUS_LOST_BEHAVIOR)) {
       field.setFocusLostBehavior(peer.getFocusLostBehavior());
     } else if (evt.getPropertyName()
-        .equals(DatePicker.PROPERTY_NAME_LOCALE)) {
+        .equals(CalendarPane.PROPERTY_NAME_LOCALE)) {
       field.setFormatterFactory(createFormatterFactory());
       calendarPane.setLocale(peer.getLocale());
     } else if (evt.getPropertyName().equals(
         DatePicker.PROPERTY_NAME_DATE_FORMAT)) {
       field.setFormatterFactory(createFormatterFactory());
-    } else if (evt.getPropertyName().equals(DatePicker.PROPERTY_NAME_ZONE)) {
+    } else if (evt.getPropertyName().equals(CalendarPane.PROPERTY_NAME_ZONE)) {
       field.setFormatterFactory(createFormatterFactory());
       calendarPane.setZone((TimeZone) evt.getNewValue());
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_SHOW_TODAY_BTN)) {
+      CalendarPane.PROPERTY_NAME_SHOW_TODAY_BTN)) {
       boolean value = ((Boolean) evt.getNewValue()).booleanValue();
       calendarPane.setShowTodayButton(value);
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_SHOW_NONE_BTN)) {
+      CalendarPane.PROPERTY_NAME_SHOW_NONE_BTN)) {
       boolean value = ((Boolean) evt.getNewValue()).booleanValue();
       calendarPane.setShowNoneButton(value);
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_SHOW_NUMBER_WEEK)) {
+      CalendarPane.PROPERTY_NAME_SHOW_NUMBER_WEEK)) {
       boolean value = ((Boolean) evt.getNewValue()).booleanValue();
       calendarPane.setShowNumberOfWeek(value);
-    } else if (evt.getPropertyName().equals(DatePicker.PROPERTY_NAME_STYLE)) {
+    } else if (evt.getPropertyName().equals(CalendarPane.PROPERTY_NAME_STYLE)) {
       int value = ((Integer) evt.getNewValue()).intValue();
       calendarPane.setStyle(value);
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_VETO_POLICY)) {
+      CalendarPane.PROPERTY_NAME_VETO_POLICY)) {
       calendarPane.setVetoPolicy((VetoPolicy) evt.getNewValue());
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_HOLIDAY_POLICY)) {
+      CalendarPane.PROPERTY_NAME_HOLIDAY_POLICY)) {
       calendarPane.setHolidayPolicy((HolidayPolicy) evt.getNewValue());
     } else if (evt.getPropertyName().equals("focusable")) {
       boolean value = ((Boolean) evt.getNewValue()).booleanValue();
       field.setFocusable(value);
     } else if (evt.getPropertyName().equals(
-        DatePicker.PROPERTY_NAME_RESOURCES)) {
+      CalendarPane.PROPERTY_NAME_RESOURCES)) {
       CalendarResources resources = (CalendarResources) evt.getNewValue();
       calendarPane.setResources(resources);
     } else if (evt.getPropertyName()
@@ -309,6 +300,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
 
   protected class ComponentListener implements ActionListener,
       PropertyChangeListener, CommitListener {
+    @Override
     public void actionPerformed(ActionEvent e) {
 
       if (e.getSource() != calendarPane)
@@ -318,13 +310,14 @@ public class BasicDatePickerUI extends DatePickerUI implements
 
     }
 
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (evt.getSource() == calendarPane) {
         if (CalendarPane.PROPERTY_NAME_DATE.equals(evt
             .getPropertyName())) {
           showPopup(false);
 
-          Date fieldValue = null;
+          Date fieldValue;
           try {
             AbstractFormatter formatter = field.getFormatter();
             fieldValue = (Date) formatter.stringToValue(field
@@ -361,7 +354,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
                   .get(Calendar.DAY_OF_MONTH));
               field.setValue(fieldCal.getTime());
             } else
-              field.setValue((Date) evt.getNewValue());
+              field.setValue(evt.getNewValue());
 
           }
         }
@@ -380,6 +373,7 @@ public class BasicDatePickerUI extends DatePickerUI implements
 
     }
 
+    @Override
     public void commit(CommitEvent action) {
       showPopup(false);
       if (field.getValue() != null || calendarPane.getDate() != null)
@@ -392,10 +386,12 @@ public class BasicDatePickerUI extends DatePickerUI implements
     }
   }
 
+  @Override
   public void commit() throws PropertyVetoException, ParseException {
     field.commitEdit();
   }
 
+  @Override
   public void revert() {
     peerDateChanged(peer.getDate());
   }

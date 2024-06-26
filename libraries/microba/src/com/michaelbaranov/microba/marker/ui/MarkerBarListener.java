@@ -1,33 +1,19 @@
 package com.michaelbaranov.microba.marker.ui;
 
-import java.awt.Polygon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
-import javax.swing.AbstractAction;
-import javax.swing.JComponent;
-import javax.swing.KeyStroke;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingConstants;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.event.TableModelEvent;
-import javax.swing.event.TableModelListener;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.marker.MarkerBar;
 import com.michaelbaranov.microba.marker.MarkerMutationModel;
 import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
+
+import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 
 public class MarkerBarListener implements TableModelListener, MouseListener,
     MouseMotionListener, FocusListener, PropertyChangeListener,
@@ -40,7 +26,7 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
 
   private final BasicMarkerBarUI barUI;
 
-  private MarkerBar bar;
+  private final MarkerBar bar;
 
   private int holdingIndex = -1;
 
@@ -51,9 +37,11 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
     this.bar = markerBar;
   }
 
+  @Override
   public void mouseClicked(MouseEvent e) {
   }
 
+  @Override
   public void mousePressed(MouseEvent e) {
 
     if (!bar.isEnabled())
@@ -101,7 +89,7 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
       ListSelectionModel selectionModel, int dataColumn) {
 
     int numAreas = dataModel.getRowCount();
-    Polygon areas[] = this.barUI.calculateMarkerAreas(bar);
+    Polygon[] areas = this.barUI.calculateMarkerAreas(bar);
 
     // try already selected
     for (int i = 0; i < numAreas; i++) {
@@ -138,19 +126,23 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
     selectionModel.clearSelection();
   }
 
+  @Override
   public void mouseReleased(MouseEvent e) {
     holdingIndex = -1;
 
   }
 
+  @Override
   public void mouseEntered(MouseEvent e) {
 
   }
 
+  @Override
   public void mouseExited(MouseEvent e) {
 
   }
 
+  @Override
   public void mouseDragged(MouseEvent e) {
 
     if (!bar.isEnabled())
@@ -173,26 +165,30 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
       if (logicalPos > dataModel.getUpperBound())
         logicalPos = dataModel.getUpperBound();
 
-      dataModel.setValueAt(new Integer(logicalPos), holdingIndex, bar
+      dataModel.setValueAt(Integer.valueOf(logicalPos), holdingIndex, bar
           .getPositionColumn());
     }
 
   }
 
+  @Override
   public void mouseMoved(MouseEvent e) {
 
   }
 
+  @Override
   public void focusGained(FocusEvent e) {
     bar.repaint();
 
   }
 
+  @Override
   public void focusLost(FocusEvent e) {
     bar.repaint();
 
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
 
     if (evt.getSource() instanceof MarkerBar) {
@@ -255,6 +251,7 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
     c.getInputMap().put(DELETE_KEYSTROKE, VK_DELETE_KEY);
     c.getActionMap().put(VK_DELETE_KEY, new AbstractAction() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
 
         BoundedTableModel dataModel = bar.getDataModel();
@@ -279,27 +276,33 @@ public class MarkerBarListener implements TableModelListener, MouseListener,
     c.getInputMap().remove(DELETE_KEYSTROKE);
   }
 
+  @Override
   public void componentResized(ComponentEvent e) {
 
   }
 
+  @Override
   public void componentMoved(ComponentEvent e) {
 
   }
 
+  @Override
   public void componentShown(ComponentEvent e) {
 
   }
 
+  @Override
   public void componentHidden(ComponentEvent e) {
 
   }
 
+  @Override
   public void tableChanged(TableModelEvent e) {
     bar.repaint();
 
   }
 
+  @Override
   public void valueChanged(ListSelectionEvent e) {
     bar.repaint();
 

@@ -1,12 +1,10 @@
 package com.michaelbaranov.microba.marker;
 
-import javax.swing.DefaultListSelectionModel;
-import javax.swing.ListSelectionModel;
-import javax.swing.SwingConstants;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.common.MicrobaComponent;
 import com.michaelbaranov.microba.marker.ui.MarkerBarUI;
+
+import javax.swing.*;
 
 /**
  * A bar with multiple draggable position marks.
@@ -177,6 +175,7 @@ public class MarkerBar extends MicrobaComponent {
    * Look&Feel UI delegate key (classID). This implementation returns:
    * <code>"MarkerBarUI"<code>.
    */
+  @Override
   public String getUIClassID() {
     return uiClassID;
   }

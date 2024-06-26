@@ -1,11 +1,10 @@
 package com.michaelbaranov.microba.gradienteditor;
 
-import javax.swing.JColorChooser;
-import javax.swing.ListSelectionModel;
-
 import com.michaelbaranov.microba.gradient.GradientBar;
 import com.michaelbaranov.microba.marker.MarkerBar;
 import com.michaelbaranov.microba.marker.MarkerMutationModel;
+
+import javax.swing.*;
 
 /**
  * IMPORTANT: alpha featre not implemented. Stubs only. No alpha marker bar yet.
@@ -69,6 +68,7 @@ public class GradientEditor extends GradientBar {
     updateUI();
   }
 
+  @Override
   public String getUIClassID() {
     return uiClassID;
   }

@@ -22,7 +22,7 @@ public class MicrobaComponent extends JComponent {
     Microba.init();
   }
 
-  protected Map colorOverrideMap;
+  protected Map<String, Color> colorOverrideMap;
 
   public ComponentUI getUI() {
     return ui;
@@ -49,7 +49,7 @@ public class MicrobaComponent extends JComponent {
    *         {@link Color} values are obtained via
    *         {@link UIManager#getColor(Object)})
    */
-  public Map getColorOverrideMap() {
+  public Map<String, Color> getColorOverrideMap() {
     if (colorOverrideMap == null)
       return null;
 
@@ -65,7 +65,7 @@ public class MicrobaComponent extends JComponent {
    *            {@link Color} values are obtained via
    *            {@link UIManager#getColor(Object)}). May be <code>null</code>.
    */
-  public void setColorOverrideMap(Map colorOverrideMap) {
+  public void setColorOverrideMap(Map<String, Color> colorOverrideMap) {
     Object old = this.colorOverrideMap;
     this.colorOverrideMap = colorOverrideMap;
     firePropertyChange(PROPERTY_NAME_COLOR_OVERRIDE_MAP, old,

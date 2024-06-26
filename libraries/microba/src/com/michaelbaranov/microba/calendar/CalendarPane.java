@@ -1,5 +1,12 @@
 package com.michaelbaranov.microba.calendar;
 
+import com.michaelbaranov.microba.calendar.ui.CalendarPaneUI;
+import com.michaelbaranov.microba.common.CommitEvent;
+import com.michaelbaranov.microba.common.CommitListener;
+import com.michaelbaranov.microba.common.MicrobaComponent;
+
+import javax.swing.*;
+import javax.swing.event.EventListenerList;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -9,14 +16,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import javax.swing.JFormattedTextField;
-import javax.swing.event.EventListenerList;
-
-import com.michaelbaranov.microba.calendar.ui.CalendarPaneUI;
-import com.michaelbaranov.microba.common.CommitEvent;
-import com.michaelbaranov.microba.common.CommitListener;
-import com.michaelbaranov.microba.common.MicrobaComponent;
 
 /**
  * A concrete implementation of JComponent. Capable of displaying and selecting
@@ -99,9 +98,9 @@ public class CalendarPane extends MicrobaComponent implements
 
   private static final String uiClassID = "microba.CalendarPaneUI";
 
-  private EventListenerList commitListenerList = new EventListenerList();
+  private final EventListenerList commitListenerList = new EventListenerList();
 
-  private EventListenerList actionListenerList = new EventListenerList();
+  private final EventListenerList actionListenerList = new EventListenerList();
 
   private Date date;
 
@@ -127,6 +126,7 @@ public class CalendarPane extends MicrobaComponent implements
 
   private boolean stripTime;
 
+  @Override
   public String getUIClassID() {
     return uiClassID;
   }
@@ -188,6 +188,7 @@ public class CalendarPane extends MicrobaComponent implements
     // forward date property change to action event
     addPropertyChangeListener(PROPERTY_NAME_DATE,
         new PropertyChangeListener() {
+          @Override
           public void propertyChange(PropertyChangeEvent evt) {
             fireActionEvent();
           }
@@ -251,6 +252,7 @@ public class CalendarPane extends MicrobaComponent implements
    * 
    * @return current locale
    */
+  @Override
   public Locale getLocale() {
     return locale;
   }
@@ -264,6 +266,7 @@ public class CalendarPane extends MicrobaComponent implements
    * @param locale
    *            the locale to set
    */
+  @Override
   public void setLocale(Locale locale) {
     Locale old = getLocale();
     this.locale = locale;
@@ -344,10 +347,9 @@ public class CalendarPane extends MicrobaComponent implements
    *            <code>false</code> to hide
    */
   public void setShowTodayButton(boolean visible) {
-    Boolean old = new Boolean(this.showTodayButton);
+    Boolean old = this.showTodayButton;
     this.showTodayButton = visible;
-    firePropertyChange(PROPERTY_NAME_SHOW_TODAY_BTN, old, new Boolean(
-        visible));
+    firePropertyChange(PROPERTY_NAME_SHOW_TODAY_BTN, old, (Boolean) visible);
   }
 
   /**
@@ -374,10 +376,9 @@ public class CalendarPane extends MicrobaComponent implements
    *            to hide
    */
   public void setShowNoneButton(boolean visible) {
-    Boolean old = new Boolean(this.showNoneButton);
+    Boolean old = this.showNoneButton;
     this.showNoneButton = visible;
-    firePropertyChange(PROPERTY_NAME_SHOW_NONE_BTN, old, new Boolean(
-        visible));
+    firePropertyChange(PROPERTY_NAME_SHOW_NONE_BTN, old, (Boolean)visible);
   }
 
   /**
@@ -414,14 +415,14 @@ public class CalendarPane extends MicrobaComponent implements
    * @see JFormattedTextField
    */
   public void setFocusLostBehavior(int behavior) {
-    behavior = checkFocusLostbehavior(behavior);
+    checkFocusLostBehavior(behavior);
     int old = this.focusLostBehavior;
     this.focusLostBehavior = behavior;
     firePropertyChange(PROPERTY_NAME_FOCUS_LOST_BEHAVIOR, old, behavior);
   }
 
   /**
-   * Resurns current calendar resources model.
+   * Returns current calendar resources model.
    * <p>
    * The model is used to query localized resources for the control.
    * 
@@ -449,11 +450,11 @@ public class CalendarPane extends MicrobaComponent implements
   }
 
   /**
-   * Returns current holliday policy (model).
+   * Returns current holiday policy (model).
    * <p>
-   * The policy is used to query holliday dates and holliday descriptions.
+   * The policy is used to query holiday dates and holiday descriptions.
    * 
-   * @return current holliday policy or <code>null</code> if none set
+   * @return current holiday policy or <code>null</code> if none set
    * @see HolidayPolicy
    */
   public HolidayPolicy getHolidayPolicy() {
@@ -461,13 +462,13 @@ public class CalendarPane extends MicrobaComponent implements
   }
 
   /**
-   * Sets current holliday policy (model) then updates the control to reflect
+   * Sets current holiday policy (model) then updates the control to reflect
    * the policy set.
    * <p>
-   * The policy is used to query holliday dates and holiday descriptions.
+   * The policy is used to query holiday dates and holiday descriptions.
    * 
    * @param holidayPolicy
-   *            a holliday policy to set. May be <code>null</code>
+   *            a holiday policy to set. May be <code>null</code>
    * @see VetoPolicy
    */
   public void setHolidayPolicy(HolidayPolicy holidayPolicy) {
@@ -538,12 +539,12 @@ public class CalendarPane extends MicrobaComponent implements
   }
 
   /**
-   * Shows or hides the the number of every week.
+   * Shows or hides the number of every week.
    * <p>
    * The number of week is based on the current locale for the component.
    * 
    * @param visible
-   *            <code>true</code> to show the the number of every week
+   *            <code>true</code> to show the number of every week
    *            <code>false</code> to hide
    */
   public void setShowNumberOfWeek(boolean visible) {
@@ -598,9 +599,9 @@ public class CalendarPane extends MicrobaComponent implements
   }
 
   /**
-   * Forces the control to commit current user's edit. The opertaion may fail
+   * Forces the control to commit current user's edit. The operation may fail
    * because the date in the control may be restricted by current veto policy.
-   * If successfull, the current date of the control may change, a
+   * If successful, the current date of the control may change, a
    * {@link CommitEvent} is fired.
    * 
    * @return <code>true</code> if successful, <code>false</code> otherwise
@@ -692,19 +693,19 @@ public class CalendarPane extends MicrobaComponent implements
             .actionPerformed(new ActionEvent(this, 0, "value"));
   }
 
-  private void checkTimeZone(TimeZone zone) {
+  private static void checkTimeZone(TimeZone zone) {
     if (zone == null)
       throw new IllegalArgumentException("'zone' can not be null.");
 
   }
 
-  private void checkLocale(Locale locale) {
+  private static void checkLocale(Locale locale) {
     if (locale == null)
       throw new IllegalArgumentException("'locale' can not be null.");
 
   }
 
-  private int checkFocusLostbehavior(int behavior) {
+  private static void checkFocusLostBehavior(int behavior) {
     if (behavior != JFormattedTextField.COMMIT
         && behavior != JFormattedTextField.COMMIT_OR_REVERT
         && behavior != JFormattedTextField.REVERT
@@ -712,7 +713,6 @@ public class CalendarPane extends MicrobaComponent implements
       throw new IllegalArgumentException(
           PROPERTY_NAME_FOCUS_LOST_BEHAVIOR
               + ": unrecognized behavior");
-    return behavior;
   }
 
   private boolean checkDate(Date date) {
@@ -724,7 +724,7 @@ public class CalendarPane extends MicrobaComponent implements
       return true;
   }
 
-  private int checkStyle(int style) {
+  private static int checkStyle(int style) {
     if (style == 0)
       style = STYLE_CLASSIC;
     if (style != STYLE_CLASSIC && style != STYLE_MODERN)
@@ -740,11 +740,11 @@ public class CalendarPane extends MicrobaComponent implements
   }
 
   /**
-   * Returns same date as given, but time portion (hours, minutes, seconds,
+   * Returns the same date as given, but time portion (hours, minutes, seconds,
    * fraction of second) set to zero, based on given locale and time zone.
    * Utility method.
    * <p>
-   * Examle:<br>
+   * Example:<br>
    * Fri Sep 29 15:57:23 EEST 2006 -> Fri Sep 29 00:00:00 EEST 2006
    * 
    * @param date
