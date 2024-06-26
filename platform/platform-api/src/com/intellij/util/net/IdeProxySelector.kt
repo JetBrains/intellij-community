@@ -35,7 +35,19 @@ class IdeProxySelector(
       return NO_PROXY_LIST
     }
 
-    when (val conf = configurationProvider.getProxyConfiguration()) {
+    val conf = try {
+      configurationProvider.getProxyConfiguration()
+    }
+    catch (_: CancellationException) {
+      logger.debug { "$uri: no proxy, cancelled" }
+      return NO_PROXY_LIST
+    }
+    catch (e: Exception) {
+      logger.error("$uri: no proxy, failed to get proxy configuration", e)
+      return NO_PROXY_LIST
+    }
+
+    when (conf) {
       is ProxyConfiguration.DirectProxy -> {
         logger.debug { "$uri: no proxy, DIRECT configuration" }
         return NO_PROXY_LIST
