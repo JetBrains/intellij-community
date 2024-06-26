@@ -313,7 +313,8 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   private fun daemonStopped(fileEditors: Collection<FileEditor>, isCancelled: Boolean) {
-    ListenerState.LOG.info("daemon stopped with ${fileEditors.size} unfiltered editors")
+    val status = if(isCancelled) "cancelled" else "stopped"
+    ListenerState.LOG.info("daemon $status with ${fileEditors.size} unfiltered editors")
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 
