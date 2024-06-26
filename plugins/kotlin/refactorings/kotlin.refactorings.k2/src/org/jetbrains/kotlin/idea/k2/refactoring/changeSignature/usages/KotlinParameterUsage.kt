@@ -69,19 +69,15 @@ internal class KotlinImplicitThisToParameterUsage(
 
 internal class KotlinImplicitThisUsage(
     callElement: KtElement,
-    private val targetDescriptor: Name
+    private val newReceiver: String
 ) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
-    private fun getNewReceiverText() = when {
-        targetDescriptor.isSpecial -> "this"
-        else -> "this@${targetDescriptor.asString()}"
-    }
 
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
         allUsages: Array<out UsageInfo>
     ): KtElement {
-        val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}"
+        val newQualifiedCall = KtPsiFactory(element.project).createExpression("$newReceiver.${element.text}"
         ) as KtQualifiedExpression
         return element.replace(newQualifiedCall).parent as KtElement
     }

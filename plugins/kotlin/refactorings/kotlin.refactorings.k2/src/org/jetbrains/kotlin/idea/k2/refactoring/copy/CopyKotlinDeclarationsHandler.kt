@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.copy
 
 import com.intellij.ide.util.EditorHelper
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -171,8 +173,10 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         project.checkConflictsInteractively(conflicts) {
             try {
-                project.executeCommand(copyCommandName) {
-                    doRefactor(sourceData, targetData)
+                ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(copyCommandName, project, null) {
+                    project.executeCommand(copyCommandName) {
+                        doRefactor(sourceData, targetData)
+                    }
                 }
             } finally {
                 elements.filterIsInstance<KtElement>().forEach(::unMarkAllUsages)

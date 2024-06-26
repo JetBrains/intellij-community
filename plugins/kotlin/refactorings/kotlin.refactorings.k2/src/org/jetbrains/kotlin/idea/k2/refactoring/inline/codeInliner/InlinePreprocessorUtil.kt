@@ -3,22 +3,22 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
@@ -209,9 +209,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             analyze(t) {
                 val resolvedSymbol = t.symbol
                 val containingSymbol = resolvedSymbol.containingSymbol ?: return true
-                if (containingSymbol is KaSymbolWithMembers) {
+                if (containingSymbol is KaDeclarationContainerSymbol) {
                     val staticScope = containingSymbol.staticMemberScope
-                    return resolvedSymbol in staticScope.getAllSymbols()
+                    return resolvedSymbol in staticScope.declarations
                 }
                 return false
             }
@@ -305,16 +305,5 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
         codeToInline.addPreCommitAction(mainExpression) {
             codeToInline.replaceExpression(it, KtPsiFactory.contextual(it).createExpression(nullCast))
         }
-    }
-}
-
-context(KaSession)
-internal fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
-    val symbol = receiverValue.symbol
-    return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
-        (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
-    }
-    else {
-        "this" + ((((symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: symbol) as? KaNamedSymbol)?.name?.let { "@$it" } ?: "")
     }
 }
