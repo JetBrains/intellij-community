@@ -1,79 +1,47 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileEditor.impl;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
-import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.ComponentUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.ComponentUtil
 
-import java.awt.*;
-import java.util.List;
-
-/**
- * @author Konstantin Bulenkov
- */
-final class ReopenClosedTabAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
-  ReopenClosedTabAction() {
-    super(ActionsBundle.messagePointer("action.ReopenClosedTabAction.text"));
-  }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    final EditorWindow window = getEditorWindow(e);
+private class ReopenClosedTabAction : DumbAwareAction(
+  ActionsBundle.messagePointer("action.ReopenClosedTabAction.text")), ActionRemoteBehaviorSpecification.Frontend {
+  override fun actionPerformed(e: AnActionEvent) {
+    val window = getEditorWindow(e)
     if (window != null) {
       if (window.hasClosedTabs()) {
-        window.restoreClosedTab();
+        window.restoreClosedTab()
       }
-      return;
+      return
     }
 
-    Project project = e.getProject();
-    if (project == null) return;
-    List<VirtualFile> list = EditorHistoryManager.getInstance(project).getFileList();
+    val project = e.project ?: return
+    val list = EditorHistoryManager.getInstance(project).fileList
     if (!list.isEmpty()) {
-      FileEditorManager.getInstance(project).openFile(list.get(list.size() - 1), true);
+      FileEditorManager.getInstance(project).openFile(list[list.size - 1], true)
     }
   }
 
-  private static @Nullable EditorWindow getEditorWindow(@NotNull AnActionEvent e) {
-    final Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
-    if (component != null) {
-      final EditorsSplitters splitters =
-        ComponentUtil.getParentOfType((Class<? extends EditorsSplitters>)EditorsSplitters.class, component);
-      if (splitters != null) {
-        return splitters.getCurrentWindow();
-      }
-    }
-    return null;
-  }
-
-  @Override
-  public void update(@NotNull AnActionEvent e) {
-    final EditorWindow window = getEditorWindow(e);
-    if (window != null) {
-      e.getPresentation().setEnabledAndVisible(window.hasClosedTabs());
-      return;
+  override fun update(e: AnActionEvent) {
+    getEditorWindow(e)?.let {
+      e.presentation.isEnabledAndVisible = it.hasClosedTabs()
+      return
     }
 
-    Project project = e.getProject();
-    if (project != null && !EditorHistoryManager.getInstance(project).getFileList().isEmpty()) {
-      e.getPresentation().setEnabledAndVisible(true);
-      return;
-    }
-
-    e.getPresentation().setEnabledAndVisible(false);
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && !EditorHistoryManager.getInstance(project).fileList.isEmpty()
   }
 
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
-  }
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+}
+
+private fun getEditorWindow(e: AnActionEvent): EditorWindow? {
+  val component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) ?: return null
+  return ComponentUtil.getParentOfType(EditorsSplitters::class.java, component)?.currentWindow
 }
