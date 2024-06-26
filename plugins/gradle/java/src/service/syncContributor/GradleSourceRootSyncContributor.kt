@@ -39,6 +39,7 @@ import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleLink
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleProjectEntitySource
 import org.jetbrains.plugins.gradle.service.syncContributor.entitites.GradleSourceSetEntitySource
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 @Order(GradleSyncContributor.Order.SOURCE_ROOT_CONTRIBUTOR)
@@ -226,6 +227,11 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
   ) {
     val sourceRootUrl = sourceRootPath.toVirtualFileUrl(virtualFileUrlManager)
     val contentRootEntity = contentRootEntities.getAncestorValues(sourceRootUrl.url).last()
+
+    if (!sourceRootPath.exists()) {
+      // TODO: SourceFolderManager.addSourceRootEntity
+      return
+    }
 
     storage addEntity SourceRootEntity(
       url = sourceRootUrl,
