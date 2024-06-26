@@ -4801,9 +4801,6 @@ c:com.intellij.ide.actions.PinActiveTabAction
 - p:getFileFromEvent(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.fileEditor.impl.EditorWindow):com.intellij.openapi.vfs.VirtualFile
 - p:getHandler(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.PinActiveTabAction$Handler
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.PinActiveTabAction$EW
-- com.intellij.ide.actions.PinActiveTabAction
-- <init>():V
 a:com.intellij.ide.actions.PinActiveTabAction$Handler
 - f:isActiveTab:Z
 - f:isPinned:Z
