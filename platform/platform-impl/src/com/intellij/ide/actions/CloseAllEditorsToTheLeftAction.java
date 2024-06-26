@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -23,7 +23,7 @@ public class CloseAllEditorsToTheLeftAction extends CloseEditorsActionBase {
 
   @Override
   protected boolean isFileToCloseInContext(DataContext dataContext, EditorComposite candidate, EditorWindow window) {
-    VirtualFile contextFile = window.getSelectedFile();
+    VirtualFile contextFile = window.getContextFile();
     VirtualFile candidateFile = candidate.getFile();
     if (candidate.isPinned()) return false;
     if (Comparing.equal(candidateFile, contextFile)) return false;

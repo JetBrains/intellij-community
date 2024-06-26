@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.ide.actions.OpenFileAction.Companion.openFile
@@ -24,7 +24,7 @@ private class InteractiveSplitAction : AnAction(), ActionRemoteBehaviorSpecifica
     val project = e.project ?: return
     var editorWindow = e.getData(EditorWindow.DATA_KEY)
     // When invoked from editor VF in context can be different from the actual editor VF, e.g. for diff in editor tab
-    val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: editorWindow?.selectedFile
+    val file = e.getData(CommonDataKeys.VIRTUAL_FILE) ?: editorWindow?.getContextFile()
     val openedFromEditor = editorWindow != null
     if (!openedFromEditor) {
       editorWindow = FileEditorManagerEx.getInstanceEx(project).splitters.currentWindow

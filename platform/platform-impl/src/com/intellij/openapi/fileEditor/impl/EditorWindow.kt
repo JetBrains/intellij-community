@@ -165,8 +165,15 @@ class EditorWindow internal constructor(
    */
   @Suppress("MemberVisibilityCanBePrivate", "unused")
   fun getSelectedComposite(ignorePopup: Boolean): EditorComposite? {
-    return if (ignorePopup) tabbedPane.tabs.selectedInfo?.composite else selectedComposite
+    return (if (ignorePopup) tabbedPane.editorTabs.selectedInfo else tabbedPane.editorTabs.targetInfo)?.composite
   }
+
+  /**
+   * A file in a context.
+   * For example, if a context menu is shown currently for some tab, the composite for which a menu is invoked will be returned
+   */
+  @Internal
+  fun getContextFile(): VirtualFile? = tabbedPane.tabs.targetInfo?.composite?.file
 
   val allComposites: List<EditorComposite>
     get() = composites().toList()
