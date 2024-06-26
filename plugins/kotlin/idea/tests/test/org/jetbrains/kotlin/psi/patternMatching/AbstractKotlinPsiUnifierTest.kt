@@ -26,7 +26,7 @@ abstract class AbstractKotlinPsiUnifierTest : KotlinLightCodeInsightFixtureTestC
             } as KtElement
         }
 
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
 
         val fileTextWithoutDirectives = dataFile().getTextWithoutDirectives() // contains markers
         val file = myFixture.configureByText(fileName(), fileTextWithoutDirectives) as? KtFile ?: error("Failed to configure file")

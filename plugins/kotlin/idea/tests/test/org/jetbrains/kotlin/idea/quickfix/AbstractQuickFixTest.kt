@@ -97,7 +97,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open val disableTestDirective: String
-        get() = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+        get() = IgnoreTests.DIRECTIVES.of(pluginMode)
 
     override fun runInDispatchThread(): Boolean = false
 

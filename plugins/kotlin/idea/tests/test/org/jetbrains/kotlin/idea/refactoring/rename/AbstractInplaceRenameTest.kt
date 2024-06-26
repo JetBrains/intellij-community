@@ -32,7 +32,7 @@ abstract class AbstractInplaceRenameTest : KotlinLightCodeInsightFixtureTestCase
     open fun doTest(unused: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),
-            IgnoreTests.DIRECTIVES.IGNORE_K1,
+            IgnoreTests.DIRECTIVES.of(pluginMode),
             directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
             doTestWithoutIgnoreDirective(unused)

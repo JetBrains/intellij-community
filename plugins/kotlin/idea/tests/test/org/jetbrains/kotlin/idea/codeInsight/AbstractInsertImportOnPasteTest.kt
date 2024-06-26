@@ -38,7 +38,7 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private val NAME_COUNT_TO_USE_STAR_IMPORT_DIRECTIVE = "// NAME_COUNT_TO_USE_STAR_IMPORT:"
     private val PACKAGES_TO_USE_STAR_IMPORTS_DIRECTIVE = "// PACKAGE_TO_USE_STAR_IMPORTS:"
 
-    private val disableTestDirective: String get() = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+    private val disableTestDirective: String get() = IgnoreTests.DIRECTIVES.of(pluginMode)
 
     protected fun doTestCut(path: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), "${disableTestDirective}_CUT") {

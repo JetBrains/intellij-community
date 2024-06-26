@@ -53,10 +53,7 @@ abstract class AbstractQuickFixMultiModuleTest : AbstractMultiModuleTest(), Quic
         val actionFile = project.findFileWithCaret()
         val virtualFilePath = actionFile.virtualFile!!.toNioPath()
 
-        val ignoreDirective = when (pluginMode) {
-            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
-        }
+        val ignoreDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(virtualFilePath, ignoreDirective) {
             val directiveFileText = actionFile.text

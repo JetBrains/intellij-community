@@ -458,7 +458,7 @@ abstract class AbstractExtractionTest : KotlinLightCodeInsightFixtureTestCase() 
     protected fun doExtractInterfaceTest(path: String) = doExtractSuperTest(path, true)
 
     protected fun doTestIfNotDisabledByFileDirective(action: (PsiFile) -> Unit) {
-        val disableTestDirective = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+        val disableTestDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
 
         IgnoreTests.runTestIfNotDisabledByFileDirective(
             dataFilePath(),

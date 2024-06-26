@@ -13,7 +13,7 @@ import kotlin.io.path.Path
 @RunWith(JUnit38ClassRunner::class)
 abstract class AbstractKotlinGotoImplementationMultifileTest : KotlinLightCodeInsightFixtureTestCase() {
   protected fun doKotlinJavaTest(path: String) {
-      IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), if (pluginMode == KotlinPluginMode.K2) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1) {
+      IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.of(pluginMode)) {
           doMultiFileTest(getTestName(false) + ".kt", getTestName(false) + ".java")
       }
   }

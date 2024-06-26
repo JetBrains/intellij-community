@@ -32,10 +32,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
     }
 
     protected fun performTest() {
-        val disableDirective = when (pluginMode) {
-            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
-        }
+        val disableDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
         myFixture.configureByDefaultFile()
         templateName?.let { myFixture.type(".$it") }
 
