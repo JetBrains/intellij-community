@@ -126,7 +126,7 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
           key.substringAfter(TOOL_PREFIX, "").substringBefore(".")
         else ""
 
-        normalize(name)
+        normalizePackageName(name)
       }.filter {
         it.isNotEmpty()
       }
@@ -150,20 +150,11 @@ class PyProjectTomlUsageCollector : ProjectUsagesCollector() {
             }
           }
         }.mapNotNull {
-          val requirement = PyRequirementParser.fromLine(normalize(it))
+          val requirement = PyRequirementParser.fromLine(normalizePackageName(it))
           requirement?.name
         }
 
       systems.addAll(collected)
-    }
-
-    @JvmStatic
-    fun normalize(name: String): String {
-      return name
-        .replace("_", "-")
-        .replace(".", "-")
-        .replace("\"", "")
-        .lowercase()
     }
   }
 }
