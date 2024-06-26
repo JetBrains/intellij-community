@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -30,7 +30,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -41,6 +40,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.IntPair;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -427,7 +427,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   @Nullable
   protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
     VirtualFile file = PsiUtilCore.getVirtualFile(psi);
-    Pair<Integer, Integer> position = getLineAndColumn(searchText);
+    IntPair position = getLineAndColumn(searchText);
     boolean positionSpecified = position.first >= 0 || position.second >= 0;
     if (file != null && positionSpecified) {
       return new OpenFileDescriptor(psi.getProject(), file, position.first, position.second);
@@ -444,7 +444,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
     return psiElement.getNavigationElement();
   }
 
-  protected static Pair<Integer, Integer> getLineAndColumn(String text) {
+  protected static IntPair getLineAndColumn(String text) {
     int line = getLineAndColumnRegexpGroup(text, 2);
     int column = getLineAndColumnRegexpGroup(text, 3);
 
@@ -452,7 +452,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       line = 0;
     }
 
-    return new Pair<>(line, column);
+    return new IntPair(line, column);
   }
 
   private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {
