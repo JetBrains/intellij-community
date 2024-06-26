@@ -114,11 +114,11 @@ abstract class SilentHostedGitHttpAuthDataProvider<A : ServerAccount> : GitHttpA
     getAuthFailureManager(project).ignoreAccount(url, authData.account as A)
   }
 
-  private suspend fun getDefaultAccountData(project: Project, url: String): AccountAuthData<A>? {
+  private suspend fun getDefaultAccountData(project: Project, gitHostUrl: String): AccountAuthData<A>? {
     val defaultAccount = getDefaultAccountHolder(project).account ?: return null
     val authFailureManager = getAuthFailureManager(project)
 
-    if (GitHostingUrlUtil.match(defaultAccount.server.toURI(), url) && !authFailureManager.isAccountIgnored(url, defaultAccount)) {
+    if (GitHostingUrlUtil.matchHost(defaultAccount.server.toURI(), gitHostUrl) && !authFailureManager.isAccountIgnored(gitHostUrl, defaultAccount)) {
       val token = accountManager.findCredentials(defaultAccount) ?: return null
       val login = getAccountLogin(defaultAccount, token) ?: return null
       return AccountAuthData(defaultAccount, login, token, authDataProviderId = providerId)
@@ -142,7 +142,7 @@ abstract class SilentHostedGitHttpAuthDataProvider<A : ServerAccount> : GitHttpA
       url: String
     ): Map<A, String?> {
       return accountManager.accountsState.value
-        .filter { GitHostingUrlUtil.match(it.server.toURI(), url) }
+        .filter { GitHostingUrlUtil.matchHost(it.server.toURI(), url) }
         .filterNot { authFailureManager.isAccountIgnored(url, it) }
         .associateWith { accountManager.findCredentials(it) }
     }
