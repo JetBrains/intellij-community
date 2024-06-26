@@ -169,7 +169,7 @@ internal class RunConfigurationListManagerHelper(private val manager: RunManager
 
   private fun doCustomSort() {
     val list = idToSettings.values.toTypedArray()
-    val folderNames = getSortedFolderNames(idToSettings.values)
+    val folderNames = getCustomOrderedFolderNames(idToSettings.values, customOrder)
     // customOrder maybe outdated (order specified not all RC), so, base sort by type and folder is applied
     list.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 ->
       val index1 = customOrder.getInt(o1.uniqueID)
@@ -240,6 +240,19 @@ private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings
   result.sortWith(NaturalComparator.INSTANCE)
   result.add(null)
   return result
+}
+
+private fun getCustomOrderedFolderNames(list: Collection<RunnerAndConfigurationSettings>, customOrder: Object2IntOpenHashMap<String>): List<String?> {
+  val folderNamesWithOrder = ArrayList<Pair<String, Int>>()
+  for (settings in list) {
+    val folderName = settings.folderName
+    if (folderName != null) {
+      val order = customOrder.getInt(settings.uniqueID)
+      folderNamesWithOrder.add(Pair(folderName, order))
+    }
+  }
+  folderNamesWithOrder.sortBy { it.second }
+  return folderNamesWithOrder.map { it.first }.distinct().plus(null)
 }
 
 internal fun Collection<RunnerAndConfigurationSettings>.managedOnly(): Sequence<RunnerAndConfigurationSettings> {
