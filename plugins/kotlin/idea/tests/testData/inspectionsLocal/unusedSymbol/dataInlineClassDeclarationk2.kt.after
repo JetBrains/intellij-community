@@ -5,4 +5,8 @@
 // IGNORE_K1
 // FIX: Create object 'Unresolved'
 
-data inline class Foo(val x: <caret>Unresolved)
+data inline class Foo(val x: Unresolved)
+
+object Unresolved {
+
+}
