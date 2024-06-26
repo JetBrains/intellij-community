@@ -490,6 +490,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   final Set<String> INSTANTIATED = PluginManagerCore.isUnitTestMode ? ContainerUtil.newConcurrentSet() : null;
+
   private @Nullable FileTypeWithDescriptor instantiateFileTypeBean(@NotNull FileTypeBean bean) {
     Lock writeLock = myPendingInitializationLock.writeLock();
     writeLock.lock();
@@ -516,26 +517,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       FileType fileType = null;
       try {
         Class<Object> aClass = ApplicationManager.getApplication().loadClass(bean.implementationClass, bean.getPluginDescriptor());
-        Field field = null;
-        if (bean.fieldName == null) {
-          // find the only static field inside the file type class which type == aClass
-          Field[] declaredFields = aClass.getDeclaredFields();
-          for (Field declaredField : declaredFields) {
-            if (Modifier.isStatic(declaredField.getModifiers()) && declaredField.getType() == aClass) {
-              if (field == null) {
-                field = declaredField;
-              }
-              else {
-                // ambiguity: two static fields, use neither to avoid surprises
-                field = null;
-                break;
-              }
-            }
-          }
-        }
-        else {
-          field = aClass.getDeclaredField(bean.fieldName);
-        }
+        Field field = getField(bean, aClass);
         if (field != null) {
           field.setAccessible(true);
           fileType = (FileType)field.get(null);
@@ -594,6 +576,29 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     finally {
       writeLock.unlock();
     }
+  }
+
+  private static @Nullable Field getField(@NotNull FileTypeBean bean, Class<Object> aClass) throws NoSuchFieldException {
+    if (bean.fieldName != null) {
+      return aClass.getDeclaredField(bean.fieldName);
+    }
+
+    Field field = null;
+    // find the only static field inside the file type class which type == aClass
+    Field[] declaredFields = aClass.getDeclaredFields();
+    for (Field declaredField : declaredFields) {
+      if (Modifier.isStatic(declaredField.getModifiers()) && declaredField.getType() == aClass) {
+        if (field == null) {
+          field = declaredField;
+        }
+        else {
+          // ambiguity: two static fields, use neither to avoid surprises
+          field = null;
+          break;
+        }
+      }
+    }
+    return field;
   }
 
   @TestOnly
