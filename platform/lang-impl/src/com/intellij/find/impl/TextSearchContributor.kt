@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl
 
 import com.intellij.find.FindBundle
@@ -10,8 +10,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
-import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
 import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
@@ -197,7 +195,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
   private fun createScopes() = mutableListOf<ScopeDescriptor>().apply {
     addAll(project.service<ScopeService>()
              .createModel(setOf(ScopeOption.LIBRARIES, ScopeOption.EMPTY_SCOPES))
-             .getScopesImmediately(createContext(project, psiContext))
+             .getScopesImmediately(AbstractGotoSEContributor.createContext(project, psiContext))
              .scopeDescriptors
     )
   }

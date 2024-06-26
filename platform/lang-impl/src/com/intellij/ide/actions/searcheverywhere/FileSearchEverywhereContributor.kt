@@ -78,7 +78,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
 
   override fun getActions(onChanged: Runnable): List<AnAction> = doGetActions(filter, FileTypeFilterCollector(), onChanged)
 
-  override fun getElementsRenderer(): ListCellRenderer<Any> {
+  override fun getElementsRenderer(): ListCellRenderer<in Any?> {
     return object : SearchEverywherePsiRenderer(this) {
       @DirtyUI
       override fun getItemMatchers(list: JList<*>, value: Any): ItemMatchers {
@@ -93,7 +93,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
 
   override fun processElement(
     progressIndicator: ProgressIndicator,
-    consumer: Processor<in FoundItemDescriptor<Any>?>,
+    consumer: Processor<in FoundItemDescriptor<Any>>,
     model: FilteringGotoByModel<*>,
     element: Any?,
     degree: Int,
@@ -113,7 +113,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
   override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
     if (selected is PsiFile) {
       val file = selected.virtualFile
-      if (file == null || myProject == null) {
+      if (file == null) {
         return super.processSelectedItem(selected, modifiers, searchText)
       }
 
@@ -151,10 +151,8 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
   override fun getItemDescription(element: Any): String? {
     if ((element is PsiFile || element is PsiDirectory) && (element as PsiFileSystemItem).isValid) {
       var path: String? = FileUtilRt.toSystemIndependentName(element.virtualFile.path)
-      if (myProject != null) {
-        myProject.basePath?.let {
-          path = FileUtilRt.getRelativePath(it, path!!, '/')
-        }
+      myProject.basePath?.let {
+        path = FileUtilRt.getRelativePath(it, path!!, '/')
       }
       return path
     }
