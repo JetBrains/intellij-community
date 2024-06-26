@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.coverage
 
-import com.intellij.vcs.git.coverage.CurrentFeatureBranchBaseDetector.Status
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.vcs.git.coverage.CurrentFeatureBranchBaseDetector.Status
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
@@ -37,14 +37,32 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
       return Status.NoProtectedBranches
     }
 
-    val headNodeId = getHeadCommitId() ?: return Status.GitDataNotFound
-    val protectedNodeIds = protectedBranches.associateBy { branch ->
-      val hash = repository.branches.getHash(branch) ?: return Status.GitDataNotFound
-      val nodeId = getCommitNodeId(hash) ?: return Status.GitDataNotFound
-      nodeId
+    val permanentCommitsInfo = permanentGraph?.permanentCommitsInfo ?: return Status.GitDataNotFound
+    val headHash = getHeadHash() ?: return Status.GitDataNotFound
+    val protectedBranchHashes = protectedBranches.map { branch ->
+      val branchHash = repository.branches.getHash(branch) ?: return Status.GitDataNotFound
+      branch to branchHash
     }
 
-    val linearGraph = permanentGraph?.linearGraph ?: return Status.GitDataNotFound
+    val headNodeId = getCommitIndex(headHash)
+                       ?.let { permanentCommitsInfo.getNodeId(it) }
+                       ?.takeIf { it >= 0 }
+                     ?: return Status.GitDataNotFound
+    val protectedBranchIndexes = protectedBranchHashes.mapNotNull { (branch, hash) ->
+      val commitIndex = storage?.getCommitIndex(hash, repository.root) ?: return@mapNotNull null
+      commitIndex to branch
+    }.toMap()
+
+    val allNodeIds = permanentCommitsInfo.convertToNodeIds(protectedBranchIndexes.keys)
+    val protectedNodeIds = allNodeIds.mapNotNull { nodeId ->
+      val commitIndex = permanentCommitsInfo.getCommitId(nodeId)
+      val branch = protectedBranchIndexes[commitIndex] ?: return@mapNotNull null
+      nodeId to branch
+    }.toMap()
+
+    if (protectedNodeIds.isEmpty()) return Status.GitDataNotFound
+
+    val linearGraph = permanentGraph.linearGraph
     return when (val status = findBaseCommit(linearGraph, headNodeId, protectedNodeIds.keys)) {
       is Status.InternalSuccess -> {
         val commits = status.commits.map { (commitId, protectedBranchId) ->
@@ -58,25 +76,21 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
     }
   }
 
-  private fun getHeadCommitId(): Int? {
+  private fun getHeadHash(): Hash? {
     val headRevision = repository.currentRevision ?: return null
-    val headHash = try {
+    return try {
       HashImpl.build(headRevision)
-    } catch (e: Throwable) {
+    }
+    catch (e: Throwable) {
       if (e is ControlFlowException) {
         throw e
       }
       thisLogger().warn(e)
       return null
     }
-    return getCommitNodeId(headHash)
   }
 
-  private fun getCommitNodeId(hash: Hash): Int? {
-    val commitIndex = storage?.getCommitIndex(hash, repository.root) ?: return null
-    val nodeId = permanentGraph?.permanentCommitsInfo?.getNodeId(commitIndex) ?: return null
-    return nodeId.takeIf { it >= 0 }
-  }
+  private fun getCommitIndex(hash: Hash): Int? = storage?.getCommitIndex(hash, repository.root)
 
   private fun getHash(nodeId: Int): Hash? {
     val commitId = permanentGraph?.permanentCommitsInfo?.getCommitId(nodeId) ?: return null
