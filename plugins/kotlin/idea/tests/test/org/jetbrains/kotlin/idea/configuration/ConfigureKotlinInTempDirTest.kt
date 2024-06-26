@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.configurationStore.saveProjectsAndApp
 import com.intellij.facet.FacetManager
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.project.RootsChangeRescanningInfo
@@ -11,6 +12,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.Kotlin2JsCompilerArgumen
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
+import org.jetbrains.kotlin.idea.configuration.ui.KotlinConfigurationCheckerService.Companion.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector
 import org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetectorListener
@@ -66,6 +69,15 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     private fun moduleFileContent() = String(module.moduleFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
 
     fun testNoKotlincExistsNoSettingsRuntime10() {
+        // Updating the settings is done in a coroutines that might take several EDT dispatches to work.
+        // We dispatch them up to 10 times here to ensure the settings are updated correctly.
+        val propertiesComponent = PropertiesComponent.getInstance(project)
+        for (i in 1..10) {
+            if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) break
+            UIUtil.dispatchAllInvocationEvents()
+            Thread.sleep(100)
+        }
+        Assert.assertTrue(propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME))
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.languageVersionSettings.languageVersion)
         runWithModalProgressBlocking(project, "") {
