@@ -31,7 +31,7 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
       JpsModuleBridge(this, it)
     } 
   }
-  private val sdkReferencesTable = JpsSdkReferencesTableBridge(additionalData.projectJdkId, this)
+  private val sdkReferencesTable = JpsSdkReferencesTableBridge(additionalData.projectSdkId, this)
 
   override fun getModules(): List<JpsModule> = modules
 

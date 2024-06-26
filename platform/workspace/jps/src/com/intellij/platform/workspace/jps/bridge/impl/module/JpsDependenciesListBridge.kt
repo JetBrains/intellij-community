@@ -23,7 +23,7 @@ internal class JpsDependenciesListBridge(dependencyItems: List<ModuleDependencyI
         is LibraryDependency -> JpsLibraryDependencyBridge(item, this)
         ModuleSourceDependency -> JpsModuleSourceDependencyBridge(this)
         InheritedSdkDependency -> {
-          val projectJdkTypeId = (model?.project as? JpsProjectBridge)?.additionalData?.projectJdkId?.type
+          val projectJdkTypeId = (model?.project as? JpsProjectBridge)?.additionalData?.projectSdkId?.type
           val projectJdkType = JpsSdkBridge.getSerializer(projectJdkTypeId).type
           JpsSdkDependencyBridge(projectJdkType, this)
         }

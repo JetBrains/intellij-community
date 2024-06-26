@@ -8,5 +8,5 @@ import com.intellij.platform.workspace.jps.entities.SdkId
  */
 internal class JpsProjectAdditionalData(
   val projectName: String,
-  val projectJdkId: SdkId?,
+  val projectSdkId: SdkId?,
 )
