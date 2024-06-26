@@ -12,17 +12,13 @@ import com.intellij.ui.ComponentUtil
 private class ReopenClosedTabAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
   override fun actionPerformed(e: AnActionEvent) {
     val window = getEditorWindow(e)
-    if (window != null) {
-      if (window.hasClosedTabs()) {
-        window.restoreClosedTab()
-      }
-      return
+    if (window == null) {
+      val project = e.project ?: return
+      val lastFile = EditorHistoryManager.getInstance(project).fileList.lastOrNull() ?: return
+      FileEditorManager.getInstance(project).requestOpenFile(lastFile)
     }
-
-    val project = e.project ?: return
-    val list = EditorHistoryManager.getInstance(project).fileList
-    if (!list.isEmpty()) {
-      FileEditorManager.getInstance(project).openFile(list[list.size - 1], true)
+    else {
+      window.restoreClosedTab()
     }
   }
 

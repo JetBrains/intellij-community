@@ -41,6 +41,11 @@ public abstract class FileEditorManager {
    */
   public abstract FileEditor @NotNull [] openFile(@NotNull VirtualFile file, boolean focusEditor);
 
+  @ApiStatus.Experimental
+  public void requestOpenFile(@NotNull VirtualFile file) {
+    openFile(file, true);
+  }
+
   public abstract @NotNull List<@NotNull FileEditor> openFile(@NotNull VirtualFile file);
 
   /**
