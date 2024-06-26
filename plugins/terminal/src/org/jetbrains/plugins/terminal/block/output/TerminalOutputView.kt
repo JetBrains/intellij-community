@@ -4,7 +4,8 @@ package org.jetbrains.plugins.terminal.block.output
 import com.intellij.find.SearchReplaceComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -123,17 +124,14 @@ internal class TerminalOutputView(
     EditorFactory.getInstance().releaseEditor(editor)
   }
 
-  private inner class TerminalOutputPanel : JBLayeredPane(), DataProvider {
+  private inner class TerminalOutputPanel : JBLayeredPane(), UiDataProvider {
     init {
       isOpaque = false
       add(editor.component, JLayeredPane.DEFAULT_LAYER as Any)  // cast to Any needed to call right method overload
     }
 
-    override fun getData(dataId: String): Any? {
-      return if (CommonDataKeys.EDITOR.`is`(dataId)) {
-        editor
-      }
-      else null
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[CommonDataKeys.EDITOR] = editor
     }
 
     override fun getPreferredSize(): Dimension {

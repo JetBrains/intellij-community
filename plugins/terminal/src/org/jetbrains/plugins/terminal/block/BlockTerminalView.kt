@@ -5,7 +5,8 @@ import com.intellij.find.SearchSession
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -276,23 +277,20 @@ internal class BlockTerminalView(
 
   private fun getDisposed(): () -> Boolean = outputView.controller.outputModel.editor.getDisposed()
 
-  private inner class BlockTerminalPanel : JPanel(), DataProvider {
+  private inner class BlockTerminalPanel : JPanel(), UiDataProvider {
     init {
       background = TerminalUi.defaultBackground(outputView.controller.outputModel.editor)
     }
 
-    override fun getData(dataId: String): Any? {
-      return when (dataId) {
-        TerminalPromptController.KEY.name -> promptView.controller
-        TerminalOutputController.KEY.name -> outputView.controller
-        TerminalOutputModel.KEY.name -> outputView.controller.outputModel
-        SimpleTerminalController.KEY.name -> alternateBufferView?.controller
-        BlockTerminalController.KEY.name -> controller
-        TerminalSelectionController.KEY.name -> selectionController
-        TerminalFocusModel.KEY.name -> focusModel
-        BlockTerminalSession.DATA_KEY.name -> session
-        else -> null
-      }
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[TerminalPromptController.KEY] = promptView.controller
+      sink[TerminalOutputController.KEY] = outputView.controller
+      sink[TerminalOutputModel.KEY] = outputView.controller.outputModel
+      sink[SimpleTerminalController.KEY] = alternateBufferView?.controller
+      sink[BlockTerminalController.KEY] = controller
+      sink[TerminalSelectionController.KEY] = selectionController
+      sink[TerminalFocusModel.KEY] = focusModel
+      sink[BlockTerminalSession.DATA_KEY] = session
     }
 
     override fun doLayout() {

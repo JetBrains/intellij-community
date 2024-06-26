@@ -502,25 +502,17 @@ public final class AntExplorer extends SimpleToolWindowPanel implements DataProv
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      Tree tree = myTree;
-      if (tree == null) {
-        return null;
-      }
-      final TreePath[] paths = tree.getSelectionPaths();
-      final TreePath leadPath = tree.getLeadSelectionPath();
-      final AntBuildFile currentBuildFile = getCurrentBuildFile();
-      return (DataProvider)id -> getSlowData(id, paths, leadPath, currentBuildFile);
-    }
-    else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HelpID.ANT;
-    }
-    else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myProject != null? myTreeExpander : null;
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.ANT);
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myProject != null ? myTreeExpander : null);
+
+    Tree tree = myTree;
+    if (tree == null) return;
+    TreePath[] paths = tree.getSelectionPaths();
+    TreePath leadPath = tree.getLeadSelectionPath();
+    AntBuildFile currentBuildFile = getCurrentBuildFile();
+    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, id -> getSlowData(id, paths, leadPath, currentBuildFile));
   }
 
   private Object getSlowData(@NotNull @NonNls String dataId, final TreePath @Nullable [] paths, @Nullable TreePath leadPath, @Nullable AntBuildFile currentBuildFile) {
