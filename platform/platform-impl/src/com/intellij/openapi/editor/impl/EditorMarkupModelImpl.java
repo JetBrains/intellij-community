@@ -234,7 +234,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
                                                        @NotNull String place,
                                                        @NotNull Presentation presentation,
                                                        Supplier<? extends @NotNull Dimension> minimumSize) {
-        if (Registry.is("ide.redesigned.inspector", false)) return super.createIconButton(action, place, presentation, minimumSize);
+        if (RedesignedInspectionsManager.isAvailable()) return super.createIconButton(action, place, presentation, minimumSize);
 
         return new ActionButton(action, presentation, place, minimumSize) {
           @Override
