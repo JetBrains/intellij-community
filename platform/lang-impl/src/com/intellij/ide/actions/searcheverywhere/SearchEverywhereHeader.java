@@ -310,6 +310,15 @@ public final class SearchEverywhereHeader {
   private @NotNull SETab createAllTab(List<? extends SearchEverywhereContributor<?>> contributors, @NotNull Runnable onChanged) {
     String actionText = IdeUICustomization.getInstance().projectMessage("checkbox.include.non.project.items");
     PersistentSearchEverywhereContributorFilter<String> filter = createContributorsFilter(contributors);
+    var contributorToEverywhereAction = new IdentityHashMap<SearchEverywhereContributor<?>, SearchEverywhereToggleAction>();
+    for (SearchEverywhereContributor<?> c : contributors) {
+      var everywhereAction = ContainerUtil.getFirstItem(
+        ContainerUtil.filterIsInstance(c.getActions(onChanged), SearchEverywhereToggleAction.class));
+      if (everywhereAction != null) {
+        contributorToEverywhereAction.put(c, everywhereAction);
+      }
+    }
+
     List<AnAction> actions = List.of(new CheckBoxSearchEverywhereToggleAction(actionText) {
       final SearchEverywhereManagerImpl seManager = (SearchEverywhereManagerImpl)SearchEverywhereManager.getInstance(myProject);
 
@@ -323,6 +332,16 @@ public final class SearchEverywhereHeader {
         if (isEverywhere() == state) return;
         seManager.setEverywhere(state);
 
+        var separateTabsContributors = myTabs.stream()
+          .filter(t -> !t.id.equals(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID)) // filter other tabs
+          .flatMap(t -> t.contributors.stream()).toList();
+        // Set everywhere flag in the contributors that only appear in the 'All' tab
+        for (var entry : contributorToEverywhereAction.entrySet()) {
+          if (!separateTabsContributors.contains(entry.getKey())) {
+            entry.getValue().setEverywhere(state);
+          }
+        }
+
         myTabs.forEach(tab -> {
           if (tab.everywhereAction != null) tab.everywhereAction.setEverywhere(state);
         });
@@ -335,7 +354,7 @@ public final class SearchEverywhereHeader {
   }
 
   public void setResultsNotifyCallback(@NotNull Consumer<@NotNull @Nls String> notifyCallback) {
-    for (SETab tab: myTabs) {
+    for (SETab tab : myTabs) {
       tab.setResultsNotifyCallback(notifyCallback);
     }
   }
