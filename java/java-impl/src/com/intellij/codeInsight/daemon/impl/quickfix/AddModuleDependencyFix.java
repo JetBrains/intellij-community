@@ -8,6 +8,9 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -25,6 +28,7 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.modules.CircularModuleDependenciesDetector;
 import org.jetbrains.annotations.NotNull;
@@ -120,6 +124,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
       addDependencyOnModule(project, editor, ContainerUtil.getFirstItem(myModules));
     }
     else {
+      //noinspection DialogTitleCapitalization
       JBPopup popup = JBPopupFactory.getInstance()
         .createPopupChooserBuilder(new ArrayList<>(myModules))
         .setRenderer(new ModuleListCellRenderer())
@@ -153,24 +158,29 @@ class AddModuleDependencyFix extends OrderEntryFix {
   }
 
   private void addDependencyOnModule(@NotNull Project project, Editor editor, @NotNull Module module) {
-    Couple<Module> circularModules = CircularModuleDependenciesDetector.addingDependencyFormsCircularity(myCurrentModule, module);
-    if (circularModules == null || showCircularWarning(project, circularModules, module)) {
-      JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
+    ReadAction.nonBlocking(() -> CircularModuleDependenciesDetector.addingDependencyFormsCircularity(myCurrentModule, module))
+      .expireWhen(() -> project.isDisposed() || module.isDisposed())
+      .finishOnUiThread(ModalityState.nonModal(), circularModules -> {
+        if (circularModules != null && !showCircularWarning(project, circularModules, module)) return;
 
-      if (editor != null && !myClasses.isEmpty()) {
-        PsiClass[] targetClasses = myClasses.stream()
-          .map(SmartPsiElementPointer::getElement)
-          .filter(c -> c != null && ModuleUtilCore.findModuleForPsiElement(c) == module)
-          .toArray(PsiClass[]::new);
-        if (targetClasses.length > 0) {
+        CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+          JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
+          if (editor == null || myClasses.isEmpty()) return;
+
+          PsiClass[] targetClasses = myClasses.stream()
+            .map(SmartPsiElementPointer::getElement)
+            .filter(Objects::nonNull)
+            .filter(c -> ModuleUtilCore.findModuleForPsiElement(c) == module)
+            .toArray(PsiClass[]::new);
+          if (targetClasses.length == 0) return;
+
           PsiReference ref = restoreReference();
-          if (ref != null) {
-            DumbService.getInstance(project).completeJustSubmittedTasks();
-            new AddImportAction(project, ref, editor, targetClasses).execute();
-          }
-        }
-      }
-    }
+          if (ref == null) return;
+
+          DumbService.getInstance(project).completeJustSubmittedTasks();
+          new AddImportAction(project, ref, editor, targetClasses).execute();
+        });
+      }).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   private boolean showCircularWarning(@NotNull Project project, @NotNull Couple<Module> circle, @NotNull Module classModule) {
@@ -178,7 +188,10 @@ class AddModuleDependencyFix extends OrderEntryFix {
                                             getModuleName(classModule), getModuleName(circle.getFirst()),
                                             getModuleName(circle.getSecond()));
     String title = QuickFixBundle.message("orderEntry.fix.title.circular.dependency.warning");
-    return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
+    return Messages.showOkCancelDialog(project, message, title,
+                                       Messages.getYesButton(),
+                                       Messages.getCancelButton(),
+                                       Messages.getWarningIcon()) == Messages.OK;
   }
 
   private @NotNull String getModuleName(@NotNull Module module) {
