@@ -60,7 +60,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     fixture.expandAll(timeout.inWholeMilliseconds.toInt())
   }
 
-  fun expandPath(vararg path: String, fullMatch: Boolean = true) = waitFor(10.seconds, errorMessage = "Failed find ${path.toList()}") {
+  fun expandPath(vararg path: String, fullMatch: Boolean = true) = waitFor("Expand path '${path.toList()}'", 10.seconds) {
     try {
       val expandedPath = mutableListOf<String>()
       path.forEach {
@@ -81,7 +81,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
-  fun expandPathWithEnter(vararg path: String, fullMatch: Boolean = true) = waitFor(10.seconds, errorMessage = "Failed find ${path.toList()}") {
+  fun expandPathWithEnter(vararg path: String, fullMatch: Boolean = true) = waitFor("Expand path by enter '${path.toList()}'") {
     try {
       val expandedPath = mutableListOf<String>()
       path.forEach {

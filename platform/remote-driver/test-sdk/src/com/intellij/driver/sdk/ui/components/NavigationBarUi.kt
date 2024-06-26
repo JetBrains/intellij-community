@@ -12,7 +12,7 @@ class NavigationBarUi(data: ComponentData): UiComponent(data) {
   }
 
   val currentPath: List<String>
-    get() = findAllText().sortedBy { it.point.x }.map { it.text }
+    get() = getAllTexts().sortedBy { it.point.x }.map { it.text }
 
   fun navBarItem(item: String): NavBarItemUi =
     x(NavBarItemUi::class.java) { and(byClass("NavBarItemComponent"), byAccessibleName(item)) }

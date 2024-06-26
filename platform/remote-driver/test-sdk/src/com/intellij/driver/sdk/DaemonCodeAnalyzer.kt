@@ -33,7 +33,7 @@ fun Driver.isCodeAnalysisFinished(project: Project? = null, file: VirtualFile): 
 
 fun Driver.waitForCodeAnalysis(project: Project? = null, file: VirtualFile, timeout: Duration = 1.minutes) {
   withContext {
-    waitFor(timeout) {
+    waitFor("No Code analysis", timeout) {
       isCodeAnalysisFinished(project, file)
     }
   }

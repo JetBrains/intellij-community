@@ -28,3 +28,16 @@ interface RectangleRef {
   fun getY(): Double
   fun getWidth(): Double
 }
+
+fun printableString(toPrint: String): String {
+  val resultString = toPrint.let {
+    val maxLength = 600
+    if (it.length < maxLength) {
+      it
+    }
+    else {
+      it.take(maxLength) + "..."
+    }
+  }
+  return resultString
+}

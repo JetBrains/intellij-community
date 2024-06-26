@@ -1,22 +1,56 @@
 package com.intellij.driver.sdk.ui.keyboard
 
 import com.intellij.driver.sdk.ui.remote.Robot
+import com.intellij.openapi.diagnostic.logger
 import java.awt.event.KeyEvent
 
 class RemoteKeyboard(private val robot: Robot) {
+  companion object {
+    private val LOG
+      get() = logger<RemoteKeyboard>()
+  }
   fun key(key: Int) = robot.pressAndReleaseKey(key)
 
-  fun enter() = key(KeyEvent.VK_ENTER)
-  fun escape() = key(KeyEvent.VK_ESCAPE)
-  fun down() = key(KeyEvent.VK_DOWN)
-  fun up() = key(KeyEvent.VK_UP)
-  fun left() = key(KeyEvent.VK_LEFT)
-  fun right() = key(KeyEvent.VK_RIGHT)
-  fun backspace() = key(KeyEvent.VK_BACK_SPACE)
-  fun tab() = key(KeyEvent.VK_TAB)
-  fun space() = key(KeyEvent.VK_SPACE)
+  fun enter() {
+    LOG.info("Pressing enter")
+    key(KeyEvent.VK_ENTER)
+  }
+  fun escape() {
+    LOG.info("Pressing escape")
+    key(KeyEvent.VK_ESCAPE)
+  }
+  fun down() {
+    LOG.info("Pressing down")
+    key(KeyEvent.VK_DOWN)
+  }
+  fun up() {
+    LOG.info("Pressing up")
+    key(KeyEvent.VK_UP)
+  }
+  fun left() {
+    LOG.info("Pressing left")
+    key(KeyEvent.VK_LEFT)
+  }
+  fun right() {
+    LOG.info("Pressing right")
+    key(KeyEvent.VK_RIGHT)
+  }
+  fun backspace() {
+    LOG.info("Pressing backspace")
+    key(KeyEvent.VK_BACK_SPACE)
+  }
+  fun tab() {
+    LOG.info("Pressing tab")
+    key(KeyEvent.VK_TAB)
+  }
+  fun space() {
+    LOG.info("Pressing space")
+    key(KeyEvent.VK_SPACE)
+  }
 
   fun hotKey(vararg keyCodes: Int) {
+    LOG.info("Pressing hotkeys ${keyCodes.joinToString(",") {"'$it'"}}.")
+
     keyCodes.forEach {
       robot.pressKey(it)
       Thread.sleep(100)
@@ -28,6 +62,7 @@ class RemoteKeyboard(private val robot: Robot) {
   }
 
   fun enterText(text: String, delayBetweenCharsInMs: Long = 50) {
+    LOG.info("Entering text '$text'.")
     text.forEach {
       robot.type(it)
       Thread.sleep(delayBetweenCharsInMs)
@@ -35,12 +70,16 @@ class RemoteKeyboard(private val robot: Robot) {
   }
 
   fun pressing(key: Int, doWhilePress: RemoteKeyboard.() -> Unit) {
+    LOG.info("Performing action while pressing $key.")
+
     robot.pressKey(key)
     this.doWhilePress()
     robot.releaseKey(key)
   }
 
   fun doublePressing(key: Int, doWhilePress: RemoteKeyboard.() -> Unit) {
+    LOG.info("Performing action while double pressing $key.")
+
     try {
       robot.doublePressKeyAndHold(key)
       this.doWhilePress()

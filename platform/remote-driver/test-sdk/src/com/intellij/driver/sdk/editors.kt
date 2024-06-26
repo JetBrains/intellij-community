@@ -110,7 +110,7 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
     val service = service(GuestNavigationService::class, project)
     withContext(OnDispatcher.EDT) {
       service.navigateViaBackend(relativePath, 0)
-      waitFor(errorMessage = "Fail to open file $relativePath", duration = 30.seconds,
+      waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
               getter = {
                 service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
               },

@@ -1,54 +1,72 @@
 package com.intellij.driver.sdk
 
 import com.intellij.driver.sdk.ui.components.UiComponent
+import com.intellij.driver.sdk.ui.printableString
+import com.intellij.openapi.diagnostic.fileLogger
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
-fun waitFor(
-  duration: Duration = 5.seconds,
-  interval: Duration = 1.seconds,
-  errorMessage: String = "",
-  condition: () -> Boolean
-) {
-  waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = condition, checker = { it })
-}
+private val LOG get() = fileLogger()
 
 fun waitFor(
-  duration: Duration = 5.seconds,
+  message: String? = null,
+  timeout: Duration = 5.seconds,
   interval: Duration = 1.seconds,
-  errorMessage: () -> String,
-  condition: () -> Boolean
+  errorMessage: (() -> String)? = null,
+  condition: () -> Boolean,
 ) {
-  waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = condition, checker = { it })
+  waitFor(message = message,
+          timeout = timeout,
+          interval = interval,
+          errorMessage = if (errorMessage == null) {
+            null
+          }
+          else {
+            run@{ errorMessage.invoke() }
+          },
+          getter = condition,
+          checker = { it })
 }
 
 fun <T> waitNotNull(
-  duration: Duration = 5.seconds,
+  message: String? = null,
+  timeout: Duration = 5.seconds,
   interval: Duration = 1.seconds,
-  errorMessage: String = "",
-  getter: () -> T?
+  errorMessage: ((T?) -> String)? = null,
+  getter: () -> T?,
 ): T {
-  return waitFor(duration = duration, interval = interval, errorMessage = errorMessage, getter = getter, checker = { it != null })!!
+  return waitFor(message = message, timeout = timeout,
+                 interval = interval,
+                 errorMessage = if (errorMessage == null) {
+                   null
+                 }
+                 else { it -> errorMessage.invoke(it) },
+                 getter = getter,
+                 checker = { it != null }
+  )!!
 }
 
-fun <T> waitFor(
-  duration: Duration = 5.seconds,
-  interval: Duration = 1.seconds,
-  errorMessage: String = "",
-  getter: () -> T,
-  checker: (T) -> Boolean
-): T {
-  return waitFor(duration = duration, interval = interval, errorMessage = { errorMessage }, getter = getter, checker = checker)
+private fun logAwaitStart(message: String?, timeout: Duration) {
+  message?.let { LOG.info("Await: '$it' with timeout $timeout") }
 }
 
+private fun <T> logAwaitFinish(message: String?, result: T) {
+  message?.let {
+    LOG.info("Await: '$it' resulted with \n\t${printableString(result.toString())}")
+  }
+}
+
+
 fun <T> waitFor(
-  duration: Duration = 5.seconds,
+  message: String? = null,
+  timeout: Duration = 5.seconds,
   interval: Duration = 1.seconds,
-  errorMessage: () -> String = { "" },
+  errorMessage: ((T) -> String)? = null,
   getter: () -> T,
-  checker: (T) -> Boolean
+  checker: (T) -> Boolean,
 ): T {
-  val endTime = System.currentTimeMillis() + duration.inWholeMilliseconds
+  logAwaitStart(message, timeout)
+  val endTime = System.currentTimeMillis() + timeout.inWholeMilliseconds
   var now = System.currentTimeMillis()
   var result = getter()
   while (now < endTime && checker(result).not()) {
@@ -57,26 +75,87 @@ fun <T> waitFor(
     now = System.currentTimeMillis()
   }
   if (checker(result).not()) {
-    throw WaitForException(duration, errorMessage() + if (result !is Boolean) " Actual: $result" else "")
+    throw WaitForException(timeout,
+                           errorMessage = errorMessage?.invoke(result)
+                                          ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
   }
   else {
+    if (result !is Boolean) {
+      logAwaitFinish(message, result)
+    }
     return result
   }
 }
 
-fun <T> retryWithFallback(
-  fallbackAction: () -> T,
-  mainAction: () -> T,
+/**
+ * Waits until there is exactly one match in getter result abiding checker.
+ */
+fun <T> waitForOne(
+  message: String? = null,
+  timeout: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: ((List<T>) -> String)? = null,
+  getter: () -> List<T>,
+  checker: (T) -> Boolean,
 ): T {
-  return try {
-    mainAction()
-  } catch (_: Exception) {
-    fallbackAction()
-    mainAction()
+  logAwaitStart(message, timeout)
+  val endTime = System.currentTimeMillis() + timeout.inWholeMilliseconds
+  var now = System.currentTimeMillis()
+  var resultList = getter()
+  var filteredResultList = resultList.filter { checker(it) }
+  while (now < endTime && filteredResultList.size != 1) {
+    Thread.sleep(interval.inWholeMilliseconds)
+    resultList = getter()
+    filteredResultList = resultList.filter { checker(it) }
+    now = System.currentTimeMillis()
+  }
+  if (filteredResultList.size != 1) {
+    throw WaitForException(timeout,
+                           errorMessage = errorMessage?.invoke(resultList)
+                                          ?: ("Failed: $message. " +
+                                              "\n\tExpected one suitable instance, but got: " +
+                                              "\n\tReceived list: ${resultList.joinToString("\n\t")}" +
+                                              "\n\tSuitable list: ${filteredResultList.joinToString("\n\t")}"))
+  }
+  else {
+    return filteredResultList.single().also {
+      logAwaitFinish(message, it)
+    }
   }
 }
 
-fun <T> withRetries(times: Int, onError: () -> Unit = {}, f: () -> T): T {
+fun <T> waitForOne(
+  message: String? = null,
+  timeout: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: ((List<T>) -> String)? = null,
+  getter: () -> List<T>,
+): T {
+  logAwaitStart(message, timeout)
+  val endTime = System.currentTimeMillis() + timeout.inWholeMilliseconds
+  var now = System.currentTimeMillis()
+  var resultList = getter()
+  while (now < endTime && resultList.size != 1) {
+    Thread.sleep(interval.inWholeMilliseconds)
+    resultList = getter()
+    now = System.currentTimeMillis()
+  }
+  if (resultList.size != 1) {
+    throw WaitForException(timeout,
+                           errorMessage = errorMessage?.invoke(resultList)
+                                          ?: ("Failed: $message. " +
+                                              "\n\tExpected one suitable instance, but got:" +
+                                              "\n\t${resultList.joinToString("\n\t")}"))
+  }
+  else {
+    return resultList.single().also {
+      logAwaitFinish(message, it)
+    }
+  }
+}
+
+fun <T> withRetries(message: String? = null, times: Int, onError: () -> Unit = {}, f: () -> T): T {
+  message?.let { LOG.info("With $times attempts: $it") }
   require(times > 0)
   var lastException: Exception? = null
   for (i in 0 until times) {
@@ -91,10 +170,10 @@ fun <T> withRetries(times: Int, onError: () -> Unit = {}, f: () -> T): T {
   throw RetryException(lastException!!)
 }
 
-class WaitForException(val duration: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($duration): $errorMessage", cause)
-class RetryException(cause: Exception): RuntimeException(cause)
+class WaitForException(val timeout: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($timeout): $errorMessage", cause)
+class RetryException(cause: Exception) : RuntimeException(cause)
 
-fun <T : UiComponent> T.wait(duration: Duration): T {
-  Thread.sleep(duration.inWholeMilliseconds)
+fun <T : UiComponent> T.wait(timeout: Duration): T {
+  Thread.sleep(timeout.inWholeMilliseconds)
   return this
 }

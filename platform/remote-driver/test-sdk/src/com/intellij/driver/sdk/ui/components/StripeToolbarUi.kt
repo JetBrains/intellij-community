@@ -18,7 +18,7 @@ class ToolWindowToolbarUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun openToolWindowFromMore(title: String) {
     moreButton.click()
-    driver.ui.popup().findAllText().first { it.text == title }.click()
+    driver.ui.popup().waitAnyTexts(text = title).first().click()
   }
 
   fun openToolWindow(title: String) {

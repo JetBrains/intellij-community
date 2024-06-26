@@ -3,10 +3,10 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
-import com.intellij.driver.sdk.ui.should
-import org.intellij.lang.annotations.Language
+import com.intellij.driver.sdk.waitForOne
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import org.intellij.lang.annotations.Language
 import java.awt.Point
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -52,12 +52,8 @@ class JCefUI(data: ComponentData) : UiComponent(data) {
   }
 
   fun findElement(@Language("XPath") xpath: String, wait: Duration = 5.seconds): DomElement {
-    var elements: List<DomElement> = emptyList()
-    should(message = "Can't find element by '$xpath' in the embedded browser($component)", 5) {
-      elements = findElements(xpath)
-      elements.size == 1
-    }
-    return elements.single()
+    return waitForOne("Find element by '$xpath' in the embedded browser($component)", wait,
+            getter = { findElements(xpath) } )
   }
 
   fun findElements(@Language("xpath") xpath: String): List<DomElement> {

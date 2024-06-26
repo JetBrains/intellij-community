@@ -4,9 +4,8 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
-import com.intellij.driver.sdk.ui.should
+import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
-import java.util.*
 import kotlin.time.Duration.Companion.seconds
 
 fun Finder.popup(@Language("xpath") xpath: String? = null) =
@@ -25,8 +24,10 @@ class PopupMenuUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun select(vararg items: String) {
     items.forEach { item ->
-      should(timeout = 5.seconds, message = "Fail to find items: ${items.contentToString()}") { menuItems.list().map { it.getText() }.contains(item) }
-      menuItems.list().first { it.getText() == item }.click()
+      waitForOne(message = "Find item: $item", timeout = 5.seconds,
+              getter = { menuItems.list() },
+              checker = { it.getText() == item })
+        .click()
     }
   }
 

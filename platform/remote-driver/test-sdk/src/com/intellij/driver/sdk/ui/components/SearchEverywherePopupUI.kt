@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.should
 import org.intellij.lang.annotations.Language
+import kotlin.time.Duration.Companion.seconds
 
 
 fun Finder.searchEverywherePopup(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='HeavyWeightWindow'][//div[contains(@class, 'SearchEverywhereUI')]]",
@@ -14,7 +15,7 @@ class SearchEverywherePopupUI(data: ComponentData): PopupUiComponent(data) {
   fun searchAndChooseFirst(text: String, exactMatch: Boolean = true) {
     keyboard {
       enterText(text)
-      resultsList.should(15) {
+      resultsList.should(timeout = 15.seconds) {
         if (exactMatch) hasText(text) else hasSubtext(text)
       }
       enter()
