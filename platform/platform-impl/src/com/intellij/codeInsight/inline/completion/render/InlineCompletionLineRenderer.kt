@@ -3,7 +3,6 @@ package com.intellij.codeInsight.inline.completion.render
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
 import com.intellij.ide.ui.AntialiasingType
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
@@ -68,17 +67,10 @@ class InlineCompletionLineRenderer(
       }
       g.color = block.attributes.foregroundColor
       g.font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(block.attributes.fontType))
-      if (block.attributes.effectType != null && block.attributes.effectColor != null) {
-        LOG.error("The effects are not supported in Inline Completion yet.") // TODO
-      }
       g.drawString(block.text, x, targetRegion.y + editor.ascent)
       x += width
     }
 
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, previousRenderingHint)
-  }
-
-  companion object {
-    private val LOG = logger<InlineCompletionLineRenderer>()
   }
 }
