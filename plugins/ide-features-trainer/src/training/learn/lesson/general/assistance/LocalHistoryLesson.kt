@@ -58,10 +58,12 @@ import java.awt.Rectangle
 import java.util.concurrent.CompletableFuture
 import javax.swing.JFrame
 
-class LocalHistoryLesson(private val helpUrl: String = "local-history.html")
-  : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
+class LocalHistoryLesson(
+  override val sampleFilePath: String? = null,
+  override val lessonType: LessonType = LessonType.SCRATCH,
+  private val helpUrl: String = "local-history.html",
+) : KLesson("CodeAssistance.LocalHistory", LessonsBundle.message("local.history.lesson.name")) {
   override val languageId = "yaml"
-  override val lessonType = LessonType.SCRATCH
   override val properties = LessonProperties(availableSince = "212.5284")
 
   private val lineToDelete = 14
