@@ -27,7 +27,12 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
                             boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
-      return serializationViaWorkspaceModel.loadModel(projectPath, externalConfigurationDirectory, optionsPath, loadUnloadedModules);
+      String projectCachePath = System.getProperty("jps.workspace.storage.project.cache.path");
+      Path workspaceStorageCachePath = projectCachePath != null ? Paths.get(projectCachePath) : null;
+      String globalCachePath = System.getProperty("jps.workspace.storage.global.cache.path");
+      Path globalWorkspaceStoragePath = globalCachePath != null ? Paths.get(globalCachePath) : null;
+      return serializationViaWorkspaceModel.loadModel(projectPath, workspaceStorageCachePath, externalConfigurationDirectory, optionsPath,
+                                                      globalWorkspaceStoragePath, loadUnloadedModules);
     }
 
     JpsModel model = JpsElementFactory.getInstance().createModel();

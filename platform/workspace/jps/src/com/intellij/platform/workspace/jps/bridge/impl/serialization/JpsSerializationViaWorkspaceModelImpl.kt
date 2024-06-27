@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.bridge.impl.serialization
 
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
@@ -16,8 +17,10 @@ import com.intellij.platform.workspace.jps.entities.exModuleOptions
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
 import org.jetbrains.jps.model.JpsModel
@@ -29,22 +32,22 @@ import org.jetbrains.jps.model.serialization.impl.JpsSerializationViaWorkspaceMo
 import java.nio.file.Path
 
 internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorkspaceModel {
-  override fun loadModel(projectPath: Path, externalConfigurationDirectory: Path?, optionsPath: Path?, loadUnloadedModules: Boolean): JpsModel {
+  override fun loadModel(projectPath: Path, workspaceStorageCachePath: Path?, externalConfigurationDirectory: Path?, optionsPath: Path?, 
+                         globalWorkspaceStoragePath: Path?, loadUnloadedModules: Boolean): JpsModel {
     val virtualFileUrlManager = VirtualFileUrlManagerImpl()
     val errorReporter = createErrorReporter()
-    val globalStorage = MutableEntityStorage.create()
-    val (globalMacroExpander, pathVariables) = if (optionsPath != null) {
-      loadGlobalStorage(optionsPath, virtualFileUrlManager, errorReporter, globalStorage)
+    val pathVariables = optionsPath?.let { JpsGlobalSettingsLoading.computeAllPathVariables(it) } ?: emptyMap()
+    val globalMacroExpander = JpsMacroExpander(pathVariables)
+    val globalStorageFromCache = globalWorkspaceStoragePath?.let {
+      loadFromCacheFile(globalWorkspaceStoragePath, virtualFileUrlManager)
     }
-    else {
-      null to emptyMap()
-    }
+    val globalStorage = globalStorageFromCache ?: loadGlobalStorage(optionsPath, virtualFileUrlManager, errorReporter, globalMacroExpander)
 
-    val model = loadProject(projectPath, externalConfigurationDirectory, virtualFileUrlManager, pathVariables, errorReporter, globalStorage,
+    val model = loadProject(projectPath, workspaceStorageCachePath, externalConfigurationDirectory, virtualFileUrlManager, pathVariables, errorReporter, globalStorage,
                             loadUnloadedModules)
 
     if (optionsPath != null) {
-      val globalLoader = JpsGlobalLoader(globalMacroExpander!!, model.global, arrayOf(JpsGlobalLoader.FILE_TYPES_SERIALIZER))
+      val globalLoader = JpsGlobalLoader(globalMacroExpander, model.global, arrayOf(JpsGlobalLoader.FILE_TYPES_SERIALIZER))
       globalLoader.load(optionsPath)
     }
 
@@ -53,8 +56,9 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
 
   private fun loadProject(
     projectPath: Path,
+    workspaceStorageCachePath: Path?,
     externalConfigurationDirectory: Path?,
-    virtualFileUrlManager: VirtualFileUrlManagerImpl,
+    virtualFileUrlManager: VirtualFileUrlManager,
     pathVariables: Map<String, String>,
     errorReporter: ErrorReporter,
     globalStorage: EntityStorage,
@@ -62,12 +66,46 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
   ): JpsModelBridge {
     val configLocation = toConfigLocation(projectPath, virtualFileUrlManager)
     val contentReader = ProjectDirectJpsFileContentReader(configLocation.baseDirectoryUrl.toPath(), externalConfigurationDirectory, pathVariables)
-    val (projectStorage, additionalData) = loadProjectStorage(virtualFileUrlManager, errorReporter, configLocation, contentReader, loadUnloadedModules)
-    val model = JpsModelBridge(projectStorage, globalStorage, additionalData)
+    val storageFromCache = workspaceStorageCachePath?.let { 
+      loadFromCacheFile(workspaceStorageCachePath, virtualFileUrlManager)
+    }
+    val projectStorage = storageFromCache ?: loadProjectStorage(virtualFileUrlManager, errorReporter, configLocation, contentReader, loadUnloadedModules)
+    val additionalData = loadAdditionalData(configLocation, contentReader.projectComponentLoader)
 
+    val model = JpsModelBridge(projectStorage, globalStorage, additionalData)
     loadOtherProjectComponents(model.project, contentReader.projectComponentLoader, configLocation, externalConfigurationDirectory)
     loadOtherModuleComponents(model.project)
     return model
+  }
+
+  private fun loadFromCacheFile(cachePath: Path, virtualFileUrlManager: VirtualFileUrlManager): EntityStorage? {
+    val urlRelativizer = null //todo
+    val ijBuildVersion = "243.SNAPSHOT" //todo
+    val serializer = EntityStorageSerializerImpl(JpsProcessEntityTypeResolver(), virtualFileUrlManager, urlRelativizer, ijBuildVersion)
+    val storage = serializer.deserializeCache(cachePath).onFailure { logger.warn("Failed to load cache from $cachePath", it) }.getOrNull()
+    if (storage != null) {
+      logger.info("Loaded from cache: $cachePath")
+    }
+    return storage
+  }
+
+  private fun loadAdditionalData(
+    configLocation: JpsProjectConfigLocation,
+    componentLoader: JpsComponentLoader,
+  ): JpsProjectAdditionalData {
+    val projectName = when (configLocation) {
+      is JpsProjectConfigLocation.DirectoryBased -> getDirectoryBaseProjectName(configLocation.ideaFolder.toPath())
+      is JpsProjectConfigLocation.FileBased -> FileUtil.getNameWithoutExtension(configLocation.iprFile.fileName)
+    }
+    val projectRootComponentFileElement = when (configLocation) {
+      is JpsProjectConfigLocation.DirectoryBased -> componentLoader.loadRootElement(configLocation.ideaFolder.toPath().resolve("misc.xml"))
+      is JpsProjectConfigLocation.FileBased -> componentLoader.loadRootElement(configLocation.iprFile.toPath())
+    }
+    val projectSdkId = readProjectSdkTypeAndName(projectRootComponentFileElement)?.let {
+      SdkId(name = it.second, type = it.first)
+    }
+    val additionalData = JpsProjectAdditionalData(projectName, projectSdkId)
+    return additionalData
   }
 
   private fun createErrorReporter() = object : ErrorReporter {
@@ -77,9 +115,9 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
   }
 
   private fun loadProjectStorage(
-    virtualFileUrlManager: VirtualFileUrlManagerImpl, errorReporter: ErrorReporter,
+    virtualFileUrlManager: VirtualFileUrlManager, errorReporter: ErrorReporter,
     configLocation: JpsProjectConfigLocation, fileContentReader: ProjectDirectJpsFileContentReader, loadUnloadedModules: Boolean,
-  ): Pair<EntityStorage, JpsProjectAdditionalData> {
+  ): EntityStorage {
     /* JpsProjectEntitiesLoader requires non-null value of externalStoragePath even if the external storage is not used, so use some
        artificial path if it isn't specified; externalStoragePath will be eliminated when IJPL-10518 is fixed
     */
@@ -97,28 +135,18 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
       serializers.loadAll(context.fileContentReader, mainStorage, orphanageStorage, unloadedStorage, unloadedModuleNames, errorReporter)
     }
 
-    val projectName = when (configLocation) {
-      is JpsProjectConfigLocation.DirectoryBased -> getDirectoryBaseProjectName(configLocation.ideaFolder.toPath())
-      is JpsProjectConfigLocation.FileBased -> FileUtil.getNameWithoutExtension(configLocation.iprFile.fileName)
-    }
-    val projectRootComponentFileElement = when (configLocation) {
-      is JpsProjectConfigLocation.DirectoryBased -> fileContentReader.projectComponentLoader.loadRootElement(configLocation.ideaFolder.toPath().resolve("misc.xml"))
-      is JpsProjectConfigLocation.FileBased -> fileContentReader.projectComponentLoader.loadRootElement(configLocation.iprFile.toPath())
-    }
-    val projectSdkId = readProjectSdkTypeAndName(projectRootComponentFileElement)?.let {
-      SdkId(name = it.second, type = it.first)
-    }
-    return mainStorage to JpsProjectAdditionalData(projectName, projectSdkId)
+    return mainStorage
   }
 
   private fun loadGlobalStorage(
-    optionsPath: Path,
+    optionsPath: Path?,
     virtualFileUrlManager: VirtualFileUrlManagerImpl,
     errorReporter: ErrorReporter,
-    globalStorage: MutableEntityStorage,
-  ): Pair<JpsMacroExpander, Map<String, String>> {
-    val pathVariables = JpsGlobalSettingsLoading.computeAllPathVariables(optionsPath)
-    val macroExpander = JpsMacroExpander(pathVariables)
+    macroExpander: JpsMacroExpander,
+  ): EntityStorage {
+    val globalStorage = MutableEntityStorage.create()
+    if (optionsPath == null) return globalStorage
+    
     val reader = GlobalDirectJpsFileContentReader(macroExpander)
     val rootsTypes = JpsSdkLibraryBridge.serializers.map { it.typeId }
     val serializers = JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, rootsTypes, optionsPath)
@@ -127,11 +155,11 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
       serializer.checkAndAddToBuilder(globalStorage, globalStorage, loaded.data)
       loaded.exception?.let { throw it }
     }
-    return macroExpander to pathVariables
+    return globalStorage
   }
 
   override fun loadProject(projectPath: Path, externalConfigurationDirectory: Path?, pathVariables: Map<String, String>, loadUnloadedModules: Boolean): JpsProject {
-    val model = loadProject(projectPath, externalConfigurationDirectory, VirtualFileUrlManagerImpl(), pathVariables, createErrorReporter(), 
+    val model = loadProject(projectPath, null, externalConfigurationDirectory, VirtualFileUrlManagerImpl(), pathVariables, createErrorReporter(), 
                             MutableEntityStorage.create(), loadUnloadedModules)
     return model.project
   }
@@ -197,6 +225,8 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
       is JpsProjectConfigLocation.FileBased -> iprFileParent.toPath().resolve("${iprFile.fileName.substringBeforeLast('.')}.iws")
     }
 }
+
+private val logger = fileLogger()
 
 private class JpsUnloadedModulesNameHolder(private val unloadedModuleNames: Set<String>) : UnloadedModulesNameHolder {
   override fun isUnloaded(name: String): Boolean = unloadedModuleNames.contains(name)
