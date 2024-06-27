@@ -264,10 +264,23 @@ public final class EnvironmentUtil {
         }
         readerCmd.append(SHELL_SOURCE_COMMAND).append(" \"").append(file).append("\" && ");
       }
-
-      readerCmd.append("'").append(reader).append("' > '").append(envDataFile.toAbsolutePath()).append("'");
-
       List<String> command = getShellProcessCommand();
+      boolean isNushell = command.get(0).endsWith("/nu");
+
+      if (isNushell) {
+        readerCmd.append("^");
+      }
+
+      readerCmd.append("'").append(reader);
+
+      if (isNushell) {
+        readerCmd.append("' | save '");
+      } else {
+        readerCmd.append("' > '");
+      }
+
+      readerCmd.append(envDataFile.toAbsolutePath()).append("'");
+
       int idx = command.indexOf(SHELL_COMMAND_ARGUMENT);
       if (idx >= 0) {
         // if there is already a command append command to the end
