@@ -1,8 +1,8 @@
 // "Convert receiver to parameter" "true"
 expect class Foo {
-    fun <caret>String.foo(n: Int)
+    fun foo(string: String, n: Int)
 }
 
 fun Foo.test() {
-    "1".foo(2)
+    foo("1", 2)
 }

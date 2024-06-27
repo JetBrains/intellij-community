@@ -8069,6 +8069,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertReceiverToParameter/autoSuggestedName.kt");
         }
 
+        @TestMetadata("autoSuggestedName1.kt")
+        public void testAutoSuggestedName1() throws Exception {
+            runTest("testData/intentions/convertReceiverToParameter/autoSuggestedName1.kt");
+        }
+
         @TestMetadata("callVariableAsFunction.kt")
         public void testCallVariableAsFunction() throws Exception {
             runTest("testData/intentions/convertReceiverToParameter/callVariableAsFunction.kt");

@@ -273,7 +273,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         if (changeInfo !is KotlinChangeInfo) return false
         val element = changeInfo.method
 
-        val namedDeclarations = changeInfo.getUserData(primaryElementsKey) ?: listOf(element)
+        val namedDeclarations = changeInfo.getUserData(primaryElementsKey)?.reversed() ?: listOf(element)
         val refactoringSupport = KotlinRenameRefactoringSupport.getInstance()
         for (declaration in namedDeclarations) {
             updatePrimaryMethod(declaration, changeInfo)

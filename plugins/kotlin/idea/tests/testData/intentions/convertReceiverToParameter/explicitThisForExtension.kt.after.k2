@@ -1,0 +1,4 @@
+// WITH_STDLIB
+fun add(i: Int) {
+    i.run { println(i + 1) }
+}

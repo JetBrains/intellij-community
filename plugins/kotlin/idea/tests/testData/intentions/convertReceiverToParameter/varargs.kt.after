@@ -1,3 +1,3 @@
 // AFTER-WARNING: Parameter 'i' is never used
 // AFTER-WARNING: Parameter 'i1' is never used
-fun <caret>f1(i1: Int, vararg i: Int){}
+fun f1(i1: Int, vararg i: Int){}

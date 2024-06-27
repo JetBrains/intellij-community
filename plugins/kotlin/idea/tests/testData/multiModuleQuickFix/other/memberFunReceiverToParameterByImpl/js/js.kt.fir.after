@@ -1,11 +1,11 @@
 // "Convert receiver to parameter" "true"
 
 actual class Foo {
-    actual fun <caret>String.foo(n: Int) {
+    actual fun foo(string: String, n: Int) {
 
     }
 }
 
 fun Foo.test1() {
-    "1".foo(2)
+    foo("1", 2)
 }

@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.refactoring.changeSignature.MethodDescriptor.ReadWriteOption
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -12,15 +15,30 @@ import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
+import org.jetbrains.kotlin.idea.search.ExpectActualUtils
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.Variance
 
-class KotlinMethodDescriptor(private val callable: KtNamedDeclaration) :
-    KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility> {
+class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility> {
+    private val callable: KtNamedDeclaration = findTargetCallable(c)
+
+    private fun findTargetCallable(c: KtNamedDeclaration): KtNamedDeclaration {
+
+        fun getCallable(): KtNamedDeclaration = (ExpectActualUtils.liftToExpected(c) ?: c) as KtNamedDeclaration
+
+        return if (ApplicationManager.getApplication().isDispatchThread) {
+            runWithModalProgressBlocking(
+                c.project, KotlinBundle.message("fix.change.signature.prepare")
+            ) { readAction { getCallable() } }
+        } else {
+            getCallable()
+        }
+    }
 
     @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     internal val oldReturnType: String = allowAnalysisOnEdt {

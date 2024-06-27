@@ -170,7 +170,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/replaceItWithExplicitFunctionLiteralParam", pattern = pattern)
             model("${idea}intentions/iterationOverMap", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertPropertyToFunction", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertReceiverToParameter", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertReceiverToParameter", pattern = pattern)
             model("${idea}intentions/convertUnsafeCastCallToUnsafeCast", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertSnakeCaseTestFunctionToSpaced", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addValOrVar", pattern = pattern, isIgnored = true)

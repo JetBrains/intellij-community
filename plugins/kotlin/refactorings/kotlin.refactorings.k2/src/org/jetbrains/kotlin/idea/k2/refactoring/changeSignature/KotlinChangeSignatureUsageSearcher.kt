@@ -108,7 +108,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                                             result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
                                         }
                                     }
-                                    else if (receiverValue is KaImplicitReceiverValue && partiallyAppliedSymbol.extensionReceiver == null) {
+                                    else if (receiverValue is KaImplicitReceiverValue) {
                                         result.add(KotlinImplicitThisToParameterUsage(receiverExpression, originalReceiverInfo!!))
                                     }
                                 }
