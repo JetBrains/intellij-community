@@ -16,6 +16,10 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated use {@link JpsProjectData} instead
+ */
+@Deprecated(forRemoval = true)
 public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   private String myProjectHomePath;
 
@@ -63,7 +67,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
       for (Map.Entry<String, String> entry : pathVariables.entrySet()) {
         configuration.addPathVariable(entry.getKey(), entry.getValue());
       }
-      JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), optionsPath);
+      JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), Paths.get(optionsPath));
     }
     catch (IOException e) {
       throw new RuntimeException(e);

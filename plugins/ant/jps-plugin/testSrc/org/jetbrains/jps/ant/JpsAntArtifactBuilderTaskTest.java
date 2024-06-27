@@ -27,6 +27,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
@@ -43,7 +44,7 @@ public class JpsAntArtifactBuilderTaskTest extends ArtifactBuilderTestCase {
 
   public void testSimple() throws IOException {
     JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(myModel.getGlobal()).addPathVariable(PathMacroUtil.APPLICATION_HOME_DIR, PathManager.getHomePath());
-    JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), getTestDataRootPath() + "/config/options");
+    JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), Paths.get(getTestDataRootPath(), "config/options"));
     addJdk("1.6");
     loadProject("ant-project");
     rebuildAllModulesAndArtifacts();

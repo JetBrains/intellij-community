@@ -45,7 +45,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService
 import org.jetbrains.jps.model.serialization.JpsPathMapper
-import org.jetbrains.jps.model.serialization.JpsProjectLoader
+import org.jetbrains.jps.model.serialization.JpsProjectLoader.loadProject
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
@@ -401,7 +401,7 @@ private suspend fun loadProject(projectHome: Path, kotlinBinaries: KotlinBinarie
       pathVariablesConfiguration.addPathVariable("MAVEN_REPOSITORY",
                                                  Path.of(SystemProperties.getUserHome(), ".m2/repository").invariantSeparatorsPathString)
       val pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.global)
-      JpsProjectLoader.loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, { launch { it.run() } }, false)
+      loadProject(model.project, pathVariables, JpsPathMapper.IDENTITY, projectHome, null, { it: Runnable -> launch { it.run() } }, false)
       span.setAllAttributes(Attributes.of(
         AttributeKey.stringKey("project"), projectHome.toString(),
         AttributeKey.longKey("moduleCount"), model.project.modules.size.toLong(),

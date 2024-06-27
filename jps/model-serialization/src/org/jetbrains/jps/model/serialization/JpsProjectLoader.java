@@ -98,17 +98,18 @@ public final class JpsProjectLoader {
                                  @NotNull JpsPathMapper pathMapper,
                                  Path projectPath,
                                  boolean loadUnloadedModules) throws IOException {
-    loadProject(project, pathVariables, pathMapper, projectPath, DefaultExecutorHolder.threadPool, loadUnloadedModules);
+    Path externalConfigurationDirectory = JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty();
+    loadProject(project, pathVariables, pathMapper, projectPath, loadUnloadedModules, externalConfigurationDirectory);
   }
 
-  public static void loadProject(JpsProject project,
-                                 Map<String, String> pathVariables,
+  public static void loadProject(@NotNull JpsProject project,
+                                 @NotNull Map<String, String> pathVariables,
                                  @NotNull JpsPathMapper pathMapper,
-                                 Path projectPath,
-                                 @NotNull Executor executor,
-                                 boolean loadUnloadedModules) throws IOException {
-    Path externalConfigurationDirectory = JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty();
-    loadProject(project, pathVariables, pathMapper, projectPath, externalConfigurationDirectory, executor, loadUnloadedModules);
+                                 @NotNull Path projectPath,
+                                 boolean loadUnloadedModules,
+                                 @Nullable Path externalConfigurationDirectory) throws IOException {
+    loadProject(project, pathVariables, pathMapper, projectPath, externalConfigurationDirectory, DefaultExecutorHolder.threadPool,
+                loadUnloadedModules);
   }
 
   public static void loadProject(JpsProject project,

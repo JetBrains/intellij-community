@@ -60,8 +60,10 @@ a:org.jetbrains.jps.model.serialization.JpsSerializationManager
 - s:getInstance():org.jetbrains.jps.model.serialization.JpsSerializationManager
 - loadModel(java.lang.String,java.lang.String):org.jetbrains.jps.model.JpsModel
 - a:loadModel(java.lang.String,java.lang.String,Z):org.jetbrains.jps.model.JpsModel
+- a:loadModel(java.nio.file.Path,java.nio.file.Path,java.nio.file.Path,Z):org.jetbrains.jps.model.JpsModel
 - a:loadProject(java.lang.String,java.util.Map):org.jetbrains.jps.model.JpsProject
 - a:loadProject(java.lang.String,java.util.Map,Z):org.jetbrains.jps.model.JpsProject
+- a:loadProject(java.nio.file.Path,java.nio.file.Path,java.util.Map,Z):org.jetbrains.jps.model.JpsProject
 f:org.jetbrains.jps.model.serialization.PathMacroUtil
 - s:getGlobalSystemMacroValue(java.lang.String):java.lang.String
 - s:getGlobalSystemMacroValue(java.lang.String,Z):java.lang.String

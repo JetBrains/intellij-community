@@ -25,7 +25,7 @@ import java.nio.file.Path
 import kotlin.io.path.Path
 
 internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorkspaceModel {
-  override fun loadModel(projectPath: String, optionsPath: String?, loadUnloadedModules: Boolean): JpsModel {
+  override fun loadModel(projectPath: Path, optionsPath: Path?, loadUnloadedModules: Boolean): JpsModel {
     val virtualFileUrlManager = VirtualFileUrlManagerImpl()
     val errorReporter = object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {
@@ -41,12 +41,12 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
       null
     }
     
-    val (projectStorage, additionalData) = loadProjectStorage(Path(projectPath), virtualFileUrlManager, errorReporter)
+    val (projectStorage, additionalData) = loadProjectStorage(projectPath, virtualFileUrlManager, errorReporter)
     val model = JpsModelBridge(projectStorage, globalStorage, additionalData)
     
     if (optionsPath != null) {
       val globalLoader = JpsGlobalLoader(globalMacroExpander!!, model.global, arrayOf(JpsGlobalLoader.FILE_TYPES_SERIALIZER))
-      globalLoader.load(Path(FileUtil.toCanonicalPath(optionsPath)))
+      globalLoader.load(optionsPath)
     }
     return model
   }
@@ -69,7 +69,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
   }
 
   private fun loadGlobalStorage(
-    optionsPath: String,
+    optionsPath: Path,
     virtualFileUrlManager: VirtualFileUrlManagerImpl,
     errorReporter: ErrorReporter,
     globalStorage: MutableEntityStorage,
@@ -86,7 +86,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
     return macroExpander
   }
 
-  override fun loadProject(projectPath: String, pathVariables: Map<String, String>, loadUnloadedModules: Boolean): JpsProject {
+  override fun loadProject(projectPath: Path, pathVariables: Map<String, String>, loadUnloadedModules: Boolean): JpsProject {
     TODO("not implemented")
   }
 }

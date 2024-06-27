@@ -10,7 +10,8 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
 import kotlin.io.path.*
 
-class JpsProjectData private constructor(relativeProjectPath: String, testClass: Class<*>, pathVariables: Map<String, String>) {
+class JpsProjectData private constructor(relativeProjectPath: String, externalConfigurationRelativePath: String?, testClass: Class<*>, 
+                                         pathVariables: Map<String, String>) {
   val baseProjectDir: Path
   val project: JpsProject
 
@@ -19,7 +20,8 @@ class JpsProjectData private constructor(relativeProjectPath: String, testClass:
     val projectPath = homeDir.resolve(relativeProjectPath)
     require(projectPath.exists()) { "$projectPath doesn't exist" }
     baseProjectDir = if (projectPath.extension == "ipr") projectPath.parent else projectPath
-    project = JpsSerializationManager.getInstance().loadProject(projectPath.absolutePathString(), pathVariables)
+    val externalConfigurationPath = externalConfigurationRelativePath?.let { homeDir.resolve(it) }
+    project = JpsSerializationManager.getInstance().loadProject(projectPath, externalConfigurationPath, pathVariables, false)
   }
 
   fun getUrl(relativePath: String): String = JpsPathUtil.pathToUrl(baseProjectDir.resolve(relativePath).invariantSeparatorsPathString)
@@ -31,9 +33,10 @@ class JpsProjectData private constructor(relativeProjectPath: String, testClass:
     @JvmOverloads
     fun loadFromTestData(
       relativeProjectPath: String, testClass: Class<*>,
+      externalConfigurationRelativePath: String? = null,
       pathVariables: Map<String, String> = emptyMap(),
     ): JpsProjectData {
-      return JpsProjectData(relativeProjectPath, testClass, pathVariables)
+      return JpsProjectData(relativeProjectPath, externalConfigurationRelativePath, testClass, pathVariables)
     }
   }
 }
@@ -48,7 +51,7 @@ fun loadGlobalSettings(relativeOptionsPath: String, testClass: Class<*>, additio
   for ((key, value) in additionalPathVariables.entries) {
     configuration.addPathVariable(key, value)
   }
-  JpsGlobalSettingsLoading.loadGlobalSettings(model.global, optionsPath.absolutePathString())
+  JpsGlobalSettingsLoading.loadGlobalSettings(model.global, optionsPath)
   return model
 }
 

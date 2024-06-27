@@ -82,7 +82,7 @@ class JpsAntSerializationTest {
   fun testLoadAntConfiguration() {
     val projectData = JpsProjectData.loadFromTestData(PROJECT_PATH, javaClass)
     val model = projectData.project.model
-    loadGlobalSettings(model.global, Path(PathManagerEx.getCommunityHomePath()).resolve(OPTIONS_PATH).absolutePathString())
+    loadGlobalSettings(model.global, Path(PathManagerEx.getCommunityHomePath()).resolve(OPTIONS_PATH))
     val buildXmlUrl = projectData.getUrl("build.xml")
     val options = JpsAntExtensionService.getOptions(projectData.project, buildXmlUrl)
     assertEquals(128, options.maxHeapSize)
