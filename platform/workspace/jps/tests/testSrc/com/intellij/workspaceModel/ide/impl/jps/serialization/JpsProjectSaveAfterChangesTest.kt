@@ -187,7 +187,7 @@ class JpsProjectSaveAfterChangesTest {
   private fun unloadedHolder(unloaded: String): com.intellij.platform.workspace.jps.UnloadedModulesNameHolder {
     val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
     return object : com.intellij.platform.workspace.jps.UnloadedModulesNameHolder {
-      override fun isUnloaded(name: String?) = name in unloadedModuleNames
+      override fun isUnloaded(name: String) = name in unloadedModuleNames
 
       override fun hasUnloaded() = !unloadedModuleNames.isEmpty()
 

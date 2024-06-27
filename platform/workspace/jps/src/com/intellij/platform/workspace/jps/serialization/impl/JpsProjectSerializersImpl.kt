@@ -231,7 +231,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val orphanage = MutableEntityStorage.create()
     val unloadedEntityBuilder = MutableEntityStorage.create()
     affectedFileLoaders.forEach {
-      val unloaded = unloadedModuleNames.isUnloaded((it as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
+      val unloaded = it is ModuleImlFileEntitiesSerializer && unloadedModuleNames.isUnloaded(it.modulePath.moduleName)
       val targetBuilder = if (unloaded) unloadedEntityBuilder else builder
       loadEntitiesAndReportExceptions(it, targetBuilder, orphanage, reader, errorReporter)
     }
@@ -259,7 +259,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val result = MutableEntityStorage.create()
           val orphanage = MutableEntityStorage.create()
           loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
-          val unloaded = unloadedModuleNames.isUnloaded((serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
+          val unloaded = serializer is ModuleImlFileEntitiesSerializer && unloadedModuleNames.isUnloaded(serializer.modulePath.moduleName)
           BuilderWithLoadedState(result, orphanage, unloaded)
         }
       }
