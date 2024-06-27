@@ -14,17 +14,26 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
 public final class FileTypeAssocTable<T> {
+  // Comparator to sort wildcard mappings from the longest to shortest matcher for IJPL-149806.
+  // NOTE: this is not perfect as sometimes wildcard matchers of the same length can still be considered to be of different "specificity"
+  //       (e.g. you'd probably want `*.pdf` to take precedence over `*.p?f`), but is still an improvement on the status quo.
+  private static final Comparator<Pair<FileNameMatcher, ?>>
+    MY_MATCHING_MAPPINGS_COMPARATOR = Comparator.comparing((Pair<FileNameMatcher, ?> pair) -> pair.first.getPresentableString()).reversed();
+
   private final Map<CharSequence, T> myExtensionMappings;
   private final Map<CharSequence, T> myExactFileNameMappings;
   private final Map<CharSequence, T> myExactFileNameAnyCaseMappings;
   private final List<Pair<FileNameMatcher, T>> myMatchingMappings;
   private final ConcurrentCharSequenceMapBuilder<T> myConcurrentCharSequenceMapBuilder;
   private final Map<String, T> myHashBangMap;
+  private final ReentrantLock myMatchingMappingsLock = new ReentrantLock();
 
   @FunctionalInterface
   public interface ConcurrentCharSequenceMapBuilder<T> {
@@ -42,7 +51,7 @@ public final class FileTypeAssocTable<T> {
     myExactFileNameAnyCaseMappings = concurrentCharSequenceMapBuilder.build(exactFileNameAnyCaseMappings, false);
     myConcurrentCharSequenceMapBuilder = concurrentCharSequenceMapBuilder;
     myHashBangMap = new ConcurrentHashMap<>(hashBangMap);
-    myMatchingMappings = ContainerUtil.createLockFreeCopyOnWriteList(matchingMappings);
+    myMatchingMappings = new CopyOnWriteArrayList<>(matchingMappings);
   }
 
   public FileTypeAssocTable(@NotNull ConcurrentCharSequenceMapBuilder<T> concurrentCharSequenceMapBuilder) {
@@ -84,14 +93,24 @@ public final class FileTypeAssocTable<T> {
       Map<CharSequence, T> mapToUse = exactFileNameMatcher.isIgnoreCase() ? myExactFileNameAnyCaseMappings : myExactFileNameMappings;
       return mapToUse.put(exactFileNameMatcher.getFileName(), type);
     }
-    int i = ContainerUtil.indexOf(myMatchingMappings, p -> p.first.equals(matcher));
-    if (i == -1) {
-      myMatchingMappings.add(Pair.create(matcher, type));
-      return null;
+
+    // Since we need to sort on insertion for IJPL-149806, we allow only one thread to modify the mapping list at a time
+    myMatchingMappingsLock.lock();
+    try {
+      int i = ContainerUtil.indexOf(myMatchingMappings, p -> p.first.equals(matcher));
+      if (i == -1) {
+        myMatchingMappings.add(Pair.create(matcher, type));
+        Collections.sort(myMatchingMappings, MY_MATCHING_MAPPINGS_COMPARATOR);
+        return null;
+      }
+      Pair<FileNameMatcher, T> old = myMatchingMappings.get(i);
+      myMatchingMappings.set(i, Pair.create(matcher, type));
+      Collections.sort(myMatchingMappings, MY_MATCHING_MAPPINGS_COMPARATOR);
+      return Pair.getSecond(old);
     }
-    Pair<FileNameMatcher, T> old = myMatchingMappings.get(i);
-    myMatchingMappings.set(i, Pair.create(matcher, type));
-    return Pair.getSecond(old);
+    finally {
+      myMatchingMappingsLock.unlock();
+    }
   }
 
   void addHashBangPattern(@NotNull String hashBang, @NotNull T type) {
@@ -120,7 +139,15 @@ public final class FileTypeAssocTable<T> {
       }
       return;
     }
-    myMatchingMappings.removeIf(assoc -> matcher.equals(assoc.getFirst()) && (type == null || type.equals(assoc.getSecond())));
+
+    // Since we need to sort on insertion for IJPL-149806, we allow only one thread to modify the mapping list at a time
+    myMatchingMappingsLock.lock();
+    try {
+      myMatchingMappings.removeIf(assoc -> matcher.equals(assoc.getFirst()) && (type == null || type.equals(assoc.getSecond())));
+    }
+    finally {
+      myMatchingMappingsLock.unlock();
+    }
   }
 
   void removeAllAssociations(@NotNull T type) {
