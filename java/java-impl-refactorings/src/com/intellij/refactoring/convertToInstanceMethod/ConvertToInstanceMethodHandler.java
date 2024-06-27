@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -17,6 +17,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
@@ -80,11 +81,13 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler,
     PsiClass containingClass = method.getContainingClass();
     if (containingClass == null || containingClass.getQualifiedName() == null) return;
     String className = containingClass.getName();
-    PsiMethod[] constructors = containingClass.getConstructors();
-    boolean noArgConstructor =
-      constructors.length == 0 || Arrays.stream(constructors).anyMatch(constructor -> constructor.getParameterList().isEmpty());
-    if (noArgConstructor) {
-      targetQualifiers.add("this / new " + className + "()");
+    if (!containingClass.isEnum() && !(containingClass instanceof PsiImplicitClass)) {
+      PsiMethod[] constructors = containingClass.getConstructors();
+      boolean noArgConstructor =
+        constructors.length == 0 || ContainerUtil.exists(constructors, constructor -> constructor.getParameterList().isEmpty());
+      if (noArgConstructor) {
+        targetQualifiers.add("this / new " + className + "()");
+      }
     }
 
     if (targetQualifiers.isEmpty()) {
@@ -98,7 +101,9 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler,
       else {
         message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
-      message += " " + JavaRefactoringBundle.message("convertToInstanceMethod.no.default.ctor");
+      if (!(containingClass instanceof PsiImplicitClass)) {
+        message += " " + JavaRefactoringBundle.message("convertToInstanceMethod.no.default.ctor");
+      }
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
