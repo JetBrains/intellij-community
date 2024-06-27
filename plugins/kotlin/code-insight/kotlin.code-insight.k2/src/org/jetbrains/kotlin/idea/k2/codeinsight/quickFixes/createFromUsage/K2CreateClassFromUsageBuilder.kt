@@ -1,4 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
@@ -13,8 +14,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinClassAction
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.ExpectedKotlinType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
@@ -36,7 +35,7 @@ object K2CreateClassFromUsageBuilder {
         var expectedType: ExpectedKotlinType?
         var superClassName:String?
         var paramList: String?
-        var returnTypeString: String = ""
+        var returnTypeString = ""
         var superClass: KtClass?
         analyze(refExpr) {
             expectedType = refExpr.getExpectedKotlinType()
@@ -57,11 +56,13 @@ object K2CreateClassFromUsageBuilder {
                         }
                         else true
                     }
+                val open = isInsideExtendsList(refExpr)
                 CreateKotlinClassAction(
                     refExpr,
                     kind,
                     applicableParents,
                     false,
+                    open,
                     refExpr.getReferencedName(),
                     superClassName,
                     paramList!!,
@@ -69,6 +70,15 @@ object K2CreateClassFromUsageBuilder {
                 )
             }
         }
+    }
+
+    private fun isInsideExtendsList(element: PsiElement): Boolean {
+        return element.findParentOfType<KtSuperTypeList>(strict = false) != null
+    }
+    private fun isInExtendsClauseOfAnnotationOrEnumOrInline(element: KtExpression): Boolean {
+        val superTypeList = element.findParentOfType<KtSuperTypeList>(strict = false) ?: return false
+        val ktClass = superTypeList.findParentOfType<KtClass>(strict = false) ?: return false
+        return ktClass.isAnnotation() || ktClass.isEnum() || ktClass.isInline()
     }
 
     private fun renderParamList(ktClass: KtClass?, isAny: Boolean): String {
@@ -137,6 +147,7 @@ object K2CreateClassFromUsageBuilder {
                                             ClassKind.ENUM_ENTRY -> false
                                             ClassKind.DEFAULT -> false
                                             ClassKind.ENUM_CLASS -> !hasTypeArguments && !inTypeBound
+                                            ClassKind.PLAIN_CLASS -> !isInExtendsClauseOfAnnotationOrEnumOrInline(fullCallExpr) // annotation/enum/inline class can't extend a class
                                             else -> true
                                         }
                                     }
@@ -225,5 +236,5 @@ object K2CreateClassFromUsageBuilder {
         return type.convertToClass()?.isInheritable() == true
     }
 
-    private fun KtType.containsStarProjections(): Boolean = this is KaNonErrorClassType && ownTypeArguments.any { it is org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection || it.type?.containsStarProjections() == true}
+    private fun KtType.containsStarProjections(): Boolean = this is KaNonErrorClassType && ownTypeArguments.any { it is KaStarTypeProjection || it.type?.containsStarProjections() == true}
 }

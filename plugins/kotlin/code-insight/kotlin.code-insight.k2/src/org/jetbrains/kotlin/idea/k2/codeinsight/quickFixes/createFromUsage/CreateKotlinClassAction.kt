@@ -23,6 +23,7 @@ class CreateKotlinClassAction(
     val kind: ClassKind,
     private val applicableParents: List<PsiElement>,
     val inner: Boolean,
+    val open: Boolean,
     val name: String,
     private val superClassName: String?,
     private val paramList: String,
@@ -90,13 +91,13 @@ class CreateKotlinClassAction(
             kind,
             className,
             applicableParents,
-            false,
+            open,
             inner,
             isInsideInnerOrLocalClass(targetParent), null
         )
         declaration.typeParameterList?.delete()
         val editor = CreateKotlinCallablePsiEditor(file.project, callableInfo)
-        val anchor = element; //element.getParentOfType<KtClassOrObject>(false) ?: element
+        val anchor = element
         val insertContainer: PsiElement = targetParent
         editor.showEditor(declaration, anchor, false, targetParent, insertContainer)
     }
