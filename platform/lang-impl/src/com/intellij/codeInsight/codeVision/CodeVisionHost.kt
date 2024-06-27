@@ -15,6 +15,7 @@ import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
@@ -377,7 +378,7 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
           val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
-          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState) {
+          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
             blockingContext {
               recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
             }
