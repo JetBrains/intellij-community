@@ -3,6 +3,8 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.JavaCodeFragmentFactory;
+import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -737,5 +739,11 @@ public class IgnoreResultOfCallInspectionTest extends LightJavaInspectionTestCas
         }
       }
     """);
+  }
+  
+  public void testFragment() {
+    PsiFile file = JavaCodeFragmentFactory.getInstance(getProject()).createCodeBlockCodeFragment("String.format(\"hello\");", null, true);
+    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
+    myFixture.testHighlighting(true, false, false);
   }
 }

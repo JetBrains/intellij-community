@@ -1420,6 +1420,10 @@ public final class ExpressionUtils {
   public static boolean isVoidContext(PsiExpression expression) {
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (element instanceof PsiExpressionStatement) {
+      if (element.getParent() instanceof PsiCodeFragment && PsiTreeUtil.skipWhitespacesAndCommentsForward(element) == null) {
+        // The last statement in the code fragment could be used as fragment return value (e.g., in the debugger watch window)
+        return false;
+      }
       return !(element.getParent() instanceof PsiSwitchLabeledRuleStatement ruleStatement) ||
              !(ruleStatement.getEnclosingSwitchBlock() instanceof PsiSwitchExpression);
     }
