@@ -36,10 +36,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -254,7 +251,7 @@ class DelayedProjectSynchronizerTest {
     return EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = JpsProjectUrlRelativizer(currentProject),
+      urlRelativizer = createJpsProjectUrlRelativizer(currentProject),
       ""
     )
   }

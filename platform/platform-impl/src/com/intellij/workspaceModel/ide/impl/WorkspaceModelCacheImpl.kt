@@ -50,7 +50,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
 
   private val urlRelativizer =
     if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
-      JpsProjectUrlRelativizer(project)
+      createJpsProjectUrlRelativizer(project)
     } else {
       null
     }
