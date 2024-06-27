@@ -77,6 +77,12 @@ class SettingsSyncBridge(
   internal fun initialize(initMode: InitMode) {
     coroutineScope.launch {
       try {
+        // Always explicitly flush settings – if this is not done before sending sync events, then remotely synced settings might not contain
+        // most up–to–date settings state (e.g. stale disabled categories).
+        runBlockingCancellable {
+          saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
+        }
+
         settingsLog.initialize()
 
         // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
@@ -120,6 +126,23 @@ class SettingsSyncBridge(
 
     settingsLog.logExistingSettings()
     try {
+      // We need to create this remote file before the first sync, otherwise the settings value (even if persisted) will be overwritten by
+      // the sync-server-side value when `com.intellij.settingsSync.CloudConfigServerCommunicator#currentSnapshotFilePath` applies
+      // the remote config received in the first sync.
+      //
+      // NOTE: it appears that `createFile` and `deleteFile` are not idempotent – calling them without first checking for the current
+      //       state of the file can cause "Sync failed. VersionId differs from the last available on server" issues.
+      if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        if (!remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)) {
+          remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+        }
+      }
+      else {
+        if (remoteCommunicator.isFileExists(CROSS_IDE_SYNC_MARKER_FILE)) {
+          remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+        }
+      }
+
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
         InitMode.PushToServer -> mergeAndPush(previousState.idePosition, previousState.cloudPosition, FORCE_PUSH)
