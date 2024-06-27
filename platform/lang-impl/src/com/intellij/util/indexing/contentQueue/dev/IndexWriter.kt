@@ -11,7 +11,7 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.stubs.StubUpdatingIndex
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
 import com.intellij.util.SystemProperties.*
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.indexing.FileBasedIndexEx
@@ -28,7 +28,7 @@ import kotlinx.coroutines.channels.consumeEach
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.Executors.newSingleThreadExecutor
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.NANOSECONDS
@@ -124,7 +124,8 @@ abstract class IndexWriter {
     private val defaultParallelWriter: ParallelIndexWriter = if (USE_COROUTINE)
       ApplyViaCoroutinesWriter()
     else
-      LegacyMultiThreadedIndexWriter()
+      //LegacyMultiThreadedIndexWriter()
+      MultiThreadedWithSuspendIndexWriter()
 
     @JvmStatic
     fun suitableWriter(applicationMode: ApplicationMode, forceWriteSynchronously: Boolean = false): IndexWriter {
@@ -211,7 +212,7 @@ object SameThreadIndexWriter : IndexWriter() {
 
   override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) = Unit
 
-  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long  = -1
+  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long = -1
 }
 
 /* ================ parallelized IndexWriter implementations: ====================================================*/
@@ -229,6 +230,13 @@ val TOTAL_WRITERS_NUMBER = BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER
 abstract class ParallelIndexWriter : IndexWriter() {
 
   val workersCount = TOTAL_WRITERS_NUMBER
+
+  override fun writeChangesToIndexesSync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
+    throw UnsupportedOperationException("writeChangesToIndexesSync is not supported")
+    //TODO implement like this? But it doesn't really needed: only SameThread implementation is really called from java code
+    //runBlockingCancellable { writeChangesToIndexes(fileIndexingResult, finishCallback) }
+  }
+
 
   override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
     for (workerNo in 0..<workersCount) {
@@ -268,7 +276,9 @@ abstract class ParallelIndexWriter : IndexWriter() {
  */
 @Internal
 class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
-  private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
+  companion object {
+    private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
+  }
 
 
   /** Max number of queued updates per indexing thread, after which one indexing thread is going to sleep until the queue is shrunk.  */
@@ -311,14 +321,6 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
 
   /** Total time (nanoseconds) indexers have slept while the writers queue was too long  */
   private val totalTimeSleptNs: AtomicLong = AtomicLong()
-
-
-
-  override fun writeChangesToIndexesSync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
-    throw UnsupportedOperationException("writeChangesToIndexesSync is not supported")
-    //TODO implement like this? But it doesn't really needed: only SameThread implementation is really called from java code
-    //runBlockingCancellable { writeChangesToIndexes(fileIndexingResult, finishCallback) }
-  }
 
 
   override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
@@ -416,12 +418,10 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
   }
 
   private fun createExecutorForIndexWriting(name: String): ExecutorService =
-    Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory(name))
+    newSingleThreadExecutor(newNamedThreadFactory(name))
 
-  private fun scheduleIndexWriting(writerIndex: Int, runnable: java.lang.Runnable) {
+  private fun scheduleIndexWriting(writerIndex: Int, runnable: Runnable) {
     indexWritesQueued.incrementAndGet()
-    //FIXME RC: we put thread to a sleep while it keeps GLOBAL_INDEXING_SEMAPHORE permit
-    //          Could we exhaust Dispatchers.IO pool?
     sleepIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
 
     writers[writerIndex].execute {
@@ -504,7 +504,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
 
   /**
    * Puts the indexing thread to the sleep until the queue of updates is shrunk enough to increase the number of indexing threads.
-   * To balance load better, each next sleeping indexer checks for the queue more frequently.
+   * To balance the load better, each next sleeping indexer checks for the queue more frequently.
    */
   private fun sleepUntilUpdatesQueueIsShrunk(writesToWakeUp: Int, napTimeNs: Long): Long {
     val sleepStart = System.nanoTime()
@@ -530,12 +530,286 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
   }
 }
 
+
+@Internal
+class MultiThreadedWithSuspendIndexWriter : ParallelIndexWriter() {
+  companion object {
+    private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
+  }
+
+
+  /** Max number of queued updates per indexing thread, after which one indexing thread is going to sleep until the queue is shrunk.  */
+  private val MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER: Int = getIntProperty("IndexUpdateWriter.MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER", 100)
+
+  /** Calibrated on indexing IDEA project: median write time for a single index entry.  */
+  private val EXPECTED_SINGLE_WRITE_TIME_NS: Long = getLongProperty("IndexUpdateWriter.EXPECTED_SINGLE_WRITE_TIME_NS", 2500)
+
+  /** Time (in milliseconds) we are waiting writers to finish their job and shutdown.  */
+  private val WRITERS_SHUTDOWN_WAITING_TIME_MS: Long = 10000
+
+
+  /** Number of asynchronous updates scheduled by [.scheduleIndexWriting] (total, across all writing pools)  */
+  private val indexWritesQueued: AtomicInteger = AtomicInteger()
+
+  /** Number of currently sleeping indexers, because of too large updates queue  */
+  private val sleepingIndexers: AtomicInteger = AtomicInteger()
+
+  private var writers: List<ExecutorService>
+
+  init {
+    val pool = mutableListOf(
+      createWorker("IdIndex Writer"),
+      createWorker("Stubs Writer"),
+      createWorker("Trigram Writer")
+    )
+    repeat(AUX_WRITERS_NUMBER) { writerNo ->
+      pool.add(createWorker("Aux Index Writer #${writerNo + 1}"))
+    }
+
+    check(pool.size == TOTAL_WRITERS_NUMBER){ "pool.size(=${pool.size}) must be == TOTAL_WRITERS_NUMBER(=$TOTAL_WRITERS_NUMBER)" }
+
+    writers = pool
+  }
+
+  private fun createWorker(name: String): ExecutorService {
+    //ThreadPoolExecutor(nThreads, nThreads,
+    //                   0L, TimeUnit.MILLISECONDS,
+    //                   LinkedBlockingQueue<Runnable>(),
+    //                   newNamedThreadFactory(name))
+    return newSingleThreadExecutor(newNamedThreadFactory(name))
+  }
+
+  /* ================= monitoring fields ======================================================== */
+
+  /** Total time (nanoseconds) spent on index writing, since app start, per worker  */
+  private val totalTimeSpentOnIndexWritingNs: Array<AtomicLong> = Array(workersCount) {
+    AtomicLong()
+  }
+
+  /** Total time (nanoseconds) indexers have slept while the writers queue was too long  */
+  private val totalTimeSleptNs: AtomicLong = AtomicLong()
+
+
+  override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
+    val startedAtNs = System.nanoTime()
+
+    val workersToSchedule = BitSet(workersCount)
+
+    for (applier in fileIndexingResult.appliers()) {
+      workersToSchedule.set(workerIndexFor(applier.indexId))
+    }
+
+    for (remover in fileIndexingResult.removers()) {
+      workersToSchedule.set(workerIndexFor(remover.indexId))
+    }
+
+    fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
+
+    // Schedule appliers to dedicated executors
+    val updatesLeftCounter = AtomicInteger(workersToSchedule.cardinality())
+    for (executorIndex in 0 until workersCount) {
+      if (workersToSchedule[executorIndex]) {
+        //Schedule applyModifications() on all the writers that are applicable.
+        // Inside the method each SingleIndexValueApplier decided on which writer it is ready to run.
+        scheduleIndexWriting(executorIndex) {
+          applyModificationsInExecutor(fileIndexingResult, executorIndex, updatesLeftCounter, finishCallback)
+        }
+      }
+    }
+  }
+
+  private fun applyModificationsInExecutor(
+    fileIndexingResult: FileIndexingResult,
+    executorIndex: Int,
+    updatesLeftCounter: AtomicInteger,
+    finishCallback: () -> Unit,
+  ) {
+
+    val startedAtNs = System.nanoTime()
+    var allModificationsSuccessful = true
+    try {
+      for (applier in fileIndexingResult.appliers()) {
+        if (executorIndex == workerIndexFor(applier.indexId)) {
+          val applied = applier.apply()
+          allModificationsSuccessful = allModificationsSuccessful && applied
+          if (!applied) {
+            VfsEventsMerger.tryLog("NOT_APPLIED", fileIndexingResult.file()) { applier.toString() }
+          }
+        }
+      }
+
+      for (remover in fileIndexingResult.removers()) {
+        if (executorIndex == workerIndexFor(remover.indexId)) {
+          val removed = remover.remove()
+          allModificationsSuccessful = allModificationsSuccessful && removed
+          if (!removed) {
+            VfsEventsMerger.tryLog("NOT_REMOVED", fileIndexingResult.file()) { remover.toString() }
+          }
+        }
+      }
+    }
+    catch (pce: ProcessCanceledException) {
+      allModificationsSuccessful = false
+      if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) {
+        Logger.getInstance(FileIndexingResult::class.java)
+          .infoWithDebug("applyModifications interrupted,fileId=${fileIndexingResult.fileId()},$pce", RuntimeException(pce))
+      }
+      throw pce
+    }
+    catch (t: Throwable) {
+      allModificationsSuccessful = false
+      Logger.getInstance(FileIndexingResult::class.java)
+        .warn("applyModifications interrupted,fileId=${fileIndexingResult.fileId()},$t",
+              if (FileBasedIndexEx.TRACE_STUB_INDEX_UPDATES) t else null)
+      throw t
+    }
+    finally {
+      val lastOrOnlyInvocationForFile = updatesLeftCounter.decrementAndGet() == 0
+      val debugString = {
+        " updated_indexes=" + fileIndexingResult.statistics().perIndexerEvaluateIndexValueTimes.keys +
+        " deleted_indexes=" + fileIndexingResult.statistics().perIndexerEvaluatingIndexValueRemoversTimes.keys
+      }
+
+      if (lastOrOnlyInvocationForFile) {
+        fileIndexingResult.markFileProcessed(allModificationsSuccessful, debugString)
+      }
+      else {
+        VfsEventsMerger.tryLog("HAS_MORE_MODIFICATIONS", fileIndexingResult.file(), debugString)
+      }
+
+      fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs)
+
+      if (lastOrOnlyInvocationForFile) {
+        finishCallback()
+      }
+    }
+  }
+
+  private suspend fun scheduleIndexWriting(writerIndex: Int, runnable: Runnable) {
+    indexWritesQueued.incrementAndGet()
+    suspendIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
+
+    writers[writerIndex].execute {
+      val startedAtNs = System.nanoTime()
+      try {
+        ProgressManager.getInstance().executeNonCancelableSection(runnable)
+      }
+      finally {
+        indexWritesQueued.decrementAndGet()
+
+        val elapsedNs = System.nanoTime() - startedAtNs
+        totalTimeSpentOnIndexWritingNs[writerIndex].addAndGet(elapsedNs)
+      }
+    }
+  }
+
+  private suspend fun suspendIfWriterQueueLarge(numberOfIndexingThreads: Int) {
+    val currentlySleeping = sleepingIndexers.get()
+    val couldBeSleeping = currentlySleeping + 1
+    val writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingThreads + couldBeSleeping)
+    val writesInQueue = indexWritesQueued.get()
+    //TODO RC: why we don't repeat the CAS below if it fails?
+    if (writesInQueue > writesInQueueToSleep && sleepingIndexers.compareAndSet(currentlySleeping, couldBeSleeping)) {
+      val writesToWakeUp = writesInQueueToSleep - MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER
+      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingThreads, "; writes queued: ", writesInQueue,
+                "; wake up when queue shrinks to ", writesToWakeUp)
+      //TODO RC: EXPECTED_SINGLE_WRITE_TIME_NS should be dynamically adjusted to actual value, not fixed
+      val napTimeNs = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * EXPECTED_SINGLE_WRITE_TIME_NS
+      try {
+        val sleptNs = suspendUntilUpdatesQueueIsShrunk(writesToWakeUp, napTimeNs)
+        LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingThreads, " by ", indexWritesQueued.get(),
+                  " updates in queue, should have wake up on ", writesToWakeUp,
+                  "; slept for ", sleptNs, " ns")
+        totalTimeSleptNs.addAndGet(sleptNs)
+      }
+      finally {
+        sleepingIndexers.decrementAndGet()
+      }
+    }
+  }
+
+
+  /**
+   * Waiting till index writing threads finish their jobs.
+   *
+   * @see .WRITERS_SHUTDOWN_WAITING_TIME_MS
+   */
+  override fun waitCurrentIndexingToFinish() {
+    if (writers.isEmpty()) {
+      return
+    }
+
+    val futures: MutableList<Future<*>> = ArrayList<Future<*>>(writers.size)
+    writers.forEach { writer -> futures.add(writer.submit(EmptyRunnable.getInstance())) }
+
+    val startTime = System.currentTimeMillis()
+    while (!futures.isEmpty()) {
+      val iterator = futures.iterator()
+      while (iterator.hasNext()) {
+        val future = iterator.next()
+        if (future.isDone) {
+          iterator.remove()
+        }
+      }
+      TimeoutUtil.sleep(10)
+      if (System.currentTimeMillis() - startTime > WRITERS_SHUTDOWN_WAITING_TIME_MS) {
+        val queueSize = indexWritesQueued.get()
+        val errorMessage = "Failed to shutdown index writers, queue size: $queueSize; executors active: $futures"
+        if (queueSize == 0) {
+          LOG.warn(errorMessage)
+        }
+        else {
+          LOG.error(errorMessage)
+        }
+        return
+      }
+    }
+  }
+
+
+  /**
+   * Suspends the indexing thread until the queue of updates is shrunk enough to increase the number of indexing
+   * threads.
+   * To balance the load better, each next sleeping indexer checks for the queue more frequently.
+   */
+  private suspend fun suspendUntilUpdatesQueueIsShrunk(writesToWakeUp: Int, napTimeNs: Long): Long {
+    val sleepStartedAtNs = System.nanoTime()
+    var iterationNo = 1
+    while (writesToWakeUp < indexWritesQueued.get()) {
+      //TODO RC: why increase backoff-time with iteration#? It is more natural to scale backoff-time as
+      //         (INDEX_WRITES_QUEUED - writesToWakeUp) * EXPECTED_SINGLE_WRITE_TIME_NS
+      val delayNs = napTimeNs * iterationNo //=linear backoff
+      if (delayNs < 1_000_000) {
+        yield()
+      }
+      else {
+        delay(delayNs / 1_000_000)
+      }
+      iterationNo++
+    }
+    return (System.nanoTime() - sleepStartedAtNs)
+  }
+
+  //======================== metrics accessors: ==================================================
+
+  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long {
+    return unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
+  }
+
+  fun totalTimeIndexersSlept(unit: TimeUnit): Long {
+    return unit.convert(totalTimeSleptNs.get(), NANOSECONDS)
+  }
+}
+
+
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
 class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
-  private val LOG = Logger.getInstance(ApplyViaCoroutinesWriter::class.java)
+  companion object {
+    private val LOG = Logger.getInstance(ApplyViaCoroutinesWriter::class.java)
+  }
 
-  //TODO RC: limit total number of tasks across all coroutines?
+  //TODO RC: limit _total_ number of tasks across all coroutines?
   //         Right now I tend to think this is not really needed: if index_1 channel is overloaded, than all the
   //         indexers coroutines that generate the changes to apply to index_1 are automatically suspended (on
   //         channel.send() call), but it shouldn't prevent say index_5 indexers to index the files, and generate
@@ -563,7 +837,9 @@ class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
         channel.consumeEach { task ->
           val startedAtNs = System.nanoTime()
           try {
-            task()
+            withContext(NonCancellable) {
+              task()
+            }
           }
           catch (e: Throwable) {
             LOG.error("Error while applying changes to index", e)
@@ -574,12 +850,6 @@ class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
         }
       }
     }
-  }
-
-  override fun writeChangesToIndexesSync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
-    throw UnsupportedOperationException("writeChangesToIndexesSync is not supported")
-    //TODO implement like this? But it doesn't really needed: only SameThread implementation is really called from java code
-    //runBlockingCancellable { writeChangesToIndexes(fileIndexingResult, finishCallback) }
   }
 
   override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
