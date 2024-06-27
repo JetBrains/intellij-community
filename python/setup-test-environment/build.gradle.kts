@@ -125,7 +125,7 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
 }
 
 createPython("py312_django_latest", "3.12",
-             listOf("django", "behave-django", "behave", "pytest", "untangle"),
+             listOf("django", "behave-django", "behave", "pytest", "untangle", "djangorestframework"),
              listOf("python3.12", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
 
 if (isUnix && !isMacOs) {
