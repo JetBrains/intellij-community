@@ -512,11 +512,7 @@ public final class AntExplorer extends SimpleToolWindowPanel implements DataProv
     TreePath[] paths = tree.getSelectionPaths();
     TreePath leadPath = tree.getLeadSelectionPath();
     AntBuildFile currentBuildFile = getCurrentBuildFile();
-    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER, id -> getSlowData(id, paths, leadPath, currentBuildFile));
-  }
-
-  private Object getSlowData(@NotNull @NonNls String dataId, final TreePath @Nullable [] paths, @Nullable TreePath leadPath, @Nullable AntBuildFile currentBuildFile) {
-    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       final List<VirtualFile> virtualFiles = collectAntFiles(buildFile -> {
         final VirtualFile virtualFile = buildFile.getVirtualFile();
         if (virtualFile != null && virtualFile.isValid()) {
@@ -525,12 +521,12 @@ public final class AntExplorer extends SimpleToolWindowPanel implements DataProv
         return null;
       }, paths);
       return virtualFiles == null? null : virtualFiles.toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       final List<PsiElement> elements = collectAntFiles(AntBuildFile::getAntFile, paths);
-      return elements == null? null : elements.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      return elements == null ? null : elements.toArray(PsiElement.EMPTY_ARRAY);
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       if (leadPath != null) {
         final DefaultMutableTreeNode node = (DefaultMutableTreeNode)leadPath.getLastPathComponent();
         if (node != null) {
@@ -548,8 +544,8 @@ public final class AntExplorer extends SimpleToolWindowPanel implements DataProv
           return new OpenFileDescriptor(myProject, file);
         }
       }
-    }
-    return null;
+      return null;
+    });
   }
 
   private static <T> List<T> collectAntFiles(final Function<? super AntBuildFile, ? extends T> function, final TreePath @Nullable [] paths) {
