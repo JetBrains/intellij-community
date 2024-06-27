@@ -10,7 +10,9 @@ import com.intellij.platform.ijent.IjentId
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.forEachGuaranteed
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import java.net.URI
 import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
@@ -18,30 +20,15 @@ import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 
-internal interface IjentWslNioFsToggleStrategy {
-  fun initialize()
-  val isInitialized: Boolean
-  fun enable(distro: WSLDistribution, ijentId: IjentId)
-  fun disable(distro: WSLDistribution)
-}
-
-internal object FallbackIjentWslNioFsToggleStrategy : IjentWslNioFsToggleStrategy {
-  override val isInitialized: Boolean = false
-  override fun initialize(): Unit = Unit
-  override fun enable(distro: WSLDistribution, ijentId: IjentId): Unit = Unit
-  override fun disable(distro: WSLDistribution): Unit = Unit
-}
-
-internal class DefaultIjentWslNioFsToggleStrategy(
+internal class IjentWslNioFsToggleStrategy(
   multiRoutingFileSystemProvider: FileSystemProvider,
   private val coroutineScope: CoroutineScope,
-) : IjentWslNioFsToggleStrategy {
+) {
   private val ownFileSystems = OwnFileSystems(multiRoutingFileSystemProvider)
 
-  override val isInitialized: Boolean = true
+  val isInitialized: Boolean = true
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  override fun initialize() {
+  fun initialize() {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       ownFileSystems.unregisterAll()
     }
@@ -86,7 +73,7 @@ internal class DefaultIjentWslNioFsToggleStrategy(
     }
   }
 
-  override fun enable(distro: WSLDistribution, ijentId: IjentId) {
+  fun enable(distro: WSLDistribution, ijentId: IjentId) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
       ijentFsProvider.newFileSystem(ijentId.uri, null)
@@ -110,7 +97,7 @@ internal class DefaultIjentWslNioFsToggleStrategy(
     }
   }
 
-  override fun disable(distro: WSLDistribution) {
+  fun disable(distro: WSLDistribution) {
     ownFileSystems.compute(distro) { _, ownFs, actualFs ->
       val actualIjentWslFsProvider = actualFs?.provider()?.unwrapIjentWslNioFileSystemProvider()
       if (actualIjentWslFsProvider != null) {

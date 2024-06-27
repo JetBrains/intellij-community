@@ -35,35 +35,35 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
   }
 
   fun enable(distro: WSLDistribution, ijentId: IjentId) {
-    strategy.enable(distro, ijentId)
+    strategy?.enable(distro, ijentId)
   }
 
   // TODO Disable when IJent exits.
   fun disable(distro: WSLDistribution) {
-    strategy.disable(distro)
+    strategy?.disable(distro)
   }
 
   private val strategy = run {
     val defaultProvider = FileSystems.getDefault().provider()
     when {
-      !WslIjentAvailabilityService.Companion.getInstance().useIjentForWslNioFileSystem() -> FallbackIjentWslNioFsToggleStrategy
+      !WslIjentAvailabilityService.Companion.getInstance().useIjentForWslNioFileSystem() -> null
 
       defaultProvider.javaClass.name == MultiRoutingFileSystemProvider::class.java.name -> {
-        DefaultIjentWslNioFsToggleStrategy(defaultProvider, coroutineScope)
+        IjentWslNioFsToggleStrategy(defaultProvider, coroutineScope)
       }
 
       else -> {
         logger<IjentWslNioFsToggler>().warn(
           "The default filesystem ${FileSystems.getDefault()} is not ${MultiRoutingFileSystemProvider::class.java}"
         )
-        FallbackIjentWslNioFsToggleStrategy
+        null
       }
     }
   }
 
   init {
-    strategy.initialize()
+    strategy?.initialize()
   }
 
-  val isInitialized: Boolean get() = strategy.isInitialized
+  val isInitialized: Boolean get() = strategy?.isInitialized ?: false
 }
