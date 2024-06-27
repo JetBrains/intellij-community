@@ -140,6 +140,7 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       case 1 -> {
         mark("m");
         for (int offset = 0; offset < myFile.getTextLength(); offset++) {
+          //noinspection ResultOfMethodCallIgnored -- performance testing
           myFile.findElementAt(offset);
         }
       }

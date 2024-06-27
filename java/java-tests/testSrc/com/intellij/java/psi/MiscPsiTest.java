@@ -205,7 +205,7 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(getProject()).createFileFromText("D.java",
                                                                                                                       "import java.util.Map.Entry");
     PsiImportStatement importStatement = file.getImportList().getImportStatements()[0];
-    assertTrue(!importStatement.isOnDemand());
+    assertFalse(importStatement.isOnDemand());
   }
 
   public void testDocCommentPrecededByLineComment() {
@@ -236,7 +236,8 @@ public class MiscPsiTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testDoNotExpandNestedChameleons() {
     PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", "class A {{{}}}");
-    file.getNode();
+    //noinspection ResultOfMethodCallIgnored
+    file.getNode(); // load tree
 
     PsiCodeBlock initializer = file.getClasses()[0].getInitializers()[0].getBody();
     assertFalse(assertInstanceOf(initializer.getNode(), LazyParseableElement.class).isParsed());
