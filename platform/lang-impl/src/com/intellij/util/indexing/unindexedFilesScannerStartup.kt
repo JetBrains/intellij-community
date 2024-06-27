@@ -145,7 +145,7 @@ private fun scheduleDirtyFilesScanning(project: Project,
   val iterators = listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFromProjectQueue, false),
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
   UnindexedFilesScanner(project, true, true, iterators, null,
-                        indexingReason, ScanningType.PARTIAL, projectDirtyFiles.asCompletableFuture())
+                        indexingReason, ScanningType.PARTIAL_ON_PROJECT_OPEN, projectDirtyFiles.asCompletableFuture())
     .queue()
   return projectDirtyFiles
 }
