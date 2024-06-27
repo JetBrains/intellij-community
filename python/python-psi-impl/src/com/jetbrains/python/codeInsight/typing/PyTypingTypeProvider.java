@@ -806,6 +806,12 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       context.getTypeAliasStack().add(alias);
     }
     try {
+      for (final PyTypeProvider provider : PyTypeProvider.EP_NAME.getExtensionList()) {
+        result = provider.getAnnotationType(typeHint, context.getTypeContext());
+        if (result != null) {
+          return result;
+        }
+      }
       final Ref<PyType> typeFromParenthesizedExpression = getTypeFromParenthesizedExpression(resolved, context);
       if (typeFromParenthesizedExpression != null) {
         return typeFromParenthesizedExpression;
