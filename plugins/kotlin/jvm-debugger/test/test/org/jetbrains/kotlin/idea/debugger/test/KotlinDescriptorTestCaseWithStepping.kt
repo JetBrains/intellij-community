@@ -341,7 +341,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         if (myInProgress) {
             action()
         } else {
-            val command = object : SuspendContextCommandImpl(this) {
+            val command = object : SuspendContextCommandImpl(this@runActionInSuspendCommand) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     action(suspendContext)
                 }

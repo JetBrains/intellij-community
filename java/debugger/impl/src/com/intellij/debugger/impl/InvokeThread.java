@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.sun.jdi.VMDisconnectedException;
@@ -21,8 +20,6 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   private static final Logger LOG = Logger.getInstance(InvokeThread.class);
 
   private static final ThreadLocal<WorkerThreadRequest> ourWorkerRequest = new ThreadLocal<>();
-
-  protected final Project myProject;
 
   public static final class WorkerThreadRequest<E extends PrioritizedTask> implements Runnable {
     private final InvokeThread<E> myOwner;
@@ -51,7 +48,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
         });
       }
       finally {
-        ourWorkerRequest.set(null);
+        ourWorkerRequest.remove();
         boolean b = Thread.interrupted(); // reset interrupted status to return into pool
       }
     }
@@ -108,13 +105,12 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
   private volatile WorkerThreadRequest myCurrentRequest = null;
 
-  public InvokeThread(Project project) {
-    myProject = project;
+  public InvokeThread() {
     myEvents = new EventQueue<>(PrioritizedTask.Priority.values().length);
     startNewWorkerThread();
   }
 
-  protected abstract void processEvent(E e);
+  protected abstract void processEvent(@NotNull E e);
 
   protected void startNewWorkerThread() {
     final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
@@ -192,19 +188,19 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     }
   }
 
-  protected static InvokeThread currentThread() {
+  public static InvokeThread currentThread() {
     final WorkerThreadRequest request = getCurrentThreadRequest();
     return request != null ? request.getOwner() : null;
   }
 
-  public boolean schedule(@Async.Schedule E r) {
+  public boolean schedule(@NotNull @Async.Schedule E r) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }
     return myEvents.put(r, r.getPriority().ordinal());
   }
 
-  public boolean pushBack(E r) {
+  public boolean pushBack(@NotNull E r) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("pushBack " + r + " in " + this);
     }

@@ -303,7 +303,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   private void pumpDebuggerThread(InvokeRatherLaterRequest request) {
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
-      request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        var commands = request.myDebugProcess.getManagerThread().getUnfinishedCommands();
+        while (!commands.isEmpty()) {
+          TimeoutUtil.sleep(1);
+        }
+        request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
+      });
     }
     else {
       if (!SwingUtilities.isEventDispatchThread()) {

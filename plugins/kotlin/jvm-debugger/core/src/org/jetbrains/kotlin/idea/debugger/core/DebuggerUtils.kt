@@ -1,12 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsImpl.getLocalVariableBorders
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
@@ -56,28 +59,29 @@ object DebuggerUtils {
         scope: GlobalSearchScope,
         className: JvmClassName,
         fileName: String,
-    ): KtFile? {
-        return runReadAction {
-            findSourceFileForClass(
-              project,
-              listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
-              className,
-              fileName,
-              location = null
-            )
-        }
+    ): KtFile? = runBlockingMaybeCancellable {
+        findSourceFileForClass(
+            project,
+            listOf(scope, KotlinSourceFilterScope.librarySources(GlobalSearchScope.allScope(project), project)),
+            className,
+            fileName,
+            location = null
+        )
     }
 
-    fun findSourceFileForClass(
+    internal suspend fun findSourceFileForClass(
         project: Project,
         scopes: List<GlobalSearchScope>,
         className: JvmClassName,
         fileName: String,
         location: Location?
     ): KtFile? {
-        val files = findSourceFilesForClass(project, scopes, className, fileName,
-                                            hasLocation = location != null,
-                                            classNameResolvesInline = false)
+        val files = readAction {
+            findSourceFilesForClass(
+                project, scopes, className, fileName,
+                hasLocation = location != null, classNameResolvesInline = false
+            )
+        }
         return chooseApplicableFile(files, location)
     }
 
@@ -123,9 +127,10 @@ object DebuggerUtils {
         return emptyList()
     }
 
-    internal fun chooseApplicableFile(files: List<KtFile>, location: Location?): KtFile? {
+    internal suspend fun chooseApplicableFile(files: List<KtFile>, location: Location?): KtFile? {
         if (files.isEmpty()) return null
         if (location == null || files.size == 1 && !forceRanking) return files.first()
+        DebuggerManagerThreadImpl.assertIsManagerThread()
         return if (Registry.`is`("kotlin.debugger.analysis.api.file.applicability.checker")) {
             FileApplicabilityChecker.chooseMostApplicableFile(files, location)
         } else {

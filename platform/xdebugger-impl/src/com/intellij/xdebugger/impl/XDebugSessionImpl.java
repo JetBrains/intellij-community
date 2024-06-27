@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
@@ -54,9 +55,12 @@ import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.util.BringDebuggeeInForegroundUtilsKt;
 import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.FlowKt;
 import kotlinx.coroutines.flow.StateFlow;
 import kotlinx.coroutines.flow.StateFlowKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,6 +101,7 @@ public final class XDebugSessionImpl implements XDebugSession {
   private final AtomicReference<Pair<XBreakpoint<?>, XSourcePosition>> myActiveNonLineBreakpoint = new AtomicReference<>();
   private final EventDispatcher<XDebugSessionListener> myDispatcher = EventDispatcher.create(XDebugSessionListener.class);
   private final Project myProject;
+  private final CoroutineScope myCoroutineScope;
   private final @Nullable ExecutionEnvironment myEnvironment;
   private final AtomicBoolean myStopped = new AtomicBoolean();
   private boolean myPauseActionSupported;
@@ -112,8 +117,10 @@ public final class XDebugSessionImpl implements XDebugSession {
   private long myUserRequestStart;
   private String myUserRequestAction;
 
-  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment, @NotNull XDebuggerManagerImpl debuggerManager) {
-    this(environment, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false, null);
+  public XDebugSessionImpl(@NotNull ExecutionEnvironment environment,
+                           @NotNull XDebuggerManagerImpl debuggerManager) {
+    this(environment, debuggerManager, environment.getRunProfile().getName(), environment.getRunProfile().getIcon(), false,
+         null);
   }
 
   public XDebugSessionImpl(@Nullable ExecutionEnvironment environment,
@@ -122,6 +129,8 @@ public final class XDebugSessionImpl implements XDebugSession {
                            @Nullable Icon icon,
                            boolean showTabOnSuspend,
                            @Nullable RunContentDescriptor contentToReuse) {
+    myCoroutineScope = CoroutineScopeKt.childScope(debuggerManager.getCoroutineScope(), "XDebugSession " + sessionName,
+                                                   EmptyCoroutineContext.INSTANCE, true);
     myEnvironment = environment;
     mySessionName = sessionName;
     myDebuggerManager = debuggerManager;
@@ -441,6 +450,11 @@ public final class XDebugSessionImpl implements XDebugSession {
       }
     }
     return myValueMarkers;
+  }
+
+  @ApiStatus.Internal
+  public CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
   }
 
   @SuppressWarnings("unchecked") //need to compile under 1.8, please do not remove before checking
@@ -1036,6 +1050,8 @@ public final class XDebugSessionImpl implements XDebugSession {
     synchronized (myRegisteredBreakpoints) {
       myRegisteredBreakpoints.clear();
     }
+
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
   }
 
   private void removeBreakpointListeners() {

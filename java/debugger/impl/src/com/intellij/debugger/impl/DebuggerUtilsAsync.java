@@ -460,7 +460,7 @@ public final class DebuggerUtilsAsync {
     SuspendContextImpl suspendContext =
       event instanceof SuspendContextCommandImpl ? ((SuspendContextCommandImpl)event).getSuspendContext() : null;
 
-    CompletableFuture<T> res = new CompletableFuture<>();
+    CompletableFuture<T> res = new DebuggerCompletableFuture<>();
     future.whenComplete((r, ex) -> {
       if (DebuggerManagerThreadImpl.isManagerThread()) {
         completeFuture(r, ex, res);

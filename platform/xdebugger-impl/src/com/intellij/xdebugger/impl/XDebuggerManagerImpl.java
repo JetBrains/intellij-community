@@ -82,6 +82,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   public static final DataKey<Integer> ACTIVE_LINE_NUMBER = DataKey.create("active.line.number");
 
   private final Project myProject;
+  private final CoroutineScope myCoroutineScope;
   private final XBreakpointManagerImpl myBreakpointManager;
   private final XDebuggerWatchesManager myWatchesManager;
   private final XDebuggerPinToTopManager myPinToTopManager;
@@ -95,6 +96,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
+    myCoroutineScope = coroutineScope;
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
 
@@ -601,5 +603,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     int lineStartOffset = EditorUtil.getNotFoldedLineStartOffset(editor, event.getOffset());
     int documentLine = editor.getDocument().getLineNumber(lineStartOffset);
     return documentLine < editor.getDocument().getLineCount() ? documentLine : -1;
+  }
+
+  @ApiStatus.Internal
+  public CoroutineScope getCoroutineScope() {
+    return myCoroutineScope;
   }
 }

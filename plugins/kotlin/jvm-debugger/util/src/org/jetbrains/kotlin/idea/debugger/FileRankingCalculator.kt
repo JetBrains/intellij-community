@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
@@ -36,8 +38,10 @@ object FileRankingCalculatorForIde : FileRankingCalculator() {
 abstract class FileRankingCalculator(private val checkClassFqName: Boolean = true) : KotlinFileSelector {
     abstract fun analyze(element: KtElement): BindingContext
 
-    override fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
-        val fileWithRankings: Map<KtFile, Int> = rankFiles(files, location)
+    override suspend fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
+        val fileWithRankings = blockingContext {
+            runReadAction { rankFiles(files, location) }
+        }
         val fileWithMaxScore = fileWithRankings.maxByOrNull { it.value }!!
         return fileWithMaxScore.key
     }

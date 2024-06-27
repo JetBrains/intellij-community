@@ -6,6 +6,7 @@ import com.intellij.debugger.NoDataException;
 import com.intellij.debugger.PositionManager;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
@@ -28,8 +29,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
-public class CompoundPositionManager implements PositionManagerWithConditionEvaluation, MultiRequestPositionManager {
+import static java.util.concurrent.CompletableFuture.completedFuture;
+import static java.util.concurrent.CompletableFuture.failedFuture;
+
+public class CompoundPositionManager implements PositionManagerWithConditionEvaluation, MultiRequestPositionManager, PositionManagerAsync {
   public static final CompoundPositionManager EMPTY = new CompoundPositionManager();
 
   private final ArrayList<PositionManager> myPositionManagers = new ArrayList<>();
@@ -69,62 +75,118 @@ public class CompoundPositionManager implements PositionManagerWithConditionEval
     return iterate(processor, defaultValue, fileType, true);
   }
 
+  private static boolean acceptsFileType(@NotNull PositionManager positionManager, @Nullable FileType fileType) {
+    if (fileType != null && fileType != UnknownFileType.INSTANCE) {
+      Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
+      if (types != null && !types.contains(fileType)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private <T> T iterate(Producer<? extends T> processor, T defaultValue, @Nullable FileType fileType, boolean ignorePCE) {
     for (PositionManager positionManager : myPositionManagers) {
-      if (fileType != null && fileType != UnknownFileType.INSTANCE) {
-        Set<? extends FileType> types = positionManager.getAcceptedFileTypes();
-        if (types != null && !types.contains(fileType)) {
-          continue;
+      if (acceptsFileType(positionManager, fileType)) {
+        try {
+          if (!ignorePCE) {
+            ProgressManager.checkCanceled();
+          }
+          return DebuggerUtilsImpl.suppressExceptions(() -> processor.produce(positionManager), defaultValue, ignorePCE,
+                                                      NoDataException.class);
         }
-      }
-      try {
-        if (!ignorePCE) {
-          ProgressManager.checkCanceled();
+        catch (NoDataException ignored) {
         }
-        return DebuggerUtilsImpl.suppressExceptions(() -> processor.produce(positionManager), defaultValue, ignorePCE, NoDataException.class);
-      }
-      catch (NoDataException ignored) {
       }
     }
     return defaultValue;
   }
 
-  @Nullable
-  @Override
-  public SourcePosition getSourcePosition(final Location location) {
-    if (location == null) return null;
-    return ReadAction.nonBlocking(() -> {
-      SourcePosition res = null;
+  private <T> CompletableFuture<T> iterateAsync(Function<PositionManager, CompletableFuture<T>> processor,
+                                                @Nullable FileType fileType,
+                                                boolean ignorePCE) {
+    CompletableFuture<T> res = failedFuture(NoDataException.INSTANCE);
+    for (PositionManager positionManager : myPositionManagers) {
+      if (acceptsFileType(positionManager, fileType)) {
+        res = res.exceptionallyCompose(e -> {
+          Throwable unwrap = DebuggerUtilsAsync.unwrap(e);
+          if (unwrap instanceof NoDataException) {
+            if (!ignorePCE) {
+              ProgressManager.checkCanceled();
+            }
+            return processor.apply(positionManager);
+          }
+          return failedFuture(unwrap);
+        });
+      }
+    }
+    return res;
+  }
+
+  private static CompletableFuture<SourcePosition> getSourcePositionAsync(PositionManager positionManager, Location location) {
+    if (positionManager instanceof PositionManagerAsync positionManagerAsync) {
+      return positionManagerAsync.getSourcePositionAsync(location);
+    }
+    else {
       try {
-        res = mySourcePositionCache.get(location);
+        return completedFuture(ReadAction.nonBlocking(() -> positionManager.getSourcePosition(location)).executeSynchronously());
       }
-      catch (IllegalArgumentException ignored) { // Invalid method id
+      catch (Exception e) {
+        return failedFuture(DebuggerUtilsAsync.unwrap(e));
       }
-      if (checkCacheEntry(res, location)) return res;
+    }
+  }
 
+  @Override
+  public @NotNull CompletableFuture<SourcePosition> getSourcePositionAsync(final Location location) {
+    return getCachedSourcePosition(location, (fileType) -> iterateAsync(positionManager -> getSourcePositionAsync(positionManager, location), fileType, false));
+  }
+
+  private CompletableFuture<SourcePosition> getCachedSourcePosition(Location location, Function<FileType, CompletableFuture<SourcePosition>> producer) {
+    if (location == null) return completedFuture(null);
+    SourcePosition res = null;
+    try {
+      res = mySourcePositionCache.get(location);
+    }
+    catch (IllegalArgumentException ignored) { // Invalid method id
+    }
+    if (checkCacheEntry(res, location)) return completedFuture(res);
+
+    FileType fileType = ReadAction.compute(() -> {
       String sourceName = DebuggerUtilsEx.getSourceName(location, (String)null);
-      FileType fileType = sourceName != null ? FileTypeManager.getInstance().getFileTypeByFileName(sourceName) : null;
-
-      return iterate(positionManager -> {
-        SourcePosition res1 = positionManager.getSourcePosition(location);
+      return sourceName != null ? FileTypeManager.getInstance().getFileTypeByFileName(sourceName) : null;
+    });
+    return producer.apply(fileType)
+      .thenApply(p -> {
         try {
-          mySourcePositionCache.put(location, res1);
+          mySourcePositionCache.put(location, p);
         }
         catch (IllegalArgumentException ignored) { // Invalid method id
         }
-        return res1;
-      }, null, fileType, false);
-    }).executeSynchronously();
+        return p;
+      });
+  }
+
+  @Nullable
+  @Override
+  public SourcePosition getSourcePosition(final Location location) {
+    return getCachedSourcePosition(location, fileType -> {
+      return completedFuture(ReadAction.nonBlocking(() -> {
+        return iterate(positionManager -> positionManager.getSourcePosition(location), null, fileType, false);
+      }).executeSynchronously());
+    }).getNow(null);
   }
 
   private static boolean checkCacheEntry(@Nullable SourcePosition position, @NotNull Location location) {
-    if (position == null) return false;
-    PsiFile psiFile = position.getFile();
-    if (!psiFile.isValid()) return false;
-    String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject());
-    if (url == null) return true;
-    VirtualFile file = psiFile.getVirtualFile();
-    return file != null && url.equals(file.getUrl());
+    return ReadAction.compute(() -> {
+      if (position == null) return false;
+      PsiFile psiFile = position.getFile();
+      if (!psiFile.isValid()) return false;
+      String url = DebuggerUtilsEx.getAlternativeSourceUrl(location.declaringType().name(), psiFile.getProject());
+      if (url == null) return true;
+      VirtualFile file = psiFile.getVirtualFile();
+      return file != null && url.equals(file.getUrl());
+    });
   }
 
   @Override

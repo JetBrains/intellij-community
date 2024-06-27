@@ -503,7 +503,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
             eventThread.stopListening();
             myEventThreads.remove(vm);
           }
-          closeProcess(false);
+          closeCurrentProcess(false);
         }
       }
     }

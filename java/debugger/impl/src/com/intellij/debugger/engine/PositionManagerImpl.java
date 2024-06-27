@@ -205,7 +205,7 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
         if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length - 1) {
           int opcode = bytecodes[bytecodeOffs] & 0xFF;
           if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
-            return SourcePosition.createFromOffset(file, ret.getTextOffset());
+            return ReadAction.compute(() -> SourcePosition.createFromOffset(file, ret.getTextOffset()));
           }
         }
       }

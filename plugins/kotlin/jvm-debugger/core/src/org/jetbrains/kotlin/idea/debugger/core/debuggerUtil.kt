@@ -12,6 +12,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
@@ -77,7 +78,7 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
+internal suspend fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
     isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
 
 /**
@@ -86,19 +87,21 @@ fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, deb
  *
  * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
  */
-fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
+internal suspend fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
     isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
 
-private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
+private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
     if (inlineArgument !is KtFunction && inlineArgument !is KtCallableReferenceExpression) return false
-    val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+    val markerLocalVariables = localVariables
+        .map { it.name() }
+        .filter { it.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
-    return runReadAction {
+    return readAction {
         val lambdaOrdinal = (inlineArgument as? KtFunction)?.let { lambdaOrdinalByArgument(it) }
         val functionName = functionNameByArgument(inlineArgument) ?: "unknown"
 
         markerLocalVariables
-            .map { it.name().drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
+            .map { it.drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
             .any { variableName ->
                 if (variableName.startsWith("-")) {
                     val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false

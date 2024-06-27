@@ -58,6 +58,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
+import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -75,6 +76,7 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -92,6 +94,8 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
+import kotlin.coroutines.EmptyCoroutineContext;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Contract;
@@ -164,9 +168,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private SingleAlarm myOtherThreadsAlarm = null;
   private int myOtherThreadsReachBreakpointNumber = 0;
 
+  private final CoroutineScope myCoroutineScope;
+
   protected DebugProcessImpl(Project project) {
     myProject = project;
-    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
+    CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
+    myCoroutineScope = CoroutineScopeKt.childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
+    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myCoroutineScope);
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
@@ -980,7 +988,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
-  protected void closeProcess(boolean closedByUser) {
+  protected void closeCurrentProcess(boolean closedByUser) {
     detachProcess(closedByUser, false, vmData -> {
       //if (DebuggerSettings.getInstance().UNMUTE_ON_STOP) {
       //  XDebugSession session = mySession.getXDebugSession();
@@ -995,10 +1003,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         catch (Throwable ignored) {
         }
       }
-      myWaitFor.up();
 
-      unstashAndReattach();
+      var attachedNewThread = unstashAndReattach();
+      if (!attachedNewThread) {
+        onRootProcessClosed();
+      }
     });
+  }
+
+  private void onRootProcessClosed() {
+    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
+    myWaitFor.up();
   }
 
   @Contract(pure = true)
@@ -1790,7 +1805,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
 
         if (!virtualMachineProxy.canBeModified()) {
-          closeProcess(false);
+          closeCurrentProcess(false);
           return;
         }
 
@@ -1813,7 +1828,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           stopConnecting();
         }
         finally {
-          closeProcess(true);
+          closeCurrentProcess(true);
         }
       }
     }
@@ -2314,16 +2329,16 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (keepCurrentVM) {
         detachProcess(false, true, vmData -> {
           myStashedVirtualMachines.addFirst(vmData);
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
+          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myCoroutineScope);
         });
       }
       else {
-        closeProcess(false);
+        closeCurrentProcess(false);
       }
     }, vmReadyCallback);
   }
 
-  private void unstashAndReattach() {
+  private boolean unstashAndReattach() {
     VirtualMachineData vmData = myStashedVirtualMachines.pollFirst();
     if (vmData != null && vmData.vm != null) {
       myDebuggerManagerThread = vmData.debuggerManagerThread;
@@ -2340,7 +2355,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           }
         }));
       });
+      return true;
     }
+    return false;
   }
 
   private void reattach(DebugEnvironment environment, Runnable detachVm, Runnable vmReadyCallback) {

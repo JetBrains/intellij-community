@@ -5,7 +5,6 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -484,7 +483,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   @Override
-  public DebugProcess getDebugProcess() {
+  public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
 
