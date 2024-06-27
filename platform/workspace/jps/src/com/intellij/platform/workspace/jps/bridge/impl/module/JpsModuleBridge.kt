@@ -23,8 +23,13 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer
 
 internal class JpsModuleBridge(private val project: JpsProjectBridge,
-                               private val entity: ModuleEntity) 
+                               val entity: ModuleEntity) 
   : JpsNamedCompositeElementBase<JpsModuleBridge>(entity.name), JpsTypedModule<JpsElement> {
+  
+  init {
+    parent = project
+  }  
+    
   private val contentRoots by lazy(LazyThreadSafetyMode.PUBLICATION) {
     JpsUrlListBridge(entity.contentRoots.map { it.url }, this)
   }

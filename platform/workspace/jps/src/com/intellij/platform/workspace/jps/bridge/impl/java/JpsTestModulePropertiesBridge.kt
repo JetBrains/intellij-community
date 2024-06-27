@@ -13,7 +13,7 @@ internal class JpsTestModulePropertiesBridge(private val testModulePropertiesEnt
   : JpsElementBase<JpsTestModulePropertiesBridge>(), JpsTestModuleProperties {
   
   private val reference by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    JpsModuleReferenceBridge(testModulePropertiesEntity.productionModuleId.name)
+    JpsModuleReferenceBridge(testModulePropertiesEntity.productionModuleId.name).also { it.parent = this }
   } 
   private val resolved by lazy(LazyThreadSafetyMode.PUBLICATION) {
     productionModuleReference.resolve()
