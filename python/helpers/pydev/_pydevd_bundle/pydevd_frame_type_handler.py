@@ -216,30 +216,23 @@ class VarsHandler:
         self._lock = threading.RLock()
 
     def get_instance(self, group_type):
-        if group_type == GET_FRAME_NORMAL_GROUP:
-            if self._instance_normal is None:
-                with self._lock:
-                    if self._instance_normal is None:
-                        self._init_normal()
-            instance = self._instance_normal
-        elif group_type == GET_FRAME_SPECIAL_GROUP:
-            if self._instance_special is None:
-                with self._lock:
-                    if self._instance_special is None:
-                        self._init_special()
-            instance = self._instance_special
-        else:
-            if self._instance_return is None:
-                with self._lock:
-                    if self._instance_return is None:
-                        self._init_return()
-            instance = self._instance_return
-
         with self._lock:
-            if instance is not None:
-                instance.update_handlers()
+            if group_type == GET_FRAME_NORMAL_GROUP:
+                if self._instance_normal is None:
+                    self._init_normal()
+                instance = self._instance_normal
+            elif group_type == GET_FRAME_SPECIAL_GROUP:
+                if self._instance_special is None:
+                    self._init_special()
+                instance = self._instance_special
+            else:
+                if self._instance_return is None:
+                    self._init_return()
+                instance = self._instance_return
 
-        return instance
+            instance.update_handlers()
+
+            return instance
 
     def _init_normal(self):
         self._instance_normal = DummyVarHandler(
