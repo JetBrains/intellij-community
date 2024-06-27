@@ -12,7 +12,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <!--Test frameworks-->
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="AssertBetweenInconvertibleTypes"
+    <localInspection language="UAST" enabledByDefault="false" level="WARNING" shortName="AssertBetweenInconvertibleTypes"
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupPathKey="jvm.inspections.group.name" groupKey="jvm.inspections.test.frameworks.group.name"
                      key="assertequals.between.inconvertible.types.display.name"
