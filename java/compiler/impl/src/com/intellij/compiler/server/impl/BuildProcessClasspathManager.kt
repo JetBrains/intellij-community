@@ -1,8 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.server.impl
 
+import com.google.common.collect.HashBiMap
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.compiler.server.CompileServerPlugin
+import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
@@ -14,8 +16,12 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.diagnostic.telemetry.TracerLevel
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializers
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.URLUtil
 import com.intellij.util.text.VersionComparatorUtil
@@ -42,7 +48,8 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
   }
 
   fun getBuildProcessClasspath(project: Project): List<String> {
-    val appClassPath = ClasspathBootstrap.getBuildProcessApplicationClasspath()
+    val appClassPath = ClasspathBootstrap.getBuildProcessApplicationClasspath() +
+                       getAdditionalApplicationClasspath()
     val pluginClassPath = getBuildProcessPluginsClasspath(project)
     val rawClasspath = appClassPath + pluginClassPath
     synchronized(lastClasspathLock) {
@@ -62,6 +69,24 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
       }
       return lastFilteredClasspath!!
     }
+  }
+
+  private fun getAdditionalApplicationClasspath(): List<String> {
+    return if (Registry.`is`("jps.build.use.workspace.model")) {
+      listOf(
+        PathManager.getJarPathForClass(WorkspaceEntity::class.java)!!, //intellij.platform.workspace.storage
+        PathManager.getJarPathForClass(JpsProjectSerializers::class.java)!!, //intellij.platform.workspace.jps
+        PathManager.getJarPathForClass(TracerLevel::class.java)!!, //intellij.platform.diagnostic.telemetry
+        PathManager.getJarPathForClass(Activity::class.java)!!, //intellij.platform.diagnostic
+        PathManager.getJarPathForClass(HashBiMap::class.java)!!, //Guava
+        PathManager.getJarPathForClass(kotlinx.coroutines.CoroutineScope::class.java)!!, //kotlinx-coroutines-core
+        PathManager.getJarPathForClass(kotlin.reflect.full.NoSuchPropertyException::class.java)!!, //kotlin-reflect
+        PathManager.getJarPathForClass(io.opentelemetry.api.OpenTelemetry::class.java)!!, //opentelemetry
+        PathManager.getJarPathForClass(io.opentelemetry.context.propagation.ContextPropagators::class.java)!!, //opentelemetry
+        PathManager.getJarPathForClass(com.esotericsoftware.kryo.kryo5.Kryo::class.java)!!, //Kryo5
+      )
+    }
+    else emptyList()
   }
 
   /**

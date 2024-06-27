@@ -14,13 +14,14 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
 internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : GlobalWorkspaceModelCache {
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-  private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
+  override val cacheFile: Path by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   private val urlRelativizer =
@@ -58,6 +59,10 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
 
     LOG.debug("Schedule cache update")
     check(saveRequests.tryEmit(Unit))
+  }
+
+  override suspend fun saveCacheNow() {
+    doCacheSaving()
   }
 
   override fun invalidateCaches() {

@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.compiler.CompilerManagerImpl;
 import com.intellij.compiler.CompilerTestUtil;
+import com.intellij.compiler.CompilerTests;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.wsl.WslPath;
@@ -194,6 +195,7 @@ public final class CompilerTester {
     ErrorReportingCallback callback = new ErrorReportingCallback(semaphore);
     PlatformTestUtil.saveProject(getProject(), false);
     CompilerTestUtil.saveApplicationSettings();
+    CompilerTests.saveWorkspaceModelCaches(getProject());
     EdtTestUtil.runInEdtAndWait(() -> {
       // for now directory based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {

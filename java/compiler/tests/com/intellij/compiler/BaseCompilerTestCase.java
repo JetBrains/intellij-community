@@ -13,7 +13,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +33,7 @@ import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -58,6 +61,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     CompilerTestUtil.enableExternalCompiler();
+    WorkspaceModelCacheImpl.forceEnableCaching(getTestRootDisposable());
   }
 
   protected void forceFSRescan() {
@@ -236,6 +240,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
 
     PlatformTestUtil.saveProject(myProject);
     CompilerTestUtil.saveApplicationSettings();
+    CompilerTests.saveWorkspaceModelCaches(myProject);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       CompilerTester.enableDebugLogging();
       action.accept(new CompileStatusNotification() {

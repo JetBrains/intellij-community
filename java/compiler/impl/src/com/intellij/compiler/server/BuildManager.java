@@ -78,6 +78,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
+import com.intellij.platform.backend.workspace.WorkspaceModelCache;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -1413,6 +1415,20 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-Djna.nosys=true");
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.noclasspath=true");
+    }
+    if (Registry.is("jps.build.use.workspace.model")) {
+      cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
+      WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
+      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
+      if (cache != null && globalCache != null) {
+        //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
+        cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
+        cmdLine.addParameter("-Djps.workspace.storage.global.cache.path=" + globalCache.getCacheFile());
+      }
+      else {
+        LOG.info("Workspace model caches aren't available and won't be used in the build process");
+      }
+      cmdLine.addParameter("--add-opens=java.base/java.util=ALL-UNNAMED");//used by com.esotericsoftware.kryo.kryo5.serializers.CachedFields.addField
     }
 
     if (sdkVersion != null) {

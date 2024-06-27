@@ -46,7 +46,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
-  private val cacheFile by lazy { initCacheFile() }
+  override val cacheFile by lazy { initCacheFile() }
   private val unloadedEntitiesCacheFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve("unloaded-entities-cache.data") }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
 
@@ -177,6 +177,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
       invalidateCaches(cachesInvalidated, invalidateCachesMarkerFile)
     }
 
+    @JvmStatic
     fun forceEnableCaching(disposable: Disposable) {
       forceEnableCaching = true
       Disposer.register(disposable) { forceEnableCaching = false }

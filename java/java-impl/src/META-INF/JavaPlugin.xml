@@ -389,6 +389,7 @@
     <applicationService serviceInterface="com.intellij.refactoring.util.RefactoringConflictsUtil"
                         serviceImplementation="com.intellij.refactoring.util.RefactoringConflictsUtilImpl"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
+    <registryKey key="jps.build.use.workspace.model" description="Use workspace model inside JPS build process. The implementation isn't finished yet, refer to https://youtrack.jetbrains.com/issue/IJPL-409 for details." defaultValue="false"/>
     <applicationService serviceInterface="com.intellij.execution.filters.ExceptionLineParserFactory"
                         serviceImplementation="com.intellij.execution.filters.ExceptionLineParserFactoryImpl"/>
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider"/>
