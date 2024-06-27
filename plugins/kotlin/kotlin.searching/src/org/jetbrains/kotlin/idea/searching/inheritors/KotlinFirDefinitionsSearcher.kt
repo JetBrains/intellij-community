@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.searching.inheritors
 
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
@@ -23,7 +22,6 @@ import org.jetbrains.kotlin.idea.search.ExpectActualUtils.actualsForExpected
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.contains
-import java.util.concurrent.Callable
 
 class KotlinFirDefinitionsSearcher : QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
     override fun execute(queryParameters: DefinitionsScopedSearch.SearchParameters, consumer: Processor<in PsiElement>): Boolean {
@@ -95,13 +93,13 @@ private fun processClassImplementations(klass: KtClass, consumer: Processor<PsiE
         return processLightClassLocalImplementations(klass, searchScope, consumer)
     }
 
-    if (!KotlinFindUsagesSupport.searchInheritors(klass, searchScope).all { runReadAction { consumer.process(it)} }) {
+    if (!KotlinFindUsagesSupport.searchInheritors(klass, searchScope).all { consumer.process(it) }) {
         return false
     }
 
-    val lightClass = klass.toLightClass() ?: klass.toFakeLightClass()
-    if (runReadAction { LambdaUtil.isFunctionalClass(lightClass) }) {
-        return FunctionalExpressionSearch.search(lightClass).all { runReadAction { consumer.process(it) } }
+    val lightClass = runReadAction { (klass.toLightClass() ?: klass.toFakeLightClass()).takeIf { LambdaUtil.isFunctionalClass(it) }}
+    if (lightClass != null) {
+        return FunctionalExpressionSearch.search(lightClass).all { consumer.process(it) }
     }
     return true
 }
@@ -131,42 +129,33 @@ private fun processFunctionImplementations(
     function: KtFunction,
     scope: SearchScope,
     consumer: Processor<PsiElement>,
-): Boolean =
-    ReadAction.nonBlocking(Callable {
-        if (!function.findAllOverridings(scope).all { consumer.process(it) }) return@Callable false
+): Boolean {
+    if (!function.findAllOverridings(scope).all { consumer.process(it) }) return false
 
-        val method = function.toPossiblyFakeLightMethods().firstOrNull() ?: return@Callable true
-        FunctionalExpressionSearch.search(method, scope).forEach(consumer)
-    }).executeSynchronously()
+    val method = runReadAction { function.toPossiblyFakeLightMethods().firstOrNull() } ?: return true
+    return FunctionalExpressionSearch.search(method, scope).forEach(consumer)
+}
 
 private fun processPropertyImplementations(
     declaration: KtCallableDeclaration,
     scope: SearchScope,
     consumer: Processor<PsiElement>
-): Boolean = ReadAction.nonBlocking(Callable {
-    processPropertyImplementationsMethods(declaration, scope, consumer)
-}).executeSynchronously()
+): Boolean = declaration.findAllOverridings(scope).all { implementation ->
+    if (isDelegated(implementation)) return@all true
+
+    val elementToProcess = runReadAction {
+        when (val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin) {
+            is KtProperty, is KtParameter -> mirrorElement
+            is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
+            else -> implementation
+        }
+    }
+
+    consumer.process(elementToProcess)
+}
 
 private fun processActualDeclarations(declaration: KtDeclaration, consumer: Processor<PsiElement>): Boolean = runReadAction {
     if (!declaration.isExpectDeclaration()) true
     else declaration.actualsForExpected().all(consumer::process)
 }
 
-private fun processPropertyImplementationsMethods(
-    callableDeclaration: KtCallableDeclaration,
-    scope: SearchScope,
-    consumer: Processor<PsiElement>
-): Boolean =
-    callableDeclaration.findAllOverridings(scope).all { implementation ->
-        if (isDelegated(implementation)) return@all true
-
-        val elementToProcess = runReadAction {
-            when (val mirrorElement = (implementation as? KtLightMethod)?.kotlinOrigin) {
-                is KtProperty, is KtParameter -> mirrorElement
-                is KtPropertyAccessor -> if (mirrorElement.parent is KtProperty) mirrorElement.parent else implementation
-                else -> implementation
-            }
-        }
-
-        consumer.process(elementToProcess)
-    }
