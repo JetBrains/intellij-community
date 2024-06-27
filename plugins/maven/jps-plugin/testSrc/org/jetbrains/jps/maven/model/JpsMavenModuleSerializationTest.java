@@ -2,14 +2,18 @@ package org.jetbrains.jps.maven.model;
 
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
+import org.jetbrains.jps.model.serialization.JpsProjectData;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-public class JpsMavenModuleSerializationTest extends JpsSerializationTestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class JpsMavenModuleSerializationTest {
+  @Test
   public void testLoadProject() {
-    loadProject("plugins/maven/jps-plugin/testData/compiler/classpathTest");
-    List<JpsModule> modules = myProject.getModules();
+    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/maven/jps-plugin/testData/compiler/classpathTest", getClass());
+    List<JpsModule> modules = projectData.getProject().getModules();
     assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
     assertEquals("main", main.getName());

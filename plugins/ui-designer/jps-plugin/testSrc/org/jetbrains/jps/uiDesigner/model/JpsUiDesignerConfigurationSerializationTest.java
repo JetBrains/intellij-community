@@ -15,12 +15,18 @@
  */
 package org.jetbrains.jps.uiDesigner.model;
 
-import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
+import org.jetbrains.jps.model.JpsProject;
+import org.jetbrains.jps.model.serialization.JpsProjectData;
+import org.junit.jupiter.api.Test;
 
-public class JpsUiDesignerConfigurationSerializationTest extends JpsSerializationTestCase {
+import static org.junit.jupiter.api.Assertions.*;
+
+public class JpsUiDesignerConfigurationSerializationTest {
+  @Test
   public void testLoad() {
-    loadProject("plugins/ui-designer/jps-plugin/testData/uiDesigner");
-    JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(myProject);
+    JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/ui-designer/jps-plugin/testData/uiDesigner", getClass());
+    JpsProject project = projectData.getProject();
+    JpsUiDesignerConfiguration configuration = JpsUiDesignerExtensionService.getInstance().getUiDesignerConfiguration(project);
     assertNotNull(configuration);
     assertTrue(configuration.isInstrumentClasses());
     assertFalse(configuration.isCopyFormsRuntimeToOutput());

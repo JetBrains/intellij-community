@@ -3,10 +3,9 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.JpsEncodingConfigurationService;
-import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
-import org.jetbrains.jps.model.JpsExcludePattern;
+import com.intellij.testFramework.UsefulTestCase;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
@@ -14,31 +13,41 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.util.JpsPathUtil;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Path;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class JpsProjectSerializationTest extends JpsSerializationTestCase {
-  public static final String SAMPLE_PROJECT_PATH = "/jps/model-serialization/testData/sampleProject";
-  public static final String SAMPLE_PROJECT_IPR_PATH = "/jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr";
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
+import static org.junit.jupiter.api.Assertions.*;
 
+public class JpsProjectSerializationTest {
+  public static final String SAMPLE_PROJECT_PATH = "jps/model-serialization/testData/sampleProject";
+  public static final String SAMPLE_PROJECT_IPR_PATH = "jps/model-serialization/testData/sampleProject-ipr/sampleProject.ipr";
+
+  @Test
   public void testLoadProject() {
-    loadProject(SAMPLE_PROJECT_PATH);
-    assertEquals("sampleProject", myProject.getName());
-    checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_PATH).toFile());
+    JpsProjectData projectData = loadProject(SAMPLE_PROJECT_PATH);
+    assertEquals("sampleProject", projectData.getProject().getName());
+    checkSampleProjectConfiguration(projectData);
   }
 
+  @Test
   public void testLoadIprProject() {
-    loadProject(SAMPLE_PROJECT_IPR_PATH);
-    assertEquals("sampleProject", myProject.getName());
-    checkSampleProjectConfiguration(getTestDataAbsoluteFile(SAMPLE_PROJECT_IPR_PATH).toFile().getParentFile());
+    JpsProjectData projectData = loadProject(SAMPLE_PROJECT_IPR_PATH);
+    assertEquals("sampleProject", projectData.getProject().getName());
+    checkSampleProjectConfiguration(projectData);
   }
 
-  private void checkSampleProjectConfiguration(File baseDirPath) {
-    assertTrue(FileUtil.filesEqual(baseDirPath, JpsModelSerializationDataService.getBaseDirectory(myProject)));
-    List<JpsModule> modules = myProject.getModules();
+  private static void checkSampleProjectConfiguration(JpsProjectData projectData) {
+    JpsProject project = projectData.getProject();
+    File baseDirPath = projectData.getBaseProjectDir().toFile();
+    assertTrue(FileUtil.filesEqual(baseDirPath, JpsModelSerializationDataService.getBaseDirectory(project)));
+    List<JpsModule> modules = project.getModules();
     assertEquals(3, modules.size());
     JpsModule main = modules.get(0);
     assertEquals("main", main.getName());
@@ -49,7 +58,7 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
 
     assertTrue(FileUtil.filesEqual(new File(baseDirPath, "util"), JpsModelSerializationDataService.getBaseDirectory(util)));
 
-    List<JpsLibrary> libraries = myProject.getLibraryCollection().getLibraries();
+    List<JpsLibrary> libraries = project.getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
 
     List<JpsDependencyElement> dependencies = util.getDependenciesList().getDependencies();
@@ -68,33 +77,37 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertNotNull(projectSdkReference);
     assertEquals("1.6", projectSdkReference.getSdkName());
 
-    assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
-    assertEquals(getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
+    assertEquals(projectData.getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
+    assertEquals(projectData.getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
   }
 
+  @Test
   public void testFileBasedProjectNameAndBaseDir() {
-    String relativePath = "/jps/model-serialization/testData/run-configurations/run-configurations.ipr";
-    Path absolutePath = getTestDataAbsoluteFile(relativePath);
-    loadProject(relativePath);
-    assertEquals("run-configurations", myProject.getName());
-    assertTrue(FileUtil.filesEqual(absolutePath.getParent().toFile(), JpsModelSerializationDataService.getBaseDirectory(myProject)));
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/run-configurations/run-configurations.ipr");
+    JpsProject project = projectData.getProject();
+    assertEquals("run-configurations", project.getName());
+    assertTrue(FileUtil.filesEqual(projectData.getBaseProjectDir().toFile(), JpsModelSerializationDataService.getBaseDirectory(project)));
   }
 
+  @Test
   public void testDirectoryBasedProjectName() {
-    loadProject("/jps/model-serialization/testData/run-configurations-dir");
-    assertEquals("run-configurations-dir", myProject.getName());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/run-configurations-dir");
+    assertEquals("run-configurations-dir", projectData.getProject().getName());
   }
 
+  @Test
   public void testImlUnderDotIdea() {
-    loadProject("/jps/model-serialization/testData/imlUnderDotIdea");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/imlUnderDotIdea");
+    JpsProject project = projectData.getProject();
+    JpsModule module = assertOneElement(project.getModules());
     JpsModuleSourceRoot root = assertOneElement(module.getSourceRoots());
-    assertEquals(getUrl("src"), root.getUrl());
+    assertEquals(projectData.getUrl("src"), root.getUrl());
   }
 
+  @Test
   public void testTestModuleProperties() {
-    loadProject("/jps/model-serialization/testData/testModuleProperties/testModuleProperties.ipr");
-    List<JpsModule> modules = myProject.getModules();
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/testModuleProperties/testModuleProperties.ipr");
+    List<JpsModule> modules = projectData.getProject().getModules();
     assertEquals(2, modules.size());
     JpsModule testModule = modules.get(0);
     assertEquals("testModule", testModule.getName());
@@ -108,38 +121,42 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertSame(productionModule, testModuleProperties.getProductionModule());
   }
 
+  @Test
   public void testInvalidLanguageLevel() {
-    loadProject("/jps/model-serialization/testData/testInvalidLanguageLevel/testInvalidLanguageLevel.ipr");
-    List<JpsModule> modules = myProject.getModules();
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/testInvalidLanguageLevel/testInvalidLanguageLevel.ipr");
+    JpsProject project = projectData.getProject();
+    List<JpsModule> modules = project.getModules();
     assertEquals(1, modules.size());
     JpsModule testModule = modules.get(0);
     assertEquals("testModule", testModule.getName());
 
     JpsJavaModuleExtension moduleExtension = JpsJavaExtensionService.getInstance().getModuleExtension(testModule);
     assertNull(moduleExtension.getLanguageLevel());
-    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(myProject);
+    JpsJavaProjectExtension projectExtension = JpsJavaExtensionService.getInstance().getProjectExtension(project);
     assertEquals(LanguageLevel.JDK_1_6, projectExtension.getLanguageLevel());
   }
 
+  @Test
   public void testExcludePatterns() {
-    String projectPath = "/jps/model-serialization/testData/excludePatterns";
-    loadProject(projectPath + "/excludePatterns.ipr");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/excludePatterns/excludePatterns.ipr");
+    JpsModule module = assertOneElement(projectData.getProject().getModules());
     JpsExcludePattern pattern = assertOneElement(module.getExcludePatterns());
     assertEquals("*.class", pattern.getPattern());
     assertEquals(assertOneElement(module.getContentRootsList().getUrls()), pattern.getBaseDirUrl());
   }
 
+  @Test
   public void testProjectSdkWithoutType() {
-    loadProject("/jps/model-serialization/testData/projectSdkWithoutType/projectSdkWithoutType.ipr");
-    JpsSdkReference<JpsDummyElement> reference = myProject.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/projectSdkWithoutType/projectSdkWithoutType.ipr");
+    JpsSdkReference<JpsDummyElement> reference = projectData.getProject().getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
     assertNotNull(reference);
     assertEquals("1.6", reference.getSdkName());
   }
 
+  @Test
   public void testInvalidDependencyScope() {
-    loadProject("/jps/model-serialization/testData/invalidDependencyScope/invalidDependencyScope.ipr");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/invalidDependencyScope/invalidDependencyScope.ipr");
+    JpsModule module = assertOneElement(projectData.getProject().getModules());
     List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(3, dependencies.size());
     JpsJavaDependencyExtension extension = JpsJavaExtensionService.getInstance().getDependencyExtension(dependencies.get(2));
@@ -147,52 +164,56 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(JpsJavaDependencyScope.COMPILE, extension.getScope());
   }
 
+  @Test
   public void testDuplicatedModuleLibrary() {
-    loadProject("/jps/model-serialization/testData/duplicatedModuleLibrary/duplicatedModuleLibrary.ipr");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/duplicatedModuleLibrary/duplicatedModuleLibrary.ipr");
+    JpsModule module = assertOneElement(projectData.getProject().getModules());
     List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(4, dependencies.size());
     JpsLibrary lib1 = assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class).getLibrary();
     assertNotNull(lib1);
-    assertSameElements(lib1.getRootUrls(JpsOrderRootType.COMPILED), getUrl("data/lib1"));
+    UsefulTestCase.assertSameElements(lib1.getRootUrls(JpsOrderRootType.COMPILED), projectData.getUrl("data/lib1"));
     JpsLibrary lib2 = assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class).getLibrary();
     assertNotSame(lib1, lib2);
     assertNotNull(lib2);
-    assertSameElements(lib2.getRootUrls(JpsOrderRootType.COMPILED), getUrl("data/lib2"));
+    UsefulTestCase.assertSameElements(lib2.getRootUrls(JpsOrderRootType.COMPILED), projectData.getUrl("data/lib2"));
   }
 
+  @Test
   public void testDotIdeaUnderDotIdea() {
-    loadProject("/jps/model-serialization/testData/matryoshka/.idea");
-    JpsJavaProjectExtension extension = JpsJavaExtensionService.getInstance().getProjectExtension(myProject);
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/matryoshka/.idea");
+    JpsJavaProjectExtension extension = JpsJavaExtensionService.getInstance().getProjectExtension(projectData.getProject());
     assertNotNull(extension);
-    assertEquals(getUrl("out"), extension.getOutputUrl());
+    assertEquals(projectData.getUrl("out"), extension.getOutputUrl());
   }
 
+  @Test
   public void testLoadEncoding() {
-    loadProject(SAMPLE_PROJECT_PATH);
-    checkEncodingConfigurationInSampleProject();
+    JpsProjectData projectData = loadProject(SAMPLE_PROJECT_PATH);
+    checkEncodingConfigurationInSampleProject(projectData);
   }
 
+  @Test
   public void testLoadEncodingIpr() {
-    loadProject(SAMPLE_PROJECT_IPR_PATH);
-    checkEncodingConfigurationInSampleProject();
+    JpsProjectData projectData = loadProject(SAMPLE_PROJECT_IPR_PATH);
+    checkEncodingConfigurationInSampleProject(projectData);
   }
 
-  private void checkEncodingConfigurationInSampleProject() {
+  private void checkEncodingConfigurationInSampleProject(JpsProjectData projectData) {
     JpsEncodingConfigurationService service = JpsEncodingConfigurationService.getInstance();
-    assertEquals("UTF-8", service.getProjectEncoding(myModel));
-    JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(myProject);
+    assertEquals("UTF-8", service.getProjectEncoding(projectData.getProject().getModel()));
+    JpsEncodingProjectConfiguration configuration = service.getEncodingConfiguration(projectData.getProject());
     assertNotNull(configuration);
     assertEquals("UTF-8", configuration.getProjectEncoding());
-    assertEquals("windows-1251", configuration.getEncoding(new File(getAbsolutePath("util"))));
-    assertEquals("windows-1251", configuration.getEncoding(new File(getAbsolutePath("util/foo/bar/file.txt"))));
-    assertEquals("UTF-8", configuration.getEncoding(new File(getAbsolutePath("other"))));
+    assertEquals("windows-1251", configuration.getEncoding(projectData.resolvePath("util").toFile()));
+    assertEquals("windows-1251", configuration.getEncoding(projectData.resolvePath("util/foo/bar/file.txt").toFile()));
+    assertEquals("UTF-8", configuration.getEncoding(projectData.resolvePath("other").toFile()));
   }
 
+  @Test
   public void testResourceRoots() {
-    String projectPath = "/jps/model-serialization/testData/resourceRoots/";
-    loadProject(projectPath + "resourceRoots.ipr");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/resourceRoots/resourceRoots.ipr");
+    JpsModule module = assertOneElement(projectData.getProject().getModules());
     List<JpsModuleSourceRoot> roots = module.getSourceRoots();
     assertSame(JavaSourceRootType.SOURCE, roots.get(0).getRootType());
     checkResourceRoot(roots.get(1), false, "");
@@ -200,9 +221,11 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     checkResourceRoot(roots.get(3), true, "foo");
   }
 
+  @Test
   public void testMissingModuleSourcesOrderEntry() {
-    loadProject("/jps/model-serialization/testData/missingModuleSourcesOrderEntry/missingModuleSourcesOrderEntry.ipr");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData =
+      loadProject("jps/model-serialization/testData/missingModuleSourcesOrderEntry/missingModuleSourcesOrderEntry.ipr");
+    JpsModule module = assertOneElement(projectData.getProject().getModules());
     List<JpsDependencyElement> dependencies = module.getDependenciesList().getDependencies();
     assertEquals(2, dependencies.size());
     assertInstanceOf(dependencies.get(0), JpsSdkDependency.class);
@@ -217,35 +240,44 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertEquals(relativeOutput, properties.getRelativeOutputPath());
   }
 
+  @Test
   public void testUnloadedModule() {
-    String projectPath = "/jps/model-serialization/testData/unloadedModule";
-    loadProject(projectPath);
-    assertEquals("main", assertOneElement(myProject.getModules()).getName());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/unloadedModule");
+    assertEquals("main", assertOneElement(projectData.getProject().getModules()).getName());
   }
 
+  @Test
   public void testMissingImlFile() {
-    loadProject("/jps/model-serialization/testData/missingImlFile/missingImlFile.ipr");
-    assertEmpty(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/missingImlFile/missingImlFile.ipr");
+    UsefulTestCase.assertEmpty(projectData.getProject().getModules());
   }
 
+  @Test
   public void testMissingContentUrlAttribute() {
-    loadProject("/jps/model-serialization/testData/missingContentUrlAttribute/missingContentUrlAttribute.ipr");
-    JpsModule module = assertOneElement(myProject.getModules());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/missingContentUrlAttribute/missingContentUrlAttribute.ipr");
+    JpsModule module = assertOneElement(projectData.getProject().getModules());
     assertEquals("missingContentUrlAttribute", module.getName());
   }
 
-  public void testLoadIdeaProject() {
+  @Test
+  public void testLoadIdeaProject() throws IOException {
     long start = System.nanoTime();
-    loadProjectByAbsolutePath(PathManager.getHomePath());
-    assertTrue(myProject.getModules().size() > 0);
-    System.out.println("JpsProjectSerializationTest: " + myProject.getModules().size() + " modules, " + myProject.getLibraryCollection().getLibraries().size() + " libraries and " +
-                       JpsArtifactService.getInstance().getArtifacts(myProject).size() + " artifacts loaded in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
+    JpsProject project = JpsSerializationManager.getInstance().loadProject(PathManager.getHomePath(), Collections.emptyMap());
+    assertFalse(project.getModules().isEmpty());
+    System.out.println("JpsProjectSerializationTest: " + project.getModules().size() + " modules, " + project.getLibraryCollection().getLibraries().size() + " libraries and " +
+                       JpsArtifactService.getInstance().getArtifacts(project).size() + " artifacts loaded in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
   }
 
+  @Test
   public void testExcludesInLibraries() {
-    loadProject("/jps/model-serialization/testData/excludesInLibraries");
-    JpsLibrary library = assertOneElement(myProject.getLibraryCollection().getLibraries());
+    JpsProjectData projectData = loadProject("jps/model-serialization/testData/excludesInLibraries");
+    JpsLibrary library = assertOneElement(projectData.getProject().getLibraryCollection().getLibraries());
     assertEquals("junit", library.getName());
-    assertEquals(JpsPathUtil.getLibraryRootUrl(new File(getAbsolutePath("lib/junit.jar"))), assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
+    assertEquals(JpsPathUtil.getLibraryRootUrl(projectData.resolvePath("lib/junit.jar").toFile()), 
+                 assertOneElement(library.getRoots(JpsOrderRootType.COMPILED)).getUrl());
+  }
+
+  private @NotNull JpsProjectData loadProject(String projectPath) {
+    return JpsProjectData.loadFromTestData(projectPath, getClass());
   }
 }
