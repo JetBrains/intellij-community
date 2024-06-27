@@ -150,7 +150,8 @@ class JavaToJKTreeBuilder(
             val patternVariable = pattern?.patternVariable
 
             if (patternVariable != null) {
-                val name = expr.expression.safeAs<JKFieldAccessExpression>()?.identifier?.name ?: patternVariable.name
+                val variable = (operand as? PsiReferenceExpression)?.resolve() as? PsiVariable
+                val name = variable?.name ?: patternVariable.name
                 val typeElementForPattern =
                     with(declarationMapper) { JKTypeElement(type, psiTypeElement.annotationList()) }
                 // Executed for the side effect of binding the symbol to a valid target
@@ -297,12 +298,12 @@ class JavaToJKTreeBuilder(
             JKPostfixExpression(operand.toJK(), createOperator(operationSign.tokenType, type))
 
         private fun PsiLambdaExpression.toJK(): JKExpression {
+            val parameters = with(declarationMapper) { parameterList.parameters.map { it.toJK() } }
             val statement = when (val body = body) {
                 is PsiExpression -> JKExpressionStatement(body.toJK())
                 is PsiCodeBlock -> JKBlockStatement(with(declarationMapper) { body.toJK() })
                 else -> JKBlockStatement(JKBodyStub)
             }
-            val parameters = with(declarationMapper) { parameterList.parameters.map { it.toJK() } }
             return JKLambdaExpression(statement, parameters, functionalType())
         }
 

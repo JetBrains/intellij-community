@@ -4885,9 +4885,24 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("instanceof.java")
-            public void testInstanceof() throws Exception {
-                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceof.java");
+            @TestMetadata("instanceofField.java")
+            public void testInstanceofField() throws Exception {
+                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofField.java");
+            }
+
+            @TestMetadata("instanceofLambdaParameter.java")
+            public void testInstanceofLambdaParameter() throws Exception {
+                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofLambdaParameter.java");
+            }
+
+            @TestMetadata("instanceofLocalVariable.java")
+            public void testInstanceofLocalVariable() throws Exception {
+                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofLocalVariable.java");
+            }
+
+            @TestMetadata("instanceofParameter.java")
+            public void testInstanceofParameter() throws Exception {
+                runTest("../../shared/tests/testData/newJ2k/newJavaFeatures/patternMatching/instanceofParameter.java");
             }
         }
 
