@@ -59,6 +59,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
   private volatile LineHistoryMapper myMapper;
   private final Object myLock = new Object();
   private Disposable myListenerDisposable;
+  private boolean myIsDisposed;
 
   private final Alarm myUpdateAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
@@ -226,7 +227,7 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
       }
     };
     synchronized (myLock) {
-      if (myDocument != null) {
+      if (!myIsDisposed) {
         myListenerDisposable = Disposer.newDisposable(this);
         document.addDocumentListener(documentListener, myListenerDisposable);
       }
@@ -478,6 +479,9 @@ public class CoverageEditorAnnotatorImpl implements CoverageEditorAnnotator, Dis
 
   @Override
   public void dispose() {
+    synchronized (myLock) {
+      myIsDisposed = true;
+    }
     hideCoverage();
     myEditor = null;
     myDocument = null;
