@@ -15,6 +15,7 @@ import com.intellij.driver.sdk.ui.remote.RobotProvider
 import com.intellij.driver.sdk.ui.remote.SearchService
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitForOne
+import com.intellij.driver.sdk.waitAny
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import java.awt.Color
@@ -70,6 +71,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
         kotlin.runCatching { findThisComponent(timeout) }.isFailure
       }
     }
+
     /**
      * Asserts that the calling UiComponent is not found in the hierarchy.
      */
@@ -138,10 +140,9 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * Waits for a non-empty list of UiText's.
    */
   fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitFor(message = message ?: "Finding at least some texts in $this",
+    return waitAny(message = message ?: "Finding at least some texts in $this",
                    timeout = timeout,
-                   getter = { getAllTexts() },
-                   checker = { it.isNotEmpty() }
+                   getter = { getAllTexts() }
     )
   }
 
@@ -149,22 +150,22 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * Waits for a non-empty list of UiText's matching predicate.
    */
   fun waitAnyTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, predicate: (UiText) -> Boolean = { true }): List<UiText> {
-    return waitFor(message = message ?: "Finding at least some texts and filter matching predicate in $this",
+    return waitAny(message = message ?: "Finding at least some texts and filter matching predicate in $this",
                    timeout = timeout,
                    getter = { getAllTexts() },
-                   checker = { it.any(predicate) }
-    ).filter(predicate)
+                   checker = { predicate(it) }
+    )
   }
 
   /**
    * Waits for a non-empty list of UiText's with text '$text'.
    */
   fun waitAnyTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitFor(message = message ?: "Finding at least some texts and filter '$text' in $this",
+    return waitAny(message = message ?: "Finding at least some texts and filter '$text' in $this",
                    timeout = timeout,
                    getter = { getAllTexts() },
-                   checker = { it.any { it.text == text } }
-    ).filter { it.text == text }
+                   checker = { it.text == text }
+    )
   }
 
   /**
@@ -199,22 +200,22 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /**
    * Waits until there is no UiText's.
    */
-  fun waitNoTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitFor(message = message ?: "Finding no texts in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() },
-                   checker = { it.isEmpty() }
+  fun waitNoTexts(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding no texts in $this",
+            timeout = timeout,
+            getter = { getAllTexts() },
+            checker = { it.isEmpty() }
     )
   }
 
   /**
    * Waits until there is no UiText's with text '$text'.
    */
-  fun waitNoTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitFor(message = message ?: "Finding no texts '$text' in $this",
-                   timeout = timeout,
-                   getter = { getAllTexts() },
-                   checker = { it.filter { it.text == text }.isEmpty() }
+  fun waitNoTexts(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor(message = message ?: "Finding no texts '$text' in $this",
+            timeout = timeout,
+            getter = { getAllTexts() },
+            checker = { it.none { it.text == text } }
     )
   }
 
@@ -222,10 +223,10 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
    * Waits for a non-empty list of UiText's with substring '$text'.
    */
   fun waitSomeTextsContains(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
-    return waitFor(message = message ?: "Finding at least some texts and contains '$text' in $this",
+    return waitAny(message = message ?: "Finding at least some texts and contains '$text' in $this",
                    timeout = timeout,
                    getter = { getAllTexts() },
-                   checker = { it.any { it.text.contains(text) } }
+                   checker = { it.text.contains(text) }
     )
   }
 
@@ -327,11 +328,13 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     waitOneMatchInVerticallyOrderedText("Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", text, fullMatch, timeout = timeout)
 
   fun present(): Boolean {
-    return data.parentSearchContext.findAll(data.xpath).isNotEmpty()
+    return data.parentSearchContext.findAll(data.xpath).isNotEmpty().also {
+      LOG.info("$this is present in hierarchy: $it")
+    }
   }
 
   fun notPresent(): Boolean {
-    return data.parentSearchContext.findAll(data.xpath).isEmpty()
+    return !present()
   }
 
   fun hasText(predicate: (UiText) -> Boolean): Boolean {

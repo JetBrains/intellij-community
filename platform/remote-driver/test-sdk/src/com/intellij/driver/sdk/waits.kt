@@ -8,6 +8,13 @@ import kotlin.time.Duration.Companion.seconds
 
 private val LOG get() = fileLogger()
 
+/**
+ * Waits for a condition to be met within a specified timeout period.
+ *
+ * @throws WaitForException if the condition is not met within the specified timeout
+ *
+ * @see WaitForException
+ */
 fun waitFor(
   message: String? = null,
   timeout: Duration = 5.seconds,
@@ -28,6 +35,17 @@ fun waitFor(
           checker = { it })
 }
 
+/**
+ * A utility method that waits for a non-null value to be returned by the specified getter function.
+ *
+ * @return the non-null value returned by the getter function
+ * @throws WaitForException if the timeout is reached and the getter function still returns a null value
+ *
+ * @see waitFor
+ * @see logAwaitStart
+ * @see WaitForException
+ * @see logAwaitFinish
+ */
 fun <T> waitNotNull(
   message: String? = null,
   timeout: Duration = 5.seconds,
@@ -46,6 +64,30 @@ fun <T> waitNotNull(
   )!!
 }
 
+/**
+ * Waits for at least one element in the list that satisfies the provided conditions.
+ *
+ * @return a list of elements that satisfy the conditions
+ */
+fun <T> waitAny(
+  message: String? = null,
+  timeout: Duration = 5.seconds,
+  interval: Duration = 1.seconds,
+  errorMessage: ((List<T>) -> String)? = null,
+  getter: () -> List<T>,
+  checker: (T) -> Boolean = { true },
+): List<T> {
+  return waitFor(message = message, timeout = timeout,
+                 interval = interval,
+                 errorMessage = if (errorMessage == null) {
+                            null
+                          }
+                          else { it -> errorMessage.invoke(it) },
+                 getter = getter,
+                 checker = { it.any { checker(it) } }
+  ).filter { checker(it) }
+}
+
 private fun logAwaitStart(message: String?, timeout: Duration) {
   message?.let { LOG.info("Await: '$it' with timeout $timeout") }
 }
@@ -57,6 +99,16 @@ private fun <T> logAwaitFinish(message: String?, result: T) {
 }
 
 
+/**
+ * Waits for a condition to be met within a specified timeout period.
+ *
+ * @return the value retrieved by the getter function after the condition is met
+ * @throws WaitForException if the condition is not met within the specified timeout
+ *
+ * @see logAwaitStart
+ * @see WaitForException
+ * @see logAwaitFinish
+ */
 fun <T> waitFor(
   message: String? = null,
   timeout: Duration = 5.seconds,
@@ -88,7 +140,10 @@ fun <T> waitFor(
 }
 
 /**
- * Waits until there is exactly one match in getter result abiding checker.
+ * Waits for exactly one suitable element in a list and returns it.
+ *
+ * @return the suitable element from the list
+ * @throws WaitForException if no suitable element is found within the specified timeout
  */
 fun <T> waitForOne(
   message: String? = null,
@@ -124,6 +179,13 @@ fun <T> waitForOne(
   }
 }
 
+/**
+ * Waits for a single item to be returned by the given `getter` function.
+ *
+ * @return The single item returned by the `getter` function.
+ *
+ * @throws WaitForException If the single item is not found within the specified timeout.
+ */
 fun <T> waitForOne(
   message: String? = null,
   timeout: Duration = 5.seconds,

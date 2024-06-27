@@ -24,7 +24,7 @@ class UIComponentsList<T : UiComponent>(
     /**
      * Searches for a non-empty list of UI components based on the given XPath until timeout hits.
      */
-    fun Finder.waitAtLeastAny(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<UiComponent> {
+    fun Finder.waitAny(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<UiComponent> {
       return waitFor(message, timeout,
                      getter = { UIComponentsList(xQuery { init() }, UiComponent::class.java, driver, searchService, robotProvider, searchContext) },
                      checker = { it.list().isNotEmpty() })
@@ -33,7 +33,7 @@ class UIComponentsList<T : UiComponent>(
     /**
      * Waits for some ui components matching the given XPath.
      */
-    fun <T : UiComponent> Finder.waitAtLeastAny(message: String? = null, type: Class<T>, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<T> {
+    fun <T : UiComponent> Finder.waitAny(message: String? = null, type: Class<T>, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<T> {
       return waitFor(message, timeout,
                      getter = { UIComponentsList(xQuery { init() }, type, driver, searchService, robotProvider, searchContext) },
                      checker = { it.list().isNotEmpty() })
