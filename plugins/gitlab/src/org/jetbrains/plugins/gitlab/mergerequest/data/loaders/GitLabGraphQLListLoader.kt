@@ -2,11 +2,14 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.Change
+import com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader
+import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
+import com.intellij.collaboration.async.launchNow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
-import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabGraphQLETagListLoader.PageInfo
+import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabGraphQLListLoader.PageInfo
 
 fun <K, V> startGitLabGraphQLListLoaderIn(
   cs: CoroutineScope,
@@ -20,7 +23,7 @@ fun <K, V> startGitLabGraphQLListLoaderIn(
 
   performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?
 ): ReloadablePotentiallyInfiniteListLoader<V> {
-  val loader = GitLabGraphQLETagListLoader(cs, extractKey, shouldTryToLoadAll, performRequest)
+  val loader = GitLabGraphQLListLoader(cs, extractKey, shouldTryToLoadAll, performRequest)
 
   cs.launchNow { requestReloadFlow?.collect { loader.reload() } }
   cs.launch { requestRefreshFlow?.collect { loader.refresh() } }
@@ -29,7 +32,7 @@ fun <K, V> startGitLabGraphQLListLoaderIn(
   return loader
 }
 
-private class GitLabGraphQLETagListLoader<K, V>(
+private class GitLabGraphQLListLoader<K, V>(
   cs: CoroutineScope,
 
   extractKey: (V) -> K,
