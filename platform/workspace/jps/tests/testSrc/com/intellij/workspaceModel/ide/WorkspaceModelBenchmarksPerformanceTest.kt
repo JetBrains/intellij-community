@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -37,12 +36,11 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.testFramework.workspaceModel.updateProjectModel
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver
 import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
@@ -80,7 +78,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @BeforeEach
   fun beforeTest() {
-    Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
+    //Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
     println("> Benchmark test started")
   }
 
@@ -1362,6 +1360,41 @@ class WorkspaceModelBenchmarksPerformanceTest {
     }
       .warmupIterations(0)
       .attempts(1).startAsSubtest()
+  }
+
+  @Test
+  fun `changelog performance - one to many children adding`(testInfo: TestInfo) {
+    val times = 20_000
+    val initialSnapshot = MutableEntityStorage.create().also { builder ->
+      repeat(times) {
+        builder addEntity ParentMultipleEntity("Parent_$it", MySource) {
+          this.children = listOf(ChildMultipleEntity("Child", MySource))
+        }
+      }
+    }.toSnapshot()
+    val builder = initialSnapshot.toBuilder()
+
+    // Fill builder with some changes. In this way we'll get more internal work for "merging" with the existing change.
+    builder.entities<ParentMultipleEntity>().forEach { parent ->
+      builder.modifyParentMultipleEntity(parent) {
+        this.children = emptyList()
+      }
+    }
+    PerformanceTestUtil.newPerformanceTest(testInfo.displayName) {
+      builder.entities<ParentMultipleEntity>().forEach { parent ->
+        builder.modifyParentMultipleEntity(parent) {
+          this.children += ChildMultipleEntity("Child_2", MySource)
+        }
+      }
+    }
+      .warmupIterations(0)
+      .attempts(1).start()
+
+    PerformanceTestUtil.newPerformanceTest(testInfo.displayName + " - applyChangesFrom") {
+      initialSnapshot.toBuilder().applyChangesFrom(builder)
+    }
+      .warmupIterations(0)
+      .attempts(1).start()
   }
 
   private fun measureOperation(launchName: String, singleBuilderEntities: List<Pair<MutableEntityStorage, NamedEntity>>,
