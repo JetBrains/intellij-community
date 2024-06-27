@@ -36,10 +36,7 @@ private class GitLabGraphQLETagListLoader<K, V>(
   shouldTryToLoadAll: Boolean = false,
 
   private val performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?
-) : PaginatedPotentiallyInfiniteListLoader<PageInfo, K, V>(cs, PageInfo(), extractKey, shouldTryToLoadAll) {
-  /**
-   *
-   */
+) : PaginatedPotentiallyInfiniteListLoader<PageInfo, K, V>(PageInfo(), extractKey, shouldTryToLoadAll) {
   data class PageInfo(
     val cursor: String? = null,
     val nextCursor: String? = null,
