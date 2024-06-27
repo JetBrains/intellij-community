@@ -28,7 +28,16 @@ internal class ProjectDirectJpsFileContentReader(
     if (fileUrl.endsWith(".iml")) {
       //todo support external storage
       val loader = getModuleLoader(fileUrl)
-      return JDomSerializationUtil.findComponent(loader.loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl))), componentName)
+      val rootElement = loader.loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl)))
+      if (componentName == "DeprecatedModuleOptionManager") {
+        //this duplicates logic from ModuleStateStorageManager.beforeElementLoaded which is used to convert attributes to data in an artificial component
+        val componentTag = JDomSerializationUtil.createComponentElement(componentName)
+        rootElement?.attributes?.forEach { attribute ->
+          componentTag.addContent(Element("option").setAttribute("key", attribute.name).setAttribute("value", attribute.value))
+        }
+        return componentTag
+      }
+      return JDomSerializationUtil.findComponent(rootElement, componentName)
     }
     return loadProjectLevelComponent(fileUrl, componentName)
   }
