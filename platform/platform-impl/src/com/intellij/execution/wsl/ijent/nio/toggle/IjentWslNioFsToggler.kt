@@ -42,13 +42,16 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
     strategy.enableForAllWslDistributions()
   }
 
-  fun enable(distro: WSLDistribution, ijentId: IjentId) {
-    strategy?.enable(distro, ijentId)
+  @TestOnly
+  fun switchToIjentFs(distro: WSLDistribution, ijentId: IjentId) {
+    strategy ?: error("Not available")
+    strategy.switchToIjentFs(distro, ijentId)
   }
 
-  // TODO Disable when IJent exits.
-  fun disable(distro: WSLDistribution) {
-    strategy?.disable(distro)
+  @TestOnly
+  fun switchToTracingWsl9pFs(distro: WSLDistribution) {
+    strategy ?: error("Not available")
+    strategy.switchToTracingWsl9pFs(distro)
   }
 
   @TestOnly
@@ -60,7 +63,7 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   private val strategy = run {
     val defaultProvider = FileSystems.getDefault().provider()
     when {
-      !WslIjentAvailabilityService.Companion.getInstance().useIjentForWslNioFileSystem() -> null
+      !WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem() -> null
 
       defaultProvider.javaClass.name == MultiRoutingFileSystemProvider::class.java.name -> {
         IjentWslNioFsToggleStrategy(defaultProvider, coroutineScope)
