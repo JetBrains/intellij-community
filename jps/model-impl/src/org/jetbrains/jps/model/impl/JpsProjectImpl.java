@@ -32,7 +32,6 @@ final class JpsProjectImpl extends JpsProjectBase {
     myContainer.setChild(JpsModuleRole.MODULE_COLLECTION_ROLE);
     myContainer.setChild(EXTERNAL_REFERENCES_COLLECTION_ROLE);
     myContainer.setChild(JpsSdkReferencesTableImpl.ROLE);
-    myContainer.setChild(RUN_CONFIGURATIONS_ROLE);
     myLibraryCollection = new JpsLibraryCollectionImpl(myContainer.setChild(JpsLibraryRole.LIBRARIES_COLLECTION_ROLE));
   }
 

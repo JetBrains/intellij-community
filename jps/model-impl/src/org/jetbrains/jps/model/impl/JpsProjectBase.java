@@ -15,10 +15,13 @@ import java.util.List;
 
 @ApiStatus.Internal
 public abstract class JpsProjectBase extends JpsRootElementBase<JpsProjectBase> implements JpsProject {
-  protected static final JpsElementCollectionRole<JpsRunConfiguration>
+  private static final JpsElementCollectionRole<JpsRunConfiguration>
     RUN_CONFIGURATIONS_ROLE = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("run configuration"));
 
-  protected JpsProjectBase(@NotNull JpsModel model) { super(model); }
+  protected JpsProjectBase(@NotNull JpsModel model) { 
+    super(model);
+    myContainer.setChild(RUN_CONFIGURATIONS_ROLE);
+  }
 
   @NotNull
   @Override
