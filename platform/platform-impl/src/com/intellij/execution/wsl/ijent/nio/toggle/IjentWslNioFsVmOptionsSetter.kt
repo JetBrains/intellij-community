@@ -23,6 +23,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 @VisibleForTesting
@@ -133,10 +134,15 @@ object IjentWslNioFsVmOptionsSetter {
 
   internal class ApplicationListener : ApplicationActivationListener {
     @Service
-    private class ServiceScope(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope
+    private class ServiceScope(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope {
+      val dialogMessageHasBeenShown = AtomicBoolean(false)
+    }
 
     override fun applicationActivated(ideFrame: IdeFrame) {
-      service<ServiceScope>().launch {
+      val serviceScope = service<ServiceScope>()
+      if (serviceScope.dialogMessageHasBeenShown.getAndSet(true)) return
+
+      serviceScope.launch {
         val changedOptions = ensureInVmOptions()
         when {
           changedOptions.isEmpty() -> {
