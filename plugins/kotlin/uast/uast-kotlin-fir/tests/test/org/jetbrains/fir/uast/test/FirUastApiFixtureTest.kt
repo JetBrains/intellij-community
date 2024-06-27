@@ -149,4 +149,8 @@ class FirUastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testNullLiteral() {
         checkNullLiteral(myFixture)
     }
+
+    fun testStringConcatInAnnotationValue() {
+        checkStringConcatInAnnotationValue(myFixture)
+    }
 }
