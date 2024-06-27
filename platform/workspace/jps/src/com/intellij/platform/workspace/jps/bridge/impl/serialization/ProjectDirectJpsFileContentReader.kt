@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading
 import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading.createProjectMacroExpander
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.path.Path
 
 /**
@@ -22,7 +23,8 @@ internal class ProjectDirectJpsFileContentReader(
 ) : JpsFileContentReader {
     
   private val projectMacroExpander = createProjectMacroExpander(pathVariables, projectBaseDir)
-  val projectComponentLoader = JpsComponentLoader(projectMacroExpander, externalConfigurationDirectory)
+  private val moduleLoadersCache = ConcurrentHashMap<String, JpsComponentLoader>()
+  val projectComponentLoader = JpsComponentLoader(projectMacroExpander, externalConfigurationDirectory, true)
   
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
     if (fileUrl.endsWith(".iml")) {
@@ -58,9 +60,13 @@ internal class ProjectDirectJpsFileContentReader(
   }
 
   private fun getModuleLoader(imlFileUrl: String): JpsComponentLoader {
+    moduleLoadersCache[imlFileUrl]?.let {
+      return it
+    }
     val moduleFile = Path(JpsPathUtil.urlToPath(imlFileUrl))
     val macroExpander = JpsProjectConfigurationLoading.createModuleMacroExpander(pathVariables, moduleFile)
-    //todo cache
-    return JpsComponentLoader(macroExpander, null) 
+    val loader = JpsComponentLoader(macroExpander, null, true)
+    moduleLoadersCache[imlFileUrl] = loader
+    return loader 
   }
 }

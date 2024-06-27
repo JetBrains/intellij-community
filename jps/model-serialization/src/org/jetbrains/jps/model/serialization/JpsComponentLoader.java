@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 @ApiStatus.Internal
 public class JpsComponentLoader {
@@ -24,10 +26,17 @@ public class JpsComponentLoader {
   private static final int MAX_ATTEMPTS = 5;
   protected final @Nullable Path myExternalConfigurationDirectory;
   private final JpsMacroExpander myMacroExpander;
+  private static final Element NULL_VALUE = new Element("null");
+  private final ConcurrentHashMap<Path, Element> myRootElementsCache;
 
   public JpsComponentLoader(@NotNull JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory) {
+    this(macroExpander, externalConfigurationDirectory, false);
+  }
+
+  public JpsComponentLoader(@NotNull JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory, boolean useCache) {
     myMacroExpander = macroExpander;
     myExternalConfigurationDirectory = externalConfigurationDirectory;
+    myRootElementsCache = useCache ? new ConcurrentHashMap<>() : null;
   }
 
   public @NotNull JpsMacroExpander getMacroExpander() {
@@ -38,7 +47,16 @@ public class JpsComponentLoader {
    * Returns null if file doesn't exist
    */
   public @Nullable Element loadRootElement(@NotNull Path file) {
-    return loadRootElement(file, myMacroExpander);
+    if (myRootElementsCache == null) {
+      return loadRootElement(file, myMacroExpander);
+    }
+    Element cached = myRootElementsCache.get(file);
+    if (cached != null) {
+      return cached != NULL_VALUE ? cached : null;
+    }
+    Element result = loadRootElement(file, myMacroExpander);
+    myRootElementsCache.put(file, Objects.requireNonNullElse(result, NULL_VALUE));
+    return result;
   }
 
   public @Nullable Element loadComponent(@NotNull Path file, @NotNull String componentName) {
