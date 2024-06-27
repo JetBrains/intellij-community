@@ -10,7 +10,10 @@ import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.getInstance
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -276,18 +279,26 @@ class VcsLogChangesBrowser internal constructor(project: Project,
     val roots = HashSet(commitModel.roots)
     val selectedData = VcsTreeModelData.selected(myViewer)
     sink.lazy(VcsDataKeys.VCS) {
-      val rootsVcs = JBIterable.from<VirtualFile>(roots)
-        .map<AbstractVcs?> { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-        .filterNotNull()
-        .unique()
-        .single()
-      rootsVcs?.keyInstanceMethod ?: selectedData.iterateUserObjects<Change>(Change::class.java)
-        .map<FilePath> { change -> ChangesUtil.getFilePath(change) }
-        .map<AbstractVcs?> { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
-        .filterNotNull()
-        .unique()
-        .single()?.keyInstanceMethod
+      getSelectedVcs(roots, selectedData)?.keyInstanceMethod
     }
+  }
+
+  private fun getSelectedVcs(
+    roots: Set<VirtualFile>,
+    selectedData: VcsTreeModelData,
+  ): AbstractVcs? {
+    val rootsVcs = JBIterable.from(roots)
+      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      .unique()
+      .single()
+    if (rootsVcs != null) return rootsVcs
+
+    val selectionVcs = selectedData.iterateUserObjects(Change::class.java)
+      .map { change -> ChangesUtil.getFilePath(change) }
+      .filterMap { root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root) }
+      .unique()
+      .single()
+    return selectionVcs
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {

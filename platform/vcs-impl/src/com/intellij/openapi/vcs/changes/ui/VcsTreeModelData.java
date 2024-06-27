@@ -6,7 +6,6 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -315,34 +314,26 @@ public abstract class VcsTreeModelData {
     sink.set(VcsDataKeys.CHANGE_LEAD_SELECTION,
              mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY));
     sink.set(VcsDataKeys.FILE_PATHS, mapToFilePath(selected(tree)));
+
     VcsTreeModelData treeSelection = selected(tree);
     VcsTreeModelData exactSelection = exactlySelected(tree);
-    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER,
-             slowId -> getSlowData(project, treeSelection, exactSelection, slowId));
-  }
-
-  @Nullable
-  private static Object getSlowData(@Nullable Project project,
-                                    @NotNull VcsTreeModelData treeSelection,
-                                    @NotNull VcsTreeModelData exactSelection,
-                                    @NotNull String slowId) {
-    if (SelectInContext.DATA_KEY.is(slowId)) {
+    sink.lazy(SelectInContext.DATA_KEY, () -> {
       if (project == null) return null;
       VirtualFile file = mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
       return new FileSelectInContext(project, file, null);
-    }
-    else if (VcsDataKeys.VIRTUAL_FILES.is(slowId)) {
+    });
+    sink.lazy(VcsDataKeys.VIRTUAL_FILES, () -> {
       return mapToVirtualFile(treeSelection);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return mapToVirtualFile(treeSelection).toArray(VirtualFile.EMPTY_ARRAY);
+    });
+    if (project != null) {
+      sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+        return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
+      });
     }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
-      if (project == null) return null;
-      return ChangesUtil.getNavigatableArray(project, mapToNavigatableFile(treeSelection));
-    }
-    return null;
   }
 
   @NotNull

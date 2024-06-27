@@ -17,7 +17,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.selected
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.uiDataSnapshot
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExpandableItemsHandler
@@ -102,7 +101,7 @@ object CodeReviewChangeListComponentFactory {
 
       override fun uiDataSnapshot(sink: DataSink) {
         super.uiDataSnapshot(sink)
-        uiDataSnapshot(sink, project, this)
+        VcsTreeModelData.uiDataSnapshot(sink, project, this)
         sink[CommonDataKeys.NAVIGATABLE] = getSelectedFiles().singleOrNull()?.let { OpenFileDescriptor(project, it) }
         sink[CommonDataKeys.NAVIGATABLE_ARRAY] = ChangesUtil.getNavigatableArray(project, getSelectedFiles())
         sink[SELECTED_CHANGES] = getSelectedChanges()
