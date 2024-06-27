@@ -3,11 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.footer
 
 import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.OpenInRightSplitAction
-import com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
-import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -194,5 +190,7 @@ class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataContext) :
 
   override fun actionPerformed(e: AnActionEvent) {
     ActionUtil.invokeAction(split, dataContext, ActionPlaces.ACTION_SEARCH, null, null)
+    val seManager = SearchEverywhereManager.getInstance(dataContext.getData(CommonDataKeys.PROJECT))
+    if (seManager.isShown) seManager.currentlyShownUI.closePopup()
   }
 }
