@@ -28,6 +28,9 @@ private fun createPathList(dir: Path): List<String> {
 }
 
 class ConsoleSpanExporter : AsyncSpanExporter {
+
+  private val isEnabled = System.getProperty("intellij.build.console.exporter.enabled")?.toBoolean() ?: true
+
   companion object {
     fun setPathRoot(dir: Path) {
       rootPathsWithEndSlash = createPathList(dir)
@@ -35,6 +38,7 @@ class ConsoleSpanExporter : AsyncSpanExporter {
   }
 
   override suspend fun export(spans: Collection<SpanData>) {
+    if (!isEnabled) return
     val sb = StringBuilder()
     for (span in spans) {
       writeSpan(sb, span, span.endEpochNanos - span.startEpochNanos, span.endEpochNanos)
