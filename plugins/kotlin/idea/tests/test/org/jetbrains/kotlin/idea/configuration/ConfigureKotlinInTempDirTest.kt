@@ -68,16 +68,20 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
 
     private fun moduleFileContent() = String(module.moduleFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
 
-    fun testNoKotlincExistsNoSettingsRuntime10() {
-        // Updating the settings is done in a coroutines that might take several EDT dispatches to work.
+    private fun waitForKotlinSettingsConfiguration() {
+        // Updating the settings is done in a coroutine that might take several EDT dispatches to work.
         // We dispatch them up to 10 times here to ensure the settings are updated correctly.
         val propertiesComponent = PropertiesComponent.getInstance(project)
-        for (i in 1..10) {
+        for (i in 1..5) {
             if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) break
             UIUtil.dispatchAllInvocationEvents()
             Thread.sleep(100)
         }
         Assert.assertTrue(propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME))
+    }
+
+    fun testNoKotlincExistsNoSettingsRuntime10() {
+        waitForKotlinSettingsConfiguration()
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(LanguageVersion.KOTLIN_1_0, myProject.languageVersionSettings.languageVersion)
         runWithModalProgressBlocking(project, "") {
@@ -195,6 +199,7 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     }
 
     fun testKotlincExistsNoSettingsLatestRuntimeNoVersionAutoAdvance() {
+        waitForKotlinSettingsConfiguration()
         val expectedLanguageVersion = KotlinPluginLayout.standaloneCompilerVersion.languageVersion
         Assert.assertEquals(expectedLanguageVersion, module.languageVersionSettings.languageVersion)
         Assert.assertEquals(expectedLanguageVersion, myProject.languageVersionSettings.languageVersion)
