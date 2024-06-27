@@ -76,7 +76,10 @@ data class EditorCompositeModel internal constructor(
 
 // workaround for remote dev, where we cannot yet implement correctly
 @Internal
-class PrecomputedFlow(@JvmField val model: EditorCompositeModel) : Flow<EditorCompositeModel> {
+class PrecomputedFlow(
+  @JvmField internal val model: EditorCompositeModel,
+  @JvmField internal val fireFileOpened: Boolean,
+) : Flow<EditorCompositeModel> {
   override suspend fun collect(collector: FlowCollector<EditorCompositeModel>) {
     error("Must not be called")
   }
@@ -135,7 +138,12 @@ open class EditorComposite internal constructor(
     EDT.assertIsEdt()
 
     if (model is PrecomputedFlow) {
-      blockingHandleModel(model.model)
+      if (model.fireFileOpened) {
+        blockingHandleModel(model.model)
+      }
+      else {
+        blockingHandleModel2(model.model)
+      }
     }
     else {
       if (ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -277,18 +285,67 @@ open class EditorComposite internal constructor(
       }
     }
 
+    val states = oldBadForRemoteDevGetStates(fileEditorWithProviders = fileEditorWithProviders, state = model.state)
+    applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
+  }
+
+  private fun oldBadForRemoteDevGetStates(
+    fileEditorWithProviders: List<FileEditorWithProvider>,
+    state: FileEntry?,
+  ): List<FileEditorState?> {
     val states = fileEditorWithProviders.map { (_, provider) ->
-      if (model.state == null) {
+      if (state == null) {
         // We have to try to get state from the history only in case of the editor is not opened.
         // Otherwise, history entry might have a state out of sync with the current editor state.
         EditorHistoryManager.getInstance(project).getState(file, provider)
       }
       else {
-        model.state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, file) }
+        state.providers.get(provider.editorTypeId)?.let { provider.readState(it, project, file) }
+      }
+    }
+    return states
+  }
+
+  // for remote dev - we don't care about performance for now
+  @RequiresEdt
+  private fun blockingHandleModel2(model: EditorCompositeModel) {
+    val fileEditorWithProviders = model.fileEditorAndProviderList
+
+    for (editorWithProvider in fileEditorWithProviders) {
+      val editor = editorWithProvider.fileEditor
+      FileEditor.FILE_KEY.set(editor, file)
+      if (!clientId.isLocal) {
+        assignClientId(editor, clientId)
       }
     }
 
+    // TODO comment this and log a warning or log something
+    if (fileEditorWithProviders.isEmpty()) {
+      compositePanel.removeAll()
+      _selectedEditorWithProvider.value = null
+      return
+    }
+
+    val messageBus = project.messageBus
+    val deferredPublishers = messageBus.syncAndPreloadPublisher(FileOpenedSyncListener.TOPIC) to
+      messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+
+    val beforePublisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+
+    val fileEditorManager = FileEditorManager.getInstance(project)
+
+    beforePublisher!!.beforeFileOpened(fileEditorManager, file)
+
+    val states = oldBadForRemoteDevGetStates(fileEditorWithProviders = fileEditorWithProviders, state = model.state)
     applyFileEditorsInEdt(fileEditorWithProviders = fileEditorWithProviders, selectedFileEditorProvider = null, states = states)
+
+    val (goodPublisher, deprecatedPublisher) = deferredPublishers
+    goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+    @Suppress("DEPRECATION")
+    deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
+
+    val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
+    publisher.fileOpened(fileEditorManager, file)
   }
 
   @RequiresEdt
@@ -930,7 +987,8 @@ internal fun focusEditorOnComposite(
   splitters: EditorsSplitters,
   toFront: Boolean = true,
 ): Boolean {
-  val currentSelectedComposite = splitters.currentCompositeFlow.value
+  val currentWindow = splitters.currentWindow
+  val currentSelectedComposite = currentWindow?.selectedComposite
   // while the editor was loading, the user switched to another editor - don't steal focus
   if (currentSelectedComposite === composite) {
     val preferredFocusedComponent = composite.preferredFocusedComponent
@@ -939,10 +997,14 @@ internal fun focusEditorOnComposite(
       return false
     }
     else {
-      preferredFocusedComponent.requestFocusInWindow()
       if (toFront) {
-        IdeFocusManager.getGlobalInstance().toFront(splitters)
+        IdeFocusManager.getGlobalInstance().toFront(preferredFocusedComponent)
+        preferredFocusedComponent.requestFocus()
       }
+      else {
+        preferredFocusedComponent.requestFocusInWindow()
+      }
+
       return true
     }
   }
