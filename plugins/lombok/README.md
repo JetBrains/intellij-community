@@ -44,7 +44,7 @@ Many features of the plugin (including warnings) could be disabled through per-p
 - [**@juriad** Adam Juraszek](https://github.com/juriad)
 - [**@kuil09** Hwang, Geon Gu](https://github.com/kuil09)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
-- [**@Lekanich** Aleksandr Zhelezniak](https://github.com/Lekanich)
+- [**@Lekanich** Oleksandr Zhelezniak](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
 - [**@RohanTalip** Rohan Talip](https://github.com/RohanTalip)
