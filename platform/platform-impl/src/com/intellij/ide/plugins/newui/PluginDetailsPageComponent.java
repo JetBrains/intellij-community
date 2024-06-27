@@ -1716,6 +1716,16 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private @Nullable @Nls String getDescription() {
+    if (myUpdateDescriptor != null) {
+      String description = myUpdateDescriptor.getDescription();
+      if (!Strings.isEmptyOrSpaces(description)) {
+        return description;
+      }
+    }
+    String description = myPlugin.getDescription();
+    if (!Strings.isEmptyOrSpaces(description)) {
+      return description;
+    }
     PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
       String description = node.getDescription();
@@ -1723,8 +1733,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
         return description;
       }
     }
-    String description = myPlugin.getDescription();
-    return Strings.isEmptyOrSpaces(description) ? null : description;
+    return null;
   }
 
   private @Nullable @NlsSafe String getChangeNotes() {
