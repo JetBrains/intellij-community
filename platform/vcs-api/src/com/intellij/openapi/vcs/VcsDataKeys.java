@@ -75,11 +75,6 @@ public interface VcsDataKeys {
    * This difference might be important when {@link AbstractVcs#areDirectoriesVersionedItems()} is {@code true}.
    */
   DataKey<Change[]> CHANGE_LEAD_SELECTION = DataKey.create("ChangeListView.ChangeLeadSelection");
-  /**
-   * Can be used to ensure that directory flags for SVN are initialized.
-   * Is potentially slow and should not be used in {@link com.intellij.openapi.actionSystem.AnAction#update}, use {@link #CHANGES} instead.
-   */
-  DataKey<Change[]> CHANGES_WITH_MOVED_CHILDREN = DataKey.create("ChangeListView.ChangesWithDetails");
   DataKey<List<VirtualFile>> MODIFIED_WITHOUT_EDITING_DATA_KEY = DataKey.create("ChangeListView.ModifiedWithoutEditing");
 
   DataKey<Change> CURRENT_CHANGE = DataKey.create("vcs.CurrentChange");

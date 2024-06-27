@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,9 @@ public class RevertChangeListAction extends RevertCommittedStuffAbstractAction {
       return e.getData(VcsDataKeys.CHANGES);
     }
     else {
-      return e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
+      CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
+      if (treeBrowser == null) return null;
+      return treeBrowser.collectChangesWithMovedChildren();
     }
   }
 }

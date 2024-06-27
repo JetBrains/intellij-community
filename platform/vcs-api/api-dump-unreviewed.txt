@@ -558,7 +558,6 @@ f:com.intellij.openapi.vcs.VcsConsoleLine
 com.intellij.openapi.vcs.VcsDataKeys
 - sf:CHANGES:com.intellij.openapi.actionSystem.DataKey
 - sf:CHANGES_SELECTION:com.intellij.openapi.actionSystem.DataKey
-- sf:CHANGES_WITH_MOVED_CHILDREN:com.intellij.openapi.actionSystem.DataKey
 - sf:CHANGE_LEAD_SELECTION:com.intellij.openapi.actionSystem.DataKey
 - sf:CHANGE_LISTS:com.intellij.openapi.actionSystem.DataKey
 - sf:COMMIT_MESSAGE_CONTROL:com.intellij.openapi.actionSystem.DataKey

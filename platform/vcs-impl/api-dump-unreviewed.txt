@@ -3168,12 +3168,15 @@ c:com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser
 - com.intellij.openapi.Disposable
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.vcs.changes.committed.DecoratorManager
+- sf:COMMITTED_CHANGES_TREE_DATA_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:ITEMS_RELOADED:com.intellij.util.messages.Topic
 - sf:ourHelpId:java.lang.String
 - <init>(com.intellij.openapi.project.Project,java.util.List):V
 - addFilter(com.intellij.openapi.vcs.changes.committed.ChangeListFilteringStrategy):V
 - append(java.util.List):V
 - s:collectChanges(java.util.List,Z):java.util.List
+- collectChangesWithMovedChildren():com.intellij.openapi.vcs.changes.Change[]
+- collectSelectedChangesWithMovedChildren():com.intellij.openapi.vcs.changes.Change[]
 - createGroupFilterToolbar(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.actionSystem.ActionGroup,java.util.List):com.intellij.openapi.actionSystem.ActionToolbar
 - dispose():V
 - getChangesTree():com.intellij.ui.treeStructure.Tree

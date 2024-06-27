@@ -93,6 +93,8 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   private final MessageBusConnection myConnection;
   private TreeState myState;
 
+  public static final DataKey<CommittedChangesTreeBrowser> COMMITTED_CHANGES_TREE_DATA_KEY = DataKey.create("CommittedChangesTreeBrowser");
+
   public CommittedChangesTreeBrowser(final Project project, final List<? extends CommittedChangeList> changeLists) {
     super(new BorderLayout());
 
@@ -422,11 +424,11 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   @Nullable
   @Override
   public Object getData(@NotNull String dataId) {
+    if (COMMITTED_CHANGES_TREE_DATA_KEY.is(dataId)) {
+      return this;
+    }
     if (VcsDataKeys.CHANGES.is(dataId)) {
       return collectChanges(getSelectedChangeLists(), false).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN.is(dataId)) {
-      return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
     }
     if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
       List<CommittedChangeList> changeLists = getSelectedChangeLists();
@@ -443,6 +445,16 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
       return myHelpId;
     }
     return null;
+  }
+
+  public Change @NotNull [] collectChangesWithMovedChildren() {
+    return collectChanges(getSelectedChangeLists(), true).toArray(Change.EMPTY_CHANGE_ARRAY);
+  }
+
+  public Change @NotNull [] collectSelectedChangesWithMovedChildren() {
+    // to ensure directory flags for SVN are initialized
+    collectChanges(getSelectedChangeLists(), true);
+    return myDetailsView.getSelectedChanges().toArray(Change.EMPTY_CHANGE_ARRAY);
   }
 
   public TreeExpander getTreeExpander() {

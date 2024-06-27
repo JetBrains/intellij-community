@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,11 +63,13 @@ public abstract class RevertSelectedChangesAction extends RevertCommittedStuffAb
 
   @Override
   protected Change @Nullable [] getChanges(@NotNull AnActionEvent e, boolean isFromUpdate) {
-    if (!isFromUpdate) {
-      // to ensure directory flags for SVN are initialized
-      e.getData(VcsDataKeys.CHANGES_WITH_MOVED_CHILDREN);
+    if (isFromUpdate) {
+      return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
     }
-
-    return e.getData(VcsDataKeys.SELECTED_CHANGES_IN_DETAILS);
+    else {
+      CommittedChangesTreeBrowser treeBrowser = e.getData(CommittedChangesTreeBrowser.COMMITTED_CHANGES_TREE_DATA_KEY);
+      if (treeBrowser == null) return null;
+      return treeBrowser.collectSelectedChangesWithMovedChildren();
+    }
   }
 }
