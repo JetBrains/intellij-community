@@ -79,8 +79,10 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val history = collectFileHistory(commits.first().file)
-    assertSameHistory(commits, history)
+    val file = commits.first().file
+
+    val history = collectFileHistory(file)
+    assertSameHistory(commits, history, "History is different for file${file.relativePath()}.")
   }
 
   @Throws(VcsException::class, IOException::class)
@@ -388,8 +390,8 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     }
   }
 
-  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
-    TestCase.assertEquals("History is different.", expected, actual.map { it.toTestCommit() })
+  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>, message: String = "History is different.") {
+    TestCase.assertEquals(message, expected, actual.map { it.toTestCommit() })
   }
 
   private data class TestCommit(val hash: String, val commitMessage: String, val root: VirtualFile, val file: File) {
