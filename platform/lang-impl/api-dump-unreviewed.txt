@@ -4199,6 +4199,7 @@ f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithUserData
 - setTextAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):V
 - showTooltip():Z
 f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithUserDataKt
+- sf:getPROBLEM_DESCRIPTOR_TAG():com.intellij.openapi.util.Key
 - sf:getRELATED_LOCATIONS():com.intellij.openapi.util.Key
 - sf:getRELATED_PROBLEMS_CHILD_HASH():com.intellij.openapi.util.Key
 - sf:getRELATED_PROBLEMS_ROOT_HASH():com.intellij.openapi.util.Key

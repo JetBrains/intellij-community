@@ -1751,6 +1751,7 @@ f:com.intellij.codeInspection.GlobalInspectionUtil
 - <init>():V
 - s:createInspectionMessage(java.lang.String):java.lang.String
 - s:createProblem(com.intellij.psi.PsiElement,com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.util.TextRange,com.intellij.lang.annotation.ProblemGroup,com.intellij.codeInspection.InspectionManager,com.intellij.codeInspection.ProblemDescriptionsProcessor,com.intellij.codeInspection.GlobalInspectionContext):V
+- s:createProblemDescriptor(com.intellij.psi.PsiElement,com.intellij.codeInsight.daemon.impl.HighlightInfo,com.intellij.openapi.util.TextRange,com.intellij.lang.annotation.ProblemGroup,com.intellij.codeInspection.InspectionManager):com.intellij.codeInspection.ProblemDescriptor
 f:com.intellij.codeInspection.InspectionEngine
 - <init>():V
 - s:calcElementDialectIds(java.util.List,java.util.List):java.util.Set
