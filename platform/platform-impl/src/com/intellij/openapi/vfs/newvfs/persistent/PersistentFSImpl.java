@@ -49,7 +49,6 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.io.ReplicatorInputStream;
-import com.intellij.util.io.storage.HeavyProcessLatch;
 import io.opentelemetry.api.metrics.Meter;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -792,11 +791,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    return contentsToByteArray(file, true);
+    // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
+    // But caching of readOnly (which 99% means 'archived') file content is useless
+    boolean cacheContent = !getFileSystem(file).isReadOnly();
+    return contentsToByteArray(file, cacheContent);
   }
 
   @Override
-  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean forceCacheContent) throws IOException {
+  public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException {
     InputStream contentStream;
     boolean outdated;
     int fileId;
@@ -829,16 +831,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         setLength(fileId, content.length);
       }
 
-      if (!shouldCache(content.length)) {
-        return content;
-      }
-      // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
-      // But caching of readOnly (which 99% means 'archived') file content is useless, if not explicitly asked
-      boolean fileContentCouldChange = !fs.isReadOnly();
-      if (fileContentCouldChange || forceCacheContent) {
+      if (mayCacheContent && shouldCache(content.length)) {
         myInputLock.writeLock().lock();
         try {
-          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ !fileContentCouldChange);
+          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ fs.isReadOnly());
           setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
         }
         finally {
@@ -903,9 +899,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static boolean shouldCache(long len) {
     if (len > PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD) {
-      return false;
-    }
-    if (HeavyProcessLatch.INSTANCE.isRunning()) {
       return false;
     }
     return true;
