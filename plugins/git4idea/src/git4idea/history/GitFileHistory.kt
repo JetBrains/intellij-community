@@ -26,6 +26,7 @@ import git4idea.history.GitLogParser.GitLogOption
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.function.Consumer
 
@@ -86,6 +87,9 @@ class GitFileHistory internal constructor(private val project: Project,
       }
     }
   }
+
+  @TestOnly
+  internal fun getFilePath() = path
 
   @Throws(VcsException::class)
   private fun runGitLog(logParser: GitLogParser<GitLogFullRecord>,
