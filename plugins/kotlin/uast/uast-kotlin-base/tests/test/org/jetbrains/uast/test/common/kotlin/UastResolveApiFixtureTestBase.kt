@@ -616,6 +616,41 @@ interface UastResolveApiFixtureTestBase {
         TestCase.assertEquals("it", resolved.name)
     }
 
+    fun checkNullityOfResolvedLambdaParameter(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                class MyLiveData<T> {
+                  public void addSource(MyLiveData<S> source, Observer<? super S> onChanged) {}
+                  public void setValue(T value) {}
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                fun interface Observer<T> {
+                  fun onChanged(value: T)
+                }
+                
+                class Test {
+                  val myData = MyLiveData<List<Boolean>>()
+                  
+                  init {
+                    myData.addSource(getSources()) { data ->
+                      myData.value = da<caret>ta
+                    }
+                  }
+                  
+                  private fun getSources(): MyLiveData<List<Boolean>> = TODO()
+                }
+            """.trimIndent()
+        )
+        val ref = myFixture.file.findElementAt(myFixture.caretOffset).toUElement()?.getParentOfType<UReferenceExpression>()
+            .orFail("cant convert to UReferenceExpression")
+        val resolved = (ref.resolve() as? PsiParameter)
+            .orFail("cant resolve lambda parameter")
+        TestCase.assertFalse(resolved.annotations.any { it.isNullnessAnnotation })
+    }
+
     fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """
