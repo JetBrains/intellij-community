@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -273,14 +274,22 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
 
-    var document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return;
+    ReadAction.nonBlocking(() -> {
+        var document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null) return null;
 
-    if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
-      document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
-    }
+        if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+          document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
+        }
 
-    InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
+        return document;
+      })
+      .expireWith(getProject())
+      .submit(AppExecutorUtil.getAppExecutorService())
+      .onSuccess(document -> {
+        if (document == null) return;
+        InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
+      });
   }
 
   @Override
