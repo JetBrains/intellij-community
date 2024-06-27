@@ -68,7 +68,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
       waitFor(message = "No ${this::class.simpleName}[xpath=${data.xpath}] in ${data.parentSearchContext.contextAsString}",
               timeout = timeout ?: DEFAULT_FIND_TIMEOUT,
               interval = 1.seconds) {
-        kotlin.runCatching { findThisComponent(timeout) }.isFailure
+        !present()
       }
     }
 
