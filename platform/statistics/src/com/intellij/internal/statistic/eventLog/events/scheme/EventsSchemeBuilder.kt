@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events.scheme
 
+import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.UsageCollectors
@@ -105,6 +108,9 @@ object EventsSchemeBuilder {
         }
       }
     }
+
+    if (recorder != null) counterCollectors.add(getEventLogSystemCollector(recorder))
+
     result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
     val stateCollectors = ArrayList<FeatureUsageCollectorInfo>()
@@ -151,6 +157,18 @@ object EventsSchemeBuilder {
                                          PluginSchemeDescriptor(plugin.id), group.description, collector.fileName)
     }
     return result.values
+  }
+
+  /**
+   * Get the event log group for each recorder from the event log provider of the recorder.
+   * If PluginDescriptor of the event log provider isn't found, then use core plugin id.
+   */
+  private fun getEventLogSystemCollector(recorder: String): FeatureUsageCollectorInfo {
+    val eventLogProvider = getEventLogProvider(recorder)
+    val eventLogSystemCollector = eventLogProvider.getEventLogSystemCollector()
+    val eventLogProviderPlugin = PluginManager.getPluginByClass(eventLogProvider.javaClass)?.pluginId?.idString
+    return FeatureUsageCollectorInfo(eventLogSystemCollector, PluginSchemeDescriptor(eventLogProviderPlugin
+                                                                                     ?: PluginManagerCore.CORE_PLUGIN_ID))
   }
 
   private fun getEventDescription(events: List<BaseEventId>, eventName: String, groupId: String): String? {
