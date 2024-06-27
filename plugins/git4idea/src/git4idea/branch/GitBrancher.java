@@ -219,13 +219,10 @@ public interface GitBrancher {
   void merge(@NotNull GitReference reference,
              @NotNull DeleteOnMergeOption deleteOnMerge,
              @NotNull List<? extends @NotNull GitRepository> repositories,
-             @NotNull Boolean allowRollback);
+             boolean allowRollback);
 
   /**
-   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List, Boolean)}
-   * @param branchName
-   * @param deleteOnMerge
-   * @param repositories
+   * @deprecated use {@link #merge(GitReference, DeleteOnMergeOption, List)}
    */
   @Deprecated
   void merge(@NotNull String branchName,

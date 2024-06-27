@@ -205,7 +205,7 @@ class GitBrancherImpl implements GitBrancher {
   public void merge(@NotNull GitReference reference,
                     @NotNull DeleteOnMergeOption deleteOnMerge,
                     @NotNull List<? extends @NotNull GitRepository> repositories,
-                    @NotNull Boolean allowRollback) {
+                    boolean allowRollback) {
     new CommonBackgroundTask(myProject, GitBundle.message("branch.merging.process", reference.getName()), null) {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
