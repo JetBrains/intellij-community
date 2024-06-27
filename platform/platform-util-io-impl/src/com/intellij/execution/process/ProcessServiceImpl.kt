@@ -36,6 +36,7 @@ class ProcessServiceImpl : ProcessService {
       .setRedirectErrorStream(redirectErrorStream)
       .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
       .setUnixOpenTtyToPreserveOutputAfterTermination(unixOpenTtyToPreserveOutputAfterTermination)
+      .setSpawnProcessUsingJdkOnMacIntel(false)
     return builder.start()
   }
 
