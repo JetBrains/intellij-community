@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
@@ -17,6 +18,7 @@ import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
 import com.intellij.platform.ijent.community.buildConstants.IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY
 import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
@@ -132,12 +134,16 @@ class IjentWslNioFsVmOptionsSetter : ApplicationActivationListener {
     }
   }
 
+  @Service
+  private class ServiceScope(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope
+
   override fun applicationActivated(ideFrame: IdeFrame) {
-    val service = service<IjentWslNioFsToggler>()
-    service.coroutineScope.launch {
+    service<ServiceScope>().launch {
       val changedOptions = ensureInVmOptions()
       when {
-        changedOptions.isEmpty() -> Unit
+        changedOptions.isEmpty() -> {
+          IjentWslNioFsToggler.instanceAsync()  // Implicitly activates IJent FS for all WSL distributions.
+        }
 
         PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() ->
           launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
