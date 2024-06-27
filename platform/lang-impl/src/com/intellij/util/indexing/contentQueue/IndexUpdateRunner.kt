@@ -22,7 +22,6 @@ import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
-import com.intellij.util.indexing.contentQueue.dev.LegacyMultiThreadedIndexWriter
 import com.intellij.util.indexing.contentQueue.dev.TOTAL_WRITERS_NUMBER
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.IndexingRequestToken
@@ -97,10 +96,6 @@ class IndexUpdateRunner(
       projectDumbIndexingHistory.visibleTimeToAllThreadsTimeRatio = if (totalProcessingTimeInAllThreads == 0L
       ) 0.0
       else (visibleProcessingTime.toDouble()) / totalProcessingTimeInAllThreads
-
-      //TODO RC: why this is called so late? -- it means that some of the stats above are not correct, they don't account for
-      //         all the processing?
-      LegacyMultiThreadedIndexWriter.waitWritingThreadsToFinish()
     }
   }
 
@@ -114,7 +109,7 @@ class IndexUpdateRunner(
 
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
 
-    runConcurrently(project, fileSet) { fileIndexingRequest ->
+    processFileSetInParallel(project, fileSet) { fileIndexingRequest ->
       //blockingContext {
       val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingRequest.file)
       progressReporter.setLocationBeingIndexed(presentableLocation)
@@ -124,10 +119,10 @@ class IndexUpdateRunner(
     }
   }
 
-  private fun runConcurrently(
+  private fun processFileSetInParallel(
     project: Project,
     fileSet: FileSet,
-    task: suspend (FileIndexingRequest) -> Unit,
+    processRequestTask: suspend (FileIndexingRequest) -> Unit,
   ) {
     runBlockingCancellable {
 
@@ -141,9 +136,11 @@ class IndexUpdateRunner(
           while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
             delay(1)
           }
-          task(fileIndexingJob)
+          processRequestTask(fileIndexingJob)
         }
-
+        //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
+        //         index writing down the stack. But what if it is not?
+        IndexWriter.defaultParallelWriter().waitCurrentIndexingToFinish()
       }
     }
   }

@@ -7,6 +7,7 @@ import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.stubs.StubUpdatingIndex
@@ -113,6 +114,11 @@ abstract class IndexWriter {
 
     private val USE_COROUTINE: Boolean = getBooleanProperty("IndexWriter.USE_COROUTINES", false)
 
+    private val defaultParallelWriter: ParallelIndexWriter = if (USE_COROUTINE)
+      ApplyViaCoroutinesWriter()
+    else
+      LegacyMultiThreadedIndexWriter()
+
     @JvmStatic
     fun suitableWriter(applicationMode: ApplicationMode, forceWriteSynchronously: Boolean = false): IndexWriter {
       if (forceWriteSynchronously) {
@@ -123,18 +129,12 @@ abstract class IndexWriter {
       }
       return when (applicationMode) {
         ApplicationMode.SameThreadOutsideReadLock -> SameThreadIndexWriter
-        ApplicationMode.AnotherThread -> if (USE_COROUTINE)
-          ApplyViaCoroutinesWriter
-        else
-          LegacyMultiThreadedIndexWriter
+        ApplicationMode.AnotherThread -> defaultParallelWriter()
       }
     }
 
     @JvmStatic
-    fun defaultParallelWriter(): IndexWriter = if (USE_COROUTINE)
-      ApplyViaCoroutinesWriter
-    else
-      LegacyMultiThreadedIndexWriter
+    fun defaultParallelWriter(): ParallelIndexWriter = defaultParallelWriter
   }
 }
 
@@ -216,33 +216,43 @@ val AUX_WRITERS_NUMBER = if (WRITE_INDEXES_ON_SEPARATE_THREAD) 1 else 0
 /** Total number of index writing threads  */
 val TOTAL_WRITERS_NUMBER = BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER
 
-/**
- * @return worker index for indexId, in [0..TOTAL_WRITERS_NUMBER).
- * Allow partitioning indexes writing to different threads to avoid concurrency.
- * We may add aux executors if necessary
- */
-private fun writerIndexFor(indexId: IndexId<*, *>): Int {
-  if (indexId === IdIndex.NAME) {
-    return 0
+
+abstract class ParallelIndexWriter : IndexWriter() {
+
+  protected val workersCount = TOTAL_WRITERS_NUMBER
+
+  /**
+   * @return worker index for indexId, in [0..workersCount).
+   * Allow partitioning indexes writing to different threads to avoid concurrency.
+   * We may add aux executors if necessary
+   */
+  protected fun workerIndexFor(indexId: IndexId<*, *>): Int {
+    if (indexId === IdIndex.NAME) {
+      return 0
+    }
+    else if (indexId === StubUpdatingIndex.INDEX_ID) {
+      return 1
+    }
+    else if (indexId === TrigramIndex.INDEX_ID) {
+      return 2
+    }
+    return if (AUX_WRITERS_NUMBER == 1)
+      BASE_WRITERS_NUMBER
+    else
+      BASE_WRITERS_NUMBER + abs(indexId.name.hashCode()) % AUX_WRITERS_NUMBER
   }
-  else if (indexId === StubUpdatingIndex.INDEX_ID) {
-    return 1
-  }
-  else if (indexId === TrigramIndex.INDEX_ID) {
-    return 2
-  }
-  return if (AUX_WRITERS_NUMBER == 1)
-    BASE_WRITERS_NUMBER
-  else
-    BASE_WRITERS_NUMBER + abs(indexId.name.hashCode()) % AUX_WRITERS_NUMBER
+
+  /** Waiting till index writing workers finish their current jobs */
+  abstract fun waitCurrentIndexingToFinish()
 }
+
 
 /**
  * Distribute the writing to N+1 threads (single-threaded
  * [com.intellij.execution.Executor]s, really), for the N heaviest indexes, +1 for all other indexes combined.
  */
 @Internal
-object LegacyMultiThreadedIndexWriter : IndexWriter() {
+class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
   private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
 
 
@@ -265,24 +275,22 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
   private var writers: List<ExecutorService>
 
   init {
-    val pool = ArrayList<ExecutorService>(workersCount())
-    pool.addAll(listOf(
+    val pool = mutableListOf(
       createExecutorForIndexWriting("IdIndex Writer"),
       createExecutorForIndexWriting("Stubs Writer"),
       createExecutorForIndexWriting("Trigram Writer")
     )
-    );
     repeat(AUX_WRITERS_NUMBER) { writerNo ->
       pool.add(createExecutorForIndexWriting("Aux Index Writer #${writerNo + 1}"));
     }
 
-    writers = Collections.unmodifiableList(pool);
+    writers = pool
   }
 
   /* ================= monitoring fields ======================================================== */
 
   /** Total time (nanoseconds) spent on index writing, since app start, per worker  */
-  private val totalTimeSpentOnIndexWritingNs: Array<AtomicLong> = Array(workersCount()) {
+  private val totalTimeSpentOnIndexWritingNs: Array<AtomicLong> = Array(workersCount) {
     AtomicLong()
   }
 
@@ -299,20 +307,20 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
   override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
     val startedAtNs = System.nanoTime()
 
-    val workersToSchedule = BitSet(workersCount())
+    val workersToSchedule = BitSet(workersCount)
 
     for (applier in fileIndexingResult.appliers()) {
-      workersToSchedule.set(writerIndexFor(applier.indexId))
+      workersToSchedule.set(workerIndexFor(applier.indexId))
     }
 
     for (remover in fileIndexingResult.removers()) {
-      workersToSchedule.set(writerIndexFor(remover.indexId))
+      workersToSchedule.set(workerIndexFor(remover.indexId))
     }
 
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
     // Schedule appliers to dedicated executors
     val updatesLeftCounter = AtomicInteger(workersToSchedule.cardinality())
-    for (executorIndex in 0 until workersCount()) {
+    for (executorIndex in 0 until workersCount) {
       if (workersToSchedule[executorIndex]) {
         //Schedule applyModifications() on all the writers that are applicable. Inside the method each
         // SingleIndexValueApplier inside decides for itself on which writer it is ready to run.
@@ -334,7 +342,7 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
     var allModificationsSuccessful = true
     try {
       for (applier in fileIndexingResult.appliers()) {
-        if (executorIndex == writerIndexFor(applier.indexId)) {
+        if (executorIndex == workerIndexFor(applier.indexId)) {
           val applied = applier.apply()
           allModificationsSuccessful = allModificationsSuccessful && applied
           if (!applied) {
@@ -344,7 +352,7 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
       }
 
       for (remover in fileIndexingResult.removers()) {
-        if (executorIndex == writerIndexFor(remover.indexId)) {
+        if (executorIndex == workerIndexFor(remover.indexId)) {
           val removed = remover.remove()
           allModificationsSuccessful = allModificationsSuccessful && removed
           if (!removed) {
@@ -444,7 +452,7 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
    *
    * @see .WRITERS_SHUTDOWN_WAITING_TIME_MS
    */
-  fun waitWritingThreadsToFinish() {
+  override fun waitCurrentIndexingToFinish() {
     if (writers.isEmpty()) {
       return
     }
@@ -493,12 +501,10 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
     return (System.nanoTime() - sleepStart)
   }
 
-  private fun workersCount() = TOTAL_WRITERS_NUMBER
-
   //======================== metrics accessors: ==================================================
 
   override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
-    for (workerNo in 0..<workersCount()) {
+    for (workerNo in 0..<workersCount) {
       val timeSpentByWorker = unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
       callback(workerNo, timeSpentByWorker)
     }
@@ -511,7 +517,7 @@ object LegacyMultiThreadedIndexWriter : IndexWriter() {
 
 @OptIn(DelicateCoroutinesApi::class)
 @Internal
-object ApplyViaCoroutinesWriter : IndexWriter() {
+class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
   private val LOG = Logger.getInstance(ApplyViaCoroutinesWriter::class.java)
 
   //TODO RC: limit total number of tasks across all coroutines?
@@ -526,12 +532,12 @@ object ApplyViaCoroutinesWriter : IndexWriter() {
   //         indexes, that are applicable to a subset of all the file only. Which means that if any of heavy-weight
   //         indexes' channel is overloaded (and those channels are the channels most likely to be overloaded) then
   //         almost every file indexing will be suspended because of attempt to send to one of those channels
-  private val channels: Array<Channel<() -> Unit>> = Array(workersCount()) {
+  private val channels: Array<Channel<() -> Unit>> = Array(workersCount) {
     Channel(1024)
   }
 
   /** Total time (nanoseconds) spent on index writing, since app start, per worker  */
-  private val totalTimeSpentOnIndexWritingNs: Array<AtomicLong> = Array(workersCount()) {
+  private val totalTimeSpentOnIndexWritingNs: Array<AtomicLong> = Array(workersCount) {
     AtomicLong()
   }
 
@@ -564,7 +570,7 @@ object ApplyViaCoroutinesWriter : IndexWriter() {
   override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
     val startedAtNs = System.nanoTime()
 
-    val workersToSchedule = BitSet(workersCount())
+    val workersToSchedule = BitSet(workersCount)
     for (applier in fileIndexingResult.appliers()) {
       workersToSchedule.set(workerIndexFor(applier.indexId))
     }
@@ -575,7 +581,7 @@ object ApplyViaCoroutinesWriter : IndexWriter() {
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
     // Schedule appliers to dedicated coroutines:
     val updatesLeftCounter = AtomicInteger(workersToSchedule.cardinality())
-    for (workerIndex in 0 until workersCount()) {
+    for (workerIndex in 0 until workersCount) {
       if (workersToSchedule[workerIndex]) {
         //Schedule applyModifications() on all the writers that are applicable. Inside the method each
         // SingleIndexValueApplier/Remover decides for itself on which writer it is ready to run.
@@ -587,7 +593,7 @@ object ApplyViaCoroutinesWriter : IndexWriter() {
   }
 
   override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
-    for (workerNo in 0..<workersCount()) {
+    for (workerNo in 0..<workersCount) {
       val timeSpentByWorker = unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
       callback(workerNo, timeSpentByWorker)
     }
@@ -661,10 +667,16 @@ object ApplyViaCoroutinesWriter : IndexWriter() {
     }
   }
 
-  private fun workersCount() = TOTAL_WRITERS_NUMBER
-
-  private fun workerIndexFor(indexId: IndexId<*, *>): Int = writerIndexFor(indexId)
-
+  override fun waitCurrentIndexingToFinish() {
+    //send fake (empty) tasks to all the workers, and wait for them to complete the task
+    runBlockingCancellable {
+      (0..<workersCount).map { workerIndex ->
+        val deferred = CompletableDeferred<Int>(null)
+        channels[workerIndex].send { deferred.complete(workerIndex) }
+        deferred
+      }.awaitAll()
+    }
+  }
 }
 
 
