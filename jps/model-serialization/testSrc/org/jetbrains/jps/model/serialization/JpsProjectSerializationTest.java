@@ -252,15 +252,21 @@ public class JpsProjectSerializationTest {
 
   @Test
   public void testMissingImlFile() {
-    JpsProjectData projectData = loadProject("jps/model-serialization/testData/missingImlFile/missingImlFile.ipr");
-    UsefulTestCase.assertEmpty(projectData.getProject().getModules());
+    loadProject("jps/model-serialization/testData/missingImlFile/missingImlFile.ipr");
   }
 
   @Test
   public void testMissingContentUrlAttribute() {
-    JpsProjectData projectData = loadProject("jps/model-serialization/testData/missingContentUrlAttribute/missingContentUrlAttribute.ipr");
-    JpsModule module = assertOneElement(projectData.getProject().getModules());
-    assertEquals("missingContentUrlAttribute", module.getName());
+    try {
+      JpsProjectData projectData = loadProject("jps/model-serialization/testData/missingContentUrlAttribute/missingContentUrlAttribute.ipr");
+      //the current implementation silently skips missing modules 
+      JpsModule module = assertOneElement(projectData.getProject().getModules());
+      assertEquals("missingContentUrlAttribute", module.getName());
+    }
+    catch (CannotLoadJpsModelException e) {
+      //the new implementation throws an exception
+      assertEquals("missingContentUrlAttribute.iml", e.getFile().getName());
+    }
   }
 
   @Test
