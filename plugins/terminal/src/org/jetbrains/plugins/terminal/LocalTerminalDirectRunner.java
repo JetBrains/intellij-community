@@ -7,6 +7,7 @@ import com.intellij.execution.process.LocalPtyOptions;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +36,7 @@ import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.block.TerminalUsageLocalStorage;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration;
 import org.jetbrains.plugins.terminal.util.ShellIntegration;
@@ -239,6 +241,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     var shellIntegration = options.getShellIntegration();
     boolean isBlockTerminal = isBlockTerminalEnabled() && shellIntegration != null && shellIntegration.getCommandBlockIntegration() != null;
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
+
+    if (isBlockTerminal) {
+      String curVersionString = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCodeAndSnapshot();
+      TerminalUsageLocalStorage.getInstance().getState().setBlockTerminalUsedLastVersion(curVersionString);
+    }
 
     try {
       long startNano = System.nanoTime();
