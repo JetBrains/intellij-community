@@ -2,6 +2,7 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions
@@ -10,20 +11,19 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.settingsSync.config.EDITOR_FONT_SUBCATEGORY_ID
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
 internal fun isSyncCategoryEnabled(fileSpec: String): Boolean {
   val rawFileSpec = removeOsPrefix(fileSpec)
   if (rawFileSpec == SettingsSyncSettings.FILE_SPEC)
     return true
 
-  val category = getSchemeCategory(rawFileSpec) ?: getCategory(rawFileSpec) ?: return false
+  val (category, subCategory) = getSchemeCategory(rawFileSpec) ?: getCategory(rawFileSpec) ?: return false
 
   if (category != SettingsCategory.OTHER && SettingsSyncSettings.getInstance().isCategoryEnabled(category)) {
-    val subCategory = getSubCategory(fileSpec)
     if (subCategory != null) {
       return SettingsSyncSettings.getInstance().isSubcategoryEnabled(category, subCategory)
     }
+
     return true
   }
   return false
@@ -34,26 +34,22 @@ private fun removeOsPrefix(fileSpec: String): String {
   return if (fileSpec.startsWith(osPrefix)) StringUtil.trimStart(fileSpec, osPrefix) else fileSpec
 }
 
-private fun getCategory(componentClasses: List<Class<PersistentStateComponent<Any>>>): SettingsCategory {
-  when {
-    componentClasses.isEmpty() -> return SettingsCategory.OTHER
-    componentClasses.size == 1 -> return ComponentCategorizer.getCategory(componentClasses[0])
-    else -> {
-      componentClasses.forEach {
-        val category = ComponentCategorizer.getCategory(it)
-        if (category != SettingsCategory.OTHER) {
-          // Once found, ignore any other possibly conflicting definitions
-          return category
-        }
-      }
-      return SettingsCategory.OTHER
+private fun getCategory(fileName: String, componentClasses: List<Class<PersistentStateComponent<Any>>>): Pair<SettingsCategory, String?> {
+  componentClasses.forEach {
+    val category = ComponentCategorizer.getCategory(it)
+
+    if (category != SettingsCategory.OTHER) {
+      // Once found, ignore any other possibly conflicting definitions
+      return (category to getSubCategory(fileName, category, it))
     }
   }
+
+  return SettingsCategory.OTHER to null
 }
 
-private val categoryCache: ConcurrentMap<String, SettingsCategory> = ConcurrentHashMap()
+private val categoryCache: ConcurrentHashMap<String, Pair<SettingsCategory, String?>> = ConcurrentHashMap()
 
-fun getCategory(fileName: String): SettingsCategory? {
+fun getCategory(fileName: String): Pair<SettingsCategory, String?>? {
   categoryCache[fileName]?.let { cachedCategory ->
     return cachedCategory
   }
@@ -64,14 +60,14 @@ fun getCategory(fileName: String): SettingsCategory? {
     return null
   }
 
-  val category = getSchemeCategory(fileName) ?: getCategory(componentClasses)
+  val category = getSchemeCategory(fileName) ?: getCategory(fileName, componentClasses)
 
   categoryCache[fileName] = category
 
   return category
 }
 
-private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
+private fun getSchemeCategory(fileSpec: String): Pair<SettingsCategory, String?>? {
   // fileSpec is e.g. keymaps/mykeymap.xml
   val separatorIndex = fileSpec.indexOf("/")
   val directoryName = if (separatorIndex >= 0) fileSpec.substring(0, separatorIndex) else fileSpec  // e.g. 'keymaps'
@@ -82,18 +78,30 @@ private fun getSchemeCategory(fileSpec: String): SettingsCategory? {
       settingsCategory = it.getSettingsCategory()
     }
   }
-  return settingsCategory
-}
 
-fun getFileSpec(path: String): String {
-  return removeOsPrefix(path)
-}
-
-private fun getSubCategory(fileSpec: String): String? {
-  if (fileSpec == AppEditorFontOptions.STORAGE_NAME)
-    return EDITOR_FONT_SUBCATEGORY_ID
-  else
+  if (settingsCategory == null) {
     return null
+  }
+
+  return settingsCategory!! to null
+}
+
+private fun getSubCategory(fileSpec: String, category: SettingsCategory, componentClass: Class<PersistentStateComponent<Any>>): String? {
+  // NOTE: we do not cache the subcategory here, as it's cached in the `categoryCache`
+  val subcategory = when (category) {
+    SettingsCategory.UI ->
+      if (fileSpec == AppEditorFontOptions.STORAGE_NAME) EDITOR_FONT_SUBCATEGORY_ID else null
+    SettingsCategory.PLUGINS -> {
+      val plugin = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(componentClass.name)
+
+      // NOTE: this has to match `com/intellij/settingsSync/config/SyncPluginsGroup.kt:21`
+      return plugin?.pluginId?.idString
+    }
+    else ->
+      null
+  }
+
+  return subcategory
 }
 
 private fun findComponentClasses(fileSpec: String): List<Class<PersistentStateComponent<Any>>> {

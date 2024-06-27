@@ -77,6 +77,10 @@ class SettingsSyncBridge(
   internal fun initialize(initMode: InitMode) {
     coroutineScope.launch {
       try {
+        // Always explicitly flush settings – if this is not done before sending sync events, then remotely synced settings
+        // might not contain the most up–to–date settings state (e.g. sync settings will be stale).
+        saveIdeSettings()
+
         settingsLog.initialize()
 
         // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
@@ -109,10 +113,8 @@ class SettingsSyncBridge(
     }
   }
 
-  private fun saveIdeSettings() {
-    runBlockingCancellable {
-      saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
-    }
+  private suspend fun saveIdeSettings() {
+    saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
   }
 
   private suspend fun applyInitialChanges(initMode: InitMode) {
