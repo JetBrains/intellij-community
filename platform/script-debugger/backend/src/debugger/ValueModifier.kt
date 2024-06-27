@@ -15,9 +15,11 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.Value
 
+@ApiStatus.Internal
 interface ValueModifier {
   // expression can contains reference to another variables in current scope, so, we should evaluate it before set
   // https://youtrack.jetbrains.com/issue/WEB-2342#comment=27-512122

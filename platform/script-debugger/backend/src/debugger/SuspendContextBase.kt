@@ -15,6 +15,9 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 abstract class SuspendContextBase<F : CallFrame> : SuspendContext<F> {
 
   override var methodReturnValue: Variable? = null

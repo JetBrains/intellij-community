@@ -15,6 +15,9 @@
  */
 package org.jetbrains.debugger.values
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 interface ArrayValue : ObjectValue {
   /**
    * Be aware - it is not equals to java array length.

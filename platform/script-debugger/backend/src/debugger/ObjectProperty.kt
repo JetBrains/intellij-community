@@ -15,12 +15,14 @@
  */
 package org.jetbrains.debugger
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.values.FunctionValue
 
 /**
  * Exposes additional data if variable is a property of object and its property descriptor
  * is available.
  */
+@ApiStatus.Internal
 interface ObjectProperty : Variable {
   val isWritable: Boolean
 

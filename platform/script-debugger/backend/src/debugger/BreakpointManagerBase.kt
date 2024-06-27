@@ -2,10 +2,12 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.nullPromise
 import org.jetbrains.concurrency.resolvedPromise
 
+@ApiStatus.Internal
 class DummyBreakpointManager : BreakpointManager {
   override val breakpoints: Iterable<Breakpoint>
     get() = emptyList()

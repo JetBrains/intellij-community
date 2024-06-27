@@ -16,7 +16,9 @@
 package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class VmBase(override val debugListener: DebugEventListener) : Vm, AttachStateManager, UserDataHolderBase() {
   override val evaluateContext: EvaluateContext? by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
 

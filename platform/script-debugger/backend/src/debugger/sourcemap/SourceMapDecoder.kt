@@ -26,6 +26,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
 import com.intellij.util.UriUtil
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.sourcemap.Base64VLQ.CharIterator
 import org.jetbrains.io.JsonReaderEx
 import java.io.IOException
@@ -34,6 +35,7 @@ import java.nio.file.Path
 
 internal const val UNMAPPED = -1
 
+@ApiStatus.Internal
 fun decodeSourceMapFromFile(file: Path,
                             trimFileScheme: Boolean,
                             baseUrl: Url?,
@@ -48,7 +50,7 @@ fun decodeSourceMapSafely(sourceMapData: CharSequence,
   return decodeSourceMap(sourceMapData) { sourceUrls -> SourceResolver(sourceUrls, trimFileScheme, baseUrl, baseUrlIsFile) }
 }
 
-fun parseMapSafely(sourceMapData: CharSequence, mapDebugName: String?): SourceMapDataImpl? {
+internal fun parseMapSafely(sourceMapData: CharSequence, mapDebugName: String?): SourceMapDataImpl? {
   try {
     if (sourceMapData.isEmpty()) {
       throw IOException("source map contents cannot be empty")
@@ -69,6 +71,7 @@ fun parseMapSafely(sourceMapData: CharSequence, mapDebugName: String?): SourceMa
 }
 
 // https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
+@ApiStatus.Internal
 fun decodeSourceMap(sourceMapData: CharSequence, sourceResolverFactory: (sourceUrls: List<String>) -> SourceResolver): SourceMap? {
   val data = SourceMapDataCache.getOrCreate(sourceMapData.toString()) ?: return null
   return OneLevelSourceMap(data, sourceResolverFactory(data.sourceMapData.sources))
@@ -322,7 +325,7 @@ private fun isSeparator(charIterator: CharSequenceIterator): Boolean {
   return current == ',' || current == ';'
 }
 
-interface MutableEntry : MappingEntry {
+internal interface MutableEntry : MappingEntry {
   override var nextGenerated: MappingEntry?
 }
 

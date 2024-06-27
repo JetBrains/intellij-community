@@ -16,12 +16,14 @@
 package org.jetbrains.debugger;
 
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.debugger.values.Value;
 
 /**
  * A JavaScript exception data holder for exceptions reported by a JavaScript
  * virtual machine.
  */
+@ApiStatus.Internal
 public interface ExceptionData {
   /**
    * @return the thrown exception value

@@ -2,9 +2,11 @@
 package org.jetbrains.debugger
 
 import com.intellij.util.BitUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.debugger.values.FunctionValue
 import org.jetbrains.debugger.values.Value
 
+@ApiStatus.Internal
 class ObjectPropertyImpl(name: String,
                          value: Value?,
                          override val getter: FunctionValue? = null,
