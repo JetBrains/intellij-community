@@ -18,6 +18,7 @@ import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.injected.editor.EditorWindow;
@@ -115,6 +116,9 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     }
     if (command instanceof ModCopyToClipboard copyToClipboard) {
       return executeCopyToClipboard(copyToClipboard);
+    }
+    if (command instanceof ModOpenUrl openUrl) {
+      return executeOpenUrl(project, openUrl);
     }
     if (command instanceof ModNothing) {
       return true;
@@ -315,6 +319,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
   private static boolean executeCopyToClipboard(@NotNull ModCopyToClipboard clipboard) {
     CopyPasteManager.getInstance().setContents(new StringSelection(clipboard.content()));
+    return true;
+  }
+
+  private static boolean executeOpenUrl(@NotNull Project project, @NotNull ModOpenUrl openUrl) {
+    BrowserUtil.browse(openUrl.url(), project);
     return true;
   }
 

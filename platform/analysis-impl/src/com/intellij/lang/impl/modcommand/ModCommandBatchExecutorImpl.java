@@ -107,7 +107,7 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModStartRename ||
         command instanceof ModStartTemplate || command instanceof ModUpdateSystemOptions ||
-        command instanceof ModUpdateReferences) {
+        command instanceof ModUpdateReferences || command instanceof ModOpenUrl) {
       return Result.INTERACTIVE;
     }
     if (command instanceof ModShowConflicts) {
@@ -290,8 +290,12 @@ public class ModCommandBatchExecutorImpl implements ModCommandExecutor {
         }
       }
       else if (command instanceof ModCopyToClipboard copy) {
-        navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
+        navigateInfo = new IntentionPreviewInfo.Html(text(
           AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
+      }
+      else if (command instanceof ModOpenUrl openUrl) {
+        navigateInfo = new IntentionPreviewInfo.Html(text(
+          AnalysisBundle.message("preview.open.url", StringUtil.shortenTextWithEllipsis(openUrl.url(), 50, 10))));
       }
       else if (command instanceof ModUpdateSystemOptions options) {
         HtmlChunk preview = createOptionsPreview(context, options);

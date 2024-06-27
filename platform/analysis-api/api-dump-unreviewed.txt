@@ -2591,6 +2591,7 @@ com.intellij.modcommand.ModCommand
 - *s:moveCaretAfter(com.intellij.modcommand.ModCommand,com.intellij.psi.PsiFile,I,Z):com.intellij.modcommand.ModCommand
 - s:moveTo(com.intellij.psi.PsiElement):com.intellij.modcommand.ModCommand
 - s:nop():com.intellij.modcommand.ModCommand
+- s:openUrl(java.lang.String):com.intellij.modcommand.ModCommand
 - s:psiBasedStep(com.intellij.psi.PsiElement,java.lang.String,java.util.function.Function,java.util.function.Function):com.intellij.modcommand.ModCommandAction
 - s:psiUpdate(com.intellij.modcommand.ActionContext,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - s:psiUpdate(com.intellij.psi.PsiElement,java.util.function.BiConsumer):com.intellij.modcommand.ModCommand
@@ -2764,6 +2765,13 @@ f:com.intellij.modcommand.ModNothing
 - f:hashCode():I
 - isEmpty():Z
 - unpack():java.util.List
+f:com.intellij.modcommand.ModOpenUrl
+- java.lang.Record
+- com.intellij.modcommand.ModCommand
+- <init>(java.lang.String):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- url():java.lang.String
 *:com.intellij.modcommand.ModPsiNavigator
 - a:getCaretOffset():I
 - a:moveCaretTo(I):V
