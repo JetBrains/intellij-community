@@ -59,6 +59,9 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
       val subModule = item.requireDescriptor()
       modules.add(subModule)
       moduleMap.put(item.name, subModule)
+      for (pluginAlias in subModule.pluginAliases) {
+        moduleMap.put(pluginAlias.idString, subModule)
+      }
     }
   }
 
@@ -183,7 +186,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
   for (dependency in rootDescriptor.pluginDependencies) {
     // check for missing optional dependency
     val dep = idMap.get(dependency.pluginId.idString) ?: continue
-    if (dep.pluginId != PluginManagerCore.CORE_ID) {
+    if (dep.pluginId != PluginManagerCore.CORE_ID || dep.moduleName != null) {
       // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
       // can be such requirements removed or not
       if (rootDescriptor === dep) {
