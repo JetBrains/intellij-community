@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.platform.workspace.jps.bridge.impl.JpsProjectBridge
 import com.intellij.platform.workspace.jps.bridge.impl.JpsUrlListBridge
 import com.intellij.platform.workspace.jps.bridge.impl.java.JpsJavaModuleExtensionBridge
+import com.intellij.platform.workspace.jps.bridge.impl.java.JpsTestModulePropertiesBridge
 import com.intellij.platform.workspace.jps.bridge.impl.reportModificationAttempt
 import com.intellij.platform.workspace.jps.entities.*
 import org.jetbrains.jps.model.*
@@ -49,10 +50,13 @@ internal class JpsModuleBridge(private val project: JpsProjectBridge,
     //todo store content of custom components from *.iml file in workspace model and use them here (it's also needed for IJPL-16008)
     getSerializer(entity.type?.name).loadProperties(null)
   }
-  val javaModuleExtension by lazy(LazyThreadSafetyMode.PUBLICATION) {
+  val javaModuleExtension: JpsJavaModuleExtensionBridge? by lazy(LazyThreadSafetyMode.PUBLICATION) {
     entity.javaSettings?.let { JpsJavaModuleExtensionBridge(it, this) }
   }
-    
+  val testModuleProperties: JpsTestModuleProperties? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    entity.testProperties?.let { JpsTestModulePropertiesBridge(it, this) }
+  }
+
   override fun getContentRootsList(): JpsUrlList = contentRoots
 
   override fun getExcludeRootsList(): JpsUrlList = excludeRoots

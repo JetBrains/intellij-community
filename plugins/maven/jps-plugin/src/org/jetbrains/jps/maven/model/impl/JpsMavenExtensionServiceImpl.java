@@ -15,8 +15,10 @@ import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.maven.model.JpsMavenModuleExtension;
 import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
+import org.jetbrains.jps.model.java.impl.JpsJavaAwareProject;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 
@@ -69,6 +71,10 @@ public final class JpsMavenExtensionServiceImpl extends JpsMavenExtensionService
 
   @Override
   public boolean isProductionOnTestDependency(@NotNull JpsDependencyElement dependency) {
+    JpsProject project = dependency.getContainingModule().getProject();
+    if (project instanceof JpsJavaAwareProject) {
+      return ((JpsJavaAwareProject)project).isProductionOnTestDependency(dependency);
+    }
     JpsSimpleElement<Boolean> child = dependency.getContainer().getChild(PRODUCTION_ON_TEST_ROLE);
     return child != null && child.getData();
   }

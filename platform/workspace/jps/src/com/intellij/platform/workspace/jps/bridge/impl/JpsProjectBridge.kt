@@ -62,6 +62,14 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
     }
   }
 
+  override fun getTestModuleProperties(module: JpsModule): JpsTestModuleProperties? {
+    return (module as? JpsModuleBridge)?.testModuleProperties
+  }
+
+  override fun isProductionOnTestDependency(element: JpsDependencyElement): Boolean {
+    return element is JpsModuleDependencyBridge && element.productionOnTest
+  }
+
   override fun <P : JpsElement?, ModuleType> addModule(name: String, moduleType: ModuleType & Any): JpsModule where ModuleType : JpsModuleType<P>?, ModuleType : JpsElementTypeWithDefaultProperties<P>? {
     reportModificationAttempt()
   }

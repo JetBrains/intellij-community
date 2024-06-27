@@ -35,6 +35,8 @@ internal class JpsModuleDependencyBridge(private val dependency: ModuleDependenc
   val javaExtension by lazy(LazyThreadSafetyMode.PUBLICATION) {
     JpsJavaDependencyExtensionBridge(dependency.exported, dependency.scope, this)
   }
+  val productionOnTest: Boolean
+    get() = dependency.productionOnTest
     
   override fun getModuleReference(): JpsModuleReference = moduleReference
 
