@@ -26,7 +26,7 @@ interface GitLabDiscussion {
   val canAddDraftNotes: Boolean
 
   val canResolve: Boolean
-  val canAddNotes: Flow<Boolean>
+  val canAddNotes: StateFlow<Boolean>
   val resolved: StateFlow<Boolean>
 
   suspend fun changeResolvedState()
@@ -109,7 +109,9 @@ class LoadedGitLabDiscussion(
         notes + draftNotes
       }.stateInNow(cs, emptyList())
 
-  override val canAddNotes: Flow<Boolean> = draftNotes.map { it.isEmpty() && mr.details.value.userPermissions.createNote }
+  override val canAddNotes: StateFlow<Boolean> = draftNotes
+    .map { it.isEmpty() && mr.details.value.userPermissions.createNote }
+    .stateIn(cs, SharingStarted.Lazily, false)
   override val canAddDraftNotes: Boolean =
     mr.details.value.userPermissions.createNote &&
     (glMetadata?.let { GitLabVersion(16, 3) <= it.version } ?: false)
