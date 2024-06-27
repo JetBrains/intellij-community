@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -35,10 +36,15 @@ internal fun isTaskNameCandidate(element: PsiElement): Boolean =
         ?.parent is KtCallExpression
 
 internal fun findTaskNameAround(element: PsiElement): String? {
+    return findTaskNameInSurroundingCallExpression(element)
+        ?: findTaskNameInSurroundingProperty(element)
+}
+
+private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String? {
     val callExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
     return analyze(callExpression) {
-        val resolveCall = callExpression.resolveToCall() ?: return null
-        val functionCall = resolveCall.singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callExpression.resolveToCall() ?: return null
+        val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
         if (!doesCustomizeTask(functionCall)) return null
         val nameArgument = functionCall.argumentMapping
             .filter { it.value.name.identifier == "name" }
@@ -46,6 +52,21 @@ internal fun findTaskNameAround(element: PsiElement): String? {
         val taskName = nameArgument
             .evaluate()
             ?.value.safeAs<String>()
+        taskName
+    }
+}
+
+private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
+    // A property element could contain e.g., `val taskName by tasks.registering{}` or `val taskName by tasks.creating{}`
+    val property = element.getParentOfType<KtProperty>(false, KtScriptInitializer::class.java) ?: return null
+    // `tasks.registering{}` would be a delegateExpression for the example above
+    val delegateExpression = property.delegateExpression ?: return null
+    val callExpression = delegateExpression.getPossiblyQualifiedCallExpression() ?: return null
+    return analyze(callExpression) {
+        val resolvedCall = callExpression.resolveToCall() ?: return null
+        val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
+        if (!doesCustomizeTask(functionCall)) return null
+        val taskName = property.symbol.name.identifier
         taskName
     }
 }
@@ -66,11 +87,9 @@ private fun getReceiverClassFqName(functionCall: KaFunctionCall<*>): FqName? {
     return type?.symbol?.classId?.asSingleFqName()
 }
 
-
 private fun isMethodOfTaskContainer(methodName: String, fqClassName: FqName) =
     fqClassName == FqName(GRADLE_API_TASK_CONTAINER)
-            && (methodName == "register" || methodName == "create" || methodName == "named")
-
+            && methodName in setOf("register", "create", "named", "registering", "creating")
 
 private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
     (methodName == "task") && (fqClassName == FqName(GRADLE_API_PROJECT)

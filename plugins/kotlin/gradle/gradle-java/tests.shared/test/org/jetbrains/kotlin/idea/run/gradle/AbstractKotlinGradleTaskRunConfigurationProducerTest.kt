@@ -19,15 +19,21 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
 
     @ParameterizedTest
     @AllGradleVersionsSource("""
+        taskName : 'task("taskName") {}',
+        taskName : 'project.task("taskName") {}',
+        
         taskName : 'project.tasks.register("taskName") {}',
         taskName : 'tasks.register("taskName") {}',
         taskName : 'tasks.register<Task>("taskName") {}',
         taskName : 'getTasks().register("taskName") {}',
-        taskName : 'project.task("taskName") {}',
-        taskName : 'task("taskName") {}',
         taskName : 'tasks.create("taskName") {}',
         taskName : 'tasks.create<Task>("taskName") {}',
-        help     : 'tasks.named("help") {}'
+        help     : 'tasks.named("help") {}',
+        
+        taskName : 'val taskName by tasks.registering {}',
+        taskName : 'val taskName by tasks.registering(Task::class) {}',
+        taskName : 'var taskName by tasks.creating {}',
+        taskName : 'var taskName by tasks.creating(Task::class) {}'
     """)
     fun testTaskHasConfiguration(gradleVersion: GradleVersion, taskName: String, taskDefinition: String) {
         assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
@@ -35,7 +41,7 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
             writeTextAndCommit("build.gradle.kts", taskDefinition)
             runReadActionAndWait {
                 val buildFile = getFile("build.gradle.kts")
-                val configurationFromContext = getConfiguration(buildFile, project, "\"$taskName\"")
+                val configurationFromContext = getConfiguration(buildFile, project, taskName)
                 val taskConfiguration = assertInstanceOf<GradleRunConfiguration>(configurationFromContext.configuration)
                 assertEquals(listOf(taskName), taskConfiguration.settings.taskNames)
                 assertEquals("${project.name} [$taskName]", taskConfiguration.name)
