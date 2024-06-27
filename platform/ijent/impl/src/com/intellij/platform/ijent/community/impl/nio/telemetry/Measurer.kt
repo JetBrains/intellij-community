@@ -23,7 +23,7 @@ internal val eventsCounterMeter = ijentMeter.counterBuilder("ijent.events.count"
 }
 
 // TODO: probably should avoid initialization of ~ 30 histograms each with ~ 10K elements in production (use special flag?)
-private val histograms: Map<Measurer.Operation, LongHistogram> = Measurer.Operation.entries.associate { it to initHistogram(it) }
+private lateinit var histograms: Map<Measurer.Operation, LongHistogram>
 
 
 /**
@@ -52,13 +52,17 @@ private fun generateHistogramBucketsBoundaries(): List<Double> {
     .map { it.toDouble() }
 }
 
-private fun initHistogram(operation: Measurer.Operation): LongHistogram = ijentMeter.histogramBuilder("ijent.${operation.name}")
+internal fun initHistogram(operation: Measurer.Operation): LongHistogram = ijentMeter.histogramBuilder("ijent.${operation.name}")
   .setExplicitBucketBoundariesAdvice(generateHistogramBucketsBoundaries())
   .setUnit("ns")
   .ofLongs()
   .build()
 
 object Measurer {
+  init {
+    reInitTelemetryHistograms()
+  }
+
   enum class Operation {
     directoryStreamClose,
     directoryStreamIteratorNext,
@@ -90,6 +94,10 @@ object Measurer {
     seekableByteChannelTruncate,
     seekableByteChannelWrite,
     supportedFileAttributeViews;
+  }
+
+  fun reInitTelemetryHistograms() {
+    histograms = Measurer.Operation.entries.associate { it to initHistogram(it) }
   }
 }
 
