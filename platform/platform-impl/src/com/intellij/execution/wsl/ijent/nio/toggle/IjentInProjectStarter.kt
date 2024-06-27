@@ -17,9 +17,13 @@ import kotlinx.coroutines.launch
 /** Starts the IJent if a project on WSL is opened. */
 internal class IjentInProjectStarter : ProjectActivity {
   override suspend fun execute(project: Project): Unit = coroutineScope {
-    val service = serviceAsync<IjentWslNioFsToggler>()
-    if (!service.isInitialized) {
+    val ijentWslNioFsToggler = IjentWslNioFsToggler.instanceAsync()
+    if (!ijentWslNioFsToggler.isAvailable) {
       return@coroutineScope
+    }
+
+    launch {
+      ijentWslNioFsToggler.enableForAllWslDistributions()
     }
 
     val allWslDistributions = async(Dispatchers.IO) {

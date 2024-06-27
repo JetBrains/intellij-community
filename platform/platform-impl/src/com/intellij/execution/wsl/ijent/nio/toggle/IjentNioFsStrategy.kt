@@ -11,6 +11,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import java.net.URI
@@ -26,13 +27,13 @@ internal class IjentWslNioFsToggleStrategy(
 ) {
   private val ownFileSystems = OwnFileSystems(multiRoutingFileSystemProvider)
 
-  val isInitialized: Boolean = true
-
-  fun initialize() {
+  init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       ownFileSystems.unregisterAll()
     }
+  }
 
+  suspend fun enableForAllWslDistributions() {
     val listener = BiConsumer<Set<WSLDistribution>, Set<WSLDistribution>> { old, new ->
       // TODO The code is race prone. Frequent creations and deletions of WSL containers may break the state.
       for (distro in new - old) {
@@ -51,8 +52,7 @@ internal class IjentWslNioFsToggleStrategy(
       wslDistributionManager.removeWslDistributionsChangeListener(listener)
     }
 
-    // The function may be called under a read lock, so it's better to postpone the execution.
-    coroutineScope.launch {
+    coroutineScope {
       for (distro in wslDistributionManager.installedDistributions) {
         launch {
           handleWslDistributionAddition(distro)
