@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.util.addOptionTag
+import com.intellij.util.xmlb.Constants
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -78,10 +79,10 @@ class KotlinGradleFUSSettings : PersistentStateComponent<Element> {
     }
 
     override fun loadState(state: Element) {
-        val dirs = mutableSetOf<String>()
-        state.getChildren(KotlinGradleFUSSettings::gradleUserDirs.name).forEach {
-            dirs += it.value
-        }
+        val dirs = state.getChildren(Constants.OPTION)
+            .filter { it.getAttributeValue(Constants.NAME) == KotlinGradleFUSSettings::gradleUserDirs.name }
+            .mapNotNull { it.getAttributeValue(Constants.VALUE) }
+            .toSet()
         gradleUserDirs = dirs
     }
 
