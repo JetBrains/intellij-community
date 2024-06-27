@@ -3,6 +3,7 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
 import com.intellij.util.SystemProperties
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import java.io.File
