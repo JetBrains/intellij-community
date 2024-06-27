@@ -17,6 +17,8 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 import kotlin.test.assertTrue
 
+private const val EXPECTED_NAVIGATION_DIRECTIVE = "EXPECTED-NAVIGATION-SUBSTRING"
+
 @TestRoot("idea/tests/testData/")
 @TestDataPath("\$CONTENT_ROOT")
 @TestMetadata("gradle/navigation")
@@ -28,6 +30,13 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
     @BaseGradleVersionSource
     @TestMetadata("projectDependency.test")
     fun testProjectDependency(gradleVersion: GradleVersion) {
+        verifyNavigationFromCaretToExpected(gradleVersion)
+    }
+
+    @ParameterizedTest
+    @BaseGradleVersionSource
+    @TestMetadata("projectKmpDependency.test")
+    fun testProjectKmpDependency(gradleVersion: GradleVersion) {
         verifyNavigationFromCaretToExpected(gradleVersion)
     }
 
@@ -99,7 +108,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
             val mainFileContent = mainTestDataFile
             val mainFile = mainTestDataPsiFile
             val expectedNavigationText =
-                InTextDirectivesUtils.findStringWithPrefixes(mainFileContent.content, "// \"EXPECTED-NAVIGATION-SUBSTRING\": ") ?: error("EXPECTED-NAVIGATION-SUBSTRING is not specified")
+                InTextDirectivesUtils.findStringWithPrefixes(mainFileContent.content, "// \"$EXPECTED_NAVIGATION_DIRECTIVE\": ") ?: error("$EXPECTED_NAVIGATION_DIRECTIVE is not specified")
 
             codeInsightFixture.configureFromExistingVirtualFile(mainFile.virtualFile)
             assertTrue("<caret> is not present") {
@@ -126,19 +135,24 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
             }
             withBuildFile(gradleVersion, useKotlinDsl = true) {
-                withKotlinJvmPlugin()
+                withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
-            withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
+            withBuildFile(gradleVersion, relativeModulePath = "buildSrc", useKotlinDsl = true) {
                 withKotlinJvmPlugin()
+                withMavenCentral()
+                withDirectory("src/main/java/")
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
+                withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
             withBuildFile(gradleVersion, relativeModulePath = "module1/module11", useKotlinDsl = true) {
-                withKotlinJvmPlugin()
+                withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
             withBuildFile(gradleVersion, relativeModulePath = "module1/module11/module111", useKotlinDsl = true) {
-                withKotlinJvmPlugin()
+                withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
             withFile(
