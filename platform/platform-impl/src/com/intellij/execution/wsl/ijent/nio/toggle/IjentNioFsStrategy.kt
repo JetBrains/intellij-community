@@ -29,7 +29,7 @@ internal class IjentWslNioFsToggleStrategy(
 
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
-      ownFileSystems.unregisterAll()
+      unregisterAll()
     }
   }
 
@@ -107,6 +107,10 @@ internal class IjentWslNioFsToggleStrategy(
         actualFs
       }
     }
+  }
+
+  fun unregisterAll() {
+    ownFileSystems.unregisterAll()
   }
 }
 

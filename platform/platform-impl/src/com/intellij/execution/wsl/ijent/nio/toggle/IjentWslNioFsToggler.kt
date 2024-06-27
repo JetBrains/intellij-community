@@ -12,7 +12,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -52,6 +51,12 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
     strategy?.disable(distro)
   }
 
+  @TestOnly
+  fun unregisterAll() {
+    strategy ?: error("Not available")
+    strategy.unregisterAll()
+  }
+
   private val strategy = run {
     val defaultProvider = FileSystems.getDefault().provider()
     when {
@@ -68,10 +73,5 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
         null
       }
     }
-  }
-
-  @TestOnly
-  fun unregisterAll() {
-    coroutineScope.cancel()
   }
 }
