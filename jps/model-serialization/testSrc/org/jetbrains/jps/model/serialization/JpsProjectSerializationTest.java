@@ -109,10 +109,10 @@ public class JpsProjectSerializationTest {
     JpsProjectData projectData = loadProject("jps/model-serialization/testData/testModuleProperties/testModuleProperties.ipr");
     List<JpsModule> modules = projectData.getProject().getModules();
     assertEquals(2, modules.size());
-    JpsModule testModule = modules.get(0);
-    assertEquals("testModule", testModule.getName());
-    JpsModule productionModule = modules.get(1);
+    JpsModule productionModule = modules.get(0);
     assertEquals("productionModule", productionModule.getName());
+    JpsModule testModule = modules.get(1);
+    assertEquals("testModule", testModule.getName());
 
     assertNull(JpsJavaExtensionService.getInstance().getTestModuleProperties(productionModule));
     JpsTestModuleProperties testModuleProperties = JpsJavaExtensionService.getInstance().getTestModuleProperties(testModule);
