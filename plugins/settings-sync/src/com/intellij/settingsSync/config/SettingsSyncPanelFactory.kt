@@ -1,14 +1,17 @@
 package com.intellij.settingsSync.config
 
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncBundle.message
-import com.intellij.settingsSync.SettingsSyncState
 import com.intellij.ui.CheckBoxList
 import com.intellij.ui.CheckBoxListListener
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.ui.dsl.builder.TopGap
+import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
@@ -22,7 +25,54 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 
 internal object SettingsSyncPanelFactory {
-  fun createPanel(syncLabel: @Nls String, state: SettingsSyncState): DialogPanel {
+  fun createCombinedSyncSettingsPanel(
+    syncLabel: @Nls String,
+    syncSettings: SettingsSyncState,
+    syncScopeSettings: SettingsSyncLocalState,
+  ): DialogPanel {
+    val categoriesPanel = createSyncCategoriesPanel(syncLabel, syncSettings)
+    val syncScopePanel = createSyncScopePanel(syncScopeSettings)
+
+    return panel {
+      row {
+        cell(categoriesPanel)
+          .onApply(categoriesPanel::apply)
+          .onReset(categoriesPanel::reset)
+          .onIsModified(categoriesPanel::isModified)
+      }
+
+      row {
+        cell(syncScopePanel)
+          .onApply(syncScopePanel::apply)
+          .onReset(syncScopePanel::reset)
+          .onIsModified(syncScopePanel::isModified)
+      }
+      onApply {
+        SettingsSyncLocalSettings.getInstance().applyFromState(syncScopeSettings)
+        SettingsSyncSettings.getInstance().applyFromState(syncSettings)
+      }
+    }
+  }
+
+  private fun createSyncScopePanel(state: SettingsSyncLocalState): DialogPanel {
+    return panel {
+      row {
+        topGap(TopGap.MEDIUM)
+        label(message("settings.cross.product.sync"))
+      }
+      buttonsGroup(indent = true) {
+        row {
+          val productName = ApplicationNamesInfo.getInstance().fullProductName
+          radioButton(message("settings.cross.product.sync.choice.only.this.product", productName), false)
+        }
+        row {
+          radioButton(message("settings.cross.product.sync.choice.all.products"), true)
+        }
+      }.bind(state::isCrossIdeSyncEnabled)
+    }
+  }
+
+  private fun createSyncCategoriesPanel(syncLabel: @Nls String, state: SettingsSyncState): DialogPanel {
     return panel {
       row {
         label(syncLabel)
