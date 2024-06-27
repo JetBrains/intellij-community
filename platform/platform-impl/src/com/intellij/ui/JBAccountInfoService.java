@@ -50,9 +50,7 @@ public interface JBAccountInfoService {
   @NotNull LoginSession startLoginSession(@NotNull LoginMode loginMode);
 
   @SuppressWarnings("unused")
-  @NotNull CompletableFuture<@NotNull LicenseListResult> getAvailableLicenses(@NotNull String productCode,
-                                                                              int productReleaseVersion,
-                                                                              @NotNull LocalDate productReleaseDate);
+  @NotNull CompletableFuture<@NotNull LicenseListResult> getAvailableLicenses(@NotNull String productCode);
 
   static @Nullable JBAccountInfoService getInstance() {
     return JBAccountInfoServiceHolder.INSTANCE;

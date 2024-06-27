@@ -1,9 +1,7 @@
 package com.intellij.settingsSync.auth
 
-import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.settingsSync.SettingsSyncEvents
 import com.intellij.ui.JBAccountInfoService
-import java.time.LocalDate
 import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
@@ -28,8 +26,6 @@ object DummyJBAccountInfoService : JBAccountInfoService {
 
   override fun getAvailableLicenses(
     productCode: String,
-    productReleaseVersion: Int,
-    productReleaseDate: LocalDate,
   ): CompletableFuture<JBAccountInfoService.LicenseListResult> {
     TODO("Not yet implemented")
   }
