@@ -69,7 +69,8 @@ internal class FacetsSerializer(private val imlFileUrl: VirtualFileUrl, private 
       .mapNotNull { entitySerializer ->
         val entitiesToSave = affectedEntities[entitySerializer.rootEntityType]?.filter { entitySourceFilter.invoke(it.entitySource) }
                              ?: return@mapNotNull null
-        entitySerializer.createFacetStateFromEntities(entitiesToSave.map { it as ModuleSettingsFacetBridgeEntity }, externalStorage)
+        @Suppress("UNCHECKED_CAST")
+        (entitySerializer as CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>).createFacetStateFromEntities(entitiesToSave.map { it as ModuleSettingsFacetBridgeEntity }, externalStorage)
       }.flatten()
 
     if (facetStatesFromEP.isEmpty()) {

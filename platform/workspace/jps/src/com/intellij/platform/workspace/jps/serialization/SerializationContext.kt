@@ -26,5 +26,5 @@ interface SerializationContext {
   
   val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
   
-  val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>>
+  val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<*>>
 }

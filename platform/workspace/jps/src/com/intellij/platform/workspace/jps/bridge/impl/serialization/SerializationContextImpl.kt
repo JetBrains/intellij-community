@@ -24,6 +24,6 @@ internal class SerializationContextImpl(
     get() = emptyList() //todo
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
     get() = emptyList() //todo
-  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>>
-    get() = emptyList() //todo
+  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<*>>
+    get() = listOf(DefaultFacetEntitySerializer()) //todo
 }

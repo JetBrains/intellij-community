@@ -18,7 +18,7 @@ abstract class BaseIdeSerializationContext : SerializationContext {
     get() = CUSTOM_MODULE_COMPONENT_SERIALIZER_EP.extensionList
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
     get() = CUSTOM_MODULE_ROOTS_SERIALIZER_EP.extensionList
-  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>>
+  override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<*>>
     get() = CUSTOM_FACET_RELATED_ENTITY_SERIALIZER_EP.extensionList
 
   companion object {
