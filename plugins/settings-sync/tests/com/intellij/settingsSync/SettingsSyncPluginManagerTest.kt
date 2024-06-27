@@ -424,6 +424,48 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     restart_required_base(true, true, false)
   }
 
+  @Test
+  @TestFor(issues = ["IJPL-157227"])
+  fun `don't touch localization plugins state in 242+`() {
+    val localization_ja = TestPluginDescriptor(
+      "com.intellij.ja",
+      listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+      bundled = true
+    )
+    val localization_kr = TestPluginDescriptor(
+      "com.intellij.kr",
+      listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+      bundled = false
+    )
+    val localization_zh = TestPluginDescriptor(
+      "com.intellij.zh",
+      listOf(TestPluginDependency("com.intellij.modules.platform", isOptional = false)),
+      bundled = false
+    )
+    testPluginManager.addPluginDescriptors(localization_ja, localization_kr, localization_zh, git4idea, cvsOutdated.withEnabled(false))
+    val pushedState = state {
+      localization_ja(enabled = true)
+      localization_kr(enabled = true)
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+    }
+
+    pushToIdeAndWait(pushedState)
+
+    assertIdeState {
+      git4idea(enabled = true)
+      cvsOutdated(enabled = false)
+      localization_ja(enabled = true)
+      localization_kr(enabled = true)
+      localization_zh(enabled = true)
+    }
+    assertPluginManagerState {
+      cvsOutdated(enabled = false) // remains the same as it's incompatible
+      localization_ja(enabled = true)
+      localization_kr(enabled = true)
+    }
+  }
+
   private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean) = runTest {
     val restartRequiredRef = AtomicReference<RestartReason>()
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
