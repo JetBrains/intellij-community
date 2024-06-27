@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.internalUsageInfo
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -36,6 +37,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.visibilityModifierTypeOrDefault
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
@@ -142,6 +144,8 @@ private fun PsiElement?.willBeMoved(declarationsToMove: Set<KtNamedDeclaration>)
 private fun MoveRenameUsageInfo.willNotBeMoved(declarationsToMove: Set<KtNamedDeclaration>): Boolean {
     return this !is K2MoveRenameUsageInfo || !element.willBeMoved(declarationsToMove)
 }
+
+private val KtNamedDeclaration.isInternal get() = visibilityModifierTypeOrDefault().toVisibility() == Visibilities.Internal
 
 private fun PsiElement.createVisibilityConflict(referencedDeclaration: PsiElement): Pair<PsiElement, String> {
     return this to KotlinBundle.message(
@@ -329,6 +333,7 @@ private fun checkModuleDependencyConflictsForNonMovedUsages(
             tryFindConflict {
                 val usageElement = usage.element ?: return@tryFindConflict null
                 val referencedDeclaration = usage.upToDateReferencedElement as? KtNamedDeclaration ?: return@tryFindConflict null
+                if (referencedDeclaration.isInternal) return@tryFindConflict null
                 val declarationCopy = containingCopyDecl(referencedDeclaration, oldToNewMap) ?: return@tryFindConflict null
                 val targetModule = declarationCopy.containingModule() ?: return@tryFindConflict null
                 val resolveScope = usageElement.resolveScope
@@ -350,6 +355,7 @@ fun checkModuleDependencyConflictsForInternalUsages(
             tryFindConflict {
                 val usageElement = usageInfo.element ?: return@tryFindConflict null
                 val referencedDeclaration = usageInfo.upToDateReferencedElement as? PsiNamedElement ?: return@tryFindConflict null
+                if (referencedDeclaration is KtNamedDeclaration && referencedDeclaration.isInternal) return@tryFindConflict null
                 analyzeCopy(refExprCopy, KaDanglingFileResolutionMode.PREFER_SELF) {
                     if (refExprCopy.mainReference.resolveToSymbol() == null) {
                         val module = refExprCopy.containingModule() ?: return@analyzeCopy null
