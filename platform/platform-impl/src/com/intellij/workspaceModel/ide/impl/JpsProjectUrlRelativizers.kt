@@ -2,6 +2,7 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectUrlRelativizer
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import org.jetbrains.annotations.ApiStatus
 
