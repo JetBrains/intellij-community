@@ -691,6 +691,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return false;
     }
     return ReadAction.compute(() -> {
+      if (!vf.isValid()) return false;
       boolean isUnderProject = isFileInBaseDir(vf) ||
                                isInDirectoryBasedRoot(vf) ||
                                hasExplicitMapping(vf) ||
@@ -704,6 +705,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   public boolean isIgnored(@NotNull VirtualFile vf) {
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || myProject.isDefault()) return false;
+      if (!vf.isValid()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
         return myExcludedIndex.isExcludedFile(vf);
