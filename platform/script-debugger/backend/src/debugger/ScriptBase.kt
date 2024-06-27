@@ -3,10 +3,12 @@ package org.jetbrains.debugger
 
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.Url
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.sourcemap.SourceMap
 import kotlin.math.max
 
+@ApiStatus.Internal
 abstract class ScriptBase(override val type: Script.Type,
                           override val url: Url,
                           line: Int,

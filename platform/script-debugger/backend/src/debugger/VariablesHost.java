@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -24,6 +25,7 @@ import org.jetbrains.debugger.values.ValueManager;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class VariablesHost<VALUE_MANAGER extends ValueManager> {
   @SuppressWarnings("unchecked")
   private static final PromiseManager<VariablesHost, List<Variable>> VARIABLES_LOADER =

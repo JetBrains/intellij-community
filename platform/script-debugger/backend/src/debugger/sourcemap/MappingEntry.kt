@@ -15,9 +15,12 @@
  */
 package org.jetbrains.debugger.sourcemap
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Mapping entry in the source map
  */
+@ApiStatus.NonExtendable
 interface MappingEntry {
   val generatedColumn: Int
 

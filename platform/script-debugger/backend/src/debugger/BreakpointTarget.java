@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * @see ScriptName
  * @see ScriptId
  */
+@ApiStatus.Internal
 public abstract class BreakpointTarget {
   /**
    * Dispatches call on the actual Target type.

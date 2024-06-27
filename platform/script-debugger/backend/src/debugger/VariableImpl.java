@@ -15,10 +15,12 @@
  */
 package org.jetbrains.debugger;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.debugger.values.Value;
 
+@ApiStatus.Internal
 public class VariableImpl implements Variable {
   protected volatile Value value;
   private final String name;

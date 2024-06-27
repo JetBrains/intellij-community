@@ -2,8 +2,10 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.editor.Document
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 interface Mappings {
   fun get(line: Int, column: Int): MappingEntry?
 
@@ -25,6 +27,7 @@ interface Mappings {
   fun getColumn(mapping: MappingEntry): Int
 }
 
+@ApiStatus.Internal
 abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   val size: Int
     get() = mappings.size
@@ -153,6 +156,7 @@ abstract class MappingList(mappings: List<MappingEntry>) : Mappings {
   }
 }
 
+@ApiStatus.Internal
 interface MappingsProcessorInLine {
 
   fun process(entry: MappingEntry, nextEntry: MappingEntry?): Boolean
