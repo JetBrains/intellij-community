@@ -183,7 +183,7 @@ public final class GitUtil {
    */
   @RequiresBackgroundThread
   public static @NotNull Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
-                                                                       @NotNull Collection<? extends VirtualFile> virtualFiles)
+                                                                                @NotNull Collection<? extends VirtualFile> virtualFiles)
     throws VcsException {
     return sortFilesByGitRoot(project, virtualFiles, false);
   }
@@ -205,7 +205,7 @@ public final class GitUtil {
    */
   @RequiresBackgroundThread
   public static @NotNull Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Project project,
-                                                                        @NotNull Collection<? extends FilePath> filePaths)
+                                                                                 @NotNull Collection<? extends FilePath> filePaths)
     throws VcsException {
     return sortFilePathsByGitRoot(project, filePaths, false);
   }
@@ -239,7 +239,7 @@ public final class GitUtil {
    */
   @RequiresBackgroundThread
   public static @NotNull Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
-                                                                            @NotNull Collection<? extends VirtualFile> filePaths)
+                                                                                     @NotNull Collection<? extends VirtualFile> filePaths)
     throws VcsException {
     return sortFilesByRepository(project, filePaths, false);
   }
@@ -422,7 +422,8 @@ public final class GitUtil {
   }
 
   @RequiresBackgroundThread
-  public static @NotNull Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
+  public static @NotNull Set<GitRepository> getRepositoriesForFiles(@NotNull Project project,
+                                                                    @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     Set<GitRepository> result = new HashSet<>();
     for (VirtualFile file : files) {
@@ -611,7 +612,7 @@ public final class GitUtil {
    * Paths are absolute, Git-formatted (i.e. with forward slashes).
    */
   public static @NotNull Collection<String> getPathsDiffBetweenRefs(@NotNull Git git, @NotNull GitRepository repository,
-                                                           @NotNull @NonNls String beforeRef, @NotNull @NonNls String afterRef)
+                                                                    @NotNull @NonNls String beforeRef, @NotNull @NonNls String afterRef)
     throws VcsException {
     List<String> parameters = Arrays.asList("--name-only", "--pretty=format:");
     String range = beforeRef + ".." + afterRef;
@@ -777,7 +778,7 @@ public final class GitUtil {
    * If a path is not found in the local changes, it is ignored, but the fact is logged.
    */
   public static @NotNull List<Change> findLocalChangesForPaths(@NotNull Project project, @NotNull VirtualFile root,
-                                                      @NotNull Collection<@NonNls String> affectedPaths, boolean relativePaths) {
+                                                               @NotNull Collection<@NonNls String> affectedPaths, boolean relativePaths) {
     ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
     List<Change> affectedChanges = new ArrayList<>();
     for (String path : affectedPaths) {
@@ -925,7 +926,7 @@ public final class GitUtil {
    * commit, but there are no local changes made in file A. Such situations are ignored.</p>
    */
   public static @NotNull Collection<Change> findCorrespondentLocalChanges(@NotNull ChangeListManager changeListManager,
-                                                                 @NotNull Collection<? extends Change> originalChanges) {
+                                                                          @NotNull Collection<? extends Change> originalChanges) {
     ObjectOpenHashSet<Change> allChanges = new ObjectOpenHashSet<>(changeListManager.getAllChanges());
     return ContainerUtil.mapNotNull(originalChanges, allChanges::get);
   }
@@ -951,7 +952,7 @@ public final class GitUtil {
 
   public static void refreshVfsInRoots(@NotNull Collection<VirtualFile> roots) {
     RefreshVFsSynchronously.trace("refresh roots " + roots);
-    VfsUtil.markDirtyAndRefresh(false, true, false, roots.toArray(VirtualFile.EMPTY_ARRAY));
+    RefreshVFsSynchronously.refreshVirtualFiles(roots);
   }
 
   public static void updateAndRefreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {
