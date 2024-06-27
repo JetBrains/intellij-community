@@ -289,14 +289,14 @@ object StorageDiagnosticData {
     }
 
     val defaultParallelWriter = IndexWriter.defaultParallelWriter()
-    defaultParallelWriter.totalTimeSpentWriting(MILLISECONDS) { workerNo, timeSpentMs ->
-      otelMeter.counterBuilder("IndexUpdateWriter_$workerNo.totalTimeSpentWritingMs").buildWithCallback {
-        it.record(timeSpentMs)
+    (0..<defaultParallelWriter.workersCount).forEach { workerNo ->
+      otelMeter.counterBuilder("IndexWriter_$workerNo.totalTimeSpentWritingMs").buildWithCallback {
+        it.record(defaultParallelWriter.totalTimeSpentWriting(MILLISECONDS, workerNo))
       }
     }
 
-    if( defaultParallelWriter is LegacyMultiThreadedIndexWriter) {
-      otelMeter.counterBuilder("IndexUpdateWriter.totalTimeIndexersSleptMs").buildWithCallback {
+    if (defaultParallelWriter is LegacyMultiThreadedIndexWriter) {
+      otelMeter.counterBuilder("IndexWriter.totalTimeIndexersSleptMs").buildWithCallback {
         it.record(defaultParallelWriter.totalTimeIndexersSlept(MILLISECONDS))
       }
     }

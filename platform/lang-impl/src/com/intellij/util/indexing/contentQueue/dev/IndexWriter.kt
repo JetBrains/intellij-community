@@ -101,6 +101,13 @@ abstract class IndexWriter {
    */
   abstract fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit)
 
+  /**
+   * Monitoring: provides information about time spent on writing (applying) index changes by specific worker, if any,
+   * in the units asked.
+   * Implementation is free to not provide this information -- in which case it must return -1
+   */
+  abstract fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long
+
 
   companion object {
     /**
@@ -203,6 +210,8 @@ object SameThreadIndexWriter : IndexWriter() {
   }
 
   override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) = Unit
+
+  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long  = -1
 }
 
 /* ================ parallelized IndexWriter implementations: ====================================================*/
@@ -216,10 +225,16 @@ val AUX_WRITERS_NUMBER = if (WRITE_INDEXES_ON_SEPARATE_THREAD) 1 else 0
 /** Total number of index writing threads  */
 val TOTAL_WRITERS_NUMBER = BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER
 
-
+@Internal
 abstract class ParallelIndexWriter : IndexWriter() {
 
-  protected val workersCount = TOTAL_WRITERS_NUMBER
+  val workersCount = TOTAL_WRITERS_NUMBER
+
+  override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
+    for (workerNo in 0..<workersCount) {
+      callback(workerNo, totalTimeSpentWriting(unit, workerNo))
+    }
+  }
 
   /**
    * @return worker index for indexId, in [0..workersCount).
@@ -281,7 +296,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
       createExecutorForIndexWriting("Trigram Writer")
     )
     repeat(AUX_WRITERS_NUMBER) { writerNo ->
-      pool.add(createExecutorForIndexWriting("Aux Index Writer #${writerNo + 1}"));
+      pool.add(createExecutorForIndexWriting("Aux Index Writer #${writerNo + 1}"))
     }
 
     writers = pool
@@ -296,6 +311,8 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
 
   /** Total time (nanoseconds) indexers have slept while the writers queue was too long  */
   private val totalTimeSleptNs: AtomicLong = AtomicLong()
+
+
 
   override fun writeChangesToIndexesSync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
     throw UnsupportedOperationException("writeChangesToIndexesSync is not supported")
@@ -401,7 +418,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
   private fun createExecutorForIndexWriting(name: String): ExecutorService =
     Executors.newSingleThreadExecutor(ConcurrencyUtil.newNamedThreadFactory(name))
 
-  fun scheduleIndexWriting(writerIndex: Int, runnable: java.lang.Runnable) {
+  private fun scheduleIndexWriting(writerIndex: Int, runnable: java.lang.Runnable) {
     indexWritesQueued.incrementAndGet()
     //FIXME RC: we put thread to a sleep while it keeps GLOBAL_INDEXING_SEMAPHORE permit
     //          Could we exhaust Dispatchers.IO pool?
@@ -421,7 +438,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
     }
   }
 
-  fun sleepIfWriterQueueLarge(numberOfIndexingThreads: Int) {
+  private fun sleepIfWriterQueueLarge(numberOfIndexingThreads: Int) {
     val currentlySleeping = sleepingIndexers.get()
     val couldBeSleeping = currentlySleeping + 1
     val writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingThreads + couldBeSleeping)
@@ -503,12 +520,10 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
 
   //======================== metrics accessors: ==================================================
 
-  override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
-    for (workerNo in 0..<workersCount) {
-      val timeSpentByWorker = unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
-      callback(workerNo, timeSpentByWorker)
-    }
+  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long {
+    return unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
   }
+
 
   fun totalTimeIndexersSlept(unit: TimeUnit): Long {
     return unit.convert(totalTimeSleptNs.get(), NANOSECONDS)
@@ -592,12 +607,8 @@ class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
     }
   }
 
-  override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
-    for (workerNo in 0..<workersCount) {
-      val timeSpentByWorker = unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
-      callback(workerNo, timeSpentByWorker)
-    }
-  }
+  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long =
+    unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
 
   private fun applyModificationsInCoroutine(
     fileIndexingResult: FileIndexingResult,
