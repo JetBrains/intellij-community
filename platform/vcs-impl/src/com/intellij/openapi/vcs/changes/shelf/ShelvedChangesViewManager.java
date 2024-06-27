@@ -507,18 +507,15 @@ public class ShelvedChangesViewManager implements Disposable {
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
       sink.set(SHELVED_CHANGES_TREE, this);
-      sink.set(SHELVED_CHANGELIST_KEY, new ArrayList<>(
-        getSelectedLists(this, l -> !l.isRecycled() && !l.isDeleted())));
-      sink.set(SHELVED_RECYCLED_CHANGELIST_KEY, new ArrayList<>(
-        getSelectedLists(this, l -> l.isRecycled() && !l.isDeleted())));
-      sink.set(SHELVED_DELETED_CHANGELIST_KEY, new ArrayList<>(
-        getSelectedLists(this, l -> l.isDeleted())));
+      sink.set(SHELVED_CHANGELIST_KEY, new ArrayList<>(getSelectedLists(this, l -> !l.isRecycled() && !l.isDeleted())));
+      sink.set(SHELVED_RECYCLED_CHANGELIST_KEY, new ArrayList<>(getSelectedLists(this, l -> l.isRecycled() && !l.isDeleted())));
+      sink.set(SHELVED_DELETED_CHANGELIST_KEY, new ArrayList<>(getSelectedLists(this, l -> l.isDeleted())));
       sink.set(SHELVED_CHANGE_KEY, VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
-        .map(s -> s.getShelvedChange())
-        .filterNotNull().toList());
+        .filterMap(s -> s.getShelvedChange())
+        .toList());
       sink.set(SHELVED_BINARY_FILE_KEY, VcsTreeModelData.selected(this).iterateUserObjects(ShelvedWrapper.class)
-        .map(s -> s.getBinaryFile())
-        .filterNotNull().toList());
+        .filterMap(s -> s.getBinaryFile())
+        .toList());
       if (!isEditing()) {
         sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
       }

@@ -178,15 +178,14 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
+      VcsTreeModelData.uiDataSnapshot(sink, myProject, this);
+
       VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
       VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
-      VcsTreeModelData.uiDataSnapshot(sink, myProject, this);
       sink.lazy(ChangesListView.EXACTLY_SELECTED_FILES_DATA_KEY, () ->
         VcsTreeModelData.mapToExactVirtualFile(exactSelection));
-      sink.set(myShownDataKey,
-               treeSelection.iterateUserObjects(FilePath.class));
-      sink.set(VcsDataKeys.FILE_PATHS,
-               treeSelection.iterateUserObjects(FilePath.class));
+      sink.set(myShownDataKey, treeSelection.iterateUserObjects(FilePath.class));
+      sink.set(VcsDataKeys.FILE_PATHS, treeSelection.iterateUserObjects(FilePath.class));
       sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
       sink.set(PlatformCoreDataKeys.HELP_ID, ChangesListView.HELP_ID);
     }

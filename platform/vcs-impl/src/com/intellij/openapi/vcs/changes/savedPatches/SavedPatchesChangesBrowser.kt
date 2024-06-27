@@ -141,8 +141,7 @@ class SavedPatchesChangesBrowser(project: Project, internal val isShowDiffWithLo
 
     val changeObjects = selection.iterateUserObjects(SavedPatchesProvider.ChangeObject::class.java)
     sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = changeObjects
-      .map { it.filePath.virtualFile }
-      .filterNotNull()
+      .filterMap { it.filePath.virtualFile }
       .toList().toTypedArray()
     sink[VcsDataKeys.FILE_PATHS] = changeObjects.map { it.filePath }
     sink[CommonDataKeys.NAVIGATABLE_ARRAY] = changeObjects
