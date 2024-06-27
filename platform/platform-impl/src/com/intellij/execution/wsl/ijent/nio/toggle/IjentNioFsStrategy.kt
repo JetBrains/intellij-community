@@ -4,6 +4,7 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
+import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentId
@@ -63,7 +64,7 @@ internal class IjentWslNioFsToggleStrategy(
 
   private suspend fun handleWslDistributionAddition(distro: WSLDistribution) {
     val ijentApi = WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
-    enable(distro, ijentApi.id)
+    switchToIjentFs(distro, ijentApi.id)
   }
 
   private fun handleWslDistributionDeletion(distro: WSLDistribution) {
@@ -73,7 +74,7 @@ internal class IjentWslNioFsToggleStrategy(
     }
   }
 
-  fun enable(distro: WSLDistribution, ijentId: IjentId) {
+  fun switchToIjentFs(distro: WSLDistribution, ijentId: IjentId) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
       ijentFsProvider.newFileSystem(ijentId.uri, null)
@@ -82,14 +83,14 @@ internal class IjentWslNioFsToggleStrategy(
       // Nothing.
     }
 
-    ownFileSystems.compute(distro) { underlyingProvider, ownFs, actualFs ->
-      if (actualFs?.provider()?.unwrapIjentWslNioFileSystemProvider() != null) {
+    ownFileSystems.compute(distro) { underlyingProvider, _, actualFs ->
+      if (actualFs is IjentWslNioFileSystem) {
         actualFs
       }
       else {
         IjentWslNioFileSystemProvider(
           ijentId = ijentId,
-          wslLocalRoot = underlyingProvider.getFileSystem(URI.create("file:/")).getPath(distro.getWindowsPath("/")),
+          wslLocalRoot = underlyingProvider.getLocalFileSystem().getPath(distro.getWindowsPath("/")),
           ijentFsProvider = ijentFsProvider,
           originalFsProvider = TracingFileSystemProvider(underlyingProvider),
         ).getFileSystem(ijentId.uri)
@@ -97,15 +98,9 @@ internal class IjentWslNioFsToggleStrategy(
     }
   }
 
-  fun disable(distro: WSLDistribution) {
-    ownFileSystems.compute(distro) { _, ownFs, actualFs ->
-      val actualIjentWslFsProvider = actualFs?.provider()?.unwrapIjentWslNioFileSystemProvider()
-      if (actualIjentWslFsProvider != null) {
-        actualIjentWslFsProvider.originalFsProvider.getFileSystem(URI.create("file:/"))
-      }
-      else {
-        actualFs
-      }
+  fun switchToTracingWsl9pFs(distro: WSLDistribution) {
+    ownFileSystems.compute(distro) { underlyingProvider, _, _ ->
+      TracingFileSystemProvider(underlyingProvider).getLocalFileSystem()
     }
   }
 
@@ -114,12 +109,8 @@ internal class IjentWslNioFsToggleStrategy(
   }
 }
 
-private fun FileSystemProvider.unwrapIjentWslNioFileSystemProvider(): IjentWslNioFileSystemProvider? =
-  when (this) {
-    is IjentWslNioFileSystemProvider -> this
-    is TracingFileSystemProvider -> delegate.unwrapIjentWslNioFileSystemProvider()
-    else -> null
-  }
+private fun FileSystemProvider.getLocalFileSystem(): FileSystem =
+  getFileSystem(URI.create("file:/"))
 
 /**
  * This class accesses two synchronization primitives simultaneously.
