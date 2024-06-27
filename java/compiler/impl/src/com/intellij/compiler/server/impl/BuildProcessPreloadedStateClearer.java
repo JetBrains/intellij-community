@@ -11,7 +11,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
 import com.intellij.platform.workspace.jps.entities.*;
 import com.intellij.platform.workspace.storage.EntityChange;
 import com.intellij.platform.workspace.storage.VersionedStorageChange;
-import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal;
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import org.jetbrains.annotations.NotNull;
 

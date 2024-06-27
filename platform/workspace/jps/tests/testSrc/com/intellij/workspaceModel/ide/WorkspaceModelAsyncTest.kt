@@ -14,7 +14,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.testEntities.entities.MySource
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertInstanceOf

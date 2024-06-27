@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.reactive
 
-import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.impl.cache.CacheProcessingStatus
 import com.intellij.platform.workspace.storage.impl.cache.ChangeOnVersionedChange
 import com.intellij.platform.workspace.storage.impl.cache.cache

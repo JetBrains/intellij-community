@@ -15,7 +15,7 @@ import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.LibraryRootTypeId
 import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.VersionedStorageChangeInternal
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import org.assertj.core.api.Assertions.assertThat
