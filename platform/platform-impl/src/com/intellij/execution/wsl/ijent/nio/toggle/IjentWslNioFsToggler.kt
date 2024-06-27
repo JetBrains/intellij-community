@@ -36,6 +36,13 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
     }
   }
 
+  val isAvailable: Boolean get() = strategy != null
+
+  suspend fun enableForAllWslDistributions() {
+    strategy ?: error("Not available")
+    strategy.enableForAllWslDistributions()
+  }
+
   fun enable(distro: WSLDistribution, ijentId: IjentId) {
     strategy?.enable(distro, ijentId)
   }
@@ -62,12 +69,6 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
       }
     }
   }
-
-  init {
-    strategy?.initialize()
-  }
-
-  val isInitialized: Boolean get() = strategy?.isInitialized ?: false
 
   @TestOnly
   fun unregisterAll() {

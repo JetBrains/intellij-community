@@ -140,7 +140,7 @@ object IjentWslNioFsVmOptionsSetter {
         val changedOptions = ensureInVmOptions()
         when {
           changedOptions.isEmpty() -> {
-            IjentWslNioFsToggler.instanceAsync()  // Implicitly activates IJent FS for all WSL distributions.
+            IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
           }
 
           PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() ->
