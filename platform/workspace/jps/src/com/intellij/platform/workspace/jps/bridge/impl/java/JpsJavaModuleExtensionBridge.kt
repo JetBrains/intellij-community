@@ -28,7 +28,7 @@ internal class JpsJavaModuleExtensionBridge(private val javaSettingsEntity: Java
 
   override fun getOutputUrl(): String? = javaSettingsEntity.compilerOutput?.url
 
-  override fun getTestOutputUrl(): String? = javaSettingsEntity.compilerOutputForTests?.url
+  override fun getTestOutputUrl(): String? = javaSettingsEntity.compilerOutputForTests?.url ?: outputUrl
 
   override fun getLanguageLevel(): LanguageLevel? = javaSettingsEntity.languageLevelId?.let { LanguageLevel.valueOf(it) }
 
