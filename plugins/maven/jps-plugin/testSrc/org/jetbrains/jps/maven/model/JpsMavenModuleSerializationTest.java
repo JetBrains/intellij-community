@@ -15,12 +15,12 @@ public class JpsMavenModuleSerializationTest {
     JpsProjectData projectData = JpsProjectData.loadFromTestData("plugins/maven/jps-plugin/testData/compiler/classpathTest", getClass());
     List<JpsModule> modules = projectData.getProject().getModules();
     assertEquals(3, modules.size());
-    JpsModule main = modules.get(0);
-    assertEquals("main", main.getName());
-    JpsModule dep = modules.get(1);
+    JpsModule dep = modules.get(0);
     assertEquals("dep", dep.getName());
-    JpsModule depTest = modules.get(2);
+    JpsModule depTest = modules.get(1);
     assertEquals("dep-test", depTest.getName());
+    JpsModule main = modules.get(2);
+    assertEquals("main", main.getName());
 
     for (JpsModule module : modules) {
       assertNotNull(getService().getExtension(module));
