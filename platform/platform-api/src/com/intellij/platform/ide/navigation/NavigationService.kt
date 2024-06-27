@@ -27,5 +27,5 @@ interface NavigationService {
   suspend fun navigate(navigatables: List<Navigatable>, options: NavigationOptions): Boolean
 
   @Internal // compatibility function
-  suspend fun navigate(navigatable: Navigatable, options: NavigationOptions): Boolean
+  suspend fun navigate(navigatable: Navigatable, options: NavigationOptions = NavigationOptions.defaultOptions()): Boolean
 }

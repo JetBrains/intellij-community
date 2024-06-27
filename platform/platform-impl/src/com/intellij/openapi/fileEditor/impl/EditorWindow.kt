@@ -3,6 +3,7 @@
 
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
@@ -396,7 +397,7 @@ class EditorWindow internal constructor(
         owner.setCurrentWindow(window = this@EditorWindow)
       }
 
-      composite.coroutineScope.launch(Dispatchers.EDT) {
+      composite.coroutineScope.launch(Dispatchers.EDT + ClientId.coroutineContext() + ModalityState.any().asContextElement()) {
         if (!isHeadless) {
           owner.setCurrentWindow(window = this@EditorWindow)
         }

@@ -3,7 +3,7 @@
 
 package com.intellij.ide.actions.searcheverywhere
 
-import com.intellij.codeInsight.navigation.activateFileWithPsiElement
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.actions.GotoActionBase
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
 import com.intellij.ide.actions.QualifiedNameProviderUtil
@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
@@ -33,6 +34,8 @@ import com.intellij.openapi.project.DumbService.Companion.isDumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
@@ -371,7 +374,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
         return true
       }
 
-      myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
+      myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
         val command = readAction {
           val psiElement = preparePsi(selected, searchText)
           val extNavigatable = createExtendedNavigatable(psi = psiElement, searchText = searchText, modifiers = modifiers)
@@ -379,16 +382,28 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
           @Suppress("DEPRECATION")
           if ((modifiers and InputEvent.SHIFT_MASK) != 0 && file != null) {
-            Runnable { openInRightSplit(project = myProject, file = file, element = extNavigatable, requestFocus = true) }
+            suspend {
+              withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+                openInRightSplit(project = myProject, file = file, element = extNavigatable, requestFocus = true)
+              }
+            }
           }
           else {
-            Runnable { doNavigate(psiElement, extNavigatable) }
+            suspend {
+              if (extNavigatable == null) {
+                val navigationRequests = serviceAsync<NavigationRequests>()
+                readAction { navigationRequests.sourceNavigationRequest(myProject, file!!, -1, null) }?.let {
+                  myProject.serviceAsync<NavigationService>().navigate(it)
+                }
+              }
+              else {
+                myProject.serviceAsync<NavigationService>().navigate(extNavigatable)
+              }
+            }
           }
         }
 
-        withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-          command.run()
-        }
+        command()
       }
     }
     else {
@@ -473,15 +488,6 @@ private fun getSelectedScopes(project: Project): MutableMap<String, String?> {
     SE_SELECTED_SCOPES.set(project, HashMap<String, String?>(3).also { map = it })
   }
   return map
-}
-
-private fun doNavigate(psiElement: PsiElement, extNavigatable: Navigatable?) {
-  if (extNavigatable != null && extNavigatable.canNavigate()) {
-    extNavigatable.navigate(true)
-  }
-  else {
-    activateFileWithPsiElement(element = psiElement, searchForOpen = true)
-  }
 }
 
 private fun getLineAndColumnRegexpGroup(text: String, groupNumber: Int): Int {

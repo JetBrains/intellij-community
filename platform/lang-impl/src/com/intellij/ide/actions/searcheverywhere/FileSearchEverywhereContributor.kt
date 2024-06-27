@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
@@ -16,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -23,6 +25,8 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.platform.backend.navigation.NavigationRequests
+import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
@@ -115,20 +119,30 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
       }
 
       val lineAndColumn = getLineAndColumn(searchText)
-      val descriptor = OpenFileDescriptor(myProject, file, lineAndColumn.first, lineAndColumn.second)
-      if (descriptor.canNavigate()) {
-        myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch {
-          withContext(Dispatchers.EDT) {
-            @Suppress("DEPRECATION")
-            if ((modifiers and InputEvent.SHIFT_MASK) != 0) {
-              openInRightSplit(project = myProject, file = file, element = descriptor, requestFocus = true)
-            }
-            else {
-              descriptor.navigate(true)
+      if (file.isValid) {
+        if (lineAndColumn.first == -1 && lineAndColumn.second == -1) {
+          myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
+            val navigationRequests = serviceAsync<NavigationRequests>()
+            readAction { navigationRequests.sourceNavigationRequest(myProject, file, -1, null) }?.let {
+              myProject.serviceAsync<NavigationService>().navigate(it)
             }
           }
-          if (lineAndColumn.first > 0) {
-            serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
+        }
+        else {
+          val descriptor = OpenFileDescriptor(myProject, file, lineAndColumn.first, lineAndColumn.second)
+          myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
+            @Suppress("DEPRECATION")
+            if ((modifiers and InputEvent.SHIFT_MASK) != 0) {
+              withContext(Dispatchers.EDT) {
+                openInRightSplit(project = myProject, file = file, element = descriptor, requestFocus = true)
+              }
+            }
+            else {
+              myProject.serviceAsync<NavigationService>().navigate(descriptor)
+            }
+            if (lineAndColumn.first > 0) {
+              serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
+            }
           }
         }
         return true

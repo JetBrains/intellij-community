@@ -150,9 +150,12 @@ internal class EditorCompositeModelManager(
 
   fun blockingFileEditorWithProviderFlow(
     editorsWithProviders: List<FileEditorWithProvider>,
-  ): PrecomputedFlow {
+  ): Flow<EditorCompositeModel> {
     postProcessFileEditorWithProviderList(editorsWithProviders)
-    return PrecomputedFlow(EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = null))
+    return PrecomputedFlow(
+      model = EditorCompositeModel(fileEditorAndProviderList = editorsWithProviders, state = null),
+      fireFileOpened = true,
+    )
   }
 
   private fun postProcessFileEditorWithProviderList(editorsWithProviders: List<FileEditorWithProvider>) {
