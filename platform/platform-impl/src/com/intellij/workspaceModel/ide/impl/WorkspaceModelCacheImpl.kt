@@ -40,7 +40,9 @@ import kotlin.time.measureTimedValue
 @OptIn(FlowPreview::class)
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceModelCache {
-  override val enabled: Boolean = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
+  override val enabled: Boolean
+    get() = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
+  
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
