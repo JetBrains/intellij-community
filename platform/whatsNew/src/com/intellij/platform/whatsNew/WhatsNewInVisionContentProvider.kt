@@ -63,9 +63,10 @@ internal object WhatsNewInVisionContentProvider {
     } ?: ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getResourceName())
   }
 
+  private val json = Json { ignoreUnknownKeys = true }
   internal suspend fun getContent(): Container {
     return content.openStream()?.use { inputStream ->
-      Json.decodeFromStream<Container>(inputStream)
+      json.decodeFromStream<Container>(inputStream)
     } ?: error("Vision page not found")
   }
 }

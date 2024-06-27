@@ -237,8 +237,8 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
   }
 
   val content: String
-  val contentHash: String
-  val myActionWhiteList: Set<String>
+  private val contentHash: String
+  private val myActionWhiteList: Set<String>
 
   init {
     var html = page.html
