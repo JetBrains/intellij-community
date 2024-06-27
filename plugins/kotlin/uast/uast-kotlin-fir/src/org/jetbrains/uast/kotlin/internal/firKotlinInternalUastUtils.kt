@@ -367,10 +367,12 @@ context(KaSession)
 internal fun nullability(ktType: KaType?): KaTypeNullability? {
     if (ktType == null) return null
     if (ktType is KaErrorType) return null
-    return if (ktType.fullyExpandedType.canBeNull)
-        KaTypeNullability.NULLABLE
-    else
-        KaTypeNullability.NON_NULLABLE
+    val expanded = ktType.fullyExpandedType
+    return when {
+        expanded.hasFlexibleNullability -> KaTypeNullability.UNKNOWN
+        expanded.canBeNull -> KaTypeNullability.NULLABLE
+        else -> KaTypeNullability.NON_NULLABLE
+    }
 }
 
 context(KaSession)

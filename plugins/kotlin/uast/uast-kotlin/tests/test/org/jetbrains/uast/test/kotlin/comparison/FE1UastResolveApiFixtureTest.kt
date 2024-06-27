@@ -98,6 +98,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveImplicitLambdaParameter_binary(myFixture)
     }
 
+    fun testNullityOfResolvedLambdaParameter() {
+        checkNullityOfResolvedLambdaParameter(myFixture)
+    }
+
     fun testResolveSyntheticMethod() {
         checkResolveSyntheticMethod(myFixture)
     }
