@@ -1262,6 +1262,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
         public void testPrefixPlusPlus() throws Exception {
             runTest("../testData/intentions/operatorToFunction/prefixPlusPlus.kt");
         }
+
+        @TestMetadata("setWithVararg.kt")
+        public void testSetWithVararg() throws Exception {
+            runTest("../testData/intentions/operatorToFunction/setWithVararg.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
