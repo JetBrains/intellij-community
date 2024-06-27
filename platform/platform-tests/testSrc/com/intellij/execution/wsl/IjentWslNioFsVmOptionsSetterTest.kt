@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl
 
-import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsToggler
+import com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsVmOptionsSetter
 import com.intellij.testFramework.junit5.TestApplication
 import io.kotest.assertions.withClue
 import io.kotest.matchers.be
@@ -9,7 +9,7 @@ import io.kotest.matchers.should
 import org.junit.jupiter.api.Test
 
 @TestApplication
-class IjentWslNioFsTogglerTest {
+class IjentWslNioFsVmOptionsSetterTest {
   private infix fun Collection<Pair<String, String?>>.shouldMatch(other: Collection<String>) {
     withClue("Improving test readability: lists should be sorted") {
       other should be(other.sorted())
@@ -20,7 +20,7 @@ class IjentWslNioFsTogglerTest {
 
   @Test
   fun `enable when no options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf(
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
       "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
@@ -30,7 +30,7 @@ class IjentWslNioFsTogglerTest {
 
   @Test
   fun `enable when no options set in unit test mode`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = false, isEnabledByDefault = false, vmOptionsReader(""))
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = false, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf(
       "-Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider",
       "-Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager",
@@ -41,13 +41,13 @@ class IjentWslNioFsTogglerTest {
 
   @Test
   fun `disable when no options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf()
   }
 
   @Test
   fun `enable when disabling options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = true, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
       -Didea.force.default.filesystem=true
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
       -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
@@ -62,7 +62,7 @@ class IjentWslNioFsTogglerTest {
 
   @Test
   fun `disable when enabling options set`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
       -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
       -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
       -Dwsl.use.remote.agent.for.nio.filesystem=true
@@ -76,7 +76,7 @@ class IjentWslNioFsTogglerTest {
 
   @Test
   fun `disable when enabling options set and forcing unset`() {
-    val changedOptions = IjentWslNioFsToggler.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader("""
         -Didea.force.default.filesystem=false
         -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
         -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
