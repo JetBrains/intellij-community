@@ -5,7 +5,9 @@ import com.intellij.openapi.actionSystem.ActionPopupMenu
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionPopupMenuListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.terminal.ui.TerminalWidget
@@ -30,10 +32,21 @@ internal object BlockTerminalPromotionService {
   }
 
   private fun doShowPromotionOnce(project: Project, widget: TerminalWidget) {
+    val curVersion = ApplicationInfo.getInstance().build
+    val blockTerminalUsedVersion = BuildNumber.fromString(TerminalUsageLocalStorage.getInstance().state.blockTerminalUsedLastVersion)
+    // If Block Terminal was used in the current version, no need to promote it.
+    // It is needed to not show promotion in the case when user enabled Block Terminal without seeing promotion,
+    // and switched back to the classic terminal.
+    // But allow showing promotion again if user tried Block Terminal in the previous version and switched back to the classic one.
+    if (curVersion.baselineVersion == blockTerminalUsedVersion?.baselineVersion) {
+      return
+    }
+
+    val gotItId = "new.terminal.promotion.${curVersion.baselineVersion}"  // Used to check that we didn't show the promotion before
     val text = TerminalBundle.message("new.terminal.promotion.text")
-    val tooltip = GotItTooltip("new.terminal.promotion", text)
+    val tooltip = GotItTooltip(gotItId, text)
     if (!tooltip.canShow()) {
-      return  // it was shown already once
+      return  // It was shown already once during the current major IDE version
     }
 
     val optionsButton = findUiComponent(project) { button: ActionButton ->

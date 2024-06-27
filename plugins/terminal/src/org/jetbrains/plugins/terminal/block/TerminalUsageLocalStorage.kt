@@ -33,6 +33,7 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
     @get:XMap
     val shellToExecutedCommandsNumber: MutableMap<String, Int> = HashMap()
     var feedbackNotificationShown: Boolean = false
+    var blockTerminalUsedLastVersion: String? = null
   }
 
   companion object {
