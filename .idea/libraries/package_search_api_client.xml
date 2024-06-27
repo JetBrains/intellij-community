@@ -1,0 +1,59 @@
+<component name="libraryTable">
+  <library name="package-search-api-client" type="repository">
+    <properties maven-id="org.jetbrains.packagesearch:packagesearch-api-client-jvm:3.1.1">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.1.1/packagesearch-api-client-jvm-3.1.1.jar">
+          <sha256sum>15cf65b66dc121308517db68e82d8930d7e227257bdb862ca07f1328515eea6b</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.1.1/packagesearch-http-models-jvm-3.1.1.jar">
+          <sha256sum>d8eeccae53547378ea2d1aaab6efa94d65c4693e3bcdefed13c44b8ce8a52df9</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.1.1/packagesearch-api-models-jvm-3.1.1.jar">
+          <sha256sum>eac34c241019a23d3b0a07b4e04888b110aa4c06a826f80de19d2457f6be4b81</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.1.1/packagesearch-version-utils-jvm-3.1.1.jar">
+          <sha256sum>ec7192861556914e6edb5ce0b901848431b03a327a3ca4045c332ab5b3b24ff8</sha256sum>
+        </artifact>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10.jar">
+          <sha256sum>0fe8dcdf54b13b5ec56fdb5f63c057364264bb2f51b7f7bc3c271d5b1ba68dcb</sha256sum>
+        </artifact>
+      </verification>
+      <exclude>
+        <dependency maven-id="io.ktor:ktor-client-cio-jvm" />
+        <dependency maven-id="ch.qos.logback:logback-classic" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-datetime-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-json-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+        <dependency maven-id="io.ktor:ktor-http-jvm" />
+        <dependency maven-id="io.ktor:ktor-client-content-negotiation-jvm" />
+        <dependency maven-id="io.ktor:ktor-client-encoding-jvm" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-json-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-jdk8" />
+        <dependency maven-id="org.slf4j:slf4j-api" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-jvm" />
+        <dependency maven-id="org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm" />
+        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="io.ktor:ktor-serialization-kotlinx-protobuf-jvm" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.1.1/packagesearch-api-client-jvm-3.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.1.1/packagesearch-http-models-jvm-3.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.1.1/packagesearch-api-models-jvm-3.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.1.1/packagesearch-version-utils-jvm-3.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-client-jvm/3.1.1/packagesearch-api-client-jvm-3.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-http-models-jvm/3.1.1/packagesearch-http-models-jvm-3.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-api-models-jvm/3.1.1/packagesearch-api-models-jvm-3.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/packagesearch-version-utils-jvm/3.1.1/packagesearch-version-utils-jvm-3.1.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/soywiz/korlibs/krypto/krypto-jvm/4.0.10/krypto-jvm-4.0.10-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

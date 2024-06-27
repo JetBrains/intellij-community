@@ -871,9 +871,9 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "OverlayScrollbars", attachedTo = "intellij.idea.community.main",
                    url = "https://kingsora.github.io/OverlayScrollbars", version = "2.1.1")
       .mit("https://github.com/KingSora/OverlayScrollbars/blob/master/LICENSE"),
-    LibraryLicense(name = "Package Search API Models", libraryName = "package-search-api-models",
-                   url = "https://github.com/JetBrains/package-search-api-models").apache(),
-
+    LibraryLicense(name = "Package Search API-Client", libraryName = "package-search-api-client", url = "https://github.com/JetBrains/package-search-api-models")
+      .apache("https://github.com/JetBrains/package-search-api-models/blob/master/LICENSE")
+      .suppliedByOrganizations("JetBrains Team"),
     LibraryLicense(name = "pip", attachedTo = "intellij.python", version = "20.3.4",
                    url = "https://pip.pypa.io/")
       .mit("https://github.com/pypa/pip/blob/main/LICENSE.txt"),
