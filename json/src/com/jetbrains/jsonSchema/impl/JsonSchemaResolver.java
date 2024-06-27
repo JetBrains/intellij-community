@@ -24,13 +24,14 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
+import static com.jetbrains.jsonSchema.impl.JsonSchemaValidityCacheKt.getOrComputeAdapterValidityAgainstGivenSchema;
 import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.*;
 
 public final class JsonSchemaResolver {
   private final @NotNull Project myProject;
   private final @NotNull JsonSchemaObject mySchema;
   private final @NotNull JsonPointerPosition myPosition;
-  private final @Nullable JsonSchemaNodeExpansionRequest myExpansionRequest;
+  private final @NotNull JsonSchemaNodeExpansionRequest myExpansionRequest;
 
 
   /**
@@ -209,8 +210,6 @@ public final class JsonSchemaResolver {
   }
 
   public static boolean isCorrect(final @NotNull JsonValueAdapter value, final @NotNull JsonSchemaObject schema) {
-    final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(value.getDelegate().getProject(), JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
-    checker.checkByScheme(value, schema);
-    return checker.isCorrect();
+    return getOrComputeAdapterValidityAgainstGivenSchema(value, schema);
   }
 }
