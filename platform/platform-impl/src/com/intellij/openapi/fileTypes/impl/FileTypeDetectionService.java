@@ -572,7 +572,7 @@ final class FileTypeDetectionService implements Disposable {
 
         if (detected == null && !StringUtil.isEmpty(text)) {
           FileTypeManagerImpl.FileTypeWithDescriptor ftd = myFileTypeManager.patternsTable.findAssociatedFileTypeByHashBang(text);
-          detected = ftd == null ? null : ftd.fileType;
+          detected = ftd == null ? null : ftd.fileType();
         }
         if (detected == null) {
           detected = StringUtil.isEmpty(text) ? (bytes.getLength() == 0 ? DetectedByContentFileType.INSTANCE : UnknownFileType.INSTANCE): PlainTextFileType.INSTANCE;

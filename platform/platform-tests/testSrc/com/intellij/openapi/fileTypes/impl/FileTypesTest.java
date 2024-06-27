@@ -288,7 +288,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     assertEmpty(psi.getText());
 
     FileTypeWithDescriptor anySaneFtd = ContainerUtil.find(myFileTypeManager.getRegisteredFileTypeWithDescriptors(),
-      f -> !(f.fileType instanceof AbstractFileType) && !f.fileType.isBinary());
+      f -> !(f.fileType() instanceof AbstractFileType) && !f.fileType().isBinary());
 
     String hashBang = "xxxxx";  // make sure no other hashBang substrings here
     associateHashBang(anySaneFtd, hashBang);
@@ -305,7 +305,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     });
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     FileDocumentManager.getInstance().saveAllDocuments();
-    assertEquals(anySaneFtd.fileType, getFileType(virtualFile));
+    assertEquals(anySaneFtd.fileType(), getFileType(virtualFile));
     assertEquals(hashBangedString, getPsiManager().findFile(virtualFile).getText());
   }
 
@@ -519,7 +519,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.fileType.getName(), true);
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.fileType().getName(), true);
 
     Element state = myFileTypeManager.getState();
     LOG.debug(JDOMUtil.writeElement(state));
@@ -544,7 +544,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     table.removeAssociation(matcher, fileType);
 
     WriteAction.run(() -> myFileTypeManager.setPatternsTable(fileTypes, table));
-    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.fileType.getName(), true);
+    myFileTypeManager.getRemovedMappingTracker().add(matcher, fileType.fileType().getName(), true);
 
     Element state = myFileTypeManager.getState();
     LOG.debug(JDOMUtil.writeElement(state));
@@ -593,7 +593,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
 
   public void testAddHashBangToReassignedTypeMustSurviveRestart() throws IOException, JDOMException {
     FileTypeWithDescriptor ftd = ContainerUtil.find(myFileTypeManager.getRegisteredFileTypeWithDescriptors(),
-      f -> !(f.fileType instanceof AbstractFileType));
+      f -> !(f.fileType() instanceof AbstractFileType));
 
     String hashBang = "xxx";
     associateHashBang(ftd, hashBang);
