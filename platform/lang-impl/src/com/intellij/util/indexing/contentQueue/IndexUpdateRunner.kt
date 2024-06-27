@@ -40,7 +40,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
-import kotlin.math.max
 
 @ApiStatus.Internal
 class IndexUpdateRunner(
@@ -51,7 +50,7 @@ class IndexUpdateRunner(
   private val indexer: Indexer = Indexer(fileBasedIndex, indexingRequest)
 
   init {
-    LOG.info("Using $INDEXING_THREADS_NUMBER indexing and ${TOTAL_WRITERS_NUMBER} writing threads for indexing")
+    LOG.info("Using ${INDEXING_PARALLELIZATION} workers for indexing and ${TOTAL_WRITERS_NUMBER} for writing indexes")
   }
 
   /**
@@ -72,7 +71,7 @@ class IndexUpdateRunner(
     fun isEmpty(): Boolean = filesOriginal.isEmpty
     fun size(): Int = filesOriginal.size
 
-    fun asChannel(cs: CoroutineScope): Channel<FileIndexingRequest> = filesOriginal.asChannel(cs, INDEXING_THREADS_NUMBER * 2)
+    fun asChannel(cs: CoroutineScope): Channel<FileIndexingRequest> = filesOriginal.asChannel(cs, INDEXING_PARALLELIZATION * 2)
   }
 
   @Throws(IndexingInterruptedException::class)
@@ -131,12 +130,13 @@ class IndexUpdateRunner(
         // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
         // So an optimization: we use fixed number of coroutines (approx. = # available CPUs), and a channel:
 
-        fileSet.filesOriginal.requests.forEachConcurrent { fileIndexingJob ->
+        fileSet.filesOriginal.requests.forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) { fileIndexingRequest ->
           while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
             delay(1)
           }
-          processRequestTask(fileIndexingJob)
+          processRequestTask(fileIndexingRequest)
         }
+
         //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
         //         index writing down the stack. But what if it is not?
         IndexWriter.defaultParallelWriter().waitCurrentIndexingToFinish()
@@ -319,11 +319,8 @@ class IndexUpdateRunner(
   companion object {
     private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
 
-    /**
-     * Number of indexing threads. In ideal scenario writing threads are 100% busy, so we are taking them into account.
-     */
-    val INDEXING_THREADS_NUMBER: Int = max(
-      UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() - TOTAL_WRITERS_NUMBER, 1)
+    /** Number indexing tasks to run in parallel */
+    val INDEXING_PARALLELIZATION: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
 
     /**
      * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed
@@ -331,7 +328,7 @@ class IndexUpdateRunner(
      *
      * @see .signalThatFileIsUnloaded
      */
-    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_THREADS_NUMBER * 4L * FileUtilRt.MEGABYTE
+    private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
 
     /**
      * Memory optimization to prevent OutOfMemory on loading file contents.

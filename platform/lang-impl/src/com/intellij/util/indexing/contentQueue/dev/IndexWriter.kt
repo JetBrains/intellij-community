@@ -19,7 +19,7 @@ import com.intellij.util.indexing.FileIndexingResult
 import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
 import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.UnindexedFilesUpdater
-import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.INDEXING_THREADS_NUMBER
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.INDEXING_PARALLELIZATION
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter.Companion.WRITE_INDEXES_ON_SEPARATE_THREAD
 import com.intellij.util.indexing.events.VfsEventsMerger
 import kotlinx.coroutines.*
@@ -410,7 +410,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
 
   private fun scheduleIndexWriting(writerIndex: Int, runnable: Runnable) {
     indexWritesQueued.incrementAndGet()
-    sleepIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
+    sleepIfWriterQueueLarge(INDEXING_PARALLELIZATION)
 
     writers[writerIndex].execute {
       val startedAtNs = System.nanoTime()
@@ -426,21 +426,21 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
     }
   }
 
-  private fun sleepIfWriterQueueLarge(numberOfIndexingThreads: Int) {
+  private fun sleepIfWriterQueueLarge(numberOfIndexingWorkers: Int) {
     val currentlySleeping = sleepingIndexers.get()
     val couldBeSleeping = currentlySleeping + 1
-    val writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingThreads + couldBeSleeping)
+    val writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingWorkers + couldBeSleeping)
     val writesInQueue = indexWritesQueued.get()
     //TODO RC: why we don't repeat the CAS below if it fails?
     if (writesInQueue > writesInQueueToSleep && sleepingIndexers.compareAndSet(currentlySleeping, couldBeSleeping)) {
       val writesToWakeUp = writesInQueueToSleep - MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER
-      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingThreads, "; writes queued: ", writesInQueue,
+      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingWorkers, "; writes queued: ", writesInQueue,
                 "; wake up when queue shrinks to ", writesToWakeUp)
       //TODO RC: EXPECTED_SINGLE_WRITE_TIME_NS should be dynamically adjusted to actual value, not fixed
       val napTimeNs = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * EXPECTED_SINGLE_WRITE_TIME_NS
       try {
         val sleptNs = sleepUntilUpdatesQueueIsShrunk(writesToWakeUp, napTimeNs)
-        LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingThreads, " by ", indexWritesQueued.get(),
+        LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingWorkers, " by ", indexWritesQueued.get(),
                   " updates in queue, should have wake up on ", writesToWakeUp,
                   "; slept for ", sleptNs, " ns")
         totalTimeSleptNs.addAndGet(sleptNs)
@@ -675,7 +675,7 @@ class MultiThreadedWithSuspendIndexWriter : ParallelIndexWriter() {
 
   private suspend fun scheduleIndexWriting(writerIndex: Int, runnable: Runnable) {
     indexWritesQueued.incrementAndGet()
-    suspendIfWriterQueueLarge(INDEXING_THREADS_NUMBER)
+    suspendIfWriterQueueLarge(INDEXING_PARALLELIZATION)
 
     writers[writerIndex].execute {
       val startedAtNs = System.nanoTime()
@@ -691,21 +691,21 @@ class MultiThreadedWithSuspendIndexWriter : ParallelIndexWriter() {
     }
   }
 
-  private suspend fun suspendIfWriterQueueLarge(numberOfIndexingThreads: Int) {
+  private suspend fun suspendIfWriterQueueLarge(numberOfIndexingWorkers: Int) {
     val currentlySleeping = sleepingIndexers.get()
     val couldBeSleeping = currentlySleeping + 1
-    val writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingThreads + couldBeSleeping)
+    val writesInQueueToSleep = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * (numberOfIndexingWorkers + couldBeSleeping)
     val writesInQueue = indexWritesQueued.get()
     //TODO RC: why we don't repeat the CAS below if it fails?
     if (writesInQueue > writesInQueueToSleep && sleepingIndexers.compareAndSet(currentlySleeping, couldBeSleeping)) {
       val writesToWakeUp = writesInQueueToSleep - MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER
-      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingThreads, "; writes queued: ", writesInQueue,
+      LOG.debug("Sleeping indexer: ", couldBeSleeping, " of ", numberOfIndexingWorkers, "; writes queued: ", writesInQueue,
                 "; wake up when queue shrinks to ", writesToWakeUp)
       //TODO RC: EXPECTED_SINGLE_WRITE_TIME_NS should be dynamically adjusted to actual value, not fixed
       val napTimeNs = MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER * EXPECTED_SINGLE_WRITE_TIME_NS
       try {
         val sleptNs = suspendUntilUpdatesQueueIsShrunk(writesToWakeUp, napTimeNs)
-        LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingThreads, " by ", indexWritesQueued.get(),
+        LOG.debug("Waking indexer ", sleepingIndexers.get(), " of ", numberOfIndexingWorkers, " by ", indexWritesQueued.get(),
                   " updates in queue, should have wake up on ", writesToWakeUp,
                   "; slept for ", sleptNs, " ns")
         totalTimeSleptNs.addAndGet(sleptNs)

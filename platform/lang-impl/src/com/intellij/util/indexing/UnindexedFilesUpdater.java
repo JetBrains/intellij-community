@@ -5,20 +5,26 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+import static com.intellij.util.SystemProperties.getIntProperty;
+
 public final class UnindexedFilesUpdater {
-  private static final boolean useConservativeThreadCountPolicy =
-    SystemProperties.getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false);
+  private static final boolean useConservativeThreadCountPolicy = getBooleanProperty("idea.indexing.use.conservative.thread.count.policy", false);
+
   private static final int DEFAULT_MAX_INDEXER_THREADS = 4;
-  // Allows to specify number of indexing threads. -1 means the default value (currently, 4).
-  private static final int INDEXER_THREAD_COUNT = SystemProperties.getIntProperty("caches.indexerThreadsCount", -1);
-  private static final boolean IS_HT_SMT_ENABLED = SystemProperties.getBooleanProperty("intellij.system.ht.smt.enabled", false);
+  /** Defines number of indexing threads. -1 means autoconfigured value (see getNumberOfIndexingThreads/getMaxNumberOfIndexingThreads for algo). */
+  private static final int INDEXER_THREAD_COUNT = getIntProperty("caches.indexerThreadsCount", -1);
+  /**
+   * Count CPU# with or without hyper-threading:
+   * if true:  assume # cores reported is # physical cores x2, so /2 to get physical cores count
+   * If false (default): use # cores reported as-is, don't try to outsmart CPU developers
+   */
+  private static final boolean IS_HT_SMT_ENABLED = getBooleanProperty("intellij.system.ht.smt.enabled", false);
 
   private UnindexedFilesUpdater() {
-
   }
 
   /**
@@ -52,6 +58,7 @@ public final class UnindexedFilesUpdater {
     var availableCores = Runtime.getRuntime().availableProcessors();
     return IS_HT_SMT_ENABLED ? availableCores / 2 : availableCores;
   }
+
   /**
    * Scanning activity can be scaled well across number of threads, so we're trying to use all available resources to do it faster.
    */
