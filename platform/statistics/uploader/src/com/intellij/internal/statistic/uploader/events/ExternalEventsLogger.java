@@ -59,8 +59,8 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
     logEvent(new ExternalUploadStartedEvent(System.currentTimeMillis(), null));
   }
 
-  public void logSendingLogsFinished(@NotNull String error) {
-    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), error, null));
+  public void logSendingLogsFinished(@NotNull StatisticsResult.ResultCode code) {
+    logEvent(new ExternalUploadFinishedEvent(System.currentTimeMillis(), code.name(), null));
   }
 
   public void logSendingLogsFinished(@NotNull String recorderId, @NotNull String error) {
@@ -82,8 +82,8 @@ public class ExternalEventsLogger implements DataCollectorSystemEventLogger {
   }
 
   @Override
-  public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
-    logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), eventId, exception, recorderId));
+  public void logLoadingConfigFailed(@NotNull String recorderId, @NotNull Throwable exception) {
+    logEvent(new ExternalSystemErrorEvent(System.currentTimeMillis(), exception, recorderId));
   }
 
   private void logEvent(@NotNull ExternalSystemEvent event) {

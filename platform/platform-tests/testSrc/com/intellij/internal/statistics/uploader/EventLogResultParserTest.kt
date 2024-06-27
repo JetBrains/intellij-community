@@ -209,15 +209,15 @@ class EventLogResultParserTest : UsefulTestCase() {
 
   fun test_parse_error_event_old_version() {
     assertEquals(
-      ExternalSystemErrorEvent(1583419435214, "event.failed", "com.jetbrains.SomeException", OLD_VERSION_RECORDER),
-      deserialize("1583419435214 ERROR event.failed com.jetbrains.SomeException", OLD_VERSION)
+      ExternalSystemErrorEvent(1583419435214, "com.jetbrains.SomeException", OLD_VERSION_RECORDER),
+      deserialize("1583419435214 ERROR com.jetbrains.SomeException", OLD_VERSION)
     )
   }
 
   fun test_parse_error_event() {
     assertEquals(
-      ExternalSystemErrorEvent(1583419435214, "event.failed", "com.jetbrains.SomeException", RECORDER),
-      deserialize("1583419435214 ERROR ABC event.failed com.jetbrains.SomeException", VERSION)
+      ExternalSystemErrorEvent(1583419435214, "com.jetbrains.SomeException", RECORDER),
+      deserialize("1583419435214 ERROR ABC com.jetbrains.SomeException", VERSION)
     )
   }
 
@@ -279,16 +279,14 @@ class EventLogResultParserTest : UsefulTestCase() {
 
   fun test_parse_error_event_failed_old_version() {
     assertNull(deserialize("1583419435214 ERROR", OLD_VERSION))
-    assertNull(deserialize("1583419435214 ERROR event.failed", OLD_VERSION))
-    assertNull(deserialize("ERROR event.failed com.jetbrains.SomeException", OLD_VERSION))
-    assertNull(deserialize("1583419435214 ERROR event.failed com.jetbrains.SomeException more.messages", OLD_VERSION))
+    assertNull(deserialize("ERROR com.jetbrains.SomeException", OLD_VERSION))
+    assertNull(deserialize("1583419435214 ERROR com.jetbrains.SomeException more.messages", OLD_VERSION))
   }
 
   fun test_parse_error_event_failed() {
     assertNull(deserialize("1583419435214 ERROR ABC", VERSION))
-    assertNull(deserialize("1583419435214 ERROR ABC event.failed", VERSION))
-    assertNull(deserialize("ERROR ABC event.failed com.jetbrains.SomeException", VERSION))
-    assertNull(deserialize("1583419435214 ERROR ABC event.failed com.jetbrains.SomeException more.messages", VERSION))
+    assertNull(deserialize("ERROR ABC com.jetbrains.SomeException", VERSION))
+    assertNull(deserialize("1583419435214 ERROR ABC com.jetbrains.SomeException more.messages", VERSION))
   }
 
   fun test_parse_unknown_event_failed_old_version() {
@@ -423,19 +421,19 @@ class EventLogResultParserTest : UsefulTestCase() {
 
   fun test_serialize_error_event() {
     assertEquals(
-      "1583419435214 ERROR ABC loading.config.failed com.jetbrains.SomeException",
-      serialize(ExternalSystemErrorEvent(1583419435214, "loading.config.failed", "com.jetbrains.SomeException", RECORDER))
+      "1583419435214 ERROR ABC com.jetbrains.SomeException",
+      serialize(ExternalSystemErrorEvent(1583419435214,"com.jetbrains.SomeException", RECORDER))
     )
 
     assertEquals(
-      "1583419435214 ERROR ABC loading SomeException",
-      serialize(ExternalSystemErrorEvent(1583419435214, "loading", "SomeException", RECORDER))
+      "1583419435214 ERROR ABC SomeException",
+      serialize(ExternalSystemErrorEvent(1583419435214, "SomeException", RECORDER))
     )
 
     val ex = MockEventLogCustomException()
     assertEquals(
-      "1583419435214 ERROR ABC event.failed com.intellij.internal.statistics.uploader.MockEventLogCustomException",
-      serialize(ExternalSystemErrorEvent(1583419435214, "event.failed", ex, RECORDER))
+      "1583419435214 ERROR ABC com.intellij.internal.statistics.uploader.MockEventLogCustomException",
+      serialize(ExternalSystemErrorEvent(1583419435214, ex, RECORDER))
     )
   }
 

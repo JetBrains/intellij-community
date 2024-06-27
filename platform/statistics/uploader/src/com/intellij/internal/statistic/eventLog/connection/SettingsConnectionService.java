@@ -102,6 +102,6 @@ public abstract class SettingsConnectionService {
     } else {
       myApplicationInfo.getLogger().warn(message, e);
     }
-    myApplicationInfo.getEventLogger().logErrorEvent(recorderId, "loading.config.failed", e);
+    myApplicationInfo.getEventLogger().logLoadingConfigFailed(recorderId, e);
   }
 }

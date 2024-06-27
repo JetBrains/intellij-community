@@ -28,8 +28,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
     myConnectionSettings = new EventLogAppConnectionSettings();
     myEventLogger = new DataCollectorSystemEventLogger() {
       @Override
-      public void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception) {
-        EventLogSystemLogger.logSystemError(recorderId, eventId, exception.getClass().getName(), -1);
+      public void logLoadingConfigFailed(@NotNull String recorderId, @NotNull Throwable exception) {
+        EventLogSystemLogger.logLoadingConfigFailed(recorderId, exception.getClass().getName(), -1);
       }
     };
   }

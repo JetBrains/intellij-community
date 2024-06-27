@@ -7,22 +7,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public class ExternalSystemErrorEvent extends ExternalSystemEvent {
-  private final String myEvent;
   private final String myErrorClass;
 
-  public ExternalSystemErrorEvent(long timestamp, @NotNull String event, @NotNull Throwable th, @Nullable String recorder) {
-    this(timestamp, event, th.getClass().getName(), recorder);
+  public ExternalSystemErrorEvent(long timestamp, @NotNull Throwable th, @Nullable String recorder) {
+    this(timestamp, th.getClass().getName(), recorder);
   }
 
-  public ExternalSystemErrorEvent(long timestamp, @NotNull String event, @NotNull String errorClass, @Nullable String recorder) {
+  public ExternalSystemErrorEvent(long timestamp, @NotNull String errorClass, @Nullable String recorder) {
     super(ExternalSystemEventType.ERROR, timestamp, recorder);
-    myEvent = event;
     myErrorClass = errorClass;
-  }
-
-  @NotNull
-  public String getEvent() {
-    return myEvent;
   }
 
   @NotNull
@@ -36,12 +29,11 @@ public class ExternalSystemErrorEvent extends ExternalSystemEvent {
     if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
     ExternalSystemErrorEvent event = (ExternalSystemErrorEvent)o;
-    return Objects.equals(myEvent, event.myEvent) &&
-           Objects.equals(myErrorClass, event.myErrorClass);
+    return Objects.equals(myErrorClass, event.myErrorClass);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(super.hashCode(), myEvent, myErrorClass);
+    return Objects.hash(super.hashCode(), myErrorClass);
   }
 }
