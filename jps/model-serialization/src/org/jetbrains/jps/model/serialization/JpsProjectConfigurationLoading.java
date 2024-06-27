@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -14,13 +16,12 @@ import org.jetbrains.jps.model.serialization.impl.JpsProjectSerializationDataExt
 import org.jetbrains.jps.model.serialization.runConfigurations.JpsRunConfigurationSerializer;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Contains helper methods which are used to load parts of the project configuration which aren't stored in the workspace model.
@@ -136,9 +137,29 @@ public final class JpsProjectConfigurationLoading {
       String sdkName = rootManagerElement.getAttributeValue("project-jdk-name");
       String sdkTypeId = rootManagerElement.getAttributeValue("project-jdk-type");
       if (sdkName != null) {
-        sdkTypeIdAndName = new Pair<>(sdkTypeId, sdkName);
+        sdkTypeIdAndName = new Pair<>(Objects.requireNonNullElse(sdkTypeId, "JavaSDK"), sdkName);
       }
     }
     return sdkTypeIdAndName;
+  }
+
+  public static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, @NotNull Path moduleFile) {
+    JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
+    String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.toAbsolutePath().toString());
+    if (moduleDirPath != null) {
+      expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtilRt.toSystemDependentName(moduleDirPath)));
+    }
+    return expander;
+  }
+
+  public static @NotNull Set<String> readNamesOfUnloadedModules(@NotNull Path workspaceFile, @NotNull JpsComponentLoader componentLoader) {
+    Set<String> unloadedModules = new HashSet<>();
+    if (workspaceFile.toFile().exists()) {
+      Element unloadedModulesList = JDomSerializationUtil.findComponent(componentLoader.loadRootElement(workspaceFile), "UnloadedModulesList");
+      for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
+        unloadedModules.add(element.getAttributeValue("name"));
+      }
+    }
+    return unloadedModules;
   }
 }

@@ -33,7 +33,7 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
   }
   private val sdkReferencesTable = JpsSdkReferencesTableBridge(additionalData.projectSdkId, this)
 
-  override fun getModules(): List<JpsModule> = modules
+  override fun getModules(): List<JpsModuleBridge> = modules
 
   override fun <P : JpsElement?> getModules(type: JpsModuleType<P>): Iterable<JpsTypedModule<P>> {
     return modules.asSequence()

@@ -25,9 +25,13 @@ public class JpsComponentLoader {
   protected final @Nullable Path myExternalConfigurationDirectory;
   private final JpsMacroExpander myMacroExpander;
 
-  public JpsComponentLoader(JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory) {
+  public JpsComponentLoader(@NotNull JpsMacroExpander macroExpander, @Nullable Path externalConfigurationDirectory) {
     myMacroExpander = macroExpander;
     myExternalConfigurationDirectory = externalConfigurationDirectory;
+  }
+
+  public @NotNull JpsMacroExpander getMacroExpander() {
+    return myMacroExpander;
   }
 
   /**
@@ -37,10 +41,10 @@ public class JpsComponentLoader {
     return loadRootElement(file, myMacroExpander);
   }
 
-  protected <E extends JpsElement> void loadComponents(@NotNull Path dir,
-                                                       @NotNull Path defaultConfigFile,
-                                                       JpsElementExtensionSerializerBase<E> serializer,
-                                                       final E element) {
+  public  <E extends JpsElement> void loadComponents(@NotNull Path dir,
+                                                     @NotNull Path defaultConfigFile,
+                                                     JpsElementExtensionSerializerBase<E> serializer,
+                                                     E element) {
     String fileName = serializer.getConfigFileName();
     Path configFile = fileName == null ? defaultConfigFile : dir.resolve(fileName);
     Runnable timingLog = TimingLog.startActivity("loading: " + configFile.getFileName() + ":" + serializer.getComponentName());

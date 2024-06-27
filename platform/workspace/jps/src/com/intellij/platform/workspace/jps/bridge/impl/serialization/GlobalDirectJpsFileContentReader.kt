@@ -10,7 +10,10 @@ import org.jetbrains.jps.model.serialization.JpsMacroExpander
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.io.path.Path
 
-internal class DirectJpsFileContentReader(private val macroExpander: JpsMacroExpander) : JpsFileContentReader {
+/**
+ * Loads global settings used in the workspace model directly from XML configuration files. 
+ */
+internal class GlobalDirectJpsFileContentReader(private val macroExpander: JpsMacroExpander) : JpsFileContentReader {
   private val componentLoader = JpsComponentLoader(macroExpander, null)
   
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {

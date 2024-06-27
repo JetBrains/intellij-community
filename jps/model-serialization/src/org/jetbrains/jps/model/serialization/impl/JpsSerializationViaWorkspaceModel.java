@@ -26,8 +26,10 @@ public interface JpsSerializationViaWorkspaceModel {
     return null;
   }
 
-  @NotNull JpsModel loadModel(@NotNull Path projectPath, @Nullable Path optionsPath, boolean loadUnloadedModules) throws IOException;
+  @NotNull JpsModel loadModel(@NotNull Path projectPath,
+                              @Nullable Path externalConfigurationDirectory,
+                              @Nullable Path optionsPath, boolean loadUnloadedModules) throws IOException;
 
-  @NotNull JpsProject loadProject(@NotNull Path projectPath, @NotNull Map<String, String> pathVariables,
+  @NotNull JpsProject loadProject(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @NotNull Map<String, String> pathVariables,
                                   boolean loadUnloadedModules) throws IOException;
 }

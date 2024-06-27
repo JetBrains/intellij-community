@@ -29,7 +29,6 @@ import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerialize
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -248,13 +247,8 @@ public final class JpsProjectLoader {
       return;
     }
 
-    Set<String> unloadedModules = new HashSet<>();
-    if (!myLoadUnloadedModules && workspaceFile.toFile().exists()) {
-      Element unloadedModulesList = JDomSerializationUtil.findComponent(myComponentLoader.loadRootElement(workspaceFile), "UnloadedModulesList");
-      for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
-        unloadedModules.add(element.getAttributeValue("name"));
-      }
-    }
+    Set<String> unloadedModules = !myLoadUnloadedModules ? JpsProjectConfigurationLoading.readNamesOfUnloadedModules(workspaceFile, myComponentLoader) 
+                                                         : Collections.emptySet();
 
     final Set<Path> foundFiles = CollectionFactory.createSmallMemoryFootprintSet();
     final List<Path> moduleFiles = new ArrayList<>();
@@ -297,7 +291,7 @@ public final class JpsProjectLoader {
 
     for (Path file : moduleFiles) {
       futureModuleFilesContents.add(CompletableFuture.supplyAsync(() -> {
-        JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
+        JpsMacroExpander expander = JpsProjectConfigurationLoading.createModuleMacroExpander(pathVariables, file);
 
         Element data = JpsComponentLoader.loadRootElement(file, expander);
         if (externalModuleDir != null) {
@@ -409,7 +403,7 @@ public final class JpsProjectLoader {
         JpsModuleClasspathSerializer classpathSerializer = extension.getClasspathSerializer();
         if (classpathSerializer != null && classpathSerializer.getClasspathId().equals(classpath)) {
           String classpathDir = moduleRoot.getAttributeValue(CLASSPATH_DIR_ATTRIBUTE);
-          final JpsMacroExpander expander = createModuleMacroExpander(pathVariables, file);
+          final JpsMacroExpander expander = JpsProjectConfigurationLoading.createModuleMacroExpander(pathVariables, file);
           classpathSerializer.loadClasspath(module, classpathDir, baseModulePath, expander, paths, projectSdkType);
         }
       }
@@ -432,15 +426,6 @@ public final class JpsProjectLoader {
 
   private static @NotNull String getModuleName(@NotNull Path file) {
     return FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
-  }
-
-  static JpsMacroExpander createModuleMacroExpander(final Map<String, String> pathVariables, @NotNull Path moduleFile) {
-    JpsMacroExpander expander = new JpsMacroExpander(pathVariables);
-    String moduleDirPath = PathMacroUtil.getModuleDir(moduleFile.toAbsolutePath().toString());
-    if (moduleDirPath != null) {
-      expander.addFileHierarchyReplacements(PathMacroUtil.MODULE_DIR_MACRO_NAME, new File(FileUtilRt.toSystemDependentName(moduleDirPath)));
-    }
-    return expander;
   }
 
   private static <P extends JpsElement> JpsModule createModule(String name, Element moduleRoot, JpsModulePropertiesSerializer<P> loader) {

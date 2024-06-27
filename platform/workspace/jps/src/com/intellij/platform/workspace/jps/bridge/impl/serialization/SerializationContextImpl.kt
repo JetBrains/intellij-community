@@ -7,11 +7,9 @@ import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 
 internal class SerializationContextImpl(
-  override val virtualFileUrlManager: VirtualFileUrlManager
+  override val virtualFileUrlManager: VirtualFileUrlManager,
+  override val fileContentReader: JpsFileContentReader,
 ) : SerializationContext {
-  
-  override val fileContentReader: JpsFileContentReader
-    get() = TODO("not implemented")
   
   override val isExternalStorageEnabled: Boolean
     get() = false //todo
@@ -19,11 +17,14 @@ internal class SerializationContextImpl(
     get() = FileInDirectorySourceNames.empty()
   
   override val isJavaPluginPresent: Boolean
-    get() = true //todo?
+    get() = true
+  
   override val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
     get() = emptyList() //todo
+  
   override val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
     get() = emptyList() //todo
+  
   override val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<*>>
     get() = listOf(DefaultFacetEntitySerializer()) //todo
 }

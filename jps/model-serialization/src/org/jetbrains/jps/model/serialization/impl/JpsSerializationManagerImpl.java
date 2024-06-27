@@ -27,7 +27,7 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
                             boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
-      return serializationViaWorkspaceModel.loadModel(projectPath, optionsPath, loadUnloadedModules);
+      return serializationViaWorkspaceModel.loadModel(projectPath, externalConfigurationDirectory, optionsPath, loadUnloadedModules);
     }
 
     JpsModel model = JpsElementFactory.getInstance().createModel();
@@ -61,7 +61,7 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
                                 boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
-      return serializationViaWorkspaceModel.loadProject(projectPath, pathVariables, loadUnloadedModules);
+      return serializationViaWorkspaceModel.loadProject(projectPath, externalConfigurationDirectory, pathVariables, loadUnloadedModules);
     }
 
     JpsModel model = JpsElementFactory.getInstance().createModel();
