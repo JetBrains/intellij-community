@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.impl.stores.stateStore
@@ -359,11 +360,14 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
   }
 
   private fun disableAndRemoveData() {
+    val modality = ModalityState.current();
+
     object : Task.Modal(null, message("disable.remove.data.title"), false) {
       override fun run(indicator: ProgressIndicator) {
         val cdl = CountDownLatch(1)
         SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData { result ->
           cdl.countDown()
+
           when (result) {
             is DeleteServerDataResult.Error -> {
               runInEdt {
@@ -371,12 +375,13 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
               }
             }
             DeleteServerDataResult.Success -> {
-              runInEdt {
+              runInEdt(modality) {
                 updateStatusInfo()
               }
             }
           }
         })
+
         cdl.await(1, TimeUnit.MINUTES)
       }
     }.queue()
