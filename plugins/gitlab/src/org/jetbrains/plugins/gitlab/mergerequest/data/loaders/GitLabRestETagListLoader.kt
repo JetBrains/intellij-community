@@ -3,10 +3,13 @@ package org.jetbrains.plugins.gitlab.mergerequest.data.loaders
 
 import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.api.util.LinkHttpHeaderValue
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.Change
+import com.intellij.collaboration.async.PaginatedPotentiallyInfiniteListLoader
+import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.util.URIUtil
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabRestETagListLoader.PageInfo
 import java.net.HttpURLConnection
@@ -43,14 +46,11 @@ private class GitLabRestETagListLoader<K, V>(
   shouldTryToLoadAll: Boolean = false,
 
   private val performRequest: suspend (uri: URI, eTag: String?) -> HttpResponse<out List<V>?>
-) : PaginatedPotentiallyInfiniteListLoader<PageInfo, K, V>(cs, PageInfo(initialURI), extractKey, shouldTryToLoadAll) {
+) : PaginatedPotentiallyInfiniteListLoader<PageInfo, K, V>(PageInfo(initialURI), extractKey, shouldTryToLoadAll) {
   companion object {
     private const val ETAG_HEADER = "ETag"
   }
 
-  /**
-   *
-   */
   data class PageInfo(
     val link: URI,
     val nextLink: URI? = null,
