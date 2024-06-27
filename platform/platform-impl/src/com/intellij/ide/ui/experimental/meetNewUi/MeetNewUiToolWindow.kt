@@ -19,6 +19,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
@@ -46,8 +47,6 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
 
     private val BANNER = IconLoader.getIcon("expui/meetNewUi/newUIOnboardingToolWindow.png", MeetNewUiToolWindow::class.java.classLoader)
 
-    private val BANNER_DARK_BACKGROUND = Gray.x01
-    private val BANNER_LIGHT_BACKGROUND = JBUI.CurrentTheme.ToolWindow.background()
     private const val BANNER_HEIGHT = 231
   }
 
@@ -60,9 +59,7 @@ internal class MeetNewUiToolWindow(private val project: Project, private val too
       row {
         val scale = JBUI.scale(BANNER_HEIGHT).toFloat() / BANNER.iconHeight
         cell(object : JLabel(IconUtil.scale(BANNER, WindowManager.getInstance().getFrame(project), scale)) {
-          override fun getBackground(): Color {
-            return if (LafManager.getInstance().lookAndFeelReference.name == "Dark") BANNER_DARK_BACKGROUND else BANNER_LIGHT_BACKGROUND
-          }
+          override fun getBackground(): Color = JBColor(JBUI.CurrentTheme.ToolWindow.background(), Gray.x01)
         })
           .align(AlignX.FILL)
           .applyToComponent {

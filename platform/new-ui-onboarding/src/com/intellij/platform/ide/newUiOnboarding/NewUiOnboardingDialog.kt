@@ -8,7 +8,6 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupBorder
@@ -17,15 +16,12 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Font
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JRootPane
 import javax.swing.border.Border
 import javax.swing.event.HyperlinkEvent
@@ -46,18 +42,11 @@ internal class NewUiOnboardingDialog(private val project: Project)
 
   override fun createCenterPanel(): JComponent {
     val contentGaps = UnscaledGaps(28, 32, 22, 32)
-     val imageWidth = 384
-     val imageHeight = 242
-     val imageSize = JBDimension(imageWidth, imageHeight)
+    val popupImage = IconLoader.getIcon(POPUP_IMAGE_PATH, NewUiOnboardingDialog::class.java.classLoader)
     val panel = panel {
       row {
-        val img = IconLoader.getIcon(POPUP_IMAGE_PATH, NewUiOnboardingDialog::class.java.classLoader)
-        val scale = JBUI.scale(imageHeight).toFloat() / img.iconHeight
-        cell(JLabel(IconUtil.scale(img, WindowManager.getInstance().getFrame(project), scale)))
+        icon(popupImage)
           .customize(UnscaledGaps.EMPTY)
-          .applyToComponent {
-            preferredSize = imageSize
-          }
       }
       panel {
         row {
@@ -68,7 +57,7 @@ internal class NewUiOnboardingDialog(private val project: Project)
             }
         }
         row {
-          val maxWidth = imageWidth - JBUI.scale(contentGaps.width)
+          val maxWidth = popupImage.iconWidth - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
           text(NewUiOnboardingBundle.message("dialog.text", ApplicationNamesInfo.getInstance().fullProductName), maxLineLength) { event ->
