@@ -220,7 +220,7 @@ fun CoroutineScope.startApplication(
     // plugins cannot be loaded when a config import is needed, because plugins may be added after importing
     configImportDeferred.join()
 
-    if (!PluginAutoUpdateRepository.shouldSkipAutoUpdate()) {
+    if (!PluginAutoUpdater.shouldSkipAutoUpdate()) {
       span("plugin auto update") {
           PluginAutoUpdater.applyPluginUpdates(logDeferred)
       }

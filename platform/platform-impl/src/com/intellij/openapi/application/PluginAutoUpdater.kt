@@ -34,8 +34,12 @@ import kotlin.io.path.exists
 
 @ApiStatus.Internal
 object PluginAutoUpdater {
+  const val SKIP_PLUGIN_AUTO_UPDATE_PROPERTY: String = "ide.skip.plugin.auto.update"
+
   @Volatile
   private var pluginAutoUpdateResult: Result<PluginAutoUpdateStatistics>? = null
+
+  fun shouldSkipAutoUpdate(): Boolean = System.getProperty(SKIP_PLUGIN_AUTO_UPDATE_PROPERTY) == "true"
 
   /**
    * This method is called during startup, before the plugins are loaded.
