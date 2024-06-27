@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.workspace.jps.serialization.impl.ApplicationLevelUrlRelativizer
 import com.intellij.util.SystemProperties
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.JpsMavenSettings
 import java.io.File
 
@@ -18,9 +18,10 @@ import java.io.File
  * Additionally, since it inherits from ApplicationLevelUrlRelativizer, its base paths
  * (such as USER_HOME and APPLICATION_HOME_DIR) are also generated.
  *
- * @param project The project for which the base paths are calculated.
+ * @param projectBaseDirPath path to the base directory of the project for which the base paths are calculated.
  */
-class JpsProjectUrlRelativizer(private val project: Project) : ApplicationLevelUrlRelativizer() {
+@ApiStatus.Internal
+class JpsProjectUrlRelativizer(private val projectBaseDirPath: String?) : ApplicationLevelUrlRelativizer() {
 
   init {
     getBasePathsToAdd().forEach { pair ->
@@ -31,7 +32,7 @@ class JpsProjectUrlRelativizer(private val project: Project) : ApplicationLevelU
   }
 
   private fun getBasePathsToAdd() = listOf(
-    Pair("PROJECT_DIR", project.basePath),
+    Pair("PROJECT_DIR", projectBaseDirPath),
     Pair("MAVEN_REPOSITORY", JpsMavenSettings.getMavenRepositoryPath()),
     Pair("GRADLE_REPOSITORY", getGradleRepositoryPath())
   )
