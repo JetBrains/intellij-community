@@ -339,7 +339,7 @@ class DirtyFilesQueueTest {
 
   private fun assertIsFullScanning(scanning: JsonIndexingActivityDiagnostic, fullScanning: Boolean) {
     val times = (scanning.projectIndexingActivityHistory.times as JsonProjectScanningHistoryTimes)
-    assertThat(times.scanningType).isEqualTo(if (fullScanning) ScanningType.FULL_ON_PROJECT_OPEN else ScanningType.PARTIAL)
+    assertThat(times.scanningType).isEqualTo(if (fullScanning) ScanningType.FULL_ON_PROJECT_OPEN else ScanningType.PARTIAL_ON_PROJECT_OPEN)
   }
 
   private fun findScanningTriggeredBy(project: Project, @Suppress("SameParameterValue") reason: String): JsonIndexingActivityDiagnostic {

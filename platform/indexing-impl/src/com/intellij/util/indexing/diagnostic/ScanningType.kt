@@ -31,6 +31,11 @@ enum class ScanningType(val isFull: Boolean) {
   PARTIAL_FORCED(false),
 
   /**
+   * Full scanning on project open was skipped, and only dirty files from the last IDE session are scanned
+   */
+  PARTIAL_ON_PROJECT_OPEN(false),
+
+  /**
    * Partial project rescan requested by some code
    */
   PARTIAL(false),
@@ -44,7 +49,7 @@ enum class ScanningType(val isFull: Boolean) {
     fun merge(first: ScanningType, second: ScanningType): ScanningType = returnFirstFound(first, second)
 
     private fun returnFirstFound(first: ScanningType, second: ScanningType): ScanningType {
-      val types = listOf(FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL, PARTIAL_FORCED, PARTIAL, REFRESH)
+      val types = listOf(FULL_FORCED, FULL_ON_PROJECT_OPEN, FULL, PARTIAL_FORCED, PARTIAL_ON_PROJECT_OPEN, PARTIAL, REFRESH)
       for (type in types) {
         if (first == type || second == type) return type
       }
