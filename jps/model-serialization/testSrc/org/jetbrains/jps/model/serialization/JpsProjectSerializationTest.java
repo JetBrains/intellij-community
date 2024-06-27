@@ -72,11 +72,15 @@ public class JpsProjectSerializationTest {
     assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
     assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
 
+    assertEquals(projectData.getUrl(""), assertOneElement(main.getContentRootsList().getUrls()));
+    assertEquals(projectData.getUrl("src"), assertOneElement(main.getSourceRoots()).getUrl());
+    
     JpsSdkDependency inheritedSdkDependency = assertInstanceOf(main.getDependenciesList().getDependencies().get(0), JpsSdkDependency.class);
     JpsSdkReference<?> projectSdkReference = inheritedSdkDependency.getSdkReference();
     assertNotNull(projectSdkReference);
     assertEquals("1.6", projectSdkReference.getSdkName());
 
+    assertEquals(projectData.getUrl("xxx"), assertOneElement(xxx.getContentRootsList().getUrls()));
     assertEquals(projectData.getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, true));
     assertEquals(projectData.getUrl("xxx/output"), JpsJavaExtensionService.getInstance().getOutputUrl(xxx, false));
   }
