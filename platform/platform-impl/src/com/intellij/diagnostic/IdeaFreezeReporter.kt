@@ -29,6 +29,7 @@ import java.lang.management.ThreadInfo
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.coroutineContext
 import kotlin.math.max
 import kotlin.math.min
@@ -107,14 +108,19 @@ internal class IdeaFreezeReporter : PerformanceListener {
       }
 
       dumpTask = object : SamplingTask(100, maxDumpDuration, coroutineScope) {
+        private val stopped = AtomicBoolean()
         override fun stop() {
           super.stop()
-          EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
+          if (stopped.compareAndSet(false, true)) {
+            EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
+          }
         }
 
         override suspend fun stopDumpingThreads() {
           super.stopDumpingThreads()
-          EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
+          if (stopped.compareAndSet(false, true)) {
+            EP_NAME.forEachExtensionSafe { it.stop(reportDir) }
+          }
         }
       }
       EP_NAME.forEachExtensionSafe { it.start(reportDir) }
