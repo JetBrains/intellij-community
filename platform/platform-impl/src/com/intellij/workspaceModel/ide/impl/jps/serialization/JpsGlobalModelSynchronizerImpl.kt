@@ -23,6 +23,7 @@ import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.*
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
+import kotlin.io.path.Path
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -90,7 +91,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   @TestOnly
   suspend fun saveSdkEntities() {
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(virtualFileUrlManager, sortedRootTypes) as JpsFileEntityTypeSerializer<WorkspaceEntity>
+    val sdkSerializer = JpsGlobalEntitiesSerializers.createSdkSerializer(virtualFileUrlManager, sortedRootTypes, Path(PathManager.getOptionsPath())) as JpsFileEntityTypeSerializer<WorkspaceEntity>
     val contentWriter = (ApplicationManager.getApplication().stateStore as ApplicationStoreJpsContentReader).createContentWriter()
     val entityStorage = GlobalWorkspaceModel.getInstance().entityStorage.current
     serializeEntities(entityStorage, sdkSerializer, contentWriter)
@@ -186,7 +187,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   private fun createSerializers(): List<JpsFileEntityTypeSerializer<WorkspaceEntity>> {
     if (isSerializationProhibited) return emptyList()
     val sortedRootTypes = OrderRootType.getSortedRootTypes().mapNotNull { it.sdkRootName }
-    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes)
+    return JpsGlobalEntitiesSerializers.createApplicationSerializers(virtualFileUrlManager, sortedRootTypes, Path(PathManager.getOptionsPath()))
   }
 
   private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,
