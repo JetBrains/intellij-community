@@ -3,6 +3,7 @@ package org.jetbrains.uast.test.common.kotlin
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
+import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
@@ -1253,5 +1254,43 @@ interface UastApiFixtureTestBase {
             }
         )
         TestCase.assertEquals(1, count)
+    }
+
+    fun checkStringConcatInAnnotationValue(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                 import java.lang.annotation.ElementType;
+                 import java.lang.annotation.Retention;
+                 import java.lang.annotation.RetentionPolicy;
+                 import java.lang.annotation.Target;
+
+                 @Retention(RetentionPolicy.CLASS)
+                 @Target({ElementType.METHOD})
+                 public @interface MyAnnotation {
+                     String[] password() default {};
+                 }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "main.kt", """
+                @MyAnnotation(
+                  password = [
+                    "nananananana, " +
+                      "batman"
+                  ]
+                )
+                fun t<caret>est() {}
+            """.trimIndent()
+        )
+        val uMethod = myFixture.file.findElementAt(myFixture.caretOffset).toUElement()?.getParentOfType<UMethod>()
+            .orFail("cant convert to UMethod")
+        TestCase.assertNotNull(uMethod)
+        val anno = uMethod.annotations.single()
+        val attributeValue = anno.findAttributeValue("password")
+        TestCase.assertNotNull(attributeValue)
+        val initializer = (attributeValue as PsiArrayInitializerMemberValue).initializers.single()
+        val uExpression = initializer.toUElementOfType<UExpression>()
+        val uEval = uExpression?.evaluate()
+        TestCase.assertEquals("nananananana, batman", uEval)
     }
 }
