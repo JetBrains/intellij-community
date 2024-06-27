@@ -27,7 +27,7 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
     
   internal val libraryBridgeCache by lazy(LazyThreadSafetyMode.PUBLICATION) { JpsLibraryCollectionsCache(entityStorage) }
   private val modules by lazy(LazyThreadSafetyMode.PUBLICATION) { 
-    entityStorage.entities(ModuleEntity::class.java).mapTo(ArrayList()) { 
+    entityStorage.entities(ModuleEntity::class.java).sortedBy { it.name }.mapTo(ArrayList()) { 
       JpsModuleBridge(this, it)
     } 
   }
