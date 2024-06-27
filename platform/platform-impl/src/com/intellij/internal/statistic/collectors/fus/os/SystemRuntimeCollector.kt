@@ -39,8 +39,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val VM_OPTIONS = listOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
   private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
+  private val REPORTED_OSVMS = listOf("none", "xen", "kvm", "vmware", "hyperv")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 19)
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 20)
   private val CORES: EventId1<Int> = GROUP.registerEvent(
     "cores", EventFields.BoundedInt("value", intArrayOf(1, 2, 4, 6, 8, 12, 16, 20, 24, 32, 64)))
   private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent(
@@ -59,6 +60,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val AGENT_PRESENCE_C2: EventId1<Boolean> = GROUP.registerEvent("agent.presence.c2", EventFields.Enabled) // IJPL-148313
   private val ADD_OPENS_PRESENCE_1: EventId1<Boolean> = GROUP.registerEvent("add.opens.presence.1", EventFields.Enabled) // IJPL-148271
   private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
+  private val OSVM: EventId1<String> = GROUP.registerEvent("os.vm", String("name", REPORTED_OSVMS + listOf("unknown", "other")))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -100,7 +102,27 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
 
     result += collectAgentMetrics()
 
+    result += getOsVirtualization()
+
     return result
+  }
+
+  /**
+   * Try to detect if we are running inside a virtual machine.
+   * Supported only in JBR.
+   * JBR-6769
+   */
+  private fun getOsVirtualization(): MetricEvent {
+    val osvm = System.getProperty("intellij.os.virtualization")?.lowercase()
+    return if (osvm == null) {
+      OSVM.metric("unknown") // value not provided
+    }
+    else if (REPORTED_OSVMS.contains(osvm)) {
+      OSVM.metric(osvm)
+    }
+    else {
+      OSVM.metric("other") // some other vm, for future
+    }
   }
 
   private fun getPhysicalMemoryAndSwapSize(): Pair<Int, Int>? {
