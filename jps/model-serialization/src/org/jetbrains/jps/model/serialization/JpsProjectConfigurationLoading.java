@@ -61,8 +61,7 @@ public final class JpsProjectConfigurationLoading {
       for (Path configurationFile : listXmlFiles(dir.resolve("runConfigurations"))) {
         JpsRunConfigurationSerializer.loadRunConfigurations(project, componentLoader.loadRootElement(configurationFile));
       }
-      JpsRunConfigurationSerializer.loadRunConfigurations(project, JDomSerializationUtil.findComponent(
-        componentLoader.loadRootElement(workspaceFile), "RunManager"));
+      JpsRunConfigurationSerializer.loadRunConfigurations(project, componentLoader.loadComponent(workspaceFile, "RunManager"));
       runConfTimingLog.run();
     }
   }
@@ -155,7 +154,7 @@ public final class JpsProjectConfigurationLoading {
   public static @NotNull Set<String> readNamesOfUnloadedModules(@NotNull Path workspaceFile, @NotNull JpsComponentLoader componentLoader) {
     Set<String> unloadedModules = new HashSet<>();
     if (workspaceFile.toFile().exists()) {
-      Element unloadedModulesList = JDomSerializationUtil.findComponent(componentLoader.loadRootElement(workspaceFile), "UnloadedModulesList");
+      Element unloadedModulesList = componentLoader.loadComponent(workspaceFile, "UnloadedModulesList");
       for (Element element : JDOMUtil.getChildren(unloadedModulesList, "module")) {
         unloadedModules.add(element.getAttributeValue("name"));
       }

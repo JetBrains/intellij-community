@@ -158,7 +158,7 @@ public final class JpsProjectLoader {
       externalConfigDir = null;
     }
 
-    Element moduleData = JDomSerializationUtil.findComponent(myComponentLoader.loadRootElement(dir.resolve("modules.xml")), MODULE_MANAGER_COMPONENT);
+    Element moduleData = myComponentLoader.loadComponent(dir.resolve("modules.xml"), MODULE_MANAGER_COMPONENT);
     Element externalModuleData;
     if (externalConfigDir == null) {
       externalModuleData = null;

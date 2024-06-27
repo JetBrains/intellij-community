@@ -41,6 +41,10 @@ public class JpsComponentLoader {
     return loadRootElement(file, myMacroExpander);
   }
 
+  public @Nullable Element loadComponent(@NotNull Path file, @NotNull String componentName) {
+    return JDomSerializationUtil.findComponent(loadRootElement(file), componentName);
+  }
+
   public  <E extends JpsElement> void loadComponents(@NotNull Path dir,
                                                      @NotNull Path defaultConfigFile,
                                                      JpsElementExtensionSerializerBase<E> serializer,
@@ -60,7 +64,7 @@ public class JpsComponentLoader {
 
   private @Nullable <E extends JpsElement> Element loadComponentData(@NotNull JpsElementExtensionSerializerBase<E> serializer, @NotNull Path configFile) {
     String componentName = serializer.getComponentName();
-    Element component = JDomSerializationUtil.findComponent(loadRootElement(configFile), componentName);
+    Element component = loadComponent(configFile, componentName);
     if (!(serializer instanceof JpsProjectExtensionWithExternalDataSerializer) || myExternalConfigurationDirectory == null) {
       return component;
     }

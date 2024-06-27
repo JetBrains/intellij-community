@@ -17,8 +17,7 @@ internal class GlobalDirectJpsFileContentReader(private val macroExpander: JpsMa
   private val componentLoader = JpsComponentLoader(macroExpander, null)
   
   override fun loadComponent(fileUrl: String, componentName: String, customModuleFilePath: String?): Element? {
-    val rootElement = componentLoader.loadRootElement(Path(JpsPathUtil.urlToPath(fileUrl))) ?: return null
-    return JDomSerializationUtil.findComponent(rootElement, componentName)
+    return componentLoader.loadComponent(Path(JpsPathUtil.urlToPath(fileUrl)), componentName)
   }
 
   override fun getExpandMacroMap(fileUrl: String): ExpandMacroToPathMap {
