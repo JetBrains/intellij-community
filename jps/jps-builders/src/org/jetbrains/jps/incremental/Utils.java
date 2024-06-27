@@ -7,7 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
@@ -100,7 +100,7 @@ public final class Utils {
       else {
         directoryBased = rootFile.resolve(PathMacroUtil.DIRECTORY_STORE_NAME);
       }
-      name = PathUtilRt.suggestFileName(JpsProjectLoader.getDirectoryBaseProjectName(directoryBased));
+      name = PathUtilRt.suggestFileName(JpsProjectConfigurationLoading.getDirectoryBaseProjectName(directoryBased));
       locationHash = hashFunction.apply(directoryBased.toString());
     }
 
