@@ -94,21 +94,6 @@ abstract class IndexWriter {
     finishCallback: () -> Unit,
   )
 
-  /**
-   * Monitoring: provides information about time spent on writing (applying) index changes by different workers, if any,
-   * in the units asked.
-   * Implementation is free to not provide this information -- in which case no callback calls should be made
-   */
-  abstract fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit)
-
-  /**
-   * Monitoring: provides information about time spent on writing (applying) index changes by specific worker, if any,
-   * in the units asked.
-   * Implementation is free to not provide this information -- in which case it must return -1
-   */
-  abstract fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long
-
-
   companion object {
     /**
      * When disabled, each indexing thread is equal and writing indexes by itself.
@@ -209,10 +194,6 @@ object SameThreadIndexWriter : IndexWriter() {
       finishCallback()
     }
   }
-
-  override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) = Unit
-
-  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long = -1
 }
 
 /* ================ parallelized IndexWriter implementations: ====================================================*/
@@ -237,12 +218,22 @@ abstract class ParallelIndexWriter : IndexWriter() {
     //runBlockingCancellable { writeChangesToIndexes(fileIndexingResult, finishCallback) }
   }
 
+  /** Waiting till current async tasks are finished */
+  abstract fun waitCurrentIndexingToFinish()
 
-  override fun totalTimeSpentWriting(unit: TimeUnit, callback: (workerNo: Int, timeSpent: Long) -> Unit) {
-    for (workerNo in 0..<workersCount) {
-      callback(workerNo, totalTimeSpentWriting(unit, workerNo))
-    }
-  }
+  /**
+   * Monitoring: provides information about time spent on writing (applying) index changes by specific worker, if any,
+   * in the units asked.
+   * Implementation is free to not provide this information -- in which case it must return -1
+   */
+  abstract fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long
+
+  /**
+   * Monitoring: provides information about time spent on writing (applying) index changes by specific worker, if any,
+   * in the units asked.
+   * Implementation is free to not provide this information -- in which case it must return -1
+   */
+  abstract fun totalTimeIndexersSlept(unit: TimeUnit): Long
 
   /**
    * @return worker index for indexId, in [0..workersCount).
@@ -264,9 +255,6 @@ abstract class ParallelIndexWriter : IndexWriter() {
     else
       BASE_WRITERS_NUMBER + abs(indexId.name.hashCode()) % AUX_WRITERS_NUMBER
   }
-
-  /** Waiting till index writing workers finish their current jobs */
-  abstract fun waitCurrentIndexingToFinish()
 }
 
 
@@ -525,7 +513,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
   }
 
 
-  fun totalTimeIndexersSlept(unit: TimeUnit): Long {
+  override fun totalTimeIndexersSlept(unit: TimeUnit): Long {
     return unit.convert(totalTimeSleptNs.get(), NANOSECONDS)
   }
 }
@@ -796,7 +784,7 @@ class MultiThreadedWithSuspendIndexWriter : ParallelIndexWriter() {
     return unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
   }
 
-  fun totalTimeIndexersSlept(unit: TimeUnit): Long {
+  override fun totalTimeIndexersSlept(unit: TimeUnit): Long {
     return unit.convert(totalTimeSleptNs.get(), NANOSECONDS)
   }
 }
@@ -877,8 +865,26 @@ class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
     }
   }
 
+  override fun waitCurrentIndexingToFinish() {
+    //send fake (empty) tasks to all the workers, and wait for them to complete the task
+    runBlockingCancellable {
+      (0..<workersCount).map { workerIndex ->
+        val deferred = CompletableDeferred<Int>(null)
+        channels[workerIndex].send { deferred.complete(workerIndex) }
+        deferred
+      }.awaitAll()
+    }
+  }
+
   override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long =
     unit.convert(totalTimeSpentOnIndexWritingNs[workerNo].get(), NANOSECONDS)
+
+  /**
+   * Assume indexers don't sleep in the coroutine world.
+   * This is not entirely correct -- but it is unclear how to calculate the amount of time indexers' coroutines were
+   * off-scheduled because of backpressure from the channels being filled up
+   */
+  override fun totalTimeIndexersSlept(unit: TimeUnit): Long = 0
 
   private fun applyModificationsInCoroutine(
     fileIndexingResult: FileIndexingResult,
@@ -945,17 +951,6 @@ class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
       if (lastOrOnlyInvocationForFile) {
         finishCallback()
       }
-    }
-  }
-
-  override fun waitCurrentIndexingToFinish() {
-    //send fake (empty) tasks to all the workers, and wait for them to complete the task
-    runBlockingCancellable {
-      (0..<workersCount).map { workerIndex ->
-        val deferred = CompletableDeferred<Int>(null)
-        channels[workerIndex].send { deferred.complete(workerIndex) }
-        deferred
-      }.awaitAll()
     }
   }
 }

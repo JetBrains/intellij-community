@@ -21,7 +21,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
-import com.intellij.util.indexing.contentQueue.dev.LegacyMultiThreadedIndexWriter
 import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
@@ -295,10 +294,8 @@ object StorageDiagnosticData {
       }
     }
 
-    if (defaultParallelWriter is LegacyMultiThreadedIndexWriter) {
-      otelMeter.counterBuilder("IndexWriter.totalTimeIndexersSleptMs").buildWithCallback {
-        it.record(defaultParallelWriter.totalTimeIndexersSlept(MILLISECONDS))
-      }
+    otelMeter.counterBuilder("IndexWriter.totalTimeIndexersSleptMs").buildWithCallback {
+      it.record(defaultParallelWriter.totalTimeIndexersSlept(MILLISECONDS))
     }
 
     mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)
