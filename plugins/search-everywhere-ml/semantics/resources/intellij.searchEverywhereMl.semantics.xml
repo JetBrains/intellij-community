@@ -20,22 +20,22 @@
       serviceImplementation="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettingsImpl"
       testServiceImplementation="com.intellij.searchEverywhereMl.semantics.settings.MockSearchEverywhereSemanticSettings"/>
 
-    <advancedSetting default="false" id="search.everywhere.ml.semantic.actions.enable"
+    <advancedSetting default="true" id="search.everywhere.ml.semantic.actions.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInActionsTab"/>
 
-    <advancedSetting default="false" id="search.everywhere.ml.semantic.files.enable"
+    <advancedSetting default="true" id="search.everywhere.ml.semantic.files.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInFilesTab"/>
 
-    <advancedSetting default="false" id="search.everywhere.ml.semantic.symbols.enable"
+    <advancedSetting default="true" id="search.everywhere.ml.semantic.symbols.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInSymbolsTab"/>
 
-    <advancedSetting default="false" id="search.everywhere.ml.semantic.classes.enable"
+    <advancedSetting default="true" id="search.everywhere.ml.semantic.classes.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInClassesTab"/>
