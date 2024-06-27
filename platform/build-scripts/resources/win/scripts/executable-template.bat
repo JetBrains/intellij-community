@@ -78,18 +78,29 @@ IF "%USER_VM_OPTIONS_FILE%" == "" (
 
 SET ACC=
 SET USER_GC=
+SET USER_PCT_INI=
+SET USER_PCT_MAX=
+SET FILTERS=%TMP%\ij-launcher-filters-%RANDOM%.txt
 IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
   SET ACC="-Djb.vmOptionsFile=%USER_VM_OPTIONS_FILE%"
   FINDSTR /R /C:"-XX:\+.*GC" "%USER_VM_OPTIONS_FILE%" > NUL
   IF NOT ERRORLEVEL 1 SET USER_GC=yes
+  FINDSTR /R /C:"-XX:InitialRAMPercentage=" "%USER_VM_OPTIONS_FILE%" > NUL
+  IF NOT ERRORLEVEL 1 SET USER_PCT_INI=yes
+  FINDSTR /R /C:"-XX:M[ia][nx]RAMPercentage=" "%USER_VM_OPTIONS_FILE%" > NUL
+  IF NOT ERRORLEVEL 1 SET USER_PCT_MAX=yes
 ) ELSE IF NOT "%VM_OPTIONS_FILE%" == "" (
   SET ACC="-Djb.vmOptionsFile=%VM_OPTIONS_FILE%"
 )
 IF NOT "%VM_OPTIONS_FILE%" == "" (
-  IF "%USER_GC%" == "" (
+  IF "%USER_GC%%USER_PCT_INI%%USER_PCT_MAX%" == "" (
     FOR /F "eol=# usebackq delims=" %%i IN ("%VM_OPTIONS_FILE%") DO CALL SET ACC=%%ACC%% "%%i"
   ) ELSE (
-    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /C:"-XX:\+Use.*GC" "%VM_OPTIONS_FILE%"`) DO CALL SET ACC=%%ACC%% "%%i"
+    IF NOT "%USER_GC%" == "" ECHO -XX:\+.*GC>> "%FILTERS%"
+    IF NOT "%USER_PCT_INI%" == "" ECHO -Xms>> "%FILTERS%"
+    IF NOT "%USER_PCT_MAX%" == "" ECHO -Xmx>> "%FILTERS%"
+    FOR /F "eol=# usebackq delims=" %%i IN (`FINDSTR /R /V /G:"%FILTERS%" "%VM_OPTIONS_FILE%"`) DO CALL SET ACC=%%ACC%% "%%i"
+    DEL "%FILTERS%"
   )
 )
 IF NOT "%USER_VM_OPTIONS_FILE%" == "" (
