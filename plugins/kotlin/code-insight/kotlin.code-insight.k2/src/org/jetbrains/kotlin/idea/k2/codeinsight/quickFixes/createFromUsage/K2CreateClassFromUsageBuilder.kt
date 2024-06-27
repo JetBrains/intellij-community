@@ -4,6 +4,7 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -73,10 +74,12 @@ object K2CreateClassFromUsageBuilder {
     }
 
     private fun isInsideExtendsList(element: PsiElement): Boolean {
-        return element.findParentOfType<KtSuperTypeList>(strict = false) != null
+        val superTypeList = PsiTreeUtil.getParentOfType(element, KtSuperTypeList::class.java, false, KtTypeArgumentList::class.java)
+        return superTypeList != null
     }
     private fun isInExtendsClauseOfAnnotationOrEnumOrInline(element: KtExpression): Boolean {
-        val superTypeList = element.findParentOfType<KtSuperTypeList>(strict = false) ?: return false
+        val superTypeList = PsiTreeUtil.getParentOfType(element, KtSuperTypeList::class.java, false, KtTypeArgumentList::class.java) ?: return false
+
         val ktClass = superTypeList.findParentOfType<KtClass>(strict = false) ?: return false
         return ktClass.isAnnotation() || ktClass.isEnum() || ktClass.isInline()
     }

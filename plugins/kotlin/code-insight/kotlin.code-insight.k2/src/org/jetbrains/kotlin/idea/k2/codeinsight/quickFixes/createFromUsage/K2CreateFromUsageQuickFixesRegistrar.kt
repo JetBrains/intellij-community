@@ -66,7 +66,7 @@ class K2CreateFromUsageQuickFixesRegistrar : KotlinQuickFixRegistrar() {
 
     private fun createClassFromUsageForUnresolvedImport(diagnostic: KaFirDiagnostic.UnresolvedImport): List<IntentionAction> {
         val unresolvedName = diagnostic.reference
-        val simpleReferences = (diagnostic.psi as KtImportDirective).importedReference?.children ?: emptyArray()
+        val simpleReferences = (diagnostic.psi as? KtImportDirective)?.importedReference?.children ?: emptyArray()
         for (simpleReference in simpleReferences) {
             if (unresolvedName == simpleReference.text) {
                 return K2CreateClassFromUsageBuilder.generateCreateClassActions(simpleReference as KtElement)
