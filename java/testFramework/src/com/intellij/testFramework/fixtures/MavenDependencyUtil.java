@@ -102,6 +102,13 @@ public final class MavenDependencyUtil {
 
   @NotNull
   public static List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
+    String repoForTesting = System.getProperty("maven.repo.for.testing");
+    if (repoForTesting != null) {
+      return List.of(new RemoteRepositoryDescription(
+        "intellij-dependencies",
+        "IntelliJ Dependencies",
+        repoForTesting));
+    }
     return REPOS_FOR_TESTING;
   }
 }
