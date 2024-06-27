@@ -12,7 +12,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.ijent.IjentId
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileSystems
 
@@ -22,7 +24,7 @@ import java.nio.file.FileSystems
 @Internal
 @Service
 @VisibleForTesting
-class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope) { // TODO Try to hide coroutineScope
+class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   companion object {
     suspend fun instanceAsync(): IjentWslNioFsToggler = serviceAsync()
     fun instance(): IjentWslNioFsToggler = service()
@@ -66,4 +68,9 @@ class IjentWslNioFsToggler(@VisibleForTesting val coroutineScope: CoroutineScope
   }
 
   val isInitialized: Boolean get() = strategy?.isInitialized ?: false
+
+  @TestOnly
+  fun unregisterAll() {
+    coroutineScope.cancel()
+  }
 }
