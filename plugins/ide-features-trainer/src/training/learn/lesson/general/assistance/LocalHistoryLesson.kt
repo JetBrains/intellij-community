@@ -236,7 +236,8 @@ class LocalHistoryLesson(
 
     task {
       before { LearningUiHighlightingManager.clearHighlights() }
-      text(LessonsBundle.message("local.history.close.window", action("EditorEscape")))
+      text(LessonsBundle.message("local.history.close.window", action("EditorEscape")),
+           LearningBalloonConfig(Balloon.Position.atLeft, width = 0, duplicateMessage = true))
       stateCheck {
         isMainEditorComponent(focusOwner)
       }
