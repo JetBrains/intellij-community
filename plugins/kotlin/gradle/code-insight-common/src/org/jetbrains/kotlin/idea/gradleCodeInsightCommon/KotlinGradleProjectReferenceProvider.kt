@@ -25,6 +25,7 @@ private const val GRADLE_PROJECT_DEPENDENCY_SUFFIX = "ProjectDependency"
 private val GRADLE_DSL_PROJECT: Name = Name.identifier("project")
 private val GRADLE_DSL_PROJECTS: Name = Name.identifier("projects")
 private val GRADLE_PROJECT_PACKAGE = FqName("org.gradle.accessors.dm")
+private val KOTLIN_DEPENDENCY_HANDLER_CLASS = FqName("KotlinDependencyHandler")
 
 class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvider() {
     override fun getImplicitReference(
@@ -41,7 +42,12 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
             ?.takeIf { it.startsWith(GRADLE_SEPARATOR) } ?: return null
         val callableId = analyzeSurroundingCallExpression(element.parent) ?: return null
 
-        if (callableId.packageName != GRADLE_DSL_PACKAGE || callableId.callableName != GRADLE_DSL_PROJECT) return null
+        if (callableId.callableName != GRADLE_DSL_PROJECT ||
+            (!(callableId.packageName == GRADLE_DSL_PACKAGE ||
+                    (callableId.packageName == KGP_PACKAGE && callableId.className == KOTLIN_DEPENDENCY_HANDLER_CLASS))
+                    )) {
+            return null
+        }
 
         val length = element.textRange.length
         return if (text == GRADLE_SEPARATOR) {

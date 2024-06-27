@@ -19,6 +19,8 @@ abstract class AbstractKotlinGradleReferenceProvider: ImplicitReferenceProvider 
     companion object {
         @JvmStatic
         protected val GRADLE_DSL_PACKAGE: FqName = FqName("org.gradle.kotlin.dsl")
+        @JvmStatic
+        protected val KGP_PACKAGE: FqName = FqName("org.jetbrains.kotlin.gradle.plugin")
     }
 
     protected fun getTextFromLiteralEntry(element: PsiElement?) : String? {
