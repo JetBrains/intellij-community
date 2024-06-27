@@ -16,6 +16,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -387,8 +388,9 @@ public final class TerminalToolWindowManager implements Disposable {
         boolean shouldShowPromotion = runner instanceof LocalBlockTerminalRunner blockRunner && blockRunner.shouldShowPromotion();
         boolean blockTerminalSupported = terminalWidget instanceof ShellTerminalWidget shellWidget &&
                                          isBlockTerminalSupported(shellWidget.getStartupOptions());
-        // show the promotion only if the current runner allows it and block terminal can be used with the shell started now
-        if (shouldShowPromotion && blockTerminalSupported) {
+        // Show the promotion only if the current runner allows it and block terminal can be used with the shell started now.
+        // And it is not the first launch of the IDE by the user.
+        if (shouldShowPromotion && blockTerminalSupported && !ConfigImportHelper.isNewUser()) {
           BlockTerminalPromotionService.INSTANCE.showPromotionOnce(myProject, widget);
         }
       }
