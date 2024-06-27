@@ -75,7 +75,7 @@ class GitFileHistory internal constructor(private val project: Project,
     while (starts.isNotEmpty()) {
       val (startRevisions, startPath) = starts.removeFirst()
       val lastCommits = runGitLog(logParser, startPath, visitedCommits, consumer, startRevisions + parameters.toList())
-      if (lastCommits.isEmpty()) return
+      if (lastCommits.isEmpty()) continue
 
       for (lastCommit in lastCommits) {
         val parents = getParentsAndPathsIfRename(lastCommit, startPath)
