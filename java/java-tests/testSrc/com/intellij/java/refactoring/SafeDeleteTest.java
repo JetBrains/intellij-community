@@ -33,7 +33,7 @@ public class SafeDeleteTest extends MultiFileTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsJava8AndHigher);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
   @Override

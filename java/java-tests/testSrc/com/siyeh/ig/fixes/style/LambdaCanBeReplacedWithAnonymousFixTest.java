@@ -31,7 +31,7 @@ public class LambdaCanBeReplacedWithAnonymousFixTest extends IGQuickFixesTestCas
     super.setUp();
     myFixture.enableInspections(new LambdaCanBeReplacedWithAnonymousInspection());
     myDefaultHint = InspectionGadgetsBundle.message("lambda.can.be.replaced.with.anonymous.quickfix");
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsJava8AndHigher);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
   public void testSimpleRunnable() {

@@ -73,11 +73,11 @@ public class DefaultLightProjectDescriptor extends LightProjectDescriptor {
     return withRepositoryLibrary(JETBRAINS_ANNOTATIONS_COORDINATES);
   }
 
-  public DefaultLightProjectDescriptor withJetBrainsAnnotationsJava8AndHigher() {
+  public DefaultLightProjectDescriptor withJetBrainsAnnotationsWithTypeUse() {
     return withRepositoryLibrary(JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8);
   }
 
-  public static void addJetBrainsAnnotationsJava8AndHigher(ModifiableRootModel model) {
+  public static void addJetBrainsAnnotationsWithTypeUse(ModifiableRootModel model) {
     MavenDependencyUtil.addFromMaven(model, JETBRAINS_ANNOTATIONS_COORDINATES_JAVA_8);
   }
 
