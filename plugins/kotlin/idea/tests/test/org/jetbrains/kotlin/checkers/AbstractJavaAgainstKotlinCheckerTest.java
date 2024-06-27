@@ -96,7 +96,7 @@ public abstract class AbstractJavaAgainstKotlinCheckerTest extends KotlinDaemonA
     protected Module createMainModule() throws IOException {
         Module module = super.createMainModule();
 
-        ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotationsJava8AndHigher);
+        ModuleRootModificationUtil.updateModel(module, DefaultLightProjectDescriptor::addJetBrainsAnnotations);
 
         String configFileText = getConfigFileText();
         if (configFileText == null) {

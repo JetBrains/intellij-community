@@ -29,7 +29,6 @@ class Mixed {
   }
 }
 
-// Error due to mock limitation
 @NotNull
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
