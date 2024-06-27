@@ -1888,7 +1888,7 @@
     <listener class="com.intellij.diff.tools.combined.CombinedDiffAdvancedSettingsChangeListener"
               topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
 
-    <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsVmOptionsSetter"
+    <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsVmOptionsSetter$ApplicationListener"
               topic="com.intellij.openapi.application.ApplicationActivationListener"
               os="windows"/>
     <listener class="com.intellij.execution.wsl.ijent.nio.toggle.IjentWslNioFsRegistryListener"
