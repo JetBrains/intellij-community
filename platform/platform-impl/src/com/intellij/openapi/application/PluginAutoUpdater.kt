@@ -139,6 +139,7 @@ object PluginAutoUpdater {
     val updatesToApply = mutableSetOf<PluginId>()
     val rejectedUpdates = mutableMapOf<PluginId, String>()
     // checks mostly duplicate what is written in com.intellij.ide.plugins.PluginInstaller.installFromDisk. FIXME, I guess
+    val enabledModules = currentDescriptors.getIdMap().flatMap { listOf(it.key) + it.value.pluginAliases }.toSet()
     for ((id, updateDesc) in updates) {
       val existingDesc = currentDescriptors.getIdMap()[id] ?: currentDescriptors.getIncompleteIdMap()[id]
       if (existingDesc == null) {
@@ -162,9 +163,20 @@ object PluginAutoUpdater {
         rejectedUpdates[id] = "plugin $id has same or newer version installed (${existingDesc.version} vs update version ${updateDesc.version})"
         continue
       }
-      val unmetDependencies = findUnmetDependencies(updateDesc, currentDescriptors)
+      // I guess a more robust way to check which updates should be applied and which not is the following.
+      // Greedily try to apply all the updates and then exclude those which turn out to be incompatible (on the module graph level).
+      // Repeat until the set of updates doesn't produce incompatibilities.
+      // We have to keep in mind that the set of dependencies may change arbitrarily with the plugin update.
+      //
+      // But for now we just check that each of the updates is compatible. Formally speaking, we don't fully check this condition and
+      // the behavior may actually differ from the honest check. To implement it better, the plugin loading implementation should be a little
+      // bit more formalized and a bit more flexible to be reused here (TODO).
+      val unmetDependencies = findUnsatisfiedDependencies(
+        updateDesc.pluginDependencies,
+        enabledModules // + currentDescriptors.getIncompleteIdMap().map { it.key } // TODO revise if incomplete is fine
+      )
       if (unmetDependencies.isNotEmpty()) {
-        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} has unmet dependencies " +
+        rejectedUpdates[id] = "plugin $id of version ${updateDesc.version} has unsatisfied dependencies " +
                               "(plugin ids): ${unmetDependencies.joinToString(", ") { it.pluginId.idString }}"
         continue
       }
@@ -175,20 +187,20 @@ object PluginAutoUpdater {
   }
 
   // TODO such functionality must be extracted into a single place com.intellij.ide.plugins.PluginInstaller.findNotInstalledPluginDependencies
+  //          com.intellij.ide.plugins.PluginInstallOperation.checkMissingDependencies
   /**
-   * returns a list of unmet dependencies
+   * @returns a list of unmet dependencies
    */
-  private fun findUnmetDependencies(
-    updateDescriptor: IdeaPluginDescriptorImpl,
-    currentDescriptors: PluginLoadingResult,
+  fun findUnsatisfiedDependencies(
+    updateDescriptor: Collection<IdeaPluginDependency>,
+    enabledModules: Collection<PluginId>,
   ): List<IdeaPluginDependency> {
-    return updateDescriptor.pluginDependencies.filter { dep ->
-      if (dep.isOptional) return@filter false
-      // TODO should we check module dependencies too?
-      // TODO revise if incomplete is fine
-      val suchPluginExists = currentDescriptors.getIdMap().containsKey(dep.pluginId) ||
-                             currentDescriptors.getIncompleteIdMap().containsKey(dep.pluginId)
-      !suchPluginExists
+    return updateDescriptor.filter { dep ->
+      if (dep.isOptional) {
+        return@filter false
+      }
+      val dependencySatisfied = enabledModules.any { it == dep.pluginId }
+      !dependencySatisfied
     }
   }
 
