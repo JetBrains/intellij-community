@@ -579,6 +579,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         });
       }
 
+      for (ConfigurationExtraActionProvider ext : ConfigurationExtraActionProvider.EXTENSION_NAME.getExtensionList()) {
+        AnAction action = ext.createAction(myProject, myConfiguration);
+        if (action != null) {
+          result.add(action);
+        }
+      }
+
       String actionName = ExecutionBundle.message("choose.run.popup.delete");
       String description = ExecutionBundle.message("choose.run.popup.delete.description");
       result.add(new ActionWithWriteAccess(actionName, description, !ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null) {
