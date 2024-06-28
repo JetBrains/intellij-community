@@ -131,7 +131,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
         val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
-                include("module1", ":module1:module11", ":module1:module11:module111")
+                include("module1", ":module1:a-module11", ":module1:a-module11:module111")
                 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
             }
             withBuildFile(gradleVersion, useKotlinDsl = true) {
@@ -147,11 +147,11 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
-            withBuildFile(gradleVersion, relativeModulePath = "module1/module11", useKotlinDsl = true) {
+            withBuildFile(gradleVersion, relativeModulePath = "module1/a-module11", useKotlinDsl = true) {
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
-            withBuildFile(gradleVersion, relativeModulePath = "module1/module11/module111", useKotlinDsl = true) {
+            withBuildFile(gradleVersion, relativeModulePath = "module1/a-module11/module111", useKotlinDsl = true) {
                 withKotlinMultiplatformPlugin()
                 withMavenCentral()
             }
