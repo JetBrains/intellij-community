@@ -19,11 +19,12 @@ fun <K, V> startGitLabGraphQLListLoaderIn(
   requestRefreshFlow: Flow<Unit>? = null,
   requestChangeFlow: Flow<Change<V>>? = null,
 
+  isReversed: Boolean = false,
   shouldTryToLoadAll: Boolean = false,
 
   performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?
 ): ReloadablePotentiallyInfiniteListLoader<V> {
-  val loader = GitLabGraphQLListLoader(cs, extractKey, shouldTryToLoadAll, performRequest)
+  val loader = GitLabGraphQLListLoader(cs, extractKey, shouldTryToLoadAll, isReversed, performRequest)
 
   cs.launchNow { requestReloadFlow?.collect { loader.reload() } }
   cs.launch { requestRefreshFlow?.collect { loader.refresh() } }
@@ -37,6 +38,8 @@ private class GitLabGraphQLListLoader<K, V>(
 
   extractKey: (V) -> K,
   shouldTryToLoadAll: Boolean = false,
+
+  private val isReversed: Boolean = false,
 
   private val performRequest: suspend (cursor: String?) -> GraphQLConnectionDTO<V>?
 ) : PaginatedPotentiallyInfiniteListLoader<PageInfo, K, V>(PageInfo(), extractKey, shouldTryToLoadAll) {
@@ -53,7 +56,7 @@ private class GitLabGraphQLListLoader<K, V>(
     f: (pageInfo: PageInfo?, results: List<V>?) -> Page<PageInfo, V>?
   ): Page<PageInfo, V>? {
     val results = performRequest(pageInfo.cursor)
-    val nextCursor = results?.pageInfo?.endCursor
+    val nextCursor = if (isReversed) results?.pageInfo?.startCursor else results?.pageInfo?.endCursor
 
     return f(pageInfo.copy(nextCursor = nextCursor), results?.nodes)
   }
