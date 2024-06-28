@@ -106,6 +106,9 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     })
   }
 
+  protected val project: Project
+    get() = myProject
+
   companion object {
     fun createContext(project: Project?, psiContext: SmartPsiElementPointer<PsiElement?>?): DataContext {
       val parentContext = if (project == null) null else SimpleDataContext.getProjectContext(project)
@@ -368,49 +371,56 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
   override fun showInFindResults(): Boolean = true
 
   override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
-    if (selected is PsiElement) {
-      if (!selected.isValid) {
-        LOG.warn("Cannot navigate to invalid PsiElement")
-        return true
-      }
+    if (selected !is PsiElement) {
+      EditSourceUtil.navigate((selected as NavigationItem), true, false)
+      return true
+    }
 
-      myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
-        val command = readAction {
-          val psiElement = preparePsi(selected, searchText)
-          val extNavigatable = createExtendedNavigatable(psi = psiElement, searchText = searchText, modifiers = modifiers)
-          val file = PsiUtilCore.getVirtualFile(psiElement)
+    if (!selected.isValid) {
+      LOG.warn("Cannot navigate to invalid PsiElement")
+      return true
+    }
 
-          @Suppress("DEPRECATION")
-          if ((modifiers and InputEvent.SHIFT_MASK) != 0 && file != null) {
-            suspend {
-              withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-                openInRightSplit(project = myProject, file = file, element = extNavigatable, requestFocus = true)
-              }
-            }
-          }
-          else {
-            suspend {
-              if (extNavigatable == null) {
-                val navigationRequests = serviceAsync<NavigationRequests>()
-                readAction { navigationRequests.sourceNavigationRequest(myProject, file!!, -1, null) }?.let {
-                  myProject.serviceAsync<NavigationService>().navigate(it)
-                }
-              }
-              else {
-                myProject.serviceAsync<NavigationService>().navigate(extNavigatable)
+    project.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
+      val command = readAction {
+        val psiElement = preparePsi(selected, searchText)
+        val extendedNavigatable = createExtendedNavigatable(psi = psiElement, searchText = searchText, modifiers = modifiers)
+        val file = PsiUtilCore.getVirtualFile(psiElement)
+
+        @Suppress("DEPRECATION")
+        if ((modifiers and InputEvent.SHIFT_MASK) != 0 && file != null) {
+          suspend {
+            withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+              openInRightSplit(project = project, file = file, element = extendedNavigatable, requestFocus = true)
+              if (extendedNavigatable != null) {
+                triggerLineOrColumnFeatureUsed(extendedNavigatable)
               }
             }
           }
         }
-
-        command()
+        else {
+          suspend {
+            if (extendedNavigatable == null) {
+              val navigationRequests = serviceAsync<NavigationRequests>()
+              readAction { navigationRequests.sourceNavigationRequest(project, file!!, -1, null) }?.let {
+                project.serviceAsync<NavigationService>().navigate(it)
+              }
+            }
+            else {
+              project.serviceAsync<NavigationService>().navigate(extendedNavigatable)
+              triggerLineOrColumnFeatureUsed(extendedNavigatable)
+            }
+          }
+        }
       }
-    }
-    else {
-      EditSourceUtil.navigate((selected as NavigationItem), true, false)
+
+      command()
     }
 
     return true
+  }
+
+  protected open suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {
   }
 
   override fun getDataForItem(element: Any, dataId: String): Any? {
@@ -447,12 +457,10 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     return null
   }
 
-  protected fun preparePsi(psiElement: PsiElement, searchText: String): PsiElement {
-    @Suppress("NAME_SHADOWING")
-    var psiElement = psiElement
-    val path = pathToAnonymousClass(searchText)
-    if (path != null) {
-      psiElement = getElement(psiElement, path)
+  private fun preparePsi(originalPsiElement: PsiElement, searchText: String): PsiElement {
+    var psiElement = originalPsiElement
+    pathToAnonymousClass(searchText)?.let {
+      psiElement = getElement(psiElement, it)
     }
     return psiElement.navigationElement
   }

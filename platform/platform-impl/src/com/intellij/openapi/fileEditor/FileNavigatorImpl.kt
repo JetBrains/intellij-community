@@ -3,12 +3,17 @@ package com.intellij.openapi.fileEditor
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.INativeFileType
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.pom.Navigatable
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -51,18 +56,16 @@ class FileNavigatorImpl : FileNavigator {
   }
 
   override fun navigateInEditor(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
-    return navigateInRequestedEditor(descriptor, dataContextSupplier = {
-      @Suppress("DEPRECATION")
-      DataManager.getInstance().dataContext
-    }) || navigateInAnyFileEditor(descriptor, requestFocus)
+    return navigateInRequestedEditor(descriptor) || navigateInAnyFileEditor(descriptor, requestFocus)
   }
 
-  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor, dataContextSupplier: () -> DataContext): Boolean {
+  fun navigateInRequestedEditor(descriptor: OpenFileDescriptor): Boolean {
     if (ignoreContextEditor.get() == true) {
       return false
     }
 
-    val dataContext = dataContextSupplier()
+    @Suppress("DEPRECATION")
+    val dataContext = DataManager.getInstance().dataContext
     val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
     if (e.isDisposed) {
       logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
@@ -72,6 +75,25 @@ class FileNavigatorImpl : FileNavigator {
       return false
     }
     OpenFileDescriptor.navigateInEditor(descriptor, e)
+    return true
+  }
+
+  suspend fun navigateInRequestedEditorAsync(descriptor: OpenFileDescriptor, dataContext: DataContext): Boolean {
+    val e = OpenFileDescriptor.NAVIGATE_IN_EDITOR.getData(dataContext) ?: return false
+    if (e.isDisposed) {
+      logger<FileNavigatorImpl>().error("Disposed editor returned for NAVIGATE_IN_EDITOR from $dataContext")
+      return false
+    }
+
+    if (serviceAsync<FileDocumentManager>().getFile(e.document) != descriptor.file) {
+      return false
+    }
+
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        OpenFileDescriptor.navigateInEditor(descriptor, e)
+      }
+    }
     return true
   }
 

@@ -9,7 +9,6 @@ import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticFilesProvider
@@ -27,8 +26,6 @@ import java.util.function.Consumer
 open class SemanticFileSearchEverywhereContributor(initEvent: AnActionEvent)
   : FileSearchEverywhereContributor(initEvent), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentPsiElementsFetcher, PossibleSlowContributor {
-  private val project = initEvent.project ?: ProjectManager.getInstance().openProjects[0]
-
   override val itemsProvider = SemanticFilesProvider(project)
 
   override var notifyCallback: Consumer<String>? = null

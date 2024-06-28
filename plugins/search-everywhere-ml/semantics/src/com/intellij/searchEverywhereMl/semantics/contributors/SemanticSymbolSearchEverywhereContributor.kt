@@ -2,14 +2,13 @@ package com.intellij.searchEverywhereMl.semantics.contributors
 
 import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.PossibleSlowContributor
 import com.intellij.ide.actions.searcheverywhere.PsiItemWithSimilarity
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticSymbolsProvider
@@ -28,8 +27,6 @@ import java.util.function.Consumer
 class SemanticSymbolSearchEverywhereContributor(initEvent: AnActionEvent)
   : SymbolSearchEverywhereContributor(initEvent), SemanticSearchEverywhereContributor,
     SearchEverywhereConcurrentPsiElementsFetcher, PossibleSlowContributor {
-  private val project = initEvent.project ?: ProjectManager.getInstance().openProjects[0]
-
   override val itemsProvider = SemanticSymbolsProvider(project)
 
   override var notifyCallback: Consumer<String>? = null
