@@ -12,7 +12,7 @@ import kotlin.math.log2
 import kotlin.math.pow
 
 object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535 PY-73471
-  private val GROUP = EventLogGroup("python.hugging.face.cards", 4)
+  private val GROUP = EventLogGroup("python.hugging.face.cards", 5)
 
   // todo:
   // card shown in Documentation toolwindow + card type (model, dataset)
@@ -23,7 +23,7 @@ object HuggingFaceCardsUsageCollector: CounterUsagesCollector() {  // PY-70535 P
   private val modelChoiceEntryPointField = EventFields.Enum<ModelChoiceEntryPointType>("modelChoiceEntryPoint")
   private val cacheManagementActionSourceField = EventFields.Enum<CacheManagementActionSource>("cacheManagementActionSource")
   private val modelChoiceActiveFileTypeField = EventFields.Enum<ActiveFileType>("activeFileType")
-  private val dialogWindowResultField = EventFields.Enum<DialogWindowResult>("activeFileType")
+  private val dialogWindowResultField = EventFields.Enum<DialogWindowResult>("dialogWindowResult")
 
   private val modelChoiceDialogClosedResulField = EventFields.Enum<ModelChoiceDialogClosedResultType>("closedResultType")
   private val durationField = EventFields.Long("duration_ms")
