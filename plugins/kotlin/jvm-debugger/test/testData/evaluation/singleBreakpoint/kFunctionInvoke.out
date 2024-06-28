@@ -1,0 +1,8 @@
+LineBreakpoint created at kFunctionInvoke.kt:3
+Run Java
+Connected to the target VM
+kFunctionInvoke.kt:3
+Compile bytecode for 42.extInlineGenericFun()
+Disconnected from the target VM
+
+Process finished with exit code 0

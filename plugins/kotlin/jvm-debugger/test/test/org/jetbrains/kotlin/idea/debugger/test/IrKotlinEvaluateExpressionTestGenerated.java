@@ -1937,6 +1937,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/kClass.kt");
             }
 
+            @TestMetadata("kFunctionInvoke.kt")
+            public void testKFunctionInvoke() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kFunctionInvoke.kt");
+            }
+
             @TestMetadata("kt12206BasePropertyWithoutBackingField.kt")
             public void testKt12206BasePropertyWithoutBackingField() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/kt12206BasePropertyWithoutBackingField.kt");
