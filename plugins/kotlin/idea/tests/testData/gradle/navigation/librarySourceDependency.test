@@ -1,28 +1,12 @@
 // FILE: build.gradle.kts
 // IGNORE_K1
 // Library source has the original copyright marker
-// "EXPECTED-NAVIGATION-SUBSTRING": "Copyright 2018 the original author or authors."
+// "EXPECTED-NAVIGATION-SUBSTRING": "Copyright 2009 the original author or authors."
 
 plugins {
-    `kotlin-dsl`
+    id("org.jetbrains.kotlin.multiplatform") version "1.9.23"
 }
 
 repositories {
-    mavenCentral()
-}
-
-dependencies {
-    imple<caret>mentation(project(":module1"))
-}
-
-// FILE: settings.gradle.kts
-include("module1")
-
-// FILE: module1/build.gradle.kts
-plugins {
-    java
-}
-
-repositories {
-    mavenCentral()
+    mave<caret>nCentral()
 }

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -104,7 +105,10 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
     }
 
     private fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
-        test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
+        val systemSettings = GradleSystemSettings.getInstance()
+        systemSettings.isDownloadSources = true
+
+        test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
             val mainFileContent = mainTestDataFile
             val mainFile = mainTestDataPsiFile
             val expectedNavigationText =
@@ -122,13 +126,15 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 mainFile.virtualFile.toNioPath(),
                 if (useK2Plugin == true) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
             ) {
-                assertTrue("Actual text:\n\n$text") { text.contains(expectedNavigationText) }
+                assertTrue("Actual text:\n\n$text") {
+                    !text.contains(EXPECTED_NAVIGATION_DIRECTIVE) && text.contains(expectedNavigationText)
+                }
             }
         }
     }
 
     companion object {
-        val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
+        val GRADLE_KMP_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
                 include("module1", ":module1:a-module11", ":module1:a-module11:module111")
@@ -141,7 +147,6 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
             withBuildFile(gradleVersion, relativeModulePath = "buildSrc", useKotlinDsl = true) {
                 withKotlinJvmPlugin()
                 withMavenCentral()
-                withDirectory("src/main/java/")
             }
             withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
                 withKotlinMultiplatformPlugin()

@@ -7,7 +7,7 @@ import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
-import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KOTLIN_FIXTURE
+import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KMP_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
@@ -71,7 +71,7 @@ class KotlinGradleVersionCatalogFindUsagesTest : AbstractGradleCodeInsightTest()
     }
 
     private fun testVersionCatalogFindUsages(gradleVersion: GradleVersion, checker: (Collection<PsiReference>) -> Unit) {
-        test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
+        test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
             codeInsightFixture.configureFromExistingVirtualFile(mainTestDataPsiFile.virtualFile)
             runInEdtAndWait {
                 val elementAtCaret = fixture.elementAtCaret

@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.testFramework.TestDataPath
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
-import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KOTLIN_FIXTURE
+import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest.Companion.GRADLE_KMP_KOTLIN_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.idea.test.AssertKotlinPluginMode
 import org.jetbrains.kotlin.idea.test.UseK2PluginMode
@@ -48,7 +48,7 @@ class KotlinGradleVersionCatalogNavigationTest : AbstractGradleCodeInsightTest()
     }
 
     private fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
-        test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
+        test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
             codeInsightFixture.configureFromExistingVirtualFile(mainTestDataPsiFile.virtualFile)
             fixture.performEditorAction(IdeActions.ACTION_GOTO_DECLARATION)
             val text = document.text
