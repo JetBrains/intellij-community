@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.DynamicBundle
 import com.intellij.help.impl.HelpManagerImpl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
@@ -10,6 +11,8 @@ import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -37,7 +40,7 @@ import java.util.*
 @Internal
 class LanguageAndRegionUi {
   companion object {
-    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable?, connection: MessageBusConnection?) {
+    fun createContent(panel: Panel, propertyGraph: PropertyGraph?, parentDisposable: Disposable, connection: MessageBusConnection?) {
       val comboGroup = "language_and_region_combo"
 
       panel.row(IdeBundle.message("combobox.language")) {
@@ -56,7 +59,7 @@ class LanguageAndRegionUi {
           languageBox.enabled(false)
             .comment(IdeBundle.message("combobox.language.disable.comment", LocalizationUtil.LOCALIZATION_KEY, forcedLocale))
         }
-        else if (propertyGraph != null && parentDisposable != null && connection != null) {
+        else if (propertyGraph != null && connection != null) {
           val property = propertyGraph.lazyProperty { LocalizationUtil.getLocale() }
 
           property.afterChange(parentDisposable) {
@@ -85,6 +88,24 @@ class LanguageAndRegionUi {
         val languageComponent = languageBox.component
         languageComponent.isSwingPopup = false
         languageComponent.renderer = LanguageComboBoxRenderer(locales)
+
+        if (forcedLocale == null) {
+          DynamicBundle.LanguageBundleEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<DynamicBundle.LanguageBundleEP> {
+            override fun extensionAdded(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
+              updateComboModel()
+            }
+
+            override fun extensionRemoved(extension: DynamicBundle.LanguageBundleEP, pluginDescriptor: PluginDescriptor) {
+              updateComboModel()
+            }
+
+            private fun updateComboModel() {
+              val newLocales = LocalizationUtil.getAllAvailableLocales()
+              languageComponent.renderer = LanguageComboBoxRenderer(newLocales)
+              languageComponent.model = CollectionComboBoxModel(newLocales.first, languageComponent.selectedItem as Locale)
+            }
+          }, parentDisposable)
+        }
       }
 
       panel.row(IdeBundle.message("combobox.region")) {
@@ -93,7 +114,7 @@ class LanguageAndRegionUi {
         val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
         val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
 
-        if (propertyGraph != null && parentDisposable != null && connection != null) {
+        if (propertyGraph != null && connection != null) {
           val property = propertyGraph.lazyProperty { RegionSettings.getRegion() }
 
           property.afterChange(parentDisposable) {
@@ -139,7 +160,7 @@ internal class LanguageAndRegionConfigurable :
     initSelectionRegion = RegionSettings.getRegion()
 
     return panel {
-      LanguageAndRegionUi.createContent(this, null, null, null)
+      LanguageAndRegionUi.createContent(this, null, disposable!!, null)
     }
   }
 
