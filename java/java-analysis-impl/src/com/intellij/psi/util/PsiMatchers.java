@@ -56,7 +56,7 @@ public final class PsiMatchers {
   }
 
   @NotNull
-  public static PsiMatcherExpression hasClass(final Class @NotNull ... classes) {
+  public static PsiMatcherExpression hasClass(final Class<?> @NotNull ... classes) {
     return new PsiMatcherExpression() {
       @Override
       public Boolean match(PsiElement element) {

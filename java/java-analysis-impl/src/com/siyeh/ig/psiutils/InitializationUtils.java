@@ -33,7 +33,7 @@ public final class InitializationUtils {
   }
 
   public static boolean expressionAssignsVariableOrFails(@Nullable PsiExpression expression, @NotNull PsiVariable variable) {
-    return expressionAssignsVariableOrFails(expression, variable, new HashSet(), true);
+    return expressionAssignsVariableOrFails(expression, variable, new HashSet<>(), true);
   }
 
   public static boolean methodAssignsVariableOrFails(@Nullable PsiMethod method, @NotNull PsiVariable variable, boolean strict) {
@@ -140,11 +140,6 @@ public final class InitializationUtils {
       // unknown statement type
       return false;
     }
-  }
-
-  public static boolean switchStatementAssignsVariableOrFails(@NotNull PsiSwitchStatement switchStatement, @NotNull PsiVariable variable,
-                                                              boolean strict) {
-    return switchStatementAssignsVariableOrFails(switchStatement, variable, new HashSet(), strict);
   }
 
   private static boolean switchStatementAssignsVariableOrFails(@NotNull PsiSwitchStatement switchStatement, @NotNull PsiVariable variable,
@@ -261,9 +256,7 @@ public final class InitializationUtils {
     }
     if (BoolUtils.isTrue(condition)) {
       final PsiStatement body = whileStatement.getBody();
-      if (statementAssignsVariableOrFails(body, variable, checkedMethods, strict)) {
-        return true;
-      }
+      return statementAssignsVariableOrFails(body, variable, checkedMethods, strict);
     }
     return false;
   }
@@ -281,9 +274,7 @@ public final class InitializationUtils {
       if (statementAssignsVariableOrFails(forStatement.getBody(), variable, checkedMethods, strict)) {
         return true;
       }
-      if (statementAssignsVariableOrFails(forStatement.getUpdate(), variable, checkedMethods, strict)) {
-        return true;
-      }
+      return statementAssignsVariableOrFails(forStatement.getUpdate(), variable, checkedMethods, strict);
     }
     return false;
   }
@@ -357,9 +348,7 @@ public final class InitializationUtils {
       }
       if (lhs instanceof PsiReferenceExpression) {
         final PsiElement element = ((PsiReference)lhs).resolve();
-        if (variable.equals(element)) {
-          return true;
-        }
+        return variable.equals(element);
       }
       return false;
     }

@@ -142,8 +142,8 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
   }
 
   @Override
-  protected ListTableModel createListModel() {
-    return new ListTableModel<Item>(NAME_COLUMN, SCOPE_COLUMN);
+  protected ListTableModel<Item> createListModel() {
+    return new ListTableModel<>(NAME_COLUMN, SCOPE_COLUMN);
   }
 
   @Override

@@ -259,7 +259,7 @@ public abstract class ImportLayoutPanel extends JPanel {
       }
 
       @Override
-      public Class getColumnClass(int col) {
+      public Class<?> getColumnClass(int col) {
         col += panel.areStaticImportsEnabled() ? 0 : 1;
         if (col == 0) {
           return Boolean.class;
@@ -294,7 +294,7 @@ public abstract class ImportLayoutPanel extends JPanel {
         }
         else if (col == 2) {
           PackageEntry newPackageEntry =
-            new PackageEntry(packageEntry.isStatic(), packageEntry.getPackageName(), ((Boolean)aValue).booleanValue());
+            new PackageEntry(packageEntry.isStatic(), packageEntry.getPackageName(), (Boolean)aValue);
           packageTable.setEntryAt(newPackageEntry, row);
         }
         else {

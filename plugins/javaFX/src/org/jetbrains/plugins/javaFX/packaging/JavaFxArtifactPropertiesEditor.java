@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
@@ -23,8 +24,6 @@ import org.jetbrains.plugins.javaFX.JavaFXBundle;
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -66,19 +65,11 @@ public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEdit
     myParams.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.file.run.in.browser.description"), project, descriptor);
     myHtmlTemplate.addBrowseFolderListener(JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.title"), JavaFXBundle.message("javafx.artifact.properties.editor.choose.html.file.description"), project,
                                            FileChooserDescriptorFactory.createSingleFileDescriptor(HtmlFileType.INSTANCE));
-    myEditSignCertificateButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
-        myDialog.show();
-      }
+    myEditSignCertificateButton.addActionListener(e -> {
+      myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
+      myDialog.show();
     });
-    myEnableSigningCB.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected());
-      }
-    });
+    myEnableSigningCB.addActionListener(e -> myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected()));
 
     myEditAttributesButton.addActionListener(e -> {
       final CustomManifestAttributesDialog customManifestAttributesDialog =
@@ -280,8 +271,8 @@ public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEdit
 
     private static final class AttributesTable extends ListTableWithButtons<JavaFxManifestAttribute> {
       @Override
-      protected ListTableModel createListModel() {
-        final ColumnInfo name = new ElementsColumnInfoBase<JavaFxManifestAttribute>(JavaFXBundle.message(
+      protected ListTableModel<JavaFxManifestAttribute> createListModel() {
+        final ColumnInfo<JavaFxManifestAttribute, @NlsContexts.ListItem String> name = new ElementsColumnInfoBase<>(JavaFXBundle.message(
           "column.name.artifact.manifest.property.name")) {
           @Override
           public @Nullable String valueOf(JavaFxManifestAttribute attribute) {
@@ -304,7 +295,8 @@ public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEdit
           }
         };
 
-        final ColumnInfo value = new ElementsColumnInfoBase<JavaFxManifestAttribute>(JavaFXBundle.message("column.name.artifact.manifest.property.value")) {
+        final ColumnInfo<JavaFxManifestAttribute, @NlsContexts.ListItem String>
+          value = new ElementsColumnInfoBase<>(JavaFXBundle.message("column.name.artifact.manifest.property.value")) {
           @Override
           public String valueOf(JavaFxManifestAttribute attr) {
             return attr.getValue();
@@ -326,7 +318,7 @@ public final class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEdit
           }
         };
 
-        return new ListTableModel(name, value);
+        return new ListTableModel<>(name, value);
       }
 
       @Override

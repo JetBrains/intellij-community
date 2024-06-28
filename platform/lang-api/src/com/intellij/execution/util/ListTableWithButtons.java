@@ -147,7 +147,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     return myTableView;
   }
 
-  protected abstract ListTableModel createListModel();
+  protected abstract ListTableModel<T> createListModel();
 
   protected void setModified() {
     setChanged();
@@ -181,7 +181,7 @@ public abstract class ListTableWithButtons<T> extends Observable {
     var downButton = ToolbarDecorator.findDownButton(panel);
 
     Stream.of(addButton, removeButton, editButton, upButton, downButton)
-      .filter(it -> it != null)
+      .filter(Objects::nonNull)
       .forEach(it -> it.addCustomUpdater(e -> myIsEnabled));
 
     if (removeButton != null) {

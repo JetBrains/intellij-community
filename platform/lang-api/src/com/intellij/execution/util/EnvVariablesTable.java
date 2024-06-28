@@ -48,8 +48,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  protected ListTableModel createListModel() {
-    return new ListTableModel(new NameColumnInfo(), new ValueColumnInfo());
+  protected ListTableModel<EnvironmentVariable> createListModel() {
+    return new ListTableModel<>(new NameColumnInfo(), new ValueColumnInfo());
   }
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {
