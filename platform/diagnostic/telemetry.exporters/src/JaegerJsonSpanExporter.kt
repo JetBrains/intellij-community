@@ -61,8 +61,8 @@ class JaegerJsonSpanExporter(
         writer.writeStringField("spanID", span.spanId)
         writer.writeStringField("operationName", span.name)
         writer.writeStringField("processID", "p1")
-        writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startEpochNanos))
-        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endEpochNanos - span.startEpochNanos))
+        writer.writeNumberField("startTime", span.startEpochNanos) // in nanoseconds
+        writer.writeNumberField("duration", span.endEpochNanos - span.startEpochNanos) // in nanoseconds
         val parentContext = span.parentSpanContext
         val hasError = span.status.statusCode == StatusData.error().statusCode
 
@@ -194,10 +194,12 @@ class JaegerJsonSpanExporter(
   }
 }
 
-private fun beginWriter(w: JsonGenerator,
-                        serviceName: String,
-                        serviceVersion: String?,
-                        serviceNamespace: String?) {
+private fun beginWriter(
+  w: JsonGenerator,
+  serviceName: String,
+  serviceVersion: String?,
+  serviceNamespace: String?,
+) {
   w.writeStartObject()
   w.writeArrayFieldStart("data")
   w.writeStartObject()

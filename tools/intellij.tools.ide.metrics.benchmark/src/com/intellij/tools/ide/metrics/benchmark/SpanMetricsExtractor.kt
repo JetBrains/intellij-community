@@ -65,7 +65,7 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
   private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
     val originalMetrics = OpentelemetrySpanJsonParser(SpanFilter.any())
       .getSpanElements(telemetryJsonFile, spanElementFilter = { it.name == spanName && it.isWarmup == forWarmup })
-      .map { PerformanceMetrics.newDuration(it.name, it.duration) }
+      .map { PerformanceMetrics.newDuration(it.name, it.duration.inWholeMilliseconds) }
       .toList()
 
     val attemptSuffix = "Attempt"

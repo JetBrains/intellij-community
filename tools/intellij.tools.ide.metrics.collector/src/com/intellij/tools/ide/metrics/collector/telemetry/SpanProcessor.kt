@@ -1,6 +1,7 @@
 package com.intellij.tools.ide.metrics.collector.telemetry
 
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import kotlin.time.Duration
 
 interface SpanProcessor<T> {
 
@@ -16,8 +17,8 @@ interface SpanProcessor<T> {
 
 class MetricSpanProcessor(val ignoreWarmupSpan: Boolean = true) : SpanProcessor<MetricWithAttributes> {
   override fun process(span: SpanElement): MetricWithAttributes? {
-    if (span.isWarmup != ignoreWarmupSpan && (span.duration > 0 || !shouldAvoidIfZero(span))) {
-      val metrics = MetricWithAttributes(PerformanceMetrics.newDuration(span.name, span.duration))
+    if (span.isWarmup != ignoreWarmupSpan && (span.duration > Duration.ZERO || !shouldAvoidIfZero(span))) {
+      val metrics = MetricWithAttributes(PerformanceMetrics.newDuration(span.name, span.duration.inWholeMilliseconds))
       populateAttributes(metrics, span)
       return metrics
     }

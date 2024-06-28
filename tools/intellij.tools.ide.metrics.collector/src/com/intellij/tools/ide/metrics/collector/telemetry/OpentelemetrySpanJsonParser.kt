@@ -7,19 +7,66 @@ import com.intellij.tools.ide.util.common.withRetryBlocking
 import it.unimi.dsi.fastutil.objects.Object2ObjectFunction
 import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
+import kotlinx.serialization.modules.SerializersModule
+import kotlinx.serialization.modules.contextual
 import java.nio.file.Files
 import java.nio.file.Path
+import java.time.Instant
 import java.util.function.Predicate
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.nanoseconds
+
+private const val nanoPrecision = 1_000_000_000
+
+object DurationNanosecondsSerializer : KSerializer<Duration> {
+  override val descriptor = PrimitiveSerialDescriptor("DurationNanosecondsSerializer", PrimitiveKind.LONG)
+
+  override fun serialize(encoder: Encoder, value: Duration) {
+    encoder.encodeLong(value.inWholeNanoseconds)
+  }
+
+  override fun deserialize(decoder: Decoder): Duration {
+    return decoder.decodeLong().nanoseconds
+  }
+}
+
+object InstantNanosecondsSerializer : KSerializer<Instant> {
+  override val descriptor = PrimitiveSerialDescriptor("Instant", PrimitiveKind.LONG)
+
+  override fun serialize(encoder: Encoder, value: Instant) {
+    encoder.encodeLong(value.epochSecond * nanoPrecision + value.nano)
+  }
+
+  override fun deserialize(decoder: Decoder): Instant {
+    val timeStamp = decoder.decodeLong()
+
+    return Instant.ofEpochSecond(
+      timeStamp / nanoPrecision,
+      timeStamp % nanoPrecision
+    )
+  }
+}
 
 private val json = Json {
+  serializersModule = SerializersModule {
+    contextual(InstantNanosecondsSerializer)
+    contextual(DurationNanosecondsSerializer)
+  }
+
   ignoreUnknownKeys = true
   // parse tag value as string
   isLenient = true
 }
+
 
 @Serializable
 private data class OpentelemetryJson(

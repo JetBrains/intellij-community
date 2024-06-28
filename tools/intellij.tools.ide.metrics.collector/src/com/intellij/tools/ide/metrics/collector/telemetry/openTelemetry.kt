@@ -27,10 +27,12 @@ private val logger = logger<OpentelemetrySpanJsonParser>()
  * 2a. If attribute ends with `#max`, in a sum the max of max will be recorded
  * 3a. If attribute ends with `#mean_value`, the mean value of mean values will be recorded
  */
-fun getMetricsFromSpanAndChildren(file: Path,
-                                  filter: SpanFilter,
-                                  metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
-                                  aliases: Map<String, String> = mapOf()): List<Metric> {
+fun getMetricsFromSpanAndChildren(
+  file: Path,
+  filter: SpanFilter,
+  metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
+  aliases: Map<String, String> = mapOf(),
+): List<Metric> {
   val spanElements = OpentelemetrySpanJsonParser(filter).getSpanElements(file).map {
     val name = aliases.getOrDefault(it.name, it.name)
     if (name != it.name) {
@@ -77,8 +79,8 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
       logger.warn(
         "Current span $fromSpanName with spanId ${currentToSpan.spanId} have ${currentToSpan.parentSpanId}, but expected ${currentFromSpan.spanId}")
     }
-    val duration = currentToSpan.startTimestamp - currentFromSpan.startTimestamp + currentToSpan.duration
-    val metric = MetricWithAttributes(Metric.newDuration(name, duration))
+    val duration = java.time.Duration.between(currentFromSpan.startTimestamp, currentToSpan.startTimestamp).plusNanos(currentToSpan.duration.inWholeNanoseconds)
+    val metric = MetricWithAttributes(Metric.newDuration(name, duration.toMillis()))
     metrics.add(metric)
   }
   return combineMetrics(mapOf(name to metrics))
@@ -100,7 +102,7 @@ fun getStartupTimestampMs(file: Path): Long {
   val spanElements = OpentelemetrySpanJsonParserWithChildrenFiltering(SpanFilter.nameEquals("bootstrap"), SpanFilter.none())
     .getSpanElements(file).filter { it.name == "bootstrap" }.toList()
   if (spanElements.size != 1) throw IllegalStateException("Unexpected number of \"bootstrap\" spans: ${spanElements.size}")
-  return spanElements[0].startTimestamp
+  return spanElements[0].startTimestamp.toEpochMilli()
 }
 
 fun getMetricsForStartup(file: Path): List<Metric> {
@@ -120,9 +122,9 @@ fun getMetricsForStartup(file: Path): List<Metric> {
   val spanToMetricMap = spansWithoutDuplicatedNames.mapNotNull { metricSpanProcessor.process(it) }.groupBy { it.metric.id.name }
 
   val spanElementsWithoutRoots = spansWithoutDuplicatedNames.filterNot { it.name in spansToPublish }
-  val startMetrics = spanElementsWithoutRoots.map { span -> Metric.newDuration(span.name + ".start", span.startTimestamp - startTime) }
+  val startMetrics = spanElementsWithoutRoots.map { span -> Metric.newDuration(span.name + ".start", java.time.Duration.between(startTime, span.startTimestamp).toMillis()) }
   val endMetrics = spanElementsWithoutRoots.map { span ->
-    Metric.newDuration(span.name + ".end", span.startTimestamp - startTime + span.duration)
+    Metric.newDuration(span.name + ".end", java.time.Duration.between(startTime, span.startTimestamp).plusNanos(span.duration.inWholeNanoseconds).toMillis())
   }
   return combineMetrics(spanToMetricMap) + startMetrics + endMetrics
 }

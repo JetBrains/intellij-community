@@ -2,16 +2,19 @@
 
 package com.intellij.tools.ide.metrics.collector.telemetry
 
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import java.time.Instant
 import kotlin.math.roundToLong
+import kotlin.time.Duration
 
 /**
  * Represents a span element that defines a unit of work or a segment of time.
  *
  * @property isWarmup Indicates whether this span element is a warm-up span.
  * @property name The name of the span element.
- * @property duration The duration of the span element in milliseconds.
- * @property startTimestamp The timestamp when the span element started, in milliseconds.
+ * @property duration The duration of the span element.
+ * @property startTimestamp The timestamp when the span element started (nanosecond precision).
  * @property spanId The unique identifier for the span element.
  * @property parentSpanId The unique identifier of the parent span element, if any.
  * @property tags The list of key-value pairs representing the tags associated with the span element.
@@ -19,23 +22,23 @@ import kotlin.math.roundToLong
 data class SpanElement(
   @JvmField var isWarmup: Boolean,
   @JvmField val name: String,
-  @JvmField val duration: Long,
-  @JvmField val startTimestamp: Long,
+  @Contextual val duration: Duration,
+  @JvmField val startTimestamp: Instant,
   @JvmField val spanId: String,
   @JvmField val parentSpanId: String?,
   @JvmField val tags: List<Pair<String, String>>,
 )
 
-val SpanElement.finishTimestamp: Long
-  get() = startTimestamp + duration
+val SpanElement.finishTimestamp: Instant
+  get() = startTimestamp.plusNanos(duration.inWholeNanoseconds)
 
 internal fun toSpanElement(span: SpanData): SpanElement {
   val tags = getTags(span)
   return SpanElement(
     isWarmup = isWarmup(tags),
     name = span.operationName,
-    duration = (span.duration / 1000.0).roundToLong(),
-    startTimestamp = (span.startTime / 1000.0).roundToLong(),
+    duration = span.duration,
+    startTimestamp = span.startTime,
     spanId = span.spanID,
     parentSpanId = span.getParentSpanId(),
     tags = tags,
@@ -46,8 +49,8 @@ internal fun toSpanElement(span: SpanData): SpanElement {
 data class SpanData(
   @JvmField val spanID: String,
   @JvmField val operationName: String,
-  @JvmField val duration: Long,
-  @JvmField val startTime: Long,
+  @Contextual val duration: Duration,
+  @Contextual val startTime: Instant,
   @JvmField val references: List<SpanRef> = emptyList(),
   @JvmField val tags: List<SpanTag> = emptyList(),
 )

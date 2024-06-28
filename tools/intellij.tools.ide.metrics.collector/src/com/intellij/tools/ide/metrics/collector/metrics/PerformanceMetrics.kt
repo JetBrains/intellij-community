@@ -3,6 +3,7 @@ package com.intellij.tools.ide.metrics.collector.metrics
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.tools.ide.metrics.collector.publishing.ApplicationMetricDto
 import java.time.OffsetDateTime
+import kotlin.time.Duration
 
 data class PerformanceMetrics(
   val buildNumber: BuildNumber,
@@ -11,7 +12,7 @@ data class PerformanceMetrics(
   val machineName: String,
   val branchName: String,
   val os: String,
-  val metrics: List<Metric>
+  val metrics: List<Metric>,
 ) {
   sealed class MetricId {
     abstract val name: String
@@ -27,8 +28,10 @@ data class PerformanceMetrics(
     data class Counter internal constructor(override val name: String) : MetricId()
   }
 
-  data class Metric private constructor(@JvmField val id: MetricId,
-                                        @JvmField val value: Long) {
+  data class Metric private constructor(
+    @JvmField val id: MetricId,
+    @JvmField val value: Long,
+  ) {
     companion object {
       /**
        * Creates instance of the Counter metric type.
