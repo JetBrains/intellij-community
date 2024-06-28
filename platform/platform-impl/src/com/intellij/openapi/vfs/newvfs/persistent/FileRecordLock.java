@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -14,6 +14,18 @@ import java.util.concurrent.locks.ReentrantLock;
 final class FileRecordLock {
 
   //Ideally, each fileId should have its own lock, but this is too expensive, so we use segmented lock
+
+  //TODO RC: Currently we use FileRecordLock for updating file hierarchy -- which is relatively long process, since it
+  //         involves children modification. Which is why 'ReentrantLock with fileId list per segment' approach was used --
+  //         it allows to keep particular fileId locked for some time, without locking other fileIds, even those falling
+  //         into the same segment.
+  //         In bright future, we should use per-file-record locks for almost every file-record modification involving >1 field.
+  //         This is _required_ for correctness in multithreaded env -- we are currently able to bypass that requirement
+  //         only because usually there are some locks acquired upper the stack, and VFS implicitly piggyback on that.
+  //         Such per-file-record locks are most of the time short, and most of the time for-read. For that kind of locking
+  //         segmented StampedLock seems much more suitable -- the contention is low by itself (because most locks are short)
+  //         and segmentation makes it even lower, so keeping list of fileIds is not needed -- we could just lock the whole
+  //         segment.
 
   private final SegmentLock[] segments;
 

@@ -799,21 +799,36 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException {
-    InputStream contentStream;
-    boolean outdated;
-    int fileId;
-    long length;
 
+    int fileId = getFileId(file);
+
+    boolean outdated;
+    long length;
+    int contentRecordId;
+
+    //MAYBE RC: we could reduce contention on this lock by utilising FileIdLock inside the vfsPeer.
     myInputLock.readLock().lock();
     try {
-      fileId = getFileId(file);
-      length = getLengthIfUpToDate(file);
-      outdated = length == -1 || mustReloadContent(file);
-      contentStream = outdated ? null : readContent(file);
+      int flags = vfsPeer.getFlags(fileId);
+      boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
+      boolean mustReloadContent = BitUtil.isSet(flags, Flags.MUST_RELOAD_CONTENT);
+      length = mustReloadLength ? -1 : vfsPeer.getLength(fileId);
+      outdated = (length == -1) || mustReloadContent;
+      if (outdated) {
+        contentRecordId = -1;
+      }
+      else {
+        // As soon as we got a contentId -- there is no need for locking anymore,
+        // since VFSContentStorage is a thread-safe append-only storage
+        contentRecordId = vfsPeer.getContentRecordId(fileId);
+      }
     }
     finally {
       myInputLock.readLock().unlock();
     }
+
+    InputStream contentStream = (contentRecordId > 0) ? vfsPeer.readContentById(contentRecordId) : null;
+
 
     if (contentStream == null) {
       NewVirtualFileSystem fs = getFileSystem(file);
@@ -963,6 +978,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
                                      boolean readOnly,
                                      byte @NotNull [] bytes,
                                      int byteLength) {
+    //TODO RC: we could reduce contention on this lock by extracting storing the content in VFSContentStorage outside the
+    //         lock, and only updating file-record fields inside the lock.
+    //         Even more reductions could be made by using (segmented) FileIdLock inside vfsPeer
     myInputLock.writeLock().lock();
     try {
       if (byteLength == fileLength) {
