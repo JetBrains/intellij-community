@@ -368,29 +368,47 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   // Mouse
-  fun click(point: Point? = null) {
+  fun click(point: Point? = null, silient: Boolean = false) {
     if (point != null) {
+      if (!silient) {
+        LOG.info("Click at $this: $point")
+      }
       robot.click(component, point)
     }
     else {
+      if (!silient) {
+        LOG.info("Click at '$this'")
+      }
       robot.click(component)
     }
   }
 
-  fun doubleClick(point: Point? = null) {
+  fun doubleClick(point: Point? = null, silient: Boolean = false) {
     if (point != null) {
+      if (!silient) {
+        LOG.info("Double click at $this: $point")
+      }
       robot.click(component, point, RemoteMouseButton.LEFT, 2)
     }
     else {
+      if (!silient) {
+        LOG.info("Double click at '$this'")
+      }
       robot.doubleClick(component)
     }
   }
 
-  fun rightClick(point: Point? = null) {
+  fun rightClick(point: Point? = null, silient: Boolean = false) {
     if (point != null) {
+      if (!silient) {
+        LOG.info("Right click at $this: $point")
+      }
       robot.click(component, point, RemoteMouseButton.RIGHT, 1)
     }
     else {
+      if (!silient) {
+        LOG.info("Right click at $this")
+      }
       robot.rightClick(component)
     }
   }
@@ -400,12 +418,18 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     robot.click(component, button, count)
   }
 
-  fun moveMouse() {
-    robot.moveMouse(component)
-  }
-
-  fun moveMouse(point: Point) {
-    robot.moveMouse(component, point)
+  fun moveMouse(point: Point? = null, silient: Boolean = false) {
+    if (point != null) {
+      if (!silient) {
+        LOG.info("Move mouse to $this: $point")
+      }
+      robot.moveMouse(component, point)
+    } else {
+      if (!silient) {
+        LOG.info("Move mouse to $this")
+      }
+      robot.moveMouse(component)
+    }
   }
 
   fun hasFocus(): Boolean {

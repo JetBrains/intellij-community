@@ -20,22 +20,22 @@ class UiText(private val component: UiComponent, private val textData: TextData)
   }
 
   fun click() {
-    LOG.info("Click at '${text}'")
-    component.click(textData.point)
+    LOG.info("Click at '$this'")
+    component.click(textData.point, silient = true)
   }
 
   fun doubleClick() {
-    LOG.info("Double click at '${text}'")
-    component.doubleClick(textData.point)
+    LOG.info("Double click at '$this'")
+    component.doubleClick(textData.point, silient = true)
   }
 
   fun rightClick() {
-    LOG.info("Right click at '${text}'")
-    component.rightClick(textData.point)
+    LOG.info("Right click at '$this'")
+    component.rightClick(textData.point, silient = true)
   }
 
   fun moveMouse() {
-    LOG.info("Move mouse to ${textData.point}")
-    component.moveMouse(textData.point)
+    LOG.info("Move mouse to the $this ${textData.point}")
+    component.moveMouse(textData.point, silient = true)
   }
 }
