@@ -236,7 +236,7 @@ function addContexts(sessionDiv, popup, lookup) {
 
   const contextObject = JSON.parse(contextJson)
   contextObject.contexts.items.forEach(context => {
-      popup.appendChild(createContextBlock(context))
+    popup.appendChild(createContextBlock(context))
   })
 }
 
@@ -278,10 +278,11 @@ function addSuggestions(sessionDiv, popup, lookup) {
     suggestionDiv.setAttribute("id", `${sessionDiv.id} ${i}`)
     let p = document.createElement("pre")
     p.setAttribute("class", "suggestion-p")
-    if (lookup["selectedPosition"] == i) {
+    if (lookup["selectedPosition"] === i) {
       p.setAttribute("style", "font-weight: bold;")
     }
-    p.innerHTML = suggestions[i].presentationText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    const presentationText = suggestions[i].presentationText.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    p.innerHTML = removeCommonIndentFromCodeSnippet(presentationText)
     suggestionDiv.appendChild(p)
     popup.appendChild(suggestionDiv)
   }
@@ -353,9 +354,7 @@ function addDiagnosticsBlock(description, field, popup, lookup) {
     elements++
 
     let li = document.createElement("li")
-
-    let code = document.createElement("code")
-    code.innerHTML = diagnostics[i]["first"] + " (" + diagnostics[i]["second"] + ")"
+    let code = addDiagnosticsItem(diagnostics, i)
 
     li.appendChild(code)
     ul.appendChild(li)
@@ -379,6 +378,34 @@ function addDiagnosticsBlock(description, field, popup, lookup) {
       cells[j].style.paddingTop = "5px"
     }
   }
+}
+
+function addDiagnosticsItem(diagnostics, num) {
+  let codeContainer = document.createElement("DIV")
+  let code = document.createElement("pre")
+  code.innerHTML = removeCommonIndentFromCodeSnippet(diagnostics[num]["first"])
+  let meta = document.createElement("pre")
+  meta.innerHTML = "(" + diagnostics[num]["second"] + ")"
+  codeContainer.appendChild(meta)
+  codeContainer.appendChild(code)
+  return codeContainer
+}
+
+/**
+ * Removes the common leading indent from a multi-line code snippet, while keeping the first line unchanged.
+ *
+ * @param {string} code - The multi-line code snippet from which the common leading indentation will be removed.
+ * @return {string} - The code snippet with the common leading indentation removed from all lines except the first one.
+ */
+function removeCommonIndentFromCodeSnippet(code) {
+  const lines = code.split('\n')
+  const offsets = lines.slice(1)
+    .filter(line => line.length !== 0)
+    .map(line => line.search(/\S/))
+  const minOffset = Math.min(...offsets)
+  if (minOffset <= 0) return code
+  const trimmedLines = lines.slice(1).map(line => line.slice(minOffset)).join('\n')
+  return lines[0] + '\n' + trimmedLines
 }
 
 function updateElementFeatures(suggestionDiv) {
@@ -593,7 +620,7 @@ function addMultilineExpectedText(popup, expectedText) {
   const expected = document.createElement("DIV")
   expected.setAttribute("class", "expected")
   const p = document.createElement("pre")
-  p.innerHTML = expectedText
+  p.innerHTML = removeCommonIndentFromCodeSnippet(expectedText)
   expected.appendChild(p)
   popup.appendChild(expected)
 }
