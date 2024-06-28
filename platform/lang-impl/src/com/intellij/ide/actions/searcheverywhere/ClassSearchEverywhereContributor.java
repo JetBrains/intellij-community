@@ -113,10 +113,10 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @Override
-  protected @Nullable Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
-    Navigatable res = super.createExtendedNavigatable(psi, searchText, modifiers);
-    if (res != null) {
-      return res;
+  protected @Nullable Navigatable createExtendedNavigatable(@NotNull PsiElement psi, @NotNull String searchText, int modifiers) {
+    Navigatable result = super.createExtendedNavigatable(psi, searchText, modifiers);
+    if (result != null) {
+      return result;
     }
 
     VirtualFile file = PsiUtilCore.getVirtualFile(psi);
@@ -129,7 +129,6 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
           public void navigate(boolean requestFocus) {
             NavigationUtil.activateFileWithPsiElement(psi, false);
             delegate.navigate(true);
-
           }
 
           @Override

@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
-import com.intellij.codeWithMe.ClientId
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.OpenInRightSplitAction.Companion.openInRightSplit
 import com.intellij.ide.actions.SearchEverywherePsiRenderer
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.FileTypeFilterCollector
 import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
@@ -16,28 +14,19 @@ import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.backend.navigation.NavigationRequests
-import com.intellij.platform.ide.navigation.NavigationService
+import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.DirtyUI
 import com.intellij.util.Processor
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
-import java.awt.event.InputEvent
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
@@ -79,7 +68,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
 
   override fun getActions(onChanged: Runnable): List<AnAction> = doGetActions(filter, FileTypeFilterCollector(), onChanged)
 
-  override fun getElementsRenderer(): ListCellRenderer<in Any?> {
+  final override fun getElementsRenderer(): ListCellRenderer<in Any?> {
     return object : SearchEverywherePsiRenderer(this) {
       @DirtyUI
       override fun getItemMatchers(list: JList<*>, value: Any): ItemMatchers {
@@ -92,7 +81,7 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
     }
   }
 
-  override fun processElement(
+  final override fun processElement(
     progressIndicator: ProgressIndicator,
     consumer: Processor<in FoundItemDescriptor<Any>>,
     model: FilteringGotoByModel<*>,
@@ -111,45 +100,8 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
     return consumer.process(FoundItemDescriptor(element, degree))
   }
 
-  override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String): Boolean {
-    if (selected is PsiFile) {
-      val file = selected.virtualFile
-      if (file == null) {
-        return super.processSelectedItem(selected, modifiers, searchText)
-      }
-
-      val lineAndColumn = getLineAndColumn(searchText)
-      if (file.isValid) {
-        if (lineAndColumn.first == -1 && lineAndColumn.second == -1) {
-          myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
-            val navigationRequests = serviceAsync<NavigationRequests>()
-            readAction { navigationRequests.sourceNavigationRequest(myProject, file, -1, null) }?.let {
-              myProject.serviceAsync<NavigationService>().navigate(it)
-            }
-          }
-        }
-        else {
-          val descriptor = OpenFileDescriptor(myProject, file, lineAndColumn.first, lineAndColumn.second)
-          myProject.service<SearchEverywhereContributorCoroutineScopeHolder>().coroutineScope.launch(ClientId.coroutineContext()) {
-            @Suppress("DEPRECATION")
-            if ((modifiers and InputEvent.SHIFT_MASK) != 0) {
-              withContext(Dispatchers.EDT) {
-                openInRightSplit(project = myProject, file = file, element = descriptor, requestFocus = true)
-              }
-            }
-            else {
-              myProject.serviceAsync<NavigationService>().navigate(descriptor)
-            }
-            if (lineAndColumn.first > 0) {
-              serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
-            }
-          }
-        }
-        return true
-      }
-    }
-
-    return super.processSelectedItem(selected, modifiers, searchText)
+  final override suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {
+    serviceAsync<FeatureUsageTracker>().triggerFeatureUsed("navigation.goto.file.line")
   }
 
   override fun getDataForItem(element: Any, dataId: String): Any? {

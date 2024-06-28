@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.navigation.impl
 
-import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.injected.editor.VirtualFileWindow
@@ -211,19 +210,11 @@ private suspend fun navigateToSource(
         descriptor.isUsePreviewTab = true
       }
 
-      val fileNavigator = serviceAsync<FileNavigator>()
-      if (fileNavigator is FileNavigatorImpl &&
-          withContext(Dispatchers.EDT) {
-            blockingContext {
-              fileNavigator.navigateInRequestedEditor(
-                descriptor = descriptor,
-                dataContextSupplier = {
-                  dataContext ?: @Suppress("DEPRECATION") DataManager.getInstance().dataContext
-                },
-              )
-            }
-          }) {
-        return
+      if (dataContext != null) {
+        val fileNavigator = serviceAsync<FileNavigator>()
+        if (fileNavigator is FileNavigatorImpl && fileNavigator.navigateInRequestedEditorAsync(descriptor, dataContext)) {
+          return
+        }
       }
 
       if (openFile(request = request, descriptor = descriptor, options = options, openMode = openMode)) {
@@ -243,7 +234,7 @@ private suspend fun openFile(
 ): Boolean {
   val originalFile = descriptor.file
   val fileEditorManager = descriptor.project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
-  val effectiveDescriptor: FileEditorNavigatable
+  val effectiveDescriptor: OpenFileDescriptor
   if (originalFile is VirtualFileWindow) {
     effectiveDescriptor = readAction {
       val hostOffset = originalFile.documentWindow.injectedToHost(descriptor.offset)
@@ -270,8 +261,8 @@ private suspend fun openFile(
     return false
   }
 
-  val currentCompositeForFile = fileEditorManager.getComposite(file) as? EditorComposite
   val elementRange = if (options.preserveCaret) request.elementRangeMarker?.takeIf { it.isValid }?.textRange else null
+  val currentCompositeForFile = fileEditorManager.getComposite(file) as? EditorComposite
   if (elementRange != null) {
     for (editor in fileEditors) {
       if (editor is TextEditor) {
@@ -282,6 +273,11 @@ private suspend fun openFile(
         }
       }
     }
+  }
+
+
+  if (effectiveDescriptor.line == -1 && effectiveDescriptor.column == -1 && effectiveDescriptor.offset == -1) {
+    return true
   }
 
   suspend fun tryNavigate(filter: (NavigatableFileEditor) -> Boolean): Boolean {
