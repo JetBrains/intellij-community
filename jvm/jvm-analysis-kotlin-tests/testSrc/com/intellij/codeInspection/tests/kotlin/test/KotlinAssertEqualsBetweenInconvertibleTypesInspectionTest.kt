@@ -14,7 +14,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.BlockJUnit4ClassRunner
 import java.io.File
 
-@Ignore
+@Ignore("IDEA-348567")
 @RunWith(BlockJUnit4ClassRunner::class)
 class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
   override fun getProjectDescriptor(): LightProjectDescriptor = object : AssertJProjectDescriptor(LanguageLevel.HIGHEST) {

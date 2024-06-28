@@ -2,8 +2,14 @@ package com.intellij.codeInspection.tests.java.test
 
 import com.intellij.jvm.analysis.internal.testFramework.test.AssertEqualsBetweenInconvertibleTypesInspectionTestBase
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
+import org.junit.Ignore
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.junit.runners.BlockJUnit4ClassRunner
 
+@RunWith(BlockJUnit4ClassRunner::class)
 class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetweenInconvertibleTypesInspectionTestBase() {
+  @Test
   fun `test JUnit 4 assertEquals`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.Assert.assertEquals;
@@ -47,6 +53,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent(), fileName = "AssertEqualsBetweenInconvertibleTypes")
   }
 
+  @Test
   fun `test JUnit 5 assertEquals`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -63,6 +70,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test AssertJ assertEquals`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
@@ -79,6 +88,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
   fun `test JUnit 4 assertNotEquals`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.Assert.assertNotEquals;
@@ -97,6 +107,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent(), fileName = "AssertNotEqualsBetweenInconvertibleTypes")
   }
 
+  @Test
   fun `test JUnit 5 assertNotEquals`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -112,6 +123,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test AssertJ assertNotEquals`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
@@ -127,6 +140,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
   fun `test JUnit 4 assertNotSame`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.Assert.assertNotSame;
@@ -145,6 +159,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent(), fileName = "AssertNotSameBetweenInconvertibleTypes")
   }
 
+  @Test
   fun `test JUnit 5 assertNotSame`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.jupiter.api.Assertions.assertNotSame;
@@ -160,6 +175,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test AssertJ assertNotSame`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.assertj.core.api.Assertions.assertThat;
@@ -175,6 +192,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
   fun `test JUnit 4 assertSame`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.Assert.assertSame;
@@ -190,6 +208,7 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
   fun `test JUnit 5 assertSame`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.junit.jupiter.api.Assertions.assertSame;
@@ -206,6 +225,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test AssertJ assertSame`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import static org.assertj.core.api.Assertions.assertThat;
@@ -222,6 +243,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test Assertj first element type match`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
         import org.assertj.core.api.Assertions;
@@ -238,6 +261,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test Assertj single element type match`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
@@ -254,6 +279,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test Assertj single element type mismatch`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
@@ -270,7 +297,9 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
-  fun `_test AssertJ extracting single element type mismatch`() {
+  @Test
+  @Ignore("IDEA-348567")
+  fun `test AssertJ extracting single element type mismatch`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
       import org.assertj.core.api.Assertions;
       import java.util.List;
@@ -287,6 +316,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test Assertj extracting method reference type match`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
         import org.assertj.core.api.Assertions;
@@ -303,6 +334,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test Assertj extracting lambda type match`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
         import org.assertj.core.api.Assertions;
@@ -319,6 +352,8 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
     """.trimIndent())
   }
 
+  @Test
+  @Ignore("IDEA-348567")
   fun `test Assertj cause match`() {
     myFixture.testHighlighting(JvmLanguage.JAVA, """
         import org.assertj.core.api.Assertions;

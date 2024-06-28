@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -44,7 +44,7 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     processAssertHint(createAssertNotEqualsHint(node), node)
     processAssertHint(createAssertSameHint(node), node)
     processAssertHint(createAssertNotSameHint(node), node)
-    processAssertJ(node)
+    //processAssertJ(node) // TODO fix issues and enable see IDEA-348567
     return true
   }
 
