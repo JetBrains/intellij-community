@@ -152,11 +152,20 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     }
   }
 
+  private fun isInternalBuild(): Boolean {
+    return ApplicationManager.getApplication().isEAP && ApplicationManager.getApplication().isInternal
+  }
+
+  private fun isJetBrainsUser(): Boolean {
+    val acc = JBAccountInfoService.getInstance()
+    return acc?.userData?.email?.endsWith("@jetbrains.com") == true
+  }
+
   private fun AdvancedSettingBean.isApplicable(): Boolean =
     when (id) {
       "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
       "federated.learning",
-      "federated.learning.search.everywhere" -> ApplicationManager.getApplication().isEAP && ApplicationManager.getApplication().isInternal
+      "federated.learning.search.everywhere" -> isInternalBuild() && isJetBrainsUser()
       else -> true
     }
 
