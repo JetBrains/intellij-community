@@ -190,25 +190,39 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 38,
+      "description": "Full Line - Llama + filter model V2",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 39,
+      "description": "Full Line - PHP WA5 + Filter model V2",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
     {
       "id": "java",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 22, 24],
+      "includeGroups": [28, 38, 22, 24],
       "shouldLogElementFeatures": false
     },
     {
       "id": "python",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 22, 24],
+      "includeGroups": [28, 38, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
       "id": "kotlin",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 22, 24],
+      "includeGroups": [28, 38, 22, 24],
       "shouldLogElementFeatures": true
     },
     {
@@ -220,25 +234,25 @@
     {
       "id": "php",
       "experimentBucketsCount": 4,
-      "includeGroups": [28, 34, 22, 35],
+      "includeGroups": [28, 39, 38, 35],
       "shouldLogElementFeatures": false
     },
     {
       "id": "javascript",
       "experimentBucketsCount": 2,
-      "includeGroups": [31, 24],
+      "includeGroups": [31, 38],
       "shouldLogElementFeatures": true
     },
     {
       "id": "ruby",
       "experimentBucketsCount": 1,
-      "includeGroups": [22],
+      "includeGroups": [38],
       "shouldLogElementFeatures": true
     },
     {
       "id": "go",
       "experimentBucketsCount": 2,
-      "includeGroups": [28, 22],
+      "includeGroups": [28, 38],
       "shouldLogElementFeatures": true
     },
     {
@@ -261,8 +275,8 @@
     },
     {
       "id": "C#",
-      "experimentBucketsCount": 4,
-      "includeGroups": [8, 22, 24],
+      "experimentBucketsCount": 2,
+      "includeGroups": [22, 28],
       "shouldLogElementFeatures": false
     },
     {
@@ -286,7 +300,7 @@
     {
       "id": "css",
       "experimentBucketsCount": 2,
-      "includeGroups": [31, 24],
+      "includeGroups": [31, 38],
       "shouldLogElementFeatures": true
     },
     {
