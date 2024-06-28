@@ -14,11 +14,8 @@ import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
 import com.intellij.util.SystemProperties.*
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.indexing.FileBasedIndexEx
-import com.intellij.util.indexing.FileIndexingResult
+import com.intellij.util.indexing.*
 import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
-import com.intellij.util.indexing.IndexId
-import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.INDEXING_PARALLELIZATION
 import com.intellij.util.indexing.events.VfsEventsMerger
 import kotlinx.coroutines.*
@@ -50,7 +47,7 @@ abstract class IndexWriter {
     writeChangesToIndexesSync(fileIndexingResult, finishCallback)
   }
 
-  suspend fun writeAsync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
+  open suspend fun writeAsync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
     if (preProcess(fileIndexingResult, finishCallback)) {
       return
     }
@@ -104,15 +101,18 @@ abstract class IndexWriter {
      * This is why we 'assign' a worker/thread to a specific set of the indexes and don't use >1 thread/worker per index
      */
     @JvmField
-    val WRITE_INDEXES_ON_SEPARATE_THREAD = getBooleanProperty("idea.write.indexes.on.separate.thread", UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5)
+    val WRITE_INDEXES_ON_SEPARATE_THREAD = getBooleanProperty("idea.write.indexes.on.separate.thread",
+                                                              UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5)
 
+    private val USE_FAKE_WRITER: Boolean = getBooleanProperty("IndexWriter.USE_FAKE_WRITER", false)
     private val USE_COROUTINES: Boolean = getBooleanProperty("IndexWriter.USE_COROUTINES", false)
 
-    private val defaultParallelWriter: ParallelIndexWriter = if (USE_COROUTINES)
-      ApplyViaCoroutinesWriter()
-    else
-      //LegacyMultiThreadedIndexWriter()
-      MultiThreadedWithSuspendIndexWriter()
+    private val defaultParallelWriter: ParallelIndexWriter = when{
+      USE_FAKE_WRITER -> FakeIndexWriter
+      USE_COROUTINES -> ApplyViaCoroutinesWriter()
+      else -> MultiThreadedWithSuspendIndexWriter()
+        //LegacyMultiThreadedIndexWriter()
+    }
 
     @JvmStatic
     fun suitableWriter(applicationMode: ApplicationMode, forceWriteSynchronously: Boolean = false): IndexWriter {
@@ -257,8 +257,10 @@ abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER)
 
 
 /**
- * Distribute the writing to N+1 threads (single-threaded
- * [com.intellij.execution.Executor]s, really), for the N heaviest indexes, +1 for all other indexes combined.
+ * Distribute the writing to N+1 threads (single-threaded [com.intellij.execution.Executor]s, really),
+ * for the N heaviest indexes, +1 for all other indexes combined.
+ * Then writing queue is too large, it parks the thread that invokes [writeChangesToIndexes] until the queue
+ * size drops down again.
  */
 class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount) {
   companion object {
@@ -267,7 +269,8 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
 
 
   /** Max number of queued updates per indexing thread, after which one indexing thread is going to sleep until the queue is shrunk.  */
-  private val MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER: Int = getIntProperty("IndexUpdateWriter.MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER", 100)
+  private val MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER: Int = getIntProperty("IndexUpdateWriter.MAX_ALLOWED_WRITES_IN_QUEUE_PER_INDEXER",
+                                                                            100)
 
   /** Calibrated on indexing IDEA project: median write time for a single index entry.  */
   private val EXPECTED_SINGLE_WRITE_TIME_NS: Long = getLongProperty("IndexUpdateWriter.EXPECTED_SINGLE_WRITE_TIME_NS", 2500)
@@ -294,7 +297,7 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
       pool.add(createExecutorForIndexWriting("Aux Index Writer #${writerNo + 1}"))
     }
 
-    check(pool.size == TOTAL_WRITERS_NUMBER){ "pool.size(=${pool.size}) must be == TOTAL_WRITERS_NUMBER(=$TOTAL_WRITERS_NUMBER)" }
+    check(pool.size == TOTAL_WRITERS_NUMBER) { "pool.size(=${pool.size}) must be == TOTAL_WRITERS_NUMBER(=$TOTAL_WRITERS_NUMBER)" }
 
     writers = pool
   }
@@ -517,8 +520,14 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
   }
 }
 
-
-class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount){
+/**
+ * Distribute the writing to N+1 threads (single-threaded [com.intellij.execution.Executor]s, really),
+ * for the N heaviest indexes, +1 for all other indexes combined.
+ * Differs from [LegacyMultiThreadedIndexWriter] is that it uses suspend for backpressure, instead of parking:
+ * i.e. then writing queue is too large, it suspends the coroutine that invokes [writeChangesToIndexes] until
+ * the queue size drops down.
+ */
+class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount) {
   companion object {
     private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
   }
@@ -552,7 +561,7 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
       pool.add(createWorker("Aux Index Writer #${writerNo + 1}"))
     }
 
-    check(pool.size == TOTAL_WRITERS_NUMBER){ "pool.size(=${pool.size}) must be == TOTAL_WRITERS_NUMBER(=$TOTAL_WRITERS_NUMBER)" }
+    check(pool.size == TOTAL_WRITERS_NUMBER) { "pool.size(=${pool.size}) must be == TOTAL_WRITERS_NUMBER(=$TOTAL_WRITERS_NUMBER)" }
 
     writers = pool
   }
@@ -789,7 +798,7 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
 
 
 @OptIn(DelicateCoroutinesApi::class)
-class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount){
+class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount) {
   companion object {
     private val LOG = Logger.getInstance(ApplyViaCoroutinesWriter::class.java)
   }
@@ -953,5 +962,33 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
 }
 
 
+/**
+ * Writes nothing, just throws away all the data supplied.
+ * To be used in test/benchmarks as baseline/reference point
+ */
+object FakeIndexWriter : ParallelIndexWriter() {
 
+  override suspend fun writeAsync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
+    // write nothing, just report 'done':
+
+    for (applier in fileIndexingResult.appliers()) {
+      IndexingStamp.setFileIndexedStateCurrent(
+        fileIndexingResult.fileId(),
+        applier.indexId,
+        applier.wasIndexProvidedByExtension()
+      )
+    }
+
+    fileIndexingResult.markFileProcessed(/*success: */ true) { "nothing" }
+    finishCallback()
+  }
+
+  override suspend fun writeChangesToIndexes(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) = Unit
+
+  override fun waitCurrentIndexingToFinish() = Unit
+
+  override fun totalTimeSpentWriting(unit: TimeUnit, workerNo: Int): Long = 0
+
+  override fun totalTimeIndexersSlept(unit: TimeUnit): Long = 0
+}
 
