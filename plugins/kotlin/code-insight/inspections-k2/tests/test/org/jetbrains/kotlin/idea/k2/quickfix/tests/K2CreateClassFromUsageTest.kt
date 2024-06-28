@@ -11,7 +11,7 @@ abstract class K2CreateClassFromUsageTest : K2AbstractCreateFromUsageTest("creat
      */
     //class AnnotationEntry : K2CreateClassFromUsageTest()
     //class CallExpression : K2CreateClassFromUsageTest()
-    //class DelegationSpecifier : K2CreateClassFromUsageTest()
+    class DelegationSpecifier : K2CreateClassFromUsageTest()
     class ImportDirective : K2CreateClassFromUsageTest() {
         //class Kt21515: K2CreateClassFromUsageTest()
     }

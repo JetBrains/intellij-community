@@ -96,15 +96,17 @@ internal class CreateKotlinCallablePsiEditor(
         TemplateManager.getInstance(project).startTemplate(editor, template, listener)
     }
 
-    private fun setupTemplate(function: PsiElement): Template {
-        val builder = TemplateBuilderImpl(function)
-        if (function is KtCallableDeclaration) {
-            function.valueParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
+    private fun setupTemplate(declaration: PsiElement): Template {
+        val builder = TemplateBuilderImpl(declaration)
+        if (declaration is KtCallableDeclaration) {
+            declaration.valueParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
             // Set up template for the return type
-            val returnType = function.typeReference
+            val returnType = declaration.typeReference
             if (returnType != null) builder.replaceElement(returnType, ExpressionForCreateCallable(callableInfo.candidatesOfRenderedReturnType))
         }
-
+        if (declaration is KtClassOrObject) {
+            declaration.primaryConstructorParameters.forEachIndexed { index, parameter -> builder.setupParameter(index, parameter) }
+        }
         return builder.buildInlineTemplate()
     }
 

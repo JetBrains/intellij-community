@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-class CreateKotlinClassAction(
+internal class CreateKotlinClassAction(
     val element: KtElement,
     val kind: ClassKind,
     private val applicableParents: List<PsiElement>,
@@ -26,7 +26,7 @@ class CreateKotlinClassAction(
     val open: Boolean,
     val name: String,
     private val superClassName: String?,
-    private val paramList: String,
+    private val paramList: Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>>,
     private val returnTypeString: String
 ) : IntentionAction {
     override fun getText(): String = KotlinBundle.message("create.0.1", kind.description, name)
@@ -71,22 +71,12 @@ class CreateKotlinClassAction(
         targetParent: PsiElement,
         className: String,
         superClassName: String?,
-        paramList: String,
+        paramList: Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>>,
         returnTypeString: String
     ) {
-        val callableInfo = NewCallableInfo(
-            definitionAsString = "",
-            parameterCandidates = listOf(), //todo
-            candidatesOfRenderedReturnType = listOf(),   //todo
-            containerClassFqName = FqName(className),
-            isForCompanion = false,
-            typeParameterCandidates = listOf(), //todo
-            superClassCandidates = listOfNotNull(superClassName)
-        )
-
         val declaration = CreateClassUtil.createClassDeclaration(
             file.project,
-            paramList,
+            paramList.first!!,
             returnTypeString,
             kind,
             className,
@@ -94,6 +84,15 @@ class CreateKotlinClassAction(
             open,
             inner,
             isInsideInnerOrLocalClass(targetParent), null
+        )
+        val callableInfo = NewCallableInfo(
+            definitionAsString = "",
+            parameterCandidates = paramList.second,
+            candidatesOfRenderedReturnType = listOf(),   //todo
+            containerClassFqName = FqName(className),
+            isForCompanion = false,
+            typeParameterCandidates = listOf(), //todo
+            superClassCandidates = listOfNotNull(superClassName)
         )
         declaration.typeParameterList?.delete()
         val editor = CreateKotlinCallablePsiEditor(file.project, callableInfo)

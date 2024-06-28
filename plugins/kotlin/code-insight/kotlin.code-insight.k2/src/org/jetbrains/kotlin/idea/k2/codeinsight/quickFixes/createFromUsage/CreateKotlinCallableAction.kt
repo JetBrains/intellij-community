@@ -10,21 +10,19 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfReturnType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtTypeWithNullability
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageUtil
 import org.jetbrains.kotlin.idea.refactoring.getContainer
 import org.jetbrains.kotlin.idea.refactoring.getExtractionContainers
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.types.Variance
 
 /**
  * This class is an IntentionAction that creates Kotlin callables based on the given [request]. To create Kotlin
@@ -53,10 +51,10 @@ internal class CreateKotlinCallableAction(
                 || (call as? PsiMethodCallExpression)?.methodExpression?.referenceName != null
     }
 
-    data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
+    internal data class ParamCandidate(val names: Collection<String>, val renderedTypes: List<String>)
 
-    private val parameterCandidates: List<ParamCandidate> = renderCandidatesOfParameterTypes(request)
-    private val candidatesOfRenderedReturnType: List<String> = renderCandidatesOfReturnType(request)
+    private val parameterCandidates: List<ParamCandidate> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { analyze(it) { renderCandidatesOfParameterTypes(request.expectedParameters, it) } } ?: emptyList()
+    private val candidatesOfRenderedReturnType: List<String> = (call as? KtElement ?: pointerToContainer.element as? KtElement)?.let { analyze(it) { renderCandidatesOfReturnType(request, it) } } ?: emptyList()
     private val containerClassFqName: FqName? = (getContainer() as? KtClassOrObject)?.fqName
 
     private val isForCompanion: Boolean = (request as? CreateMethodFromKotlinUsageRequest)?.isForCompanion == true
@@ -135,37 +133,6 @@ internal class CreateKotlinCallableAction(
     private fun getContainer(): KtElement? {
         val element = pointerToContainer.element as? KtElement
         return element
-    }
-
-    private fun renderCandidatesOfParameterTypes(request: CreateMethodRequest): List<ParamCandidate> {
-        val container = getContainer()
-        return request.expectedParameters.map { expectedParameter ->
-            val types = if (container == null) listOf("Any")
-            else
-                analyze(call as? KtElement ?: container) {
-                    expectedParameter.expectedTypes.map {
-                        renderTypeName(it, container) ?: "Any"
-                    }
-                }
-            ParamCandidate(expectedParameter.semanticNames, types)
-        }
-    }
-
-    private fun renderCandidatesOfReturnType(request: CreateMethodRequest): List<String> {
-        val container = getContainer() ?: return emptyList()
-        return analyze(call as? KtElement ?: container) {
-            request.returnType.mapNotNull { returnType ->
-                renderTypeName(returnType, container)
-            }
-        }
-    }
-
-    context (KaSession)
-    @OptIn(KaExperimentalApi::class)
-    private fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
-        val ktType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
-        if (ktType == null || ktType == builtinTypes.UNIT) return null
-        return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 
     private fun buildCallableAsString(request: CreateMethodRequest): String? {

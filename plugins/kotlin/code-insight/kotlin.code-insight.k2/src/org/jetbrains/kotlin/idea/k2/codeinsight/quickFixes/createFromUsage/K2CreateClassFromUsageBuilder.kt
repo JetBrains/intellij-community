@@ -15,6 +15,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getExpectedKotlinType
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.resolveExpression
@@ -35,7 +37,6 @@ object K2CreateClassFromUsageBuilder {
 
         var expectedType: ExpectedKotlinType?
         var superClassName:String?
-        var paramList: String?
         var returnTypeString = ""
         var superClass: KtClass?
         analyze(refExpr) {
@@ -43,7 +44,7 @@ object K2CreateClassFromUsageBuilder {
             superClass = expectedType?.ktType?.convertToClass()
             superClassName = superClass?.name
             val isAny = superClassName == StandardClassIds.Any.shortClassName.asString()
-            paramList = renderParamList(superClass, isAny)
+            val paramList: Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>> = renderParamList(superClass, isAny, refExpr)
             returnTypeString = if (superClass == null || superClassName == null || isAny) "" else if (superClass!!.isInterface()) ": $superClassName" else ": $superClassName()"
 
             val (classKinds, targetParents) = getPossibleClassKindsAndParents(refExpr)
@@ -66,7 +67,7 @@ object K2CreateClassFromUsageBuilder {
                     open,
                     refExpr.getReferencedName(),
                     superClassName,
-                    paramList!!,
+                    paramList,
                     returnTypeString
                 )
             }
@@ -84,16 +85,33 @@ object K2CreateClassFromUsageBuilder {
         return ktClass.isAnnotation() || ktClass.isEnum() || ktClass.isInline()
     }
 
-    private fun renderParamList(ktClass: KtClass?, isAny: Boolean): String {
-        if (ktClass == null || isAny) return ""
-        val prefix = if (ktClass.isAnnotation()) "val " else ""
-        val primaryConstructor = ktClass.primaryConstructor
-        val parameters = primaryConstructor?.valueParameterList?.parameters ?: listOf()
-        val renderedParameters = parameters.indices.joinToString(", ") { i -> "${prefix}p$i: Any" }
-        return if (parameters.isNotEmpty() || primaryConstructor != null)
+    context(KaSession)
+    private fun renderParamList(ktClass: KtClass?, isAny: Boolean, refExpr: KtNameReferenceExpression): Pair<String?, List<CreateKotlinCallableAction.ParamCandidate>> {
+        val renderedParameters: String
+        val shouldParenthesize: Boolean
+        val candidateList: List<CreateKotlinCallableAction.ParamCandidate>
+        if (ktClass == null || isAny) {
+            // find params from the ref parameters, e.g.: `class F: Foo(1,"2")`
+            val superTypeCallEntry = refExpr.findParentOfType<KtSuperTypeCallEntry>(false)?:return Pair("", listOf())
+            val expectedParams = computeExpectedParams(superTypeCallEntry)
+            candidateList = renderCandidatesOfParameterTypes(expectedParams, refExpr)
+            renderedParameters = candidateList.joinToString(", ") { it.names.first() + ": " + it.renderedTypes.first() }
+            shouldParenthesize = expectedParams.isNotEmpty()
+        }
+        else {
+            val prefix = if (ktClass.isAnnotation()) "val " else ""
+            val primaryConstructor = ktClass.primaryConstructor
+            val parameters = primaryConstructor?.valueParameterList?.parameters ?: listOf()
+            renderedParameters = parameters.indices.joinToString(", ") { i -> "${prefix}p$i: Any" }
+            shouldParenthesize = parameters.isNotEmpty() || primaryConstructor != null
+            candidateList = listOf()
+        }
+        val renderedParamList = if (shouldParenthesize)
             "($renderedParameters)"
         else
             renderedParameters
+
+        return Pair(renderedParamList, candidateList)
     }
 
     context (KaSession)
