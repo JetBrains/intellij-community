@@ -31,7 +31,7 @@ abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls Strin
     }
     job.invokeOnCompletion {
       if (it != null) {
-        context.error(text + ": " + it.message, line)
+        context.error(text + ": " + it.message + "\nException: ${it.stackTraceToString()}", line)
       }
     }
     return job.asCompletableFuture()
