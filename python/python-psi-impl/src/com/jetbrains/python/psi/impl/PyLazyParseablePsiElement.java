@@ -30,7 +30,7 @@ public class PyLazyParseablePsiElement extends LazyParseablePsiElement implement
     }
   }
 
-  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+  protected void acceptPyVisitor(@NotNull PyElementVisitor pyVisitor) {
     pyVisitor.visitPyElement(this);
   }
 

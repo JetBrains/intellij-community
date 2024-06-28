@@ -9,4 +9,9 @@ public interface PyAstStatementList extends PyAstElement {
   PyAstStatementList[] EMPTY_ARRAY = new PyAstStatementList[0];
 
   PyAstStatement[] getStatements();
+
+  @Override
+  default void acceptPyVisitor(PyAstElementVisitor pyVisitor) {
+    pyVisitor.visitPyStatementList(this);
+  }
 }

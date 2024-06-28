@@ -10,6 +10,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyElementGenerator;
+import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +25,11 @@ public class PyStatementListImpl extends PyLazyParseablePsiElement implements Py
 
   public PyStatementListImpl(@Nullable CharSequence buffer) {
     super(PyElementTypes.STATEMENT_LIST, buffer);
+  }
+
+  @Override
+  protected void acceptPyVisitor(@NotNull PyElementVisitor pyVisitor) {
+    pyVisitor.visitPyStatementList(this);
   }
 
   @Override
