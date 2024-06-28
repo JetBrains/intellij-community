@@ -51,12 +51,22 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   private int expectedInputSize;                  // size of input the test is expected to process;
   private ThrowableRunnable<?> setup;                   // to run before each test
   private int maxMeasurementAttempts = 3;               // number of retries
-  public  String launchName;                      // to print on fail
+  public String launchName;                      // to print on fail
   private int warmupIterations = 1;                      // default warmup iterations should be positive
   private String uniqueTestName;                        // at least full qualified test name (plus other identifiers, optionally)
   @NotNull
   private final IJTracer tracer;
   private ArrayList<TelemetryMetricsCollector> metricsCollectors = new ArrayList<>();
+
+  private boolean useDefaultSpanMetricExporter = true;
+
+  /**
+   * Default span metrics exporter {@link BenchmarksSpanMetricsCollector} will not be used
+   */
+  public PerformanceTestInfoImpl disableDefaultSpanMetricsExporter() {
+    this.useDefaultSpanMetricExporter = false;
+    return this;
+  }
 
   private static final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(
     SupervisorKt.SupervisorJob(null).plus(Dispatchers.getIO())
@@ -122,7 +132,7 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
     }
   }
 
-  public PerformanceTestInfoImpl(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName){
+  public PerformanceTestInfoImpl(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName) {
     this();
     initialize(test, expectedInputSize, launchName);
   }
@@ -134,7 +144,9 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
   }
 
   @Override
-  public PerformanceTestInfoImpl initialize(@NotNull ThrowableComputable<Integer, ?> test, int expectedInputSize, @NotNull String launchName){
+  public PerformanceTestInfoImpl initialize(@NotNull ThrowableComputable<Integer, ?> test,
+                                            int expectedInputSize,
+                                            @NotNull String launchName) {
     this.test = test;
     this.expectedInputSize = expectedInputSize;
     assert expectedInputSize > 0 : "Expected input size must be > 0. Was: " + expectedInputSize;
@@ -349,8 +361,14 @@ public class PerformanceTestInfoImpl implements PerformanceTestInfo {
       try {
         // publish warmup and final measurements at once at the end of the runs
         if (iterationType.equals(IterationMode.MEASURE)) {
-          IJPerfMetricsPublisher.Companion.publishSync(uniqueTestName,
-                                                       metricsCollectors.toArray(new TelemetryMetricsCollector[0]));
+          var collectors = new ArrayList<TelemetryMetricsCollector>();
+          if (useDefaultSpanMetricExporter) {
+            collectors.add(new BenchmarksSpanMetricsCollector(uniqueTestName,
+                                                              BenchmarksSpanMetricsCollector.Companion.getDefaultPathToTelemetrySpanJson()));
+          }
+          collectors.addAll(metricsCollectors);
+
+          IJPerfMetricsPublisher.Companion.publishSync(uniqueTestName, collectors.toArray(new TelemetryMetricsCollector[0]));
         }
       }
       catch (Throwable t) {

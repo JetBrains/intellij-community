@@ -27,7 +27,7 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
 
     // fallback to the collecting meters from the .csv files for older IDEs versions (where meters aren't exported to JSON files)
     if (metricsFiles.isEmpty()) {
-      logError("Cannot find JSON files with metrics `open-telemetry-meters.***.json` in '$logsDirPath'. Falling back to use metrics from *.csv files")
+      logError("Cannot find JSON files with metrics `open-telemetry-meters.***.json` in '${logsDirPath.toUri()}'. Falling back to use metrics from *.csv files")
 
       return OpenTelemetryCsvMeterCollector(metricsSelectionStrategy) { metricEntry ->
         val metricData = object : MetricData {

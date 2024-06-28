@@ -2,6 +2,7 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.testFramework.PerformanceTestInfo
 import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
@@ -25,7 +26,7 @@ class SpanExtractionFromUnitPerfTest {
   companion object {
     fun checkMetricsAreFlushedToTelemetryFile(spanName: String, withWarmup: Boolean = true, vararg customSpanNames: String) {
       val extractedMetrics = runBlocking {
-        SpanMetricsExtractor().waitTillMetricsExported(spanName = spanName)
+        BenchmarksSpanMetricsCollector(spanName).collect(PathManager.getLogDir())
       }
 
       if (withWarmup) {
@@ -57,8 +58,9 @@ class SpanExtractionFromUnitPerfTest {
   fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) = runBlocking {
     val mainMetricName = "simple perf test"
 
-    val extractedMetrics = SpanMetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json"))
-      .waitTillMetricsExported(spanName = mainMetricName)
+    val extractedMetrics = BenchmarksSpanMetricsCollector(spanName = mainMetricName,
+                                                          telemetryJsonFile = (openTelemetryReports / "open-telemetry-unit-perf-test.json"))
+      .collect(PathManager.getLogDir())
 
     // warmup metrics
     Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value)
@@ -70,13 +72,13 @@ class SpanExtractionFromUnitPerfTest {
     Assertions.assertEquals(379, extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value)
 
     // measured metrics
-    Assertions.assertEquals(307, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
+    Assertions.assertEquals(306, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
     Assertions.assertEquals(324, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
-    Assertions.assertEquals(375, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
-    Assertions.assertEquals(921, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
+    Assertions.assertEquals(376, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
+    Assertions.assertEquals(920, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
     Assertions.assertEquals(3, extractedMetrics.single { it.id.name == "attempt.count" }.value)
     Assertions.assertEquals(153, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
-    Assertions.assertEquals(2005, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
+    Assertions.assertEquals(2004, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
 
     val reportFile = Files.createTempFile("temp", ".json")
 

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.teamcity.TeamCityClient
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
@@ -64,16 +65,18 @@ class IJPerfMetricsPublisher {
       else setBuildParams()
     )
 
+    @Suppress("TestOnlyProblems")
     private suspend fun prepareMetricsForPublishing(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector): PerformanceMetricsDto {
-      val metrics: List<PerformanceMetrics.Metric> = SpanMetricsExtractor().waitTillMetricsExported(uniqueTestIdentifier)
-      val additionalMetrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry meters should be exported",
-                                                                         retries = 5, delay = 300.milliseconds) {
+      delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
+
+      val metrics: List<PerformanceMetrics.Metric> = withRetry("Telemetry metrics should be exported",
+                                                               retries = 10, delay = 300.milliseconds) {
+        TelemetryManager.getInstance().forceFlushMetrics()
+
         metricsCollectors.flatMap {
           it.collect(PathManager.getLogDir())
         }
       }!!
-
-      val mergedMetrics = metrics.plus(additionalMetrics)
 
       teamCityClient.publishTeamCityArtifacts(source = PathManager.getLogDir(), artifactPath = uniqueTestIdentifier)
       teamCityClient.publishTeamCityArtifacts(source = getIdeTestLogFile(), artifactPath = uniqueTestIdentifier)
@@ -97,7 +100,7 @@ class IJPerfMetricsPublisher {
         projectDescription = "",
         methodName = uniqueTestIdentifier,
         buildNumber = BuildNumber.currentVersion(),
-        metrics = mergedMetrics,
+        metrics = metrics,
         buildInfo = buildInfo
       )
     }
@@ -109,8 +112,6 @@ class IJPerfMetricsPublisher {
     }
 
     suspend fun publish(uniqueTestIdentifier: String, vararg metricsCollectors: TelemetryMetricsCollector) {
-      delay(1.seconds) // give some time to settle metrics (usually meters) that were published at the end of the test
-
       val metricsDto = prepareMetricsForPublishing(uniqueTestIdentifier, *metricsCollectors)
 
       withContext(Dispatchers.IO) {

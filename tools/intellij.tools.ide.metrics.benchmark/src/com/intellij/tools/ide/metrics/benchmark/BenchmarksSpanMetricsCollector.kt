@@ -3,15 +3,15 @@ package com.intellij.tools.ide.metrics.benchmark
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.tool.withRetryAsync
+import com.intellij.tools.ide.metrics.collector.TelemetryMetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.*
 import com.intellij.tools.ide.metrics.collector.telemetry.OpentelemetrySpanJsonParser
 import com.intellij.tools.ide.metrics.collector.telemetry.SpanFilter
+import com.intellij.tools.ide.util.common.withRetryBlocking
 import java.nio.file.Path
-import kotlin.math.absoluteValue
 import kotlin.time.Duration.Companion.milliseconds
 
-class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) {
+class BenchmarksSpanMetricsCollector(val spanName: String, private val telemetryJsonFile: Path = getDefaultPathToTelemetrySpanJson()) : TelemetryMetricsCollector {
   companion object {
     fun getDefaultPathToTelemetrySpanJson(): Path {
       return Path.of(System.getProperty("idea.diagnostic.opentelemetry.file",
@@ -19,15 +19,9 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
     }
   }
 
-  @Suppress("TestOnlyProblems")
-  suspend fun waitTillMetricsExported(spanName: String): List<PerformanceMetrics.Metric> {
-    val originalMetrics: List<PerformanceMetrics.Metric>? = withRetryAsync(retries = 10, delayBetweenRetries = 300.milliseconds) {
-      TelemetryManager.getInstance().forceFlushMetrics()
-      extractOpenTelemetrySpanMetrics(spanName, forWarmup = true).plus(extractOpenTelemetrySpanMetrics(spanName, forWarmup = false))
-    }
-
-    return requireNotNull(originalMetrics) { "Unable to extract metrics for '$spanName' from $telemetryJsonFile" }
-  }
+  override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> = requireNotNull(
+    extractOpenTelemetrySpanMetrics(spanName, forWarmup = true).plus(extractOpenTelemetrySpanMetrics(spanName, forWarmup = false))
+  ) { "Unable to extract metrics for '$spanName' from $telemetryJsonFile" }
 
   private fun getAttemptsSpansStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
     val attemptMeanMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mean.ms", attempts.map { it.value }.average().toLong())
