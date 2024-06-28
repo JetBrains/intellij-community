@@ -70,6 +70,4 @@ internal class JpsSdkDependencyBridge(private val sdkType: JpsSdkType<*>, parent
   }
 
   override fun getSdkReference(): JpsSdkReference<*>? = containingModule.getSdkReference(sdkType)
-
-  override fun isInherited(): Boolean = false
 }

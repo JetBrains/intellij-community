@@ -710,7 +710,7 @@ org.jetbrains.jps.model.module.JpsSdkDependency
 - org.jetbrains.jps.model.module.JpsDependencyElement
 - a:getSdkReference():org.jetbrains.jps.model.library.sdk.JpsSdkReference
 - a:getSdkType():org.jetbrains.jps.model.library.sdk.JpsSdkType
-- a:isInherited():Z
+- isInherited():Z
 - a:resolveSdk():org.jetbrains.jps.model.library.JpsLibrary
 org.jetbrains.jps.model.module.JpsSdkReferencesTable
 - org.jetbrains.jps.model.JpsCompositeElement

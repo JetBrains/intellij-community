@@ -61,11 +61,6 @@ final class JpsSdkDependencyImpl extends JpsDependencyElementBase<JpsSdkDependen
   }
 
   @Override
-  public boolean isInherited() {
-    return false;
-  }
-
-  @Override
   public String toString() {
     return "sdk dep [" + mySdkType + "]";
   }
