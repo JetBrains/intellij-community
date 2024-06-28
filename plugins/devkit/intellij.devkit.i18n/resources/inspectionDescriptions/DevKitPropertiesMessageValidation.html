@@ -48,8 +48,8 @@ Reports the following <code>MessageFormat</code> problems in property values:
   When using choice format, nested formats are evaluated as format strings themselves, and quotes will need to be duplicated twice.
   For example when passing <code>1</code>:
 <ul>
-  <li><code>{0, choice, 0#no|#1''{0}'' files}</code> &rarr; <code>{0} files</code></li>
-  <li><code>{0, choice, 0#no|#1''''{0}'''' files}</code> &rarr; <code>'1' files</code></li>
+  <li><code>{0, choice, 0#no|1#''{0}'' files}</code> &rarr; <code>{0} files</code></li>
+  <li><code>{0, choice, 0#no|1#''''{0}'''' files}</code> &rarr; <code>'1' files</code></li>
 </ul>
 
 <p><b>Note</b>
