@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -63,7 +63,7 @@ public interface ElementType extends JavaTokenType, JavaDocTokenType, JavaElemen
   TokenSet JAVA_MODULE_STATEMENT_BIT_SET = TokenSet.create(
     REQUIRES_STATEMENT, EXPORTS_STATEMENT, OPENS_STATEMENT, USES_STATEMENT, PROVIDES_STATEMENT);
 
-  TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT);
+  TokenSet IMPORT_STATEMENT_BASE_BIT_SET = TokenSet.create(IMPORT_STATEMENT, IMPORT_STATIC_STATEMENT, IMPORT_MODULE_STATEMENT);
   TokenSet CLASS_KEYWORD_BIT_SET = BasicElementTypes.BASIC_CLASS_KEYWORD_BIT_SET;
   TokenSet MEMBER_BIT_SET = TokenSet.create(CLASS, FIELD, ENUM_CONSTANT, METHOD, ANNOTATION_METHOD);
   TokenSet FULL_MEMBER_BIT_SET = TokenSet.orSet(MEMBER_BIT_SET, TokenSet.create(

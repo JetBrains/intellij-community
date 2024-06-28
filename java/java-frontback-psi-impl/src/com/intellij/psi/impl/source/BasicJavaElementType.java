@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.*;
@@ -40,6 +41,7 @@ public interface BasicJavaElementType {
   IElementType BASIC_IMPORT_LIST = new IJavaElementType("IMPORT_LIST");
   IElementType BASIC_IMPORT_STATEMENT = new IJavaElementType("IMPORT_STATEMENT");
   IElementType BASIC_IMPORT_STATIC_STATEMENT = new IJavaElementType("IMPORT_STATIC_STATEMENT");
+  IElementType BASIC_IMPORT_MODULE_STATEMENT = new IJavaElementType("IMPORT_MODULE_STATEMENT");
   IElementType BASIC_MODIFIER_LIST = new IJavaElementType("MODIFIER_LIST");
   IElementType BASIC_ANNOTATION = new IJavaElementType("ANNOTATION");
   IElementType BASIC_NAME_VALUE_PAIR = new IJavaElementType("NAME_VALUE_PAIR", true);
@@ -70,6 +72,7 @@ public interface BasicJavaElementType {
   IElementType BASIC_PERMITS_LIST = new IJavaElementType("PERMITS_LIST", true);
 
   IElementType BASIC_IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
+  IElementType BASIC_IMPORT_MODULE_REFERENCE = new IJavaElementType("IMPORT_MODULE_REFERENCE");
   IElementType BASIC_TYPE = new IJavaElementType("TYPE");
   IElementType BASIC_DIAMOND_TYPE = new IJavaElementType("DIAMOND_TYPE");
   IElementType BASIC_REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST", true);
