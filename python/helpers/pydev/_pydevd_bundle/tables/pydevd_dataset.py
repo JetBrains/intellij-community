@@ -51,7 +51,8 @@ def display_data(table, start_index, end_index):
 
 
 def __get_data_slice(table, start, end):
-    return table.select(range(start, end)).to_pandas()
+    table = pd.concat(list(__convert_to_df(table)), ignore_index=True)
+    return table.iloc[start:end]
 
 
 def _compute_sliced_data(table, fun, start_index=None, end_index=None):
