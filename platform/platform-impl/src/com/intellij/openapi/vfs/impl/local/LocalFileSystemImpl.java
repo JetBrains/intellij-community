@@ -8,9 +8,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileTooBigException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -279,9 +277,6 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
     if (SystemInfo.isUnix && file.is(VFileProperty.SPECIAL)) { // avoid opening FIFO files
       throw new NoSuchFileException(file.getPath(), null, "Not a file");
     }
-    var len = file.getLength();
-    if (FileUtilRt.isTooLarge(len)) throw new FileTooBigException(file.getPath());
-    if (len < 0 || len > Integer.MAX_VALUE) throw new IOException("Invalid file length: " + len + ", " + file);
     var result = myContentGetter.accessDiskWithCheckCanceled(file);
     if (result instanceof IOException e) throw e;
     return (byte[])result;
@@ -361,7 +356,7 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
   private static Object readContent(VirtualFile file) {
     try {
       var nioFile = Path.of(toIoPath(file));
-      return Files.readAllBytes(nioFile);
+      return readIfNotTooLarge(nioFile);
     }
     catch (IOException e) {
       return e;

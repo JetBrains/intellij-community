@@ -827,6 +827,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       myInputLock.readLock().unlock();
     }
 
+    //VFS content storage is append-only, hence reading doesn't require locks:
     InputStream contentStream = (contentRecordId > 0) ? vfsPeer.readContentById(contentRecordId) : null;
 
 
@@ -837,6 +838,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       if (outdated) {
         // In this case, the file can have an out-of-date length. So, update it first (needed for the correct work of `contentsToByteArray`)
         // See IDEA-90813 for possible bugs.
+        //TODO RC: why fs.contentToByteArray() relies on VFS.length value? FS should be a source of truth here, not VFS.
+        //         LocalFileSystemBase/LocalFileSystemImpl both relies on VirtualFile.getLength() but only for sanity checks,
+        //         i.e. to check the length is not too big and not negative. This is strange, since LocalFS is the only FS
+        //         impl that relies on VFS length, instead of checking the actual file length.
+        //         Without that strange design choice the 2 branches here collapse into 1, and the following writeContent()
+        //         could be merged with storeContentToStorage() reducing code duplication
         setLength(fileId, fs.getLength(file));
         content = fs.contentsToByteArray(file);
       }

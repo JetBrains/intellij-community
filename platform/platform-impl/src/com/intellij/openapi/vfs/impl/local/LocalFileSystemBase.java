@@ -348,9 +348,21 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     var nioFile = convertToNioFileAndCheck(file, true);
-    var len = file.getLength();
-    if (FileUtilRt.isTooLarge(len)) throw new FileTooBigException(file.getPath());
-    if (len < 0) throw new IOException("Invalid file length: " + len + ", " + file);
+    return readIfNotTooLarge(nioFile);
+  }
+
+  protected static byte @NotNull [] readIfNotTooLarge(Path nioFile) throws IOException {
+    //MAYBE RC: The only reason to get file size here is to check it is not too big. We could skip this check, and start
+    //          to load the file, and throw the exception if _loaded_ size exceeds the limit -- huge files are infrequent
+    //          cases, so this approach optimizes the fast path.
+    //          ...but this is probably an overkill: nioFile.size is requested inside Files.readAllBytes() anyway,
+    //          and OSes cache file-system requests, so 2 file.size() requests one after another cost almost the same
+    //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
+    //          does provide anything -- and my guess: it probably doesn't
+    var length = Files.size(nioFile);
+    if (FileUtilRt.isTooLarge(length)) {
+      throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
+    }
     return Files.readAllBytes(nioFile);
   }
 
