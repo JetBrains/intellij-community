@@ -39,7 +39,9 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions;
 import org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurveyKt;
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle;
 import org.jetbrains.plugins.terminal.fus.BlockTerminalSwitchPlace;
 import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector;
 
@@ -90,15 +92,20 @@ public final class TerminalSettingsPanel {
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
+  private BlockTerminalOptions myBlockTerminalOptions;
 
   private final List<UnnamedConfigurable> myConfigurables = new ArrayList<>();
 
-  public JComponent createPanel(@NotNull Project project,
-                                @NotNull TerminalOptionsProvider provider,
-                                @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
+  public JComponent createPanel(
+    @NotNull Project project,
+    @NotNull TerminalOptionsProvider provider,
+    @NotNull TerminalProjectOptionsProvider projectOptionsProvider,
+    @NotNull BlockTerminalOptions blockTerminalOptions
+  ) {
     myProject = project;
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
+    myBlockTerminalOptions = blockTerminalOptions;
 
     myNewUiSettingsPanel.setVisible(ExperimentalUI.isNewUI());
     myBetaLabel.setIcon(AllIcons.General.Beta);
@@ -195,8 +202,9 @@ public final class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
+    boolean isShellPrompt = myBlockTerminalOptions.getPromptStyle() == TerminalPromptStyle.SHELL;
     return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
-           || (myShellPromptCheckbox.isSelected() != myOptionsProvider.getUseShellPrompt())
+           || (myShellPromptCheckbox.isSelected() != isShellPrompt)
            || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
@@ -226,7 +234,8 @@ public final class TerminalSettingsPanel {
         }, ModalityState.nonModal());
       }
     }
-    myOptionsProvider.setUseShellPrompt(myShellPromptCheckbox.isSelected());
+    var newPromptStyle = myShellPromptCheckbox.isSelected() ? TerminalPromptStyle.SHELL : TerminalPromptStyle.DOUBLE_LINE;
+    myBlockTerminalOptions.setPromptStyle(newPromptStyle);
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
@@ -253,7 +262,8 @@ public final class TerminalSettingsPanel {
 
   public void reset() {
     myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
-    myShellPromptCheckbox.setSelected(myOptionsProvider.getUseShellPrompt());
+    boolean isShellPrompt = myBlockTerminalOptions.getPromptStyle() == TerminalPromptStyle.SHELL;
+    myShellPromptCheckbox.setSelected(isShellPrompt);
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());

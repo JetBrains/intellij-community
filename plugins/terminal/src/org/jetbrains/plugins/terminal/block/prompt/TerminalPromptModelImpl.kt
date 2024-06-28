@@ -22,8 +22,8 @@ import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
 import java.util.concurrent.CopyOnWriteArrayList
@@ -69,7 +69,7 @@ internal class TerminalPromptModelImpl(
     editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       doUpdatePrompt(renderingInfo)
     })
-    TerminalOptionsProvider.instance.addListener(this) {
+    BlockTerminalOptions.getInstance().addListener(this) {
       renderer = createPromptRenderer()
       updatePrompt(promptState)
     }
@@ -123,7 +123,10 @@ internal class TerminalPromptModelImpl(
   }
 
   private fun createPromptRenderer(): TerminalPromptRenderer {
-    return if (TerminalOptionsProvider.instance.useShellPrompt) ShellPromptRenderer(sessionInfo) else BuiltInPromptRenderer(sessionInfo)
+    return when (BlockTerminalOptions.getInstance().promptStyle) {
+      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(sessionInfo)
+      TerminalPromptStyle.SHELL -> ShellPromptRenderer(sessionInfo)
+    }
   }
 
   override fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?) {

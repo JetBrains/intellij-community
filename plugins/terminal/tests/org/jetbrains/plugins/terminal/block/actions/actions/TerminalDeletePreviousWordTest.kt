@@ -4,13 +4,15 @@ package org.jetbrains.plugins.terminal.block.actions.actions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModelImpl
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
+import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -72,7 +74,13 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
   private fun doTest(commandBefore: String, commandAfter: String, promptText: String = "") {
     // Set the setting to use ShellPromptRenderer in TerminalPromptModel, so we can provide the exact prompt string to 'updatePrompt' method.
     // BuiltInPromptRenderer is always appending the line break at the end, and now it is not configurable.
-    TerminalOptionsProvider.instance.useShellPrompt = true
+    val options = BlockTerminalOptions.getInstance()
+    val originalPromptStyle = options.promptStyle
+    options.promptStyle = TerminalPromptStyle.SHELL
+    Disposer.register(testRootDisposable) {
+      options.promptStyle = originalPromptStyle
+    }
+
     // Extension of the file is the same as the default extension of TerminalPromptFileType
     configureFromFileText("promptFile.prompt", commandBefore)
     // Update prompt, the prompt text is supplied as an 'originalPrompt' to ShellPromptRenderer
@@ -90,6 +98,7 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
     val editor = super.createSaveAndOpenFile(relativePath, fileText)
 
     promptModel = TerminalPromptModelImpl(editor as EditorEx, TestTerminalSessionInfo())
+    Disposer.register(testRootDisposable, promptModel)
     // Used in terminal actions
     editor.putUserData(TerminalPromptModel.KEY, promptModel)
     editor.putUserData(IS_PROMPT_EDITOR_KEY, true)

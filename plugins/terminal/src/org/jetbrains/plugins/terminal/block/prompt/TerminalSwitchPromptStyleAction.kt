@@ -5,16 +5,20 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import org.jetbrains.plugins.terminal.TerminalBundle
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider
+import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 
 internal class TerminalSwitchPromptStyleAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    val options = TerminalOptionsProvider.instance
-    options.useShellPrompt = !options.useShellPrompt
+    val options = BlockTerminalOptions.getInstance()
+    val newPromptStyle = if (options.promptStyle == TerminalPromptStyle.DOUBLE_LINE) {
+      TerminalPromptStyle.SHELL
+    }
+    else TerminalPromptStyle.DOUBLE_LINE
+    options.promptStyle = newPromptStyle
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.text = if (TerminalOptionsProvider.instance.useShellPrompt) {
+    e.presentation.text = if (BlockTerminalOptions.getInstance().promptStyle == TerminalPromptStyle.SHELL) {
       @Suppress("DialogTitleCapitalization")  // It triggers on 'Pre-set'
       TerminalBundle.message("action.Terminal.SwitchPromptStyle.use.preset.prompt")
     }
