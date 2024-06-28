@@ -50,7 +50,12 @@ class IndexUpdateRunner(
   private val indexer: Indexer = Indexer(fileBasedIndex, indexingRequest)
 
   init {
-    LOG.info("Using ${INDEXING_PARALLELIZATION} workers for indexing and ${TOTAL_WRITERS_NUMBER} for writing indexes")
+    if (IndexWriter.WRITE_INDEXES_ON_SEPARATE_THREAD) {
+      LOG.info("Using ${INDEXING_PARALLELIZATION} workers for indexing and ${TOTAL_WRITERS_NUMBER} for writing indexes")
+    }
+    else {
+      LOG.info("Using ${INDEXING_PARALLELIZATION} workers for indexing, and writing indexes on the same worker")
+    }
   }
 
   /**

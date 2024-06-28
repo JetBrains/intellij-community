@@ -20,12 +20,10 @@ import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
 import com.intellij.util.indexing.IndexId
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.INDEXING_PARALLELIZATION
-import com.intellij.util.indexing.contentQueue.dev.IndexWriter.Companion.WRITE_INDEXES_ON_SEPARATE_THREAD
 import com.intellij.util.indexing.events.VfsEventsMerger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
-import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors.newSingleThreadExecutor
@@ -39,7 +37,6 @@ import java.util.function.Supplier
 import kotlin.math.abs
 
 /** Abstracts out writing of indexed files data into the actual index storages */
-@Internal
 abstract class IndexWriter {
 
   /** Same as [writeAsync], but not suspended -- to call from java, in a synchronous manner */
@@ -96,17 +93,22 @@ abstract class IndexWriter {
 
   companion object {
     /**
-     * When disabled, each indexing thread is equal and writing indexes by itself.
-     * When enabled, indexing threads are preparing updates and submitting writing to the dedicated threads: IdIndex, TrigramIndex, Stubs
-     * and the rest.
+     * When disabled, each indexing thread writes its produced updates to the indexes by itself.
+     * When enabled, indexing threads are preparing updates and submitting writing to the dedicated threads:
+     * IdIndex, TrigramIndex, Stubs and the rest.
      * By default, it is enabled for multiprocessor systems, where we can benefit from the parallel processing.
+     *
+     * BEWARE: The idea is not only to parallelize index writing, but to _limit_ the parallelism -- currently,
+     * each particular index writing is protected by lock, hence >1 thread trying to update the same index only
+     * increases contention on the lock, so throughput likely decreases, not increases.
+     * This is why we 'assign' a worker/thread to a specific set of the indexes and don't use >1 thread/worker per index
      */
     @JvmField
     val WRITE_INDEXES_ON_SEPARATE_THREAD = getBooleanProperty("idea.write.indexes.on.separate.thread", UnindexedFilesUpdater.getMaxNumberOfIndexingThreads() > 5)
 
-    private val USE_COROUTINE: Boolean = getBooleanProperty("IndexWriter.USE_COROUTINES", false)
+    private val USE_COROUTINES: Boolean = getBooleanProperty("IndexWriter.USE_COROUTINES", false)
 
-    private val defaultParallelWriter: ParallelIndexWriter = if (USE_COROUTINE)
+    private val defaultParallelWriter: ParallelIndexWriter = if (USE_COROUTINES)
       ApplyViaCoroutinesWriter()
     else
       //LegacyMultiThreadedIndexWriter()
@@ -132,7 +134,6 @@ abstract class IndexWriter {
 }
 
 /** Applies all the changes to the indexes on the calling thread */
-@Internal
 object SameThreadIndexWriter : IndexWriter() {
 
   override fun writeChangesToIndexesSync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
@@ -199,18 +200,15 @@ object SameThreadIndexWriter : IndexWriter() {
 /* ================ parallelized IndexWriter implementations: ====================================================*/
 
 /** Base writers are for: IdIndex, Stubs and Trigrams  */
-val BASE_WRITERS_NUMBER = if (WRITE_INDEXES_ON_SEPARATE_THREAD) 3 else 0
+private val BASE_WRITERS_NUMBER = 3
 
 /** Aux writers used to write other indexes in parallel. But each index is 100% written on the same thread.  */
-val AUX_WRITERS_NUMBER = if (WRITE_INDEXES_ON_SEPARATE_THREAD) 1 else 0
+private val AUX_WRITERS_NUMBER = 1
 
 /** Total number of index writing threads  */
 val TOTAL_WRITERS_NUMBER = BASE_WRITERS_NUMBER + AUX_WRITERS_NUMBER
 
-@Internal
-abstract class ParallelIndexWriter : IndexWriter() {
-
-  val workersCount = TOTAL_WRITERS_NUMBER
+abstract class ParallelIndexWriter(val workersCount: Int = TOTAL_WRITERS_NUMBER) : IndexWriter() {
 
   override fun writeChangesToIndexesSync(fileIndexingResult: FileIndexingResult, finishCallback: () -> Unit) {
     throw UnsupportedOperationException("writeChangesToIndexesSync is not supported")
@@ -262,8 +260,7 @@ abstract class ParallelIndexWriter : IndexWriter() {
  * Distribute the writing to N+1 threads (single-threaded
  * [com.intellij.execution.Executor]s, really), for the N heaviest indexes, +1 for all other indexes combined.
  */
-@Internal
-class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
+class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount) {
   companion object {
     private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
   }
@@ -296,6 +293,8 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
     repeat(AUX_WRITERS_NUMBER) { writerNo ->
       pool.add(createExecutorForIndexWriting("Aux Index Writer #${writerNo + 1}"))
     }
+
+    check(pool.size == TOTAL_WRITERS_NUMBER){ "pool.size(=${pool.size}) must be == TOTAL_WRITERS_NUMBER(=$TOTAL_WRITERS_NUMBER)" }
 
     writers = pool
   }
@@ -519,8 +518,7 @@ class LegacyMultiThreadedIndexWriter : ParallelIndexWriter() {
 }
 
 
-@Internal
-class MultiThreadedWithSuspendIndexWriter : ParallelIndexWriter() {
+class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount){
   companion object {
     private val LOG: Logger = Logger.getInstance(LegacyMultiThreadedIndexWriter::class.java)
   }
@@ -791,8 +789,7 @@ class MultiThreadedWithSuspendIndexWriter : ParallelIndexWriter() {
 
 
 @OptIn(DelicateCoroutinesApi::class)
-@Internal
-class ApplyViaCoroutinesWriter : ParallelIndexWriter() {
+class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : ParallelIndexWriter(workersCount){
   companion object {
     private val LOG = Logger.getInstance(ApplyViaCoroutinesWriter::class.java)
   }
