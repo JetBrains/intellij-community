@@ -23,11 +23,6 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
   @ApiStatus.Experimental
   open suspend fun contextActionSuspend(suspendContext: SuspendContextImpl) = contextAction(suspendContext)
 
-  @Throws(Exception::class)
-  public override fun action() {
-    error("Should not be called")
-  }
-
   override suspend fun actionSuspend() {
     if (LOG.isDebugEnabled) {
       LOG.debug("trying $this")

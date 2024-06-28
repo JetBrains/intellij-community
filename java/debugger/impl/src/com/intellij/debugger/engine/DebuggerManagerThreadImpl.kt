@@ -308,7 +308,6 @@ fun <T> invokeCommandAsCompletableFuture(action: suspend () -> T): CompletableFu
   }
   else {
     managerThread.invoke(object : DebuggerCommandImpl(priority) {
-      override fun action() {}
       override suspend fun actionSuspend() = doRun()
       override fun commandCancelled() {
         res.cancel(false)
