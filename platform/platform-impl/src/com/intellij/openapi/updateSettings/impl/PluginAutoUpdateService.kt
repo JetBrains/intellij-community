@@ -80,7 +80,6 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
 
       if (downloadedList.isNotEmpty()) {
         LOG.debug { "adding downloaded updates to the repository: ${downloadedList.joinToString { it.pluginName }}" }
-        notifyUpdatesDownloaded(downloadedList)
         withContext(Dispatchers.IO) {
           PluginAutoUpdateRepository.addUpdates(updatesState.mapValues {
             PluginAutoUpdateRepository.PluginUpdateInfo(
