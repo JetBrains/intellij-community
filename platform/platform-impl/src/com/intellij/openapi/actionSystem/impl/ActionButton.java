@@ -52,17 +52,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
   private static final @NonNls Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
-  /**
-   * By default, a toolbar button for a popup action group paints additional "drop-down-arrow" mark over its icon.
-   * Set this key to disable the painting of that mark as follows:
-   * <p>
-   * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)}.
-   * <p>
-   * Both ordinary and template presentations are supported.
-   *
-   * @see Presentation#setPerformGroup(boolean)
-   */
-  public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
+  /** @deprecated Use {@link ActionUtil#HIDE_DROPDOWN_ICON} instead */
+  @Deprecated
+  public static final Key<Boolean> HIDE_DROPDOWN_ICON = ActionUtil.HIDE_DROPDOWN_ICON;
 
   public static final Key<HelpTooltip> CUSTOM_HELP_TOOLTIP = Key.create("CUSTOM_HELP_TOOLTIP");
 

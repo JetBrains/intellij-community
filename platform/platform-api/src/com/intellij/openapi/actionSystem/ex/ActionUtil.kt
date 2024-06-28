@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -43,6 +44,7 @@ import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.Action
+import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
@@ -51,6 +53,41 @@ private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, tr
 
 object ActionUtil {
 
+  /**
+   * By default, a "performable" non-empty popup action group menu item still shows a submenu.
+   * Use this key to disable the submenu and avoid children expansion on update as follows:
+   *
+   * `presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)`.
+   *
+   * Both ordinary and template presentations are supported.
+   * @see Presentation.setPerformGroup
+   */
+  @JvmField
+  val SUPPRESS_SUBMENU: Key<Boolean> = Key.create("SUPPRESS_SUBMENU")
+
+  /**
+   * By default, a toolbar button for a popup action group paints the additional "drop-down-arrow" mark over its icon.
+   * Use this key to disable the painting of that mark as follows:
+   *
+   * `presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)`
+   *
+   * Both ordinary and template presentations are supported.
+   * @see Presentation.setPerformGroup
+   */
+  @JvmField
+  val HIDE_DROPDOWN_ICON: Key<Boolean> = Key.create("HIDE_DROPDOWN_ICON");
+
+  @JvmField
+  val KEYBOARD_SHORTCUT_SUFFIX: Key<@NlsSafe String> = Key.create("KEYBOARD_SHORTCUT_SUFFIX");
+
+  /** The icon that will be placed after the text */
+  @JvmField
+  val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
+
+  /** Same as [AlwaysVisibleActionGroup] */
+  @JvmField
+  val ALWAYS_VISIBLE_GROUP: Key<Boolean> = Key.create("ALWAYS_VISIBLE_GROUP")
+
   @JvmField
   val ALLOW_PlAIN_LETTER_SHORTCUTS: Key<Boolean> = Key.create("ALLOW_PlAIN_LETTER_SHORTCUTS")
 
@@ -58,25 +95,27 @@ object ActionUtil {
   @JvmField
   val ALLOW_ACTION_PERFORM_WHEN_HIDDEN: Key<Boolean> = Key.create("ALLOW_ACTION_PERFORM_WHEN_HIDDEN")
 
+  @JvmField
+  @Suppress("DEPRECATION", "removal")
+  val SECONDARY_TEXT: Key<String> = Presentation.PROP_VALUE
+
+  @JvmField
+  val SEARCH_TAG: Key<@NonNls String> = Key.create("SEARCH_TAG")
+
+  @JvmField
+  val INLINE_ACTIONS: Key<List<AnAction>> = Key.create("INLINE_ACTIONS")
+
+  // Internal keys
+
   @JvmStatic
-  private val WAS_ENABLED_BEFORE_DUMB = Key.create<Boolean>("WAS_ENABLED_BEFORE_DUMB")
+  private val WAS_ENABLED_BEFORE_DUMB: Key<Boolean> = Key.create("WAS_ENABLED_BEFORE_DUMB")
 
   @ApiStatus.Internal
   @JvmField
   val WOULD_BE_ENABLED_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_ENABLED_IF_NOT_DUMB_MODE")
 
   @JvmStatic
-  private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE = Key.create<Boolean>("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
-
-  @JvmField
-  @Suppress("DEPRECATION", "removal")
-  val SECONDARY_TEXT: Key<String> = Presentation.PROP_VALUE
-
-  @JvmField
-  val SEARCH_TAG: Key<String?> = Key.create<@NonNls String?>("SEARCH_TAG")
-
-  @JvmField
-  val INLINE_ACTIONS: Key<List<AnAction>> = Key.create("INLINE_ACTIONS")
+  private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 
   @JvmStatic
   fun showDumbModeWarning(project: Project?,
