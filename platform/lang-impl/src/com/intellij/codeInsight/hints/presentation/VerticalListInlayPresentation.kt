@@ -63,6 +63,12 @@ class VerticalListInlayPresentation(
     changePresentationUnderCursor(null)
   }
 
+  @Deprecated("No longer needed. Presentation's size remains relevant.")
+  fun calcDimensions() {
+    width = presentations.maxByOrNull { it.width }!!.width
+    height = presentations.sumOf { it.height }
+  }
+
   private fun handleMouse(
     original: Point,
     action: (InlayPresentation, Point) -> Unit
