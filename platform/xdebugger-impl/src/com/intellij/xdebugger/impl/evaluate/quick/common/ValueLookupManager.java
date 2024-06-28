@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class ValueLookupManager
@@ -23,6 +23,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.settings.DataViewsConfigurableUi;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
 
   @Override
   public void mouseMoved(@NotNull EditorMouseEvent e) {
-    if (e.isConsumed()) {
+    if (e.isConsumed() || !Registry.is(DataViewsConfigurableUi.DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY)) {
       return;
     }
 
@@ -118,7 +119,7 @@ public class ValueLookupManager implements EditorMouseMotionListener, EditorMous
     final Rectangle area = editor.getScrollingModel().getVisibleArea();
     cancelAll();
     if (type == ValueHintType.MOUSE_OVER_HINT) {
-      if (Registry.is("debugger.valueTooltipAutoShow")) {
+      if (Registry.is(DataViewsConfigurableUi.DEBUGGER_VALUE_TOOLTIP_AUTO_SHOW_KEY)) {
         myAlarm.addRequest(() -> {
           if (area.equals(editor.getScrollingModel().getVisibleArea())) {
             showHint(handler, editor, point, e, type);
