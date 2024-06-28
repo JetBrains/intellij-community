@@ -121,7 +121,9 @@ open class ManagedPersistentCache<K, V>(
   }
 
   private fun close(persistentMap: PersistentMapBase<K, V>) {
+    LOG.info("closing persistent map $name")
     try {
+      persistentMap.force() // IJPL-157442 prevent data loss
       persistentMap.close()
     } catch (e: Exception) {
       LOG.warn("error closing persistent map $name", e)
