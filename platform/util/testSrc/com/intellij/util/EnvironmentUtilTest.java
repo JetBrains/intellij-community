@@ -110,6 +110,16 @@ public class EnvironmentUtilTest {
     assertEquals("/hey", list.get(2));
   }
 
+  @Test
+  public void testWindowsCaseInsensitive() {
+    assumeWindows();
+
+    List<String> list = substitute("FIRST=$foo$;SECOND=$FOO$;THIRD=$fOo$", "FOo=/hey");
+    assertEquals("/hey", list.get(0));
+    assertEquals("/hey", list.get(1));
+    assertEquals("/hey", list.get(2));
+  }
+
   private static List<String> substitute(String environment, String parent) {
     Map<String, String> env = EnvVariablesTable.parseEnvsFromText(environment);
     Map<String, String> parentEnv = EnvVariablesTable.parseEnvsFromText(parent);
