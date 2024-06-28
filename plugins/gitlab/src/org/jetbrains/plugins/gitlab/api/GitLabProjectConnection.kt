@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.util.coroutines.childScope
 import git4idea.remote.hosting.HostedGitRepositoryConnection
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -31,7 +30,7 @@ class GitLabProjectConnection(
 
   val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData = GitLabLazyProject(project, scope.childScope(), apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
+  val projectData = GitLabLazyProject(project, scope, apiClient, glMetadata, repo, currentUser, tokenRefreshFlow)
   val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   override suspend fun close() {

@@ -62,7 +62,7 @@ class GitLabLazyProject(
   private val tokenRefreshFlow: Flow<Unit>
 ) : GitLabProject {
 
-  private val cs = parentCs.childScope()
+  private val cs = parentCs.childScope(javaClass.name)
 
   private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
 
