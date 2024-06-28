@@ -9,6 +9,7 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
+import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider
 
 internal fun ConfigurationFromContext.isJpsJunitConfiguration(): Boolean {
     for (extension in KotlinTestFrameworkProvider.EP_NAME.extensionList) {
@@ -19,6 +20,13 @@ internal fun ConfigurationFromContext.isJpsJunitConfiguration(): Boolean {
     }
 
     return isProducedBy(AbstractPatternBasedConfigurationProducer::class.java)
+}
+
+fun ConfigurationFromContext.isProvidedByMultiplatformProducer(): Boolean {
+    for (extension in KotlinMultiplatformCommonProducersProvider.EP_NAME.extensionList) {
+        if (extension.isProducedByCommonProducer(this)) return true
+    }
+    return false
 }
 
 internal fun canRunJvmTests(): Boolean {

@@ -24,6 +24,11 @@
             qualifiedName="org.jetbrains.kotlin.mppProjectResolve"
             interface="org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension"
             dynamic="true"/>
+
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.gradleJava.kotlinMultiplatformProducersProvider"
+            interface="org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider"
+            dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
@@ -141,6 +146,13 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
     <extrasSerialization implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.serialize.KotlinGradlePluginExtrasSerializationService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.gradleJava">
+    <kotlinMultiplatformProducersProvider implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer"/>
+    <kotlinMultiplatformProducersProvider implementation="org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer"/>
+    <kotlinMultiplatformProducersProvider implementation="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestClassGradleConfigurationProducer"/>
+    <kotlinMultiplatformProducersProvider implementation="org.jetbrains.kotlin.idea.gradleJava.testing.common.KotlinMultiplatformCommonTestMethodGradleConfigurationProducer"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.gradleTooling">
