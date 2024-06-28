@@ -627,6 +627,25 @@ def should_evaluate_shape():
     return LOAD_VALUES_POLICY != ValuesPolicy.ON_DEMAND
 
 
+def is_safe_to_access(obj, attr_name):
+    """Evaluates the safety of attribute accessibility via `obj.attr_name`.
+
+    Direct attribute access can occasionally lead to unsafe conditions. A typical
+    scenario is when an extension class contains a property that might attempt to
+    access a field before its initialization. This function aims to verify the safety
+    of attribute access in the most risk-free manner. As an example, it leverages the
+    `inspect` module, facilitating attribute retrieval without triggering any
+    descriptor functionality.
+    """
+    attr = inspect.getattr_static(obj, attr_name, None)
+
+    # Should we check for other descriptor types here?
+    if inspect.isgetsetdescriptor(attr):
+        return False
+
+    return True
+
+
 def is_in_unittests_debugging_mode():
     debugger = get_global_debugger()
     if debugger:
