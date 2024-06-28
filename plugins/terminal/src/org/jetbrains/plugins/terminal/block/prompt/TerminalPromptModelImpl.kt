@@ -124,7 +124,8 @@ internal class TerminalPromptModelImpl(
 
   private fun createPromptRenderer(): TerminalPromptRenderer {
     return when (BlockTerminalOptions.getInstance().promptStyle) {
-      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(sessionInfo)
+      TerminalPromptStyle.SINGLE_LINE -> BuiltInPromptRenderer(sessionInfo, isSingleLine = true)
+      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(sessionInfo, isSingleLine = false)
       TerminalPromptStyle.SHELL -> ShellPromptRenderer(sessionInfo)
     }
   }

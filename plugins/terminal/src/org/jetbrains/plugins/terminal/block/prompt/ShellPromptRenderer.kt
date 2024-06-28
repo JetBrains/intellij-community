@@ -20,7 +20,7 @@ import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.normalize
 
 internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
-  private val fallbackRenderer: TerminalPromptRenderer = BuiltInPromptRenderer(sessionInfo)
+  private val fallbackRenderer: TerminalPromptRenderer = BuiltInPromptRenderer(sessionInfo, isSingleLine = false)
 
   override fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo {
     val escapedPrompt = state.originalPrompt
