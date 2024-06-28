@@ -2,7 +2,7 @@
 package com.intellij.util.indexing.contentQueue
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.*
@@ -237,21 +237,20 @@ class IndexUpdateRunner(
       }
     }
 
-    private fun getApplierForFileIndexDelete(
+    private suspend fun getApplierForFileIndexDelete(
       indexingStamp: FileIndexingStamp,
       file: VirtualFile, parentDisposable: Disposable,
     ): FileIndexingResult? {
-      val fileIndexingResult = ReadAction
-        .nonBlocking<FileIndexingResult?> {
-          fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
-        }
-        .expireWith(parentDisposable)
-        .executeSynchronously()
+      //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
+      //         the lifecycle?
+      val fileIndexingResult = readAction {
+        fileBasedIndex.getApplierToRemoveDataFromIndexesForFile(file, indexingStamp)
+      }
       incIndexingSuccessfulCountAndLogIfNeeded()
       return fileIndexingResult
     }
 
-    private fun getApplierForFileIndexUpdate(
+    private suspend fun getApplierForFileIndexUpdate(
       indexingStamp: FileIndexingStamp, startTime: Long,
       file: VirtualFile,
       parentDisposable: Disposable,
@@ -268,14 +267,13 @@ class IndexUpdateRunner(
       try {
         val fileTypeChangeChecker = CachedFileType.getFileTypeChangeChecker()
         val type = FileTypeRegistry.getInstance().getFileTypeByFile(file, fileContent.bytes)
-        val fileIndexingResult = ReadAction
-          .nonBlocking<FileIndexingResult> {
-            indexingAttemptCount.incrementAndGet()
-            val fileType = if (fileTypeChangeChecker.get()) type else null
-            fileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp)
-          }
-          .expireWith(parentDisposable)
-          .executeSynchronously()
+        //TODO RC: do we need parentDisposable in coroutine world -- seems like scoping should deal with
+        //         the lifecycle?
+        val fileIndexingResult = readAction {
+          indexingAttemptCount.incrementAndGet()
+          val fileType = if (fileTypeChangeChecker.get()) type else null
+          fileBasedIndex.indexFileContent(project, fileContent, false, fileType, indexingStamp)
+        }
         incIndexingSuccessfulCountAndLogIfNeeded()
         return Triple(fileIndexingResult, contentLoadingTime, length)
       }
