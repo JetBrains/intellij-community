@@ -149,6 +149,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
       }
     }
 
+  @Deprecated("Use BlockTerminalOptions#promptStyle instead")
   var useShellPrompt: Boolean
     get() = state.useShellPrompt
     set(value) {
