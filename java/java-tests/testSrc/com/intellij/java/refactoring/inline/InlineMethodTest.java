@@ -49,6 +49,8 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   public void testSideEffect() { doTest(); }
+  
+  public void testParamAsAutocloseableRef() { doTest(); }
 
   public void testInlineWithTry() { doTest(); }
   public void testEmptyMethod() { doTest(); }
