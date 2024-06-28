@@ -222,6 +222,7 @@ abstract class ChartWrapper : ChartComponent {
       this@ChartWrapper.height = height
       this@ChartWrapper.width = width
       val gridGraphics = (g.create(0, 0, this@ChartWrapper.width, this@ChartWrapper.height) as Graphics2D).apply {
+        clip(visibleRect)
         setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
         setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_SPEED)
         setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE)
