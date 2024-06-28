@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PluginAutoUpdateRepository
+import com.intellij.openapi.application.PluginAutoUpdater
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -95,11 +96,29 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
 
   private suspend fun CoroutineScope.downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
+    val enabledModules = PluginManagerCore.getPluginSet().moduleGraph.nodes.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
     val downloaders = downloaders.filter { downloader ->
       val existingUpdateState = updatesState[downloader.id]
-      val pluginExists = PluginManagerCore.getPlugin(downloader.id) != null
-      val thereIsNoActualDownloadedUpdate = existingUpdateState == null || VersionComparatorUtil.compare(existingUpdateState.version, downloader.pluginVersion) < 0
-      pluginExists && thereIsNoActualDownloadedUpdate
+      if (PluginManagerCore.getPlugin(downloader.id) == null) {
+        LOG.debug { "skipping the update for plugin ${downloader.pluginName}, as the plugin is not installed" }
+        return@filter false
+      }
+      if (existingUpdateState != null && VersionComparatorUtil.compare(existingUpdateState.version, downloader.pluginVersion) >= 0) {
+        LOG.debug { "skipping the update for plugin ${downloader.pluginName}, since it is already downloaded" }
+        return@filter false
+      }
+      val unsatisfiedDependencies = PluginAutoUpdater.findUnsatisfiedDependencies(
+        updateDescriptor = downloader.toPluginNode().dependencies,
+        enabledModules = enabledModules,
+      )
+      if (unsatisfiedDependencies.isNotEmpty()) {
+        LOG.debug {
+          "skipping the update for plugin ${downloader.pluginName}, since dependencies won't be satisfied: " +
+          unsatisfiedDependencies.joinToString { it.pluginId.toString() }
+        }
+        return@filter false
+      }
+      return@filter true
     }
     reportProgress(downloaders.size) { reporter ->
       for (downloader in downloaders) {
