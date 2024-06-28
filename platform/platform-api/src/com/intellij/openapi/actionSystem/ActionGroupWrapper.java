@@ -46,7 +46,7 @@ public class ActionGroupWrapper extends ActionGroup implements ActionWithDelegat
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    myDelegate.actionPerformed(e);
+    ActionWrapperUtil.actionPerformed(e, this, myDelegate);
   }
 
   @Override
