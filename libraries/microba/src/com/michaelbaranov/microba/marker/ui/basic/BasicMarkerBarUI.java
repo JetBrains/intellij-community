@@ -1,25 +1,15 @@
 package com.michaelbaranov.microba.marker.ui.basic;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Insets;
-import java.awt.Polygon;
-import java.awt.Rectangle;
-import java.awt.event.MouseMotionListener;
-
-import javax.swing.JComponent;
-import javax.swing.ListSelectionModel;
-import javax.swing.LookAndFeel;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicGraphicsUtils;
-
 import com.michaelbaranov.microba.common.BoundedTableModel;
 import com.michaelbaranov.microba.marker.MarkerBar;
 import com.michaelbaranov.microba.marker.ui.MarkerBarListener;
 import com.michaelbaranov.microba.marker.ui.MarkerBarUI;
+
+import javax.swing.*;
+import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.basic.BasicGraphicsUtils;
+import java.awt.*;
+import java.awt.event.MouseMotionListener;
 
 public class BasicMarkerBarUI extends MarkerBarUI {
 
@@ -67,14 +57,14 @@ public class BasicMarkerBarUI extends MarkerBarUI {
   }
 
   protected void installKeyboardActions(MarkerBar bar) {
-    MarkerBarListener listener = lookupListsner(bar);
+    MarkerBarListener listener = lookupListener(bar);
     if (listener != null)
       listener.installKeyboardActions(bar);
 
   }
 
   protected void uninstallKeyboardActions(MarkerBar bar) {
-    MarkerBarListener listener = lookupListsner(bar);
+    MarkerBarListener listener = lookupListener(bar);
     if (listener != null)
       listener.uninstallKeyboardActions(bar);
 
@@ -95,7 +85,7 @@ public class BasicMarkerBarUI extends MarkerBarUI {
   }
 
   protected void uninstallListeners(MarkerBar markerBar) {
-    MarkerBarListener listener = lookupListsner(markerBar);
+    MarkerBarListener listener = lookupListener(markerBar);
     if (listener != null) {
       if (markerBar.getDataModel() != null)
         markerBar.getDataModel().removeTableModelListener(listener);
@@ -110,13 +100,13 @@ public class BasicMarkerBarUI extends MarkerBarUI {
 
   }
 
-  protected MarkerBarListener lookupListsner(MarkerBar markerBar) {
+  protected MarkerBarListener lookupListener(MarkerBar markerBar) {
     MouseMotionListener[] listeners = markerBar.getMouseMotionListeners();
 
     if (listeners != null) {
-      for (int counter = 0; counter < listeners.length; counter++) {
-        if (listeners[counter] instanceof MarkerBarListener) {
-          return (MarkerBarListener) listeners[counter];
+      for (MouseMotionListener listener : listeners) {
+        if (listener instanceof MarkerBarListener) {
+          return (MarkerBarListener)listener;
         }
       }
     }
@@ -141,15 +131,13 @@ public class BasicMarkerBarUI extends MarkerBarUI {
       return;
 
     int numAreas = dataModel.getRowCount();
-    Polygon areas[] = calculateMarkerAreas(bar);
+    Polygon[] areas = calculateMarkerAreas(bar);
 
     ListSelectionModel selectionModel = bar.getSelectionModel();
 
     for (int i = 0; i < numAreas; i++) {
       boolean isMovable = dataModel.isCellEditable(i, bar.getPositionColumn());
-      boolean isLeadSelect = (selectionModel == null || selectionModel
-          .isSelectionEmpty()) ? false
-          : selectionModel.getLeadSelectionIndex() == i;
+      boolean isLeadSelect = selectionModel != null && !selectionModel.isSelectionEmpty() && selectionModel.getLeadSelectionIndex() == i;
       if (!isLeadSelect)
         drawMarker(g, areas[i], false, (Color) dataModel.getValueAt(i, bar
             .getColorColumn()));
@@ -192,8 +180,8 @@ public class BasicMarkerBarUI extends MarkerBarUI {
     // bick
 
     if (isSelected) {
-      int xx[] = new int[3];
-      int yy[] = new int[3];
+      int[] xx = new int[3];
+      int[] yy = new int[3];
 
       xx[0] = p.xpoints[0];
       xx[1] = p.xpoints[1];
