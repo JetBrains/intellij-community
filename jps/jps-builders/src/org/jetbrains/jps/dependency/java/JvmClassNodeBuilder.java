@@ -409,6 +409,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   private final Ref<String> myOuterClassName = Ref.create();
   private final Ref<Boolean> myLocalClassFlag = Ref.create(false);
   private final Ref<Boolean> myAnonymousClassFlag = Ref.create(false);
+  private final Ref<Boolean> mySealedClassFlag = Ref.create(false);
 
   private final Set<JvmMethod> myMethods = new HashSet<>();
   private final Set<JvmField> myFields = new HashSet<>();
@@ -463,6 +464,9 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     }
     if (myAnonymousClassFlag.get()) {
       flags = flags.deriveIsAnonymous();
+    }
+    if (mySealedClassFlag.get()) {
+      flags = flags.deriveIsSealed();
     }
     if (myIsGenerated) {
       flags = flags.deriveIsGenerated();
@@ -901,6 +905,12 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
     if (name != null) {
       myLocalClassFlag.set(true);
     }
+  }
+
+  @Override
+  public void visitPermittedSubclass(String permittedSubclass) {
+    mySealedClassFlag.set(true);
+    addUsage(new ClassUsage(permittedSubclass));
   }
 
   private class BaseSignatureVisitor extends SignatureVisitor {

@@ -121,6 +121,10 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     return getFlags().isAnonymous();
   }
 
+  public boolean isSealed() {
+    return getFlags().isSealed();
+  }
+
   public boolean isLocal() {
     return getFlags().isLocal();
   }
@@ -206,6 +210,10 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
     public boolean extendsRemoved() {
       String currentSuper = getSuperFqName();
       return (currentSuper.isEmpty() || OBJECT_CLASS_NAME.equals(currentSuper)) && superClassChanged();
+    }
+
+    public boolean becameSealed() {
+      return getAddedFlags().isSealed();
     }
 
     public boolean outerClassChanged() {
