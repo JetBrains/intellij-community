@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
-import java.util.*
 
 class KotlinSmartStepTargetFilterer(
     private val targets: List<KotlinMethodSmartStepTarget>,
@@ -153,7 +152,12 @@ private fun KaType.jvmName(element: PsiElement): String? {
         else psiType.canonicalText.fqnToInternalName().internalNameToReferenceTypeName()
     }
     if (psiType.canonicalText == "kotlin.Unit") return "V"
-    return JvmClassName.internalNameByClassId(classId).internalNameToReferenceTypeName()
+    val psiTypeInternalName = psiType.canonicalText.substringBefore("<").fqnToInternalName()
+    if (psiTypeInternalName.startsWith("kotlin/jvm/") || psiTypeInternalName.startsWith("java/")) {
+        return psiTypeInternalName.internalNameToReferenceTypeName()
+    }
+    val ktTypeInternalName = JvmClassName.internalNameByClassId(classId)
+    return ktTypeInternalName.internalNameToReferenceTypeName()
 }
 
 private fun String.internalNameToReferenceTypeName(): String = "L$this;"
