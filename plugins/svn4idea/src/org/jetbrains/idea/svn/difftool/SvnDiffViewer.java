@@ -10,8 +10,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -93,16 +91,9 @@ public class SvnDiffViewer implements DiffViewer {
     MyPropertyContext propertyContext = initPropertyContext(context);
     myPropertiesViewer = createPropertiesViewer(propertyRequest, propertyContext);
 
-    myPanel = new JPanel(new BorderLayout());
+    myPanel = new SvnContentPanel();
     myPanel.add(mySplitter, BorderLayout.CENTER);
     myPanel.add(myNotificationPanel, BorderLayout.SOUTH);
-    DataManager.registerDataProvider(myPanel, dataId -> {
-      DataProvider propertiesDataProvider = DataManagerImpl.getDataProviderEx(myPropertiesViewer.getComponent());
-      DataProvider contentDataProvider = DataManagerImpl.getDataProviderEx(myContentViewer.getComponent());
-      DataProvider defaultDP = myPropertiesViewerFocused ? propertiesDataProvider : contentDataProvider;
-      DataProvider fallbackDP = myPropertiesViewerFocused ? contentDataProvider : propertiesDataProvider;
-      return DiffUtil.getData(defaultDP, fallbackDP, dataId);
-    });
 
     updatePropertiesPanel();
   }
@@ -320,6 +311,24 @@ public class SvnDiffViewer implements DiffViewer {
   //
   // Helpers
   //
+
+  private class SvnContentPanel extends JPanel implements UiDataProvider {
+    private SvnContentPanel() {
+      super(new BorderLayout());
+    }
+
+    @Override
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      if (myPropertiesViewerFocused) {
+        DataSink.uiDataSnapshot(sink, myContentViewer);
+        DataSink.uiDataSnapshot(sink, myPropertiesViewer);
+      }
+      else {
+        DataSink.uiDataSnapshot(sink, myPropertiesViewer);
+        DataSink.uiDataSnapshot(sink, myContentViewer);
+      }
+    }
+  }
 
   private class MyPropertyContext extends DiffContext {
     @Nullable

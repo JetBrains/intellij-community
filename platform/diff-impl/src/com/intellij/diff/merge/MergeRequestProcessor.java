@@ -11,8 +11,6 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -238,7 +236,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   private @NotNull BorderLayoutPanel createFeedbackToolbarPanel() {
     AnAction action = ActionManager.getInstance().getAction("Diff.Conflicts.Feedback");
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("FeedbackToolbar", (ActionGroup)action, true);
-    actionToolbar.setTargetComponent(myMainPanel);
+    actionToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     return new BorderLayoutPanel().addToRight(actionToolbar.getComponent());
   }
 
@@ -271,8 +269,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
     toolbar.setShowSeparatorTitles(true);
 
-    DataManager.registerDataProvider(toolbar.getComponent(), myMainPanel);
-    toolbar.setTargetComponent(toolbar.getComponent());
+    toolbar.setTargetComponent(myContentPanel.getTargetComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
     recursiveRegisterShortcutSet(group, myMainPanel, null);
@@ -552,12 +549,6 @@ public abstract class MergeRequestProcessor implements Disposable {
     @Override
     public Object getData(@NotNull @NonNls String dataId) {
       Object data;
-
-      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
-      if (contentProvider != null) {
-        data = contentProvider.getData(dataId);
-        if (data != null) return data;
-      }
 
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;

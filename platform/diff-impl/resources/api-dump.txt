@@ -2770,7 +2770,6 @@ f:com.intellij.diff.util.DiffUtil
 - s:getArrowIcon(com.intellij.diff.util.Side):javax.swing.Icon
 - s:getCaretPosition(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.LogicalPosition
 - s:getContentLineConvertor(com.intellij.diff.contents.DocumentContent):java.util.function.IntUnaryOperator
-- s:getData(com.intellij.openapi.actionSystem.DataProvider,com.intellij.openapi.actionSystem.DataProvider,java.lang.String):java.lang.Object
 - s:getDefaultDiffPanelSize():java.awt.Dimension
 - s:getDefaultDiffWindowSize():java.awt.Dimension
 - s:getDiffSettings(com.intellij.diff.DiffContext):com.intellij.diff.impl.DiffSettingsHolder$DiffSettings

@@ -1744,19 +1744,6 @@ public final class DiffUtil {
   // DataProvider
   //
 
-  @Nullable
-  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NotNull @NonNls String dataId) {
-    if (provider != null) {
-      Object data = provider.getData(dataId);
-      if (data != null) return data;
-    }
-    if (fallbackProvider != null) {
-      Object data = fallbackProvider.getData(dataId);
-      if (data != null) return data;
-    }
-    return null;
-  }
-
   public static <T> void putDataKey(@NotNull UserDataHolder holder, @NotNull DataKey<T> key, @Nullable T value) {
     DataProvider dataProvider = holder.getUserData(DiffUserDataKeys.DATA_PROVIDER);
     if (!(dataProvider instanceof GenericDataProvider)) {
