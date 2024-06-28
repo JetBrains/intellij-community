@@ -254,7 +254,11 @@ internal class BlockTerminalView(
     val (width, charSize) = if (alternateBufferView != null) {
       alternateBufferView!!.let { it.terminalWidth to it.charSize }
     }
-    else outputView.let { it.terminalWidth to it.charSize }
+    else {
+      // Use the width of the prompt as a target, because it can be reduced by the side action toolbar.
+      // Need to take the reduced width to not intersect with the toolbar.
+      promptView.let { it.terminalWidth to it.charSize }
+    }
     return if (width > 0 && component.height > 0) {
       TerminalUiUtils.calculateTerminalSize(Dimension(width, component.height), charSize)
     }

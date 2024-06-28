@@ -17,10 +17,8 @@ import org.jetbrains.plugins.terminal.block.TerminalFocusModel
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
-import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.geom.Dimension2D
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
 import javax.swing.JScrollBar
@@ -46,16 +44,6 @@ internal class TerminalOutputView(
     get() = editor.contentComponent
 
   private val editor: EditorImpl
-
-  val terminalWidth: Int
-    get() {
-      val visibleArea = editor.scrollingModel.visibleArea
-      val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
-      return visibleArea.width - scrollBarWidth
-    }
-
-  val charSize: Dimension2D
-    get() = editor.getCharSize()
 
   init {
     editor = createEditor(settings)
