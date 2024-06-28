@@ -25,16 +25,12 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.TerminalUiSettingsManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.ActionLink;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
-import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
@@ -86,8 +82,12 @@ public final class TerminalSettingsPanel {
   private JBCheckBox myNewUiCheckbox;
   private JBLabel myBetaLabel;
   private JPanel myNewUiChildSettingsPanel;
-  private JBCheckBox myShellPromptCheckbox;
-  private JLabel myShellPromptDescription;
+
+  private JPanel myPromptStyleButtonsPanel;
+  private JBRadioButton mySingleLineButton;
+  private JBRadioButton myDoubleLineButton;
+  private JBRadioButton myShellPromptButton;
+  private JPanel myShellPromptButtonPanel;
 
   private Project myProject;
   private TerminalOptionsProvider myOptionsProvider;
@@ -109,19 +109,23 @@ public final class TerminalSettingsPanel {
 
     myNewUiSettingsPanel.setVisible(ExperimentalUI.isNewUI());
     myBetaLabel.setIcon(AllIcons.General.Beta);
-    myNewUiChildSettingsPanel.setBorder(JBUI.Borders.emptyLeft(20));
+    myNewUiChildSettingsPanel.setBorder(JBUI.Borders.emptyLeft(28));
     myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
     // Show child New Terminal settings as disabled if New Terminal is not selected
     updateNewUiPanelState();
     myNewUiCheckbox.addChangeListener(__ -> updateNewUiPanelState());
 
-    myShellPromptDescription.setBorder(JBUI.Borders.emptyLeft(28));
-    myShellPromptDescription.setFont(JBFont.medium());
-    myShellPromptDescription.setForeground(JBUI.CurrentTheme.ContextHelp.FOREGROUND);
-    myShellPromptDescription.setVisible(myShellPromptCheckbox.isSelected());
-    myShellPromptCheckbox.addChangeListener(__ -> {
-      myShellPromptDescription.setVisible(myShellPromptCheckbox.isSelected());
-    });
+    myPromptStyleButtonsPanel.setBorder(JBUI.Borders.empty(4, 20, 0, 0));
+    // UI Designer is unable to create a ContextHelpLabel, because it doesn't have a default constructor.
+    // So, I have to create and add it manually.
+    var shellPromptDescription = ContextHelpLabel.create(TerminalBundle.message("settings.shell.prompt.description"));
+    shellPromptDescription.setBorder(JBUI.Borders.emptyLeft(6));
+    myShellPromptButtonPanel.add(shellPromptDescription);
+
+    var buttonGroup = new ButtonGroup();
+    buttonGroup.add(mySingleLineButton);
+    buttonGroup.add(myDoubleLineButton);
+    buttonGroup.add(myShellPromptButton);
 
     myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
     myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
@@ -202,9 +206,8 @@ public final class TerminalSettingsPanel {
   }
 
   public boolean isModified() {
-    boolean isShellPrompt = myBlockTerminalOptions.getPromptStyle() == TerminalPromptStyle.SHELL;
     return myNewUiCheckbox.isSelected() != Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY)
-           || (myShellPromptCheckbox.isSelected() != isShellPrompt)
+           || (myBlockTerminalOptions.getPromptStyle() != getSelectedPromptStyle())
            || !Objects.equals(myShellPathField.getText(), myProjectOptionsProvider.getShellPath())
            || !Objects.equals(myStartDirectoryField.getText(), StringUtil.notNullize(myProjectOptionsProvider.getStartingDirectory()))
            || !Objects.equals(myTabNameTextField.getText(), myOptionsProvider.getTabName())
@@ -234,8 +237,7 @@ public final class TerminalSettingsPanel {
         }, ModalityState.nonModal());
       }
     }
-    var newPromptStyle = myShellPromptCheckbox.isSelected() ? TerminalPromptStyle.SHELL : TerminalPromptStyle.DOUBLE_LINE;
-    myBlockTerminalOptions.setPromptStyle(newPromptStyle);
+    myBlockTerminalOptions.setPromptStyle(getSelectedPromptStyle());
     myProjectOptionsProvider.setStartingDirectory(myStartDirectoryField.getText());
     myProjectOptionsProvider.setShellPath(myShellPathField.getText());
     myOptionsProvider.setTabName(myTabNameTextField.getText());
@@ -262,8 +264,10 @@ public final class TerminalSettingsPanel {
 
   public void reset() {
     myNewUiCheckbox.setSelected(Registry.is(LocalBlockTerminalRunner.BLOCK_TERMINAL_REGISTRY));
-    boolean isShellPrompt = myBlockTerminalOptions.getPromptStyle() == TerminalPromptStyle.SHELL;
-    myShellPromptCheckbox.setSelected(isShellPrompt);
+    var promptStyle = myBlockTerminalOptions.getPromptStyle();
+    mySingleLineButton.setSelected(promptStyle == TerminalPromptStyle.SINGLE_LINE);
+    myDoubleLineButton.setSelected(promptStyle == TerminalPromptStyle.DOUBLE_LINE);
+    myShellPromptButton.setSelected(promptStyle == TerminalPromptStyle.SHELL);
     myShellPathField.setText(myProjectOptionsProvider.getShellPath());
     myStartDirectoryField.setText(myProjectOptionsProvider.getStartingDirectory());
     myTabNameTextField.setText(myOptionsProvider.getTabName());
@@ -280,6 +284,19 @@ public final class TerminalSettingsPanel {
     myEnvVarField.setData(myProjectOptionsProvider.getEnvData());
     myCursorShape.setItem(myOptionsProvider.getCursorShape());
     myEnvVarField.setEnabled(TrustedProjects.isTrusted(myProject));
+  }
+
+  private TerminalPromptStyle getSelectedPromptStyle() {
+    if (mySingleLineButton.isSelected()) {
+      return TerminalPromptStyle.SINGLE_LINE;
+    }
+    else if (myDoubleLineButton.isSelected()) {
+      return TerminalPromptStyle.DOUBLE_LINE;
+    }
+    else if (myShellPromptButton.isSelected()) {
+      return TerminalPromptStyle.SHELL;
+    }
+    throw new IllegalStateException("None of prompt style radio buttons are selected");
   }
 
   public Color getDefaultValueColor() {
