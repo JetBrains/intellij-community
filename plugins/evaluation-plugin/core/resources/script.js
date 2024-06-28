@@ -520,6 +520,7 @@ function updateMultilinePopup(event) {
   if (showSuggestion) {
     addMultilineSuggestion(sessionDiv, popup, lookup)
     addMultilineExpectedText(popup, expectedText)
+    addCommonFeatures(sessionDiv, popup, lookup)
   }
   else {
     addMultilineAttachments(sessionDiv, popup, expectedText)
