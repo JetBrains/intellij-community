@@ -16,6 +16,7 @@ import javax.swing.*
 class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
   @Nls private val tooltipText: String?,
+  @Nls private val durationText: String?,
   private val executionCount: Int?,
   private val statusIcon: Icon?,
   private val isExecutable: Boolean,
@@ -44,7 +45,10 @@ class NotebookBelowCellDelimiterPanel(
 
   private fun createExecutionLabel(): JLabel {
     val executionCountText = executionCount?.let { if (it > 0) "[$it]" else "" } ?: ""
-    return JLabel(executionCountText).apply {
+    val durationLabelText = durationText ?: ""
+    val labelText = "$executionCountText $durationLabelText"
+
+    return JLabel(labelText).apply {
       icon = statusIcon
       font = EditorUtil.getEditorFont()
       foreground = UIUtil.getLabelInfoForeground()
