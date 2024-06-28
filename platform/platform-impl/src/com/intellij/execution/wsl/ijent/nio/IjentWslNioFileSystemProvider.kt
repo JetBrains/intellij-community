@@ -256,18 +256,22 @@ private class IjentNioPosixFileAttributesWithDosAdapter(
   private val fileInfo: PosixFileAttributes,
   private val nameStartsWithDot: Boolean,
 ) : PosixFileAttributes by fileInfo, DosFileAttributes {
+  /**
+   * Returns `false` if the corresponding file or directory can be modified.
+   * Note that returning `true` does not mean that the corresponding file can be read or the directory can be listed.
+   */
   override fun isReadOnly(): Boolean = fileInfo.run {
     val owner = owner()
     val group = group()
     return when {
       owner is IjentPosixUserPrincipal && owner.uid == userInfo.uid ->
-        OWNER_READ in permissions() && (!isDirectory || OWNER_EXECUTE in permissions())
+        OWNER_WRITE !in permissions() || (isDirectory && OWNER_EXECUTE !in permissions())
 
       group is IjentPosixGroupPrincipal && group.gid == userInfo.gid ->
-        GROUP_READ in permissions() && (!isDirectory || GROUP_EXECUTE in permissions())
+        GROUP_WRITE !in permissions() || (isDirectory && GROUP_EXECUTE !in permissions())
 
       else ->
-        OTHERS_READ in permissions() && (!isDirectory || OTHERS_EXECUTE in permissions())
+        OTHERS_WRITE !in permissions() || (isDirectory && OTHERS_EXECUTE !in permissions())
     }
   }
 
