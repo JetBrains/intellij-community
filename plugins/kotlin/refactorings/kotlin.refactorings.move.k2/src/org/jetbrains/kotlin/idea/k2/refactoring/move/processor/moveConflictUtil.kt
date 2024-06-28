@@ -125,6 +125,11 @@ fun createCopyTarget(
     val oldToNewMap = declarationsToMove.moveInto(fakeTargetFile)
     val usageInfos = fakeTargetFile.collectOldToNewUsageInfos(oldToNewMap)
     usageInfos.forEach { (originalUsageInfo, copyUsageInfo) ->
+        if (!originalUsageInfo.isUpdatable(oldToNewMap.values.toList())) {
+            (copyUsageInfo.reference?.element as? KtReferenceExpression)?.internalUsageInfo = originalUsageInfo
+            return@forEach
+        }
+
         // Retarget all references to make sure all references are resolvable after moving
         val retargetResult = copyUsageInfo.retarget(copyUsageInfo.referencedElement as PsiNamedElement) as? KtElement ?: return@forEach
         val retargetReference = retargetResult.getCalleeExpressionIfAny() as? KtSimpleNameExpression ?: return@forEach
