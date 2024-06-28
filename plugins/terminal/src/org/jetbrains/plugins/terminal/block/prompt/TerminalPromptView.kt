@@ -17,7 +17,6 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.border.CustomLineBorder
-import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
@@ -32,12 +31,15 @@ import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptLanguage
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
+import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.geom.Dimension2D
 import javax.swing.JComponent
-import javax.swing.JLayeredPane
+import javax.swing.JPanel
 import javax.swing.JScrollPane
+import kotlin.math.max
 import kotlin.math.min
 
 internal class TerminalPromptView(
@@ -51,6 +53,16 @@ internal class TerminalPromptView(
 
   val preferredFocusableComponent: JComponent
     get() = editor.contentComponent
+
+  val terminalWidth: Int
+    get() {
+      val visibleArea = editor.scrollingModel.visibleArea
+      val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
+      return visibleArea.width - scrollBarWidth
+    }
+
+  val charSize: Dimension2D
+    get() = editor.getCharSize()
 
   private val editor: EditorImpl
   private val commandHistoryPresenter: CommandHistoryPresenter
@@ -181,21 +193,20 @@ internal class TerminalPromptView(
 
   private class TerminalPromptPanel(
     private val mainComponent: JComponent,
-    private val sideComponent: JComponent
-  ) : JBLayeredPane() {
+    private val sideComponent: JComponent,
+  ) : JPanel(null) {
     private var bottomComponent: JComponent? = null
 
     init {
       isOpaque = false
-      // cast to Any needed to call right method overload
-      add(mainComponent, JLayeredPane.DEFAULT_LAYER as Any)
-      add(sideComponent, JLayeredPane.POPUP_LAYER as Any)
+      add(mainComponent)
+      add(sideComponent)
     }
 
     fun setBottomComponent(component: JComponent?) {
       bottomComponent?.let { remove(it) }
       if (component != null) {
-        add(component, JLayeredPane.DEFAULT_LAYER as Any)
+        add(component)
       }
       bottomComponent = component
       revalidate()
@@ -205,7 +216,8 @@ internal class TerminalPromptView(
     override fun getPreferredSize(): Dimension {
       val mainComponentSize = mainComponent.preferredSize
       val bottomComponentSize = bottomComponent?.preferredSize ?: Dimension(0, 0)
-      val size = Dimension(mainComponentSize.width, mainComponentSize.height + bottomComponentSize.height)
+      val sideComponentSize = sideComponent.preferredSize
+      val size = Dimension(mainComponentSize.width + sideComponentSize.width, mainComponentSize.height + bottomComponentSize.height)
       JBInsets.addTo(size, insets)
       return size
     }
@@ -213,26 +225,23 @@ internal class TerminalPromptView(
     override fun doLayout() {
       val rect = Rectangle(0, 0, width, height)
       JBInsets.removeFrom(rect, insets)
-      layoutMainAndBottomComponents(mainComponent, bottomComponent, rect)
-      layoutSideComponent(sideComponent, rect)
-    }
 
-    private fun layoutMainAndBottomComponents(main: Component, bottom: Component?, rect: Rectangle) {
-      val mainPrefHeight = main.preferredSize.height
-      val mainHeight = min(rect.height, mainPrefHeight)
-      main.setBounds(rect.x, rect.y, rect.width, mainHeight)
+      val sidePrefSize = sideComponent.preferredSize
+      val mainPrefSize = mainComponent.preferredSize
+      val bottomPrefSize = bottomComponent?.preferredSize ?: Dimension(0, 0)
 
-      if (bottom != null) {
-        val bottomPrefHeight = bottom.preferredSize.height
-        val bottomHeight = min(rect.height - mainHeight, bottomPrefHeight)
-        bottom.setBounds(rect.x, rect.y + mainHeight, rect.width, bottomHeight)
-      }
-    }
+      // Place it in the top right corner
+      val sideComponentX = max(rect.x + rect.width - sidePrefSize.width, 0)
+      sideComponent.setBounds(sideComponentX, rect.y, sidePrefSize.width, sidePrefSize.height)
 
-    private fun layoutSideComponent(component: Component, rect: Rectangle) {
-      val prefSize = component.preferredSize
-      val compWidth = min(rect.width, prefSize.width)
-      component.setBounds(rect.x + rect.width - compWidth, rect.y, compWidth, prefSize.height)
+      // Make it fill the all horizontal space until the side component and vertical space until the bottom component
+      val mainHeight = min(rect.height, mainPrefSize.height)
+      mainComponent.setBounds(rect.x, rect.y, rect.width - sidePrefSize.width, mainHeight)
+
+      // Place it right below the main component, allowing it to fill the full width.
+      // Side component is small, so they should not intersect.
+      val bottomHeight = min(rect.height - mainHeight, bottomPrefSize.height)
+      bottomComponent?.setBounds(rect.x, rect.y + mainHeight, rect.width, bottomHeight)
     }
   }
 }
