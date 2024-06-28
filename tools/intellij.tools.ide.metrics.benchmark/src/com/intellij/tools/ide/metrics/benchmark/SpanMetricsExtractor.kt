@@ -30,11 +30,8 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
   }
 
   private fun getAttemptsSpansStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
-    val medianValueOfAttempts: Long = attempts.medianValue()
-    val madValueOfAttempts = attempts.map { (it.value - medianValueOfAttempts).absoluteValue }.median()
-
     val attemptMeanMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mean.ms", attempts.map { it.value }.average().toLong())
-    val attemptMedianMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.median.ms", medianValueOfAttempts)
+    val attemptMedianMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.median.ms", attempts.medianValue())
 
     // Why minimum matters? Its distribution is better than mean or median.
     // See https://blog.kevmod.com/2016/06/10/benchmarking-minimum-vs-average/
@@ -46,7 +43,7 @@ class SpanMetricsExtractor(private val telemetryJsonFile: Path = getDefaultPathT
                                                                         attempts.standardDeviationValue())
     // "... the MAD is a robust statistic, being more resilient to outliers in data set than the standard deviation."
     // See https://en.m.wikipedia.org/wiki/Median_absolute_deviation
-    val attemptMadMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mad.ms", madValueOfAttempts)
+    val attemptMadMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mad.ms", attempts.madValue())
 
     return listOf(attemptMeanMetric, attemptMedianMetric, attemptMinMetric,
                   attemptRangeMetric, attemptSumMetric, attemptCountMetric, attemptStandardDeviationMetric, attemptMadMetric)

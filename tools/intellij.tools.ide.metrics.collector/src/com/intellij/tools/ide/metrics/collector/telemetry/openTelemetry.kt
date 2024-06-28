@@ -30,8 +30,9 @@ private val logger = logger<OpentelemetrySpanJsonParser>()
 fun getMetricsFromSpanAndChildren(
   file: Path,
   filter: SpanFilter,
-  metricSpanProcessor: MetricSpanProcessor = MetricSpanProcessor(),
+  metricSpanProcessor: SpanProcessor<MetricWithAttributes> = MetricSpanProcessor(),
   aliases: Map<String, String> = mapOf(),
+  metricsPostProcessor: MetricsPostProcessor = CombinedMetricsPostProcessor(),
 ): List<Metric> {
   val spanElements = OpentelemetrySpanJsonParser(filter).getSpanElements(file).map {
     val name = aliases.getOrDefault(it.name, it.name)
@@ -41,9 +42,9 @@ fun getMetricsFromSpanAndChildren(
     return@map it
   }
 
-  val spanToMetricMap = spanElements.mapNotNull { metricSpanProcessor.process(it) }
+  val spanToMetricMap: Map<String, List<MetricWithAttributes>> = spanElements.mapNotNull { metricSpanProcessor.process(it) }
     .groupBy { it.metric.id.name }
-  return combineMetrics(spanToMetricMap)
+  return metricsPostProcessor.process(spanToMetricMap)
 }
 
 /**
@@ -83,7 +84,7 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
     val metric = MetricWithAttributes(Metric.newDuration(name, duration.toMillis()))
     metrics.add(metric)
   }
-  return combineMetrics(mapOf(name to metrics))
+  return CombinedMetricsPostProcessor().process(mapOf(name to metrics))
 }
 
 fun getSpansMetricsMap(file: Path, spanFilter: SpanFilter = SpanFilter.any()): Map<String, List<MetricWithAttributes>> {
@@ -126,66 +127,10 @@ fun getMetricsForStartup(file: Path): List<Metric> {
   val endMetrics = spanElementsWithoutRoots.map { span ->
     Metric.newDuration(span.name + ".end", java.time.Duration.between(startTime, span.startTimestamp).plusNanos(span.duration.inWholeNanoseconds).toMillis())
   }
-  return combineMetrics(spanToMetricMap) + startMetrics + endMetrics
+  return CombinedMetricsPostProcessor().process(spanToMetricMap) + startMetrics + endMetrics
 }
 
-private fun combineMetrics(metrics: Map<String, List<MetricWithAttributes>>): List<Metric> {
-  val result = mutableListOf<Metric>()
-  for (entry in metrics) {
-    if (entry.value.size == 1) {
-      val metric = entry.value.first()
-      result.addAll(getAttributes(entry.key, metric))
-      if (metric.metric.id.name != TOTAL_TEST_TIMER_NAME) {
-        result.add(metric.metric)
-      }
-    }
-    else {
-      var counter = 1
-      val mediumAttributes = mutableMapOf<String, MutableList<Long>>()
-      for (metric in entry.value) {
-        val value = metric.metric.value
-        val spanUpdatedName = entry.key + "_$counter"
-        result.add(Metric.newDuration(spanUpdatedName, value))
-        result.addAll(getAttributes(spanUpdatedName, metric))
-        getAttributes(entry.key, metric).forEach {
-          val key = it.id.name
-          val collection = mediumAttributes.getOrDefault(key, mutableListOf())
-          collection.add(it.value)
-          mediumAttributes.put(key, collection)
-        }
-        counter++
-      }
-      for (attr in mediumAttributes) {
-        if (attr.key.endsWith("#max")) {
-          result.add(Metric.newDuration(attr.key, attr.value.max()))
-          continue
-        }
-        if (attr.key.endsWith("#p90")) {
-          continue
-        }
-        if (attr.key.endsWith("#mean_value")) {
-          result.add(Metric.newDuration(attr.key, attr.value.average().toLong()))
-          continue
-        }
-
-        result.add(Metric.newCounter(attr.key + "#count", attr.value.size.toLong()))
-        result.add(Metric.newDuration(attr.key + "#mean_value", attr.value.average().toLong()))
-        result.add(Metric.newDuration(attr.key + "#standard_deviation", attr.value.standardDeviation()))
-      }
-      val sum = entry.value.sumOf { it.metric.value }
-      val count = entry.value.size
-      val mean = sum / count
-      val standardDeviation = entry.value.map { it.metric.value }.standardDeviation()
-      result.add(Metric.newDuration(entry.key, sum))
-      result.add(Metric.newCounter(entry.key + "#count", count.toLong()))
-      result.add(Metric.newDuration(entry.key + "#mean_value", mean))
-      result.add(Metric.newDuration(entry.key + "#standard_deviation", standardDeviation))
-    }
-  }
-  return result
-}
-
-private fun getAttributes(spanName: String, metric: MetricWithAttributes): Collection<Metric> {
+internal fun getAttributes(spanName: String, metric: MetricWithAttributes): Collection<Metric> {
   return metric.attributes.map { attributeMetric ->
     Metric.newCounter("$spanName#" + attributeMetric.id.name, attributeMetric.value)
   }

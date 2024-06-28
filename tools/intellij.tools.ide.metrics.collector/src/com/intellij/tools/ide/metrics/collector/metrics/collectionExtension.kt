@@ -70,9 +70,14 @@ fun Iterable<Long>.range(): Long {
 /** Difference between the smallest and the largest values */
 fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Long = this.map { it.value }.range()
 
-// TODO: write unit tests
 /** Calculates [percentile] in the provided collection */
 fun Iterable<Long>.percentile(percentile: Byte): Long {
+  require(percentile in 0..100) { "Percentile must be between 0 and 100" }
+  require(this.count() > 0) { "Cannot calculate percentile because collection is empty" }
+
   val sorted = this.sorted()
-  return sorted[((percentile * sorted.size) / 100.0).roundToInt().coerceIn(sorted.indices)]
+  return sorted[((percentile * (sorted.size - 1)) / 100.0).roundToInt().coerceIn(sorted.indices)]
 }
+
+/** @see percentile */
+fun Iterable<PerformanceMetrics.Metric>.percentileValue(percentile: Byte): Long = this.map { it.value }.percentile(percentile)

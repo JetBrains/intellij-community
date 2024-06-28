@@ -38,7 +38,7 @@ private fun shouldAvoidIfZero(span: SpanElement): Boolean {
   return false
 }
 
-private fun populateAttributes(metric: MetricWithAttributes, span: SpanElement) {
+fun populateAttributes(metric: MetricWithAttributes, span: SpanElement) {
   span.tags.forEach { tag ->
     val attributeName = tag.first
     tag.second.runCatching { toInt() }.onSuccess {
