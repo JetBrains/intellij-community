@@ -25,6 +25,7 @@ import com.intellij.ui.*
 import com.intellij.ui.hover.TreeHoverListener
 import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
+import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
 import com.intellij.util.containers.FList
@@ -43,6 +44,7 @@ import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
+
 import java.awt.Graphics
 import java.awt.GraphicsEnvironment
 import java.awt.datatransfer.Transferable
@@ -229,6 +231,72 @@ internal class BranchesTreeComponent(project: Project) : DnDAwareTree() {
   }
 }
 
+internal abstract class FilteringBranchesTreeBase(
+  tree: Tree,
+  rootNode: BranchTreeNode,
+) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(tree, rootNode) {
+  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
+  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
+  private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.HEAD_NODE))
+
+  private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
+                                                          remoteBranchesNode.getNodeDescriptor())
+
+  protected abstract val groupingConfig: Map<GroupingKey, Boolean>
+
+  final override fun getNodeClass() = BranchTreeNode::class.java
+
+  public final override fun getText(nodeDescriptor: BranchNodeDescriptor?) =
+    nodeDescriptor?.branchInfo?.branchName ?: nodeDescriptor?.displayName
+
+  final override fun createNode(nodeDescriptor: BranchNodeDescriptor) =
+    when (nodeDescriptor.type) {
+      NodeType.LOCAL_ROOT -> localBranchesNode
+      NodeType.REMOTE_ROOT -> remoteBranchesNode
+      NodeType.HEAD_NODE -> headBranchesNode
+      else -> BranchTreeNode(nodeDescriptor)
+    }
+
+  final override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
+    when (nodeDescriptor.type) {
+      NodeType.ROOT -> getRootNodeDescriptors()
+      NodeType.LOCAL_ROOT -> localBranchesNode.getNodeDescriptor().getDirectChildren()
+      NodeType.REMOTE_ROOT -> remoteBranchesNode.getNodeDescriptor().getDirectChildren()
+      NodeType.GROUP_NODE -> nodeDescriptor.getDirectChildren()
+      NodeType.GROUP_REPOSITORY_NODE -> nodeDescriptor.getDirectChildren()
+      else -> emptyList() //leaf branch node
+    }
+
+  final override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply =
+    BranchesFilteringSpeedSearch(this, searchTextField)
+
+  protected fun isEmptyModel() = searchModel.isLeaf(localBranchesNode) && searchModel.isLeaf(remoteBranchesNode)
+
+  internal fun refreshNodeDescriptorsModel(
+    localBranches: Collection<BranchInfo>,
+    remoteBranches: Collection<BranchInfo>,
+    showOnlyMy: Boolean,
+  ) {
+      nodeDescriptorsModel.reloadFrom(
+        localBranches = localBranches,
+        remoteBranches = remoteBranches,
+        filter = if (showOnlyMy) ::isMy else { _ -> true },
+        groupingConfig
+      )
+  }
+
+  private fun isMy(branch: BranchInfo) = branch.isMy == ThreeState.YES
+
+  private fun getRootNodeDescriptors() =
+    mutableListOf<BranchNodeDescriptor>().apply {
+      if (nodeDescriptorsModel.localNodeExist || nodeDescriptorsModel.remoteNodeExist) add(headBranchesNode.getNodeDescriptor())
+      if (nodeDescriptorsModel.localNodeExist) add(localBranchesNode.getNodeDescriptor())
+      if (nodeDescriptorsModel.remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
+    }
+
+  private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
+}
+
 internal class FilteringBranchesTree(
   val project: Project,
   val component: BranchesTreeComponent,
@@ -236,26 +304,16 @@ internal class FilteringBranchesTree(
   rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)),
   place: @NonNls String,
   private val disposable: Disposable
-) : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(component, rootNode) {
+) : FilteringBranchesTreeBase(component, rootNode) {
 
   private val expandedPaths = HashSet<TreePath>()
 
-  private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
-  private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
-  private val headBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.HEAD_NODE))
-  private val branchFilter: (BranchInfo) -> Boolean =
-    { branch -> !uiController.showOnlyMy || branch.isMy == ThreeState.YES }
-  private val nodeDescriptorsModel = NodeDescriptorsModel(localBranchesNode.getNodeDescriptor(),
-                                                          remoteBranchesNode.getNodeDescriptor())
-
-  private var localNodeExist = false
-  private var remoteNodeExist = false
   private val treeStateProvider = BranchesTreeStateProvider(this, disposable)
 
   private val treeStateHolder: BranchesTreeStateHolder get() =
     BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, Supplier { project.service() })
 
-  private val groupingConfig: MutableMap<GroupingKey, Boolean> =
+  override val groupingConfig: MutableMap<GroupingKey, Boolean> =
     with(project.service<GitBranchManager>()) {
       hashMapOf(
         GroupingKey.GROUPING_BY_DIRECTORY to isGroupingEnabled(GroupingKey.GROUPING_BY_DIRECTORY),
@@ -276,51 +334,6 @@ internal class FilteringBranchesTree(
       setupTreeListeners()
     }
   }
-
-  override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply =
-    object : FilteringSpeedSearch(searchTextField) {
-      private var matcher = BranchesTreeMatcher(searchTextField.text)
-      private var bestMatch: BestMatch? = null
-
-      override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: Matching) {
-        if (result == Matching.NONE || userObject.type == NodeType.GROUP_NODE) return
-        val text = getText(userObject) ?: return
-        val singleMatch = matchingFragments?.singleOrNull() ?: return
-
-        val matchingDegree = matcher.matchingDegree(text, valueStartCaseMatch = false, fragments = FList.singleton(singleMatch))
-        if (matchingDegree > (bestMatch?.matchingDegree ?: 0)) {
-          val node = searchModel.getNode(userObject)
-          bestMatch = BestMatch(matchingDegree, node)
-        }
-      }
-
-      override fun getMatcher(): MinusculeMatcher = matcher
-
-      override fun updatePattern(string: String?) {
-        super.updatePattern(string)
-        onUpdatePattern(string)
-      }
-
-      override fun updateSelection() {
-        val bestMatch = bestMatch
-        if (bestMatch == null) {
-          super.updateSelection()
-          return
-        }
-
-        val selectionText = getText(selection?.getNodeDescriptor())
-
-        val selectionMatchingDegree = if (selectionText != null) matcher.matchingDegree(selectionText) else Int.MIN_VALUE
-        if (selectionMatchingDegree < bestMatch.matchingDegree) {
-          select(bestMatch.node)
-        }
-      }
-
-      override fun onUpdatePattern(text: String?) {
-        matcher = BranchesTreeMatcher(text)
-        bestMatch = null
-      }
-    }
 
   override fun installSearchField(): SearchTextField {
     val searchField = super.installSearchField()
@@ -387,30 +400,6 @@ internal class FilteringBranchesTree(
     }
   }
 
-  private fun isEmptyModel() = searchModel.isLeaf(localBranchesNode) && searchModel.isLeaf(remoteBranchesNode)
-
-  override fun getNodeClass() = BranchTreeNode::class.java
-
-  override fun createNode(nodeDescriptor: BranchNodeDescriptor) =
-    when (nodeDescriptor.type) {
-      NodeType.LOCAL_ROOT -> localBranchesNode
-      NodeType.REMOTE_ROOT -> remoteBranchesNode
-      NodeType.HEAD_NODE -> headBranchesNode
-      else -> BranchTreeNode(nodeDescriptor)
-    }
-
-  override fun getChildren(nodeDescriptor: BranchNodeDescriptor) =
-    when (nodeDescriptor.type) {
-      NodeType.ROOT -> getRootNodeDescriptors()
-      NodeType.LOCAL_ROOT -> localBranchesNode.getNodeDescriptor().getDirectChildren()
-      NodeType.REMOTE_ROOT -> remoteBranchesNode.getNodeDescriptor().getDirectChildren()
-      NodeType.GROUP_NODE -> nodeDescriptor.getDirectChildren()
-      NodeType.GROUP_REPOSITORY_NODE -> nodeDescriptor.getDirectChildren()
-      else -> emptyList() //leaf branch node
-    }
-
-  private fun BranchNodeDescriptor.getDirectChildren() = nodeDescriptorsModel.getChildrenForParent(this)
-
   fun update(initial: Boolean) {
     val branchesReloaded = uiController.reloadBranches()
     runPreservingTreeState(initial) {
@@ -460,24 +449,12 @@ internal class FilteringBranchesTree(
   }
 
   fun refreshNodeDescriptorsModel() {
-    with(uiController) {
-      nodeDescriptorsModel.clear()
-
-      localNodeExist = localBranches.isNotEmpty()
-      remoteNodeExist = remoteBranches.isNotEmpty()
-
-      nodeDescriptorsModel.populateFrom((localBranches.asSequence() + remoteBranches.asSequence()).filter(branchFilter), groupingConfig)
-    }
+    refreshNodeDescriptorsModel(
+      localBranches = uiController.localBranches,
+      remoteBranches = uiController.remoteBranches,
+      showOnlyMy = uiController.showOnlyMy,
+    )
   }
-
-  override fun getText(nodeDescriptor: BranchNodeDescriptor?) = nodeDescriptor?.branchInfo?.branchName ?: nodeDescriptor?.displayName
-
-  private fun getRootNodeDescriptors() =
-    mutableListOf<BranchNodeDescriptor>().apply {
-      if (localNodeExist || remoteNodeExist) add(headBranchesNode.getNodeDescriptor())
-      if (localNodeExist) add(localBranchesNode.getNodeDescriptor())
-      if (remoteNodeExist) add(remoteBranchesNode.getNodeDescriptor())
-    }
 }
 
 private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
@@ -540,6 +517,51 @@ internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable
         state = TreeState.createOn(it.tree, it.root)
       }
     }
+  }
+}
+
+private class BranchesFilteringSpeedSearch(private val tree: FilteringBranchesTreeBase, searchTextField: SearchTextField):
+  FilteringSpeedSearch<BranchTreeNode, BranchNodeDescriptor>(tree, searchTextField) {
+  private var matcher = BranchesTreeMatcher(searchTextField.text)
+  private var bestMatch: BestMatch? = null
+
+  override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: FilteringTree.Matching) {
+    if (result == FilteringTree.Matching.NONE || userObject.type == NodeType.GROUP_NODE) return
+    val text = tree.getText(userObject) ?: return
+    val singleMatch = matchingFragments?.singleOrNull() ?: return
+
+    val matchingDegree = matcher.matchingDegree(text, valueStartCaseMatch = false, fragments = FList.singleton(singleMatch))
+    if (matchingDegree > (bestMatch?.matchingDegree ?: 0)) {
+      val node = tree.searchModel.getNode(userObject)
+      bestMatch = BestMatch(matchingDegree, node)
+    }
+  }
+
+  override fun getMatcher(): MinusculeMatcher = matcher
+
+  override fun updatePattern(string: String?) {
+    super.updatePattern(string)
+    onUpdatePattern(string)
+  }
+
+  override fun updateSelection() {
+    val bestMatch = bestMatch
+    if (bestMatch == null) {
+      super.updateSelection()
+      return
+    }
+
+    val selectionText = tree.getText(selection?.getNodeDescriptor())
+
+    val selectionMatchingDegree = if (selectionText != null) matcher.matchingDegree(selectionText) else Int.MIN_VALUE
+    if (selectionMatchingDegree < bestMatch.matchingDegree) {
+      select(bestMatch.node)
+    }
+  }
+
+  override fun onUpdatePattern(text: String?) {
+    matcher = BranchesTreeMatcher(text)
+    bestMatch = null
   }
 }
 

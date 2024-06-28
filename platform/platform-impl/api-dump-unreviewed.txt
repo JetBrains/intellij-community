@@ -23864,6 +23864,22 @@ c:com.intellij.ui.ExpandableEditorSupport
 f:com.intellij.ui.ExtendableEditorSupport
 - <init>():V
 - s:setupExtension(com.intellij.openapi.editor.ex.EditorEx,java.awt.Color,com.intellij.ui.components.fields.ExtendableTextComponent$Extension):javax.swing.JLabel
+c:com.intellij.ui.FilteringSpeedSearch
+- com.intellij.ui.speedSearch.SpeedSearch
+- com.intellij.ui.FilteringTree$FilteringTreeUserObjectMatcher
+- p:<init>(com.intellij.ui.FilteringTree,com.intellij.ui.SearchTextField):V
+- f:checkMatching(java.lang.Object,java.lang.Iterable):com.intellij.ui.FilteringTree$Matching
+- checkMatching(javax.swing.tree.DefaultMutableTreeNode):com.intellij.ui.FilteringTree$Matching
+- getSelection():javax.swing.tree.DefaultMutableTreeNode
+- iterate(javax.swing.tree.DefaultMutableTreeNode,Z):java.util.Iterator
+- iterate(javax.swing.tree.DefaultMutableTreeNode,Z,Z):java.util.Iterator
+- noHits():V
+- p:onMatchingChecked(java.lang.Object,java.lang.Iterable,com.intellij.ui.FilteringTree$Matching):V
+- p:onSearchFieldUpdated(java.lang.String):V
+- p:onUpdatePattern(java.lang.String):V
+- select(javax.swing.tree.DefaultMutableTreeNode):V
+- update():V
+- updateSelection():V
 a:com.intellij.ui.FilteringTree
 - sf:DUMMY_SEARCH:com.intellij.ui.speedSearch.SpeedSearchSupply
 - <init>(com.intellij.ui.treeStructure.Tree,javax.swing.tree.DefaultMutableTreeNode):V
@@ -23882,26 +23898,6 @@ a:com.intellij.ui.FilteringTree
 - installSimple():V
 - p:onSpeedSearchUpdateComplete(java.lang.String):V
 - p:useIdentityHashing():Z
-pc:com.intellij.ui.FilteringTree$FilteringSpeedSearch
-- com.intellij.ui.FilteringTree$FilteringTreeUserObjectMatcher
-- com.intellij.ui.speedSearch.SpeedSearch
-- p:<init>(com.intellij.ui.FilteringTree,com.intellij.ui.SearchTextField):V
-- a:checkMatching(java.lang.Object):com.intellij.ui.FilteringTree$Matching
-- f:checkMatching(java.lang.Object,java.lang.Iterable):com.intellij.ui.FilteringTree$Matching
-- checkMatching(javax.swing.tree.DefaultMutableTreeNode):com.intellij.ui.FilteringTree$Matching
-- a:getSelection():java.lang.Object
-- getSelection():javax.swing.tree.DefaultMutableTreeNode
-- a:iterate(java.lang.Object,Z):java.util.Iterator
-- iterate(java.lang.Object,Z,Z):java.util.Iterator
-- iterate(javax.swing.tree.DefaultMutableTreeNode,Z):java.util.Iterator
-- noHits():V
-- p:onMatchingChecked(java.lang.Object,java.lang.Iterable,com.intellij.ui.FilteringTree$Matching):V
-- p:onSearchFieldUpdated(java.lang.String):V
-- p:onUpdatePattern(java.lang.String):V
-- a:select(java.lang.Object):V
-- select(javax.swing.tree.DefaultMutableTreeNode):V
-- update():V
-- updateSelection():V
 p:com.intellij.ui.FilteringTree$FilteringTreeUserObjectMatcher
 - a:checkMatching(java.lang.Object,java.lang.Iterable):com.intellij.ui.FilteringTree$Matching
 e:com.intellij.ui.FilteringTree$Matching

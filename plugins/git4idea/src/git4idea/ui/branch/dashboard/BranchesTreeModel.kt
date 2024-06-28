@@ -100,22 +100,38 @@ internal class BranchTreeNode(nodeDescriptor: BranchNodeDescriptor) : DefaultMut
 
 internal class NodeDescriptorsModel(private val localRootNodeDescriptor: BranchNodeDescriptor,
                                     private val remoteRootNodeDescriptor: BranchNodeDescriptor) {
+  var localNodeExist = false
+    private set
+  var remoteNodeExist = false
+    private set
+
   /**
    * Parent node descriptor to direct children map
    */
   private val branchNodeDescriptors = hashMapOf<BranchNodeDescriptor, MutableSet<BranchNodeDescriptor>>()
 
-  fun clear() = branchNodeDescriptors.clear()
 
   fun getChildrenForParent(parent: BranchNodeDescriptor): Set<BranchNodeDescriptor> =
     branchNodeDescriptors.getOrDefault(parent, emptySet())
 
-  fun populateFrom(branches: Sequence<BranchInfo>, groupingConfig: Map<GroupingKey, Boolean>) {
+  fun reloadFrom(localBranches: Collection<BranchInfo>,
+                 remoteBranches: Collection<BranchInfo>,
+                 filter: (BranchInfo) -> Boolean,
+                 groupingConfig: Map<GroupingKey, Boolean>) {
+    clear()
+
+    localNodeExist = localBranches.isNotEmpty()
+    remoteNodeExist = remoteBranches.isNotEmpty()
+
+    val branches = (localBranches.asSequence() + remoteBranches.asSequence()).filter(filter)
+
     branches.forEach { branch -> populateFrom(branch, groupingConfig) }
     branchNodeDescriptors.forEach { (parent, children)  ->
       children.forEach { it.parent = parent }
     }
   }
+
+  private fun clear() = branchNodeDescriptors.clear()
 
   private fun populateFrom(br: BranchInfo, groupingConfig: Map<GroupingKey, Boolean>) {
     val curParent: BranchNodeDescriptor = if (br.isLocal) localRootNodeDescriptor else remoteRootNodeDescriptor

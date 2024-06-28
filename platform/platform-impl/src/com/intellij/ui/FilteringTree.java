@@ -4,15 +4,11 @@ package com.intellij.ui;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.JBIterable;
-import com.intellij.util.containers.JBIterator;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -23,13 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.text.JTextComponent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
-import javax.swing.tree.TreePath;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
 import java.util.*;
@@ -86,97 +78,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   protected @NotNull SpeedSearchSupply createSpeedSearch(@NotNull SearchTextField searchTextField) {
-    return new FilteringSpeedSearch(searchTextField);
-  }
-
-  protected class FilteringSpeedSearch extends MySpeedSearch<T> implements FilteringTreeUserObjectMatcher<U> {
-
-    protected FilteringSpeedSearch(@NotNull SearchTextField field) {
-      super(myTree, field.getTextEditor());
-    }
-
-    @Override
-    protected void onSearchFieldUpdated(String pattern) {
-      TreePath[] paths = myTree.getSelectionModel().getSelectionPaths();
-      getSearchModel().refilter();
-      expandTreeOnSearchUpdateComplete(pattern);
-      myTree.getSelectionModel().setSelectionPaths(paths);
-      onSpeedSearchUpdateComplete(pattern);
-    }
-
-    @Override
-    public void select(@NotNull T node) {
-      TreeUtil.selectInTree(node, false, myTree);
-    }
-
-    @Override
-    public @NotNull Matching checkMatching(@NotNull T node) {
-      U userObject = getUserObject(node);
-      if (userObject == null) return Matching.NONE;
-
-      String text = getText(userObject);
-      if (text == null) return Matching.NONE;
-
-      Iterable<TextRange> matchingFragments = matchingFragments(text);
-      return checkMatching(userObject, matchingFragments);
-    }
-
-    @Override
-    public final @NotNull Matching checkMatching(@NotNull U userObject, @Nullable Iterable<TextRange> matchingFragments) {
-      Matching result;
-      if (matchingFragments == null) {
-        result = Matching.NONE;
-      } else {
-        TextRange onlyFragment = getOnlyElement(matchingFragments);
-        result = onlyFragment != null && onlyFragment.getStartOffset() == 0 ? Matching.FULL : Matching.PARTIAL;
-      }
-      onMatchingChecked(userObject, matchingFragments, result);
-
-      return result;
-    }
-
-    protected void onMatchingChecked(@NotNull U userObject, @Nullable Iterable<TextRange> matchingFragments, @NotNull Matching result) {
-    }
-
-    private static <T> @Nullable T getOnlyElement(@NotNull Iterable<T> iterable) {
-      Iterator<T> it = iterable.iterator();
-      if (!it.hasNext()) return null;
-      T firstValue = it.next();
-      return it.hasNext() ? null : firstValue;
-    }
-
-    @Override
-    public @Nullable T getSelection() {
-      return ArrayUtil.getFirstElement(myTree.getSelectedNodes(getNodeClass(), null));
-    }
-
-    @Override
-    public @NotNull Iterator<T> iterate(@Nullable T start, boolean fwd) {
-      JBTreeTraverser<T> traverser = JBTreeTraverser.from(n -> {
-        int count = n.getChildCount();
-        List<T> children = new ArrayList<>(count);
-        for (int i = 0; i < count; ++i) {
-          T c = ObjectUtils.tryCast(n.getChildAt(fwd ? i : count - i - 1), getNodeClass());
-          if (c != null) children.add(c);
-        }
-        return children;
-      });
-      if (start == null) {
-        traverser = traverser.withRoot(getRoot());
-      }
-      else {
-        List<T> roots = new ArrayList<>();
-        for (TreeNode node = null, parent = start; parent != null; node = parent, parent = node.getParent()) {
-          int idx = node == null ? -1 : parent.getIndex(node);
-          for (int i = fwd ? idx + 1 : 0, c = fwd ? parent.getChildCount() : idx; i < c; ++i) {
-            T child = ObjectUtils.tryCast(parent.getChildAt(fwd ? i : idx - i - 1), getNodeClass());
-            if (child != null) roots.add(child);
-          }
-        }
-        traverser = traverser.withRoots(roots);
-      }
-      return traverser.preOrderDfsTraversal().iterator();
-    }
+    return new FilteringSpeedSearch<T, U>(this, searchTextField);
   }
 
   public void installSimple() {
@@ -498,156 +400,6 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
     @SuppressWarnings("unchecked")
     public @Nullable U getUserObject(@Nullable N node) {
       return node == null ? null : (U)node.getUserObject();
-    }
-  }
-
-  private abstract static class MySpeedSearch<Item> extends SpeedSearch {
-    private boolean myUpdating = false;
-    private final JTextComponent myField;
-
-    MySpeedSearch(@NotNull JComponent comp, @NotNull JTextComponent field) {
-      myField = field;
-      myField.getDocument().addDocumentListener(new DocumentAdapter() {
-        @Override
-        protected void textChanged(@NotNull DocumentEvent e) {
-          if (!myUpdating) {
-            myUpdating = true;
-            try {
-              String text = myField.getText();
-              updatePattern(text);
-              onUpdatePattern(text);
-              update();
-            }
-            finally {
-              myUpdating = false;
-            }
-          }
-        }
-      });
-      setEnabled(true);
-      comp.addKeyListener(new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-          if (selectTargetElement(e.getKeyCode())) {
-            e.consume();
-          }
-        }
-      });
-      comp.addKeyListener(this);
-      installSupplyTo(comp);
-    }
-
-    @Override
-    public void update() {
-      String filter = getFilter();
-      if (!myUpdating) {
-        myUpdating = true;
-        try {
-          myField.setText(filter);
-        }
-        finally {
-          myUpdating = false;
-        }
-      }
-      onSearchFieldUpdated(filter);
-      updateSelection();
-    }
-
-    @Override
-    public void noHits() {
-      myField.setBackground(LightColors.RED);
-    }
-
-    public void updateSelection() {
-      Item selection = getSelection();
-
-      Matching currentMatching = selection != null ? checkMatching(selection) : Matching.NONE;
-      if (currentMatching == Matching.FULL) {
-        return;
-      }
-
-      Item fullMatch = findNextMatchingNode(selection, true);
-      if (fullMatch != null) {
-        select(fullMatch);
-      }
-      else if (currentMatching == Matching.NONE) {
-        Item partialMatch = findNextMatchingNode(selection, false);
-        if (partialMatch != null) {
-          select(partialMatch);
-        }
-      }
-    }
-
-    private @Nullable Item findNextMatchingNode(@Nullable Item selection, boolean fullMatch) {
-      JBIterator<Item> allNodeIterator = JBIterator.from(iterate(selection, true, true));
-      JBIterator<Item> fullMatches = filterMatchingNodes(allNodeIterator, fullMatch)
-        .filter(item -> item != selection);
-      if (fullMatches.advance()) {
-        return fullMatches.current();
-      }
-      return null;
-    }
-
-    @NotNull
-    private JBIterator<Item> filterMatchingNodes(JBIterator<Item> nodes, boolean fullMatch) {
-      return nodes.filter(item -> {
-        Matching matching = checkMatching(item);
-        return fullMatch ? matching == Matching.FULL : matching != Matching.NONE;
-      });
-    }
-
-    protected void onUpdatePattern(@Nullable String text) { }
-
-    protected void onSearchFieldUpdated(String pattern) { }
-
-    public abstract void select(@NotNull Item item);
-
-    public abstract @Nullable Item getSelection();
-
-    public abstract @NotNull Matching checkMatching(@NotNull Item item);
-
-    public abstract @NotNull Iterator<Item> iterate(@Nullable Item start, boolean fwd);
-
-    public @NotNull Iterator<Item> iterate(@Nullable Item start, boolean fwd, boolean wrap) {
-      if (!wrap || start == null) return iterate(start, fwd);
-      return new JBIterator<>() {
-        boolean wrapped = false;
-        Iterator<Item> it = iterate(start, fwd);
-
-        @Override
-        protected Item nextImpl() {
-          if (it.hasNext()) return it.next();
-          if (wrapped) return stop();
-          wrapped = true;
-          it = JBIterator.from(iterate(null, fwd)).takeWhile(item -> item != start);
-          return it.hasNext() ? it.next() : stop();
-        }
-      };
-    }
-
-    private boolean selectTargetElement(int keyCode) {
-      if (!isPopupActive()) return false;
-      Iterator<Item> it;
-      if (keyCode == KeyEvent.VK_UP) {
-        it = iterate(getSelection(), false, TreeUtil.isCyclicScrollingAllowed());
-      }
-      else if (keyCode == KeyEvent.VK_DOWN) {
-        it = iterate(getSelection(), true, TreeUtil.isCyclicScrollingAllowed());
-      }
-      else if (keyCode == KeyEvent.VK_HOME) {
-        it = iterate(null, true);
-      }
-      else if (keyCode == KeyEvent.VK_END) {
-        it = iterate(null, false);
-      }
-      else {
-        return false;
-      }
-      it = filterMatchingNodes(JBIterator.from(it), false);
-      if (it.hasNext()) {
-        select(it.next());
-      }
-      return true;
     }
   }
 
