@@ -83,13 +83,13 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
 
         val modules = className.dropSuffix(GRADLE_PROJECT_DEPENDENCY_SUFFIX) ?: return null
         return modules.split(GRADLE_CLASS_ACCESSOR_SEPARATOR)
-            .map { it.first().lowercaseChar() + it.drop(1).camelToSnakeCase() } + identifier.camelToSnakeCase()
+            .map { it.first().lowercaseChar() + it.drop(1).camelToKebabCase() } + identifier.camelToKebabCase()
     }
 
-    fun String.camelToSnakeCase(separator: Char = '-'): String =
+    fun String.camelToKebabCase(): String =
         this.fold(StringBuilder()) { acc, c ->
             val lc = c.lowercase()
-            if (c.isUpperCase()) acc.append(separator)
+            if (c.isUpperCase()) acc.append('-')
             acc.append(lc)
         }.toString()
 
