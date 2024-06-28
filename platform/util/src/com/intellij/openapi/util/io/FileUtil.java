@@ -18,9 +18,6 @@ import org.intellij.lang.annotations.RegExp;
 import org.jetbrains.annotations.*;
 
 import java.io.*;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -1563,6 +1560,9 @@ public class FileUtil {
       catch (ClassNotFoundException e) {
         // Do nothing
       } finally {
+        //We cannot use TObjectHashingStrategy explicitly to declare the variable, as NoClassDefFoundError could be thrown 
+        // if trove4j is not available
+        //noinspection CastCanBeRemovedNarrowingVariableType,unchecked
         FILE_HASHING_STRATEGY = (TObjectHashingStrategy<File>)FILE_HASHING_STRATEGY_temp;
       }
   }
