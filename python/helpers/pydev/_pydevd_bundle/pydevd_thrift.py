@@ -17,7 +17,7 @@ from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresenta
 from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_utils import  is_string, should_evaluate_full_value, should_evaluate_shape
 from _pydevd_bundle.pydevd_vars import get_label, array_default_format, is_able_to_format_number, MAXIMUM_ARRAY_SIZE, \
-    get_column_formatter_by_type, get_formatted_row_elements, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
+    get_column_formatter_by_type, get_formatted_row_elements, IAtPolarsAccessor, DEFAULT_DF_FORMAT, DATAFRAME_HEADER_LOAD_MAX_SIZE
 from pydev_console.pydev_protocol import DebugValue, GetArrayResponse, ArrayData, ArrayHeaders, ColHeader, RowHeader, \
     UnsupportedArrayTypeException, ExceedingArrayDimensionsException
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
@@ -505,7 +505,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
 
     """
     original_df = df
-    dim = len(df.axes)
+    dim = len(df.axes) if hasattr(df, 'axes') else -1
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
     array_chunk = GetArrayResponse()
@@ -523,7 +523,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             except AttributeError:
                 try:
                     kind = df.dtypes[0].kind
-                except (IndexError, KeyError):
+                except (IndexError, KeyError, AttributeError):
                     kind = "O"
             format = array_default_format(kind)
         else:
@@ -556,19 +556,34 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
             else:
                 bounds = (0, 0)
             col_bounds[col] = bounds
+    elif dim == -1:
+        dtype = '0'
+        dtypes[0] = dtype
+        col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
     else:
         dtype = df.dtype.kind
         dtypes[0] = dtype
         col_bounds[0] = (df.min(), df.max()) if dtype in NUMPY_NUMERIC_TYPES and df.size != 0 else (0, 0)
 
-    df = df.iloc[roffset: roffset + rows, coffset: coffset + cols] if dim > 1 else df.iloc[roffset: roffset + rows]
+    if dim > 1:
+        df = df.iloc[roffset: roffset + rows, coffset: coffset + cols]
+    elif dim == -1:
+        df = df[roffset: roffset + rows]
+    else:
+        df.iloc[roffset: roffset + rows]
+
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
 
     def col_to_format(c):
         return get_column_formatter_by_type(format, dtypes[c])
 
-    iat = df.iat if dim == 1 or len(df.columns.unique()) == len(df.columns) else df.iloc
+    if dim == -1:
+        iat = IAtPolarsAccessor(df)
+    elif dim == 1 or len(df.columns.unique()) == len(df.columns):
+        iat = df.iat
+    else:
+        iat = df.iloc
 
     def formatted_row_elements(row):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
@@ -610,7 +625,7 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
     for row in range(rows):
         row_header = RowHeader()
         row_header.index = row
-        row_header.label = get_label(df.axes[0].values[row])
+        row_header.label = get_label(df.axes[0].values[row] if dim != -1 else str(row))
         row_headers.append(row_header)
     array_headers.colHeaders = col_headers
     array_headers.rowHeaders = row_headers
