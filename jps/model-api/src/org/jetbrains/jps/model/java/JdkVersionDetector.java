@@ -40,6 +40,7 @@ public abstract class JdkVersionDetector {
     Oracle(null, "Oracle OpenJDK"),
     SapMachine("sap", "SAP SapMachine"),
     Zulu("zulu", "Azul Zulu"),
+    Homebrew("homebrew", "Homebrew OpenJDK"),
     Unknown(null, null);
 
     public final @Nullable String prefix;

@@ -162,6 +162,7 @@ public class JdkVersionDetectorImpl extends JdkVersionDetector {
       if (implementorVersion.startsWith("JBR-")) return Variant.JBR;
       if (implementorVersion.startsWith("SapMachine")) return Variant.SapMachine;
       if (implementorVersion.startsWith("Zulu")) return Variant.Zulu;
+      if (implementorVersion.startsWith("Homebrew")) return Variant.Homebrew;
     }
 
     String implementor = unquoteProperty(p, "IMPLEMENTOR");
