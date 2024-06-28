@@ -72,4 +72,6 @@ class PopupItemUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun getIconPath() = "path=(.*),".toRegex().find(popupComponent.getIcon().toString())?.let { it.groups.last()?.value ?: "empty" }
                       ?: "empty"
+
+  override fun toString(): String = super.toString() + " '" + getText() + "'"
 }
