@@ -29,7 +29,11 @@ object ConversionsRunner {
                 updateProgress(conversionIndex, conversions.size, index, applyingConversionsMessage)
             }
 
-            conversion.runForEach(treeSequence, context)
+            try {
+                conversion.runForEach(treeSequence, context)
+            } catch (ignored: UninitializedPropertyAccessException) {
+                // This should only happen on copy-pasting broken (incomplete) code
+            }
         }
     }
 }
