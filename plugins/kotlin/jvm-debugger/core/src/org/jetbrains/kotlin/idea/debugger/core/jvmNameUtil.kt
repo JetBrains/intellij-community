@@ -48,7 +48,7 @@ fun KaFunctionSymbol.getJvmInternalClassName(): String? {
     return if (classOrObject == null) {
         val fileSymbol = containingFile ?: return null
         val file = fileSymbol.psi as? KtFile ?: return null
-        JvmFileClassUtil.getFileClassInfoNoResolve(file).fileClassFqName.asString().fqnToInternalName()
+        JvmFileClassUtil.getFileClassInfoNoResolve(file).facadeClassFqName.asString().fqnToInternalName()
     } else {
         val classId = classOrObject.classId ?: return null
         JvmClassName.internalNameByClassId(classId)

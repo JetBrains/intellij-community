@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
@@ -88,7 +89,9 @@ class KotlinSmartStepTargetFilterer(
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
         analyze(declaration) {
             val symbol = declaration.symbol as? KaFunctionSymbol ?: return false
-            return owner == symbol.getJvmInternalClassName() && signature == symbol.getJvmSignature()
+            val declarationSignature = symbol.getJvmSignature()
+            val declarationInternalName = symbol.getJvmInternalClassName()
+            return signature == declarationSignature && owner.isSubClassOf(declarationInternalName)
         }
     }
 
@@ -126,6 +129,13 @@ private fun MutableMap<String, Int>.increment(key: String): Int {
     return newValue
 }
 
+private fun String.isSubClassOf(baseInternalName: String?): Boolean {
+    if (baseInternalName == null) return false
+    if (this == baseInternalName) return true
+    // Only inheritance from Object is checked to support equals/toString methods
+    return baseInternalName == "java/lang/Object" || baseInternalName == "kotlin/Any"
+}
+
 context(KaSession)
 private fun KaFunctionSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
@@ -138,6 +148,7 @@ private fun KaFunctionSymbol.getJvmSignature(): String? {
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun KaType.jvmName(element: PsiElement): String? {
+    if (this is KaTypeParameterType) return "Ljava/lang/Object;"
     if (this !is KaClassType) return null
     val psiType = asPsiType(element, allowErrorTypes = false) ?: return null
     if (symbol.isInlineClass()) {
