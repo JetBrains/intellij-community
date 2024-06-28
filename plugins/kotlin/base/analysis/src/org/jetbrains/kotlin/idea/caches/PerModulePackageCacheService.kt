@@ -385,6 +385,8 @@ class PerModulePackageCacheService(private val project: Project) : Disposable {
         }
 
         private fun onEvents(events: List<VFileEvent>, isAfter: Boolean) {
+            if (!project.isInitialized) return
+
             val service = getInstance(project)
             val fileManager = PsiManagerEx.getInstanceEx(project).fileManager
             val fileIndexFacade = FileIndexFacade.getInstance(project)
