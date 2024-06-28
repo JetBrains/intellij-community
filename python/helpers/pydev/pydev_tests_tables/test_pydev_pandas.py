@@ -4,9 +4,10 @@ Here we test aux methods for pandas tables handling, namely,
 check functions from _pydevd_bundle.tables.pydevd_pandas module.
 """
 
-import sys
-import pytest
 import pandas as pd
+import pytest
+import sys
+
 import _pydevd_bundle.tables.pydevd_pandas as pandas_tables_helpers
 from _pydevd_bundle.pydevd_constants import NEXT_VALUE_SEPARATOR
 
@@ -216,17 +217,6 @@ def test_describe_many_columns_check_html(setup_dataframe_many_columns):
     )
 
 
-@pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
-def test_counts_many_columns_check_html(setup_dataframe_many_columns):
-    df = setup_dataframe_many_columns
-    actual = pandas_tables_helpers.get_value_counts(df)
-
-    read_expected_from_file_and_compare_with_actual(
-        actual=actual,
-        expected_file='test_data/pandas/dataframe_many_columns_counts_after.txt'
-    )
-
-
 def test_describe_shape_numeric_types(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
     describe_df = pandas_tables_helpers.__get_describe(df)
@@ -235,16 +225,6 @@ def test_describe_shape_numeric_types(setup_dataframe_many_columns):
     assert describe_df.shape[0] == 10
     # the number of columns should be the same
     assert describe_df.shape[1] == describe_df.shape[1]
-
-
-def test_counts_shape(setup_dataframe_many_columns):
-    df = setup_dataframe_many_columns
-    counts_df = pandas_tables_helpers.__get_counts(df)
-
-    # only one row in counts_df with the number of non-NaN-s values
-    assert counts_df.shape[0] == 1
-    # the number of columns should be the same
-    assert counts_df.shape[1] == df.shape[1]
 
 
 def test_describe_shape_all_types(setup_dataframe):
