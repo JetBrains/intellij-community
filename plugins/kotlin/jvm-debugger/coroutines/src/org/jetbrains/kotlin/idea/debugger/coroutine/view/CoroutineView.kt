@@ -177,13 +177,14 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
                 val jobs = XValueChildrenList()
                 val coroutines = XValueChildrenList()
                 this.coroutines.forEach { coroutine ->
+                    val isCurrent = coroutine.isRunningOnCurrentThread(suspendContext)
                     if (coroutine.jobHierarchy.isNotEmpty()) {
                         var parent: JobContainer? = null
                         coroutine.jobHierarchy.reversed().forEach {
                             parent = jobNodes.computeIfAbsent(it) { jobDetails ->
                                 val coroutineName = jobToCoroutineInfo[jobDetails]?.descriptor?.formatName()
                                 val jobName = (if (coroutineName != null) "\"$coroutineName\":" else "") + jobDetails
-                                JobContainer(suspendContext, jobName, coroutine.isRunningOnCurrentThread(suspendContext)).also { jobContainer ->
+                                JobContainer(suspendContext, jobName, isCurrent).also { jobContainer ->
                                     if (parent == null) {
                                         jobs.add(jobContainer)
                                     }
@@ -195,7 +196,7 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
                         }
                         jobNodes[coroutine.jobHierarchy[0]]!!.addCoroutine(coroutine)
                     } else {
-                        coroutines.add(FramesContainer(coroutine, suspendContext, ""))
+                        coroutines.add(FramesContainer(coroutine, suspendContext,  isCurrent, ""))
                     }
                 }
 
@@ -227,21 +228,23 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
 
         override fun computeChildren(node: XCompositeNode) {
             node.setAlreadySorted(true)
+            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+                val children = XValueChildrenList()
 
-            val children = XValueChildrenList()
+                jobs.forEach {
+                    children.add(it)
+                }
 
-            jobs.forEach {
-                children.add(it)
-            }
+                coroutines.forEach {
+                    val isCurrent = it.isRunningOnCurrentThread(suspendContext)
+                    children.add(FramesContainer(it, suspendContext, isCurrent, jobName))
+                }
 
-            coroutines.forEach {
-                children.add(FramesContainer(it, suspendContext, jobName))
-            }
-
-            if (children.size() > 0) {
-                node.addChildren(children, true)
-            } else {
-                node.addChildren(XValueChildrenList.singleton(InfoNode("coroutine.view.fetching.not_found")), true)
+                if (children.size() > 0) {
+                    node.addChildren(children, true)
+                } else {
+                    node.addChildren(XValueChildrenList.singleton(InfoNode("coroutine.view.fetching.not_found")), true)
+                }
             }
         }
     }
@@ -251,19 +254,21 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
         val coroutines: List<CoroutineInfoData>
     ) : RendererContainer(renderer.renderNoIconNode(KotlinDebuggerCoroutinesBundle.message("coroutine.view.node.dispatchers"))) {
         override fun computeChildren(node: XCompositeNode) {
-            val children = XValueChildrenList()
-            val groups = coroutines.groupBy { it.descriptor.dispatcher }
-            for (dispatcher in groups.keys) {
-                // Mark the group that contains a running coroutine with a tick
-                val coroutines = groups[dispatcher]
-                val isCurrent = coroutines?.any { it.isRunningOnCurrentThread(suspendContext) } ?: false
-                children.add(CoroutineContainer(suspendContext, dispatcher ?: EMPTY_DISPATCHER_NAME, isCurrent, coroutines))
-            }
+            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+                val children = XValueChildrenList()
+                val groups = coroutines.groupBy { it.descriptor.dispatcher }
+                for (dispatcher in groups.keys) {
+                    // Mark the group that contains a running coroutine with a tick
+                    val coroutines = groups[dispatcher]
+                    val isCurrent = coroutines?.any { it.isRunningOnCurrentThread(suspendContext) } ?: false
+                    children.add(CoroutineContainer(suspendContext, dispatcher ?: EMPTY_DISPATCHER_NAME, isCurrent, coroutines))
+                }
 
-            if (children.size() > 0) {
-                node.addChildren(children, true)
-            } else {
-                node.addChildren(XValueChildrenList.singleton(InfoNode("coroutine.view.fetching.not_found")), true)
+                if (children.size() > 0) {
+                    node.addChildren(children, true)
+                } else {
+                    node.addChildren(XValueChildrenList.singleton(InfoNode("coroutine.view.fetching.not_found")), true)
+                }
             }
         }
     }
@@ -275,14 +280,17 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
         private val coroutines: List<CoroutineInfoData>?
     ) : RendererContainer(renderer.renderThreadGroup(groupName, isCurrent)) {
         override fun computeChildren(node: XCompositeNode) {
-            val children = XValueChildrenList()
-            coroutines?.forEach {
-                children.add(FramesContainer(it, suspendContext, groupName))
-            }
-            if (children.size() > 0) {
-                node.addChildren(children, true)
-            } else {
-                node.addChildren(XValueChildrenList.singleton(InfoNode("coroutine.view.fetching.not_found")), true)
+            debugProcess.invokeInSuspendContext(suspendContext) { suspendContext ->
+                val children = XValueChildrenList()
+                coroutines?.forEach {
+                    val isCurrent = it.isRunningOnCurrentThread(suspendContext)
+                    children.add(FramesContainer(it, suspendContext, isCurrent, groupName))
+                }
+                if (children.size() > 0) {
+                    node.addChildren(children, true)
+                } else {
+                    node.addChildren(XValueChildrenList.singleton(InfoNode("coroutine.view.fetching.not_found")), true)
+                }
             }
         }
     }
@@ -294,8 +302,9 @@ class CoroutineView(project: Project, javaDebugProcess: JavaDebugProcess) :
     inner class FramesContainer(
         private val infoData: CoroutineInfoData,
         private val suspendContext: SuspendContextImpl,
+        isCurrent: Boolean,
         parentGroupNameToHideFromContext: String,
-    ) : RendererContainer(renderer.render(infoData, infoData.isRunningOnCurrentThread(suspendContext), parentGroupNameToHideFromContext)) {
+    ) : RendererContainer(renderer.render(infoData, isCurrent, parentGroupNameToHideFromContext)) {
         override fun computeChildren(node: XCompositeNode) {
             node.setAlreadySorted(true)
 
