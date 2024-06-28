@@ -180,7 +180,6 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
         else if (isIncompatible(myPluginDescriptor)) {
           // a plugin is incompatible with current installation (both views)
           if (!isSelected) myName.setForeground(JBColor.RED);
-          table.getModel();
           myPanel.setToolTipText(
             IdeBundle.message("plugin.manager.incompatible.tooltip", ApplicationNamesInfo.getInstance().getFullProductName()));
         }
