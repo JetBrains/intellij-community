@@ -629,7 +629,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     val component = info.component as PersistentStateComponent<Any>
 
     // getting state after loading with an active controller can lead to unusual issues - disable write protection
-    if (useLoadedStateAsExisting && storage is XmlElementStorage && storage.controller == null && isUseLoadedStateAsExisting(storage)) {
+    if (useLoadedStateAsExisting && storage is XmlElementStorage && (storage.controller == null || project != null) && isUseLoadedStateAsExisting(storage)) {
       return storage.createGetSession(
         component = component,
         componentName = componentName,
