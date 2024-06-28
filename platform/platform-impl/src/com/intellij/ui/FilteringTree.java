@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -613,10 +612,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
       if (!isPopupActive()) return false;
       Iterator<Item> it;
       if (keyCode == KeyEvent.VK_UP) {
-        it = iterate(getSelection(), false, UISettings.getInstance().getCycleScrolling());
+        it = iterate(getSelection(), false, TreeUtil.isCyclicScrollingAllowed());
       }
       else if (keyCode == KeyEvent.VK_DOWN) {
-        it = iterate(getSelection(), true, UISettings.getInstance().getCycleScrolling());
+        it = iterate(getSelection(), true, TreeUtil.isCyclicScrollingAllowed());
       }
       else if (keyCode == KeyEvent.VK_HOME) {
         it = iterate(null, true);
