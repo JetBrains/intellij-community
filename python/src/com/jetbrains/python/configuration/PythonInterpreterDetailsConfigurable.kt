@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
@@ -32,10 +33,12 @@ class PythonInterpreterDetailsConfigurable(project: Project,
     underlyingConfigurable.apply()
 
     if (currentSdkName != initialSdkName) {
-      val sdkModificator = sdk.sdkModificator
-      sdkModificator.name = currentSdkName
-      sdkModificator.commitChanges()
-      initialSdkName = currentSdkName
+      WriteAction.run<Throwable> {
+        val sdkModificator = sdk.sdkModificator
+        sdkModificator.name = currentSdkName
+        sdkModificator.commitChanges()
+        initialSdkName = currentSdkName
+      }
     }
   }
 
