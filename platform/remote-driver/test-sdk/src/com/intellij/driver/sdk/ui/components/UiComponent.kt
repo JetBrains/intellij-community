@@ -222,7 +222,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   /**
    * Waits for a non-empty list of UiText's with substring '$text'.
    */
-  fun waitSomeTextsContains(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
+  fun waitAnyTextsContains(text: String, message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT): List<UiText> {
     return waitAny(message = message ?: "Finding at least some texts and contains '$text' in $this",
                    timeout = timeout,
                    getter = { getAllTexts() },
