@@ -744,9 +744,13 @@ public final class InlineUtil implements CommonJavaInlineUtil {
 
 
     boolean isAccessedForWriting = false;
+    boolean usedAsResource = false;
     for (PsiReferenceExpression refElement : refs) {
       if (PsiUtil.isAccessedForWriting(refElement)) {
         isAccessedForWriting = true;
+      }
+      if (refElement.getParent() instanceof PsiResourceExpression) {
+        usedAsResource = true;
       }
     }
 
@@ -754,6 +758,7 @@ public final class InlineUtil implements CommonJavaInlineUtil {
     Project project = variable.getProject();
     boolean canInline = refs.size() == 1 && !isAccessedForWriting && isFirstUse(variable, refs.get(0)) ||
                         canInlineParameterOrThisVariable(project, initializer, shouldBeFinal, strictlyFinal, refs.size(), isAccessedForWriting);
+    canInline &= !usedAsResource;
     if (canInline) {
       if (shouldBeFinal) {
         declareUsedLocalsFinal(initializer, true);
