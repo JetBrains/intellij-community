@@ -6,20 +6,25 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.project.modules
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
+import org.jetbrains.kotlin.idea.gradleJava.run.isProvidedByMultiplatformProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
-class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleConfigurationProducer() {
+class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleConfigurationProducer(),
+                                                            KotlinMultiplatformCommonProducersProvider {
 
     private val mppTestTasksChooser = MultiplatformTestTasksChooser()
 
     override fun isPreferredConfiguration(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
-        return other.isProducedBy(KotlinMultiplatformAllInDirectoryConfigurationProducer::class.java) || super.isPreferredConfiguration(self, other)
+        return other.isProducedBy(KotlinMultiplatformAllInDirectoryConfigurationProducer::class.java) ||
+                super.isPreferredConfiguration(self, other) && !other.isProvidedByMultiplatformProducer()
     }
 
     override fun shouldReplace(self: ConfigurationFromContext, other: ConfigurationFromContext): Boolean {
-        return other.isProducedBy(KotlinMultiplatformAllInDirectoryConfigurationProducer::class.java) || super.shouldReplace(self, other)
+        return other.isProducedBy(KotlinMultiplatformAllInDirectoryConfigurationProducer::class.java) ||
+                super.shouldReplace(self, other) && !other.isProvidedByMultiplatformProducer()
     }
 
     override fun getAllTestsTaskToRun(
@@ -37,5 +42,9 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
         val tasks = mppTestTasksChooser.listAvailableTasks(listOf(sourceElement))
 
         return tasks.map { TestTasksToRun(it, wildcardFilter) }
+    }
+
+    override fun isProducedByCommonProducer(configuration: ConfigurationFromContext): Boolean {
+        return configuration.isProducedBy(this.javaClass)
     }
 }

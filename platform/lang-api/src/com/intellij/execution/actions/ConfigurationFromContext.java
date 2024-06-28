@@ -142,6 +142,10 @@ public abstract class ConfigurationFromContext {
     if (PsiTreeUtil.isAncestor(configuration2.getSourceElement(), configuration1.getSourceElement(), true)) {
       return -1;
     }
+    // If neither configuration1 nor configuration2 are preferred to each other, then these are considered equal.
+    if (!configuration1.isPreferredTo(configuration2) && !configuration2.isPreferredTo(configuration1)) {
+      return 0;
+    }
     if (!configuration1.isPreferredTo(configuration2)) {
       return 1;
     }
