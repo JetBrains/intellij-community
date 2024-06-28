@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.Disposable;
@@ -166,7 +166,7 @@ public final class OtelReportingEventWatcher implements EventWatcher, Disposable
       return;// missed call to .edtEventStarted()
     }
     final long awtEventExecutionDurationNs = System.nanoTime() - this.awtEventExecutionStartedNs;
-    if (awtEventExecutionDurationNs > HOURS.toNanos(1)) {
+    if (awtEventExecutionDurationNs > HOURS.toNanos(1) || awtEventExecutionDurationNs < 0) {
       return;// _likely_ missed call to .edtEventStarted()
     }
     awtEventDispatchTimeHistogram.recordValue(awtEventExecutionDurationNs);
