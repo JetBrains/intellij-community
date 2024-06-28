@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.scope;
 
 import com.intellij.psi.*;
@@ -11,6 +11,7 @@ public final class ElementClassFilter implements ElementFilter {
   public static final ElementClassFilter CLASS = new ElementClassFilter(ElementClassHint.DeclarationKind.CLASS);
   public static final ElementClassFilter FIELD = new ElementClassFilter(ElementClassHint.DeclarationKind.FIELD);
   public static final ElementClassFilter ENUM_CONST = new ElementClassFilter(ElementClassHint.DeclarationKind.ENUM_CONST);
+  public static final ElementClassFilter MODULE = new ElementClassFilter(ElementClassHint.DeclarationKind.MODULE);
 
   private final ElementClassHint.DeclarationKind myKind;
 
@@ -38,6 +39,9 @@ public final class ElementClassFilter implements ElementFilter {
 
       case VARIABLE:
         return element instanceof PsiVariable;
+
+        case MODULE:
+        return element instanceof PsiJavaModule;
     }
 
     return false;

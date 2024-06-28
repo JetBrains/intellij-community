@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.ASTNode;
@@ -45,6 +45,7 @@ public interface JavaElementType {
   IElementType IMPORT_LIST = JavaStubElementTypes.IMPORT_LIST;
   IElementType IMPORT_STATEMENT = JavaStubElementTypes.IMPORT_STATEMENT;
   IElementType IMPORT_STATIC_STATEMENT = JavaStubElementTypes.IMPORT_STATIC_STATEMENT;
+  IElementType IMPORT_MODULE_STATEMENT = JavaStubElementTypes.IMPORT_MODULE_STATEMENT;
   IElementType MODIFIER_LIST = JavaStubElementTypes.MODIFIER_LIST;
   IElementType ANNOTATION = JavaStubElementTypes.ANNOTATION;
   IElementType NAME_VALUE_PAIR = JavaStubElementTypes.NAME_VALUE_PAIR;
@@ -77,6 +78,9 @@ public interface JavaElementType {
   IElementType IMPORT_STATIC_REFERENCE =
     new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", () -> new PsiImportStaticReferenceElementImpl(),
                                  BASIC_IMPORT_STATIC_REFERENCE);
+  IElementType IMPORT_MODULE_REFERENCE =
+    new JavaCompositeElementType("IMPORT_MODULE_REFERENCE", () -> new PsiImportModuleReferenceElementImpl(),
+                                 BASIC_IMPORT_MODULE_REFERENCE);
   IElementType TYPE = new JavaCompositeElementType("TYPE", () -> new PsiTypeElementImpl(), BASIC_TYPE);
   IElementType DIAMOND_TYPE =
     new JavaCompositeElementType("DIAMOND_TYPE", () -> new PsiDiamondTypeElementImpl(), BASIC_DIAMOND_TYPE);

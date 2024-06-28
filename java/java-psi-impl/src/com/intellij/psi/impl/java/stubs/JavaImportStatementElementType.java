@@ -7,10 +7,12 @@ import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportStatementStubImpl;
+import com.intellij.psi.impl.source.PsiImportModuleStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStatementImpl;
 import com.intellij.psi.impl.source.PsiImportStaticStatementImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
+import com.intellij.psi.impl.source.tree.java.ImportModuleStatementElement;
 import com.intellij.psi.impl.source.tree.java.ImportStaticStatementElement;
 import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
@@ -36,6 +38,9 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
   public PsiImportStatementBase createPsi(final @NotNull ASTNode node) {
     if (node instanceof ImportStaticStatementElement) {
       return new PsiImportStaticStatementImpl(node);
+    }
+    else if (node instanceof ImportModuleStatementElement) {
+      return new PsiImportModuleStatementImpl(node);
     }
     else {
       return new PsiImportStatementImpl(node);

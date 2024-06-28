@@ -50,7 +50,10 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, true);
 
   private static final JavaParserUtil.ParserWrapper STATIC_IMPORT_REF =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, true);
+    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, true, false);
+
+  private static final JavaParserUtil.ParserWrapper MODULE_IMPORT_REF =
+    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, false, true);
 
   private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER =
     builder -> JavaParser.INSTANCE.getReferenceParser().parseTypeParameter(builder);
@@ -250,9 +253,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
 
   @Override
   public @NotNull PsiJavaCodeReferenceElement createReferenceFromText(@NotNull String text, @Nullable PsiElement context) throws IncorrectOperationException {
-    boolean isStaticImport = context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand();
-    boolean mayHaveDiamonds = context instanceof PsiNewExpression && PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context);
-    JavaParserUtil.ParserWrapper wrapper = isStaticImport ? STATIC_IMPORT_REF : mayHaveDiamonds ? DIAMOND_REF : REFERENCE;
+    JavaParserUtil.ParserWrapper wrapper = getParserWrapper(context);
     DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, wrapper, level(context)), context);
     PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiJavaCodeReferenceElement)) {
@@ -265,6 +266,21 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
       ((PsiJavaCodeReferenceElementImpl)element).setKindWhenDummy(((PsiJavaCodeReferenceElementImpl)context).getKindEnum(context.getContainingFile()));
     }
     return (PsiJavaCodeReferenceElement)element;
+  }
+
+  private static @NotNull JavaParserUtil.ParserWrapper getParserWrapper(@Nullable PsiElement context) {
+    if (context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand()) {
+      return STATIC_IMPORT_REF;
+    }
+    else if (context instanceof PsiImportModuleStatement && !((PsiImportModuleStatement)context).isOnDemand()) {
+      return MODULE_IMPORT_REF;
+    }
+    else if (context instanceof PsiNewExpression && PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
+      return DIAMOND_REF;
+    }
+    else {
+      return REFERENCE;
+    }
   }
 
   @Override

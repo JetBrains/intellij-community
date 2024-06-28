@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -95,7 +95,8 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     BASIC_PROVIDES_STATEMENT);
 
   ParentAwareTokenSet BASIC_IMPORT_STATEMENT_BASE_BIT_SET = ParentAwareTokenSet.create(BASIC_IMPORT_STATEMENT,
-                                                                                       BASIC_IMPORT_STATIC_STATEMENT);
+                                                                                       BASIC_IMPORT_STATIC_STATEMENT,
+                                                                                       BASIC_IMPORT_MODULE_STATEMENT);
   TokenSet BASIC_CLASS_KEYWORD_BIT_SET =
     TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, RECORD_KEYWORD);
   ParentAwareTokenSet BASIC_MEMBER_BIT_SET = ParentAwareTokenSet.create(BASIC_CLASS, BASIC_FIELD, BASIC_ENUM_CONSTANT,
