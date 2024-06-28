@@ -16,17 +16,13 @@ object EventsBus {
   val SHARED_EVENTS_FLOW = SharedEventsFlow(LocalEventBusServerClient(LocalEventBusServer), EVENTS_FLOW)
 
   fun executeWithExceptionHandling(ignoreExceptions: Boolean = true, block: () -> Unit) {
-    try {
-      block()
-    }
-    catch (t: Throwable) {
-      if (ignoreExceptions) {
-        LOG.info("Ignored: $t")
+    runCatching { block() }.onFailure { t ->
+        if (ignoreExceptions) {
+          LOG.info("Ignored: $t")
+        } else {
+          throw t
+        }
       }
-      else {
-        throw t
-      }
-    }
   }
 
   /**
