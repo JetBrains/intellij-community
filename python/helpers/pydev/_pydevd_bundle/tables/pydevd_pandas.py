@@ -90,13 +90,6 @@ def get_column_descriptions(table):
         return ""
 
 
-def get_value_counts(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> str
-    counts_result = __get_counts(table)
-
-    return get_data(counts_result, None, None)
-
-
 def __get_describe(table):
     # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series, None]
     try:
@@ -116,11 +109,6 @@ def __get_describe(table):
         return described_
     else:
         return described_.reindex(columns=table.columns, copy=False)
-
-
-def __get_counts(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> pd.DataFrame
-    return __convert_to_df(table).count().to_frame().transpose()
 
 
 class ColumnVisualisationType:

@@ -64,12 +64,6 @@ def get_column_descriptions(table):
         return ""
 
 
-# Polars compute NaN-s in describe. So, we don't need get_value_counts for Polars
-def get_value_counts(table):
-    # type: (Union[pl.DataFrame, pl.Series]) -> str
-    return ""
-
-
 class ColumnVisualisationType:
     HISTOGRAM = "histogram"
     UNIQUE = "unique"

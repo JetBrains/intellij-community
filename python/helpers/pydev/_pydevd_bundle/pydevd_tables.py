@@ -10,7 +10,7 @@ class TableCommandType:
     DF_INFO = "DF_INFO"
     SLICE = "SLICE"
     DESCRIBE = "DF_DESCRIBE"
-    HISTOGRAM_DATA = "HISTOGRAM_DATA"
+    VISUALIZATION_DATA = "VISUALIZATION_DATA"
 
 
 def is_error_on_eval(val):
@@ -47,10 +47,8 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
 
     elif command_type == TableCommandType.DESCRIBE:
         res.append(table_provider.get_column_descriptions(table))
-        res.append(NEXT_VALUE_SEPARATOR)
-        res.append(table_provider.get_value_counts(table))
 
-    elif command_type == TableCommandType.HISTOGRAM_DATA:
+    elif command_type == TableCommandType.VISUALIZATION_DATA:
         res.append(table_provider.get_value_occurrences_count(table))
         res.append(NEXT_VALUE_SEPARATOR)
 
