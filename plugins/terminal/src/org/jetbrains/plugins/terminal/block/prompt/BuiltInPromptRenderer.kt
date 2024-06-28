@@ -6,12 +6,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.terminal.block.output.*
-import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
-import org.jetbrains.plugins.terminal.block.output.TextWithAttributes
-import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 
-internal class BuiltInPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
+internal class BuiltInPromptRenderer(
+  private val sessionInfo: TerminalSessionInfo,
+  private val isSingleLine: Boolean,
+) : TerminalPromptRenderer {
   override fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo {
     val content: TextWithHighlightings = getPromptComponents(state).toTextWithHighlightings()
     return TerminalPromptRenderingInfo(content.text, content.highlightings)
@@ -43,7 +43,8 @@ internal class BuiltInPromptRenderer(private val sessionInfo: TerminalSessionInf
       addComponent("git:", yellowAttributes)
       addComponent("[${state.gitBranch}]", greenAttributes)
     }
-    addComponent("\n", defaultAttributes)
+    val promptInputSeparator = if (isSingleLine) " " else "\n"
+    addComponent(promptInputSeparator, defaultAttributes)
     return result
   }
 

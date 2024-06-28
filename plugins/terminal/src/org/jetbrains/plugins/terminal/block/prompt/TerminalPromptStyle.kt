@@ -2,5 +2,5 @@
 package org.jetbrains.plugins.terminal.block.prompt
 
 internal enum class TerminalPromptStyle {
-  DOUBLE_LINE, SHELL
+  SINGLE_LINE, DOUBLE_LINE, SHELL
 }
