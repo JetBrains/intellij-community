@@ -1,10 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.git.coverage
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.project.Project
 import com.intellij.vcs.git.coverage.CurrentFeatureBranchBaseDetector.Status
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.graph.api.LinearGraph
@@ -23,10 +24,18 @@ import git4idea.repo.GitRepository
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.WeakHashMap
 
-private val CACHE_KEY = Key<MutableMap<GitRepository, CachedResult>>(CurrentFeatureBranchBaseDetector::class.java.name)
-
 private data class CachedResult(val status: Status, val state: CachedState)
 private data class CachedState(val headHash: String, val protectedBranchHashes: List<Pair<String, String>>)
+
+
+@Service(Service.Level.PROJECT)
+private class CurrentFeatureBranchBaseDetectorCache {
+  val cache = WeakHashMap<GitRepository, CachedResult>()
+
+  companion object {
+    fun getInstance(project: Project) = project.service<CurrentFeatureBranchBaseDetectorCache>()
+  }
+}
 
 internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepository) {
 
@@ -57,7 +66,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
       branch.fullName to hash.asString()
     })
 
-    val cache = project.getOrCreateUserData(CACHE_KEY) { WeakHashMap() }
+    val cache = CurrentFeatureBranchBaseDetectorCache.getInstance(project).cache
     val cachedResult = cache[repository]
     return if (cachedResult == null || cachedResult.state != currentState) {
       val (status, canCache) = computeStatus(headHash, permanentCommitsInfo, protectedBranchHashes)
