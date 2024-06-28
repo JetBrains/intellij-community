@@ -65,7 +65,6 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
     }
   }
 
-  @Async.Execute
   @Throws(Exception::class)
   private suspend fun runSuspend() {
     val managerThreadImpl = InvokeThread.currentThread() as DebuggerManagerThreadImpl

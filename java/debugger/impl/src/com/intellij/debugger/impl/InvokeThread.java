@@ -118,6 +118,11 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     workerRequest.setRequestFuture(ApplicationManager.getApplication().executeOnPooledThread(workerRequest));
   }
 
+  // Extracted to have a separate method for @Async.Execute
+  private void doProcessEvent(@Async.Execute E event) {
+    processEvent(event);
+  }
+
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
     try {
       DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> ProgressManager.getInstance().runProcess(() -> {
@@ -134,7 +139,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
               break; // ensure events are processed by one thread at a time
             }
 
-            processEvent(myEvents.get());
+            doProcessEvent(myEvents.get());
           }
           catch (VMDisconnectedException | EventQueueClosedException ignored) {
             break;
