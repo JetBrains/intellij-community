@@ -324,6 +324,7 @@ e:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Corretto:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:GraalVM:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:GraalVMCE:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
+- sf:Homebrew:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:IBM:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:JBR:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
 - sf:Liberica:org.jetbrains.jps.model.java.JdkVersionDetector$Variant
