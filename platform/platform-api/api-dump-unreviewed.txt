@@ -2607,6 +2607,7 @@ f:com.intellij.openapi.keymap.KeymapUtil
 - s:getFirstKeyboardShortcutText(java.lang.String):java.lang.String
 - s:getFirstMouseShortcutText(java.lang.String):java.lang.String
 - s:getKeyStroke(com.intellij.openapi.actionSystem.ShortcutSet):javax.swing.KeyStroke
+- s:getKeyStroke(java.lang.String):javax.swing.KeyStroke
 - s:getKeyStrokes(com.intellij.openapi.actionSystem.ShortcutSet):java.util.Collection
 - s:getKeyText(I):java.lang.String
 - s:getKeystrokeText(javax.swing.KeyStroke):java.lang.String
