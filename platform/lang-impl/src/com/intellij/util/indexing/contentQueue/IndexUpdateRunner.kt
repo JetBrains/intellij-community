@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
@@ -16,7 +18,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
-import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
-import java.util.concurrent.*
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
@@ -134,12 +135,22 @@ class IndexUpdateRunner(
         // of distributing the load across available CPUs.
         // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
         // So an optimization: we use fixed number of coroutines (approx. = # available CPUs), and a channel:
+        // BTW .forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) does almost the same thing, but it uses
+        // channel(size: 0), i.e. rendezvous-channel. I setup channel(size: 8k), to have some buffering:
 
-        fileSet.filesOriginal.requests.forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) { fileIndexingRequest ->
-          while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
-            delay(1)
+        val channel = fileSet.filesOriginal.asChannel(this, bufferSize = 8192)
+        repeat(INDEXING_PARALLELIZATION) {
+          launch {
+            for (fileIndexingRequest in channel) {
+              while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
+                delay(1)
+              }
+
+              processRequestTask(fileIndexingRequest)
+
+              ensureActive()
+            }
           }
-          processRequestTask(fileIndexingRequest)
         }
 
         //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
