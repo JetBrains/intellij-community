@@ -27,11 +27,18 @@ final class ComplexTextFragment extends TextFragment {
 
   ComplexTextFragment(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
     super(end - start);
-    assert start >= 0;
-    assert end <= lineChars.length;
-    assert start < end;
-    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(fontInfo.getFont(), fontInfo.getFontRenderContext(),
-                                                                      lineChars, start, end, isRtl);
+    assert start >= 0              : assertMessage(lineChars, start, end, isRtl, fontInfo);
+    assert end <= lineChars.length : assertMessage(lineChars, start, end, isRtl, fontInfo);
+    assert start < end             : assertMessage(lineChars, start, end, isRtl, fontInfo);
+
+    myGlyphVector = FontLayoutService.getInstance().layoutGlyphVector(
+      fontInfo.getFont(),
+      fontInfo.getFontRenderContext(),
+      lineChars,
+      start,
+      end,
+      isRtl
+    );
     int numChars = end - start;
     int numGlyphs = myGlyphVector.getNumGlyphs();
     float totalWidth = (float)myGlyphVector.getGlyphPosition(numGlyphs).getX();
@@ -128,9 +135,9 @@ final class ComplexTextFragment extends TextFragment {
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
   @Override
   public Consumer<Graphics2D> draw(float x, float y, int startColumn, int endColumn) {
-    assert startColumn >= 0;
-    assert endColumn <= myCharPositions.length;
-    assert startColumn < endColumn;
+    assert startColumn >= 0                    : assertMessage(x, y, startColumn, endColumn);
+    assert endColumn <= myCharPositions.length : assertMessage(x, y, startColumn, endColumn);
+    assert startColumn < endColumn             : assertMessage(x, y, startColumn, endColumn);
 
     return g -> {
       Color color = g.getColor();
@@ -243,5 +250,30 @@ final class ComplexTextFragment extends TextFragment {
       ourCharsProcessed = 0;
       ourGlyphsProcessed = 0;
     }
+  }
+
+  private @NotNull String assertMessage(char @NotNull [] lineChars, int start, int end, boolean isRtl, @NotNull FontInfo fontInfo) {
+    return String.join(
+      ", ",
+      "lineChars: '" + new String(lineChars) + "'",
+      "start: " + start,
+      "end: " + end,
+      "isRtl: " + isRtl,
+      "fontInfo: " + fontInfo,
+      "myCharPositions: " + Arrays.toString(myCharPositions),
+      "myCodePoint2Offset: " + Arrays.toString(myCodePoint2Offset)
+    );
+  }
+
+  private @NotNull String assertMessage(float x, float y, int startColumn, int endColumn) {
+    return String.join(
+      ", ",
+      "x: " + x,
+      "y: " + y,
+      "startColumn: " + startColumn,
+      "endColumn: " + endColumn,
+      "myCharPositions: " + Arrays.toString(myCharPositions),
+      "myCodePoint2Offset: " + Arrays.toString(myCodePoint2Offset)
+    );
   }
 }
