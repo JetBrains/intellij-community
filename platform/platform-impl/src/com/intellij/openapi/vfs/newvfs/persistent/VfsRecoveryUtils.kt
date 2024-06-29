@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
+import com.intellij.openapi.util.io.ByteArraySequence
 import com.intellij.openapi.util.io.DataInputOutputUtilRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.FileAttribute
@@ -392,7 +393,7 @@ object VfsRecoveryUtils {
       when (val nextContent = snapshot.getContent(lastRecoveredContentId + 1)) {
         is NotAvailable -> break
         is Ready -> {
-          val result = newFsRecords.contentAccessor().allocateContentRecordAndStore(nextContent.value)
+          val result = newFsRecords.contentAccessor().allocateContentRecordAndStore(ByteArraySequence(nextContent.value))
           check(result == lastRecoveredContentId + 1) { "assumption failed: got $result, expected ${lastRecoveredContentId + 1}" }
           lastRecoveredContentId++
         }

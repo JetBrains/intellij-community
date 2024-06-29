@@ -1337,9 +1337,9 @@ public final class FSRecordsImpl implements Closeable {
     }
   }
 
-  int storeUnlinkedContent(byte[] bytes) {
+  int storeUnlinkedContent(@NotNull ByteArraySequence content) {
     try {
-      return contentAccessor.allocateContentRecordAndStore(bytes);
+      return contentAccessor.allocateContentRecordAndStore(content);
     }
     catch (IOException e) {
       throw handleError(e);

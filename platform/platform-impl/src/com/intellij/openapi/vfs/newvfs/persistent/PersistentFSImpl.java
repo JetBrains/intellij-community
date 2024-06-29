@@ -486,13 +486,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return vfsPeer.writeContent(getFileId(file), contentOfFixedSize);
   }
 
-  private void writeContent(@NotNull VirtualFile file, @NotNull ByteArraySequence content, boolean contentOfFixedSize) {
-    vfsPeer.writeContent(getFileId(file), content, contentOfFixedSize);
-  }
-
   @Override
   public int storeUnlinkedContent(byte @NotNull [] bytes) {
-    return vfsPeer.storeUnlinkedContent(bytes);
+    return vfsPeer.storeUnlinkedContent(new ByteArraySequence(bytes));
   }
 
   @SuppressWarnings("removal")
@@ -802,7 +798,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     int fileId = getFileId(file);
 
-    boolean outdated;
     long length;
     int contentRecordId;
 
@@ -813,8 +808,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       boolean mustReloadLength = BitUtil.isSet(flags, Flags.MUST_RELOAD_LENGTH);
       boolean mustReloadContent = BitUtil.isSet(flags, Flags.MUST_RELOAD_CONTENT);
       length = mustReloadLength ? -1 : vfsPeer.getLength(fileId);
-      outdated = (length == -1) || mustReloadContent;
-      if (outdated) {
+      boolean contentOutdated = (length == -1) || mustReloadContent;
+      if (contentOutdated) {
         contentRecordId = -1;
       }
       else {
@@ -827,37 +822,26 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       myInputLock.readLock().unlock();
     }
 
-    //VFS content storage is append-only, hence reading doesn't require locks:
-    InputStream contentStream = (contentRecordId > 0) ? vfsPeer.readContentById(contentRecordId) : null;
-
-
-    if (contentStream == null) {
+    if (contentRecordId <= 0) {
       NewVirtualFileSystem fs = getFileSystem(file);
 
-      byte[] content;
-      if (outdated) {
-        // In this case, the file can have an out-of-date length. So, update it first (needed for the correct work of `contentsToByteArray`)
-        // See IDEA-90813 for possible bugs.
-        //TODO RC: why fs.contentToByteArray() relies on VFS.length value? FS should be a source of truth here, not VFS.
-        //         LocalFileSystemBase/LocalFileSystemImpl both relies on VirtualFile.getLength() but only for sanity checks,
-        //         i.e. to check the length is not too big and not negative. This is strange, since LocalFS is the only FS
-        //         impl that relies on VFS length, instead of checking the actual file length.
-        //         Without that strange design choice the 2 branches here collapse into 1, and the following writeContent()
-        //         could be merged with storeContentToStorage() reducing code duplication
-        setLength(fileId, fs.getLength(file));
-        content = fs.contentsToByteArray(file);
-      }
-      else {
-        // a bit of optimization
-        content = fs.contentsToByteArray(file);
-        setLength(fileId, content.length);
-      }
+      byte[] content = fs.contentsToByteArray(file);
 
       if (mayCacheContent && shouldCache(content.length)) {
+        //VFS content storage is append-only, hence storing could be done outside the lock:
+        int newContentRecordId = vfsPeer.storeUnlinkedContent(new ByteArraySequence(content));
         myInputLock.writeLock().lock();
         try {
-          writeContent(file, ByteArraySequence.create(content), /*contentOfFixedSize: */ fs.isReadOnly());
-          setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
+          updateContentId(fileId, newContentRecordId, content.length);
+        }
+        finally {
+          myInputLock.writeLock().unlock();
+        }
+      }
+      else {
+        myInputLock.writeLock().lock();
+        try {
+          setLength(fileId, content.length);
         }
         finally {
           myInputLock.writeLock().unlock();
@@ -867,6 +851,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return content;
     }
 
+    //VFS content storage is append-only, hence doesn't need lock for reading:
+    InputStream contentStream = vfsPeer.readContentById(contentRecordId);
     try {
       assert length >= 0 : file;
       return contentStream.readNBytes((int)length);
@@ -874,6 +860,27 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     catch (IOException e) {
       throw vfsPeer.handleError(e);
     }
+  }
+
+  //@GuardedBy(myInputLock.writeLock)
+  private void updateContentId(int fileId,
+                               int newContentRecordId,
+                               int newContentLength) throws IOException {
+    PersistentFSConnection connection = vfsPeer.connection();
+    PersistentFSRecordsStorage records = connection.getRecords();
+    //TODO RC: ideally, this method shouldn't be protected by external myInputLock, but .updateRecord() should
+    //         involve VFS internal locking to protect it from concurrent writes
+    ((IPersistentFSRecordsStorage)records).updateRecord(fileId, record -> {
+      int flags = record.getFlags();
+      int newFlags = flags & ~(Flags.MUST_RELOAD_LENGTH | Flags.MUST_RELOAD_CONTENT);
+      if (newFlags != flags) {
+        record.setFlags(newFlags);
+      }
+      record.setContentRecordId(newContentRecordId);
+      record.setLength(newContentLength);
+      return true;
+    });
+    connection.markDirty();
   }
 
   @Override
@@ -887,7 +894,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     InputStream contentStream;
     boolean useReplicator = false;
     long len = 0L;
-    boolean readOnly = false;
 
     myInputLock.readLock().lock();
     try {
@@ -904,7 +910,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         if (shouldCache(len)) {
           useReplicator = true;
-          readOnly = fs.isReadOnly();
         }
       }
     }
@@ -913,7 +918,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     if (useReplicator) {
-      contentStream = createReplicatorAndStoreContent(file, contentStream, len, readOnly);
+      contentStream = createReplicatorAndStoreContent(file, contentStream, len);
     }
 
     return contentStream;
@@ -944,12 +949,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private @NotNull InputStream createReplicatorAndStoreContent(@NotNull VirtualFile file,
                                                                @NotNull InputStream nativeStream,
-                                                               long fileLength,
-                                                               boolean readOnly) {
+                                                               long fileLength) throws IOException {
     if (nativeStream instanceof BufferExposingByteArrayInputStream byteStream) {
       // optimization
       byte[] bytes = byteStream.getInternalBuffer();
-      storeContentToStorage(fileLength, file, readOnly, bytes, bytes.length);
+      storeContentToStorage(fileLength, file, bytes, bytes.length);
       return nativeStream;
     }
     BufferExposingByteArrayOutputStream cache = new BufferExposingByteArrayOutputStream((int)fileLength);
@@ -969,7 +973,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             }
             super.close();
             if (isEndOfFileReached) {
-              storeContentToStorage(fileLength, file, readOnly, cache.getInternalBuffer(), cache.size());
+              storeContentToStorage(fileLength, file, cache.getInternalBuffer(), cache.size());
             }
           }
           finally {
@@ -982,25 +986,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void storeContentToStorage(long fileLength,
                                      @NotNull VirtualFile file,
-                                     boolean readOnly,
                                      byte @NotNull [] bytes,
-                                     int byteLength) {
-    //TODO RC: we could reduce contention on this lock by extracting storing the content in VFSContentStorage outside the
-    //         lock, and only updating file-record fields inside the lock.
-    //         Even more reductions could be made by using (segmented) FileIdLock inside vfsPeer
-    myInputLock.writeLock().lock();
-    try {
-      if (byteLength == fileLength) {
-        writeContent(file, new ByteArraySequence(bytes, 0, byteLength), /*contentOfFixedSize: */ readOnly);
-        setFlag(file, Flags.MUST_RELOAD_CONTENT, false);
-        setFlag(file, Flags.MUST_RELOAD_LENGTH, false);
+                                     int byteLength) throws IOException {
+    int fileId = getFileId(file);
+
+    if (byteLength == fileLength) {
+      ByteArraySequence newContent = new ByteArraySequence(bytes, 0, byteLength);
+      int newContentId = vfsPeer.storeUnlinkedContent(newContent);
+      myInputLock.writeLock().lock();
+      try {
+        updateContentId(fileId, newContentId, byteLength);
       }
-      else {
-        doCleanPersistedContent(getFileId(file));
+      finally {
+        myInputLock.writeLock().unlock();
       }
     }
-    finally {
-      myInputLock.writeLock().unlock();
+    else {
+      myInputLock.writeLock().lock();
+      try {
+        doCleanPersistedContent(fileId);
+      }
+      finally {
+        myInputLock.writeLock().unlock();
+      }
     }
   }
 
@@ -2372,11 +2380,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  private void setFlag(@NotNull VirtualFile file, @PersistentFS.Attributes int mask, boolean value) {
+  private void setFlag(@NotNull VirtualFile file, @Attributes int mask, boolean value) {
     setFlag(getFileId(file), mask, value);
   }
 
-  private void setFlag(int id, @PersistentFS.Attributes int mask, boolean value) {
+  private void setFlag(int id, @Attributes int mask, boolean value) {
     int oldFlags = vfsPeer.getFlags(id);
     int flags = value ? oldFlags | mask : oldFlags & ~mask;
 
