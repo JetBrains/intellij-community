@@ -93,8 +93,11 @@ class PyDataView(private val project: Project) : DumbAware {
       val selectedInfo = addTab(value.frameAccessor)
       val dataViewerPanel = selectedInfo.component as PyDataViewerPanel
       dataViewerPanel.apply(value, false)
+      window.show {
+        window.component.requestFocusInWindow()
+        dataViewerPanel.requestFocusInWindow()
+      }
     }
-    window.show()
   }
 
   fun closeTabs(ifClose: Predicate<PyFrameAccessor>) {
