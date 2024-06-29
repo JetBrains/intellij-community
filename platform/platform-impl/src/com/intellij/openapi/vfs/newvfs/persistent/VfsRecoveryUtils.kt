@@ -393,7 +393,7 @@ object VfsRecoveryUtils {
       when (val nextContent = snapshot.getContent(lastRecoveredContentId + 1)) {
         is NotAvailable -> break
         is Ready -> {
-          val result = newFsRecords.contentAccessor().allocateContentRecordAndStore(ByteArraySequence(nextContent.value))
+          val result = newFsRecords.contentAccessor().writeContentRecord(ByteArraySequence(nextContent.value))
           check(result == lastRecoveredContentId + 1) { "assumption failed: got $result, expected ${lastRecoveredContentId + 1}" }
           lastRecoveredContentId++
         }

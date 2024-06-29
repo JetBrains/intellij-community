@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.storage;
 
 import com.intellij.openapi.Forceable;
@@ -25,7 +25,7 @@ public interface VFSContentStorage extends CleanableStorage, Closeable, Forceabl
 
   /**
    * Stores bytes and return contentRecordId, by which content could be later retrieved.
-   * If the same bytes was already stored -- method could return id of already existing record, without allocating
+   * If the same content (bytes) was already stored -- method could return id of already existing record, without allocating
    * & storing new record.
    */
   int storeRecord(@NotNull ByteArraySequence bytes) throws IOException;

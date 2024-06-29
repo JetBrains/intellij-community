@@ -488,7 +488,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   @Override
   public int storeUnlinkedContent(byte @NotNull [] bytes) {
-    return vfsPeer.storeUnlinkedContent(new ByteArraySequence(bytes));
+    return vfsPeer.writeContentRecord(new ByteArraySequence(bytes));
   }
 
   @SuppressWarnings("removal")
@@ -828,15 +828,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       byte[] content = fs.contentsToByteArray(file);
 
       if (mayCacheContent && shouldCache(content.length)) {
-        //VFS content storage is append-only, hence storing could be done outside the lock:
-        int newContentRecordId = vfsPeer.storeUnlinkedContent(new ByteArraySequence(content));
-        myInputLock.writeLock().lock();
-        try {
-          updateContentId(fileId, newContentRecordId, content.length);
-        }
-        finally {
-          myInputLock.writeLock().unlock();
-        }
+        updateContentForFile(fileId, new ByteArraySequence(content));
       }
       else {
         myInputLock.writeLock().lock();
@@ -992,23 +984,24 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     if (byteLength == fileLength) {
       ByteArraySequence newContent = new ByteArraySequence(bytes, 0, byteLength);
-      int newContentId = vfsPeer.storeUnlinkedContent(newContent);
-      myInputLock.writeLock().lock();
-      try {
-        updateContentId(fileId, newContentId, byteLength);
-      }
-      finally {
-        myInputLock.writeLock().unlock();
-      }
+      updateContentForFile(fileId, newContent);
     }
     else {
-      myInputLock.writeLock().lock();
-      try {
-        doCleanPersistedContent(fileId);
-      }
-      finally {
-        myInputLock.writeLock().unlock();
-      }
+      doCleanPersistedContent(fileId);
+    }
+  }
+
+  private void updateContentForFile(int fileId,
+                                    @NotNull ByteArraySequence newContent) throws IOException {
+    //VFS content storage is append-only, hence storing could be done outside the lock:
+    int newContentId = vfsPeer.writeContentRecord(newContent);
+
+    myInputLock.writeLock().lock();
+    try {
+      updateContentId(fileId, newContentId, newContent.length());
+    }
+    finally {
+      myInputLock.writeLock().unlock();
     }
   }
 
@@ -2386,9 +2379,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void setFlag(int id, @Attributes int mask, boolean value) {
     int oldFlags = vfsPeer.getFlags(id);
-    int flags = value ? oldFlags | mask : oldFlags & ~mask;
+    int flags = value ? oldFlags | mask
+                      : oldFlags & ~mask;
 
     if (oldFlags != flags) {
+      //noinspection MagicConstant
       vfsPeer.setFlags(id, flags);
     }
   }
@@ -2458,9 +2453,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void doCleanPersistedContent(int id) {
-    //TODO set in single call: setFlag(id, MUST_RELOAD_CONTENT |  MUST_RELOAD_LENGTH, true);
-    setFlag(id, Flags.MUST_RELOAD_CONTENT, true);
-    setFlag(id, Flags.MUST_RELOAD_LENGTH, true);
+    myInputLock.writeLock().lock();
+    try {
+      setFlag(id, Flags.MUST_RELOAD_CONTENT | Flags.MUST_RELOAD_LENGTH, true);
+    }
+    finally {
+      myInputLock.writeLock().unlock();
+    }
   }
 
   @Override
