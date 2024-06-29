@@ -56,10 +56,6 @@ public final class RecentFilesSEContributor extends FileSearchEverywhereContribu
   public void fetchWeightedElements(@NotNull String pattern,
                                     @NotNull ProgressIndicator progressIndicator,
                                     @NotNull Processor<? super FoundItemDescriptor<Object>> consumer) {
-    if (myProject == null) {
-      return; //nothing to search
-    }
-
     String searchString = filterControlSymbols(pattern);
     boolean preferStartMatches = !searchString.startsWith("*");
     MinusculeMatcher matcher = createMatcher(searchString, preferStartMatches);
