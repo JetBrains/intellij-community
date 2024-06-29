@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.fir.resolve
 
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
 import org.jetbrains.kotlin.idea.fir.extensions.KtResolveExtensionProviderForTests
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
@@ -24,6 +25,8 @@ abstract class AbstractK2ReferenceResolveWithResolveExtensionTest : AbstractFirR
                 </class>
             </xml>
         """.trimIndent())
+
+        @OptIn(KaExperimentalApi::class)
         project.extensionArea.getExtensionPoint(KaResolveExtensionProvider.EP_NAME)
             .registerExtension(KtResolveExtensionProviderForTests(), testRootDisposable)
     }
