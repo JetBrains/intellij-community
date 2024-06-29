@@ -10,11 +10,14 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
+import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -155,6 +158,17 @@ object KotlinCallProcessor {
         return current
     }
 
+    private object ReadAccess : KaSimpleVariableAccess.Read
+
+    private class SpecialPartiallyAppliedSymbol<out S : KaCallableSymbol, out C : KaCallableSignature<S>>(
+        private val backingSignature: C
+    ) : KaPartiallyAppliedSymbol<S, C> {
+        override val signature: C get() = withValidityAssertion { backingSignature }
+        override val dispatchReceiver: KaReceiverValue? get() = withValidityAssertion { null }
+        override val extensionReceiver: KaReceiverValue? get() = withValidityAssertion { null }
+        override val token: KaLifetimeToken get() = backingSignature.token
+    }
+
     @OptIn(KaExperimentalApi::class)
     private fun handle(element: KtElement, processor: KotlinCallTargetProcessor): Boolean {
         analyze(element) {
@@ -170,15 +184,28 @@ object KotlinCallProcessor {
                         when (symbol) {
                             is KaFunctionSymbol -> {
                                 val signature = symbol.asSignature()
-                                val partiallyAppliedSymbol = KaPartiallyAppliedFunctionSymbol(signature, null, null)
-                                val call = KaSimpleFunctionCall(partiallyAppliedSymbol, linkedMapOf(), mapOf(), isImplicitInvoke = false)
+                                val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
+                                val call = object : KaSimpleFunctionCall {
+                                    override val isImplicitInvoke: Boolean get() = withValidityAssertion { false }
+                                    override val argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>> get() = withValidityAssertion { emptyMap() }
+                                    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaFunctionSymbol, KaFunctionSignature<KaFunctionSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
+                                    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
+                                    override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token
+                                }
+
                                 processCallTarget(FunctionCallTarget(element, call, partiallyAppliedSymbol))
                             }
 
                             is KaVariableSymbol -> {
                                 val signature = symbol.asSignature()
-                                val partiallyAppliedSymbol = KaPartiallyAppliedVariableSymbol(signature, null, null)
-                                val call = KaSimpleVariableAccessCall(partiallyAppliedSymbol, linkedMapOf(), KaSimpleVariableAccess.Read)
+                                val partiallyAppliedSymbol = SpecialPartiallyAppliedSymbol(signature)
+                                val call = object : KaSimpleVariableAccessCall {
+                                    override val simpleAccess: KaSimpleVariableAccess.Read get() = withValidityAssertion { ReadAccess }
+                                    override val partiallyAppliedSymbol: KaPartiallyAppliedSymbol<KaVariableSymbol, KaVariableSignature<KaVariableSymbol>> get() = withValidityAssertion { partiallyAppliedSymbol }
+                                    override val typeArgumentsMapping: Map<KaTypeParameterSymbol, KaType> get() = withValidityAssertion { emptyMap() }
+                                    override val token: KaLifetimeToken get() = partiallyAppliedSymbol.token
+                                }
+
                                 processCallTarget(VariableCallTarget(element, call, partiallyAppliedSymbol))
                             }
 
