@@ -48,7 +48,7 @@ internal val MatchingHandler.withinHierarchyTextFilterSet: Boolean
 context(KaSession)
 fun KtExpression.findDispatchReceiver(): KaType? {
     val symbol = resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol ?: return null
-    val containingClass = symbol.containingSymbol as? KaClassSymbol ?: return null
+    val containingClass = symbol.containingDeclaration as? KaClassSymbol ?: return null
     val classId = containingClass.classId ?: return null
     val fromKotlinPkg = classId.packageFqName.asString().startsWith("kotlin")
     val isFunctionCall = classId.relativeClassName.asString().startsWith("Function")

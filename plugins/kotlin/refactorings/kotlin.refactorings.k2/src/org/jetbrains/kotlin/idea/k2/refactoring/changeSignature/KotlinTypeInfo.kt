@@ -102,8 +102,8 @@ private fun createSubstitutor(inheritorDeclaration: KtDeclaration, baseFunction:
     val inheritorCallable = inheritorDeclaration.symbol
     val baseCallable = (baseFunction as? KtCallableDeclaration)?.symbol
         ?: (baseFunction as? PsiMember)?.callableSymbol ?: return null
-    val inheritor = inheritorCallable.containingSymbol
-    val base = baseCallable.containingSymbol
+    val inheritor = inheritorCallable.containingDeclaration
+    val base = baseCallable.containingDeclaration
     return if (inheritor is KaClassSymbol && base is KaClassSymbol) {
         createInheritanceTypeSubstitutor(inheritor, base)?.let { iSubstitutor ->
             buildSubstitutor {

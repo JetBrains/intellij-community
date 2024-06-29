@@ -67,7 +67,7 @@ object KotlinChangeSignatureHandler : KotlinChangeSignatureHandlerBase() {
                         val symbol = element.mainReference.resolveToSymbol()
                         when {
                           symbol is KaValueParameterSymbol && symbol.generatedPrimaryConstructorProperty == null -> null
-                          symbol is KaConstructorSymbol && symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.containingSymbol
+                          symbol is KaConstructorSymbol && symbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED -> symbol.containingDeclaration
                           else -> symbol
                         }
                     }

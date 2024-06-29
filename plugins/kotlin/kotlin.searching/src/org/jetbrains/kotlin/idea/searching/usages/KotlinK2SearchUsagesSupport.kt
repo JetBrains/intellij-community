@@ -62,7 +62,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                         return superSymbol == this || isSubClassOf(superSymbol)
                     }
 
-                    return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingSymbol as? KaClassSymbol) ||
+                    return searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.containingDeclaration as? KaClassSymbol) ||
                             searchTargetContainerSymbol.isInheritorOrSelf(invokeSymbol.receiverParameter?.type?.expandedSymbol)
                 }
             }
@@ -155,8 +155,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                     return@any false
                 }
 
-                val candidateContainer = candidateSymbol.containingSymbol
-                val container = declarationSymbol.containingSymbol
+                val candidateContainer = candidateSymbol.containingDeclaration
+                val container = declarationSymbol.containingDeclaration
                 if (candidateContainer == null && container == null) { //top level functions should be from the same package
                     declaration.containingKtFile.packageFqName == candidateDeclaration.containingKtFile.packageFqName
                 } else if (candidateContainer != null && container != null) { //instance functions should be from the same class/function or same hierarchy
@@ -171,7 +171,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         if (declaration !is KtCallableDeclaration) return false
         val container = analyze(declaration) {
-            (declaration.symbol.containingSymbol as? KaClassSymbol)?.psi?.originalElement as? KtClassOrObject ?: return false
+            (declaration.symbol.containingDeclaration as? KaClassSymbol)?.psi?.originalElement as? KtClassOrObject ?: return false
         }
 
         return reference.unwrappedTargets.filterIsInstance<KtDeclaration>().any { candidateDeclaration ->
@@ -257,7 +257,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     context(KaSession)
     private fun getContainingClassType(symbol: KaCallableSymbol): KaType? {
-        val containingSymbol = symbol.containingSymbol ?: return null
+        val containingSymbol = symbol.containingDeclaration ?: return null
         val classSymbol = containingSymbol as? KaNamedClassOrObjectSymbol ?: return null
         return classSymbol.defaultType
     }
@@ -372,7 +372,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                         is KaDelegatedConstructorCall -> {
                             val constructorSymbol = call.symbol
                             val declarationSymbol = ((ktDeclaration.originalElement as? KtDeclaration)?.takeUnless { ktDeclaration.containingFile == element.containingFile } ?: ktDeclaration).symbol
-                            constructorSymbol == declarationSymbol || constructorSymbol.containingSymbol == declarationSymbol
+                            constructorSymbol == declarationSymbol || constructorSymbol.containingDeclaration == declarationSymbol
                         }
                         else -> false
                     }

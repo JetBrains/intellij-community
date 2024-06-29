@@ -159,7 +159,7 @@ sealed class K2MoveRenameUsageInfo(
                 val resolvedSymbol = mainReference.resolveToSymbol()
                 if (resolvedSymbol is KaClassSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
                 if (resolvedSymbol is KaConstructorSymbol) return true
-                val containingSymbol = resolvedSymbol?.containingSymbol
+                val containingSymbol = resolvedSymbol?.containingDeclaration
                 if (resolvedSymbol is KaPackageSymbol) return false // ignore packages
                 if (containingSymbol == null) return true // top levels are static
                 if (containingSymbol is KaClassSymbol) {

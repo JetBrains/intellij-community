@@ -43,6 +43,6 @@ fun KtNameReferenceExpression.getImplicitLambdaParameterSymbol(): KaValueParamet
 context(KaSession)
 fun KaValueParameterSymbol.getFunctionLiteralByImplicitLambdaParameterSymbol(): KtFunctionLiteral? {
     if (!isImplicitLambdaParameter) return null
-    val lambda = containingSymbol as? KaAnonymousFunctionSymbol ?: return null
+    val lambda = containingDeclaration as? KaAnonymousFunctionSymbol ?: return null
     return lambda.psi as? KtFunctionLiteral
 }

@@ -399,7 +399,7 @@ private fun getReferencedClassifierSymbol(
 
         is KaTypeParameterSymbol -> referencedSymbol
 
-        is KaConstructorSymbol -> referencedSymbol.containingSymbol as? KaClassifierSymbol
+        is KaConstructorSymbol -> referencedSymbol.containingDeclaration as? KaClassifierSymbol
 
         else -> null
     }
@@ -481,7 +481,7 @@ private fun ExtractionData.getBrokenReferencesInfo(body: KtBlockExpression): Lis
             val (isCompanionObject, bothReceivers) = analyze(smartCastTarget) {
                 val symbol = originalRefExpr.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 val receiverSymbol = (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
-                ((receiverSymbol?.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) to
+                ((receiverSymbol?.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) to
                         (symbol?.dispatchReceiver != null && symbol.extensionReceiver != null)
             }
             val shouldSkipPrimaryReceiver = smartCast == null

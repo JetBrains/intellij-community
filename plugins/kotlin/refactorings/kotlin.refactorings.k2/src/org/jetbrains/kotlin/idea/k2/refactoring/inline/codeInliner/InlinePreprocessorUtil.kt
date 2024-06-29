@@ -208,7 +208,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         fun isImportable(t: KtNamedDeclaration): Boolean {
             analyze(t) {
                 val resolvedSymbol = t.symbol
-                val containingSymbol = resolvedSymbol.containingSymbol ?: return true
+                val containingSymbol = resolvedSymbol.containingDeclaration ?: return true
                 if (containingSymbol is KaSymbolWithMembers) {
                     val staticScope = containingSymbol.staticMemberScope
                     return resolvedSymbol in staticScope.getAllSymbols()
@@ -312,7 +312,7 @@ context(KaSession)
 internal fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
     val symbol = receiverValue.symbol
     return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
-        (symbol.containingSymbol as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+        (symbol.containingDeclaration as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
     }
     else {
         "this" + ((((symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: symbol) as? KaNamedSymbol)?.name?.let { "@$it" } ?: "")

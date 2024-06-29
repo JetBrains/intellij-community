@@ -84,7 +84,7 @@ private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
             }
             result = visibility
         }
-        declaration = declaration.containingSymbol
+        declaration = declaration.containingDeclaration
     }
     return result
 }

@@ -167,7 +167,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
         analyze(targetClass) {
             val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
             val equalsMethod = findEqualsMethodForClass(classSymbol) as? KaNamedFunctionSymbol ?: return@analyze
-            val superContainingEqualsMethod = equalsMethod.containingSymbol ?: return@analyze
+            val superContainingEqualsMethod = equalsMethod.containingDeclaration ?: return@analyze
 
             val parameterName = equalsMethod.valueParameters.singleOrNull()?.name?.asString() ?: return@analyze
 
@@ -303,7 +303,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
             val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
             val hashCodeMethod = findHashCodeMethodForClass(classSymbol) as? KaNamedFunctionSymbol ?: return@analyze
-            val superContainingHashCodeMethod = hashCodeMethod.containingSymbol ?: return@analyze
+            val superContainingHashCodeMethod = hashCodeMethod.containingDeclaration ?: return@analyze
 
             /**
              * TODO: We have to add a wizard to select members used for hashCode. See how
