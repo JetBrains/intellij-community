@@ -1096,6 +1096,9 @@ public final class AppendOnlyLogOverMMappedFile implements AppendOnlyLog, Unmapp
 
   @VisibleForTesting
   static long recordIdToOffset(long recordId) {
+    if (recordId <= 0) {
+      throw new IllegalArgumentException("recordId(=" + recordId + ") is negative or NULL_ID -- can't be read");
+    }
     long offset = recordIdToOffsetUnchecked(recordId);
     if (!AlignmentUtils.is32bAligned(offset)) {
       throw new IllegalArgumentException("recordId(=" + recordId + ") is invalid: recordOffsetInFile(=" + offset + ") is not 32b-aligned");
