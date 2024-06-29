@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.navigation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlFile
 import org.intellij.lang.annotations.Language
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolve.extensions.KaResolveExtensionProvider
@@ -30,6 +31,7 @@ abstract class AbstractResolveExtensionGeneratedSourcesFilterTest : AbstractRefe
         """.trimIndent()) as XmlFile
         this.xmlFile = xmlFile
 
+        @OptIn(KaExperimentalApi::class)
         project.extensionArea.getExtensionPoint(KaResolveExtensionProvider.EP_NAME)
             .registerExtension(KtResolveExtensionProviderForTests(), testRootDisposable)
     }
