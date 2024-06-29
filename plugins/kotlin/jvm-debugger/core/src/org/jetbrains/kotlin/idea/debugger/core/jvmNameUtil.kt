@@ -58,10 +58,10 @@ fun KaFunctionSymbol.getJvmInternalClassName(): String? {
 context(KaSession)
 @ApiStatus.Internal
 fun KaFunctionSymbol.getContainingClassOrObjectSymbol(): KaClassSymbol? {
-    var symbol = containingSymbol
+    var symbol = containingDeclaration
     while (symbol != null) {
         if (symbol is KaClassSymbol) return symbol
-        symbol = symbol.containingSymbol
+        symbol = symbol.containingDeclaration
     }
     return null
 }

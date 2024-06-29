@@ -42,7 +42,7 @@ internal class UsePlatformProcessAwaitExitInspection : LocalInspectionTool() {
             val calledMethodName = calledSymbol.name.identifier
             if (isNotForbidden(calledMethodName)) return false
             if (calledSymbol.valueParameters.isNotEmpty()) return false
-            val className = (calledSymbol.containingSymbol?.psi as? PsiClass)?.qualifiedName ?: return false
+            val className = (calledSymbol.containingDeclaration?.psi as? PsiClass)?.qualifiedName ?: return false
             return className == "java.lang.Process"
           }
         }
