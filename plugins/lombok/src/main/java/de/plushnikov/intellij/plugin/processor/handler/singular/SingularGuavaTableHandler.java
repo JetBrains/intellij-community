@@ -119,11 +119,11 @@ class SingularGuavaTableHandler extends SingularMapHandler {
 
   @Override
   protected String getOneMethodBody(@NotNull String singularName, @NotNull BuilderInfo info) {
-    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {2}.{3}; \n" +
+    final String codeBlockTemplate = "if (this.{0} == null) this.{0} = {1}.{2}; \n" +
                                      "this.{0}.put(" + LOMBOK_ROW_KEY + ", " + LOMBOK_COLUMN_KEY + ", " + LOMBOK_VALUE + ");\n" +
-                                     "return {4};";
+                                     "return {3};";
 
-    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), singularName, collectionQualifiedName,
+    return MessageFormat.format(codeBlockTemplate, info.getFieldName(), collectionQualifiedName,
                                 sortedCollection ? "naturalOrder()" : "builder()", info.getBuilderChainResult());
   }
 
