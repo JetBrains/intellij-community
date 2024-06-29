@@ -320,10 +320,10 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         return null
     }
 
-    private fun getNameReference(callee: KtExpression?): KtNameReferenceExpression? {
+    private fun getNameReference(callee: KtExpression?): KtSimpleNameExpression? {
         if (callee is KtConstructorCalleeExpression)
-            return callee.constructorReferenceExpression as? KtNameReferenceExpression
-        return callee as? KtNameReferenceExpression
+            return callee.constructorReferenceExpression
+        return callee as? KtSimpleNameExpression
     }
 
     private fun getArgument(host: KtElement): KtValueArgument? = when (val parent = host.parent) {
