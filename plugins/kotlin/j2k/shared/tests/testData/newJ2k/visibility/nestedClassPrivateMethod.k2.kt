@@ -1,5 +1,3 @@
-import Foo.Inner
-
 class Foo {
     fun m() {
         Inner().x()

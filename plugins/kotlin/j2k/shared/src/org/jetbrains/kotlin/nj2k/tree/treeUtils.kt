@@ -9,6 +9,10 @@ inline fun <reified T : JKElement> JKElement.parentOfType(): T? {
     return generateSequence(parent) { it.parent }.filterIsInstance<T>().firstOrNull()
 }
 
+inline fun <reified T : JKElement> JKTreeElement.findParentOfType(crossinline filter: (T) -> Boolean): T? {
+    return generateSequence(parent) { it.parent }.filter { it is T && filter(it) }.firstOrNull() as? T
+}
+
 fun JKElement.parents(): Sequence<JKElement> {
     return generateSequence(parent) { it.parent }
 }

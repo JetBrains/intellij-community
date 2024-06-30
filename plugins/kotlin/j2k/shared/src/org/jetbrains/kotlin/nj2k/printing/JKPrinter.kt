@@ -141,8 +141,7 @@ class JKPrinter(
             is JKStarProjectionType ->
                 this.print("*")
 
-            is JKTypeParameterType ->
-                this.print(type.identifier.name)
+            is JKTypeParameterType -> this.print(type.identifier.name)
 
             is JKVarianceTypeParameterType -> {
                 when (type.variance) {
@@ -157,7 +156,7 @@ class JKPrinter(
 
         if (type is JKParametrizedType && type.parameters.isNotEmpty() && renderTypeParameters) {
             par(ParenthesisKind.ANGLE) {
-                renderList(type.parameters, renderElement = { renderType(it) })
+                renderList(type.parameters, renderElement = { renderType(it, owner) })
             }
         }
         // we print undefined types as nullable because we need smartcast to work in nullability inference in post-processing

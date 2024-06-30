@@ -7,11 +7,9 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import org.jetbrains.kotlin.name.SpecialNames
-import org.jetbrains.kotlin.nj2k.JKImportStorage
-import org.jetbrains.kotlin.nj2k.escaped
+import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.symbols.*
-import org.jetbrains.kotlin.nj2k.tree.JKQualifiedExpression
-import org.jetbrains.kotlin.nj2k.tree.JKTreeElement
+import org.jetbrains.kotlin.nj2k.tree.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -35,6 +33,7 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
     fun renderSymbol(symbol: JKSymbol, owner: JKTreeElement?): String {
         val name = symbol.name.escaped()
         val fqName = symbol.getDisplayFqName().escapedAsQualifiedName()
+        val target = symbol.target
 
         return when {
             !symbol.isFqNameExpected(owner) -> {
@@ -48,9 +47,28 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
 
             symbol.isFromJavaLangPackage() -> fqName
 
+            // if this symbol is an inner type referenced in an outer class's header, refer to it with the qualified name
+            // e.g. `Outer.Nested` in `class Outer<T : Outer.Nested?> : Comparable<Outer.Nested?>`
+            (owner is JKInheritanceInfo || (owner?.parentOfType<JKTypeParameterList>() != null)) &&
+                    target is JKClass && owner.isDefinedInSameClass(target) -> fqName
+
             symbol is JKClassSymbol && canBeShortenedClassNameCache.canBeShortened(symbol) -> {
-                importStorage.addImport(fqName)
-                name
+
+                // If a type's definition and reference live in the same file, no import is needed as long as we follow the next 3 rules:
+                //   1. If a type's definition is a parent node of the reference, we can use the type's short name
+                //   2. If a type's definition and reference share the same direct parent node, we can use the type's short name
+                //   3. If a type's definition and reference share a non-direct parent node, we can use the type's semi-qualified name
+                if (target !is JKClass) {
+                    importStorage.addImport(fqName)
+                    name
+                } else if (owner?.findParentOfType<JKClass> { it == target || target in it.declarationList } != null) {
+                    name
+                } else if (owner?.parentOfType<JKTreeRoot>() == target.parentOfType<JKTreeRoot>()) {
+                    if (target.parent is JKFile) name else fqName
+                } else {
+                    importStorage.addImport(fqName)
+                    name
+                }
             }
 
             symbol.isStaticMember && symbol.containingClass?.isUnnamedCompanion == true -> {
@@ -86,6 +104,9 @@ class JKSymbolRenderer(private val importStorage: JKImportStorage, project: Proj
 
         private fun JKTreeElement.isSelectorOfQualifiedExpression(): Boolean =
             parent?.safeAs<JKQualifiedExpression>()?.selector == this
+
+        private fun JKTreeElement.isDefinedInSameClass(other: JKClass): Boolean =
+            this.parentOfType<JKClass>()?.declarationList?.any { it == other } == true
     }
 }
 

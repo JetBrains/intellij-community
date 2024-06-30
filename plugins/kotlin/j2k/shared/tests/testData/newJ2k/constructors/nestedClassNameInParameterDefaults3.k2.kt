@@ -11,5 +11,5 @@ internal class A @JvmOverloads constructor(nested: Nested? = Nested(Nested.Compa
 }
 
 internal class B {
-    var nested: Nested? = null
+    var nested: A.Nested? = null
 }

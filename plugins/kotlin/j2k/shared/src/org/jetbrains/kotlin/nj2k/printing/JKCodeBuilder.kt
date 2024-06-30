@@ -213,7 +213,7 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         override fun visitInheritanceInfoRaw(inheritanceInfo: JKInheritanceInfo) {
             val thisClass = inheritanceInfo.parentOfType<JKClass>()!!
             if (thisClass.classKind == INTERFACE) {
-                renderTypes(inheritanceInfo.extends)
+                renderTypes(inheritanceInfo.extends, inheritanceInfo)
                 return
             }
             inheritanceInfo.extends.singleOrNull()?.let { superTypeElement ->
@@ -227,13 +227,13 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
                 }
                 if (inheritanceInfo.implements.isNotEmpty()) printer.print(", ")
             }
-            renderTypes(inheritanceInfo.implements)
+            renderTypes(inheritanceInfo.implements, inheritanceInfo)
         }
 
-        private fun renderTypes(types: List<JKTypeElement>) {
+        private fun renderTypes(types: List<JKTypeElement>, owner: JKTreeElement) {
             printer.renderList(types) {
                 it.annotationList.accept(this)
-                printer.renderType(it.type)
+                printer.renderType(it.type, owner)
             }
         }
 

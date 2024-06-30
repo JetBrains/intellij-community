@@ -1139,6 +1139,11 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
             runTest("../../shared/tests/testData/newJ2k/class/innerClassInInterface.java");
         }
 
+        @TestMetadata("innerClassReferencedInOuterClassHeader.java")
+        public void testInnerClassReferencedInOuterClassHeader() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/class/innerClassReferencedInOuterClassHeader.java");
+        }
+
         @TestMetadata("innerEmptyClass.java")
         public void testInnerEmptyClass() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/class/innerEmptyClass.java");

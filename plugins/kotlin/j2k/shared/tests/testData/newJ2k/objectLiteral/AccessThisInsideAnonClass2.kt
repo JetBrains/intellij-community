@@ -1,8 +1,6 @@
-import Test.FrameCallback
-
 class Foo {
     fun fail() {
-        object : FrameCallback {
+        object : Test.FrameCallback {
             override fun doFrame() {
                 Test().postFrameCallbackDelayed(this)
             }
