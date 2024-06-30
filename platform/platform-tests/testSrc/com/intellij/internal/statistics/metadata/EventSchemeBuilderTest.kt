@@ -84,6 +84,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertTrue(descriptors.any { x -> x.plugin.id == "com.intellij" })
   }
 
+  fun `test generate fileName`() {
+    val group = buildGroupDescription()
+    assertEquals("EventSchemeBuilderTest.kt", group.fileName)
+  }
+
   fun `test generate descriptions`() {
     val groupDescription = "Test group description"
     val eventDescription = "Description of test event"
@@ -113,9 +118,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertSameElements(event.fields, expectedValues)
   }
 
-  private fun buildGroupDescription(eventField: EventField<*>): GroupDescriptor {
+  private fun buildGroupDescription(eventField: EventField<*>? = null): GroupDescriptor {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
-    eventLogGroup.registerEvent("test_event", eventField)
+    if (eventField != null) {
+      eventLogGroup.registerEvent("test_event", eventField)
+    }
     val collector = EventsSchemeBuilder.FeatureUsageCollectorInfo(TestCounterCollector(eventLogGroup), PluginSchemeDescriptor("testPlugin"))
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(collector), "FUS")
     assertSize(1, groups)
@@ -124,8 +131,10 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
 
   enum class TestEnum { FOO, BAR }
 
-  @Suppress("StatisticsCollectorNotRegistered")
   class TestCounterCollector(private val eventLogGroup: EventLogGroup) : CounterUsagesCollector() {
+    init {
+      forceCalculateFileName()
+    }
     override fun getGroup(): EventLogGroup = eventLogGroup
   }
 

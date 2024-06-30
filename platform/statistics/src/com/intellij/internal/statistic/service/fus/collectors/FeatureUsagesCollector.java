@@ -5,10 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.openapi.util.text.Strings;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -33,13 +30,15 @@ public abstract class FeatureUsagesCollector {
    * This property is true for StatisticsEventSchemeGeneration build.
    */
   public FeatureUsagesCollector() {
-    if (Boolean.parseBoolean(System.getenv("FUS_COLLECTOR_FILENAME_ENABLED"))) {
-      StackTraceElement[] stackTraceElements = (new Exception()).getStackTrace();
-      Optional<StackTraceElement>
-        collectorStackTraceElement =
-        Arrays.stream(stackTraceElements).filter(x -> Strings.areSameInstance(x.getClassName(), this.getClass().getName())).findFirst();
-      collectorStackTraceElement.ifPresent(element -> fileName = element.getFileName());
+    boolean isCollectorFileNameEnabled = Boolean.parseBoolean(System.getenv("FUS_COLLECTOR_FILENAME_ENABLED"));
+    if (isCollectorFileNameEnabled) {
+      calculateFileName();
     }
+  }
+
+  @TestOnly
+  public void forceCalculateFileName() {
+    calculateFileName();
   }
 
   public final boolean isValid() {
@@ -48,6 +47,13 @@ public abstract class FeatureUsagesCollector {
 
   public @Nullable String getFileName() {
     return fileName;
+  }
+
+  private void calculateFileName() {
+    StackTraceElement[] stackTraceElements = Thread.currentThread().getStackTrace();
+    Optional<StackTraceElement> collectorStackTraceElement =
+      Arrays.stream(stackTraceElements).filter(x -> Strings.areSameInstance(x.getClassName(), this.getClass().getName())).findFirst();
+    collectorStackTraceElement.ifPresent(element -> fileName = element.getFileName());
   }
 
   /**
