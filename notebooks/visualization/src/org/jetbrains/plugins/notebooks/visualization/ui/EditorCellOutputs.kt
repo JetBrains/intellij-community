@@ -18,6 +18,7 @@ import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComp
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.InnerComponent
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.SurroundingComponent
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView.NotebookCellDataProvider
+import org.jetbrains.plugins.notebooks.visualization.use
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
@@ -32,7 +33,22 @@ class EditorCellOutputs(
   private val onInlayDisposed: (EditorCellOutputs) -> Unit = {},
 ) : EditorCellViewComponent(), Disposable {
 
-  private var foldingVisible: Boolean = false
+  var foldingsVisible: Boolean = false
+    set(value) {
+      if(field != value) {
+        field = value
+        outputs.forEach { it.folding.visible = value }
+      }
+    }
+
+  var foldingsSelected: Boolean = false
+    set(value) {
+      if(field != value) {
+        field = value
+        outputs.forEach { it.folding.selected = value }
+      }
+    }
+
   private val _outputs = mutableListOf<EditorCellOutput>()
   val outputs: List<EditorCellOutput>
     get() = _outputs
@@ -64,20 +80,6 @@ class EditorCellOutputs(
     return inlay?.bounds ?: Rectangle(0, 0, 0, 0)
   }
 
-  fun updateSelection(selected: Boolean) {
-    outputs.forEach { it.updateSelection(selected) }
-  }
-
-  fun showFolding() {
-    foldingVisible = true
-    outputs.forEach { it.showFolding() }
-  }
-
-  fun hideFolding() {
-    foldingVisible = false
-    outputs.forEach { it.hideFolding() }
-  }
-
   fun update() {
     val outputDataKeys =
       NotebookOutputDataKeyExtractor.EP_NAME.extensionList.asSequence()
@@ -92,7 +94,7 @@ class EditorCellOutputs(
   }
 
   private fun recreateInlayIfNecessary() {
-    if (outputs.size > 0) {
+    if (outputs.isNotEmpty()) {
       val expectedOffset = computeInlayOffset(editor.document, interval().lines)
       val currentInlay = inlay
       if (currentInlay != null) {
@@ -256,11 +258,8 @@ class EditorCellOutputs(
     )
 
     val outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable)
-    if (foldingVisible) {
-      outputComponent.showFolding()
-    } else {
-      outputComponent.hideFolding()
-    }
+    outputComponent.folding.visible = foldingsVisible
+
     _outputs.add(if (pos == -1) _outputs.size else pos, outputComponent)
     add(outputComponent)
 
@@ -274,18 +273,15 @@ class EditorCellOutputs(
     override fun next(): Pair<A, B> = this@zip.next() to other.next()
   }
 
-  fun paintGutter(
-    editor: EditorImpl,
-    g: Graphics,
-    r: Rectangle,
-  ) {
+  fun paintGutter(editor: EditorImpl, g: Graphics, r: Rectangle) {
     val yOffset = innerComponent.yOffsetFromEditor(editor) ?: return
-
     val oldClip = g.clipBounds
-    val ng = g.create() as Graphics2D
-    ng.clip(Rectangle(oldClip.x, yOffset, oldClip.width, innerComponent.height).intersection(oldClip))
-    outputs.forEach {
-      it.paintGutter(editor, yOffset, ng, r)
+    g.create().use { g2 ->
+      g2 as Graphics2D
+      g2.clip(Rectangle(oldClip.x, yOffset, oldClip.width, innerComponent.height).intersection(oldClip))
+      outputs.forEach {
+        it.paintGutter(editor, yOffset, g2, r)
+      }
     }
   }
 }

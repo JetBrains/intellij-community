@@ -15,7 +15,7 @@ import kotlin.reflect.KClass
 class EditorCell(
   private val editor: EditorEx,
   internal var intervalPointer: NotebookIntervalPointer,
-  private val viewFactory: (EditorCell) -> EditorCellView
+  private val viewFactory: (EditorCell) -> EditorCellView,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
 
   val source: String
@@ -26,47 +26,41 @@ class EditorCell(
       if (startOffset >= endOffset) return ""  // possible for empty cells
       return document.getText(TextRange(startOffset, endOffset))
     }
+
   val type: NotebookCellLines.CellType get() = interval.type
-
-  private var _visible = true
-  val visible: Boolean
-    get() = _visible
-
-  private var _selected = false
-
-  var selected: Boolean
-    get() = _selected
-    set(value) {
-      if (_selected != value) {
-        _selected = value
-        updateSelection(value)
-      }
-    }
-
-  private fun updateSelection(value: Boolean) {
-    view?.updateSelection(value)
-  }
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
   var view: EditorCellView? = viewFactory(this)
 
-  private var gutterAction: AnAction? = null
+  var visible: Boolean = true
+    set(value) {
+      if(field == value) return
+      field = value
 
-  fun hide() {
-    _visible = false
-    view?.let { Disposer.dispose(it) }
-    view = null
-  }
-
-  fun show() {
-    _visible = true
-    if (view == null) {
-      view = viewFactory(this).also { Disposer.register(this, it) }
-      view?.updateSelection(_selected)
-      gutterAction?.let { view?.setGutterAction(it) }
+      if(value) {
+        view?.let {
+          Disposer.dispose(it)
+          view = null
+        }
+      } else {
+        if (view == null) {
+          view = viewFactory(this).also { Disposer.register(this, it) }
+          view?.selected = selected
+          gutterAction?.let { view?.setGutterAction(it) }
+        }
+      }
     }
-  }
+
+  var selected: Boolean = false
+    set(value) {
+      if (field != value) {
+        field = value
+        view?.selected = value
+      }
+    }
+
+  private var gutterAction: AnAction? = null
 
   override fun dispose() {
     view?.let { Disposer.dispose(it) }
@@ -97,17 +91,17 @@ class EditorCell(
     return view?.getExtension<T>()
   }
 
-  @PublishedApi internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
+  @PublishedApi
+  internal fun createLazyControllers(factory: NotebookCellInlayController.LazyFactory) {
     factory.cellOrdinalsInCreationBlock.add(interval.ordinal)
     update(true)
     factory.cellOrdinalsInCreationBlock.remove(interval.ordinal)
   }
 
-  @PublishedApi internal fun <T: NotebookCellInlayController> getLazyFactory(type: KClass<T>): NotebookCellInlayController.LazyFactory? {
+  @PublishedApi
+  internal fun <T : NotebookCellInlayController> getLazyFactory(type: KClass<T>): NotebookCellInlayController.LazyFactory? {
     return NotebookCellInlayController.Factory.EP_NAME.extensionList
       .filterIsInstance<NotebookCellInlayController.LazyFactory>()
       .firstOrNull { it.getControllerClass() == type.java }
   }
-
-
 }

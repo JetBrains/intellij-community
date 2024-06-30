@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
@@ -43,60 +42,69 @@ class EditorCellView(
 ) : EditorCellViewComponent(), Disposable {
 
   private var _controllers: List<NotebookCellInlayController> = emptyList()
+
   private val controllers: List<NotebookCellInlayController>
     get() = _controllers + ((input.component as? ControllerEditorCellViewComponent)?.controller?.let { listOf(it) } ?: emptyList())
 
   private val intervalPointer: NotebookIntervalPointer
     get() = cell.intervalPointer
+
   private val interval: NotebookCellLines.Interval
-    get() {
-      return intervalPointer.get() ?: error("Invalid interval")
-    }
+    get() = intervalPointer.get() ?: error("Invalid interval")
 
   private val cellHighlighters = mutableListOf<RangeHighlighter>()
 
-  val input: EditorCellInput = EditorCellInput(
-    editor,
-    { parent: EditorCellInput, currentComponent: EditorCellViewComponent? ->
-      val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
-      val controller = getInputFactories().firstNotNullOfOrNull { factory ->
-        failSafeCompute(factory, editor, currentController?.let { listOf(it) }
-                                         ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
-      }
-      if (controller != null) {
-        if (controller == currentController) {
-          currentComponent
-        }
-        else {
-          ControllerEditorCellViewComponent(controller, parent)
-        }
-      }
-      else {
-        if (currentComponent is TextEditorCellViewComponent) {
-          currentComponent
-        }
-        else {
-          TextEditorCellViewComponent(editor, cell)
-        }
-      }
-    }, cell)
-    .also {
-      add(it)
+  val input: EditorCellInput = createEditorCellInput()
+
+  var outputs: EditorCellOutputs? = null
+    private set
+
+  var selected = false
+    set(value) {
+      field = value
+      updateFolding()
+      updateRunButton()
+      updateCellHighlight()
     }
 
-  private var _outputs: EditorCellOutputs? = null
-
-  val outputs: EditorCellOutputs?
-    get() = _outputs
-
-  private var selected = false
-
   private var mouseOver = false
+
+  // We are storing last lines range for highlighters to prevent highlighters recreation on same interval.
+  private var lastHighLightersLines: IntRange? = null
 
   init {
     recreateControllers()
     updateSelection(false)
   }
+
+  private fun createEditorCellInput() =
+    EditorCellInput(editor,
+                    { parent: EditorCellInput, currentComponent: EditorCellViewComponent? ->
+                      val currentController = (currentComponent as? ControllerEditorCellViewComponent)?.controller
+                      val controller = getInputFactories().firstNotNullOfOrNull { factory ->
+                        failSafeCompute(factory, editor, currentController?.let { listOf(it) }
+                                                         ?: emptyList(), intervals.intervals.listIterator(interval.ordinal))
+                      }
+                      if (controller != null) {
+                        if (controller == currentController) {
+                          currentComponent
+                        }
+                        else {
+                          ControllerEditorCellViewComponent(controller, parent)
+                        }
+                      }
+                      else {
+                        if (currentComponent is TextEditorCellViewComponent) {
+                          currentComponent
+                        }
+                        else {
+                          TextEditorCellViewComponent(editor, cell)
+                        }
+                      }
+                    }, cell)
+      .also {
+        add(it)
+      }
 
   fun postInitInlays() {
     _controllers.forEach {
@@ -120,18 +128,19 @@ class EditorCellView(
     Disposer.dispose(inlay)
   }
 
+  // Force == true only from disableMarkdownRenderingIfEnabled and caused recreation of components in EditorCellInput.updateInput.
   fun update(force: Boolean = false) {
     recreateControllers()
     updateControllers(force)
   }
 
-   private fun updateControllers(force: Boolean = false) {
+  private fun updateControllers(force: Boolean = false) {
     for (controller in controllers) {
       val inlay = controller.inlay
       inlay.renderer.asSafely<JComponent>()?.let { component ->
         val oldProvider = DataManager.getDataProvider(component)
         if (oldProvider != null && oldProvider !is NotebookCellDataProvider) {
-          LOG.error("Overwriting an existing CLIENT_PROPERTY_DATA_PROVIDER. Old provider: $oldProvider")
+          thisLogger().error("Overwriting an existing CLIENT_PROPERTY_DATA_PROVIDER. Old provider: $oldProvider")
         }
         DataManager.removeDataProvider(component)
         DataManager.registerDataProvider(component, NotebookCellDataProvider(editor, component) { interval })
@@ -164,8 +173,8 @@ class EditorCellView(
 
   internal fun updateOutputs() {
     if (hasOutputs()) {
-      if (_outputs == null) {
-        _outputs = EditorCellOutputs(editor, { interval })
+      if (outputs == null) {
+        outputs = EditorCellOutputs(editor, { interval })
           .also {
             Disposer.register(this, it)
             add(it)
@@ -182,7 +191,7 @@ class EditorCellView(
         Disposer.dispose(it)
         remove(it)
       }
-      _outputs = null
+      outputs = null
     }
   }
 
@@ -245,17 +254,26 @@ class EditorCellView(
   }
 
   private fun removeCellHighlight() {
-    for (highlighter in cellHighlighters) {
-      highlighter.dispose()
+    cellHighlighters.forEach {
+      it.dispose()
     }
     cellHighlighters.clear()
   }
 
   private fun updateCellHighlight() {
-    removeCellHighlight()
     val interval = intervalPointer.get() ?: error("Invalid interval")
+
+    if (interval.lines == lastHighLightersLines) {
+      return
+    }
+
+    lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
+
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+
+    removeCellHighlight()
+
     addCellHighlighter {
       editor.markupModel.addRangeHighlighter(
         null,
@@ -263,14 +281,14 @@ class EditorCellView(
         endOffset,
         HighlighterLayer.FIRST - 100,  // Border should be seen behind any syntax highlighting, selection or any other effect.
         HighlighterTargetArea.LINES_IN_RANGE
-      ).also {
-        it.lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
+      ).apply {
+        lineMarkerRenderer = NotebookGutterLineMarkerRenderer(interval)
       }
     }
 
     if (interval.type == NotebookCellLines.CellType.CODE) {
       addCellHighlighter {
-        val highlighter = editor.markupModel.addRangeHighlighter(
+        editor.markupModel.addRangeHighlighter(
           startOffset,
           endOffset,
           // Code cell background should be seen behind any syntax highlighting, selection or any other effect.
@@ -279,9 +297,9 @@ class EditorCellView(
             backgroundColor = editor.notebookAppearance.getCodeCellBackground(editor.colorsScheme)
           },
           HighlighterTargetArea.LINES_IN_RANGE
-        )
-        highlighter.customRenderer = NotebookCellHighlighterRenderer
-        highlighter
+        ).apply {
+          customRenderer = NotebookCellHighlighterRenderer
+        }
       }
     }
 
@@ -342,7 +360,7 @@ class EditorCellView(
       }
 
       update(true)
-      cell.putUserData(wasFoldedInRenderedState, true)
+      cell.putUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY, true)
     }
   }
 
@@ -351,7 +369,7 @@ class EditorCellView(
     // The idea was to force rendering of md cells that were folded in the rendered state.
     // This was a temporary solution written on rush, since we cannot use NotebookMarkdownEditorManager here directly.
     // todo: a refactor will be required as part of the ongoing reorganization of Jupyter modules
-    cell.getUserData(wasFoldedInRenderedState) ?: return
+    cell.getUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY) ?: return
     val document = editor.document
     val caretModel = editor.caretModel
     val oldPosition = caretModel.offset
@@ -359,20 +377,14 @@ class EditorCellView(
     val startOffset = document.getLineEndOffset(startLine)
     caretModel.moveToOffset(startOffset)
     caretModel.moveToOffset(oldPosition)
-    cell.removeUserData(wasFoldedInRenderedState)
+    cell.removeUserData(WAS_FOLDED_IN_RENDERED_STATE_KEY)
   }
 
   private fun updateFolding() {
-    input.updateSelection(selected)
-    outputs?.updateSelection(selected)
-    if (mouseOver || selected) {
-      input.showFolding()
-      outputs?.showFolding()
-    }
-    else {
-      input.hideFolding()
-      outputs?.hideFolding()
-    }
+    input.folding.visible = mouseOver || selected
+    input.folding.selected = selected
+    outputs?.foldingsVisible = mouseOver || selected
+    outputs?.foldingsSelected = selected
   }
 
   private fun updateRunButton() {
@@ -402,28 +414,25 @@ class EditorCellView(
     )
   }
 
-  fun configureFoldings() {
-    for (controller: NotebookCellInlayController in controllers) {
-      controller.configureFolding()
-    }
+  fun updateCellFolding() {
+    controllers.forEach { it.updateCellFolding() }
   }
 
   inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
     override fun paint(editor: Editor, g: Graphics, r: Rectangle) {
       editor as EditorImpl
 
-      @Suppress("NAME_SHADOWING")
-      g.create().use { g ->
-        g as Graphics2D
+      g.create().use { g2 ->
+        g2 as Graphics2D
 
-        val visualLineStart = editor.xyToVisualPosition(Point(0, g.clip.bounds.y)).line
-        val visualLineEnd = editor.xyToVisualPosition(Point(0, g.clip.bounds.run { y + height })).line
+        val visualLineStart = editor.xyToVisualPosition(Point(0, g2.clip.bounds.y)).line
+        val visualLineEnd = editor.xyToVisualPosition(Point(0, g2.clip.bounds.run { y + height })).line
         val logicalLineStart = editor.visualToLogicalPosition(VisualPosition(visualLineStart, 0)).line
         val logicalLineEnd = editor.visualToLogicalPosition(VisualPosition(visualLineEnd, 0)).line
 
         if (interval.lines.first > logicalLineEnd || interval.lines.last < logicalLineStart) return
 
-        paintBackground(editor, g, r, interval)
+        paintBackground(editor, g2, r, interval)
       }
     }
 
@@ -455,8 +464,7 @@ class EditorCellView(
   }
 
   companion object {
-    private val LOG = logger<EditorCell>()
-    val wasFoldedInRenderedState = Key<Boolean>("jupyter.markdown.folding.was.rendered")
+    val WAS_FOLDED_IN_RENDERED_STATE_KEY = Key<Boolean>("jupyter.markdown.folding.was.rendered")
   }
 }
 

@@ -4,19 +4,60 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.paint.RectanglePainter2D
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.visualization.use
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 
-internal class EditorCellFoldingBar(
+@ApiStatus.Internal
+class EditorCellFoldingBar(
   private val editor: EditorEx,
-  private val toggleListener: () -> Unit
+  private val yAndHeightSupplier: () -> Pair<Int, Int>,
+  private val toggleListener: () -> Unit,
 ) {
+  // Why not use the default approach with RangeHighlighters?
+  // Because it is not possible to create RangeHighlighter for every single inlay, only on a chain of consequential inlays.
+  private var panel: JComponent? = null
 
-  val panel = object : JComponent() {
+  var visible: Boolean
+    get() = panel?.isVisible == true
+    set(value) {
+      if (visible == value) return
 
+      if (value) {
+        val panel = createFoldingBar()
+        editor.gutterComponentEx.add(panel)
+        this.panel = panel
+        updateBounds()
+      }
+      else {
+        dispose()
+      }
+    }
+
+  var selected: Boolean = false
+    set(value) {
+      if (field != value) {
+        field = value
+        panel?.repaint()
+      }
+    }
+
+  fun dispose() {
+    panel?.let { editor.gutterComponentEx.remove(it) }
+    panel = null
+  }
+
+  fun updateBounds() {
+    val panel = panel ?: return
+    val yAndHeight = yAndHeightSupplier.invoke()
+    panel.setBounds(editor.gutterComponentEx.extraLineMarkerFreePaintersAreaOffset + 1, yAndHeight.first, 6, yAndHeight.second)
+  }
+
+  private fun createFoldingBar() = object : JComponent() {
     private var mouseOver = false
 
     init {
@@ -53,11 +94,14 @@ internal class EditorCellFoldingBar(
       else {
         null
       }
-      val graphics2D = g as Graphics2D
-      graphics2D.color = color
-      RectanglePainter2D.FILL.paint(graphics2D, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_DEFAULT)
+      g.create().use { g2 ->
+        g2 as Graphics2D
+        g2.color = color
+        RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_DEFAULT)
+      }
     }
 
+    // Returns rect size for drawing rounded corners rect of folding area
     private fun rect(): Rectangle {
       val size = size
       val width = size.width
@@ -66,35 +110,9 @@ internal class EditorCellFoldingBar(
         Rectangle(0, 0, width, height)
       }
       else {
+        //TODO Will not properly work with different UI scales.
         Rectangle(1, 1, width - 2, height - 2)
       }
     }
-  }
-
-  var visible: Boolean
-    get() = panel.isVisible
-    set(value) {
-      panel.isVisible = value
-    }
-
-  var selected: Boolean = false
-    set(value) {
-      if (field != value) {
-        field = value
-        panel.repaint()
-      }
-    }
-
-  init {
-    editor.gutterComponentEx.add(panel)
-  }
-
-  fun dispose() {
-    editor.gutterComponentEx.remove(panel)
-  }
-
-  fun setLocation(y: Int, height: Int) {
-    panel.location = Point(editor.gutterComponentEx.extraLineMarkerFreePaintersAreaOffset + 1, y)
-    panel.size = Dimension(6, height)
   }
 }
