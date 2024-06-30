@@ -14,7 +14,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
-import java.awt.*
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.GraphicsEnvironment
+import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JLayer
@@ -31,7 +34,10 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     if (!GraphicsEnvironment.isHeadless()) {
       setupScrollPaneListener()
     }
+
+    // TODO This position keeper conflicts with editor position keeper and produces invalid positioning on fold.
     setupScrollingPositionKeeper()
+
     manager.onInvalidate {
       component.revalidate()
     }
@@ -105,7 +111,6 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
         }
       }
     }
-
   })
 
   private fun updateMouseOverCell(component: JComponent, point: Point) {
@@ -117,13 +122,13 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
       val viewBottom = viewTop + it.bounds.height
       viewLeft <= point.x && viewTop <= point.y && viewRight >= point.x && viewBottom >= point.y
     }
+
     if (mouseOverCell != currentOverCell) {
       mouseOverCell?.mouseExited()
       mouseOverCell = currentOverCell
       mouseOverCell?.mouseEntered()
     }
   }
-
 }
 
 fun decorateTextEditor(textEditor: TextEditor, manager: NotebookCellInlayManager): TextEditor {
@@ -166,9 +171,5 @@ class EditorComponentWrapper(
     keepScrollingPositionWhile(editor) {
       super.validateTree()
     }
-  }
-
-  override fun paintComponent(g: Graphics?) {
-    super.paintComponent(g)
   }
 }

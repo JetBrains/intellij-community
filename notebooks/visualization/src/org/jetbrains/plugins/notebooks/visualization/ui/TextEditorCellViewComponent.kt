@@ -22,8 +22,7 @@ class TextEditorCellViewComponent(
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
     disposeExistingHighlighter()
-    val action = gutterAction
-    if (action != null) {
+    if (gutterAction != null) {
       val markupModel = editor.markupModel
       val interval = interval
       val startOffset = editor.document.getLineStartOffset(interval.lines.first)
@@ -35,7 +34,7 @@ class TextEditorCellViewComponent(
         TextAttributes(),
         HighlighterTargetArea.LINES_IN_RANGE
       )
-      highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(action)
+      highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
       this.highlighters = listOf(highlighter)
     }
   }
@@ -54,9 +53,9 @@ class TextEditorCellViewComponent(
   }
 
   override fun calculateBounds(): Rectangle {
+    val interval = interval
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val startLocation = editor.offsetToXY(startOffset)
-    val interval = interval
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
     val endLocation = editor.offsetToXY(endOffset)
     val height = endLocation.y + editor.lineHeight - startLocation.y
@@ -64,5 +63,4 @@ class TextEditorCellViewComponent(
     val dimension = Dimension(width, height)
     return Rectangle(startLocation, dimension)
   }
-
 }
