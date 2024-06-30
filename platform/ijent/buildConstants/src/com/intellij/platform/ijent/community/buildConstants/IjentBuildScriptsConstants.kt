@@ -13,8 +13,6 @@ fun isIjentWslFsEnabledByDefaultForProduct(platformPrefix: String?): Boolean =
   platformPrefix in IJENT_ENABLED_BY_DEFAULT_IN
 
 private val IJENT_ENABLED_BY_DEFAULT_IN: Collection<String> = listOf(
-  "idea",
-  "Idea",
   "WebStorm",
 )
 
