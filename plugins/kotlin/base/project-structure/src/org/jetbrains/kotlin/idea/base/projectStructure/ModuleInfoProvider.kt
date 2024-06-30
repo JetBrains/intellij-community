@@ -421,13 +421,14 @@ class ModuleInfoProvider(private val project: Project) {
 
     private fun SeqScope<Result<IdeaModuleInfo>>.collectByUserData(container: UserDataModuleContainer) {
         register {
-            val module = container.module
             val sourceRootType = container.customSourceRootType
+            if (sourceRootType == null) return@register null
 
-            if (module != null && sourceRootType != null) {
-                module.asSourceInfo(sourceRootType.sourceRootType)?.let {moduleInfo ->
-                    return@register moduleInfo
-                }
+            // Compute `module` last. `ModuleUtilCore.findModuleForPsiElement` is costly to compute as it iterates through all libraries of
+            // a module to find the virtual file possibly in a module-only library. At the same time, `customSourceRootType` only applies to
+            // Android light classes, which are an edge case, so we can assume that it'll be `null` most of the time.
+            container.module?.asSourceInfo(sourceRootType.sourceRootType)?.let { moduleInfo ->
+                return@register moduleInfo
             }
             null
         }
