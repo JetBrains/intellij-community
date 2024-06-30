@@ -149,7 +149,7 @@ class IndexUpdateRunner(
     fileSet: FileSet,
     processRequestTask: suspend (FileIndexingRequest) -> Unit,
   ) {
-    withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
+    withContext(Dispatchers.Default + CoroutineName("Indexing(${project.locationHash}")) {
       //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
       // of distributing the load across available CPUs.
       // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
