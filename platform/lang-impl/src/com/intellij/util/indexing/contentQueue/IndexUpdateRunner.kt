@@ -38,6 +38,7 @@ import java.io.IOException
 import java.nio.file.NoSuchFileException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.Condition
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
@@ -113,50 +114,66 @@ class IndexUpdateRunner(
 
     val contentLoader: CachedFileContentLoader = CurrentProjectHintedCachedFileContentLoader(project)
 
-    processFileSetInParallel(project, fileSet) { fileIndexingRequest ->
-      //blockingContext {
-      val presentableLocation = getPresentableLocationBeingIndexed(project, fileIndexingRequest.file)
-      progressReporter.setLocationBeingIndexed(presentableLocation)
-      indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
-      progressReporter.oneMoreFileProcessed()
-      //}
+    runBlockingCancellable {
+
+      //Detach UI update from processing: it's a waste of CPU to update UI on each
+      // file processed, especially if the machine is powerful with a lot of CPU cores
+      //TODO RC: all this is better encapsulated in the IndexingProgressReporter itself
+      val currentlyIndexedFileRef: AtomicReference<VirtualFile?> = AtomicReference(null)
+      val filesIndexed = AtomicInteger(0)
+      val progressReportingJob = launch {
+        while (true) {
+          delay(200)
+          val currentlyIndexedFile = currentlyIndexedFileRef.get()
+          if (currentlyIndexedFile != null) {
+            val presentableLocation = getPresentableLocationBeingIndexed(project, currentlyIndexedFile)
+            progressReporter.setLocationBeingIndexed(presentableLocation)
+          }
+          progressReporter.filesProcessed(filesIndexed.getAndSet(0))
+        }
+      }
+
+      processFileSetInParallel(project, fileSet) { fileIndexingRequest ->
+        currentlyIndexedFileRef.set(fileIndexingRequest.file)
+        indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
+        filesIndexed.incrementAndGet()
+      }
+
+      progressReportingJob.cancel()
     }
   }
 
-  private fun processFileSetInParallel(
+  private suspend fun processFileSetInParallel(
     project: Project,
     fileSet: FileSet,
     processRequestTask: suspend (FileIndexingRequest) -> Unit,
   ) {
-    runBlockingCancellable {
+    withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
+      //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
+      // of distributing the load across available CPUs.
+      // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
+      // So an optimization: we use fixed number of coroutines (approx. = # available CPUs), and a channel:
+      // BTW .forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) does almost the same thing, but it uses
+      // channel(size: 0), i.e. rendezvous-channel. I setup channel(size: 8k), to have some buffering:
 
-      withContext(Dispatchers.IO + CoroutineName("Indexing(${project.locationHash}")) {
-        //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
-        // of distributing the load across available CPUs.
-        // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
-        // So an optimization: we use fixed number of coroutines (approx. = # available CPUs), and a channel:
-        // BTW .forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) does almost the same thing, but it uses
-        // channel(size: 0), i.e. rendezvous-channel. I setup channel(size: 8k), to have some buffering:
-
-        val channel = fileSet.filesOriginal.asChannel(this, bufferSize = 8192)
-        repeat(INDEXING_PARALLELIZATION) {
-          launch {
-            for (fileIndexingRequest in channel) {
-              while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
-                delay(1)
-              }
-
-              processRequestTask(fileIndexingRequest)
-
-              ensureActive()
+      val channel = fileSet.filesOriginal.asChannel(this, bufferSize = 8192)
+      repeat(INDEXING_PARALLELIZATION) {
+        launch {
+          for (fileIndexingRequest in channel) {
+            while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
+              delay(1)
             }
+
+            processRequestTask(fileIndexingRequest)
+
+            ensureActive()
           }
         }
-
-        //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
-        //         index writing down the stack. But what if it is not?
-        IndexWriter.defaultParallelWriter().waitCurrentIndexingToFinish()
       }
+
+      //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
+      //         index writing down the stack. But what if it is not?
+      IndexWriter.defaultParallelWriter().waitCurrentIndexingToFinish()
     }
   }
 
