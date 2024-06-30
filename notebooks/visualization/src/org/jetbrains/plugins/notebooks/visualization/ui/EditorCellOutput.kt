@@ -11,7 +11,9 @@ import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory.Companion.gutterPainter
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputInlayShowable
 import org.jetbrains.plugins.notebooks.visualization.outputs.impl.CollapsingComponent
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
@@ -31,21 +33,8 @@ class EditorCellOutput internal constructor(
       component.isSeen = !value
     }
 
-  @TestOnly
-  fun getOutputComponent(): JComponent = component.mainComponent
-
-  private val folding = EditorCellFolding(editor) { component.isSeen = !component.isSeen }
-    .also {
-      component.addComponentListener(object : ComponentAdapter() {
-        override fun componentMoved(e: ComponentEvent) {
-          updateFoldingPosition(calculateBounds())
-        }
-
-        override fun componentResized(e: ComponentEvent) {
-          updateFoldingPosition(calculateBounds())
-        }
-      })
-    }
+  // Real UI Panel will be created lazily when folding became visible.
+  val folding: EditorCellFoldingBar = createFolding()
 
   init {
     if (DataManager.getDataProvider(component) == null) {
@@ -56,6 +45,30 @@ class EditorCellOutput internal constructor(
         }
       }
     }
+  }
+
+  @TestOnly
+  fun getOutputComponent(): JComponent = component.mainComponent
+
+  private fun getFoldingBounds(): Pair<Int, Int> {
+    val inlayComponentLocation = SwingUtilities.convertPoint(component, Point(0, 0), editor.gutterComponentEx)
+    return inlayComponentLocation.y to component.height
+  }
+
+  private fun createFolding(): EditorCellFoldingBar {
+    val folding = EditorCellFoldingBar(editor, ::getFoldingBounds) { component.isSeen = !component.isSeen }
+
+    component.addComponentListener(object : ComponentAdapter() {
+      override fun componentMoved(e: ComponentEvent) {
+        folding.updateBounds()
+      }
+
+      override fun componentResized(e: ComponentEvent) {
+        folding.updateBounds()
+      }
+    })
+
+    return folding
   }
 
   override fun doDispose() {
@@ -69,18 +82,6 @@ class EditorCellOutput internal constructor(
     validateComponent(component)
     val componentRect = SwingUtilities.convertRectangle(component, component.bounds, editor.scrollPane.viewport.view)
     component.shown = editor.scrollPane.viewport.viewRect.intersects(componentRect)
-  }
-
-  fun hideFolding() {
-    folding.hide()
-  }
-
-  fun showFolding() {
-    folding.show()
-  }
-
-  fun updateSelection(value: Boolean) {
-    folding.updateSelection(value)
   }
 
   fun paintGutter(editor: EditorImpl, yOffset: Int, g: Graphics, r: Rectangle) {
@@ -99,16 +100,6 @@ class EditorCellOutput internal constructor(
 
   override fun calculateBounds(): Rectangle {
     val location = SwingUtilities.convertPoint(component.parent, component.location, editor.contentComponent)
-    val size = component.size
-    return Rectangle(location, size)
+    return Rectangle(location, component.size)
   }
-
-  override fun doLayout() {
-    updateFoldingPosition(bounds)
-  }
-
-  private fun updateFoldingPosition(b: Rectangle) {
-    folding.updatePosition(b.y, b.height)
-  }
-
 }

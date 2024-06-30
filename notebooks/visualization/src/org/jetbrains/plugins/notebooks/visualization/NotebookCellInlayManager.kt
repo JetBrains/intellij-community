@@ -56,13 +56,13 @@ class NotebookCellInlayManager private constructor(
   fun getCellForInterval(interval: NotebookCellLines.Interval): EditorCell =
     _cells[interval.ordinal]
 
-  fun updateAllOutputs() = runInEdt {
+  fun updateAllOutputs() {
     _cells.forEach {
       it.view?.updateOutputs()
     }
   }
 
-  private fun updateAll() = runInEdt {
+  private fun updateAll() {
     if (initialized) {
       updateConsequentInlays(0..editor.document.lineCount, force = false)
     }
@@ -165,27 +165,18 @@ class NotebookCellInlayManager private constructor(
       }
 
       override fun onFoldProcessingEnd() {
-        val changedRegions = changedRegions.filter { it.getUserData(foldingKeyMarker) == true }
+        val changedRegions = changedRegions.filter { it.getUserData(FOLDING_MARKER_KEY) == true }
         this.changedRegions.clear()
         val removedRegions = removedRegions.toList()
         this.removedRegions.clear()
         changedRegions.forEach { region ->
-          val coveredCells = editorCells(region)
-          if (!region.isExpanded) {
-            coveredCells.forEach {
-              it.hide()
-            }
-          }
-          else {
-            coveredCells.forEach {
-              it.show()
-            }
+          editorCells(region).forEach {
+            it.visible = region.isExpanded
           }
         }
         removedRegions.forEach { region ->
-          val coveredCells = editorCells(region)
-          coveredCells.forEach {
-            it.show()
+          editorCells(region).forEach {
+            it.visible = true
           }
         }
       }
@@ -262,7 +253,7 @@ class NotebookCellInlayManager private constructor(
     val foldingModel = editor.foldingModel
     foldingModel.runBatchFoldingOperation({
                                             editorCells.forEach { cell ->
-                                              cell.view?.configureFoldings()
+                                              cell.view?.updateCellFolding()
                                             }
                                           }, true, false)
   }
@@ -294,7 +285,7 @@ class NotebookCellInlayManager private constructor(
 
     @JvmStatic
     fun get(editor: Editor): NotebookCellInlayManager? = key.get(editor)
-    val foldingKeyMarker = Key<Boolean>("jupyter.folding.paragraph")
+    val FOLDING_MARKER_KEY = Key<Boolean>("jupyter.folding.paragraph")
     private val key = Key.create<NotebookCellInlayManager>(NotebookCellInlayManager::class.java.name)
   }
 

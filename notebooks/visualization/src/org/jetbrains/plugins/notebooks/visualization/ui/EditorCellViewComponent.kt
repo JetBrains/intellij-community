@@ -35,14 +35,14 @@ abstract class EditorCellViewComponent {
     doDispose()
   }
 
-  open fun doDispose() {}
+  open fun doDispose() = Unit
 
   fun onViewportChange() {
     children.forEach { it.onViewportChange() }
     doViewportChange()
   }
 
-  open fun doViewportChange() {}
+  open fun doViewportChange() = Unit
 
   abstract fun calculateBounds(): Rectangle
 
@@ -68,5 +68,5 @@ abstract class EditorCellViewComponent {
     }
   }
 
-  open fun doInvalidate() {}
+  open fun doInvalidate() = Unit
 }
