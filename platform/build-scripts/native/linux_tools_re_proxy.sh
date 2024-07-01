@@ -12,7 +12,7 @@ declare -r dist_dir=$(make_target_dir "$2")
 declare -r build_number="$3"
 
 declare -r script_dir=$(realpath "$(dirname "$0")")
-declare -r top=$(realpath "$(dirname "$0")/../../..")
+declare -r top=$(realpath "$(dirname "$0")/../../../../..")
 
 declare -r re_client="${top}/prebuilts/remoteexecution-client/latest"
 
