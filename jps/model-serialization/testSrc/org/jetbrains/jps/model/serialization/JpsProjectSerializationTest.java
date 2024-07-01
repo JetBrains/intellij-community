@@ -7,6 +7,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.*;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -59,6 +60,7 @@ public class JpsProjectSerializationTest {
 
     List<JpsLibrary> libraries = project.getLibraryCollection().getLibraries();
     assertEquals(3, libraries.size());
+    assertEquals(project, ((JpsElementBase<?>)libraries.get(0)).getParent().getParent());
 
     List<JpsDependencyElement> dependencies = util.getDependenciesList().getDependencies();
     assertEquals(4, dependencies.size());
@@ -69,7 +71,10 @@ public class JpsProjectSerializationTest {
     assertEquals("1.5", reference.getSdkName());
     assertInstanceOf(dependencies.get(1), JpsModuleSourceDependency.class);
     assertInstanceOf(dependencies.get(2), JpsLibraryDependency.class);
-    assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
+    JpsLibraryDependency moduleLibraryDependency = assertInstanceOf(dependencies.get(3), JpsLibraryDependency.class);
+    JpsLibrary moduleLibrary = moduleLibraryDependency.getLibrary();
+    assertEquals("log4j", moduleLibrary.getName());
+    assertEquals(util, ((JpsElementBase<?>)moduleLibrary).getParent().getParent());
 
     assertEquals(projectData.getUrl(""), assertOneElement(main.getContentRootsList().getUrls()));
     assertEquals(projectData.getUrl("src"), assertOneElement(main.getSourceRoots()).getUrl());

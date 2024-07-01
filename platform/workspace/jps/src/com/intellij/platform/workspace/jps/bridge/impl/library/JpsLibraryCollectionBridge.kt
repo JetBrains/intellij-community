@@ -13,13 +13,15 @@ import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsLibraryType
 import org.jetbrains.jps.model.library.JpsTypedLibrary
 
-internal class JpsLibraryCollectionBridge(entities: List<LibraryEntity>, sdkEntities: List<SdkEntity>?, parentElement: JpsElementBase<*>) : JpsLibraryCollection {
+internal class JpsLibraryCollectionBridge(entities: List<LibraryEntity>, sdkEntities: List<SdkEntity>?, parentElement: JpsElementBase<*>) 
+  : JpsElementBase<JpsLibraryCollectionBridge>(), JpsLibraryCollection {
   private val libraries: List<JpsLibraryBridgeBase<*>> 
   
   init {
+    parent = parentElement
     val entitiesList = ArrayList<JpsLibraryBridgeBase<*>>()
-    entities.mapTo(entitiesList) { entity -> JpsLibraryBridge(entity, parentElement) }
-    sdkEntities?.mapTo(entitiesList) { entity -> JpsSdkLibraryBridge(entity, parentElement) }
+    entities.mapTo(entitiesList) { entity -> JpsLibraryBridge(entity, this) }
+    sdkEntities?.mapTo(entitiesList) { entity -> JpsSdkLibraryBridge(entity, this) }
     libraries = entitiesList
   }
                                             
