@@ -70,7 +70,8 @@ class InlayTextMetrics(
   val fontHeight: Int,
   val fontBaseline: Int,
   private val fontMetrics: FontMetrics,
-  val fontType: Int
+  val fontType: Int,
+  private val ideScale: Float,
 ) {
   companion object {
     internal fun create(editor: Editor, size: Float, fontType: Int) : InlayTextMetrics {
@@ -86,7 +87,7 @@ class InlayTextMetrics(
       // We assume this will be a better approximation to a real line height for a given font
       val fontHeight = ceil(font.createGlyphVector(context, "Albpq@").visualBounds.height).toInt()
       val fontBaseline = ceil(font.createGlyphVector(context, "Alb").visualBounds.height).toInt()
-      return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics, fontType)
+      return InlayTextMetrics(editor, fontHeight, fontBaseline, metrics, fontType, UISettings.getInstance().ideScale)
     }
 
     private fun getCurrentContext(editorComponent: JComponent): FontRenderContext {
@@ -109,6 +110,7 @@ class InlayTextMetrics(
   fun isActual(size: Float, familyName: String) : Boolean {
     if (size != font.size2D) return false
     if (font.family != familyName) return false
+    if (ideScale != UISettings.getInstance().ideScale) return false
     return getCurrentContext(editorComponent).equals(fontMetrics.fontRenderContext)
   }
 
