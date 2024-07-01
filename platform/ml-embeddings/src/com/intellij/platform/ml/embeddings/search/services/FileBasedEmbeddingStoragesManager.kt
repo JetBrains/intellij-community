@@ -49,6 +49,9 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
   @OptIn(ExperimentalCoroutinesApi::class)
   private val filesIterationContext = Dispatchers.Default.limitedParallelism(FILE_WORKER_COUNT)
 
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val indexingContext = Dispatchers.Default.limitedParallelism(8)
+
   private val filesLimit: Int?
     get() {
       return if (Registry.`is`("intellij.platform.ml.embeddings.index.files.use.limit")) {
@@ -193,61 +196,63 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     startIndexingSession()
     try {
       withContext(indexingScope.coroutineContext) {
-        LocalEmbeddingServiceProvider.getInstance().indexingSession {
-          suspend fun processChunk(chunk: HashMap<CharSequence, MutableList<IndexableEntity>>) {
-            val orderedRepresentations = chunk.map { it.key as String }.toList()
-            val embeddings = orderedRepresentations.map { embed(it).normalized() }
-            // Associate embeddings with actual indexable entities again
-            (orderedRepresentations.asSequence() zip embeddings.asSequence())
-              .flatMap { (representation, embedding) -> chunk[representation]!!.map { it to embedding } }
-              .groupBy({ (entity, _) -> getIndex(entity) }) { (entity, embedding) -> entity.id to embedding }
-              .forEach { (index, values) -> index.addEntries(values) }
-            chunk.clear()
-          }
-
-          val entityChannel = Channel<List<IndexableEntity>>(capacity = 4096)
-
-          repeat(EMBEDDING_WORKER_COUNT) {
-            launch {
-              // The map structure of chunk is important to not calculate embeddings multiple times for the same string
-              val chunk = HashMap<CharSequence, MutableList<IndexableEntity>>(BATCH_SIZE)
-              for (entitySeq in entityChannel) {
-                for (entity in entitySeq) {
-                  // The initial capacity of ArrayList here is selected empirically
-                  chunk.getOrPut((entity.indexableRepresentation as CharSequence).take(64)) { ArrayList(2) }.add(entity)
-                  // Batching and batch size accelerate the indexing speed and are crucial
-                  if (chunk.size == BATCH_SIZE && EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) {
-                    processChunk(chunk)
-                  }
-                }
-              }
-              if (chunk.isNotEmpty()) processChunk(chunk)
+        withContext(indexingContext) {
+          LocalEmbeddingServiceProvider.getInstance().indexingSession {
+            suspend fun processChunk(chunk: HashMap<CharSequence, MutableList<IndexableEntity>>) {
+              val orderedRepresentations = chunk.map { it.key as String }.toList()
+              val embeddings = orderedRepresentations.map { embed(it).normalized() }
+              // Associate embeddings with actual indexable entities again
+              (orderedRepresentations.asSequence() zip embeddings.asSequence())
+                .flatMap { (representation, embedding) -> chunk[representation]!!.map { it to embedding } }
+                .groupBy({ (entity, _) -> getIndex(entity) }) { (entity, embedding) -> entity.id to embedding }
+                .forEach { (index, values) -> index.addEntries(values) }
+              chunk.clear()
             }
-          }
 
-          val psiManager = PsiManager.getInstance(project)
-          val processedFiles = AtomicInteger(0)
-          val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
-          logger.debug { "Effective embedding indexing files limit: $total" }
-          withContext(filesIterationContext) {
-            val limit = filesLimit
-            repeat(FILE_WORKER_COUNT) { worker ->
+            val entityChannel = Channel<List<IndexableEntity>>(capacity = 4096)
+
+            repeat(EMBEDDING_WORKER_COUNT) {
               launch {
-                for ((i, file) in files.withIndex()) {
-                  if (i % FILE_WORKER_COUNT != worker) continue
-                  if (limit != null && processedFiles.get() >= limit) return@launch
-                  if (file.isFile && file.isValid && file.isInLocalFileSystem) {
-                    processFile(file, psiManager, settings, entityChannel)
-                    processedFiles.incrementAndGet()
+                // The map structure of chunk is important to not calculate embeddings multiple times for the same string
+                val chunk = HashMap<CharSequence, MutableList<IndexableEntity>>(BATCH_SIZE)
+                for (entitySeq in entityChannel) {
+                  for (entity in entitySeq) {
+                    // The initial capacity of ArrayList here is selected empirically
+                    chunk.getOrPut((entity.indexableRepresentation as CharSequence).take(64)) { ArrayList(2) }.add(entity)
+                    // Batching and batch size accelerate the indexing speed and are crucial
+                    if (chunk.size == BATCH_SIZE && EmbeddingIndexMemoryManager.getInstance().checkCanAddEntry()) {
+                      processChunk(chunk)
+                    }
                   }
-                  else {
-                    logger.debug { "File is not valid: ${file.name}" }
+                }
+                if (chunk.isNotEmpty()) processChunk(chunk)
+              }
+            }
+
+            val psiManager = PsiManager.getInstance(project)
+            val processedFiles = AtomicInteger(0)
+            val total: Int = filesLimit?.let { minOf(files.size, it) } ?: files.size
+            logger.debug { "Effective embedding indexing files limit: $total" }
+            withContext(filesIterationContext) {
+              val limit = filesLimit
+              repeat(FILE_WORKER_COUNT) { worker ->
+                launch {
+                  for ((i, file) in files.withIndex()) {
+                    if (i % FILE_WORKER_COUNT != worker) continue
+                    if (limit != null && processedFiles.get() >= limit) return@launch
+                    if (file.isFile && file.isValid && file.isInLocalFileSystem) {
+                      processFile(file, psiManager, settings, entityChannel)
+                      processedFiles.incrementAndGet()
+                    }
+                    else {
+                      logger.debug { "File is not valid: ${file.name}" }
+                    }
                   }
                 }
               }
             }
+            entityChannel.close()
           }
-          entityChannel.close()
         }
       }
     }
@@ -257,8 +262,10 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
     LocalEmbeddingServiceProvider.getInstance().cleanup()
   }
 
-  private suspend fun processFile(file: VirtualFile, psiManager: PsiManager, settings: EmbeddingIndexSettings,
-                                  channel: SendChannel<List<IndexableEntity>>) = coroutineScope {
+  private suspend fun processFile(
+    file: VirtualFile, psiManager: PsiManager, settings: EmbeddingIndexSettings,
+    channel: SendChannel<List<IndexableEntity>>,
+  ) = coroutineScope {
 
     val jobs = ArrayList<Deferred<List<IndexableEntity>>>(3)
     if (settings.shouldIndexFiles) {
@@ -367,8 +374,8 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
   companion object {
     fun getInstance(project: Project): FileBasedEmbeddingStoragesManager = project.service()
 
-    private const val FILE_WORKER_COUNT = 8
-    private const val EMBEDDING_WORKER_COUNT = 8
+    private const val FILE_WORKER_COUNT = 4
+    private const val EMBEDDING_WORKER_COUNT = 4
     private const val BATCH_SIZE = 256
 
     private val logger = Logger.getInstance(FileBasedEmbeddingStoragesManager::class.java)
