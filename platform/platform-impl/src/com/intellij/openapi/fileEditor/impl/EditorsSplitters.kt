@@ -220,9 +220,14 @@ open class EditorsSplitters internal constructor(
       .stateIn(coroutineScope, SharingStarted.Lazily, null)
 
     coroutineScope.launch(CoroutineName("EditorSplitters frame title update")) {
-      currentCompositeFlow.collectLatest { _ ->
-        updateFrameTitle()
-      }
+      @Suppress("OPT_IN_USAGE")
+      currentCompositeFlow
+        .debounce(100.milliseconds)
+        .collectLatest { composite ->
+          // some providers depend on editor list (DiffEditorTabTitleProvider)
+          composite?.waitForAvailableWithoutTriggeringInit()
+          updateFrameTitle()
+        }
     }
   }
 
@@ -451,11 +456,7 @@ open class EditorsSplitters internal constructor(
       }
     }
     else {
-      val frameTitleBuilder = serviceAsync<FrameTitleBuilder>()
-      val title = readAction {
-        frameTitleBuilder.getFileTitle(project, file)
-      }
-
+      val title = serviceAsync<FrameTitleBuilder>().getFileTitleAsync(project, file)
       val ioFile = try {
         if (file is LightVirtualFileBase) null else Path.of(file.presentableUrl)
       }
@@ -965,9 +966,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           )
 
           val tabTitleTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
-            readAction {
-              EditorTabPresentationUtil.getEditorTabTitle(fileEditorManager.project, file)
-            }
+            EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, file)
           }
           val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
             compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
