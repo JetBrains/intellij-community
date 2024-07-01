@@ -18,6 +18,10 @@ class EditorTabsUiComponent(data: ComponentData) : UiComponent(data) {
     x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]").click()
   }
 
+  fun doubleClickTab(text: String) {
+    x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]").doubleClick()
+  }
+
   fun closeTab(text: String = "") {
     x("//div[@class='EditorTabLabel'][.//div[@visible_text='$text']]//div[@myicon='closeSmall.svg']")
       .click()
