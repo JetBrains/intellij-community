@@ -76,7 +76,7 @@ internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : Performanc
     withContext(Dispatchers.EDT) {
       // do nothing
     }
-    context.project.service<ListenerState>().waitAnalysisToFinish()
+    context.project.service<CodeAnalysisStateListener>().waitAnalysisToFinish()
   }
 
   override fun getName(): String {
@@ -85,7 +85,7 @@ internal class WaitForFinishedCodeAnalysis(text: String, line: Int) : Performanc
 }
 
 @Service(Service.Level.PROJECT)
-class ListenerState(val project: Project, val cs: CoroutineScope) {
+class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
 
   internal companion object {
     val LOG = logger<WaitForFinishedCodeAnalysis>()
@@ -287,7 +287,7 @@ private class SimpleEditedDocumentsListener(private val project: Project) : Bulk
 
     val worthy = FileEditorManager.getInstance(project).getEditorList(file).getWorthy()
     if (worthy.isEmpty()) return
-    project.service<ListenerState>().registerEditedDocuments(worthy)
+    project.service<CodeAnalysisStateListener>().registerEditedDocuments(worthy)
   }
 }
 
@@ -299,13 +299,13 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   }
 
   override fun daemonStarting(fileEditors: Collection<FileEditor>) {
-    ListenerState.LOG.info("daemon starting with ${fileEditors.size} unfiltered editors: " +
-                           fileEditors.joinToString(separator = "\n") { it.description })
-    project.service<ListenerState>().registerAnalysisStarted(fileEditors.getWorthy())
+    CodeAnalysisStateListener.LOG.info("daemon starting with ${fileEditors.size} unfiltered editors: " +
+                                       fileEditors.joinToString(separator = "\n") { it.description })
+    project.service<CodeAnalysisStateListener>().registerAnalysisStarted(fileEditors.getWorthy())
   }
 
   override fun daemonCanceled(reason: String, fileEditors: Collection<FileEditor>) {
-    ListenerState.LOG.info("daemon canceled by the reason of '$reason'")
+    CodeAnalysisStateListener.LOG.info("daemon canceled by the reason of '$reason'")
     daemonStopped(fileEditors, true)
   }
 
@@ -315,16 +315,16 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
 
   private fun daemonStopped(fileEditors: Collection<FileEditor>, isCancelled: Boolean) {
     val status = if(isCancelled) "cancelled" else "stopped"
-    ListenerState.LOG.info("daemon $status with ${fileEditors.size} unfiltered editors")
+    CodeAnalysisStateListener.LOG.info("daemon $status with ${fileEditors.size} unfiltered editors")
     val worthy = fileEditors.getWorthy()
     if (worthy.isEmpty()) return
 
-    val highlightedEditors: Map<TextEditor, ListenerState.HighlightedEditor> = runReadAction {
+    val highlightedEditors: Map<TextEditor, CodeAnalysisStateListener.HighlightedEditor> = runReadAction {
       val isFinishedInDumbMode = DumbService.isDumb(project)
-      worthy.associateWith { ListenerState.HighlightedEditor.create(it, project, isCancelled = isCancelled, isFinishedInDumbMode = isFinishedInDumbMode) }
+      worthy.associateWith { CodeAnalysisStateListener.HighlightedEditor.create(it, project, isCancelled = isCancelled, isFinishedInDumbMode = isFinishedInDumbMode) }
     }
 
-    project.service<ListenerState>().registerAnalysisFinished(highlightedEditors)
+    project.service<CodeAnalysisStateListener>().registerAnalysisFinished(highlightedEditors)
   }
 }
 
@@ -336,7 +336,7 @@ internal class WaitForFinishedCodeAnalysisFileEditorListener : FileOpenedSyncLis
   }
 
   override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
-    source.project.service<ListenerState>().registerOpenedEditors(editorsWithProviders.map { it.fileEditor }.getWorthy())
+    source.project.service<CodeAnalysisStateListener>().registerOpenedEditors(editorsWithProviders.map { it.fileEditor }.getWorthy())
   }
 }
 
