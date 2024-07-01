@@ -8,6 +8,9 @@ import java.io.Reader
 
 @ApiStatus.Experimental
 interface GraphQLDataDeserializer {
+  /**
+   * The reader is not closed by this function. It should be managed by the caller.
+   */
   fun <T> readAndMapGQLResponse(bodyReader: Reader, pathFromData: Array<out String>, clazz: Class<T>)
   : GraphQLResponseDTO<T?, GraphQLErrorDTO>
 }
