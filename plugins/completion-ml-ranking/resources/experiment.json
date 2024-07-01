@@ -204,6 +204,13 @@
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
+    },
+    {
+      "number": 40,
+      "description": "Full Line - RAG + filter model V2",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -240,7 +247,7 @@
     {
       "id": "javascript",
       "experimentBucketsCount": 2,
-      "includeGroups": [31, 38],
+      "includeGroups": [31, 40],
       "shouldLogElementFeatures": true
     },
     {
@@ -288,7 +295,7 @@
     {
       "id": "C++",
       "experimentBucketsCount": 4,
-      "includeGroups": [7, 22, 24],
+      "includeGroups": [22, 28],
       "shouldLogElementFeatures": false
     },
     {
@@ -300,7 +307,7 @@
     {
       "id": "css",
       "experimentBucketsCount": 2,
-      "includeGroups": [31, 38],
+      "includeGroups": [31, 40],
       "shouldLogElementFeatures": true
     },
     {
