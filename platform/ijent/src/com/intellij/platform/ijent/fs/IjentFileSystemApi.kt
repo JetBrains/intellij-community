@@ -295,12 +295,16 @@ sealed interface IjentOpenedFile {
     }
 
     @Throws(TruncateException::class)
-    suspend fun truncate()
+    suspend fun truncate(size: Long)
 
     sealed class TruncateException(
       where: IjentPath.Absolute,
       additionalMessage: @NlsSafe String,
     ) : IjentFsIOException(where, additionalMessage) {
+      class UnknownFile(where: IjentPath.Absolute) : TruncateException(where, "Could not find opened file"), IjentFsError.UnknownFile
+      class NegativeOffset(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
+      class OffsetTooBig(where: IjentPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
+      class ReadOnlyFs(where: IjentPath.Absolute) : TruncateException(where, "File system is read-only")
       class Other(where: IjentPath.Absolute, additionalMessage: @NlsSafe String)
         : TruncateException(where, additionalMessage), IjentFsError.Other
     }

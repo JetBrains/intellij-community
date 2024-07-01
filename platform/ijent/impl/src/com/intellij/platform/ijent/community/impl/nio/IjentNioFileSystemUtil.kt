@@ -6,6 +6,7 @@ package com.intellij.platform.ijent.community.impl.nio
 import com.intellij.platform.ijent.fs.*
 import com.intellij.util.text.nullize
 import java.io.IOException
+import java.nio.channels.NonWritableChannelException
 import java.nio.file.*
 
 /**
@@ -46,11 +47,14 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.NotDirectory -> NotDirectoryException(where.toString())
     is IjentFsError.AlreadyDeleted -> NoSuchFileException(where.toString())
     is IjentFsError.AlreadyExists -> FileAlreadyExistsException(where.toString())
-    is IjentFsError.FileNotOpened -> IOException("File is not opened")
-    is IjentOpenedFile.SeekError.InvalidValue -> TODO()
+    is IjentFsError.UnknownFile -> IOException("File is not opened")
+    is IjentOpenedFile.SeekError.InvalidValue -> throw IllegalArgumentException(message)
     is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
     is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
     is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
+    is IjentOpenedFile.Writer.TruncateException.NegativeOffset,
+    is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
+    is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> throw NonWritableChannelException()
   }
 }
 

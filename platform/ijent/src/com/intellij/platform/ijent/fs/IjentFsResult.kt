@@ -57,6 +57,10 @@ sealed class IjentFsIOException(
       is IjentFsError.AlreadyExists -> "File with this name already exists"
       is IjentFsError.Other -> "Unexpected rare error"
       is IjentFileSystemApi.DeleteException.DirNotEmpty -> "Directory is not empty"
+      is IjentOpenedFile.Writer.TruncateException.NegativeOffset -> "Offset is negative"
+      is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> "Offset is too big"
+      is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> "File system is read-only"
+      is IjentOpenedFile.Writer.TruncateException.UnknownFile -> "File is not opened"
     }
     return if (additionalMessage.isEmpty()) "$prefix: $where" else "$prefix: $where ($additionalMessage)"
   }
