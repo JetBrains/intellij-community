@@ -2,9 +2,13 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.JPS
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
 import com.intellij.platform.workspace.storage.ConnectionId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.containers.with
+import io.opentelemetry.api.metrics.Meter
 
 internal typealias ChangeLog = MutableMap<EntityId, ChangeEntry>
 
@@ -73,7 +77,7 @@ internal class WorkspaceBuilderChangeLog {
     newConnectionId: ConnectionId,
     newParentId: ParentEntityId,
     incModificationCounter: Boolean = true,
-  ) {
+  ) = addReplaceEventForNewParentMs.addMeasuredTime {
     if (incModificationCounter) modificationCount++
 
     val existingChange = changeLog[entityId]
@@ -139,7 +143,7 @@ internal class WorkspaceBuilderChangeLog {
     removedConnectionId: ConnectionId,
     removedParentId: ParentEntityId,
     incModificationCounter: Boolean = true,
-  ) {
+  ) = addReplaceEventForRemovedParentMs.addMeasuredTime {
     if (incModificationCounter) modificationCount++
 
     val existingChange = changeLog[entityId]
@@ -205,7 +209,7 @@ internal class WorkspaceBuilderChangeLog {
     addedChildConnectionId: ConnectionId,
     addedChildId: ChildEntityId,
     incModificationCounter: Boolean = true,
-  ) {
+  ) = addReplaceEventForNewChildMs.addMeasuredTime {
     if (incModificationCounter) modificationCount++
 
     val existingChange = changeLog[entityId]
@@ -292,7 +296,7 @@ internal class WorkspaceBuilderChangeLog {
     removedChildConnectionId: ConnectionId,
     removedChildId: ChildEntityId,
     incModificationCounter: Boolean = true,
-  ) {
+  ) = addReplaceEventForRemovedChildMs.addMeasuredTime  {
     if (incModificationCounter) modificationCount++
 
     val existingChange = changeLog[entityId]
@@ -478,6 +482,35 @@ internal class WorkspaceBuilderChangeLog {
 
   companion object {
     val LOG = logger<WorkspaceBuilderChangeLog>()
+
+    private val addReplaceEventForNewParentMs = MillisecondsMeasurer()
+    private val addReplaceEventForNewChildMs = MillisecondsMeasurer()
+    private val addReplaceEventForRemovedParentMs = MillisecondsMeasurer()
+    private val addReplaceEventForRemovedChildMs = MillisecondsMeasurer()
+
+    private fun setupOpenTelemetryReporting(meter: Meter) {
+      val addReplaceEventForNewParentCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.changeLog.addReplaceEventForNewParent.ms").buildObserver()
+      val addReplaceEventForNewChildCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.changeLog.addReplaceEventForNewChild.ms").buildObserver()
+      val addReplaceEventForRemovedParentCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.changeLog.addReplaceEventForRemovedParent.ms").buildObserver()
+      val addReplaceEventForRemovedChildCounter = meter.counterBuilder("workspaceModel.mutableEntityStorage.changeLog.addReplaceEventForRemovedChild.ms").buildObserver()
+
+      meter.batchCallback(
+        {
+          addReplaceEventForNewParentCounter.record(addReplaceEventForNewParentMs.asMilliseconds())
+          addReplaceEventForNewChildCounter.record(addReplaceEventForNewChildMs.asMilliseconds())
+          addReplaceEventForRemovedParentCounter.record(addReplaceEventForRemovedParentMs.asMilliseconds())
+          addReplaceEventForRemovedChildCounter.record(addReplaceEventForRemovedChildMs.asMilliseconds())
+        },
+        addReplaceEventForNewParentCounter,
+        addReplaceEventForNewChildCounter,
+        addReplaceEventForRemovedParentCounter,
+        addReplaceEventForRemovedChildCounter,
+      )
+    }
+
+    init {
+      setupOpenTelemetryReporting(TelemetryManager.getMeter(JPS))
+    }
   }
 }
 
