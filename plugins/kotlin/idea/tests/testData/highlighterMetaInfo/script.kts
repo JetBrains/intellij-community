@@ -1,5 +1,5 @@
+// FIR_IDENTICAL
 // IGNORE_K1
-// IGNORE_K2
 class MyScriptClass {
     fun memberFunction(i: Int) {
 

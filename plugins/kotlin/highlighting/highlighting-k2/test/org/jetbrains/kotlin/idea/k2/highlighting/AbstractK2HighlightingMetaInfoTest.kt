@@ -26,7 +26,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
         val psiFile = files.first()
         if (psiFile is KtFile && psiFile.isScript()) {
             val scriptModel = ScriptModel(psiFile.virtualFile)
-            K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(setOf(scriptModel), System.getProperty("java.home"))
+            K2ScriptDependenciesProvider.getInstance(project).reloadConfigurations(setOf(scriptModel), null)
         }
 
         super.doMultiFileTest(files, globalDirectives)
