@@ -96,6 +96,7 @@ internal object GHPRStatusChecksComponentFactory {
       requestOrError.bimap(
         ifLeft = {
           when (it) {
+            is AlreadyResolvedLocally -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.alreadyResolvedLocally")
             is MergeInProgress -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.mergeInProgress")
             is DetailsNotLoaded -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.detailsNotLoaded")
             is RepositoryNotFound -> GithubBundle.message("pull.request.resolveConflicts.error.repositoryNotFound", it.baseOrHead.text)
