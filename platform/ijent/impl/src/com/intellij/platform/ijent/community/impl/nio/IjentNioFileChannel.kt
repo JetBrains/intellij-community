@@ -156,7 +156,18 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun truncate(size: Long): FileChannel = apply {
-    TODO("Not yet implemented")
+    val file = when (ijentOpenedFile) {
+      is IjentOpenedFile.Writer -> ijentOpenedFile
+      is IjentOpenedFile.Reader -> throw IOException("File ${ijentOpenedFile.path} is not open for writing")
+    }
+    nioFs.fsBlocking {
+      try {
+        file.truncate(size)
+      } catch (e : IjentOpenedFile.Writer.TruncateException) {
+        e.throwFileSystemException()
+      }
+    }
+    return this
   }
 
   override fun force(metaData: Boolean) {
