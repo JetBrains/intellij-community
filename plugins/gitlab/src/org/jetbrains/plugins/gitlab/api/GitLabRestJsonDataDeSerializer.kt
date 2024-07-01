@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonMapperBuilder
 import com.intellij.collaboration.api.json.JsonDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import java.io.Reader
@@ -16,23 +16,27 @@ import java.util.*
 
 object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer {
 
-  private val mapper: ObjectMapper = jacksonObjectMapper()
+  private val mapper: ObjectMapper = gitlabJacksonMapper()
     .genericConfig()
     .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
-  internal fun ObjectMapper.genericConfig(): ObjectMapper =
-    this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
-      .setTimeZone(TimeZone.getDefault())
+  internal fun gitlabJacksonMapper(): ObjectMapper =
+    jacksonMapperBuilder()
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
       .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
       .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
-      .setSerializationInclusion(JsonInclude.Include.NON_NULL)
-      .setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
+      .serializationInclusion(JsonInclude.Include.NON_NULL)
+      .visibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.NONE,
                                            JsonAutoDetect.Visibility.ANY))
+      .build()
+
+  internal fun ObjectMapper.genericConfig(): ObjectMapper =
+    this.setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"))
+      .setTimeZone(TimeZone.getDefault())
 
   override fun toJsonBytes(content: Any): ByteArray = mapper.writeValueAsBytes(content)
 

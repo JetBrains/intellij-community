@@ -5,18 +5,18 @@ import com.fasterxml.jackson.databind.JavaType
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.genericConfig
+import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.gitlabJacksonMapper
 import java.io.Reader
 import java.text.SimpleDateFormat
 
 object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
 
-  private val mapper: ObjectMapper = jacksonObjectMapper()
+  private val mapper: ObjectMapper = gitlabJacksonMapper()
     .genericConfig()
     .setDateFormat(SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"))
     .setPropertyNamingStrategy(PropertyNamingStrategies.LOWER_CAMEL_CASE)
