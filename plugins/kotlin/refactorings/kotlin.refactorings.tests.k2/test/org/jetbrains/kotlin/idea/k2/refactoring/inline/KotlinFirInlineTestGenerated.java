@@ -47,6 +47,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/AppendToCollection.kt");
         }
 
+        @TestMetadata("asSuperTypeCallArgument.kt")
+        public void testAsSuperTypeCallArgument() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/asSuperTypeCallArgument.kt");
+        }
+
         @TestMetadata("Basic.kt")
         public void testBasic() throws Exception {
             runTest("../../idea/tests/testData/refactoring/inline/inlineVariableOrProperty/Basic.kt");

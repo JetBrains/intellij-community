@@ -60,7 +60,7 @@ class CodeInliner(
         val qualifiedElement = if (call is KtExpression) {
             call.getQualifiedExpressionForSelector()
                 ?: call.callableReferenceExpressionForReference()
-                ?: PsiTreeUtil.getParentOfType(call, KtSuperTypeCallEntry::class.java)
+                ?: call.parent as? KtSuperTypeCallEntry
                 ?: call
         } else call
         val assignment = (qualifiedElement as? KtExpression)

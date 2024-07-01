@@ -924,6 +924,11 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/AppendToCollection.kt");
             }
 
+            @TestMetadata("asSuperTypeCallArgument.kt")
+            public void testAsSuperTypeCallArgument() throws Exception {
+                runTest("testData/refactoring/inline/inlineVariableOrProperty/asSuperTypeCallArgument.kt");
+            }
+
             @TestMetadata("Basic.kt")
             public void testBasic() throws Exception {
                 runTest("testData/refactoring/inline/inlineVariableOrProperty/Basic.kt");
