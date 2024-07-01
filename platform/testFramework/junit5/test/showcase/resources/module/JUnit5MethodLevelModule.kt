@@ -3,38 +3,33 @@ package com.intellij.testFramework.junit5.showcase.resources.module
 
 import com.intellij.openapi.module.Module
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.resources.NoInject
-import com.intellij.testFramework.junit5.resources.ProjectResource
-import com.intellij.testFramework.junit5.resources.asExtension
-import com.intellij.testFramework.junit5.resources.providers.module.ModuleProvider
+import com.intellij.testFramework.junit5.fixture.moduleFixture
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 
 /**
  * Method-level [Module]s are destroyed after each test
  */
 @TestApplication
-@ProjectResource
 class JUnit5MethodLevelModule {
 
-  @JvmField
-  @RegisterExtension
-  val ext = ModuleProvider().asExtension()
+  private val moduleFixture = projectFixture().moduleFixture()
 
-  @NoInject
   private var moduleFromPreviousTest: Module? = null
 
   @Test
-  fun test(module1: Module, module2: Module) {
+  fun test() {
+    val module1 = moduleFixture.get()
+    val module2 = moduleFixture.get()
     Assertions.assertEquals(module1, module2, "Method level modules must be same")
     Assertions.assertFalse(module1.isDisposed)
     ensureNotModuleFromPrevTest(module1)
   }
 
   @Test
-  fun testDifferentModule(module: Module) {
-    ensureNotModuleFromPrevTest(module)
+  fun testDifferentModule() {
+    ensureNotModuleFromPrevTest(moduleFixture.get())
   }
 
   private fun ensureNotModuleFromPrevTest(module: Module) {
