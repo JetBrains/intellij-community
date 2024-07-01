@@ -12,11 +12,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.docking.impl.DockManagerImpl
 
-internal val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDITOR")
+private val IS_DIFF_FILE_EDITOR: Key<Boolean> = Key.create("IS_DEFAULT_DIFF_EDITOR")
 private val CUSTOM_DIFF_ESCAPE_HANDLER: Key<AnAction> = Key.create("CUSTOM_DIFF_ESCAPE_HANDLER")
 
-internal class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
-
+private class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCustomizer {
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
     registerEscapeAction(editor)
 
@@ -45,7 +44,7 @@ internal class DefaultDiffFileEditorCustomizer : DiffRequestProcessorEditorCusto
 
 private class DiffEditorEscapeDelegatingAction(delegate: AnAction) : AnActionWrapper(delegate), DiffEditorEscapeAction
 
-internal class CloseDiffEditorAction : DumbAwareAction(), DiffEditorEscapeAction {
+private class CloseDiffEditorAction : DumbAwareAction(), DiffEditorEscapeAction {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   override fun update(e: AnActionEvent) {
