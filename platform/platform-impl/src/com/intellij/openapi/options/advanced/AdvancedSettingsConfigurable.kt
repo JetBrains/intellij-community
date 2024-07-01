@@ -7,7 +7,6 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar
 import com.intellij.internal.statistic.collectors.fus.ui.SettingsCounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationBundle
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.DslConfigurableBase
 import com.intellij.openapi.options.SearchableConfigurable
@@ -34,6 +33,12 @@ import javax.swing.JLabel
 import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurable, Configurable.NoScroll {
+  class Config {
+    companion object {
+      var showFederatedLearningSwitches = false
+    }
+  }
+
   private class SettingsGroup(val groupRow: Row, val title: JBLabel, val text: String, val settingsRows: Collection<SettingsRow>)
 
   private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String, val isDefaultPredicate: ComponentPredicate) {
@@ -152,20 +157,10 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
     }
   }
 
-  private fun isInternalBuild(): Boolean {
-    return ApplicationManager.getApplication().isEAP && ApplicationManager.getApplication().isInternal
-  }
-
-  private fun isJetBrainsUser(): Boolean {
-    val acc = JBAccountInfoService.getInstance()
-    return acc?.userData?.email?.endsWith("@jetbrains.com") == true
-  }
-
   private fun AdvancedSettingBean.isApplicable(): Boolean =
-    when (id) {
-      "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
-      "federated.learning",
-      "federated.learning.search.everywhere" -> isInternalBuild() && isJetBrainsUser()
+    when {
+      id == "project.view.do.not.autoscroll.to.libraries" -> !ProjectJdkTable.getInstance().allJdks.isEmpty()
+      id.startsWith("federated.learning") -> Config.showFederatedLearningSwitches
       else -> true
     }
 

@@ -1639,8 +1639,6 @@
     <advancedSetting id="search.everywhere.show.results.notification" default="true" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.contributors.wait.timeout" default="2000" groupKey="group.advanced.settings.se"/>
     <advancedSetting id="search.everywhere.recent.at.top" default="true" groupKey="group.advanced.settings.se"/>
-    <advancedSetting id="federated.learning" default="true" groupKey="group.advanced.settings.federated.learning"/>
-    <advancedSetting id="federated.learning.search.everywhere" default="true" groupKey="group.advanced.settings.federated.learning"/>
 
     <applicationInitializedListener implementation="com.intellij.lang.documentation.ide.impl.QuickDocAutoPopupInEAPInitializer"/>
 
