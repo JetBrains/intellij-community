@@ -181,6 +181,15 @@ open class JBTabsImpl internal constructor(
       private set
     private val RELAYOUT_DELAY = 2000
     private val relayoutAlarm = Alarm(parentDisposable)
+    private var suspended = false
+
+    fun suspend() {
+      suspended = true
+    }
+
+    fun resume() {
+      suspended = false
+    }
 
     fun reset() {
       relayoutAlarm.cancelAllRequests()
@@ -188,6 +197,7 @@ open class JBTabsImpl internal constructor(
     }
 
     fun setRecentlyActive() {
+      if (suspended) return
       relayoutAlarm.cancelAllRequests()
       isRecentlyActive = true
       if (!relayoutAlarm.isDisposed) {
@@ -2012,6 +2022,7 @@ open class JBTabsImpl internal constructor(
   }
 
   override fun doLayout() {
+    scrollBarActivityTracker.suspend() // Model changes caused by layout changes shouldn't be interpreted as activity.
     try {
       for (tab in tabs) {
         tab.tabLabel?.setTabActionsAutoHide(tabLabelActionsAutoHide)
@@ -2081,6 +2092,7 @@ open class JBTabsImpl internal constructor(
     }
     finally {
       forcedRelayout = false
+      scrollBarActivityTracker.resume()
     }
   }
 
