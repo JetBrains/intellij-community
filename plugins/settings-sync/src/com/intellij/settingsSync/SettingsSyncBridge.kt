@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.SettingsSyncBridge.PushRequestMode.*
 import com.intellij.settingsSync.statistics.SettingsSyncEventsStatistics
 import com.intellij.util.containers.ContainerUtil
@@ -38,6 +39,10 @@ class SettingsSyncBridge(
 
   @Volatile
   private var queueJob: Job? = null
+
+  val isInitialized
+    get() = queueJob != null
+
 
   private val eventsLock = ReentrantLock()
 
@@ -76,24 +81,27 @@ class SettingsSyncBridge(
 
   internal fun initialize(initMode: InitMode) {
     coroutineScope.launch {
-      try {
-        settingsLog.initialize()
+      withProgressText(SettingsSyncBundle.message(initMode.messageKey)) {
+        try {
+          settingsLog.initialize()
 
-        // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-        SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
-        ideMediator.activateStreamProvider()
+          // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
+          SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
+          ideMediator.activateStreamProvider()
 
-        applyInitialChanges(initMode)
+          applyInitialChanges(initMode)
 
-        startQueue()
-      }
-      catch (ex: Exception) {
-        stopSyncingAndRollback(null, ex)
+          startQueue()
+        }
+        catch (ex: Exception) {
+          stopSyncingAndRollback(null, ex)
+        }
       }
     }
   }
 
   private fun startQueue() {
+    LOG.info("Starting settings sync queue")
     queueJob = coroutineScope.launch {
       while (true) {
         processPendingEvents()
@@ -197,11 +205,18 @@ class SettingsSyncBridge(
     })
   }
 
-  internal sealed class InitMode {
-    object JustInit : InitMode()
-    class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange) : InitMode()
-    class MigrateFromOldStorage(val migration: SettingsSyncMigration) : InitMode()
-    object PushToServer : InitMode()
+  internal sealed class InitMode(val messageKey: String) {
+    object JustInit
+      : InitMode("enable.sync.check.server.data.progress")
+
+    class TakeFromServer(val cloudEvent: SyncSettingsEvent.CloudChange)
+      : InitMode("enable.sync.get.from.server.progress")
+
+    class MigrateFromOldStorage(val migration: SettingsSyncMigration)
+      : InitMode("enable.sync.check.server.data.progress")
+
+    object PushToServer
+      : InitMode("enable.sync.push.to.server.progress")
   }
 
   private suspend fun processExclusiveEvent(event: SyncSettingsEvent.ExclusiveEvent) {
@@ -239,7 +254,7 @@ class SettingsSyncBridge(
           var mergeAndPushAfterProcessingEvents = true
           while (pendingEvents.isNotEmpty()) {
             val event = pendingEvents.removeAt(0)
-            LOG.debug("Processing event $event")
+            LOG.info("Processing event $event")
             when (event) {
               is SyncSettingsEvent.IdeChange -> {
                 settingsLog.applyIdeState(event.snapshot, "Local changes made in the IDE")
