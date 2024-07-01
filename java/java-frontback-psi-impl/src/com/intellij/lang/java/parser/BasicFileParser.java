@@ -196,7 +196,12 @@ public class BasicFileParser {
     IElementType type = getImportType(builder);
     boolean isStatic = type == myJavaElementTypeContainer.IMPORT_STATIC_STATEMENT;
     boolean isModule = type == myJavaElementTypeContainer.IMPORT_MODULE_STATEMENT;
-    boolean isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic, isModule);
+    final boolean isOk;
+    if (isModule) {
+      isOk = myParser.getModuleParser().parseName(builder) != null;
+    } else {
+      isOk = myParser.getReferenceParser().parseImportCodeReference(builder, isStatic);
+    }
     if (isOk) semicolon(builder);
 
     done(statement, type, myWhiteSpaceAndCommentSetHolder);

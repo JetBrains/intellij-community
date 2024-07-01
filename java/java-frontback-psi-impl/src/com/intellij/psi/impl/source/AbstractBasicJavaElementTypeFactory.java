@@ -87,8 +87,6 @@ public abstract class AbstractBasicJavaElementTypeFactory {
 
     public final IElementType IMPORT_STATIC_REFERENCE;
 
-    public final IElementType IMPORT_MODULE_REFERENCE;
-
     public final IElementType TYPE;
 
     public final IElementType DIAMOND_TYPE;
@@ -274,7 +272,6 @@ public abstract class AbstractBasicJavaElementTypeFactory {
                                     IElementType NAME_VALUE_PAIR,
                                     IElementType LITERAL_EXPRESSION,
                                     IElementType IMPORT_STATIC_REFERENCE,
-                                    IElementType IMPORT_MODULE_REFERENCE,
                                     IElementType TYPE,
                                     IElementType DIAMOND_TYPE,
                                     IElementType REFERENCE_PARAMETER_LIST,
@@ -388,7 +385,6 @@ public abstract class AbstractBasicJavaElementTypeFactory {
       this.NAME_VALUE_PAIR = NAME_VALUE_PAIR;
       this.LITERAL_EXPRESSION = LITERAL_EXPRESSION;
       this.IMPORT_STATIC_REFERENCE = IMPORT_STATIC_REFERENCE;
-      this.IMPORT_MODULE_REFERENCE = IMPORT_MODULE_REFERENCE;
       this.TYPE = TYPE;
       this.DIAMOND_TYPE = DIAMOND_TYPE;
       this.REFERENCE_PARAMETER_LIST = REFERENCE_PARAMETER_LIST;

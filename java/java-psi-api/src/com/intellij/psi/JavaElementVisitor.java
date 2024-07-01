@@ -197,10 +197,6 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(list);
   }
 
-  public void visitImportModuleReferenceElement(@NotNull PsiImportModuleReferenceElement reference) {
-    visitReferenceElement(reference);
-  }
-
   public void visitImportModuleStatement(@NotNull PsiImportModuleStatement statement) {
     visitElement(statement);
   }

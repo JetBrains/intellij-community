@@ -5,11 +5,8 @@ java.FILE
       WHITE_SPACE
       MODULE
       WHITE_SPACE
-      IMPORT_MODULE_REFERENCE
-        JAVA_CODE_REFERENCE
-          IDENTIFIER
+      MODULE_REFERENCE
+        IDENTIFIER
         DOT
         IDENTIFIER
-        REFERENCE_PARAMETER_LIST
-          <empty list>
       SEMICOLON

@@ -5,11 +5,8 @@ PsiJavaFile:ModuleImport.java
       PsiWhiteSpace(' ')
       PsiKeyword:module('module')
       PsiWhiteSpace(' ')
-      PsiImportModuleReferenceElement:java.sql
-        PsiJavaCodeReferenceElement:java
-          PsiIdentifier:java('java')
+      PsiJavaModuleReference
+        PsiIdentifier:java('java')
         PsiJavaToken:DOT('.')
         PsiIdentifier:sql('sql')
-        PsiReferenceParameterList
-          <empty list>
       PsiJavaToken:SEMICOLON(';')

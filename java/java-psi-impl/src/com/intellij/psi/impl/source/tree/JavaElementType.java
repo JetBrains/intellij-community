@@ -78,9 +78,6 @@ public interface JavaElementType {
   IElementType IMPORT_STATIC_REFERENCE =
     new JavaCompositeElementType("IMPORT_STATIC_REFERENCE", () -> new PsiImportStaticReferenceElementImpl(),
                                  BASIC_IMPORT_STATIC_REFERENCE);
-  IElementType IMPORT_MODULE_REFERENCE =
-    new JavaCompositeElementType("IMPORT_MODULE_REFERENCE", () -> new PsiImportModuleReferenceElementImpl(),
-                                 BASIC_IMPORT_MODULE_REFERENCE);
   IElementType TYPE = new JavaCompositeElementType("TYPE", () -> new PsiTypeElementImpl(), BASIC_TYPE);
   IElementType DIAMOND_TYPE =
     new JavaCompositeElementType("DIAMOND_TYPE", () -> new PsiDiamondTypeElementImpl(), BASIC_DIAMOND_TYPE);

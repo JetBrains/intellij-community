@@ -60,7 +60,6 @@ public class JavaElementTypeFactory extends AbstractBasicJavaElementTypeFactory 
       JavaElementType.NAME_VALUE_PAIR,
       JavaElementType.LITERAL_EXPRESSION,
       JavaElementType.IMPORT_STATIC_REFERENCE,
-      JavaElementType.IMPORT_MODULE_REFERENCE,
       JavaElementType.TYPE,
       JavaElementType.DIAMOND_TYPE,
       JavaElementType.REFERENCE_PARAMETER_LIST,

@@ -72,7 +72,6 @@ public interface BasicJavaElementType {
   IElementType BASIC_PERMITS_LIST = new IJavaElementType("PERMITS_LIST", true);
 
   IElementType BASIC_IMPORT_STATIC_REFERENCE = new IJavaElementType("IMPORT_STATIC_REFERENCE");
-  IElementType BASIC_IMPORT_MODULE_REFERENCE = new IJavaElementType("IMPORT_MODULE_REFERENCE");
   IElementType BASIC_TYPE = new IJavaElementType("TYPE");
   IElementType BASIC_DIAMOND_TYPE = new IJavaElementType("DIAMOND_TYPE");
   IElementType BASIC_REFERENCE_PARAMETER_LIST = new IJavaElementType("REFERENCE_PARAMETER_LIST", true);

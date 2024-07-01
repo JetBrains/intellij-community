@@ -19,11 +19,9 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
 
   @Override
   public @Nullable PsiJavaModule resolveTargetModule() {
-    PsiJavaModuleReferenceElement moduleReference = geModuleReference();
+    PsiJavaModuleReference moduleReference = getModuleReference();
     if (moduleReference == null) return null;
-    PsiJavaModuleReference reference = moduleReference.getReference();
-    if (reference == null) return null;
-    return reference.resolve();
+    return moduleReference.resolve();
   }
 
   @Override
@@ -31,7 +29,8 @@ public class PsiImportModuleStatementImpl extends PsiImportStatementBaseImpl imp
     return null;
   }
 
-  public @Nullable PsiJavaModuleReferenceElement geModuleReference() {
+  @Override
+  public @Nullable PsiJavaModuleReference getModuleReference() {
     return null;
   }
 
