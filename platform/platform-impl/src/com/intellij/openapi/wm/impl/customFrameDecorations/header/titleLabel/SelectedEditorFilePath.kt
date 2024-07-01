@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel
 
@@ -310,20 +310,22 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     val result = readAction {
       val titleBuilder = FrameTitleBuilder.getInstance()
       val baseTitle = titleBuilder.getFileTitle(project, file)
-      Pair(
-        (titleBuilder as? PlatformFrameTitleBuilder)?.run {
-          val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
-          if (!fileTitle.endsWith(file.presentableName) || file.parent == null) {
-            fileTitle
-          }
-          else {
-            displayUrlRelativeToProject(file = file,
-                                        url = file.presentableUrl,
-                                        project = project,
-                                        isIncludeFilePath = true,
-                                        moduleOnTheLeft = false)
-          }
-        } ?: baseTitle, baseTitle)
+      val first = (titleBuilder as? PlatformFrameTitleBuilder)?.run {
+        val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
+        if (!fileTitle.endsWith(file.presentableName) || file.parent == null) {
+          fileTitle
+        }
+        else {
+          displayUrlRelativeToProject(
+            file = file,
+            url = file.presentableUrl,
+            project = project,
+            isIncludeFilePath = true,
+            moduleOnTheLeft = false,
+          )
+        }
+      } ?: baseTitle
+      Pair(first, baseTitle)
     }
     withContext(Dispatchers.EDT) {
       classTitle.classPath = result.first
