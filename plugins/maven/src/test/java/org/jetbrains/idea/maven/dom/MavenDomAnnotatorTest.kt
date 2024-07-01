@@ -7,11 +7,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenDomAnnotatorTest : MavenDomTestCase() {
   @Test
-  fun testAnnotatePlugin() = runBlocking(Dispatchers.EDT) {
+  fun testAnnotatePlugin() = runBlocking {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -61,7 +62,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotateDependency() = runBlocking(Dispatchers.EDT) {
+  fun testAnnotateDependency() = runBlocking {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -112,7 +113,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotateDependencyWithEmptyRelativePath() = runBlocking(Dispatchers.EDT) {
+  fun testAnnotateDependencyWithEmptyRelativePath() = runBlocking {
     val modulePom = createModulePom("m", """
 <parent>
   <groupId>test</groupId>
@@ -164,20 +165,22 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
          </parent>"""))
   }
 
-  private fun checkGutters(virtualFile: VirtualFile, expectedProperties: Collection<String>) {
-    val file = PsiManager.getInstance(project).findFile(virtualFile)!!
-    fixture.configureFromExistingVirtualFile(virtualFile)
+  private suspend fun checkGutters(virtualFile: VirtualFile, expectedProperties: Collection<String>) {
+    withContext(Dispatchers.EDT) {
+      val file = PsiManager.getInstance(project).findFile(virtualFile)!!
+      fixture.configureFromExistingVirtualFile(virtualFile)
 
-    val text = file.text
-    val actualProperties = fixture.doHighlighting()
-      .filter { it.gutterIconRenderer != null }
-      .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
-      .map { it.replace(" ", "") }
-      .toSet()
+      val text = file.text
+      val actualProperties = fixture.doHighlighting()
+        .filter { it.gutterIconRenderer != null }
+        .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
+        .map { it.replace(" ", "") }
+        .toSet()
 
-    val expectedPropertiesClearing = expectedProperties
-      .map { it.replace(" ", "") }
-      .toSet()
-    assertEquals(expectedPropertiesClearing, actualProperties)
+      val expectedPropertiesClearing = expectedProperties
+        .map { it.replace(" ", "") }
+        .toSet()
+      assertEquals(expectedPropertiesClearing, actualProperties)
+    }
   }
 }
