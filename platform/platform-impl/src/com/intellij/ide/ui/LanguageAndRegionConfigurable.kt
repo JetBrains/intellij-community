@@ -10,7 +10,7 @@ import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.application
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.RestartDialog
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -67,8 +68,8 @@ class LanguageAndRegionUi {
 
             localizationService.setSelectedLocale(it.toLanguageTag())
 
-            ApplicationManager.getApplication().invokeLater {
-              RestartDialog.showRestartRequired()
+            application.invokeLater {
+              application.service<RestartDialog>().showRestartRequired()
             }
           }
           languageBox.bindItem(property)
@@ -122,8 +123,8 @@ class LanguageAndRegionUi {
 
             RegionSettings.setRegion(it)
 
-            ApplicationManager.getApplication().invokeLater {
-              RestartDialog.showRestartRequired()
+            application.invokeLater {
+              application.service<RestartDialog>().showRestartRequired()
             }
           }
           regionBox.bindItem(property)
@@ -167,8 +168,8 @@ internal class LanguageAndRegionConfigurable :
     super.apply()
     if (initSelectionLanguage.toLanguageTag() != LocalizationUtil.getLocale().toLanguageTag() ||
         initSelectionRegion != RegionSettings.getRegion()) {
-      ApplicationManager.getApplication().invokeLater {
-        RestartDialog.showRestartRequired()
+      application.invokeLater {
+        application.service<RestartDialog>().showRestartRequired()
       }
     }
   }

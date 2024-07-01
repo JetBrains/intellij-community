@@ -14,7 +14,15 @@ import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-class RestartDialog {
+interface RestartDialog {
+  fun showRestartRequired()
+}
+
+@ApiStatus.Experimental
+class RestartDialogImpl : RestartDialog {
+  override fun showRestartRequired() {
+    showRestartRequired(showCancelButton = false, launchRestart = true)
+  }
 
   companion object {
 
