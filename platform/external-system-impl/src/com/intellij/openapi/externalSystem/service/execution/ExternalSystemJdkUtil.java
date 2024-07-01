@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.externalSystem.util.environment.Environment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -11,12 +12,16 @@ import com.intellij.openapi.projectRoots.impl.DependentSdkType;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision;
+import com.intellij.openapi.roots.ui.configuration.SdkLookupUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +80,7 @@ public final class ExternalSystemJdkUtil {
     }
 
     // Workaround for projects without project Jdk
-    SdkType jdkType = getJavaSdk();
+    SdkType jdkType = getJavaSdkType();
     return ProjectJdkTable.getInstance()
       .getSdksOfType(jdkType).stream()
       .filter(it -> isValidJdk(it))
@@ -188,7 +193,7 @@ public final class ExternalSystemJdkUtil {
 
   @NotNull
   public static SdkType getJavaSdkType() {
-    return getJavaSdk();
+    return ExternalSystemJdkProvider.getInstance().getJavaSdkType();
   }
 
   /**
@@ -234,11 +239,6 @@ public final class ExternalSystemJdkUtil {
   }
 
   @NotNull
-  private static SdkType getJavaSdk() {
-    return ExternalSystemJdkProvider.getInstance().getJavaSdkType();
-  }
-
-  @NotNull
   private static Sdk getInternalJdk() {
     return ExternalSystemJdkProvider.getInstance().getInternalJdk();
   }
@@ -248,5 +248,49 @@ public final class ExternalSystemJdkUtil {
     JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
       javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
     return jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Sdk lookupJdkByName(@NotNull String sdkName) {
+    return SdkLookupUtil.lookupSdkBlocking(builder -> builder
+      .withSdkName(sdkName)
+      .withSdkType(getJavaSdkType())
+      .onDownloadableSdkSuggested(__ -> SdkLookupDecision.STOP)
+    );
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Sdk lookupJdkByPath(@NotNull String sdkHome) {
+    var jdk = findJdkInSdkTableByPath(sdkHome);
+    if (jdk != null) {
+      return jdk;
+    }
+    return WriteAction.computeAndWait(() -> {
+      var effectiveJdk = findJdkInSdkTableByPath(sdkHome);
+      if (effectiveJdk != null) {
+        return effectiveJdk;
+      }
+      return createJdk(sdkHome);
+    });
+  }
+
+  @RequiresWriteLock
+  private static @NotNull Sdk createJdk(@NotNull String sdkHome) {
+    var sdkTable = ProjectJdkTable.getInstance();
+    var jdkProvider = ExternalSystemJdkProvider.getInstance();
+    var jdkType = jdkProvider.getJavaSdkType();
+    var jdkName = jdkType.suggestSdkName(null, sdkHome);
+    var allJdks = sdkTable.getSdksOfType(getJavaSdkType());
+    var uniqueJdkName = SdkConfigurationUtil.createUniqueSdkName(jdkName, allJdks);
+    var jdk = jdkProvider.createJdk(uniqueJdkName, sdkHome);
+    sdkTable.addJdk(jdk);
+    return jdk;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Sdk findJdkInSdkTableByPath(@NotNull String jdkHome) {
+    var sdkTable = ProjectJdkTable.getInstance();
+    var allJdks = sdkTable.getSdksOfType(getJavaSdkType());
+    return ContainerUtil.find(allJdks, it -> FileUtil.pathsEqual(jdkHome, it.getHomePath()));
   }
 }
