@@ -248,6 +248,12 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           for (String path : getJarFileNames(productInfo)) {
             params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
+
+          if (productInfo != null) {
+            for (String moduleJarPath: productInfo.getProductModuleJarPaths()) {
+              params.getClassPath().add(ideaJdkHome + FileUtil.toSystemIndependentName("/"+ moduleJarPath));
+            }
+          }
         }
         params.getClassPath().addFirst(((JavaSdkType)usedIdeaJdk.getSdkType()).getToolsPath(usedIdeaJdk));
 
