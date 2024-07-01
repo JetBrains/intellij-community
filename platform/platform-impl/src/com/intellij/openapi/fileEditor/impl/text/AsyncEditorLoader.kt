@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -270,23 +271,24 @@ private fun CoroutineScope.showLoadingIndicator(
 
     delay(delayBeforeIcon)
 
-    val processIcon = withContext(Dispatchers.EDT) {
-      val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
-      addUi(processIcon)
-      LOG.trace { "spinner icon created for $editorFileName, await cancellation call expected next" }
-
-      processIcon
-    }
-
-    LOG.trace { "spinner icon cancellation awaiting for $editorFileName" }
+    val processIconRef = AtomicReference<AnimatedIcon>()
 
     awaitCancellationAndInvoke {
       withContext(Dispatchers.EDT) {
-        LOG.trace { "spinner icon removing for $editorFileName" }
-        processIcon.suspend()
-        processIcon.parent.remove(processIcon)
-        LOG.trace { "spinner icon removed for $editorFileName" }
+        val processIcon = processIconRef.getAndSet(null)
+        if (processIcon != null) {
+          processIcon.suspend()
+          processIcon.parent.remove(processIcon)
+          LOG.trace { "spinner icon removed for $editorFileName" }
+        }
       }
+    }
+
+    withContext(Dispatchers.EDT) {
+      val processIcon = AsyncProcessIcon.createBig(/* coroutineScope = */ this@launch)
+      processIconRef.set(processIcon)
+      addUi(processIcon)
+      LOG.trace { "spinner icon created for $editorFileName" }
     }
   }
 }
