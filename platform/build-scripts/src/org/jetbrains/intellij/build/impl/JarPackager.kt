@@ -314,7 +314,14 @@ class JarPackager private constructor(
       extraExcludes.mapTo(result) { fileSystem.getPathMatcher("glob:$it") }
       result
     }
-    moduleSources.add(DirSource(dir = moduleOutDir, excludes = excludes))
+    moduleSources.add(
+      if (moduleOutDir.toString().endsWith(".jar")) {
+        ZipSource(file = moduleOutDir, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(excludes))
+      }
+      else {
+        DirSource(dir = moduleOutDir, excludes = excludes)
+      }
+    )
 
     if (layout is PluginLayout && layout.mainModule == moduleName) {
       handleCustomAssets(layout, jarAsset)
@@ -468,6 +475,7 @@ class JarPackager private constructor(
               }
             },
             isPreSignedAndExtractedCandidate = asset.value.nativeFiles != null || isLibPreSigned(library),
+            filter = ::defaultLibrarySourcesNamesFilter,
           )
         )
       }
@@ -655,6 +663,7 @@ class JarPackager private constructor(
               relativeOutputFile = relativeOutputFile,
             )
           },
+          filter = ::defaultLibrarySourcesNamesFilter,
         )
       )
     }
@@ -772,6 +781,13 @@ internal val commonModuleExcludes: List<PathMatcher> = FileSystems.getDefault().
     fs.getPathMatcher("glob:.hash"),
     fs.getPathMatcher("glob:classpath.index"),
   )
+}
+
+fun createModuleSourcesNamesFilter(excludes: List<PathMatcher>): (String) -> Boolean {
+  return { name ->
+    val p = Path.of(name)
+    excludes.none { it.matches(p) }
+  }
 }
 
 // null targetFile means main jar

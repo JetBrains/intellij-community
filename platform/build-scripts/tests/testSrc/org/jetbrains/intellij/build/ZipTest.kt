@@ -189,8 +189,9 @@ class ZipTest {
     zip(zip, mapOf(dir to ""))
 
     val archiveFile = tempDir.resolve("archive.zip")
+    val regex = Regex("^zip-excl.*")
     buildJar(archiveFile, listOf(
-      ZipSource(file = zip, excludes = listOf(Regex("^zip-excl.*")), distributionFileEntryProducer = null)
+      ZipSource(file = zip, distributionFileEntryProducer = null, filter = { name -> !regex.matches(name)})
     ))
 
     checkZip(archiveFile) { zipFile ->

@@ -238,13 +238,9 @@ private suspend fun handleZipSource(
       return@suspendAwareReadZipFile
     }
 
-    val filter = source.filter
-    val isIncluded = if (filter == null) {
-      checkNameForZipSource(name = name, excludes = source.excludes, includeManifest = sources.size == 1)
-    }
-    else {
-      filter(name)
-    }
+    val includeManifest = sources.size == 1
+    val isIncluded = source.filter(name) &&
+                     (includeManifest || name != "META-INF/MANIFEST.MF")
 
     if (!isIncluded || isDuplicated(uniqueNames = uniqueNames, name = name, sourceFile = sourceFile)) {
       return@suspendAwareReadZipFile
@@ -395,12 +391,10 @@ private fun getIgnoredNames(): Set<String> {
 
 private val ignoredNames = getIgnoredNames()
 
-private fun checkNameForZipSource(name: String, excludes: List<Regex>, includeManifest: Boolean): Boolean {
+fun defaultLibrarySourcesNamesFilter(name: String): Boolean {
   @Suppress("SpellCheckingInspection")
   return !ignoredNames.contains(name) &&
-         excludes.none { it.matches(name) } &&
          !name.endsWith(".kotlin_metadata") &&
-         (includeManifest || name != "META-INF/MANIFEST.MF") &&
          !name.startsWith("license/") &&
          !name.startsWith("META-INF/license/") &&
          !name.startsWith("META-INF/LICENSE-") &&

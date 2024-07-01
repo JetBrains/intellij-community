@@ -44,10 +44,10 @@ class LazySource(
 
 data class ZipSource(
   @JvmField val file: Path,
-  @JvmField val excludes: List<Regex> = emptyList(),
   @JvmField val isPreSignedAndExtractedCandidate: Boolean = false,
   @JvmField val optimizeConfigId: String? = null,
   @JvmField val distributionFileEntryProducer: DistributionFileEntryProducer?,
+  override val filter: ((String) -> Boolean),
 ) : Source, Comparable<ZipSource> {
   override var size: Int = 0
   override var hash: Long = 0
@@ -70,7 +70,6 @@ data class ZipSource(
     if (other !is ZipSource) return false
 
     if (file != other.file) return false
-    if (excludes != other.excludes) return false
     if (isPreSignedAndExtractedCandidate != other.isPreSignedAndExtractedCandidate) return false
     if (filter != other.filter) return false
 
@@ -79,9 +78,8 @@ data class ZipSource(
 
   override fun hashCode(): Int {
     var result = file.hashCode()
-    result = 31 * result + excludes.hashCode()
     result = 31 * result + isPreSignedAndExtractedCandidate.hashCode()
-    result = 31 * result + (filter?.hashCode() ?: 0)
+    result = 31 * result + filter.hashCode()
     return result
   }
 }
