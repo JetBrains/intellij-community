@@ -1,15 +1,19 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenDomPathWithPropertyTest : MavenDomTestCase() {
   @Test
-  fun testRename() = runBlocking(Dispatchers.EDT) {
+  fun testRename() = runBlocking {
     importProjectAsync(
       """
         <groupId>test</groupId>
@@ -42,22 +46,24 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
         </build>
         """.trimIndent())
 
-    val dir = createProjectSubDir("aaa/bbb/res")
+    withContext(Dispatchers.EDT) {
+      val dir = createProjectSubDir("aaa/bbb/res")
 
-    val bbb = dir.getParent()
-    fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
+      val bbb = dir.getParent()
 
+      fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
 
-    val text = PsiManager.getInstance(fixture.getProject()).findFile(projectPom)!!.getText()
-    assert(text.contains("<directory>aaa/Z/res</directory>"))
-    assert(text.contains("<directory>aaa/Z/res</directory>"))
-    assert(text.contains("<directory>aaa/Z/res</directory>"))
-    assert(text.contains("<directory>aaa/Z/res</directory>"))
-    assert(text.contains("<directory>aaa/Z/@rrr@</directory>"))
+      val text = PsiManager.getInstance(fixture.getProject()).findFile(projectPom)!!.getText()
+      assert(text.contains("<directory>aaa/Z/res</directory>"))
+      assert(text.contains("<directory>aaa/Z/res</directory>"))
+      assert(text.contains("<directory>aaa/Z/res</directory>"))
+      assert(text.contains("<directory>aaa/Z/res</directory>"))
+      assert(text.contains("<directory>aaa/Z/@rrr@</directory>"))
+    }
   }
 
   @Test
-  fun testCompletionDirectoriesOnly() = runBlocking(Dispatchers.EDT) {
+  fun testCompletionDirectoriesOnly() = runBlocking {
     createProjectPom(
       """
             <groupId>test</groupId>
