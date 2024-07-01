@@ -194,8 +194,6 @@ private suspend fun navigateToSource(
   dataContext: DataContext?,
 ) {
   val file = request.file
-  val offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
-
   val type = if (file.isDirectory) null else FileTypeManager.getInstance().getKnownFileTypeOrAssociate(file, project)
   if (type != null && file.isValid) {
     if (type is INativeFileType) {
@@ -204,20 +202,20 @@ private suspend fun navigateToSource(
       }
     }
     else {
-      val descriptor = OpenFileDescriptor(project, request.file, offset)
-      descriptor.isUseCurrentWindow = true
-      if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
-        descriptor.isUsePreviewTab = true
-      }
-
       if (dataContext != null) {
+        val descriptor = OpenFileDescriptor(project, request.file, request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1)
+        descriptor.isUseCurrentWindow = true
+        if (UISettings.getInstance().openInPreviewTabIfPossible && Registry.`is`("editor.preview.tab.navigation")) {
+          descriptor.isUsePreviewTab = true
+        }
+
         val fileNavigator = serviceAsync<FileNavigator>()
         if (fileNavigator is FileNavigatorImpl && fileNavigator.navigateInRequestedEditorAsync(descriptor, dataContext)) {
           return
         }
       }
 
-      if (openFile(request = request, descriptor = descriptor, options = options, openMode = openMode)) {
+      if (openFile(request = request, project = project, options = options, openMode = openMode)) {
         return
       }
     }
@@ -227,36 +225,31 @@ private suspend fun navigateToSource(
 }
 
 private suspend fun openFile(
-  descriptor: OpenFileDescriptor,
   options: NavigationOptions.Impl,
   openMode: FileEditorManagerImpl.OpenMode,
+  project: Project,
   request: SourceNavigationRequest,
 ): Boolean {
-  val originalFile = descriptor.file
-  val fileEditorManager = descriptor.project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
-  val effectiveDescriptor: OpenFileDescriptor
+  var offset = request.offsetMarker?.takeIf { it.isValid }?.startOffset ?: -1
+  val originalFile = request.file
+  var file = originalFile
+
+  val fileEditorManager = project.serviceAsync<FileEditorManager>() as FileEditorManagerEx
   if (originalFile is VirtualFileWindow) {
-    effectiveDescriptor = readAction {
-      val hostOffset = originalFile.documentWindow.injectedToHost(descriptor.offset)
-      val fixedDescriptor = OpenFileDescriptor(descriptor.project, originalFile.delegate, hostOffset)
-      fixedDescriptor.isUseCurrentWindow = descriptor.isUseCurrentWindow
-      fixedDescriptor.isUsePreviewTab = descriptor.isUsePreviewTab
-      fixedDescriptor
+    readAction {
+      offset = originalFile.documentWindow.injectedToHost(offset)
+      file = originalFile.delegate
     }
   }
-  else {
-    effectiveDescriptor = descriptor
-  }
 
-  val file = effectiveDescriptor.file
-  val openOptions = FileEditorOpenOptions(
-    reuseOpen = !effectiveDescriptor.isUseCurrentWindow,
-    usePreviewTab = effectiveDescriptor.isUsePreviewTab,
-    requestFocus = options.requestFocus,
-    openMode = openMode,
-  )
-
-  val fileEditors = fileEditorManager.openFile(file = file, options = openOptions).allEditors
+  val fileEditors = fileEditorManager.openFile(
+    file = file,
+    options = FileEditorOpenOptions(
+      reuseOpen = true,
+      requestFocus = options.requestFocus,
+      openMode = openMode,
+    ),
+  ).allEditors
   if (fileEditors.isEmpty()) {
     return false
   }
@@ -267,8 +260,7 @@ private suspend fun openFile(
     for (editor in fileEditors) {
       if (editor is TextEditor) {
         val text = editor.editor
-        val offset = readAction { text.caretModel.offset }
-        if (elementRange.containsOffset(offset)) {
+        if (elementRange.containsOffset(readAction { text.caretModel.offset })) {
           return true
         }
       }
@@ -276,16 +268,17 @@ private suspend fun openFile(
   }
 
 
-  if (effectiveDescriptor.line == -1 && effectiveDescriptor.column == -1 && effectiveDescriptor.offset == -1) {
+  if (offset == -1) {
     return true
   }
 
+  val descriptor = OpenFileDescriptor(project, file, offset)
   suspend fun tryNavigate(filter: (NavigatableFileEditor) -> Boolean): Boolean {
     for (editor in fileEditors) {
       // try to navigate opened editor
       if (editor is NavigatableFileEditor &&
           filter(editor) &&
-          withContext(Dispatchers.EDT) { navigateAndSelectEditor(editor, effectiveDescriptor, currentCompositeForFile) }) {
+          withContext(Dispatchers.EDT) { navigateAndSelectEditor(editor, descriptor, currentCompositeForFile) }) {
         return true
       }
     }
