@@ -10,7 +10,9 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.impl.compilation.ArchivedCompilationOutputStorage
+import org.jetbrains.intellij.build.impl.moduleBased.OriginalModuleRepositoryImpl
 import org.jetbrains.intellij.build.io.readZipFile
+import org.jetbrains.intellij.build.moduleBased.OriginalModuleRepository
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
 import java.nio.file.Path
@@ -27,6 +29,11 @@ class ArchivedCompilationContext(
 ) : CompilationContext by delegate {
   val archivesLocation: Path
     get() = storage.archivedOutputDirectory
+
+  override suspend fun getOriginalModuleRepository(): OriginalModuleRepository {
+    generateRuntimeModuleRepository(this)
+    return OriginalModuleRepositoryImpl(this)
+  }
 
   override suspend fun getModuleOutputDir(module: JpsModule, forTests: Boolean): Path {
     return replaceWithCompressedIfNeeded(delegate.getModuleOutputDir(module = module, forTests = forTests))
