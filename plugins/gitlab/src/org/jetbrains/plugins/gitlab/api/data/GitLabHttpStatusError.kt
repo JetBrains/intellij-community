@@ -27,7 +27,9 @@ data class GitLabHttpStatusError(val error: @NlsSafe String) {
 fun HttpStatusErrorException.asGitLabStatusError(): GitLabHttpStatusError? {
   val actualBody = body ?: return null
   return try {
-    GitLabRestJsonDataDeSerializer.fromJson(StringReader(actualBody), GitLabHttpStatusError::class.java)
+    StringReader(actualBody).use {
+      GitLabRestJsonDataDeSerializer.fromJson(it, GitLabHttpStatusError::class.java)
+    }
   }
   catch (e: Exception) {
     null
