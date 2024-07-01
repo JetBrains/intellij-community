@@ -732,7 +732,9 @@ object Utils {
   fun isKeepPopupOpen(action: AnAction, presentationFlag: Boolean, event: InputEvent?): Boolean = when {
     action is KeepingPopupOpenAction -> true
     !presentationFlag -> false
-    action is ToggleAction -> !action.isSoftMultiChoice || event is MouseEvent && UIUtil.isControlKeyDown(event)
+    action is ToggleAction ->
+      UISettings.getInstance().keepPopupsForToggles ||
+      !action.isSoftMultiChoice || event is MouseEvent && UIUtil.isControlKeyDown(event)
     else -> true
   }
 

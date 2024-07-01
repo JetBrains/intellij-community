@@ -279,6 +279,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showIconsInMenus = value
     }
 
+  var keepPopupsForToggles: Boolean
+    get() = state.keepPopupsForToggles
+    set(value) {
+      state.keepPopupsForToggles = value
+    }
+
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
     set(value) {

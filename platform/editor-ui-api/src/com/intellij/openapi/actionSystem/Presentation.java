@@ -669,11 +669,11 @@ public final class Presentation implements Cloneable {
   }
 
   /**
-   * For an action presentation sets whether a menu or a popup is not closed when the action is performed
+   * For an action presentation sets whether a menu or a popup is not closed when the action is performed,
    * so more actions can be performed at once.
    * <p>
    * {@link com.intellij.openapi.actionSystem.ToggleAction} has this flag on by default in template presentation,
-   * and it is handled in a "soft" manner - only when the Alt is pressed.
+   * and it is handled in a "soft" manner - only when specific modifier is applied (default: Control/Command).
    * See {@link com.intellij.openapi.actionSystem.ToggleAction#isSoftMultiChoice()}.
    * <p>
    * Other actions have this flag off by default,

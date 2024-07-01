@@ -157,6 +157,8 @@ class UISettingsState : BaseState() {
   var alphaModeRatio: Float by property(0.5f)
   @get:OptionTag("SHOW_ICONS_IN_MENUS")
   var showIconsInMenus: Boolean by property(true)
+  @get:OptionTag("KEEP_POPUPS_FOR_TOGGLES")
+  var keepPopupsForToggles: Boolean by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
   var disableMnemonics: Boolean by property(SystemInfoRt.isMac)
