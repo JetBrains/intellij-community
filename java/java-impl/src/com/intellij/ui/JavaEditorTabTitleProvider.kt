@@ -1,33 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui;
+package com.intellij.ui
 
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiJavaModule;
-import com.intellij.psi.PsiManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiManager
 
-final class JavaEditorTabTitleProvider implements EditorTabTitleProvider {
-  @Override
-  public @NlsContexts.TabTitle @Nullable String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    String fileName = file.getName();
-    if (!PsiJavaModule.MODULE_INFO_FILE.equals(fileName)) {
-      return null;
+private class JavaEditorTabTitleProvider : EditorTabTitleProvider {
+  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
+    val fileName = file.name
+    if (PsiJavaModule.MODULE_INFO_FILE != fileName) {
+      return null
     }
 
-    return ReadAction.compute(() -> {
-      Object obj = PsiManager.getInstance(project).findFile(file);
-      PsiJavaFile javaFile = obj instanceof PsiJavaFile ? (PsiJavaFile)obj : null;
-      PsiJavaModule moduleDescriptor = javaFile == null ? null : javaFile.getModuleDeclaration();
+    return ReadAction.compute<String, RuntimeException> {
+      val obj: Any? = PsiManager.getInstance(project).findFile(file)
+      val javaFile = if (obj is PsiJavaFile) obj else null
+      val moduleDescriptor = javaFile?.moduleDeclaration
       if (moduleDescriptor == null) {
-        return null;
+        return@compute null
       }
-      return fileName + " (" + moduleDescriptor.getName() + ")";
-    });
+      fileName + " (" + moduleDescriptor.name + ")"
+    }
   }
 }
