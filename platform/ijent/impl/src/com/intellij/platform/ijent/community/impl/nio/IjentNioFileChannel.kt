@@ -117,10 +117,10 @@ internal class IjentNioFileChannel private constructor(
     length: Int,
     body: (ByteBuffer) -> Unit,
   ) {
-    if (buffers.isEmpty()) throw IndexOutOfBoundsException()
-    if (offset !in 0..<buffers.size) throw IndexOutOfBoundsException()
-    if (length < 0) throw IndexOutOfBoundsException()
-    if (length > buffers.size - offset) throw IndexOutOfBoundsException()
+    if (buffers.isEmpty()) throw IndexOutOfBoundsException("Empty buffer")
+    if (offset !in 0..<buffers.size) throw IndexOutOfBoundsException("Attempting to write to a buffer at $offset which is out of range [0..${buffers.size})")
+    if (length < 0) throw IndexOutOfBoundsException("Number of written buffers $length is negative")
+    if (length > buffers.size - offset) throw IndexOutOfBoundsException("Attempting to write to $length buffers while only ${buffers.size - offset} are available")
 
     val iter = buffers.asSequence().take(length).iterator()
     if (iter.hasNext()) {

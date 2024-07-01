@@ -9,6 +9,7 @@ import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystem.FsAndUs
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider.UnixFilePermissionBranch.*
 import com.intellij.platform.ijent.fs.*
 import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
+import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import kotlinx.coroutines.job
 import java.io.IOException
@@ -168,10 +169,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
         }
       }
     }
-    catch (e : IjentFileSystemPosixApi.CreateDirectoryException) {
+    catch (e : CreateDirectoryException) {
       when (e) {
-        is IjentFileSystemPosixApi.CreateDirectoryException.DirAlreadyExists, is IjentFileSystemPosixApi.CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
-        is IjentFileSystemPosixApi.CreateDirectoryException.ParentNotFound -> throw NoSuchFileException(dir.toString(), null, "Parent directory not found")
+        is CreateDirectoryException.DirAlreadyExists,
+        is CreateDirectoryException.FileAlreadyExists -> throw FileAlreadyExistsException(dir.toString())
+        is CreateDirectoryException.ParentNotFound -> throw NoSuchFileException(dir.toString(), null, "Parent directory not found")
         else -> throw IOException(e)
       }
     }
