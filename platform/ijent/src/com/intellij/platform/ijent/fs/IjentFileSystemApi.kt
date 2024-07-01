@@ -248,11 +248,22 @@ sealed interface IjentOpenedFile {
   interface Reader : IjentOpenedFile {
 
     /**
+     * Reads data from the current position of the file (see [tell])
+     *
      * If the remote file is read completely, then this function returns [ReadResult] with [ReadResult.EOF].
      * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes].
      * Note, that [ReadResult.Bytes] can be `0` if [buf] cannot accept new data.
+     *
+     * This operation modifies the file's cursor, i.e. [tell] may show different results before and after this function is invoked.
      */
     suspend fun read(buf: ByteBuffer): IjentFsResult<ReadResult, ReadError>
+
+    /**
+     * Reads data from the position [offset] of the file.
+     *
+     * This operation does not modify the file's cursor, i.e. [tell] will show the same result before and after this function is invoked.
+     */
+    suspend fun read(buf: ByteBuffer, offset: Long) : IjentFsResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
       interface EOF : ReadResult

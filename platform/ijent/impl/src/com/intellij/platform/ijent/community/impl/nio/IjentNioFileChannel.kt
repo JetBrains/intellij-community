@@ -39,17 +39,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun read(dst: ByteBuffer): Int {
-    when (ijentOpenedFile) {
-      is IjentOpenedFile.Reader -> Unit
-      is IjentOpenedFile.Writer -> throw NonReadableChannelException()
-    }
-    val readResult = nioFs.fsBlocking {
-        ijentOpenedFile.read(dst)
-      }.getOrThrowFileSystemException()
-    return when (readResult) {
-      is IjentOpenedFile.Reader.ReadResult.Bytes -> readResult.bytesRead
-      is IjentOpenedFile.Reader.ReadResult.EOF -> -1
-    }
+    return readFromPosition(dst, null)
   }
 
   override fun read(dsts: Array<out ByteBuffer>, offset: Int, length: Int): Long {
@@ -183,7 +173,25 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun read(dst: ByteBuffer, position: Long): Int {
-    TODO("Not yet implemented")
+    return readFromPosition(dst, position)
+  }
+
+  private fun readFromPosition(dst: ByteBuffer, position: Long?) : Int {
+    when (ijentOpenedFile) {
+      is IjentOpenedFile.Reader -> Unit
+      is IjentOpenedFile.Writer -> throw NonReadableChannelException()
+    }
+    val readResult = nioFs.fsBlocking {
+      if (position == null) {
+        ijentOpenedFile.read(dst)
+      } else {
+        ijentOpenedFile.read(dst, position)
+      }
+    }.getOrThrowFileSystemException()
+    return when (readResult) {
+      is IjentOpenedFile.Reader.ReadResult.Bytes -> readResult.bytesRead
+      is IjentOpenedFile.Reader.ReadResult.EOF -> -1
+    }
   }
 
   override fun write(src: ByteBuffer, position: Long): Int {
