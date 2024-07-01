@@ -12,32 +12,29 @@ import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
 import java.nio.channels.*
 import java.nio.file.FileSystemException
-import java.util.concurrent.atomic.AtomicLong
 
 internal class IjentNioFileChannel private constructor(
   private val nioFs: IjentNioFileSystem,
   private val ijentOpenedFile: IjentOpenedFile,
-  private val position: AtomicLong,
 ) : FileChannel() {
   companion object {
     @JvmStatic
     internal suspend fun createReading(nioFs: IjentNioFileSystem, path: IjentPath.Absolute): IjentNioFileChannel =
-      IjentNioFileChannel(nioFs, nioFs.ijent.fs.fileReader(path).getOrThrowFileSystemException(), AtomicLong(0))
+      IjentNioFileChannel(nioFs, nioFs.ijent.fs.openForReading(path).getOrThrowFileSystemException())
 
     @JvmStatic
     internal suspend fun createWriting(
       nioFs: IjentNioFileSystem,
-      path: IjentPath.Absolute,
-      append: Boolean,
-      truncate: Boolean,
-      creationMode: IjentFileSystemApi.FileWriterCreationMode,
-    ): IjentNioFileChannel {
+      options: IjentFileSystemApi.WriteOptions
+    ): IjentNioFileChannel =
+      IjentNioFileChannel(nioFs, nioFs.ijent.fs.openForWriting(options).getOrThrowFileSystemException())
 
-      return IjentNioFileChannel(
-        nioFs,
-        nioFs.ijent.fs.fileWriter(path, append = append, truncateExisting = truncate, creationMode = creationMode).getOrThrowFileSystemException(),
-        AtomicLong(0)
-      )
+    @JvmStatic
+    internal suspend fun createReadingWriting(
+      nioFs: IjentNioFileSystem,
+      options: IjentFileSystemApi.WriteOptions
+    ): IjentNioFileChannel {
+      return IjentNioFileChannel(nioFs, nioFs.ijent.fs.openForReadingAndWriting(options).getOrThrowFileSystemException())
     }
   }
 
@@ -85,7 +82,6 @@ internal class IjentNioFileChannel private constructor(
         ijentOpenedFile.write(src)
       }
       .getOrThrowFileSystemException()
-    position.addAndGet(bytesWritten.toLong())
     return bytesWritten
   }
 
@@ -104,7 +100,6 @@ internal class IjentNioFileChannel private constructor(
         }
         else {
           totalWritten += written
-          position.getAndAdd(written.toLong())
         }
       }
     }

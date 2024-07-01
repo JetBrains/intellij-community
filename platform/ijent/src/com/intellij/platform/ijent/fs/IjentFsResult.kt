@@ -36,7 +36,7 @@ sealed interface IjentFsError {
   sealed interface PermissionDenied : IjentFsError
   sealed interface NotDirectory : IjentFsError
   sealed interface NotFile : IjentFsError
-  sealed interface FileNotOpened: IjentFsError
+  sealed interface UnknownFile: IjentFsError
 }
 
 /**
