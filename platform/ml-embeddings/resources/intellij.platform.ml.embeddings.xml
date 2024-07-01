@@ -31,7 +31,7 @@
       key="intellij.platform.ml.embeddings.index.use.memory.limit"/>
 
     <registryKey
-      defaultValue="200"
+      defaultValue="120"
       description="Embedding indexing per-application memory limit (MB)"
       key="intellij.platform.ml.embeddings.index.memory.limit"/>
 

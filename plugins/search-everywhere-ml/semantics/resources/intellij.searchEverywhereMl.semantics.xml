@@ -30,7 +30,7 @@
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInFilesTab"/>
 
-    <advancedSetting default="true" id="search.everywhere.ml.semantic.symbols.enable"
+    <advancedSetting default="false" id="search.everywhere.ml.semantic.symbols.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInSymbolsTab"/>
