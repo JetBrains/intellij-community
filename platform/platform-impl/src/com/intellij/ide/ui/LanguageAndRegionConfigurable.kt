@@ -6,6 +6,7 @@ import com.intellij.help.impl.HelpManagerImpl
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
+import com.intellij.ide.RegionSettings.RegionSettingsListener
 import com.intellij.l10n.LocalizationListener
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
@@ -129,7 +130,9 @@ class LanguageAndRegionUi {
           }
           regionBox.bindItem(property)
 
-          connection.subscribe(RegionSettings.UPDATE_TOPIC, Runnable { model.selectedItem = RegionSettings.getRegion() })
+          connection.subscribe(RegionSettingsListener.UPDATE_TOPIC, RegionSettingsListener {
+            model.selectedItem = RegionSettings.getRegion()
+          })
 
           regionBox.gap(RightGap.SMALL)
           cell(ContextHelpLabel.createWithBrowserLink(null, IdeBundle.message("combobox.region.hint"),

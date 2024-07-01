@@ -16,10 +16,6 @@ public final class RegionSettings {
    */
   private static final String REGION_CODE_KEY = "JetBrains.region.code";
 
-  @ApiStatus.Internal
-  @Topic.AppLevel
-  public static final Topic<Runnable> UPDATE_TOPIC = new Topic<>(Runnable.class, Topic.BroadcastDirection.NONE, true);
-
   private RegionSettings() {
   }
 
@@ -49,6 +45,15 @@ public final class RegionSettings {
   }
 
   private static void fireEvent() {
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(UPDATE_TOPIC).run();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(RegionSettingsListener.UPDATE_TOPIC).regionChanged();
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public interface RegionSettingsListener {
+    @Topic.AppLevel
+    Topic<RegionSettingsListener> UPDATE_TOPIC = new Topic<>(RegionSettingsListener.class, Topic.BroadcastDirection.NONE, true);
+
+    void regionChanged();
   }
 }
