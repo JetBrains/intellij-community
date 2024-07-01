@@ -11,7 +11,7 @@ internal class JTableTextCellReader : JTableCellReader {
     return computeOnEdt {
       val component = table
         .getCellRenderer(row, column)
-        .getTableCellRendererComponent(JTable(), table.getValueAt(row, column), true, true, row, column)
+        .getTableCellRendererComponent(table, table.getValueAt(row, column), true, true, row, column)
       component.size = Dimension(table.width, 100)
       TextParser.parseCellRenderer(component).joinToString(" ") { it.trim() }
     }
