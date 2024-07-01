@@ -13,7 +13,7 @@ import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
 
 internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogConfigOptionsService,
-                                                recorderId: String,
+                                                private val recorderId: String,
                                                 private val recorderVersion: String,
                                                 private val delegate: StatisticsEventLogWriter) : StatisticsEventLogWriter {
   private val ourLock: Any = Object()
@@ -81,7 +81,9 @@ internal class StatisticsEventLogThrottleWriter(configOptionsService: EventLogCo
     }
 
     if (shouldLog.report) {
-      val errorGroupId = if (shouldLog.type == EventsRateResultType.DENIED_TOTAL) EventLogSystemLogger.GROUP else logEvent.group.id
+      val errorGroupId = if (shouldLog.type == EventsRateResultType.DENIED_TOTAL)
+        StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).eventLogSystemLogger.group.id
+      else logEvent.group.id
       val errorGroupVersion = if (shouldLog.type == EventsRateResultType.DENIED_TOTAL) recorderVersion else logEvent.group.version
       val event = copyEvent(EventLogSystemEvents.TOO_MANY_EVENTS, errorGroupId, errorGroupVersion, logEvent)
       return delegate.log(event)

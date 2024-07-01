@@ -36,11 +36,6 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val sendLogsOnIdeClose: Boolean = false,
                                              val isCharsEscapingRequired: Boolean = true) {
 
-  private val eventLogSystemLogger: EventLogSystemCollector by lazy { EventLogSystemCollector(recorderId, version) }
-  open fun getEventLogSystemCollector(): EventLogSystemCollector {
-    return eventLogSystemLogger
-  }
-
   @Deprecated(message = "Use primary constructor instead")
   constructor(recorderId: String,
               version: Int,
@@ -84,6 +79,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
   private val localLogger: StatisticsEventLogger by lazy { createLocalLogger() }
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
+  internal val eventLogSystemLogger: EventLogSystemCollector by lazy { EventLogSystemCollector(this) }
 
   open val logger: StatisticsEventLogger
     get() = if (isLoggingEnabled()) actualLogger else localLogger

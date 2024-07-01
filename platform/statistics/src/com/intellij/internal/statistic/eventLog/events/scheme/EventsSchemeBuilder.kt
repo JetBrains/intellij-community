@@ -109,7 +109,7 @@ object EventsSchemeBuilder {
       }
     }
 
-    if (recorder != null) counterCollectors.add(getEventLogSystemCollector(recorder))
+    if (recorder != null) counterCollectors.add(calculateEventLogSystemCollector(recorder))
 
     result.addAll(collectGroupsFromExtensions("counter", counterCollectors, recorder))
 
@@ -163,9 +163,9 @@ object EventsSchemeBuilder {
    * Get the event log group for each recorder from the event log provider of the recorder.
    * If PluginDescriptor of the event log provider isn't found, then use core plugin id.
    */
-  private fun getEventLogSystemCollector(recorder: String): FeatureUsageCollectorInfo {
+  private fun calculateEventLogSystemCollector(recorder: String): FeatureUsageCollectorInfo {
     val eventLogProvider = getEventLogProvider(recorder)
-    val eventLogSystemCollector = eventLogProvider.getEventLogSystemCollector()
+    val eventLogSystemCollector = eventLogProvider.eventLogSystemLogger
     val eventLogProviderPlugin = PluginManager.getPluginByClass(eventLogProvider.javaClass)?.pluginId?.idString
     return FeatureUsageCollectorInfo(eventLogSystemCollector, PluginSchemeDescriptor(eventLogProviderPlugin
                                                                                      ?: PluginManagerCore.CORE_PLUGIN_ID))
