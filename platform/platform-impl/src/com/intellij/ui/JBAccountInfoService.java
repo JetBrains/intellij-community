@@ -7,7 +7,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.Instant;
 import java.time.LocalDate;
 import java.util.EventListener;
 import java.util.List;
@@ -112,11 +111,7 @@ public interface JBAccountInfoService {
   sealed interface LicenseListResult permits LicenseListResult.FetchFailure,
                                              LicenseListResult.LicenseList,
                                              LicenseListResult.LoginRequired {
-    record LicenseList(
-      @NotNull List<@NotNull JbaLicense> licenses,
-      @NotNull Instant recommendedValidationAt,
-      @NotNull Instant deadlineValidationAt
-    ) implements LicenseListResult { }
+    record LicenseList(@NotNull List<@NotNull JbaLicense> licenses) implements LicenseListResult { }
 
     final class LoginRequired implements LicenseListResult {
       public static final LoginRequired INSTANCE = new LoginRequired();
