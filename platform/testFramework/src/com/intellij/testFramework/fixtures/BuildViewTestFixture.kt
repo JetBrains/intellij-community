@@ -88,13 +88,8 @@ class BuildViewTestFixture(private val myProject: Project) : IdeaTestFixture {
   }
 
   fun getSyncViewRerunActions(): List<AnAction> {
-    val buildView = syncViewManager.buildsMap[syncViewManager.getRecentBuild()]
-    return BuildView.RESTART_ACTIONS.getData(buildView!!)!!
-  }
-
-  fun getBuildViewRerunActions(): List<AnAction> {
-    val buildView = buildViewManager.buildsMap[syncViewManager.getRecentBuild()]
-    return BuildView.RESTART_ACTIONS.getData(buildView!!)!!
+    val buildView = syncViewManager.buildsMap[syncViewManager.getRecentBuild()]!!
+    return buildView.restartActions
   }
 
   fun assertBuildViewSelectedNode(nodeText: String, consoleText: String, assertSelected: Boolean = true) {

@@ -1874,7 +1874,6 @@ c:com.intellij.build.BuildView
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.execution.ui.ObservableConsoleView
 - com.intellij.ide.OccurenceNavigator
-- com.intellij.openapi.actionSystem.DataProvider
 - sf:CONSOLE_VIEW_NAME:java.lang.String
 - *sf:RESTART_ACTIONS:com.intellij.openapi.actionSystem.DataKey
 - <init>(com.intellij.openapi.project.Project,com.intellij.build.BuildDescriptor,java.lang.String,com.intellij.build.ViewManager):V
@@ -1891,7 +1890,6 @@ c:com.intellij.build.BuildView
 - getActions():com.intellij.openapi.actionSystem.AnAction[]
 - getAdditionalActions():com.intellij.openapi.actionSystem.AnAction[]
 - getContentSize():I
-- getData(java.lang.String):java.lang.Object
 - getFilter():java.util.function.Predicate
 - getNextOccurenceActionName():java.lang.String
 - getPreviousOccurenceActionName():java.lang.String
@@ -1911,6 +1909,7 @@ c:com.intellij.build.BuildView
 - scrollTo(I):V
 - setHelpId(java.lang.String):V
 - setOutputPaused(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.build.BuildViewManager
 - com.intellij.build.AbstractViewManager
 - <init>(com.intellij.openapi.project.Project):V
@@ -1949,7 +1948,7 @@ f:com.intellij.build.BuildViewSettingsProviderAdapter
 - isExecutionViewHidden():Z
 *c:com.intellij.build.CompositeView
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiDataProvider
 - com.intellij.openapi.ui.ComponentContainer
 - <init>(java.lang.String):V
 - addView(com.intellij.openapi.ui.ComponentContainer,java.lang.String):V
@@ -1957,13 +1956,13 @@ f:com.intellij.build.BuildViewSettingsProviderAdapter
 - createConsoleActions():com.intellij.openapi.actionSystem.AnAction[]
 - dispose():V
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - getPreferredFocusableComponent():javax.swing.JComponent
 - getSwitchActions():com.intellij.openapi.actionSystem.AnAction[]
 - getView(java.lang.String):com.intellij.openapi.ui.ComponentContainer
 - getView(java.lang.String,java.lang.Class):java.lang.Object
 - isViewVisible(java.lang.String):Z
 - showView(java.lang.String,Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.build.DefaultBuildDescriptor
 - com.intellij.build.BuildDescriptor
 - <init>(com.intellij.build.BuildDescriptor):V

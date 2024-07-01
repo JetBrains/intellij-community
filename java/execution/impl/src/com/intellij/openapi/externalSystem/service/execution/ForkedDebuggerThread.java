@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution;
 
+import com.intellij.build.BuildView;
 import com.intellij.debugger.DebugEnvironment;
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.DefaultDebugEnvironment;
@@ -28,8 +29,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
@@ -408,10 +407,10 @@ class ForkedDebuggerThread extends Thread {
       if (executionConsole instanceof ConsoleViewImpl) {
         return (ConsoleViewImpl)executionConsole;
       }
-      if (executionConsole instanceof DataProvider) {
-        Object consoleView = ((DataProvider)executionConsole).getData(LangDataKeys.CONSOLE_VIEW.getName());
-        if (consoleView instanceof ConsoleViewImpl) {
-          return (ConsoleViewImpl)consoleView;
+      if (executionConsole instanceof BuildView buildView) {
+        Object consoleView = buildView.getConsoleView();
+        if (consoleView instanceof ConsoleViewImpl o) {
+          return o;
         }
       }
       return null;

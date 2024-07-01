@@ -3,7 +3,6 @@ package com.intellij.build;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.impl.DataValidators;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Experimental
-public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, DataProvider {
+public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, UiDataProvider {
   private final Map<String, T> myViewMap = new ConcurrentHashMap<>();
   private final @NonNls String mySelectionStateKey;
   private final AtomicReference<String> myVisibleViewRef = new AtomicReference<>();
@@ -120,14 +119,10 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
     String visibleViewName = myVisibleViewRef.get();
     T visibleView = visibleViewName != null ? getView(visibleViewName) : null;
-    Object data = visibleView instanceof DataProvider ? ((DataProvider)visibleView).getData(dataId) : null;
-    if (data != null) {
-      return DataValidators.validOrNull(data, dataId, visibleView);
-    }
-    return null;
+    DataSink.uiDataSnapshot(sink, visibleView);
   }
 
   private void setStoredState(String viewName) {
