@@ -328,9 +328,21 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
     waitOneMatchInVerticallyOrderedText("Find '${text}'(fullMatch = $fullMatch) in vertically ordered text", text, fullMatch, timeout = timeout)
 
   fun present(): Boolean {
-    return data.parentSearchContext.findAll(data.xpath).isNotEmpty().also {
-      LOG.info("$this is present in hierarchy: $it")
+    val found = data.parentSearchContext.findAll(data.xpath)
+
+    val present = if (found.size == 1) {
+      true
     }
+    else if (found.isEmpty()) {
+      false
+    }
+    else {
+      error("There are more than one $this in the hierarchy: $found.\n\t" +
+            "Please use `xx()` if you need to check for more than one $this or clarify your search request.")
+    }
+
+    LOG.info("$this is present in hierarchy: $present")
+    return present
   }
 
   fun notPresent(): Boolean {
