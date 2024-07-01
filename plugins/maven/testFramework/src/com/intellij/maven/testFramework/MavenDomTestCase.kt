@@ -195,11 +195,13 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     assertNull(ref!!.resolve())
   }
 
-  protected fun assertUnresolved(file: VirtualFile, expectedText: String?) {
-    val ref = getReferenceAtCaret(file)
-    assertNotNull(ref)
-    assertNull(ref!!.resolve())
-    assertEquals(expectedText, ref.canonicalText)
+  protected suspend fun assertUnresolved(file: VirtualFile, expectedText: String?) {
+    withContext(Dispatchers.EDT) {
+      val ref = getReferenceAtCaret(file)
+      assertNotNull(ref)
+      assertNull(ref!!.resolve())
+      assertEquals(expectedText, ref.canonicalText)
+    }
   }
 
   @Throws(IOException::class)
@@ -248,10 +250,11 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
     return resolved
   }
 
-  @Throws(IOException::class)
-  protected fun assertResolved(file: VirtualFile, expected: PsiElement, expectedText: String?) {
-    val ref = doAssertResolved(file, expected)
-    assertEquals(expectedText, ref!!.canonicalText)
+  protected suspend fun assertResolved(file: VirtualFile, expected: PsiElement, expectedText: String?) {
+    withContext(Dispatchers.EDT) {
+      val ref = doAssertResolved(file, expected)
+      assertEquals(expectedText, ref!!.canonicalText)
+    }
   }
 
   private fun doAssertResolved(file: VirtualFile, expected: PsiElement): PsiReference? {

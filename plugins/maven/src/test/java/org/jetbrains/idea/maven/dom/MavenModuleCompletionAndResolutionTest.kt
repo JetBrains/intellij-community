@@ -16,16 +16,18 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   @Test
-  fun testCompleteFromAllAvailableModules() = runBlocking(Dispatchers.EDT) {
+  fun testCompleteFromAllAvailableModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -94,7 +96,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotCompeteIfThereIsNoModules() = runBlocking(Dispatchers.EDT) {
+  fun testDoesNotCompeteIfThereIsNoModules() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -117,7 +119,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testIncludesAllThePomsAvailable() = runBlocking(Dispatchers.EDT) {
+  fun testIncludesAllThePomsAvailable() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -154,7 +156,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolution() = runBlocking(Dispatchers.EDT) {
+  fun testResolution() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -193,7 +195,10 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(projectPom, findPsiFile(m1), "m1")
+    val psiFile1 = readAction { findPsiFile(m1) }
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, psiFile1, "m1")
+    }
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -206,7 +211,10 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(projectPom, findPsiFile(m2), "m2")
+    val psiFile2 = readAction { findPsiFile(m2) }
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, psiFile2, "m2")
+    }
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -222,7 +230,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testResolutionWithSlashes() = runBlocking(Dispatchers.EDT) {
+  fun testResolutionWithSlashes() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -252,7 +260,10 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(projectPom, findPsiFile(m), "./m")
+    val psiFile1 = readAction { findPsiFile(m) }
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, psiFile1, "./m")
+    }
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -264,11 +275,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(projectPom, findPsiFile(m), ".\\m")
+    val psiFile2 = readAction { findPsiFile(m) }
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, psiFile2, ".\\m")
+    }
   }
 
   @Test
-  fun testResolutionWithProperties() = runBlocking(Dispatchers.EDT) {
+  fun testResolutionWithProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -304,7 +318,10 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(projectPom, findPsiFile(m), "subDir/m")
+    val psiFile = readAction { findPsiFile(m) }
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, psiFile, "subDir/m")
+    }
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -319,11 +336,14 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        </modules>
                        """.trimIndent())
 
-    assertResolved(projectPom, findTag(projectPom, "project.properties.dirName"))
+    val tag = readAction { findTag(projectPom, "project.properties.dirName") }
+    withContext(Dispatchers.EDT) {
+      assertResolved(projectPom, tag)
+    }
   }
 
   @Test
-  fun testCreatePomQuickFix() = runBlocking(Dispatchers.EDT) {
+  fun testCreatePomQuickFix() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -366,7 +386,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixCustomPomFileName() = runBlocking(Dispatchers.EDT) {
+  fun testCreatePomQuickFixCustomPomFileName() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -409,7 +429,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixInDotXmlFolder() = runBlocking(Dispatchers.EDT) {
+  fun testCreatePomQuickFixInDotXmlFolder() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -453,7 +473,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() = runBlocking(Dispatchers.EDT) {
+  fun testCreatePomQuickFixTakesGroupAndVersionFromSuperParent() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -499,7 +519,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixWithProperties() = runBlocking(Dispatchers.EDT) {
+  fun testCreatePomQuickFixWithProperties() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -530,7 +550,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() = runBlocking(Dispatchers.EDT) {
+  fun testCreatePomQuickFixTakesDefaultGroupAndVersionIfNothingToOffer() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -570,7 +590,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix() = runBlocking(Dispatchers.EDT) {
+  fun testCreateModuleWithParentQuickFix() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -618,7 +638,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix2() = runBlocking(Dispatchers.EDT) {
+  fun testCreateModuleWithParentQuickFix2() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -667,7 +687,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testCreateModuleWithParentQuickFix3() = runBlocking(Dispatchers.EDT) {
+  fun testCreateModuleWithParentQuickFix3() = runBlocking {
     val parentPom = createModulePom("parent",
                                     """
                                               <groupId>test</groupId>
@@ -688,10 +708,13 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
           <module>../ppp/new<caret>Module</module>
         </modules>
         """.trimIndent()))
-    PsiDocumentManager.getInstance(project).commitAllDocuments()
-    val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
-    assertNotNull(i)
-    fixture.launchAction(i!!)
+
+    withContext(Dispatchers.EDT) {
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      val i = getIntentionAtCaret(parentPom, createModuleWithParentIntention)
+      assertNotNull(i)
+      fixture.launchAction(i!!)
+    }
 
     assertCreateModuleFixResult(
       "ppp/newModule/pom.xml",
@@ -719,7 +742,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() = runBlocking(Dispatchers.EDT) {
+  fun testDoesNotShowCreatePomQuickFixForEmptyModuleTag() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -742,7 +765,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testDoesNotShowCreatePomQuickFixExistingModule() = runBlocking(Dispatchers.EDT) {
+  fun testDoesNotShowCreatePomQuickFixExistingModule() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
@@ -774,16 +797,16 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
     assertNull(getIntentionAtCaret(createModuleIntention))
   }
 
-  private fun assertCreateModuleFixResult(relativePath: String, expectedText: String) {
+  private suspend fun assertCreateModuleFixResult(relativePath: String, expectedText: String) {
     val pom = projectRoot.findFileByRelativePath(relativePath)
     assertNotNull(pom)
 
-    val doc = FileDocumentManager.getInstance().getDocument(pom!!)
-
-    val selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor()
-    assertEquals(doc, selectedEditor!!.getDocument())
-
-    assertEquals(expectedText, doc!!.text)
+    readAction {
+      val doc = FileDocumentManager.getInstance().getDocument(pom!!)
+      val selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor()
+      assertEquals(doc, selectedEditor!!.getDocument())
+      assertEquals(expectedText, doc!!.text)
+    }
   }
 
   companion object {
