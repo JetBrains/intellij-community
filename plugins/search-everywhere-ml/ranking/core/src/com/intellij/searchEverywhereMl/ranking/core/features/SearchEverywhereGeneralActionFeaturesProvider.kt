@@ -11,6 +11,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.ml.embeddings.search.services.ActionEmbeddingsStorage
 import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
@@ -66,7 +67,7 @@ internal class SearchEverywhereGeneralActionFeaturesProvider
     if (similarityScore != null) {
       data.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
     }
-    else {
+    else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
       val action = extractAction(element)
       val actionEmbedding = getActionEmbedding(action, valueName)
       val queryEmbedding = getQueryEmbedding(searchQuery, split = false)
