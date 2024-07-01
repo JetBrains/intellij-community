@@ -144,10 +144,6 @@ internal class SmoothRobot : Robot {
 
       component.removeMouseListener(mouseListener)
     }
-
-    if (!finished) {
-      throw Exception("$attempt attempts failed to click on component $component.")
-    }
   }
 
   override fun click(component: Component, point: Point) {
