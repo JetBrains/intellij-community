@@ -46,6 +46,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformCoreDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext, true);
+    if (undoManager == null) return;
 
     myActionInProgress = true;
     try {
