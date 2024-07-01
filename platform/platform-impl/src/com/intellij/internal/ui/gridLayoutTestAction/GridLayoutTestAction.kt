@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.gridLayout.*
@@ -166,8 +167,8 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
       )
     }
     val grid = (panel.layout as GridLayout).rootGrid
-    grid.resizableColumns.addAll(0..HorizontalAlign.values().size)
-    grid.resizableRows.addAll(0..VerticalAlign.values().size)
+    grid.resizableColumns.addAll(0..HorizontalAlign.entries.size)
+    grid.resizableRows.addAll(0..VerticalAlign.entries.size)
     return createTabPanel("Every second cell has own Gaps", panel)
   }
 
@@ -226,18 +227,18 @@ internal class GridLayoutTestAction : DumbAwareAction("Show GridLayout Test") {
   }
 
   fun createCellAlignmentsPanel(): JPanel {
-    val panel = createPanelLabels(HorizontalAlign.values().size, VerticalAlign.values().size) { grid, x, y ->
+    val panel = createPanelLabels(HorizontalAlign.entries.size, VerticalAlign.entries.size) { grid, x, y ->
       Constraints(
         grid,
         x,
         y,
-        horizontalAlign = HorizontalAlign.values()[x],
-        verticalAlign = VerticalAlign.values()[y]
+        horizontalAlign = HorizontalAlign.entries[x],
+        verticalAlign = VerticalAlign.entries[y]
       )
     }
     val grid = (panel.layout as GridLayout).rootGrid
-    grid.resizableColumns.addAll(0..HorizontalAlign.values().size)
-    grid.resizableRows.addAll(0..VerticalAlign.values().size)
+    grid.resizableColumns.addAll(0..HorizontalAlign.entries.size)
+    grid.resizableRows.addAll(0..VerticalAlign.entries.size)
     return createTabPanel("Cells size is equal, component layouts have different alignments", panel)
   }
 
@@ -407,7 +408,7 @@ fun createTabPanel(title: String, content: JComponent): JPanel {
   rootGrid.resizableColumns.add(0)
   rootGrid.resizableRows.add(1)
   val label = JLabel("<html>$title<br>${gridToHtmlString((content.layout as GridLayout).rootGrid)}")
-  label.background = Color.LIGHT_GRAY
+  label.background = JBColor.LIGHT_GRAY
   label.isOpaque = true
   result.add(label, Constraints(rootGrid, 0, 0, width = 2, horizontalAlign = HorizontalAlign.FILL))
   result.add(
@@ -461,7 +462,7 @@ private fun createControls(container: JComponent, content: JComponent, grid: Gri
         isSelected,
         cellHasFocus
       ) as DefaultListCellRenderer
-      result.foreground = if (label.isVisible) Color.BLACK else Color.LIGHT_GRAY
+      result.foreground = if (label.isVisible) JBColor.BLACK else JBColor.LIGHT_GRAY
 
       return result
     }
