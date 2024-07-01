@@ -28,6 +28,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.run.ProductInfo;
+import org.jetbrains.idea.devkit.run.ProductInfoKt;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsModel;
@@ -159,6 +161,16 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   private static VirtualFile[] getIdeaLibrary(String home) {
     List<VirtualFile> result = new ArrayList<>();
     appendIdeaLibrary(home, result, "junit.jar", "junit4.jar");
+
+    ProductInfo productInfo = ProductInfoKt.loadProductInfo(home);
+    if (productInfo != null) {
+      final JarFileSystem jfs = JarFileSystem.getInstance();
+      for (String productModuleJarPath : productInfo.getProductModuleJarPaths()) {
+        VirtualFile vf = jfs.findFileByPath(home + File.separator + productModuleJarPath + JarFileSystem.JAR_SEPARATOR);
+        LOG.assertTrue(vf != null, productModuleJarPath + " not found in " + home);
+        result.add(vf);
+      }
+    }
 
     String plugins = home + File.separator + PLUGINS_DIR + File.separator;
     appendIdeaLibrary(plugins + "java", result);
@@ -316,7 +328,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
         return false;
       }
     }
-    else  {
+    else {
       VirtualFile[] ideaLib = getIdeaLibrary(sdkHome);
       for (VirtualFile aIdeaLib : ideaLib) {
         sdkModificator.addRoot(aIdeaLib, OrderRootType.CLASSES);
@@ -336,7 +348,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       setInternalJdk(sdk, sdkModificator, internalJava);
     }
 
-    Map<String, JpsModule> moduleByName = model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
+    Map<String, JpsModule> moduleByName =
+      model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
     @NonNls String[] mainModuleCandidates = {
       "intellij.idea.ultimate.main",
       "intellij.idea.community.main",
@@ -444,7 +457,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   private static void addSources(SdkModificator sdkModificator, final Sdk javaSdk) {
     if (javaSdk != null) {
-      if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)){
+      if (!addOrderEntries(OrderRootType.SOURCES, javaSdk, sdkModificator)) {
         if (SystemInfo.isMac) {
           Sdk[] jdks = ProjectJdkTable.getInstance().getAllJdks();
           for (Sdk jdk : jdks) {
@@ -472,7 +485,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
   }
 
-  private static boolean addOrderEntries(@NotNull OrderRootType orderRootType, @NotNull Sdk sdk, @NotNull SdkModificator toModificator){
+  private static boolean addOrderEntries(@NotNull OrderRootType orderRootType, @NotNull Sdk sdk, @NotNull SdkModificator toModificator) {
     boolean wasSmthAdded = false;
     final String[] entries = sdk.getRootProvider().getUrls(orderRootType);
     for (String entry : entries) {
@@ -486,7 +499,8 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Override
-  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel, @NotNull SdkModificator sdkModificator) {
+  public AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull final SdkModel sdkModel,
+                                                                     @NotNull SdkModificator sdkModificator) {
     return new IdeaJdkConfigurable(sdkModel, sdkModificator);
   }
 
@@ -501,7 +515,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @Nullable
   public String getToolsPath(@NotNull Sdk sdk) {
     final Sdk jdk = getInternalJavaSdk(sdk);
-    if (jdk != null && jdk.getVersionString() != null){
+    if (jdk != null && jdk.getVersionString() != null) {
       return JavaSdk.getInstance().getToolsPath(jdk);
     }
     return null;
