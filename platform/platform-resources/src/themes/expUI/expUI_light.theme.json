@@ -920,8 +920,7 @@
       "termsAndConditionsForeground": "Gray8",
       "separatorColor": "Gray12",
       "LicenseList": {
-        "licenseDetailsForeground": "Gray6",
-        "separatorColor": "Gray9"
+        "licenseDetailsForeground": "Gray6"
       }
     },
 

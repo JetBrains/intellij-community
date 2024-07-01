@@ -2456,15 +2456,8 @@ public final class JBUI {
         private static final @NotNull Color LICENSE_DETAILS_COLOR =
           JBColor.namedColor("LicenseDialog.LicenseList.licenseDetailsForeground", 0xC9CCD6, 0x9DA0A8);
 
-        private static final @NotNull Color SEPARATOR_COLOR =
-          JBColor.namedColor("LicenseDialog.LicenseList.separatorColor", 0x818594, 0x6F737A);
-
         public static @NotNull Color getLicenseDetailsColor() {
           return LICENSE_DETAILS_COLOR;
-        }
-
-        public static @NotNull Color getSeparatorColor() {
-          return SEPARATOR_COLOR;
         }
       }
     }

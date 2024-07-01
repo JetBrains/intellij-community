@@ -2518,10 +2518,6 @@
     {
       "key": "LicenseDialog.LicenseList.licenseDetailsForeground",
       "since": "2024.2"
-    },
-    {
-      "key": "LicenseDialog.LicenseList.separatorColor",
-      "since": "2024.2"
     }
   ]
 }
