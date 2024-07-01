@@ -14558,6 +14558,7 @@ f:com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTrig
 - sf:GROUP_NAVIGATE:com.intellij.internal.statistic.eventLog.events.EventId1
 - sf:HAS_ONLY_SIMILAR_ELEMENT:com.intellij.internal.statistic.eventLog.events.BooleanEventField
 - sf:HAS_ONLY_SIMILAR_ITEM_SHOWN:com.intellij.internal.statistic.eventLog.events.EventId
+- sf:IS_ELEMENT_SEMANTIC:com.intellij.internal.statistic.eventLog.events.BooleanEventField
 - sf:IS_ONLY_MORE:com.intellij.internal.statistic.eventLog.events.BooleanEventField
 - sf:ITEM_NUMBER_BEFORE_MORE:com.intellij.internal.statistic.eventLog.events.IntEventField
 - sf:LAST_TAB_ID:com.intellij.internal.statistic.eventLog.events.StringEventField
