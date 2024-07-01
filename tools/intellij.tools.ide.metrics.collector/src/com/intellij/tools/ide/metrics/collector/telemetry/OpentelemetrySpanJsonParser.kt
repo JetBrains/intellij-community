@@ -102,7 +102,7 @@ private fun getSpans(file: Path): List<SpanData> {
 
   val allSpans = spanData?.firstOrNull()?.spans
   check(!allSpans.isNullOrEmpty()) {
-    "No spans was found"
+    "No spans were found"
   }
   return allSpans
 }
