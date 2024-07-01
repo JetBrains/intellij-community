@@ -326,7 +326,9 @@ Android Studio: workaround for b/218317110 */
         val untilBuild = System.getProperty("kotlin.plugin.until")
         val sinceUntil = if (sinceBuild != null && untilBuild != null) sinceBuild to untilBuild else null
 
+/* Android Studio: our build number format differs from upstream.
         val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+|(\\d+\\.)?SNAPSHOT.*)\$").matcher(ideBuildVersion)
+*/      val ijBuildNumber = Pattern.compile("^(\\d+)\\.([\\d.]+__BUILD_NUMBER__)\$").matcher(ideBuildVersion)
         if (ijBuildNumber.matches()) {
           // IJ installer configurations.
           return@PluginVersionEvaluator PluginVersionEvaluatorResult(pluginVersion = "$ideBuildVersion-$kind", sinceUntil = sinceUntil)
