@@ -2,10 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.api.page.ApiPageUtil
-import com.intellij.collaboration.async.modelFlow
-import com.intellij.collaboration.async.withInitial
-import com.intellij.collaboration.util.ResultUtil.runCatchingUser
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -30,14 +27,16 @@ private val LOG = logger<GitLabProject>()
 interface GitLabProject {
   val projectMapping: GitLabProjectMapping
 
+  val dataReloadSignal: SharedFlow<Unit>
   val mergeRequests: GitLabProjectMergeRequestsStore
 
-  val labels: SharedFlow<Result<List<GitLabLabelDTO>>>
-  val members: SharedFlow<Result<List<GitLabUserDTO>>>
-  val defaultBranch: Deferred<String?>
-  val allowsMultipleReviewers: SharedFlow<Boolean>
+  suspend fun getEmojis(): List<GitLabReaction>
 
-  val emojis: Deferred<List<ParsedGitLabEmoji>>
+  fun getLabelsBatches(): Flow<List<GitLabLabelDTO>>
+  fun getMembersBatches(): Flow<List<GitLabUserDTO>>
+
+  suspend fun getDefaultBranch(): String?
+  suspend fun isMultipleReviewersAllowed(): Boolean
 
   /**
    * Creates a merge request on the GitLab server and returns a DTO containing the merge request
@@ -51,7 +50,6 @@ interface GitLabProject {
   fun reloadData()
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class GitLabLazyProject(
   private val project: Project,
   parentCs: CoroutineScope,
@@ -59,67 +57,59 @@ class GitLabLazyProject(
   private val glMetadata: GitLabServerMetadata?,
   override val projectMapping: GitLabProjectMapping,
   private val currentUser: GitLabUserDTO,
-  private val tokenRefreshFlow: Flow<Unit>
+  private val tokenRefreshFlow: Flow<Unit>,
 ) : GitLabProject {
 
   private val cs = parentCs.childScope(javaClass.name)
 
   private val projectCoordinates: GitLabProjectCoordinates = projectMapping.repository
 
-  private val projectDataReloadSignal = MutableSharedFlow<Unit>()
+  private val _dataReloadSignal = MutableSharedFlow<Unit>(replay = 1)
+  override val dataReloadSignal: SharedFlow<Unit> = _dataReloadSignal.asSharedFlow()
+
+  private val emojisRequest = cs.async(start = CoroutineStart.LAZY) {
+    serviceAsync<GitLabEmojiService>().emojis.await().map { GitLabReactionImpl(it) }  }
+
+  private val initialData: Deferred<GitLabProjectDTO> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    api.graphQL.findProject(projectCoordinates).body() ?: error("Project not found $projectCoordinates")
+  }
+  private val multipleReviewersAllowedRequest = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
+    val projectDto = initialData.await()
+    loadMultipleReviewersAllowed(projectDto)
+  }
 
   override val mergeRequests by lazy {
     CachingGitLabProjectMergeRequestsStore(project, cs, api, glMetadata, projectMapping, currentUser, tokenRefreshFlow)
   }
 
-  override val labels: SharedFlow<Result<List<GitLabLabelDTO>>> = resultListFlow {
-    api.graphQL.createAllProjectLabelsFlow(projectMapping.repository)
-  }.triggerOn(projectDataReloadSignal.withInitial(Unit))
-    .modelFlow(parentCs, LOG)
+  private val labelsLoader = BatchesLoader(cs, api.graphQL.createAllProjectLabelsFlow(projectMapping.repository))
+  private val membersLoader = BatchesLoader(cs,
+                                            ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) {
+                                              api.rest.getProjectUsers(it)
+                                            }.map { response -> response.body().map(GitLabUserDTO::fromRestDTO) })
 
-  override val members: SharedFlow<Result<List<GitLabUserDTO>>> = resultListFlow {
-    ApiPageUtil.createPagesFlowByLinkHeader(getProjectUsersURI(projectMapping.repository)) { api.rest.getProjectUsers(it) }
-      .map { response -> response.body().map(GitLabUserDTO::fromRestDTO) }
-  }.triggerOn(projectDataReloadSignal.withInitial(Unit))
-    .modelFlow(parentCs, LOG)
+  override suspend fun getEmojis(): List<GitLabReaction> = emojisRequest.await()
+  override suspend fun getDefaultBranch(): String? = initialData.await().repository?.rootRef
+  override suspend fun isMultipleReviewersAllowed(): Boolean = multipleReviewersAllowedRequest.await()
+  override fun getLabelsBatches(): Flow<List<GitLabLabelDTO>> = labelsLoader.getBatches()
+  override fun getMembersBatches(): Flow<List<GitLabUserDTO>> = membersLoader.getBatches()
 
-  private val initialData: Deferred<GitLabProjectDTO> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    api.graphQL.findProject(projectCoordinates).body() ?: error("Project not found $projectCoordinates")
-  }
-
-  override val defaultBranch: Deferred<String?> = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-    val project = initialData.await()
-    project.repository?.rootRef
-  }
-
-  override val allowsMultipleReviewers: SharedFlow<Boolean> = channelFlow {
-    if (glMetadata != null && glMetadata.version >= GitLabVersion(16, 8)) {
-      val project = initialData.await()
-      send(project.allowsMultipleMergeRequestReviewers!!)
-      return@channelFlow
+  private suspend fun loadMultipleReviewersAllowed(project: GitLabProjectDTO): Boolean {
+    if (project.allowsMultipleMergeRequestReviewers != null) {
+      return project.allowsMultipleMergeRequestReviewers
     }
 
-    val plan = cs.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-      runCatchingUser {
-        val namespace = api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()
-        namespace?.plan
-      }.getOrNull()
-    }.await()
-
-    if (plan != null) {
-      send(plan != GitLabPlan.FREE)
-      return@channelFlow
+    val fromPlan = getAllowsMultipleAssigneesPropertyFromNamespacePlan()
+    if (fromPlan != null) {
+      return fromPlan
     }
 
     if (glMetadata != null && glMetadata.version >= GitLabVersion(15, 2)) {
-      send(getAllowsMultipleAssigneesPropertyFromIssueWidget())
-      return@channelFlow
+      return getAllowsMultipleAssigneesPropertyFromIssueWidget()
     }
 
-    send(false)
-  }.modelFlow(parentCs, LOG)
-
-  override val emojis: Deferred<List<ParsedGitLabEmoji>> = service<GitLabEmojiService>().emojis
+    return false
+  }
 
   @Throws(GitLabGraphQLMutationException::class)
   override suspend fun createMergeRequestAndAwaitCompletion(sourceBranch: String, targetBranch: String, title: String): GitLabMergeRequestDTO {
@@ -155,48 +145,115 @@ class GitLabLazyProject(
   }
 
   override fun reloadData() {
-    cs.launch {
-      projectDataReloadSignal.emit(Unit)
+    labelsLoader.cancel()
+    membersLoader.cancel()
+    _dataReloadSignal.tryEmit(Unit)
+  }
+
+  private suspend fun getAllowsMultipleAssigneesPropertyFromNamespacePlan() = try {
+    api.rest.getProjectNamespace(projectMapping.repository.projectPath.owner).body()?.plan?.let {
+      it != GitLabPlan.FREE
+    } ?: run {
+      LOG.warn("Failed to find namespace for project ${projectMapping.repository}")
+      null
     }
+  }
+  catch (ce: CancellationException) {
+    throw ce
+  }
+  catch (e: Exception) {
+    LOG.warn("Failed to load namespace for project ${projectMapping.repository}", e)
+    null
   }
 
   private suspend fun getAllowsMultipleAssigneesPropertyFromIssueWidget(): Boolean {
-    val widgetAssignees: WorkItemWidgetAssignees? = resultListFlow {
+    val widgetAssignees: WorkItemWidgetAssignees? = try {
       api.graphQL.createAllWorkItemsFlow(projectMapping.repository)
-    }.transformWhile { resultedWorkItems ->
-      val items = resultedWorkItems.getOrNull() ?: return@transformWhile false
-      val widget = items.find { workItem -> workItem.workItemType.name == WorkItemType.ISSUE_TYPE }
-        ?.widgets
-        ?.asSequence()
-        ?.filterIsInstance<WorkItemWidgetAssignees>()
-        ?.first()
+        .transformWhile { workItems ->
+          val widget = workItems.find { workItem -> workItem.workItemType.name == WorkItemType.ISSUE_TYPE }
+            ?.widgets
+            ?.asSequence()
+            ?.filterIsInstance<WorkItemWidgetAssignees>()
+            ?.first()
 
-      if (widget != null) {
-        emit(widget)
-        return@transformWhile false
-      }
-      else {
-        return@transformWhile true
-      }
-    }.firstOrNull()
-
+          if (widget != null) {
+            emit(widget)
+            return@transformWhile false
+          }
+          else {
+            return@transformWhile true
+          }
+        }.firstOrNull()
+    }
+    catch (ce: CancellationException) {
+      throw ce
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to load work item widgets for project ${projectMapping.repository}", e)
+      return false
+    }
     return widgetAssignees?.allowsMultipleAssignees ?: false
   }
+}
 
-  private fun <T> resultListFlow(flowProvider: () -> Flow<List<T>>): Flow<Result<List<T>>> = channelFlow<Result<List<T>>> {
-    runCatchingUser {
-      val loadedItems = mutableListOf<T>()
-      val itemsFlow = flowProvider()
-      itemsFlow.collect { items ->
-        loadedItems.addAll(items)
-        send(Result.success(loadedItems))
+private class BatchesLoader<T>(private val cs: CoroutineScope, private val batchesFlow: Flow<List<T>>) {
+  private var flowAndScope: Pair<SharedFlow<BatchesLoadingState<T>>, CoroutineScope>? = null
+
+  fun getBatches(): Flow<List<T>> {
+    var currentPagesCount = 0
+    return startLoading().transformWhile {
+      if (it.pages.size > currentPagesCount) {
+        emit(it.pages.subList(currentPagesCount, it.pages.size).flatten())
+        currentPagesCount = it.pages.size
       }
-    }.onFailure { e -> send(Result.failure(e)) }
+      when (it) {
+        is BatchesLoadingState.Loading -> true
+        is BatchesLoadingState.Loaded -> false
+        is BatchesLoadingState.Cancelled -> throw it.ce
+        is BatchesLoadingState.Error -> throw it.error
+      }
+    }
   }
 
-  // NOTE: works only with cold flow
-  private fun <T> Flow<T>.triggerOn(signalFlow: Flow<Unit>): Flow<T> {
-    val originalFlow = this
-    return signalFlow.flatMapLatest { originalFlow }
+  @Synchronized
+  private fun startLoading(): SharedFlow<BatchesLoadingState<T>> {
+    flowAndScope?.run {
+      return first
+    }
+
+    val sharingScope = cs.childScope(javaClass.name)
+    val sharedFlow = flow {
+      val loadedBatches = mutableListOf<List<T>>()
+      try {
+        batchesFlow.flowOn(Dispatchers.IO).collect { batch ->
+          loadedBatches.add(batch)
+          emit(BatchesLoadingState.Loading(loadedBatches.toList()))
+        }
+        // will never change anymore, so it's fine to emit as-is
+        emit(BatchesLoadingState.Loaded(loadedBatches))
+      }
+      catch (ce: CancellationException) {
+        emit(BatchesLoadingState.Cancelled(loadedBatches, ce))
+        throw ce
+      }
+      catch (e: Exception) {
+        emit(BatchesLoadingState.Error(loadedBatches, e))
+      }
+    }.shareIn(sharingScope, SharingStarted.Lazily, 1)
+    flowAndScope = sharedFlow to sharingScope
+    return sharedFlow
+  }
+
+  @Synchronized
+  fun cancel() {
+    flowAndScope?.second?.cancel()
+    flowAndScope = null
+  }
+
+  private sealed class BatchesLoadingState<T>(val pages: List<List<T>>) {
+    class Loading<T>(pages: List<List<T>>) : BatchesLoadingState<T>(pages)
+    class Loaded<T>(pages: List<List<T>>) : BatchesLoadingState<T>(pages)
+    class Error<T>(pages: List<List<T>>, val error: Exception) : BatchesLoadingState<T>(pages)
+    class Cancelled<T>(pages: List<List<T>>, val ce: CancellationException) : BatchesLoadingState<T>(pages)
   }
 }

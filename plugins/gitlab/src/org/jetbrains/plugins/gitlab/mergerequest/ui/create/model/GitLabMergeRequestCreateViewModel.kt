@@ -34,6 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabCoroutineUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
@@ -82,7 +83,14 @@ internal class GitLabMergeRequestCreateViewModelImpl(
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
-  override val allowsMultipleReviewers: Flow<Boolean> = projectData.allowsMultipleReviewers
+  override val allowsMultipleReviewers: Flow<Boolean> = suspend {
+    try {
+      projectData.isMultipleReviewersAllowed()
+    }
+    catch (e: Exception) {
+      false
+    }
+  }.asFlow()
 
   private val listenableProgressIndicator = ListenableProgressIndicator()
   override val creatingProgressText: Flow<String?> = callbackFlow {
@@ -150,7 +158,8 @@ internal class GitLabMergeRequestCreateViewModelImpl(
   private val _reviewCreatingError: MutableStateFlow<Throwable?> = MutableStateFlow(null)
   override val reviewCreatingError: StateFlow<Throwable?> = _reviewCreatingError.asStateFlow()
 
-  override val potentialReviewers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
+  override val potentialReviewers: Flow<Result<List<GitLabUserDTO>>> =
+    GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getMembersBatches)
 
   private val _adjustedReviewers: MutableStateFlow<List<GitLabUserDTO>> = MutableStateFlow(listOf())
   override val adjustedReviewers: StateFlow<List<GitLabUserDTO>> = _adjustedReviewers.asStateFlow()
@@ -161,7 +170,7 @@ internal class GitLabMergeRequestCreateViewModelImpl(
     cs.launch {
       val baseRepo = projectData.projectMapping
       val baseGitRepo = baseRepo.gitRepository
-      val defaultBranch = projectData.defaultBranch.await() ?: return@launch
+      val defaultBranch = projectData.getDefaultBranch() ?: return@launch
       val baseBranch = baseGitRepo.getBranchTrackInfo(defaultBranch)?.remoteBranch ?: return@launch
       val currentBranch = baseGitRepo.currentBranch ?: return@launch
 

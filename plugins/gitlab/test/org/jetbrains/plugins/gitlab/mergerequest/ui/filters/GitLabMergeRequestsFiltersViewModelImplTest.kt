@@ -2,18 +2,19 @@
 package org.jetbrains.plugins.gitlab.mergerequest.ui.filters
 
 import com.intellij.collaboration.async.ReloadablePotentiallyInfiniteListLoader
-import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.api.data.GitLabAccessLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestShortRestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.list.GitLabMergeRequestsListViewModel
@@ -36,14 +37,18 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
   @Test
   fun `check initial default filter search state`() = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+    val projectData = mock<GitLabProject> {
+      on(it.dataReloadSignal).thenReturn(MutableSharedFlow())
+      on(it.getLabelsBatches()).thenReturn(flow {})
+      on(it.getMembersBatches()).thenReturn(flow {})
+    }
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = backgroundScope, project = null,
                                                            historyModel = emptyHistoryModel, currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(), projectData = mock())
+                                                           avatarIconsProvider = mock(), projectData = projectData)
     val loaderSupplierMock = mockLoaderSupplier()
 
     // Init a list VM with mocked loader
-    val vm = GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
+    val vm = GitLabMergeRequestsListViewModelImpl(parentCs = backgroundScope, filterVm = filterVm, repository = "",
                                                   avatarIconsProvider = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   loaderSupplier = loaderSupplierMock)
@@ -78,20 +83,22 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     filterVm.searchState.value = defaultFilter
     vm.awaitLoader()
     verify(loaderSupplierMock, times(1)).invoke(any(), eq(defaultFilter))
-
-    cs.cancel()
   }
 
   @Test
   fun `check changed filter search state`() = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+    val projectData = mock<GitLabProject> {
+      on(it.dataReloadSignal).thenReturn(MutableSharedFlow())
+      on(it.getLabelsBatches()).thenReturn(flow {})
+      on(it.getMembersBatches()).thenReturn(flow {})
+    }
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = backgroundScope, project = null,
                                                            historyModel = emptyHistoryModel, currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(), projectData = mock())
+                                                           avatarIconsProvider = mock(), projectData = projectData)
     val loaderSupplierMock = mockLoaderSupplier()
 
     // Init a list VM with mocked loader
-    val vm = GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
+    val vm = GitLabMergeRequestsListViewModelImpl(parentCs = backgroundScope, filterVm = filterVm, repository = "",
                                                   avatarIconsProvider = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   loaderSupplier = loaderSupplierMock)
@@ -109,19 +116,21 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
     filterVm.searchState.value = filterValueStateClosed
     vm.awaitLoader()
     verify(loaderSupplierMock, times(1)).invoke(any(), eq(filterValueStateClosed))
-
-    cs.cancel()
   }
 
   @Test
   fun `check participant filters`() = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+    val projectData = mock<GitLabProject> {
+      on(it.dataReloadSignal).thenReturn(MutableSharedFlow())
+      on(it.getLabelsBatches()).thenReturn(flow {})
+      on(it.getMembersBatches()).thenReturn(flow {})
+    }
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = backgroundScope, project = null,
                                                            historyModel = emptyHistoryModel, currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(), projectData = mock())
+                                                           avatarIconsProvider = mock(), projectData = projectData)
     val loaderSupplierMock = mockLoaderSupplier()
 
-    val vm = GitLabMergeRequestsListViewModelImpl(parentCs = cs, filterVm = filterVm, repository = "",
+    val vm = GitLabMergeRequestsListViewModelImpl(parentCs = backgroundScope, filterVm = filterVm, repository = "",
                                                   avatarIconsProvider = mock(),
                                                   tokenRefreshFlow = mock(),
                                                   loaderSupplier = loaderSupplierMock)
@@ -146,33 +155,35 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
       assignee = MergeRequestsAssigneeFilterValue(member.user.username, member.user.name),
       reviewer = MergeRequestsReviewerFilterValue(member.user.username, member.user.name)
     ))
-
-    cs.cancel()
   }
 
   @Test
   fun `check default filter`() = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+    val projectData = mock<GitLabProject> {
+      on(it.dataReloadSignal).thenReturn(MutableSharedFlow())
+      on(it.getLabelsBatches()).thenReturn(flow {})
+      on(it.getMembersBatches()).thenReturn(flow {})
+    }
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = backgroundScope, project = null,
                                                            historyModel = emptyHistoryModel, currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(), projectData = mock())
+                                                           avatarIconsProvider = mock(), projectData = projectData)
     assertEquals(filterVm.searchState.value, defaultFilter)
-
-    cs.cancel()
   }
 
   @Test
   fun `select empty state filter`() = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+    val projectData = mock<GitLabProject> {
+      on(it.dataReloadSignal).thenReturn(MutableSharedFlow())
+      on(it.getLabelsBatches()).thenReturn(flow {})
+      on(it.getMembersBatches()).thenReturn(flow {})
+    }
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = backgroundScope, project = null,
                                                            historyModel = emptyHistoryModel, currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(), projectData = mock())
+                                                           avatarIconsProvider = mock(), projectData = projectData)
     assertEquals(filterVm.searchState.value, defaultFilter)
 
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
     assertEquals(filterVm.searchState.value, GitLabMergeRequestsFiltersValue.EMPTY)
-
-    cs.cancel()
   }
 
   @Test
@@ -195,10 +206,14 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
   )
 
   private fun checkSelectedFilter(selectedFilter: GitLabMergeRequestsFiltersValue) = runTest(UnconfinedTestDispatcher()) {
-    val cs = childScope()
-    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = cs, project = null,
+    val projectData = mock<GitLabProject> {
+      on(it.dataReloadSignal).thenReturn(MutableSharedFlow())
+      on(it.getLabelsBatches()).thenReturn(flow {})
+      on(it.getMembersBatches()).thenReturn(flow {})
+    }
+    val filterVm = GitLabMergeRequestsFiltersViewModelImpl(scope = backgroundScope, project = null,
                                                            historyModel = emptyHistoryModel, currentUser = mockedUser,
-                                                           avatarIconsProvider = mock(), projectData = mock())
+                                                           avatarIconsProvider = mock(), projectData = projectData)
     assertEquals(filterVm.searchState.value, defaultFilter)
 
     filterVm.searchState.value = GitLabMergeRequestsFiltersValue.EMPTY
@@ -206,8 +221,6 @@ internal class GitLabMergeRequestsFiltersViewModelImplTest {
 
     filterVm.searchState.value = selectedFilter
     assertEquals(filterVm.searchState.value, selectedFilter)
-
-    cs.cancel()
   }
 
   private suspend fun verifyFilterParticipantSelect(

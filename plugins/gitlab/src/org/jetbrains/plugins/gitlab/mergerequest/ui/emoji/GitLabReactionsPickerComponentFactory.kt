@@ -6,13 +6,15 @@ import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionComponent
 import com.intellij.collaboration.ui.codereview.reactions.CodeReviewReactionsUIUtil
 import com.intellij.collaboration.ui.util.popup.awaitClose
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.WrapLayout
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReaction
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabReactionImpl
 import java.awt.FlowLayout
 import java.util.*
 import javax.swing.JComponent
@@ -21,7 +23,7 @@ import javax.swing.JPanel
 
 internal object GitLabReactionsPickerComponentFactory {
   suspend fun showPopup(reactionsVm: GitLabReactionsViewModel, component: JComponent) {
-    val availableReactions = reactionsVm.availableParsedEmojis.await().map(::GitLabReactionImpl)
+    val availableReactions = reactionsVm.availableReactions.mapNotNull { it?.getOrNull() }.first()
     var popup: JBPopup? = null
     val reactionPicker = create(availableReactions) { reaction ->
       reactionsVm.toggle(reaction)
