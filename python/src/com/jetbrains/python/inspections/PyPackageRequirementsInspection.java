@@ -546,6 +546,67 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     }
   }
 
+  public static class InstallAllPackagesQuickFix implements LocalQuickFix {
+    public static final String CONFIRM_PACKAGE_INSTALLATION_PROPERTY = "python.confirm.package.installation";
+
+    protected final @NotNull List<String> myPackageNames;
+
+    public InstallAllPackagesQuickFix(@NotNull List<String> packageNames) {
+      myPackageNames = packageNames;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return PyBundle.message("python.unresolved.reference.inspection.install.all", myPackageNames.stream());
+    }
+
+    @Override
+    public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      List<String> confirmedPackages = PyPackageInstallUtilsKt.getConfirmedPackages(myPackageNames);
+      myPackageNames.stream().filter(x -> confirmedPackages.contains(x))
+        .forEach(packageName -> {
+          final PsiElement element = descriptor.getPsiElement();
+          if (element == null) return;
+          Module module = ModuleUtilCore.findModuleForPsiElement(element);
+          Sdk sdk = PythonSdkUtil.findPythonSdk(element);
+          if (module != null && sdk != null) {
+            new PyInstallRequirementsFix(
+              getFamilyName(), module, sdk,
+              Collections.singletonList(PyRequirementsKt.pyRequirement(packageName)),
+              Collections.emptyList(),
+              new RunningPackagingTasksListener(module) {
+                @Override
+                public void finished(List<ExecutionException> exceptions) {
+                  super.finished(exceptions);
+                  if (exceptions.isEmpty()) {
+                    onSuccess(descriptor);
+                  }
+                }
+              }
+            ).applyFix(module.getProject(), descriptor);
+          }
+        });
+    }
+
+    protected void onSuccess(@NotNull ProblemDescriptor descriptor) { }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
+    @Override
+    public boolean availableInBatchMode() {
+      return false;
+    }
+
+    @Override
+    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
+      return IntentionPreviewInfo.EMPTY;
+    }
+  }
+
+
   public static class InstallAndImportPackageQuickFix extends InstallPackageQuickFix {
     private final @Nullable String myAsName;
 

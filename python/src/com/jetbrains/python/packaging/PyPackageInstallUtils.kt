@@ -11,6 +11,9 @@ import com.intellij.openapi.ui.DoNotAskOption
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Version
+import com.intellij.ui.components.dialog
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection.InstallPackageQuickFix
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -93,4 +96,26 @@ object PyPackageInstallUtils {
       }
     }
   }
+}
+
+@Suppress("HardCodedStringLiteral")
+fun getConfirmedPackages(packageNames: List<String>): List<String> {
+  val confirmationEnabled = PropertiesComponent.getInstance().getBoolean(InstallPackageQuickFix.CONFIRM_PACKAGE_INSTALLATION_PROPERTY, true)
+  if (!confirmationEnabled) return packageNames
+  val nonWellKnownPackages = packageNames.filterNot {
+    ApplicationManager.getApplication()
+      .getService(PyPIPackageRanking::class.java)
+      .packageRank.containsKey(it)
+  }
+  if (nonWellKnownPackages.isEmpty()) return packageNames
+  val packagesToInstall = ArrayList(packageNames)
+  val panel = panel {
+    packageNames.forEach {
+      row {
+        checkBox(it).bindSelected({ true }, { isSelected -> if (isSelected) packagesToInstall.add(it) else packagesToInstall.remove(it) })
+      }
+    }
+  }
+  dialog(PyBundle.message("python.packaging.dialog.title.install.package.confirmation"), panel).showAndGet()
+  return packagesToInstall
 }
