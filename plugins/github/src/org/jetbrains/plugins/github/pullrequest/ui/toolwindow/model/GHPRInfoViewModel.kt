@@ -74,12 +74,14 @@ class GHPRInfoViewModel internal constructor(
   val detailsLoadingErrorHandler: GHApiLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     cs.launch {
       dataProvider.detailsData.signalDetailsNeedReload()
+      dataProvider.detailsData.signalMergeabilityNeedsReload()
     }
   }
 
   override fun requestReload() {
     cs.launch {
       dataProvider.detailsData.signalDetailsNeedReload()
+      dataProvider.detailsData.signalMergeabilityNeedsReload()
       dataProvider.reviewData.signalPendingReviewNeedsReload()
       dataProvider.reviewData.signalThreadsNeedReload()
       dataProvider.changesData.signalChangesNeedReload()

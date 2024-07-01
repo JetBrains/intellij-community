@@ -33,9 +33,10 @@ class GHPRResolveConflictsLocallyViewModelImpl(
   detailsData: GHPRDetailsDataProvider,
 ) : BaseResolveConflictsLocallyViewModel<GHPRResolveConflictsLocallyError>(parentCs, project, gitRepository),
     GHPRResolveConflictsLocallyViewModel {
-  override val hasConflicts: StateFlow<Boolean?> = detailsData.mergeabilityStateComputationFlow.map { mergeability ->
-    mergeability.getOrNull()?.hasConflicts
-  }.stateIn(cs, SharingStarted.Lazily, false)
+  override val hasConflicts: StateFlow<Boolean?> = detailsData.mergeabilityStateComputationFlow
+    .filter { !it.isInProgress }
+    .map { it.getOrNull()?.hasConflicts }
+    .stateIn(cs, SharingStarted.Lazily, false)
 
   override val requestOrError: StateFlow<Either<GHPRResolveConflictsLocallyError, ResolveConflictsLocallyCoordinates>> =
     detailsData.detailsComputationFlow.combine(gitRepository.infoFlow()) { detailsResult, repoState ->

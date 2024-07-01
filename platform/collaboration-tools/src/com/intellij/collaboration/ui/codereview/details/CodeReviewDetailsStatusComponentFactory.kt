@@ -99,7 +99,7 @@ object CodeReviewDetailsStatusComponentFactory {
     return HorizontalListPanel(CI_COMPONENTS_GAP).apply {
       name = "Code review status: review has conflicts"
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
-      bindVisibilityIn(scope, hasConflicts.map { it ?: false })
+      bindVisibilityIn(scope, hasConflicts.map { it ?: true }) // Also show when loading
 
       add(title)
       add(resolveLink)
