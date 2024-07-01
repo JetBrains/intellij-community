@@ -1356,6 +1356,8 @@
     <internal.statistic.libraryUsageImportProcessor language="Groovy"
                                                     implementationClass="org.jetbrains.plugins.groovy.stats.GroovyLibraryUsageImportProcessor"/>
     <lang.dumb.mode.supported language="Groovy" implementationClass="org.jetbrains.plugins.groovy.GroovyLanguageDumbAware"/>
+
+    <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.groovy.config.GroovyLanguageVersionCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

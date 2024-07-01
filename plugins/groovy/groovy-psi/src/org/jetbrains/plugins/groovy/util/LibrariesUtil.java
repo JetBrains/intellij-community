@@ -5,6 +5,7 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -100,6 +101,27 @@ public final class LibrariesUtil {
       }
     }
     return null;
+  }
+
+  /**
+   * Finds all JAR files within a given project that contain a specific class.
+   *
+   * @param project the project in which to search for the class.
+   * @param classQName the qualified name of the class to search for.
+   * @return a list of VirtualFile objects representing the JAR files that contain the specified class.
+   */
+  @NotNull
+  public static List<VirtualFile> findAllJarsWithClass(@NotNull Project project, final String classQName) {
+    GlobalSearchScope scope = GlobalSearchScope.allScope(project);
+    List<VirtualFile> jarList = new ArrayList<>();
+    for (PsiClass psiClass : JavaPsiFacade.getInstance(project).findClasses(classQName, scope)) {
+      VirtualFile virtualFile = psiClass.getContainingFile().getVirtualFile();
+      final VirtualFile local = getLocalFor(virtualFile);
+      if (local != null) {
+        jarList.add(local);
+      }
+    }
+    return jarList;
   }
 
   private static VirtualFile getLocalFor(VirtualFile virtualFile) {
