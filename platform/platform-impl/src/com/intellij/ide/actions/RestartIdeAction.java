@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.util.ui.RestartDialog;
+import com.intellij.util.ui.RestartDialogImpl;
 import org.jetbrains.annotations.NotNull;
 
 public class RestartIdeAction extends AnAction implements DumbAware {
@@ -16,7 +16,7 @@ public class RestartIdeAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    RestartDialog.restartWithConfirmation();
+    RestartDialogImpl.restartWithConfirmation();
   }
 
   @Override
