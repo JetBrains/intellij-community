@@ -6922,7 +6922,7 @@ f:com.intellij.codeInsight.hints.presentation.IconPresentation
 - f:setIcon(javax.swing.Icon):V
 f:com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 - sf:Companion:com.intellij.codeInsight.hints.presentation.InlayTextMetrics$Companion
-- <init>(com.intellij.openapi.editor.Editor,I,I,java.awt.FontMetrics,I):V
+- <init>(com.intellij.openapi.editor.Editor,I,I,java.awt.FontMetrics,I,F):V
 - f:getAscent():I
 - f:getDescent():I
 - f:getFont():java.awt.Font
