@@ -201,6 +201,7 @@
     "Pythonid:app:PyDuplocatorSettings.distinguish_methods",
     "Pythonid:app:PyDuplocatorSettings.distinguish_variables",
     "Pythonid:app:PyDuplocatorSettings.lower_bound",
-    "Pythonid:app:PythonFoldingSettings.*"
+    "Pythonid:app:PythonFoldingSettings.*",
+    "Subversion:app:SvnApplicationSettings.mySvnCommandLine"
   ]
 }
