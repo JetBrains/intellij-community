@@ -94,6 +94,7 @@ public final class ThreadLeakTracker {
       "Netty ",
       "ObjectCleanerThread",
       "OkHttp ConnectionPool", // Dockers okhttp3.internal.connection.RealConnectionPool
+      "OkHttp TaskRunner",
       "Okio Watchdog", // Dockers "okio.AsyncTimeout.Watchdog"
       "Periodic tasks thread", // com.intellij.util.concurrency.AppDelayQueue.TransferThread
       "process reaper", // Thread[#46,process reaper(pid7496),10,InnocuousThreadGroup] (since JDK-8279488 part of InnocuousThreadGroup)
@@ -105,6 +106,7 @@ public final class ThreadLeakTracker {
       "Shared Index Hash Index Flushing Queue",
       "Signal Dispatcher",
       "tc-okhttp-stream", // Dockers "com.github.dockerjava.okhttp.UnixDomainSocket.recv"
+      "testcontainers",
       "timer-int", //serverIm,
       "timer-sys", //clientIm,
       "TimerQueue",
