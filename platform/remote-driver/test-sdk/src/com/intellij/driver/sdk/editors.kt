@@ -36,6 +36,7 @@ interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
+  fun moveToOffset(offset: Int)
 }
 
 @Remote("com.intellij.openapi.editor.InlayModel")
