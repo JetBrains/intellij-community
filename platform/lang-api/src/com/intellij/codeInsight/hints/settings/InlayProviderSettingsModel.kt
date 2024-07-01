@@ -123,4 +123,8 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    * List of cases. If main check box is disabled, these checkboxes are also disabled
    */
   abstract val cases: List<ImmediateConfigurable.Case>
+
+  override fun toString(): String {
+    return "InlayProviderSettingsModel[${language.displayName}, $id, isEnabled=$isEnabled]"
+  }
 }
