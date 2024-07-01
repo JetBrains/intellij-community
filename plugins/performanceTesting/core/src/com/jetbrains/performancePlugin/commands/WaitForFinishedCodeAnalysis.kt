@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -258,7 +259,7 @@ class ListenerState(val project: Project, val cs: CoroutineScope) {
   private fun printCodeAnalyzerStatistic(editor: Editor) {
     try {
       ReadAction.run<Throwable> {
-        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).daemonCodeAnalyzerStatus}")
+        LOG.info("Analyzer status for ${editor.virtualFile.path}\n ${TrafficLightRenderer(project, editor.document).use { it.daemonCodeAnalyzerStatus }}")
       }
     }
     catch (_: Throwable) {
