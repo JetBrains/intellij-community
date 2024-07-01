@@ -405,11 +405,12 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       window.setupNorthPanel()
     }
     container.add(
-      createDockableEditor(
-        image = null,
+      DockableEditor(
+        img = null,
         file = file,
         presentation = Presentation(file.name),
-        window = editorWindow,
+        preferredSize = editorWindow.size,
+        isPinned = editorWindow.isFilePinned(file = file),
         isNorthPanelAvailable = isNorthPanelAvailable,
       ),
       null

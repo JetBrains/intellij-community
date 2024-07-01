@@ -436,11 +436,12 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
     session = DockManager.getInstance(window.manager.project).createDragSession(
       mouseEvent,
-      createDockableEditor(
-        image = img,
+      DockableEditor(
+        img = img,
         file = file,
         presentation = presentation,
-        window = window,
+        preferredSize = window.size,
+        isPinned = window.isFilePinned(file = file),
         isNorthPanelAvailable = isNorthPanelAvailable(editors),
       ),
     )
@@ -721,23 +722,6 @@ private class EditorTabLabel(info: TabInfo, tabs: JBTabsImpl) : TabLabel(tabs, i
   override fun getIconAlpha(): Float = if (paintDimmed()) JBUI.CurrentTheme.EditorTabs.unselectedAlpha() else 1f
 
   private fun paintDimmed() = ExperimentalUI.isNewUI() && tabs.selectedInfo != info && !tabs.isHoveredTab(this)
-}
-
-internal fun createDockableEditor(
-  image: Image?,
-  file: VirtualFile,
-  presentation: Presentation,
-  window: EditorWindow,
-  isNorthPanelAvailable: Boolean,
-): DockableEditor {
-  return DockableEditor(
-    img = image,
-    file = file,
-    presentation = presentation,
-    preferredSize = window.size,
-    isPinned = window.isFilePinned(file),
-    isNorthPanelAvailable = isNorthPanelAvailable,
-  )
 }
 
 internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
