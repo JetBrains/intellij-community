@@ -7,7 +7,6 @@ import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.spec.*
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecsManagerImpl
 
 /**
@@ -21,7 +20,7 @@ class ShellCompletionTestFixture private constructor(
   private val project: Project,
   private val curDirectory: String,
   private val shellName: ShellName,
-  private val generatorCommandsRunner: ShellGeneratorCommandsRunner,
+  private val generatorCommandsRunner: ShellCommandExecutor,
   private val generatorsExecutor: ShellDataGeneratorsExecutor,
 ) {
   /**
@@ -52,7 +51,7 @@ class ShellCompletionTestFixture private constructor(
   class Builder internal constructor(private val project: Project) {
     private var curDirectory: String = project.guessProjectDir()?.path ?: ""
     private var shellName: ShellName = ShellName("dummy")
-    private var generatorCommandsRunner: ShellGeneratorCommandsRunner = TestGeneratorCommandsRunner.DUMMY
+    private var generatorCommandsRunner: ShellCommandExecutor = TestGeneratorCommandsRunner.DUMMY
     private var generatorsExecutor: ShellDataGeneratorsExecutor = TestGeneratorsExecutor()
 
     /**

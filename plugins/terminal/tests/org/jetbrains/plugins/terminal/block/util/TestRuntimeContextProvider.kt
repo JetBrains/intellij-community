@@ -3,17 +3,17 @@ package org.jetbrains.plugins.terminal.block.util
 
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
+import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellName
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextImpl
-import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellGeneratorCommandsRunner
 
 internal class TestRuntimeContextProvider(
   private val project: Project? = null,
   private val directory: String = "",
   private val shellName: ShellName = ShellName("dummy"),
-  private val generatorCommandsRunner: ShellGeneratorCommandsRunner = TestGeneratorCommandsRunner.DUMMY
+  private val generatorCommandsRunner: ShellCommandExecutor = TestGeneratorCommandsRunner.DUMMY
 ) : ShellRuntimeContextProvider {
   override fun getContext(typedPrefix: String): ShellRuntimeContext {
     return ShellRuntimeContextImpl(directory, typedPrefix, shellName, generatorCommandsRunner).also {
