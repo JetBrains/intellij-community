@@ -444,15 +444,16 @@ open class EditorsSplitters internal constructor(
   internal suspend fun updateFrameTitle() {
     val project = manager.project
     val frame = getFrame() ?: return
-    val file = currentFile
+    val file = currentCompositeFlow.value?.file
     if (file == null) {
       withContext(Dispatchers.EDT) {
         frame.setFileTitle(null, null)
       }
     }
     else {
+      val frameTitleBuilder = serviceAsync<FrameTitleBuilder>()
       val title = readAction {
-        FrameTitleBuilder.getInstance().getFileTitle(project, file)
+        frameTitleBuilder.getFileTitle(project, file)
       }
 
       val ioFile = try {
