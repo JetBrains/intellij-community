@@ -25,15 +25,7 @@ public final class Runner {
   static final Logger LOG = createLogger();
 
   // Android Studio: b/299293997
-  private static final List<String> DEFAULT_CRITICAL_FILES = List.of(
-    "plugins/android/resources/perfa.jar",
-    "Contents/plugins/android/resources/perfa.jar",
-    "plugins/android/resources/perfa_okhttp.dex",
-    "Contents/plugins/android/resources/perfa_okhttp.dex",
-    "plugins/android/resources/app-inspection/layoutinspector-view-inspection.jar",
-    "Contents/plugins/android/resources/app-inspection/layoutinspector-view-inspection.jar"
-    // "compose-ui-inspection.jar" seems to be external to Studio
-  );
+  private static final List<String> DEFAULT_CRITICAL_FILES = List.of();
 
   public static boolean isCaseSensitiveFs() {
     return ourCaseSensitiveFs;
