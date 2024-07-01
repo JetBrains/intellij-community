@@ -43,7 +43,7 @@ internal abstract class AbstractSquareStripeButton(
     setLook(SquareStripeButtonLook(this))
     addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
-        showPopup(popupBuilder, component, x, y)
+        ResizeStripeManager.showPopup(popupBuilder.invoke(), component, x, y)
       }
     })
   }
@@ -64,11 +64,6 @@ internal abstract class AbstractSquareStripeButton(
     }
 
     buttonLook.paintLookBorder(g, rect, color)
-  }
-
-  protected open fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
-    val popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.TOOLWINDOW_POPUP, popupBuilder.invoke())
-    popupMenu.component.show(component, x, y)
   }
 }
 
@@ -142,7 +137,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           val insets = button.insets
           val textOffset = if (UISettings.Companion.getInstance().compactMode) 6 else 8
           val x = insets.left + JBUI.scale(textOffset)
-          val y = iconPosition.y + JBUI.scale(2)
+          val y = iconPosition.y + JBUI.scale(3)
           val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textOffset * 2)
           val textWidth = SwingUtilities2.stringWidth(this@SquareStripeButton, fm, text)
           val textHeight = fm.height
@@ -156,7 +151,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
             UIUtil.drawCenteredString(g2d, Rectangle(x, y, totalWidth, textHeight), text)
 
             if (textWidth > totalWidth) {
-              val gradientWidth = JBUI.scale(4)
+              val gradientWidth = JBUI.scale(3)
               val gradientX = x + totalWidth - gradientWidth
               var bgColor = getBackgroundColor()
 
@@ -194,15 +189,6 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
         }
       }
     })
-  }
-
-  override fun showPopup(popupBuilder: () -> ActionGroup, component: Component, x: Int, y: Int) {
-    if (ResizeStripeManager.enabled()) {
-      ResizeStripeManager.showPopup(popupBuilder.invoke(), component, x, y)
-    }
-    else {
-      super.showPopup(popupBuilder, component, x, y)
-    }
   }
 
   override fun paintButtonLook(g: Graphics?) {
@@ -281,7 +267,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
   override fun getPreferredSize(): Dimension {
     val size = super.getPreferredSize()
     if (myShowName) {
-      size.height += JBUI.scale(2) + getFontMetrics(getTextFont()).height
+      size.height += JBUI.scale(3) + getFontMetrics(getTextFont()).height
     }
     return size
   }
