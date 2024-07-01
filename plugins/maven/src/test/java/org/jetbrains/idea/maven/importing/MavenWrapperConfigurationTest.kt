@@ -39,7 +39,7 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
   }
 
   @Test
-  fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking(Dispatchers.EDT) {
+  fun testShouldDownloadAndUseWrapperMavenSettings() = runBlocking {
     val helper = MavenCustomRepositoryHelper(dir, "local1", "remote")
     val remoteRepoPath = helper.getTestDataPath("remote")
     val localRepoPath = helper.getTestDataPath("local1")
