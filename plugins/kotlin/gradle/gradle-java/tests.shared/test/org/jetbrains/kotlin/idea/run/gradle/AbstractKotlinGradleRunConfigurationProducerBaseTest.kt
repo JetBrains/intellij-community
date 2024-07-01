@@ -16,16 +16,30 @@ import kotlin.test.assertTrue
 
 abstract class AbstractKotlinGradleRunConfigurationProducerBaseTest : AbstractKotlinGradleCodeInsightBaseTest() {
 
+    protected fun assertNoConfigurationAtCaret() {
+        runInEdtAndWait {
+            val context = getConfigurationContextAtCaret()
+            assertTrue("There should be no configuration at caret"){
+                context.configurationsFromContext.isNullOrEmpty()
+            }
+        }
+    }
+
     protected fun verifyGradleConfigurationAtCaret(taskName: String) {
         runInEdtAndWait {
-            codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle.kts"))
-            val location = PsiLocation(codeInsightFixture.elementByOffset)
-            val context = ConfigurationContext.createEmptyContextForLocation(location)
+            val context = getConfigurationContextAtCaret()
             val configurationFromContext = context.configurationsFromContext?.singleOrNull()
                                            ?: error("Unable to find a single configuration from context")
             verifyGradleRunConfiguration(configurationFromContext, taskName)
             verifyConfigurationProducer(configurationFromContext, context)
         }
+    }
+
+    private fun getConfigurationContextAtCaret(): ConfigurationContext {
+        codeInsightFixture.configureFromExistingVirtualFile(getFile("build.gradle.kts"))
+        val location = PsiLocation(codeInsightFixture.elementByOffset)
+        val context = ConfigurationContext.createEmptyContextForLocation(location)
+        return context
     }
 
     private fun verifyGradleRunConfiguration(configurationFromContext: ConfigurationFromContext, taskName: String) {
