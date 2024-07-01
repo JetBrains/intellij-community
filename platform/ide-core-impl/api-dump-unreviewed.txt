@@ -766,15 +766,19 @@ com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 f:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 - sf:INSTANCE:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 - sf:getCustomEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- *f:getCustomEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEditorTabBackgroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - sf:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - sf:getFileBackgroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - sf:getUniqueEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 - com.intellij.openapi.project.DumbAware
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- sf:Companion:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
 - a:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- *:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:getEditorTabTitleAsync$suspendImpl(com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+f:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
 com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - isNotWritable(com.intellij.openapi.vfs.VirtualFile):Z

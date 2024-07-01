@@ -2,10 +2,13 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
  *
@@ -14,12 +17,18 @@ import com.intellij.openapi.vfs.VirtualFile
 interface EditorTabTitleProvider : DumbAware {
   companion object {
     @JvmField
+    @Internal
     val EP_NAME: ExtensionPointName<EditorTabTitleProvider> = ExtensionPointName("com.intellij.editorTabTitleProvider")
   }
 
   fun getEditorTabTitle(project: Project, file: VirtualFile): @NlsContexts.TabTitle String?
 
-  fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): @NlsContexts.Tooltip String? {
-    return null
+  @Experimental
+  suspend fun getEditorTabTitleAsync(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {
+    return blockingContext {
+      getEditorTabTitle(project, file)
+    }
   }
+
+  fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): @NlsContexts.Tooltip String? = null
 }

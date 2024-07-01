@@ -20235,10 +20235,14 @@ f:com.intellij.openapi.wm.impl.FocusRequestInfo
 - f:trace:java.lang.Throwable
 - <init>(java.awt.Component,java.lang.Throwable,Z):V
 a:com.intellij.openapi.wm.impl.FrameTitleBuilder
+- sf:Companion:com.intellij.openapi.wm.impl.FrameTitleBuilder$Companion
 - <init>():V
 - a:getFileTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- s:getInstance():com.intellij.openapi.wm.impl.FrameTitleBuilder
+- *:getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
+- sf:getInstance():com.intellij.openapi.wm.impl.FrameTitleBuilder
 - a:getProjectTitle(com.intellij.openapi.project.Project):java.lang.String
+f:com.intellij.openapi.wm.impl.FrameTitleBuilder$Companion
+- f:getInstance():com.intellij.openapi.wm.impl.FrameTitleBuilder
 f:com.intellij.openapi.wm.impl.IdeBackgroundUtil
 - sf:EDITOR_PROP:java.lang.String
 - sf:FRAME_PROP:java.lang.String
@@ -20381,6 +20385,7 @@ c:com.intellij.openapi.wm.impl.PlatformFrameTitleBuilder
 - com.intellij.openapi.wm.impl.FrameTitleBuilder
 - <init>():V
 - getFileTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- getFileTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - getProjectTitle(com.intellij.openapi.project.Project):java.lang.String
 c:com.intellij.openapi.wm.impl.ProjectFrameHelper
 - com.intellij.openapi.actionSystem.UiDataProvider
