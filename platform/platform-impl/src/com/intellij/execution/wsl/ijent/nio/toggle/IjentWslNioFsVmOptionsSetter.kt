@@ -139,6 +139,8 @@ object IjentWslNioFsVmOptionsSetter {
     }
 
     override fun applicationActivated(ideFrame: IdeFrame) {
+      if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) return
+
       val serviceScope = service<ServiceScope>()
       if (serviceScope.dialogMessageHasBeenShown.getAndSet(true)) return
 
