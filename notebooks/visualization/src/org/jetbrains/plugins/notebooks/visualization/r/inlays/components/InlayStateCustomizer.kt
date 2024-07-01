@@ -14,13 +14,14 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * */
 @Experimental
 interface InlayStateCustomizer {
-  /** Checks if a customizer can customize an inlay output of the given type. */
-  fun <T : NotebookInlayState> isApplicableTo(klass: Class<T>): Boolean = true
-
   /** Applies customizations and return the inlay output. */
   fun customize(state: NotebookInlayState): NotebookInlayState
 
   companion object {
-    val EP = ExtensionPointName.create<InlayStateCustomizer>("com.intellij.datavis.inlays.components.inlayStateCustomizer")
+    private val EP = ExtensionPointName.create<InlayStateCustomizer>("com.intellij.datavis.inlays.components.inlayStateCustomizer")
+
+    fun customize(state: NotebookInlayState) {
+      EP.extensionList.forEach { customizer -> customizer.customize(state) }
+    }
   }
 }
