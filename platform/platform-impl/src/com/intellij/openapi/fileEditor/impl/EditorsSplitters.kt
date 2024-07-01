@@ -496,6 +496,9 @@ open class EditorsSplitters internal constructor(
   internal val splitCount: Int
     get() = if (componentCount > 0) getSplitCount(getComponent(0) as JComponent) else 0
 
+  internal open val isSingletonEditorInWindow: Boolean
+    get() = false
+
   internal open fun afterFileClosed(file: VirtualFile) {}
 
   open fun afterFileOpen(file: VirtualFile) {}

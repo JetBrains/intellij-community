@@ -274,6 +274,7 @@ class DockableEditor(
   private val presentation: Presentation,
   private val preferredSize: Dimension,
   @JvmField internal val isPinned: Boolean,
+  @JvmField internal val isSingletonEditorInWindow: Boolean,
   @JvmField internal val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
 ) : DockableContent<VirtualFile?> {
   override fun getKey(): VirtualFile = file
@@ -433,7 +434,8 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
     }
     presentation.icon = info.icon
     val editors = info.composite.allEditors
-    presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
+    val isSingletonEditorInWindow = isSingletonEditorInWindow(editors)
+    presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow)
     session = DockManager.getInstance(window.manager.project).createDragSession(
       mouseEvent,
       DockableEditor(
@@ -442,6 +444,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
         presentation = presentation,
         preferredSize = window.size,
         isPinned = window.isFilePinned(file = file),
+        isSingletonEditorInWindow = isSingletonEditorInWindow,
         isNorthPanelAvailable = isNorthPanelAvailable(editors),
       ),
     )

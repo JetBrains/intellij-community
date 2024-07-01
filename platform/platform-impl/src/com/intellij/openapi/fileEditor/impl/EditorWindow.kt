@@ -609,7 +609,7 @@ class EditorWindow internal constructor(
   }
 
   internal fun updateTabsVisibility(uiSettings: UISettings = UISettings.getInstance()) {
-    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && shouldHideTabs(selectedComposite)) ||
+    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && (owner.isSingletonEditorInWindow || shouldHideTabs(selectedComposite))) ||
                                        uiSettings.editorTabPlacement == UISettings.TABS_NONE ||
                                        (uiSettings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
