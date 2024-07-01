@@ -432,7 +432,7 @@ internal class EditorTabbedContainerDragOutDelegate(private val window: EditorWi
       presentation.putClientProperty(DockManagerImpl.REOPEN_WINDOW, DockManagerImpl.REOPEN_WINDOW.get(file, true))
     }
     presentation.icon = info.icon
-    val editors = window.getComposite(file)?.allEditors ?: emptyList()
+    val editors = info.composite.allEditors
     presentation.putClientProperty(DockManagerImpl.ALLOW_DOCK_TOOL_WINDOWS, !isSingletonEditorInWindow(editors))
     session = DockManager.getInstance(window.manager.project).createDragSession(
       mouseEvent,
