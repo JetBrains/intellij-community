@@ -9,6 +9,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -307,9 +308,9 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
       file
     } ?: return
 
+    val titleBuilder = serviceAsync<FrameTitleBuilder>()
+    val baseTitle = titleBuilder.getFileTitleAsync(project, file)
     val result = readAction {
-      val titleBuilder = FrameTitleBuilder.getInstance()
-      val baseTitle = titleBuilder.getFileTitle(project, file)
       val first = (titleBuilder as? PlatformFrameTitleBuilder)?.run {
         val fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file)
         if (!fileTitle.endsWith(file.presentableName) || file.parent == null) {

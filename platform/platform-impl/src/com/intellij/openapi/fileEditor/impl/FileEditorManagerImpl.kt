@@ -2398,7 +2398,7 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
           continue
         }
 
-        val title = EditorTabPresentationUtil.getEditorTabTitle(splitters.manager.project, composite.file)
+        val title = EditorTabPresentationUtil.getEditorTabTitleAsync(splitters.manager.project, composite.file)
         withContext(Dispatchers.EDT) {
           val tab = window.findTabByComposite(composite) ?: return@withContext
           tab.setText(title)

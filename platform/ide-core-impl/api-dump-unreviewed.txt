@@ -769,6 +769,7 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil
 - *f:getCustomEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getEditorTabBackgroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - sf:getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- *f:getEditorTabTitleAsync(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.coroutines.Continuation):java.lang.Object
 - sf:getFileBackgroundColor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.awt.Color
 - sf:getUniqueEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
