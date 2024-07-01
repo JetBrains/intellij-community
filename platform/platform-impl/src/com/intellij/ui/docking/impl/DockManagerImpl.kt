@@ -396,7 +396,8 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
     val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
     val result = openFile(editorWindow)
-    if (!isSingletonEditorInWindow(result.allEditors)) {
+    val isSingletonEditorInWindow = isSingletonEditorInWindow(result.allEditors)
+    if (!isSingletonEditorInWindow) {
       window.setupToolWindowPane()
     }
     val isNorthPanelAvailable = isNorthPanelAvailable(result.allEditors)
@@ -410,6 +411,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
         presentation = Presentation(file.name),
         preferredSize = editorWindow.size,
         isPinned = editorWindow.isFilePinned(file = file),
+        isSingletonEditorInWindow = isSingletonEditorInWindow,
         isNorthPanelAvailable = isNorthPanelAvailable,
       ),
       null
