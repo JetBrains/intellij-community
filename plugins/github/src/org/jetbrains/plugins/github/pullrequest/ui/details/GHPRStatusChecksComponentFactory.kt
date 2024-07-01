@@ -96,10 +96,10 @@ internal object GHPRStatusChecksComponentFactory {
       requestOrError.bimap(
         ifLeft = {
           when (it) {
-            is MergeInProgress -> CollaborationToolsBundle.message("review.details.resolve-conflicts.error.merge-in-progress")
-            is DetailsNotLoaded -> CollaborationToolsBundle.message("review.details.resolve-conflicts.error.details-not-loaded")
-            is RepositoryNotFound -> GithubBundle.message("pull.request.resolve-conflicts.error.repository-not-found", it.baseOrHead.text)
-            is RemoteNotFound -> GithubBundle.message("pull.request.resolve-conflicts.error.remote-not-found", it.baseOrHead.text, it.coordinates.getWebURI())
+            is MergeInProgress -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.mergeInProgress")
+            is DetailsNotLoaded -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.detailsNotLoaded")
+            is RepositoryNotFound -> GithubBundle.message("pull.request.resolveConflicts.error.repositoryNotFound", it.baseOrHead.text)
+            is RemoteNotFound -> GithubBundle.message("pull.request.resolveConflicts.error.remoteNotFound", it.baseOrHead.text, it.coordinates.getWebURI())
           }
         },
         ifRight = { request ->
