@@ -91,6 +91,9 @@ interface NotebookCellInlayController {
    */
   fun updateCellFolding() = Unit
 
+  val shouldUpdateInlay: Boolean
+    get() = false
+
   companion object {
     val GUTTER_ACTION_KEY = Key<AnAction>("jupyter.editor.cell.gutter.action")
   }

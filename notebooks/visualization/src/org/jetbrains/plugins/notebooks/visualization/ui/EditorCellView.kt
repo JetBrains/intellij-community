@@ -414,6 +414,9 @@ class EditorCellView(
     )
   }
 
+  val shouldUpdateFolding: Boolean
+    get() = controllers.any { it.shouldUpdateInlay }
+
   fun updateCellFolding() {
     controllers.forEach { it.updateCellFolding() }
   }

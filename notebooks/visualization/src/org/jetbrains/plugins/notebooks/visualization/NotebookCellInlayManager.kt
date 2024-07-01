@@ -80,7 +80,7 @@ class NotebookCellInlayManager private constructor(
     linesList.mergeAndJoinIntersections(listOf())
 
     for (lines in linesList) {
-      updateConsequentInlays(0..editor.document.lineCount, force = false)
+      updateConsequentInlays(lines, force = false)
     }
   }
 
@@ -251,8 +251,13 @@ class NotebookCellInlayManager private constructor(
 
   private fun updateCellsFolding(editorCells: List<EditorCell>) {
     val foldingModel = editor.foldingModel
+
+    val cellsForFoldingUpdate = editorCells.filter { it.view?.shouldUpdateFolding == true }
+    if (cellsForFoldingUpdate.isEmpty())
+      return
+
     foldingModel.runBatchFoldingOperation({
-                                            editorCells.forEach { cell ->
+                                            cellsForFoldingUpdate.forEach { cell ->
                                               cell.view?.updateCellFolding()
                                             }
                                           }, true, false)
