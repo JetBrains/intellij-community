@@ -34,5 +34,5 @@ public interface JsonSchemaCompletionCustomizer {
    */
   default boolean acceptsPropertyCompletionItem(JsonSchemaObject parentSchema, String propertyName,
                                                 @Nullable List<String> nestedPath,
-                                                @NotNull PsiElement originalPosition) { return true; }
+                                                @NotNull PsiElement completionElement) { return true; }
 }

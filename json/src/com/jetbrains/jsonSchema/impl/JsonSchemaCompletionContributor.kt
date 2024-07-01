@@ -184,7 +184,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         .filter { name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name == adapter.name }
         .forEach { name ->
           knownNames.add(name)
-          if (customHandlers.size == 1 && !customHandlers[0].acceptsPropertyCompletionItem(schema, name, completionPath?.accessor(), originalPosition)) return@forEach
+          if (customHandlers.size == 1 && !customHandlers[0].acceptsPropertyCompletionItem(schema, name, completionPath?.accessor(), completionPsiElement)) return@forEach
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
           addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
         }
