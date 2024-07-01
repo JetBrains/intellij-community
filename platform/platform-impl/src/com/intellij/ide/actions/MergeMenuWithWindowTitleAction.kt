@@ -9,7 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.wm.impl.IdeRootPane
-import com.intellij.util.ui.RestartDialog
+import com.intellij.util.ui.RestartDialogImpl
 
 class MergeMenuWithWindowTitleAction : ToggleAction(), DumbAware {
 
@@ -26,7 +26,7 @@ class MergeMenuWithWindowTitleAction : ToggleAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val result = RestartDialog.showRestartRequired(showCancelButton = true, launchRestart = false)
+    val result = RestartDialogImpl.showRestartRequired(showCancelButton = true, launchRestart = false)
     if (result == MessageConstants.CANCEL) {
       return
     }
