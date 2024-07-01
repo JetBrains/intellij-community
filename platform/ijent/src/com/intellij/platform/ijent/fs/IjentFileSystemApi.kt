@@ -220,7 +220,8 @@ sealed interface IjentOpenedFile {
 
     /**
      * If the remote file is read completely, then this function returns [ReadResult] with [ReadResult.EOF].
-     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes]
+     * Otherwise, if there are any data left to read, then it returns [ReadResult.Bytes].
+     * Note, that [ReadResult.Bytes] can be `0` if [buf] cannot accept new data.
      */
     suspend fun read(buf: ByteBuffer): IjentFsResult<ReadResult, ReadError>
 
