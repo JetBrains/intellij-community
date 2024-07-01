@@ -5,14 +5,11 @@ import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.util.coroutines.childScope
-import git4idea.remote.hosting.GitCodeReviewUtils
 import git4idea.remote.hosting.GitRemoteBranchesUtil
-import git4idea.remote.hosting.infoFlow
+import git4idea.remote.hosting.isInCurrentHistory
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.supervisorScope
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.detailsComputationFlow
@@ -28,33 +25,12 @@ internal class GHPRReviewBranchStateSharedViewModel(
 ) {
   private val cs = parentCs.childScope(javaClass.name)
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  val updateRequired: StateFlow<Boolean> = run {
-    val repository = dataContext.repositoryDataService.remoteCoordinates.repository
-    val currentRevFlow = repository.infoFlow().map { it.currentRevision }
-    val headRevFlow = dataProvider.detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.headRefOid }
+  private val repository = dataContext.repositoryDataService.remoteCoordinates.repository
 
-    /*
-     * Request for the sync state between current local branch and branch state on the server.
-     * Will produce false if local branch has all the commits that are recorded on the server, true otherwise.
-     * Can't just do combineTransform bc it will not cancel previous computation
-     */
-    currentRevFlow.combine(headRevFlow) { currentRev, headRev ->
-      currentRev to headRev
-    }.distinctUntilChanged().transformLatest { (currentRev, headRev) ->
-      when (currentRev) {
-        null -> emit(false) // does not make sense to update on a no-revision head
-        headRev -> emit(false)
-        else -> supervisorScope {
-          emit(false)
-          val res = runCatching {
-            !GitCodeReviewUtils.testIsAncestor(repository, headRev, currentRev)
-          }
-          emit(res.getOrNull() ?: false)
-        }
-      }
-    }
-  }.stateInNow(cs, false)
+  val updateRequired: StateFlow<Boolean> =
+    repository.isInCurrentHistory(
+      rev = dataProvider.detailsData.detailsComputationFlow.mapNotNull { it.getOrNull() }.map { it.headRefOid }
+    ).map { it?.not() ?: false }.stateInNow(cs, false)
 
   private val _updateErrors = MutableSharedFlow<Exception>()
   val updateErrors: SharedFlow<Exception> = _updateErrors.asSharedFlow()
