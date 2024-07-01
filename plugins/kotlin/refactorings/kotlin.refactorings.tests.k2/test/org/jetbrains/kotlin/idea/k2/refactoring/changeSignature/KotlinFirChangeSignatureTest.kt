@@ -6,6 +6,11 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -118,6 +123,19 @@ class KotlinFirChangeSignatureTest :
 
     fun testInterface() {
         doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+    }
+
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    fun testExpressionFragmentErrors() {
+        val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
+        val fragment = KtPsiFactory(project).createTypeCodeFragment("CustomList<out String>", psiFile)
+        assertTrue(
+            allowAnalysisOnEdt {
+                analyze(fragment) {
+                    fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()
+                }
+            }
+        )
     }
 
     override fun testRemoveDataClassParameter() {
