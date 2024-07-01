@@ -63,8 +63,8 @@ object IjentFsResultImpl {
     IjentOpenedFile.Reader.ReadError.InvalidValue,
     IjentOpenedFile.SeekError.InvalidValue
 
-  data class FileNotOpened(override val where: IjentPath.Absolute, override val message: String) :
-    IjentOpenedFile.Reader.ReadError.FileNotOpened,
-    IjentOpenedFile.Writer.WriteError.FileNotOpened,
-    IjentOpenedFile.SeekError.FileNotOpened
+  data class UnknownFile(override val where: IjentPath.Absolute, override val message: String) :
+    IjentOpenedFile.Reader.ReadError.UnknownFile,
+    IjentOpenedFile.Writer.WriteError.UnknownFile,
+    IjentOpenedFile.SeekError.UnknownFile
 }

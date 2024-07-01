@@ -94,7 +94,6 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     // TODO Handle options and attrs
     val fs = registeredFileSystems[path.ijentId] ?: throw FileSystemNotFoundException()
 
-    require(!(READ in options && WRITE in options)) { "READ + WRITE not allowed" }
     require(!(READ in options && APPEND in options)) { "READ + APPEND not allowed" }
     require(!(APPEND in options && TRUNCATE_EXISTING in options)) { "APPEND + TRUNCATE_EXISTING not allowed" }
 
@@ -102,18 +101,23 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
 
+      val writeOptions = fs.ijent.fs
+        .writeOptionsBuilder(path.ijentPath)
+        .append(APPEND in options)
+        .truncateExisting(TRUNCATE_EXISTING in options)
+        .creationMode(when {
+          CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
+          CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
+          else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
+        }).build()
+
+
       fs.fsBlocking {
-        IjentNioFileChannel.createWriting(
-          fs,
-          path.ijentPath,
-          append = APPEND in options,
-          truncate = TRUNCATE_EXISTING in options,
-          creationMode = when {
-            CREATE_NEW in options -> IjentFileSystemApi.FileWriterCreationMode.ONLY_CREATE
-            CREATE in options -> IjentFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
-            else -> IjentFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
-          },
-        )
+        if (READ in options) {
+          IjentNioFileChannel.createWriting(fs, writeOptions)
+        } else {
+          IjentNioFileChannel.createReadingWriting(fs, writeOptions)
+        }
       }
     }
     else {

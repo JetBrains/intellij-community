@@ -99,7 +99,10 @@ sealed interface IjentFileSystemApi {
     interface Other : SameFileError, IjentFsError.Other
   }
 
-  suspend fun fileReader(path: IjentPath.Absolute): IjentFsResult<
+  /**
+   * Opens file only for reading
+   */
+  suspend fun openForReading(path: IjentPath.Absolute): IjentFsResult<
     IjentOpenedFile.Reader,
     FileReaderError>
 
@@ -113,16 +116,43 @@ sealed interface IjentFileSystemApi {
   }
 
   /**
-   * If [append] is false, the file is erased.
+   * Opens file only for writing
    */
-  suspend fun fileWriter(
-    path: IjentPath.Absolute,
-    append: Boolean,
-    truncateExisting: Boolean,
-    creationMode: FileWriterCreationMode,
+  suspend fun openForWriting(
+    options: WriteOptions
   ): IjentFsResult<
     IjentOpenedFile.Writer,
     FileWriterError>
+
+  interface WriteOptions
+
+  fun writeOptionsBuilder(path: IjentPath.Absolute) : WriteOptionsBuilder
+
+  interface WriteOptionsBuilder {
+    /**
+     * Whether to append new data to the end of file.
+     * Default: `false`
+     */
+    fun append(shouldAppend: Boolean) : WriteOptionsBuilder
+
+    /**
+     * Whether to remove contents from the existing file.
+     * Default: `false`
+     */
+    fun truncateExisting(shouldTruncate: Boolean): WriteOptionsBuilder
+
+    /**
+     * Defines the behavior if the written file does not exist
+     * Default: [FileWriterCreationMode.ONLY_OPEN_EXISTING]
+     */
+    fun creationMode(mode: FileWriterCreationMode): WriteOptionsBuilder
+
+    fun build() : WriteOptions
+  }
+
+  enum class FileWriterCreationMode {
+    ALLOW_CREATE, ONLY_CREATE, ONLY_OPEN_EXISTING,
+  }
 
   sealed interface FileWriterError : IjentFsError {
     interface DoesNotExist : FileWriterError, IjentFsError.DoesNotExist
@@ -133,9 +163,8 @@ sealed interface IjentFileSystemApi {
     interface Other : FileWriterError, IjentFsError.Other
   }
 
-  enum class FileWriterCreationMode {
-    ALLOW_CREATE, ONLY_CREATE, ONLY_OPEN_EXISTING,
-  }
+  suspend fun openForReadingAndWriting(options: WriteOptions) : IjentFsResult<IjentOpenedFile.ReaderWriter, FileWriterError>
+
 
   @Throws(DeleteException::class)
   suspend fun deleteDirectory(path: IjentPath.Absolute, removeContent: Boolean)
@@ -207,7 +236,7 @@ sealed interface IjentOpenedFile {
 
   sealed interface SeekError : IjentFsError {
     interface InvalidValue : SeekError, IjentFsError
-    interface FileNotOpened : SeekError, IjentFsError.FileNotOpened
+    interface UnknownFile : SeekError, IjentFsError.UnknownFile
     interface Other : SeekError, IjentFsError.Other
   }
 
@@ -233,7 +262,7 @@ sealed interface IjentOpenedFile {
     }
 
     sealed interface ReadError : IjentFsError {
-      interface FileNotOpened : ReadError, IjentFsError.FileNotOpened
+      interface UnknownFile : ReadError, IjentFsError.UnknownFile
       interface InvalidValue : ReadError, IjentFsError
       interface Other : ReadError, IjentFsError.Other
     }
@@ -250,7 +279,7 @@ sealed interface IjentOpenedFile {
         interface FileSizeExceeded : ResourceExhausted, IjentFsError.Other
         interface NoSpaceLeft : ResourceExhausted, IjentFsError.Other
       }
-      interface FileNotOpened : WriteError, IjentFsError.FileNotOpened
+      interface UnknownFile : WriteError, IjentFsError.UnknownFile
       interface Other : WriteError, IjentFsError.Other
     }
 
@@ -276,6 +305,8 @@ sealed interface IjentOpenedFile {
         : TruncateException(where, additionalMessage), IjentFsError.Other
     }
   }
+
+  interface ReaderWriter : Reader, Writer
 }
 
 interface IjentFileSystemPosixApi : IjentFileSystemApi {
