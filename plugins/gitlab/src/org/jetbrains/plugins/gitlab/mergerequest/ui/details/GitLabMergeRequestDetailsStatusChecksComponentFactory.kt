@@ -85,6 +85,7 @@ internal object GitLabMergeRequestDetailsStatusChecksComponentFactory {
       requestOrError.bimap(
         ifLeft = {
           when (it) {
+            is AlreadyResolvedLocally -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.alreadyResolvedLocally")
             is MergeInProgress -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.mergeInProgress")
             is DetailsNotLoaded -> CollaborationToolsBundle.message("review.details.resolveConflicts.error.detailsNotLoaded")
             is SourceRepositoryNotFound -> GitLabBundle.message("merge.request.resolveConflicts.error.sourceProjectNotFound")
