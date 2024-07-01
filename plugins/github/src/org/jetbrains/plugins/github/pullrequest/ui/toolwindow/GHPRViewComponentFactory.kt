@@ -15,8 +15,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ScrollPaneFactory
-import com.intellij.ui.ScrollableContentBorder
-import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
@@ -104,10 +102,8 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
                                                              GithubBundle.message("pull.request.does.not.contain.changes"))
 
     val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
-    val stripe = CollaborationToolsUIUtil.wrapWithProgressStripe(this, changeListVm.isUpdating, scrollPane)
-    ScrollableContentBorder.setup(scrollPane, Side.TOP_AND_BOTTOM, stripe)
 
-    DataManager.registerDataProvider(stripe) { dataId ->
+    DataManager.registerDataProvider(scrollPane) { dataId ->
       when {
         tree.isShowing ->
           when {
@@ -120,7 +116,7 @@ internal class GHPRViewComponentFactory(actionManager: ActionManager,
     }
     tree.installPopupHandler(ActionManager.getInstance().getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
-    return stripe
+    return scrollPane
   }
 
   private fun createChangesErrorComponent(changesVm: GHPRChangesViewModel, error: Throwable): JComponent {

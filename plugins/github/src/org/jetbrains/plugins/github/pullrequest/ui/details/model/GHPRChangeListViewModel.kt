@@ -23,7 +23,6 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.viewedStateComputa
 
 @ApiStatus.Experimental
 interface GHPRChangeListViewModel : CodeReviewChangeListViewModel.WithDetails, CodeReviewChangeListViewModel.WithGrouping {
-  val isUpdating: StateFlow<Boolean>
   val isOnLatest: Boolean
 
   @RequiresEdt
@@ -45,9 +44,6 @@ internal class GHPRChangeListViewModelImpl(
   private val preferences = GithubPullRequestsProjectUISettings.getInstance(project)
   private val repository: GitRepository get() = dataContext.repositoryDataService.remoteCoordinates.repository
 
-  private val _isUpdating = MutableStateFlow(false)
-  override val isUpdating: StateFlow<Boolean> = _isUpdating.asStateFlow()
-
   override val isOnLatest: Boolean = changeList.commitSha == null || changes.commits.size == 1
 
   private val viewedStateData = dataProvider.viewedStateData
@@ -61,10 +57,6 @@ internal class GHPRChangeListViewModelImpl(
     }
 
   override val grouping: StateFlow<Set<String>> = preferences.changesGroupingState
-
-  fun setUpdating(updating: Boolean) {
-    _isUpdating.value = updating
-  }
 
   override fun showDiffPreview() {
     dataContext.filesManager.createAndOpenDiffFile(dataProvider.id, true)

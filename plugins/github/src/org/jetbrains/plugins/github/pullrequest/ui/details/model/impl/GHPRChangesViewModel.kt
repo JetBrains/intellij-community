@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
-import com.intellij.collaboration.async.launchNowIn
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.async.stateInNow
 import com.intellij.collaboration.async.withInitial
@@ -42,8 +41,6 @@ internal class GHPRChangesViewModelImpl(
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
-  private val isLoadingChanges = MutableStateFlow(false)
-
   override val changesLoadingErrorHandler = GHApiLoadingErrorHandler(project, dataContext.securityService.account) {
     cs.launch {
       dataProvider.changesData.signalChangesNeedReload()
@@ -65,25 +62,15 @@ internal class GHPRChangesViewModelImpl(
 
   private val changesContainer: StateFlow<Result<CodeReviewChangesContainer>?> =
     dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).map {
-    isLoadingChanges.value = true
-    try {
-      runCatching {
-        dataProvider.changesData.loadChanges()
-      }.map {
-        CodeReviewChangesContainer(it.changes, it.commits.map { it.sha }, it.changesByCommits)
-      }
-    }
-    finally {
-      isLoadingChanges.value = false
+    runCatching {
+      dataProvider.changesData.loadChanges()
+    }.map {
+      CodeReviewChangesContainer(it.changes, it.commits.map { it.sha }, it.changesByCommits)
     }
     }.stateInNow(cs, null)
 
   private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changes, changeList ->
-    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList).also { vm ->
-      changesContainer.combine(isLoadingChanges) { _, loading ->
-        vm.setUpdating(loading)
-      }.launchNowIn(this)
-    }
+    GHPRChangeListViewModelImpl(this, project, dataContext, dataProvider, changes, changeList)
   }
 
   override val selectedCommitIndex: SharedFlow<Int> = reviewCommits.combine(delegate.selectedCommit) { commits, sha ->
