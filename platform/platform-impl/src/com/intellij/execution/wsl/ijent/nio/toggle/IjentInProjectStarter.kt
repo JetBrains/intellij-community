@@ -3,6 +3,7 @@ package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -17,6 +18,10 @@ import kotlinx.coroutines.launch
 /** Starts the IJent if a project on WSL is opened. */
 internal class IjentInProjectStarter : ProjectActivity {
   override suspend fun execute(project: Project): Unit = coroutineScope {
+    if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
+      return@coroutineScope
+    }
+
     val ijentWslNioFsToggler = IjentWslNioFsToggler.instanceAsync()
     if (!ijentWslNioFsToggler.isAvailable) {
       return@coroutineScope
