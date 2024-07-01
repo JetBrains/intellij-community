@@ -39,14 +39,14 @@ public final class org/jetbrains/jewel/intui/standalone/StandalonePainterHintsPr
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiButtonStylingKt {
-	public static final fun default-H1KY9o8 (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JF)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
-	public static synthetic fun default-H1KY9o8$default (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
+	public static final fun default-Kzyhx1A (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFF)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
+	public static synthetic fun default-Kzyhx1A$default (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
 	public static final fun getDefault (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButtonColorFactory;
 	public static final fun getDefault (Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButtonStyleFactory;
 	public static final fun getOutlined (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedButtonColorFactory;
 	public static final fun getOutlined (Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle$Companion;)Lorg/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedButtonStyleFactory;
-	public static final fun outlined-H1KY9o8 (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JF)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
-	public static synthetic fun outlined-H1KY9o8$default (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
+	public static final fun outlined-Kzyhx1A (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFF)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
+	public static synthetic fun outlined-Kzyhx1A$default (Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFFILjava/lang/Object;)Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiCheckboxStylingKt {
@@ -86,8 +86,8 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButt
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButtonStyleFactory {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiDefaultButtonStyleFactory;
-	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
-	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiDefaultDropdownColorsFactory {
@@ -232,8 +232,8 @@ public final class org/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedBut
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedButtonStyleFactory {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/intui/standalone/styling/IntUiOutlinedButtonStyleFactory;
-	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
-	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public final fun dark (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
+	public final fun light (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle;
 }
 
 public final class org/jetbrains/jewel/intui/standalone/styling/IntUiRadioButtonStylingKt {

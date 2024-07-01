@@ -91,8 +91,8 @@ public final class org/jetbrains/jewel/ui/Outline$Companion {
 }
 
 public final class org/jetbrains/jewel/ui/OutlineKt {
-	public static final fun focusOutline-FJfuzF0 (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/state/FocusableComponentState;Landroidx/compose/ui/graphics/Shape;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
-	public static final fun focusOutline-FJfuzF0 (Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/graphics/Shape;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun focusOutline-AGcomas (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/state/FocusableComponentState;Landroidx/compose/ui/graphics/Shape;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
+	public static final fun focusOutline-AGcomas (Landroidx/compose/ui/Modifier;ZLandroidx/compose/ui/graphics/Shape;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FFLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 	public static final fun outline-HYR8e34 (Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/foundation/state/FocusableComponentState;Lorg/jetbrains/jewel/ui/Outline;Landroidx/compose/ui/graphics/Shape;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;FLandroidx/compose/runtime/Composer;II)Landroidx/compose/ui/Modifier;
 }
 
@@ -796,10 +796,11 @@ public final class org/jetbrains/jewel/ui/component/styling/ButtonColors$Compani
 public final class org/jetbrains/jewel/ui/component/styling/ButtonMetrics {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics$Companion;
-	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFLkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public synthetic fun <init> (Landroidx/compose/foundation/shape/CornerSize;Landroidx/compose/foundation/layout/PaddingValues;JFFLkotlin/jvm/internal/DefaultConstructorMarker;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getBorderWidth-D9Ej5fM ()F
 	public final fun getCornerSize ()Landroidx/compose/foundation/shape/CornerSize;
+	public final fun getFocusOutlineExpand-D9Ej5fM ()F
 	public final fun getMinSize-MYxV2XQ ()J
 	public final fun getPadding ()Landroidx/compose/foundation/layout/PaddingValues;
 	public fun hashCode ()I
@@ -812,9 +813,10 @@ public final class org/jetbrains/jewel/ui/component/styling/ButtonMetrics$Compan
 public final class org/jetbrains/jewel/ui/component/styling/ButtonStyle {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/ButtonStyle$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;Lorg/jetbrains/jewel/foundation/Stroke$Alignment;)V
 	public fun equals (Ljava/lang/Object;)Z
 	public final fun getColors ()Lorg/jetbrains/jewel/ui/component/styling/ButtonColors;
+	public final fun getFocusOutlineAlignment ()Lorg/jetbrains/jewel/foundation/Stroke$Alignment;
 	public final fun getMetrics ()Lorg/jetbrains/jewel/ui/component/styling/ButtonMetrics;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;

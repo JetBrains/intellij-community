@@ -46,6 +46,7 @@ import org.jetbrains.jewel.bridge.toDpSize
 import org.jetbrains.jewel.bridge.toPaddingValues
 import org.jetbrains.jewel.foundation.GlobalColors
 import org.jetbrains.jewel.foundation.GlobalMetrics
+import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
@@ -282,8 +283,10 @@ private fun readDefaultButtonStyle(): ButtonStyle {
                 cornerSize = retrieveArcAsCornerSizeWithFallbacks("Button.default.arc", "Button.arc"),
                 padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
                 minSize = DpSize(minimumSize.width, minimumSize.height),
-                borderWidth = DarculaUIUtil.LW.dp,
+                borderWidth = 1.dp,
+                focusOutlineExpand = 1.5.dp, // From DarculaButtonPainter.getBorderInsets
             ),
+        focusOutlineAlignment = Stroke.Alignment.Center,
     )
 }
 
@@ -330,7 +333,9 @@ private fun readOutlinedButtonStyle(): ButtonStyle {
                 padding = PaddingValues(horizontal = 14.dp), // see DarculaButtonUI.HORIZONTAL_PADDING
                 minSize = DpSize(minimumSize.width, minimumSize.height),
                 borderWidth = DarculaUIUtil.LW.dp,
+                focusOutlineExpand = Dp.Unspecified,
             ),
+        focusOutlineAlignment = Stroke.Alignment.Center,
     )
 }
 

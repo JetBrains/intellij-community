@@ -39,6 +39,7 @@ import org.jetbrains.jewel.foundation.theme.LocalContentColor
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.chipStyle
+import org.jetbrains.jewel.ui.util.thenIf
 
 @Composable
 public fun Chip(
@@ -166,7 +167,7 @@ private fun ChipImpl(
         modifier =
             modifier
                 .background(colors.backgroundFor(chipState).value, shape)
-                .border(Stroke.Alignment.Center, borderWidth, borderColor, shape)
+                .thenIf(!chipState.isFocused) { border(Stroke.Alignment.Center, borderWidth, borderColor, shape) }
                 .focusOutline(chipState, shape)
                 .padding(style.metrics.padding),
         verticalAlignment = Alignment.CenterVertically,

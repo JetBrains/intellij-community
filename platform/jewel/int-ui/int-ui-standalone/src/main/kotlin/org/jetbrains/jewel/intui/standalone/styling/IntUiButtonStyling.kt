@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
 import org.jetbrains.jewel.ui.component.styling.ButtonColors
@@ -23,13 +24,15 @@ public object IntUiDefaultButtonStyleFactory {
     public fun light(
         colors: ButtonColors = ButtonColors.Default.light(),
         metrics: ButtonMetrics = ButtonMetrics.default(),
-    ): ButtonStyle = ButtonStyle(colors, metrics)
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
     @Composable
     public fun dark(
         colors: ButtonColors = ButtonColors.Default.dark(),
         metrics: ButtonMetrics = ButtonMetrics.default(),
-    ): ButtonStyle = ButtonStyle(colors, metrics)
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 }
 
 public val ButtonStyle.Companion.Outlined: IntUiOutlinedButtonStyleFactory
@@ -40,13 +43,15 @@ public object IntUiOutlinedButtonStyleFactory {
     public fun light(
         colors: ButtonColors = ButtonColors.Outlined.light(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
-    ): ButtonStyle = ButtonStyle(colors, metrics)
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 
     @Composable
     public fun dark(
         colors: ButtonColors = ButtonColors.Outlined.dark(),
         metrics: ButtonMetrics = ButtonMetrics.outlined(),
-    ): ButtonStyle = ButtonStyle(colors, metrics)
+        focusOutlineAlignment: Stroke.Alignment = Stroke.Alignment.Center,
+    ): ButtonStyle = ButtonStyle(colors, metrics, focusOutlineAlignment)
 }
 
 public val ButtonColors.Companion.Default: IntUiDefaultButtonColorFactory
@@ -67,8 +72,8 @@ public object IntUiDefaultButtonColorFactory {
         contentHovered: Color = IntUiLightTheme.colors.grey(14),
         border: Brush = SolidColor(IntUiLightTheme.colors.blue(4)),
         borderDisabled: Brush = SolidColor(IntUiLightTheme.colors.grey(12)),
-        borderFocused: Brush = SolidColor(IntUiLightTheme.colors.blue(4)),
-        borderPressed: Brush = border,
+        borderFocused: Brush = SolidColor(IntUiLightTheme.colors.grey(14)),
+        borderPressed: Brush = borderFocused,
         borderHovered: Brush = border,
     ): ButtonColors =
         ButtonColors(
@@ -104,7 +109,7 @@ public object IntUiDefaultButtonColorFactory {
         border: Brush = SolidColor(IntUiDarkTheme.colors.blue(6)),
         borderDisabled: Brush = SolidColor(IntUiDarkTheme.colors.grey(5)),
         borderFocused: Brush = SolidColor(IntUiDarkTheme.colors.grey(1)),
-        borderPressed: Brush = border,
+        borderPressed: Brush = borderFocused,
         borderHovered: Brush = border,
     ): ButtonColors =
         ButtonColors(
@@ -207,12 +212,14 @@ public fun ButtonMetrics.Companion.default(
     cornerSize: CornerSize = CornerSize(4.dp),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
     minSize: DpSize = DpSize(72.dp, 28.dp),
-    borderWidth: Dp = 0.dp,
-): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth)
+    borderWidth: Dp = 1.dp,
+    focusOutlineExpand: Dp = 1.5.dp,
+): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)
 
 public fun ButtonMetrics.Companion.outlined(
     cornerSize: CornerSize = CornerSize(4.dp),
     padding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
     minSize: DpSize = DpSize(72.dp, 28.dp),
     borderWidth: Dp = 1.dp,
-): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth)
+    focusOutlineExpand: Dp = Dp.Unspecified,
+): ButtonMetrics = ButtonMetrics(cornerSize, padding, minSize, borderWidth, focusOutlineExpand)

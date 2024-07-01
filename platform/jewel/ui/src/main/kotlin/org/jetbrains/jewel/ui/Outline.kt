@@ -35,7 +35,8 @@ public fun Modifier.focusOutline(
     outlineShape: Shape,
     alignment: Stroke.Alignment = Stroke.Alignment.Outside,
     outlineWidth: Dp = JewelTheme.globalMetrics.outlineWidth,
-): Modifier = focusOutline(state.isFocused, outlineShape, alignment, outlineWidth)
+    expand: Dp = Dp.Unspecified,
+): Modifier = focusOutline(state.isFocused, outlineShape, alignment, outlineWidth, expand)
 
 @Composable
 public fun Modifier.focusOutline(
@@ -43,12 +44,13 @@ public fun Modifier.focusOutline(
     outlineShape: Shape,
     alignment: Stroke.Alignment = Stroke.Alignment.Outside,
     outlineWidth: Dp = JewelTheme.globalMetrics.outlineWidth,
+    expand: Dp = Dp.Unspecified,
 ): Modifier {
     val outlineColors = JewelTheme.globalColors.outlines
 
     return thenIf(showOutline) {
         val outlineColor = outlineColors.focused
-        border(alignment, outlineWidth, outlineColor, outlineShape)
+        border(alignment, outlineWidth, outlineColor, outlineShape, expand)
     }
 }
 

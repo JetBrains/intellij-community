@@ -58,8 +58,8 @@ public fun DefaultButton(
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
-        content = content,
         textStyle = textStyle,
+        content = content,
     )
 }
 
@@ -79,8 +79,8 @@ public fun OutlinedButton(
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
-        content = content,
         textStyle = textStyle,
+        content = content,
     )
 }
 
@@ -92,7 +92,7 @@ private fun ButtonImpl(
     interactionSource: MutableInteractionSource,
     style: ButtonStyle,
     textStyle: TextStyle,
-    content: @Composable RowScope.() -> Unit,
+    content: @Composable (RowScope.() -> Unit),
 ) {
     var buttonState by remember(interactionSource) {
         mutableStateOf(ButtonState.of(enabled = enabled))
@@ -130,8 +130,13 @@ private fun ButtonImpl(
                     indication = null,
                 )
                 .background(colors.backgroundFor(buttonState).value, shape)
-                .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape)
-                .focusOutline(buttonState, shape),
+                .focusOutline(
+                    state = buttonState,
+                    outlineShape = shape,
+                    alignment = style.focusOutlineAlignment,
+                    expand = style.metrics.focusOutlineExpand,
+                )
+                .border(Stroke.Alignment.Center, style.metrics.borderWidth, borderColor, shape),
         propagateMinConstraints = true,
     ) {
         val contentColor by colors.contentFor(buttonState)
