@@ -381,7 +381,7 @@ interface Row {
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
    */
-  @Deprecated("Use overloaded customize(...) with UnscaledGapsY")
+  @Deprecated("Use overloaded customize(...) with UnscaledGapsY", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun customize(customRowGaps: VerticalGaps): Row
 

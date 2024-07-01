@@ -47,7 +47,7 @@ interface Panel : CellBase<Panel> {
 
   override fun gap(rightGap: RightGap): Panel
 
-  @Deprecated("Use customize(UnscaledGaps) instead")
+  @Deprecated("Use customize(UnscaledGaps) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Panel
 

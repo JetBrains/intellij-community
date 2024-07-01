@@ -42,7 +42,7 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun gap(rightGap: RightGap): Cell<T>
 
-  @Deprecated("Use customize(UnscaledGaps) instead")
+  @Deprecated("Use customize(UnscaledGaps) instead", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Cell<T>
 
