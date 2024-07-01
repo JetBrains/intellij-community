@@ -422,6 +422,7 @@ f:com.intellij.ide.ui.UISettings
 - f:getIdeScale():F
 - sf:getInstance():com.intellij.ide.ui.UISettings
 - sf:getInstanceOrNull():com.intellij.ide.ui.UISettings
+- f:getKeepPopupsForToggles():Z
 - f:getLeftHorizontalSplit():Z
 - f:getMarkModifiedTabsWithAsterisk():Z
 - f:getMaxLookupListHeight():I
@@ -506,6 +507,7 @@ f:com.intellij.ide.ui.UISettings
 - f:setHideToolStripes(Z):V
 - f:setIdeAAType(com.intellij.ide.ui.AntialiasingType):V
 - f:setIdeScale(F):V
+- f:setKeepPopupsForToggles(Z):V
 - f:setLeftHorizontalSplit(Z):V
 - f:setMarkModifiedTabsWithAsterisk(Z):V
 - f:setMaxLookupListHeight(I):V
@@ -612,6 +614,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:getHideKnownExtensionInTabs():Z
 - f:getHideTabsIfNeeded():Z
 - f:getHideToolStripes():Z
+- f:getKeepPopupsForToggles():Z
 - f:getLeftHorizontalSplit():Z
 - f:getMarkModifiedTabsWithAsterisk():Z
 - f:getMaxLookupListHeight():I
@@ -697,6 +700,7 @@ f:com.intellij.ide.ui.UISettingsState
 - f:setHideKnownExtensionInTabs(Z):V
 - f:setHideTabsIfNeeded(Z):V
 - f:setHideToolStripes(Z):V
+- f:setKeepPopupsForToggles(Z):V
 - f:setLeftHorizontalSplit(Z):V
 - f:setMarkModifiedTabsWithAsterisk(Z):V
 - f:setMaxLookupListHeight(I):V

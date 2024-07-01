@@ -56,8 +56,9 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
   }
 
   /**
-   * Tells whether multi-choice behavior is activated by Alt modifier (aka "soft multi-choice")
-   * */
+   * Tells whether multi-choice behavior is activated by specific modifier (aka "soft multi-choice")
+   * @see Presentation#isMultiChoice()
+   */
   public boolean isSoftMultiChoice() {
     return true;
   }
