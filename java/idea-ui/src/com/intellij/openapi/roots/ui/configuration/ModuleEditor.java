@@ -4,8 +4,9 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.facet.impl.ProjectFacetsConfigurator;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -547,17 +548,14 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
     updateImportedModelWarning();
   }
 
-  private class ModuleEditorPanel extends JPanel implements DataProvider{
+  private class ModuleEditorPanel extends JPanel implements UiDataProvider {
     ModuleEditorPanel() {
       super(new BorderLayout());
     }
 
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (LangDataKeys.MODULE_CONTEXT.is(dataId)) {
-        return getModule();
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(LangDataKeys.MODULE_CONTEXT, getModule());
     }
   }
 }

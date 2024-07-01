@@ -5,10 +5,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -42,7 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
+class DiscoveredTestsTree extends Tree implements UiDataProvider, Disposable {
   private final DiscoveredTestsTreeModel myModel;
 
   DiscoveredTestsTree(String title) {
@@ -155,25 +152,16 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
     return myModel.getTestClassesCount();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      TreePath[] paths = getSelectionPaths();
-      return (DataProvider)slowId -> getSlowData(slowId, paths);
-    }
-    else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return PopupUtil.getPopupContainerFor(this);
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath[] paths = getSelectionPaths();
+    sink.set(LangDataKeys.POSITION_ADJUSTER_POPUP, PopupUtil.getPopupContainerFor(this));
 
-  private @Nullable Object getSlowData(@NotNull String dataId, TreePath @Nullable [] paths) {
-    if (paths == null || paths.length == 0) return null;
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (paths == null || paths.length == 0) return;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return obj2psi(paths[0].getLastPathComponent());
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       List<PsiElement> result = new SmartList<>();
       TreeModel model = getModel();
       for (TreePath p : paths) {
@@ -195,7 +183,6 @@ class DiscoveredTestsTree extends Tree implements DataProvider, Disposable {
         }
       }
       return result.toArray(PsiElement.EMPTY_ARRAY);
-    }
-    return null;
+    });
   }
 }
