@@ -63,7 +63,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
   suspend fun attachProjectAsync(project: Project, projectFile: VirtualFile): Project {
     performActionAsync(
-      action = { AddManagedFilesAction().actionPerformedAsync(it) },
+      action = { withContext(Dispatchers.IO) { AddManagedFilesAction().actionPerformedAsync(it) } },
       project = project,
       systemId = SYSTEM_ID,
       selectedFile = projectFile
@@ -73,7 +73,7 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
 
   suspend fun attachProjectFromScriptAsync(project: Project, projectFile: VirtualFile): Project {
     performActionAsync(
-      action = { AddFileAsMavenProjectAction().actionPerformedAsync(it) },
+      action = { withContext(Dispatchers.IO) { AddFileAsMavenProjectAction().actionPerformedAsync(it) } },
       project = project,
       systemId = SYSTEM_ID,
       selectedFile = projectFile,
