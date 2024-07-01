@@ -322,6 +322,8 @@ public final class org/jetbrains/jewel/foundation/lazy/SelectableLazyListState :
 	public final fun getFirstVisibleItemScrollOffset ()I
 	public final fun getInteractionSource ()Landroidx/compose/foundation/interaction/InteractionSource;
 	public final fun getLastActiveItemIndex ()Ljava/lang/Integer;
+	public fun getLastScrolledBackward ()Z
+	public fun getLastScrolledForward ()Z
 	public final fun getLayoutInfo ()Landroidx/compose/foundation/lazy/LazyListLayoutInfo;
 	public final fun getLazyListState ()Landroidx/compose/foundation/lazy/LazyListState;
 	public fun getSelectedKeys ()Ljava/util/Set;
@@ -656,6 +658,8 @@ public final class org/jetbrains/jewel/foundation/lazy/tree/TreeState : androidx
 	public fun dispatchRawDelta (F)F
 	public fun getCanScrollBackward ()Z
 	public fun getCanScrollForward ()Z
+	public fun getLastScrolledBackward ()Z
+	public fun getLastScrolledForward ()Z
 	public final fun getOpenNodes ()Ljava/util/Set;
 	public fun getSelectedKeys ()Ljava/util/Set;
 	public fun isScrollInProgress ()Z

@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.ui.theme
 
-import androidx.compose.foundation.LocalIndication
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.ReadOnlyComposable
@@ -11,7 +10,6 @@ import org.jetbrains.jewel.foundation.theme.ThemeColorPalette
 import org.jetbrains.jewel.foundation.theme.ThemeDefinition
 import org.jetbrains.jewel.foundation.theme.ThemeIconData
 import org.jetbrains.jewel.ui.ComponentStyling
-import org.jetbrains.jewel.ui.NoIndication
 import org.jetbrains.jewel.ui.component.styling.ButtonStyle
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
@@ -192,7 +190,6 @@ public fun BaseJewelTheme(
         CompositionLocalProvider(
             LocalColorPalette provides theme.colorPalette,
             LocalIconData provides theme.iconData,
-            LocalIndication provides NoIndication,
         ) {
             CompositionLocalProvider(values = styling.styles(), content = content)
         }

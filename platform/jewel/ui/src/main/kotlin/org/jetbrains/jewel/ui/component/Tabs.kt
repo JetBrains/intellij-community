@@ -44,7 +44,6 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
-import org.jetbrains.jewel.ui.NoIndication
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
@@ -138,7 +137,7 @@ internal fun TabImpl(
                     onClick = tabData.onClick,
                     selected = tabData.selected,
                     interactionSource = interactionSource,
-                    indication = NoIndication,
+                    indication = null,
                     role = Role.Tab,
                 )
                 .drawBehind {

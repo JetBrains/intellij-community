@@ -62,12 +62,6 @@ public final class org/jetbrains/jewel/ui/DisabledColorFilterKt {
 	public static final fun disabled (Landroidx/compose/ui/graphics/ColorFilter$Companion;)Landroidx/compose/ui/graphics/ColorFilter;
 }
 
-public final class org/jetbrains/jewel/ui/NoIndication : androidx/compose/foundation/Indication {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/NoIndication;
-	public fun rememberUpdatedInstance (Landroidx/compose/foundation/interaction/InteractionSource;Landroidx/compose/runtime/Composer;I)Landroidx/compose/foundation/IndicationInstance;
-}
-
 public final class org/jetbrains/jewel/ui/Orientation : java/lang/Enum {
 	public static final field Horizontal Lorg/jetbrains/jewel/ui/Orientation;
 	public static final field Vertical Lorg/jetbrains/jewel/ui/Orientation;
