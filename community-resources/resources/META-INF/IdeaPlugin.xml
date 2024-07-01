@@ -10,8 +10,6 @@
   <content>
     <module name="intellij.platform.coverage"/>
     <module name="intellij.platform.coverage.agent"/>
-    <module name="intellij.notebooks.visualization"/>
-    <module name="intellij.notebooks.ui"/>
     <module name="intellij.xml.xmlbeans"/>
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.platform.ml.embeddings"/>
