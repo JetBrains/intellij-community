@@ -1,7 +1,7 @@
 package com.intellij.searchEverywhereMl.semantics.reordering
 
 import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 
 class SearchEverywhereReorderingServiceImpl : SearchEverywhereReorderingService {
   private val enabledTabs = setOf(

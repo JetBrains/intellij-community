@@ -15,7 +15,7 @@ import java.util.List;
 
 public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCollector {
 
-  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 16);
+  private static final EventLogGroup GROUP = new EventLogGroup("searchEverywhere", 17);
 
   // this string will be used as ID for contributors from private
   // plugins that mustn't be sent in statistics
@@ -65,10 +65,12 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
   public static final EventId DIALOG_CLOSED = GROUP.registerEvent("dialogClosed");
   public static final IntEventField SELECTED_ITEM_NUMBER = EventFields.Int("selectedItemNumber");
   public static final BooleanEventField HAS_ONLY_SIMILAR_ELEMENT = EventFields.Boolean("hasOnlySimilarElement");
+  public static final BooleanEventField IS_ELEMENT_SEMANTIC = EventFields.Boolean("isElementSemantic");
 
-  public static final VarargEventId CONTRIBUTOR_ITEM_SELECTED = GROUP.registerVarargEvent("contributorItemChosen", CONTRIBUTOR_ID_FIELD,
-                                                                                          EventFields.Language, CURRENT_TAB_FIELD,
-                                                                                          SELECTED_ITEM_NUMBER, HAS_ONLY_SIMILAR_ELEMENT);
+  public static final VarargEventId CONTRIBUTOR_ITEM_SELECTED = GROUP.registerVarargEvent(
+    "contributorItemChosen", CONTRIBUTOR_ID_FIELD, EventFields.Language, CURRENT_TAB_FIELD, SELECTED_ITEM_NUMBER,
+    HAS_ONLY_SIMILAR_ELEMENT, IS_ELEMENT_SEMANTIC
+  );
   public static final EventId MORE_ITEM_SELECTED = GROUP.registerEvent("moreItemChosen");
   public static final IntEventField ITEM_NUMBER_BEFORE_MORE = EventFields.Int("itemsNumberBeforeMore");
   public static final BooleanEventField IS_ONLY_MORE = EventFields.Boolean("isOnlyMore");
