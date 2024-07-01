@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.pathString
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.jvm.JvmDependency
 import kotlin.script.experimental.jvm.jdkHome
@@ -73,18 +74,6 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
         val sdk = configurationWrapper.javaHome?.let { sdks[it.toPath()] }?.rootProvider?.getFiles(OrderRootType.CLASSES)?.toList()
             ?: emptyList<VirtualFile>()
         return compose(roots + sdk)
-    }
-
-    private fun getScriptSdkByJavaHome(javaHome: Path): Sdk? {
-        // workaround for mismatched gradle wrapper and plugin version
-        val javaHomeVF = try {
-            VfsUtil.findFile(javaHome, true)
-        } catch (e: Throwable) {
-            null
-        } ?: return null
-
-        return ProjectJdkTable.getInstance().allJdks
-            .firstOrNull { it.homeDirectory == javaHomeVF && it.canBeUsedForScript() }
     }
 
     private fun getDefaultSdk(): Sdk? {
@@ -148,10 +137,7 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                 classes.addAll(toVfsRoots(configurationWrapper.dependenciesClassPath))
                 sources.addAll(toVfsRoots(configurationWrapper.dependenciesSources))
                 configurationWrapper.javaHome?.toPath()?.let {
-                    val sdk = getScriptSdkByJavaHome(it)
-                    if (sdk != null) {
-                        sdks[it] = sdk
-                    }
+                    sdks[it] = ExternalSystemJdkUtil.lookupJdkByPath(it.pathString)
                 }
 
                 counter++
