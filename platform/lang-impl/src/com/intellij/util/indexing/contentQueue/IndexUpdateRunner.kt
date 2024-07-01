@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
@@ -37,12 +36,9 @@ import org.jetbrains.annotations.TestOnly
 import java.io.FileNotFoundException
 import java.io.IOException
 import java.nio.file.NoSuchFileException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.locks.Condition
-import java.util.concurrent.locks.Lock
-import java.util.concurrent.locks.ReentrantLock
 
 @ApiStatus.Internal
 class IndexUpdateRunner(
@@ -287,13 +283,7 @@ class IndexUpdateRunner(
       loader: CachedFileContentLoader,
     ): Triple<FileIndexingResult, Long, Long> {
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
-      val loadingResult = withContext(Dispatchers.IO) {
-        //TODO IJPL-157558: the withContext(NonCancellable) {} don't work here (but should)
-        //TODO RC: non-cancellable section is used just to avoid context-switch down the stack (DiskQueryRelay):
-        Cancellation.withNonCancelableSection().use {
-          loadContent(file, loader)
-        }
-      }
+      val loadingResult: ContentLoadingResult = loadContent(file, loader)
 
       val contentLoadingTime: Long = System.nanoTime() - startTime
 
@@ -314,12 +304,12 @@ class IndexUpdateRunner(
         return Triple(fileIndexingResult, contentLoadingTime, length)
       }
       finally {
-        signalThatFileIsUnloaded(length)
+        loadedFileContentLimiter.releaseBytes(length)
       }
     }
 
     @Throws(TooLargeContentException::class, FailedToLoadContentException::class)
-    private fun loadContent(
+    private suspend fun loadContent(
       file: VirtualFile,
       loader: CachedFileContentLoader,
     ): ContentLoadingResult {
@@ -327,9 +317,8 @@ class IndexUpdateRunner(
         throw TooLargeContentException(file)
       }
 
-      val fileLength: Long
-      try {
-        fileLength = file.length
+      val fileLength: Long = try {
+        file.length
       }
       catch (e: ProcessCanceledException) {
         throw e
@@ -339,15 +328,14 @@ class IndexUpdateRunner(
       }
 
       // Reserve bytes for the file.
-      waitForFreeMemoryToLoadFileContent(fileLength)
-
-      try {
-        val fileContent = loader.loadContent(file)
-        return ContentLoadingResult(fileContent, fileLength)
-      }
-      catch (e: Throwable) {
-        signalThatFileIsUnloaded(fileLength)
-        throw e
+      return loadedFileContentLimiter.acquiringBytes(fileLength) {
+        //TODO RC: withContext(Dispatchers.IO) ?
+        //TODO RC: non-cancellable section is used just to avoid context-switch down the stack (DiskQueryRelay):
+        //TODO RC: withContext(NonCancellable) {} don't work here (but should work: IJPL-157558)
+        Cancellation.withNonCancelableSection().use {
+          val fileContent = loader.loadContent(file)
+          ContentLoadingResult(fileContent, fileLength)
+        }
       }
     }
   }
@@ -356,39 +344,19 @@ class IndexUpdateRunner(
   private data class ContentLoadingResult(val cachedFileContent: CachedFileContent, val fileLength: Long)
 
   companion object {
-    private val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
+    internal val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
 
     /** Number indexing tasks to run in parallel */
     val INDEXING_PARALLELIZATION: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
 
     /**
-     * Soft cap of memory we are using for loading files content during indexing process. Single file may be bigger, but until memory is freed
-     * indexing threads are sleeping.
-     *
-     * @see .signalThatFileIsUnloaded
+     * Soft cap of memory we are using for loading files content during indexing process.
+     * Single file may be bigger, but until memory is freed indexing is suspended.
+     * @see UsedMemorySoftLimiter
      */
     private val SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY = INDEXING_PARALLELIZATION * 4L * FileUtilRt.MEGABYTE
 
-    /**
-     * Memory optimization to prevent OutOfMemory on loading file contents.
-     *
-     *
-     * "Soft" total limit of bytes loaded into memory in the whole application is [.SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY].
-     * It is "soft" because one (and only one) "indexable" file can exceed this limit.
-     *
-     *
-     * "Indexable" file is any file for which [FileBasedIndexImpl.isTooLarge] returns `false`.
-     * Note that this method may return `false` even for relatively big files with size greater than [.SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY].
-     * This is because for some files (or file types) the size limit is ignored.
-     *
-     *
-     * So in its maximum we will load `SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY + <size of not "too large" file>`, which seems acceptable,
-     * because we have to index this "not too large" file anyway (even if its size is 4 Gb), and `SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY`
-     * additional bytes are insignificant.
-     */
-    private var ourTotalBytesLoadedIntoMemory: Long = 0
-    private val ourLoadedBytesLimitLock: Lock = ReentrantLock()
-    private val ourLoadedBytesAreReleasedCondition: Condition = ourLoadedBytesLimitLock.newCondition()
+    private val loadedFileContentLimiter = UsedMemorySoftLimiter(SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY)
 
     private suspend fun writeIndexesForFile(
       fileIndexingResult: FileIndexingResult,
@@ -421,42 +389,6 @@ class IndexUpdateRunner(
       unlockFile(file)
     }
 
-    @Throws(ProcessCanceledException::class)
-    private fun waitForFreeMemoryToLoadFileContent(fileLength: Long) {
-      ourLoadedBytesLimitLock.lock()
-      try {
-        while (ourTotalBytesLoadedIntoMemory >= SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
-          ProgressManager.checkCanceled()
-          try {
-            ourLoadedBytesAreReleasedCondition.await(100, TimeUnit.MILLISECONDS)
-          }
-          catch (e: InterruptedException) {
-            throw ProcessCanceledException(e)
-          }
-        }
-        ourTotalBytesLoadedIntoMemory += fileLength
-      }
-      finally {
-        ourLoadedBytesLimitLock.unlock()
-      }
-    }
-
-    /**
-     * @see .SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY
-     */
-    private fun signalThatFileIsUnloaded(fileLength: Long) {
-      ourLoadedBytesLimitLock.lock()
-      try {
-        LOG.assertTrue(ourTotalBytesLoadedIntoMemory >= fileLength)
-        ourTotalBytesLoadedIntoMemory -= fileLength
-        if (ourTotalBytesLoadedIntoMemory < SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
-          ourLoadedBytesAreReleasedCondition.signalAll()
-        }
-      }
-      finally {
-        ourLoadedBytesLimitLock.unlock()
-      }
-    }
 
     private fun logFailedToLoadContentException(e: FailedToLoadContentException) {
       val cause = e.cause
@@ -500,5 +432,63 @@ class IndexUpdateRunner(
       }
       return file.path
     }
+  }
+
+
+}
+
+/**
+ * Limit total memory used, to prevent OutOfMemory.
+ * Used for limiting file contents loading.
+ *
+ * Limiter is 'soft' which means it allows one (and only one) [acquireBytes] operation exceed this limit.
+ *
+ * Motivation: we want to limit total amount of memory occupied by files content in any given moment of indexing.
+ * But at the same time it could be the file to index is so huge, so than that its size is larger than the limit
+ * alone -- and we still want to be able to index such files, so the Limiter must allow them too.
+ *
+ * BTW: usually file size to index is limited by [FileBasedIndexImpl.isTooLarge], but the limit there is quite large
+ * (~20Mb), and also there are file types for which the limit is ignored, i.e. there is basically no limit
+ *
+ * So in its maximum we will load `softLimitOfTotalBytesUsed + max(file size)`, which seems acceptable, because we have
+ * to index this "max(file size)" file anyway (even if its size is 4 Gb), and `softLimitOfTotalBytesUsed` additional
+ * bytes are insignificant.
+ */
+private class UsedMemorySoftLimiter(private val softLimitOfTotalBytesUsed: Long) {
+
+  private val totalBytesUsed: AtomicLong = AtomicLong(0)
+
+  /**
+   * Runs block of code, acquiring [bytesToAcquire], but releases those bytes if the block of code fails, i.e.
+   * throws any exception.
+   */
+  suspend inline fun <T> acquiringBytes(bytesToAcquire: Long, block: () -> T): T {
+    acquireBytes(bytesToAcquire)
+    try {
+      return block()
+    }
+    catch (e: Throwable) {
+      releaseBytes(bytesToAcquire)
+      throw e
+    }
+  }
+
+  suspend fun acquireBytes(bytesToAcquire: Long) {
+    while (true) { //CAS-loop
+      val _totalBytesUsed = totalBytesUsed.get()
+      if (_totalBytesUsed > softLimitOfTotalBytesUsed) {
+        yield()
+        continue
+      }
+
+      if (totalBytesUsed.compareAndSet(_totalBytesUsed, _totalBytesUsed + bytesToAcquire)) {
+        return
+      }
+    }
+  }
+
+  fun releaseBytes(bytesToRelease: Long) {
+    val totalBytesInUse = totalBytesUsed.addAndGet(-bytesToRelease)
+    check(totalBytesInUse >= 0){ "Total bytes in use ($totalBytesInUse) is negative" }
   }
 }
