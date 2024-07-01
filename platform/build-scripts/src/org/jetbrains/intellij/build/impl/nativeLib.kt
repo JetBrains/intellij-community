@@ -20,15 +20,43 @@ import java.nio.file.attribute.PosixFilePermission
 import java.nio.file.attribute.PosixFilePermissions
 import java.util.*
 
+/**
+ * Set of native files that shouldn't be signed.
+ */
+@Suppress("SpellCheckingInspection")
+private val nonSignFiles = java.util.Set.of(
+  // Native file used by skiko (Compose backend) for Windows.
+  // It cannot be signed.
+  "icudtl.dat"
+)
+
 @VisibleForTesting
 object OsFamilyDetector {
-  private val regex = "(^|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
+  private val macosRegex = "(darwin|mac|macos)".toRegex(RegexOption.IGNORE_CASE)
+  private val windowsRegex = "(windows|win32-|win)".toRegex(RegexOption.IGNORE_CASE)
+  private val linuxRegex = "linux".toRegex(RegexOption.IGNORE_CASE)
 
-  fun detectOsFamily(path: String): Pair<OsFamily, Int>? {
+  private val regex = "(^|-|/)((?<macos>(darwin|mac|macos)[-/])|(?<win>win32-|(win|windows)[-/])|(?<android>Linux-(Android|Musl)/)|(?<linux>linux[-/]))".toRegex(RegexOption.IGNORE_CASE)
+
+  fun detectOsFamily(path: String): Pair<OsFamily, String>? {
+    if (!path.contains("/")) { // support for dirless natives like skiko
+      return when {
+        macosRegex.containsMatchIn(path) -> OsFamily.MACOS to ""
+        windowsRegex.containsMatchIn(path) -> OsFamily.WINDOWS to ""
+        linuxRegex.containsMatchIn(path) -> OsFamily.LINUX to ""
+        path == "icudtl.dat" -> OsFamily.WINDOWS to ""
+        else -> null
+      }
+    }
+
     val result = regex.find(path) ?: return null
-    return result.groups["macos"]?.run { OsFamily.MACOS to range.first }
-           ?: result.groups["win"]?.run { OsFamily.WINDOWS to range.first }
-           ?: result.groups["linux"]?.run { OsFamily.LINUX to range.first }
+    return result.groups["macos"]?.run { OsFamily.MACOS to path.extractPrefix(range) }
+           ?: result.groups["win"]?.run { OsFamily.WINDOWS to path.extractPrefix(range) }
+           ?: result.groups["linux"]?.run { OsFamily.LINUX to path.extractPrefix(range) }
+  }
+
+  private fun String.extractPrefix(range: IntRange): String {
+    return subSequence(startIndex = 0, endIndex = range.first).toString()
   }
 }
 
@@ -40,13 +68,16 @@ class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsF
   fun findNext(): Match? {
     while (iterator.hasNext()) {
       val pathWithPrefix = iterator.next()
-      val osAndIndex = OsFamilyDetector.detectOsFamily(pathWithPrefix) ?: continue
-      val prefix = commonPathPrefix?.apply {
-        assert(length == osAndIndex.second) {
+      val (osFamily, newPrefix) = OsFamilyDetector.detectOsFamily(pathWithPrefix) ?: continue
+
+      if (commonPathPrefix != null) {
+        assert(commonPathPrefix == newPrefix) {
           "All native runtimes should have common path prefix. Failed to match $pathWithPrefix to $this"
         }
-      } ?: pathWithPrefix.subSequence(startIndex = 0, endIndex = osAndIndex.second).also { commonPathPrefix = it }
-      val osFamily = osAndIndex.first
+      }
+
+      val prefix = commonPathPrefix ?: newPrefix.also { commonPathPrefix = it }
+
       if (targetOs != null && !targetOs.contains(osFamily)) {
         continue
       }
@@ -72,11 +103,13 @@ class NativeFilesMatcher(paths: List<String>, private val targetOs: Iterable<OsF
   }
 }
 
-private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(EnumSet.of(
-  PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
-  PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
-  PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
-))
+private val posixExecutableFileAttribute = PosixFilePermissions.asFileAttribute(
+  EnumSet.of(
+    PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE, PosixFilePermission.OWNER_EXECUTE,
+    PosixFilePermission.GROUP_READ, PosixFilePermission.GROUP_EXECUTE,
+    PosixFilePermission.OTHERS_READ, PosixFilePermission.OTHERS_EXECUTE
+  )
+)
 
 internal suspend fun packNativePresignedFiles(
   nativeFiles: Map<ZipSource, List<String>>,
@@ -138,7 +171,7 @@ private suspend fun unpackNativeLibraries(
       val os = match.osFamily
       val arch = match.arch
 
-      var file: Path? = if (os == OsFamily.LINUX || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
+      var file: Path? = if (os == OsFamily.LINUX || fileName in nonSignFiles || signTool.signNativeFileMode != SignNativeFileMode.ENABLED) {
         null
       }
       else {
@@ -152,17 +185,19 @@ private suspend fun unpackNativeLibraries(
           extractFileToDisk(file = file, zipFile = zipFile, pathWithPackage = pathWithPackage)
         }
 
-        if (os != OsFamily.LINUX) {
+        if (os != OsFamily.LINUX && fileName !in nonSignFiles) {
           unsignedFiles.computeIfAbsent(os) { mutableListOf() }.add(file)
         }
       }
 
-      context.addDistFile(DistFile(
-        content = LocalDistFileContent(file),
-        relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
-        os = os.takeUnless { allPlatformsRequired },
-        arch = arch.takeUnless { allPlatformsRequired },
-      ))
+      context.addDistFile(
+        DistFile(
+          content = LocalDistFileContent(file),
+          relativePath = toRelativePath(libName, getRelativePath(libName = libName, arch = arch, fileName = fileName, path = path)),
+          os = os.takeUnless { allPlatformsRequired },
+          arch = arch.takeUnless { allPlatformsRequired },
+        )
+      )
     }
   }
 
@@ -177,10 +212,12 @@ private suspend fun unpackNativeLibraries(
       launch {
         unsignedFiles.get(OsFamily.WINDOWS)?.let {
           @Suppress("SpellCheckingInspection")
-          context.signFiles(it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
+          context.signFiles(
+            it, BuildOptions.WIN_SIGN_OPTIONS + versionOption + persistentMapOf(
             "contentType" to "application/x-exe",
             "jsign_replace" to "true"
-          ))
+          )
+          )
         }
       }
     }
@@ -212,6 +249,7 @@ private fun extractFileToDisk(file: Path, zipFile: ZipFile, pathWithPackage: Str
 private enum class NativeFileArchitecture(@JvmField val jvmArch: JvmArchitecture?) {
   X_64(JvmArchitecture.x64),
   AARCH_64(JvmArchitecture.aarch64),
+
   // universal native file can be used by any platform
   UNIVERSAL(null);
 
@@ -223,10 +261,19 @@ private enum class NativeFileArchitecture(@JvmField val jvmArch: JvmArchitecture
 @Suppress("SpellCheckingInspection")
 private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitecture? {
   // detect architecture from subfolders e.g. "linux-aarch64/libsqliteij.so"
+  if (!path.contains("/")) {
+    return when {
+      path.contains("x64") -> X_64
+      path.contains("aarch64") || path.contains("arm64") -> AARCH_64
+      path == "icudtl.dat" -> UNIVERSAL
+      else -> null
+    }
+  }
+
   val osAndArch = path.indexOf('/').takeIf { it != -1 }?.let { path.subSequence(0, it) } ?: return null
   return when {
-    osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") -> AARCH_64
-    path.contains("x86-64") || path.contains("x86_64") -> X_64
+    osAndArch.endsWith("-aarch64") || path.contains("/aarch64/") || osAndArch.contains("arm64") -> AARCH_64
+    path.contains("x86-64") || path.contains("x86_64") || osAndArch.contains("x64") -> X_64
     os == OsFamily.MACOS && path.count { it == '/' } == 1 -> UNIVERSAL
     !osAndArch.contains('-') && path.count { it == '/' } == 1 -> X_64
     else -> null
@@ -235,11 +282,16 @@ private fun determineArch(os: OsFamily, path: CharSequence): NativeFileArchitect
 
 // each library has own implementation of handling path property
 private fun getRelativePath(libName: String, arch: JvmArchitecture?, fileName: String, path: String): String {
-  if (libName == "async-profiler") {
-    return if (arch == null) fileName else "${arch.dirName}/$fileName"
-  }
-  else {
-    return if (libName == "jna") "${arch!!.dirName}/$fileName" else path
+  when (libName) {
+    "async-profiler" -> {
+      return if (arch == null) fileName else "${arch.dirName}/$fileName"
+    }
+    "skiko-awt-runtime-all" -> {
+      return fileName
+    }
+    else -> {
+      return if (libName == "jna") "${arch!!.dirName}/$fileName" else path
+    }
   }
 }
 

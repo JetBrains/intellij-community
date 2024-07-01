@@ -64,7 +64,7 @@ private val libsThatUsedInJps = java.util.Set.of(
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val presignedLibNames = java.util.Set.of(
-  "pty4j", "jna", "sqlite-native", "async-profiler"
+  "pty4j", "jna", "sqlite-native", "async-profiler", "jetbrains.skiko.awt.runtime.all"
 )
 
 private fun isLibPreSigned(library: JpsLibrary) = presignedLibNames.contains(library.name)
@@ -835,7 +835,8 @@ private class NativeFileHandlerImpl(private val context: BuildContext, private v
     return isMacLibrary(name) ||
            name.endsWith(".exe") ||
            name.endsWith(".dll") ||
-           name.endsWith("pty4j-unix-spawn-helper")
+           name.endsWith("pty4j-unix-spawn-helper") ||
+           name.endsWith("icudtl.dat")
   }
 
   @Suppress("SpellCheckingInspection", "GrazieInspection")
@@ -846,7 +847,7 @@ private class NativeFileHandlerImpl(private val context: BuildContext, private v
 
     // we allow to use .so for macOS binraries (binaries/macos/libasyncProfiler.so), but removing obvious linux binaries
     // (binaries/linux-aarch64/libasyncProfiler.so) to avoid detecting by binary content
-    if (name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-")) {
+    if (name.endsWith(".dll") || name.endsWith(".exe") || name.contains("/linux/") || name.contains("/linux-") || name.contains("icudtl.dat")) {
       return null
     }
 
