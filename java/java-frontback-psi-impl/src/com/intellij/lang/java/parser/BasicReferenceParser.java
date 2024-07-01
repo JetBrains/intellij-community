@@ -112,7 +112,7 @@ public class BasicReferenceParser {
       return typeInfo;
     }
     else if (tokenType == JavaTokenType.IDENTIFIER) {
-      parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, false, isSet(flags, DIAMONDS), typeInfo);
+      parseJavaCodeReference(builder, isSet(flags, EAT_LAST_DOT), true, false, false, false, isSet(flags, DIAMONDS), typeInfo);
     }
     else if (tokenType == JavaTokenType.VAR_KEYWORD) {
       builder.advanceLexer();
@@ -195,18 +195,18 @@ public class BasicReferenceParser {
                                                   boolean parameterList,
                                                   boolean isNew,
                                                   boolean diamonds) {
-    return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, false, isNew, diamonds, new TypeInfo());
+    return parseJavaCodeReference(builder, eatLastDot, parameterList, false, false, isNew, diamonds, new TypeInfo());
   }
 
-  public boolean parseImportCodeReference(PsiBuilder builder, boolean isStatic, boolean isModule) {
+  public boolean parseImportCodeReference(PsiBuilder builder, boolean isStatic) {
     TypeInfo typeInfo = new TypeInfo();
-    parseJavaCodeReference(builder, true, false, true, isStatic, isModule, false, false, typeInfo);
+    parseJavaCodeReference(builder, true, false, true, isStatic, false, false, typeInfo);
     return !typeInfo.hasErrors;
   }
 
   @Nullable
   private PsiBuilder.Marker parseJavaCodeReference(PsiBuilder builder, boolean eatLastDot, boolean parameterList, boolean isImport,
-                                                   boolean isStaticImport, boolean isModuleImport, boolean isNew, boolean diamonds,
+                                                   boolean isStaticImport, boolean isNew, boolean diamonds,
                                                    TypeInfo typeInfo) {
     PsiBuilder.Marker refElement = builder.mark();
 
@@ -224,7 +224,7 @@ public class BasicReferenceParser {
     if (parameterList) {
       typeInfo.isParameterized = parseReferenceParameterList(builder, true, diamonds);
     }
-    else if (!isStaticImport && !isModuleImport) {
+    else if (!isStaticImport) {
       emptyElement(builder, myJavaElementTypeContainer.REFERENCE_PARAMETER_LIST);
     }
 
@@ -274,9 +274,6 @@ public class BasicReferenceParser {
 
     if (isStaticImport) {
       refElement.done(myJavaElementTypeContainer.IMPORT_STATIC_REFERENCE);
-    }
-    else if (isModuleImport) {
-      refElement.done(myJavaElementTypeContainer.IMPORT_MODULE_REFERENCE);
     }
     else {
       refElement.done(myJavaElementTypeContainer.JAVA_CODE_REFERENCE);

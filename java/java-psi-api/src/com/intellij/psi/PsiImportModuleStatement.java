@@ -27,4 +27,6 @@ public interface PsiImportModuleStatement extends PsiImportStatementBase {
    * @return the name of the member.
    */
   String getReferenceName();
+
+  @Nullable PsiJavaModuleReference getModuleReference();
 }

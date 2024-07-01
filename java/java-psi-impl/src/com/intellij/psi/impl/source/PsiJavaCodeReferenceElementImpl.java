@@ -145,9 +145,6 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     if (i == JavaElementType.IMPORT_STATIC_STATEMENT) {
       return Kind.CLASS_FQ_OR_PACKAGE_NAME_KIND;
     }
-    if (i == JavaElementType.IMPORT_MODULE_REFERENCE) {
-      return Kind.MODULE_NAME_KIND;
-    }
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
       Kind parentKind = ((PsiJavaCodeReferenceElementImpl)treeParent).getKindEnum(containingFile);
       if (parentKind == Kind.CLASS_NAME_KIND) {

@@ -50,10 +50,10 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     builder -> JavaParser.INSTANCE.getReferenceParser().parseJavaCodeReference(builder, false, true, false, true);
 
   private static final JavaParserUtil.ParserWrapper STATIC_IMPORT_REF =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, true, false);
+    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, true);
 
   private static final JavaParserUtil.ParserWrapper MODULE_IMPORT_REF =
-    builder -> JavaParser.INSTANCE.getReferenceParser().parseImportCodeReference(builder, false, true);
+    builder -> JavaParser.INSTANCE.getModuleParser().parseName(builder);
 
   private static final JavaParserUtil.ParserWrapper TYPE_PARAMETER =
     builder -> JavaParser.INSTANCE.getReferenceParser().parseTypeParameter(builder);
