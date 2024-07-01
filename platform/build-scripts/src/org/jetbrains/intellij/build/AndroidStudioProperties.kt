@@ -323,9 +323,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // same mechanisms for our .ico and .svg files
       icnsPath = "$projectHome/adt-branding/src/artwork/AndroidStudio.icns"
       icnsPathForEAP = "$projectHome/adt-branding/src/artwork/preview/AndroidStudio.icns"
-
-      // TODO b/313701398 switch to new XPlatLauncher
-      useXPlatLauncher = false
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
