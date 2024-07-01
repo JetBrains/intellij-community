@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.impl.ProjectUtil
@@ -79,7 +79,7 @@ class FilenameToolbarWidgetAction : ExpandableComboAction(), DumbAware, ActionRe
     presentation.putClientProperty(FILE_COLOR, fg)
     presentation.putClientProperty(FILE_FULL_PATH, if (UISettings.getInstance().fullPathsInWindowHeader && path != filename) path else null)
     presentation.text = StringUtil.shortenTextWithEllipsis(filename, 60, 30)
-    presentation.description = path ?: if (filename != presentation.text) filename else null
+    presentation.description = path
     presentation.icon = icon
   }
 

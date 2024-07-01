@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 abstract class FrameTitleBuilder {
   abstract fun getProjectTitle(project: Project): String
 
+  @RequiresBlockingContext
   abstract fun getFileTitle(project: Project, file: VirtualFile): String
 
   @Experimental
