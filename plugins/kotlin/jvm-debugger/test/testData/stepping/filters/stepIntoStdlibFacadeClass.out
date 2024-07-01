@@ -3,7 +3,7 @@ Run Java
 Connected to the target VM
 stepIntoStdlibFacadeClass.kt:6
 _Arrays.!EXT!
-Intrinsics.!EXT!
+Lambda.!EXT!
 Disconnected from the target VM
 
 Process finished with exit code 0

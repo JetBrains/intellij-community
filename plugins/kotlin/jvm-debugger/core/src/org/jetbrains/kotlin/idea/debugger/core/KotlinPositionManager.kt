@@ -262,7 +262,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         if (sameLineLocations.size < 2 || hasFinallyBlockInParent(psiFile)) {
             return false
         }
-        val locationsInSameInlinedFunction = findLocationsInSameInlinedFunction(sameLineLocations, method, sourceFileName)
+        val locationsInSameInlinedFunction = findLocationsInSameInlinedFunction(sameLineLocations, method)
         return locationsInSameInlinedFunction.ifEmpty { sameLineLocations }.indexOf(this) > 0
     }
 
@@ -274,9 +274,9 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
     }
 
-    private fun Location.findLocationsInSameInlinedFunction(locations: List<Location>, method: Method, sourceFileName: String): List<Location> {
+    private fun Location.findLocationsInSameInlinedFunction(locations: List<Location>, method: Method): List<Location> {
         val leastEnclosingBorders = method
-            .getInlineFunctionBorders(sourceFileName)
+            .getInlineFunctionBorders()
             .getLeastEnclosingBorders(this)
             ?: return emptyList()
         return locations.filter { leastEnclosingBorders.contains(it) }
@@ -292,11 +292,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         return result
     }
 
-    private fun Method.getInlineFunctionBorders(sourceFileName: String): List<ClosedRange<Location>> {
-        return getInlineFunctionOrArgumentVariables()
-            .mapNotNull { it.getBorders() }
-            .filter { it.start.safeSourceName() == sourceFileName }
-            .toList()
+    private fun Method.getInlineFunctionBorders(): List<ClosedRange<Location>> {
+        return getInlineFunctionOrArgumentVariables().mapNotNull { it.getBorders() }.toList()
     }
 
     private suspend fun getAlternativeSource(location: Location): PsiFile? {
