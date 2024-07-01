@@ -614,10 +614,8 @@ open class EditorsSplitters internal constructor(
         }
       }
     }
-    else if (!windowsPerFile.isEmpty()) {
-      if (!windowsPerFile.contains(currentWindow)) {
-        setCurrentWindow(window = windowsPerFile[0])
-      }
+    else if (!windowsPerFile.isEmpty() && !windowsPerFile.contains(currentWindow)) {
+      setCurrentWindow(window = windowsPerFile[0])
     }
     return currentWindow!!
   }

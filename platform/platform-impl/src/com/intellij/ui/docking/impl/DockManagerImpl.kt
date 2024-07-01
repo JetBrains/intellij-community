@@ -36,7 +36,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.drawImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
 import org.jdom.Element
@@ -162,8 +162,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
         containerToWindow.get(container)?.setTransparent(true)
       }
     }
-    currentDragSession = MyDragSession(mouseEvent, content)
-    return currentDragSession!!
+    return MyDragSession(mouseEvent, content).also { currentDragSession = it }
   }
 
   fun stopCurrentDragSession() {
@@ -174,10 +173,9 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     currentDragSession!!.cancelSession()
     currentDragSession = null
     busyObject.onReady()
-    for (each in getAllContainers()) {
-      if (!each.isEmpty) {
-        val window = containerToWindow.get(each)
-        window?.setTransparent(false)
+    for (container in getAllContainers()) {
+      if (!container.isEmpty) {
+        containerToWindow.get(container)?.setTransparent(false)
       }
     }
   }
@@ -212,7 +210,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
 
         @Synchronized
         override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
-          StartupUiUtil.drawImage(g, defaultDragImage, x, y, window)
+          drawImage(g = g, image = defaultDragImage, x = x, y = y, sourceBounds = null, op = null, observer = window)
         }
       })
       window.contentPane = imageContainer
@@ -342,13 +340,14 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     return null
   }
 
-  private fun getFactory(type: String): DockContainerFactory? {
-    assert(factories.containsKey(type)) { "No factory for content type=$type" }
-    return factories.get(type)
+  private fun getFactory(type: String): DockContainerFactory {
+    return requireNotNull(factories.get(type)) {
+      "No factory for content type=$type"
+    }
   }
 
   fun createNewDockContainerFor(content: DockableContent<*>, point: RelativePoint) {
-    val container = getFactory(content.dockContainerType)!!.createContainer(content)
+    val container = getFactory(content.dockContainerType).createContainer(content)
     val canReopenWindow = content.presentation.getClientProperty(REOPEN_WINDOW)
     val reopenWindow = canReopenWindow == null || canReopenWindow
     val window = createWindowFor(dimensionKey = getWindowDimensionKey(content = content),
@@ -382,7 +381,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   }
 
   internal fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
-    val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
+    val container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null)
 
     // Order is important here.
     // Create the dock window, then create the editor window.

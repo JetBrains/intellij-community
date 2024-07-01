@@ -268,13 +268,13 @@ class EditorTabbedContainer internal constructor(
 }
 
 @ApiStatus.Internal
-class DockableEditor @JvmOverloads constructor(
-  @JvmField val img: Image?,
-  @JvmField val file: VirtualFile,
+class DockableEditor(
+  @JvmField internal val img: Image?,
+  @JvmField internal val file: VirtualFile,
   private val presentation: Presentation,
   private val preferredSize: Dimension,
-  @JvmField val isPinned: Boolean,
-  @JvmField val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
+  @JvmField internal val isPinned: Boolean,
+  @JvmField internal val isNorthPanelAvailable: Boolean = isNorthPanelVisible(UISettings.getInstance()),
 ) : DockableContent<VirtualFile?> {
   override fun getKey(): VirtualFile = file
 
