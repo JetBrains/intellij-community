@@ -321,8 +321,19 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
     private fun loadExpressions(testFile: KotlinBaseTest.TestFile): List<CodeFragment> {
         val directives = findLinesWithPrefixesRemoved(testFile.content, "// EXPRESSION: ")
         val expected = findLinesWithPrefixesRemoved(testFile.content, "// RESULT: ")
+        val expectedK2 = findLinesWithPrefixesRemoved(testFile.content, "// RESULT_K2: ")
         assert(directives.size == expected.size) { "Sizes of test directives are different" }
-        return directives.zip(expected).map { (text, result) -> CodeFragment(text, result, CodeFragmentKind.EXPRESSION) }
+        if (expectedK2.isNotEmpty()) {
+            assert(expected.size == expectedK2.size) { "Sizes of test directives are different" }
+        }
+
+        val expectations =
+            if (compileWithK2 && expectedK2.isNotEmpty()) {
+                expectedK2
+            } else {
+                expected
+            }
+        return directives.zip(expectations).map { (text, result) -> CodeFragment(text, result, CodeFragmentKind.EXPRESSION) }
     }
 
     private fun loadCodeBlocks(wholeFile: File): List<CodeFragment> {
