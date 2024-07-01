@@ -981,6 +981,10 @@ fun <T : CommandChain> T.waitInlineCompletion(): T = apply {
   addCommand("${CMD_PREFIX}waitInlineCompletion")
 }
 
+fun <T : CommandChain> T.logInlineCompletion(): T = apply {
+  addCommand("${CMD_PREFIX}logInlineCompletion")
+}
+
 fun <T : CommandChain> T.waitInlineCompletionWarmup(): T = apply {
   addCommand("${CMD_PREFIX}waitInlineCompletion WARMUP")
 }

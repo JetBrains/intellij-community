@@ -25,6 +25,11 @@ fun Finder.codeEditor(@Language("xpath") xpath: String? = null): JEditorUiCompon
            JEditorUiComponent::class.java)
 }
 
+fun Finder.codeEditor(@Language("xpath") xpath: String? = null, action: JEditorUiComponent.() -> Unit) {
+  x(xpath ?: "//div[@class='EditorTabs']//div[@class='EditorComponentImpl']",
+    JEditorUiComponent::class.java).action()
+}
+
 fun Finder.editor(@Language("xpath") xpath: String? = null, action: JEditorUiComponent.() -> Unit) {
   x(xpath ?: "//div[@class='EditorComponentImpl']", JEditorUiComponent::class.java).action()
 }
