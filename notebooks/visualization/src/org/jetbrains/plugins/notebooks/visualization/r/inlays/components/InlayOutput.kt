@@ -157,7 +157,7 @@ abstract class InlayOutput(
 
     fun loadActions(vararg ids: String): List<AnAction> {
       val actionManager = ActionManager.getInstance()
-      return ids.map { actionManager.getAction(it) }
+      return ids.mapNotNull { actionManager.getAction(it) }
     }
   }
 }
