@@ -2219,6 +2219,26 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/simple.kt");
             }
 
+            @TestMetadata("smartStepIntoInlineLambdaWithParameterDestructuring.kt")
+            public void testSmartStepIntoInlineLambdaWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/smartStepIntoInlineLambdaWithParameterDestructuring.kt");
+            }
+
+            @TestMetadata("smartStepIntoInlineSamWithParameterDestructuring.kt")
+            public void testSmartStepIntoInlineSamWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/smartStepIntoInlineSamWithParameterDestructuring.kt");
+            }
+
+            @TestMetadata("smartStepIntoLambdaWithParameterDestructuring.kt")
+            public void testSmartStepIntoLambdaWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/smartStepIntoLambdaWithParameterDestructuring.kt");
+            }
+
+            @TestMetadata("smartStepIntoSamWithParameterDestructuring.kt")
+            public void testSmartStepIntoSamWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/smartStepIntoSamWithParameterDestructuring.kt");
+            }
+
             @TestMetadata("statements.kt")
             public void testStatements() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/statements.kt");
@@ -2232,6 +2252,36 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("stdlib.kt")
             public void testStdlib() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/stdlib.kt");
+            }
+
+            @TestMetadata("stepIntoInlineLambdaWithParameterDestructuring1.kt")
+            public void testStepIntoInlineLambdaWithParameterDestructuring1() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/stepIntoInlineLambdaWithParameterDestructuring1.kt");
+            }
+
+            @TestMetadata("stepIntoInlineLambdaWithParameterDestructuring2.kt")
+            public void testStepIntoInlineLambdaWithParameterDestructuring2() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/stepIntoInlineLambdaWithParameterDestructuring2.kt");
+            }
+
+            @TestMetadata("stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt")
+            public void testStepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/stepIntoInlineLambdaWithParameterDestructuringAndComponentFunctions.kt");
+            }
+
+            @TestMetadata("stepIntoInlineSamWithParameterDestructuring.kt")
+            public void testStepIntoInlineSamWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/stepIntoInlineSamWithParameterDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoLambdaWithParameterDestructuring.kt")
+            public void testStepIntoLambdaWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/stepIntoLambdaWithParameterDestructuring.kt");
+            }
+
+            @TestMetadata("stepIntoSamWithParameterDestructuring.kt")
+            public void testStepIntoSamWithParameterDestructuring() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/stepIntoSamWithParameterDestructuring.kt");
             }
 
             @TestMetadata("superCallsCaptured.kt")
@@ -2379,6 +2429,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("breakpointsInLambdasWithDestructuring.kt")
+            public void testBreakpointsInLambdasWithDestructuring() throws Exception {
+                runTest("../testData/evaluation/multipleBreakpoints/breakpointsInLambdasWithDestructuring.kt");
             }
 
             @TestMetadata("clearCache.kt")

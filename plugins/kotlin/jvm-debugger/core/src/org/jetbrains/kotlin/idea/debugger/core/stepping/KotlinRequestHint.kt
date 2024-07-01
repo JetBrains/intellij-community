@@ -2,23 +2,25 @@
 
 package org.jetbrains.kotlin.idea.debugger.core.stepping
 
+import com.intellij.debugger.DebuggerManagerEx
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.*
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
-import com.intellij.debugger.engine.DebugProcessImpl
-import com.intellij.debugger.engine.MethodFilter
-import com.intellij.debugger.engine.RequestHint
-import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.util.Range
 import com.jetbrains.jdi.ClassTypeImpl
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.request.StepRequest
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.*
+import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
@@ -246,6 +248,18 @@ class KotlinStepIntoRequestHint(
                 return STOP
             }
 
+            // When the VM steps into a method, it will stop in the beginning of it,
+            // even if the first line number is declared a number of opcodes later.
+            // This can spoil the debugging in case of stepping into lambdas like:
+            // f { (a, b) -> ... }
+            // However the newest versions of the compiler will not generate line numbers
+            // for parameter destructuring, the debugger will stop in the beginning of a
+            // lambda anyway, and destructured parameters will not be visible in the variables
+            // view. In such situations we need to install a breakpoint to the first location
+            // declared in a lambda and perform a step over to reach it.
+            if (addBreakpointAtFirstDeclaredLocationInLambda(this, context)) {
+                return StepRequest.STEP_OVER
+            }
             return super.getNextStepDepth(context)
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {
@@ -253,6 +267,37 @@ class KotlinStepIntoRequestHint(
         }
         return STOP
     }
+}
+
+private fun addBreakpointAtFirstDeclaredLocationInLambda(hint: KotlinRequestHint, context: SuspendContextImpl): Boolean {
+    val currentLocation = context.location ?: return false
+    if (!currentLocation.isInKotlinSources()) {
+        return false
+    }
+
+    val method = currentLocation.safeMethod() ?: return false
+    if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
+        return false
+    }
+
+    val firstDeclaredLocation = method.safeAllLineLocations().minByOrNull { it.codeIndex() }
+        ?: return false
+    // If the current location is before the first declared location, then
+    // it means that it is synthetic, and we should skip it when stepping.
+    if (currentLocation.codeIndex() >= firstDeclaredLocation.codeIndex()) {
+        return false
+    }
+
+    val sourcePosition = context.debugProcess.positionManager.getSourcePosition(firstDeclaredLocation) ?: return false
+    val filter = object : BreakpointStepMethodFilter {
+        override fun locationMatches(process: DebugProcessImpl?, location: Location?) = location == firstDeclaredLocation
+        override fun getBreakpointPosition() = sourcePosition
+        override fun getCallingExpressionLines() = null // Not needed
+        override fun getLastStatementLine() = -1 // Not needed
+    }
+    val breakpoint = DebuggerManagerEx.getInstanceEx(context.debugProcess.project).getBreakpointManager().addStepIntoBreakpoint(filter) ?: return false
+    DebugProcessImpl.prepareAndSetSteppingBreakpoint(context, breakpoint, hint, true)
+    return true
 }
 
 private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {

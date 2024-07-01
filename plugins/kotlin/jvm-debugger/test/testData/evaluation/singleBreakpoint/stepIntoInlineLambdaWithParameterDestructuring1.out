@@ -1,0 +1,19 @@
+LineBreakpoint created at stepIntoInlineLambdaWithParameterDestructuring1.kt:11
+Run Java
+Connected to the target VM
+stepIntoInlineLambdaWithParameterDestructuring1.kt:11
+stepIntoInlineLambdaWithParameterDestructuring1.kt:15
+InlineStackFrame lambda 'inlineFoo' in 'main' (stepIntoInlineLambdaWithParameterDestructuring1.kt:15)
+    JavaValue[local] c: int = 1
+    JavaValue[local] d: int = 1
+    JavaValue[local] g: int = 1
+    JavaValue[local] n: int = 1
+    JavaValue[local] o: int = 1
+InlineStackFrame inlineFoo (stepIntoInlineLambdaWithParameterDestructuring1.kt:11)
+    JavaValue[local] a: destructurableClasses.A = A(x=1, y=1)
+        JavaValue[field] x: int = 1 (destructurableClasses.kt:4)
+        JavaValue[field] y: int = 1 (destructurableClasses.kt:4)
+KotlinStackFrame (stepIntoInlineLambdaWithParameterDestructuring1.kt:15)
+Disconnected from the target VM
+
+Process finished with exit code 0
