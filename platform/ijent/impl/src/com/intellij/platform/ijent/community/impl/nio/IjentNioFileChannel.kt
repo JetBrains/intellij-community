@@ -62,17 +62,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun write(src: ByteBuffer): Int {
-    when (ijentOpenedFile) {
-      is IjentOpenedFile.Writer -> Unit
-      is IjentOpenedFile.Reader -> throw NonWritableChannelException()
-    }
-
-    val bytesWritten = nioFs
-      .fsBlocking {
-        ijentOpenedFile.write(src)
-      }
-      .getOrThrowFileSystemException()
-    return bytesWritten
+    return writeToPosition(src, null)
   }
 
   override fun write(srcs: Array<out ByteBuffer>, offset: Int, length: Int): Long {
@@ -195,7 +185,25 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun write(src: ByteBuffer, position: Long): Int {
-    TODO("Not yet implemented")
+    return writeToPosition(src, position)
+  }
+
+  private fun writeToPosition(src: ByteBuffer, position: Long?): Int {
+    when (ijentOpenedFile) {
+      is IjentOpenedFile.Writer -> Unit
+      is IjentOpenedFile.Reader -> throw NonWritableChannelException()
+    }
+
+    val bytesWritten = nioFs
+      .fsBlocking {
+        if (position != null) {
+          ijentOpenedFile.write(src, position)
+        } else {
+          ijentOpenedFile.write(src)
+        }
+      }
+      .getOrThrowFileSystemException()
+    return bytesWritten
   }
 
   override fun map(mode: MapMode, position: Long, size: Long): MappedByteBuffer =

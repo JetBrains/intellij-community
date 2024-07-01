@@ -284,6 +284,10 @@ sealed interface IjentOpenedFile {
       Int,
       WriteError>
 
+    suspend fun write(buf: ByteBuffer, pos: Long): IjentFsResult<
+      Int,
+      WriteError>
+
     sealed interface WriteError : IjentFsError {
       sealed interface ResourceExhausted : WriteError, IjentFsError.Other {
         interface DiskQuotaExceeded : ResourceExhausted, IjentFsError.Other
