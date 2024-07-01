@@ -4998,6 +4998,7 @@ c:com.intellij.ide.actions.RevealFileAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - s:getFileManagerName():java.lang.String
 - s:getFileManagerName(Z):java.lang.String
+- s:isDirectoryOpenSupported():Z
 - s:isSupported():Z
 - s:openDirectory(java.io.File):V
 - s:openDirectory(java.nio.file.Path):V

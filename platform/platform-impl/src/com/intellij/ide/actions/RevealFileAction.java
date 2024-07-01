@@ -9,10 +9,10 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -37,7 +37,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
@@ -46,6 +45,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import static java.util.Objects.requireNonNullElse;
 import static java.util.Objects.requireNonNullElseGet;
 
 /**
@@ -78,7 +78,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    var editor = e.getData(CommonDataKeys.EDITOR);
     e.getPresentation().setEnabledAndVisible(
       isSupported() &&
       getFile(e) != null &&
@@ -106,9 +106,14 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     return findLocalFile(e.getData(CommonDataKeys.VIRTUAL_FILE));
   }
 
+  /** Whether a system is able to open a directory in a file manager and highlight a file in it. */
   public static boolean isSupported() {
-    return SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.hasXdgOpen() ||
-           Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN);
+    return SystemInfo.isWindows || SystemInfo.isMac || Holder.fileManagerApp != null;
+  }
+
+  /** Whether a system is able to open a directory in a file manager. */
+  public static boolean isDirectoryOpenSupported() {
+    return SystemInfo.isWindows || SystemInfo.isMac || Holder.fileManagerPresent;
   }
 
   public static @ActionText @NotNull String getActionName() {
@@ -190,8 +195,8 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   }
 
   private static void doOpen(@NotNull Path _dir, @Nullable Path _toSelect) {
-    String dir = _dir.toAbsolutePath().normalize().toString();
-    String toSelect = _toSelect != null ? _toSelect.toAbsolutePath().normalize().toString() : null;
+    var dir = _dir.toAbsolutePath().normalize().toString();
+    var toSelect = _toSelect != null ? _toSelect.toAbsolutePath().normalize().toString() : null;
     String fmApp;
 
     if (SystemInfo.isWindows) {
@@ -221,22 +226,13 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         spawn(fmApp, toSelect != null ? toSelect : dir);
       }
     }
-    else if (SystemInfo.hasXdgOpen()) {
+    else if (toSelect == null && SystemInfo.hasXdgOpen()) {
       spawn("xdg-open", dir);
     }
-    else if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.OPEN)) {
-      if (LOG.isDebugEnabled()) LOG.debug("opening " + dir + " via Desktop API");
-      ProcessIOExecutorService.INSTANCE.execute(() -> {
-        try {
-          Desktop.getDesktop().open(new File(dir));
-        }
-        catch (Exception e) {
-          LOG.warn(e);
-        }
-      });
-    }
     else {
-      Messages.showErrorDialog(IdeBundle.message("message.action.not.supported"), IdeBundle.message("dialog.title.cannot.open.file"));
+      var message = IdeBundle.message("reveal.unsupported.message", requireNonNullElse(toSelect, dir));
+      new Notification("System Messages", message, NotificationType.WARNING)
+        .notify(null);
     }
   }
 
@@ -303,10 +299,12 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
   private static final class Holder {
     private static final String[] supportedFileManagers = {"nautilus", "pantheon-files", "dolphin", "dde-file-manager"};
 
+    private static final boolean fileManagerPresent;
     private static final @Nullable String fileManagerApp;
     private static final @Nullable @NlsSafe String fileManagerName;
 
     static {
+      boolean fmPresent = false;
       String fmApp = null, fmName = null;
       if (SystemInfo.hasXdgMime()) {
         try (var reader = new ProcessBuilder("xdg-mime", "query", "default", "inode/directory").start().inputReader()) {
@@ -317,6 +315,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
               .filter(Files::exists)
               .findFirst();
             if (desktopFile.isPresent()) {
+              fmPresent = true;
               var lines = Files.readAllLines(desktopFile.get());
               fmApp = lines.stream()
                 .filter(line -> line.startsWith("Exec="))
@@ -334,6 +333,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
           LOG.info(e);
         }
       }
+      fileManagerPresent = fmPresent;
       fileManagerApp = fmApp;
       fileManagerName = fmName;
     }
