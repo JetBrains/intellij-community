@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
+import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SaveAndSyncHandler
@@ -99,6 +100,11 @@ suspend fun saveSettings(componentManager: ComponentManager, forceSavingAllSetti
   storeReloadManager?.reloadChangedStorageFiles()
   storeReloadManager?.blockReloadingProjectOnExternalChanges()
   try {
+    if (!ClientId.isCurrentlyUnderLocalId) {
+      throw IllegalStateException("Saving settings is not allowed under a foreign ClientId. " +
+                                  "Current ClientId: ${ClientId.currentOrNull}")
+    }
+
     componentManager.stateStore.save(forceSavingAllSettings)
     return true
   }
