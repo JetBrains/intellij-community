@@ -74,11 +74,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     @JvmField
     val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create("ALLOW_DOCK_TOOL_WINDOWS")
 
-    @JvmStatic
-    fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
-      return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
-    }
-
     private fun getWindowDimensionKey(content: DockableContent<*>): String? {
       return if (content is DockableEditor) getWindowDimensionKey(content.file) else null
     }
@@ -191,7 +186,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     get() = busyObject.getReady(this)
 
   private inner class MyDragSession(mouseEvent: MouseEvent, content: DockableContent<*>) : DragSession {
-    private val window: JDialog
+    private val window: JDialog = JDialog(ComponentUtil.getWindow(mouseEvent.component))
     private var dragImage: Image?
     private val defaultDragImage: Image
     private val content: DockableContent<*>
@@ -200,7 +195,6 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     private val imageContainer: JLabel
 
     init {
-      window = JDialog(ComponentUtil.getWindow(mouseEvent.component))
       window.isUndecorated = true
       this.content = content
       startDragContainer = getContainerFor(mouseEvent.component) { true }
@@ -287,7 +281,7 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
       else if (e.id == MouseEvent.MOUSE_RELEASED) {
         val currentOverContainer = currentOverContainer
         if (currentOverContainer == null) {
-          // This relative point might be relative to a component that's on a different screen, with a different DPI scaling factor than
+          // This relative point might be relative to a component on a different screen, with a different DPI scaling factor than
           // the target location. Ideally, we should pass the DevicePoint to createNewDockContainerFor, but that will change the API. We'll
           // fix it up inside createNewDockContainerFor
           val point = RelativePoint(e)
@@ -425,11 +419,12 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
   }
 
   private fun createWindowFor(dimensionKey: String?, id: String?, container: DockContainer, canReopenWindow: Boolean): DockWindow {
-    val coroutineScope = coroutineScope.childScope()
+    val windowId = id ?: (windowIdCounter++).toString()
+    val coroutineScope = coroutineScope.childScope("DockWindow #$windowId")
     val window = DockWindow(dockManager = this,
                             coroutineScope = coroutineScope,
                             dimensionKey = dimensionKey,
-                            id = id ?: (windowIdCounter++).toString(),
+                            id = windowId,
                             container = container,
                             isDialog = container is DockContainer.Dialog,
                             supportReopen = canReopenWindow)

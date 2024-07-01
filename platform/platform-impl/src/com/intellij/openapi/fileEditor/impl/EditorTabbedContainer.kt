@@ -12,7 +12,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -46,7 +46,6 @@ import com.intellij.ui.docking.DragSession
 import com.intellij.ui.docking.impl.DockManagerImpl
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelAvailable
 import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isNorthPanelVisible
-import com.intellij.ui.docking.impl.DockManagerImpl.Companion.isSingletonEditorInWindow
 import com.intellij.ui.tabs.*
 import com.intellij.ui.tabs.TabInfo.DragOutDelegate
 import com.intellij.ui.tabs.UiDecorator.UiDecoration
@@ -549,7 +548,7 @@ private class EditorTabs(
     })
 
     val source = ActionManager.getInstance().getAction("EditorTabsEntryPoint")
-    source.templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
+    source.templatePresentation.putClientProperty(ActionUtil.HIDE_DROPDOWN_ICON, true)
     _entryPointActionGroup = DefaultActionGroup(java.util.List.of(source))
   }
 
@@ -739,4 +738,8 @@ internal fun createDockableEditor(
     isPinned = window.isFilePinned(file),
     isNorthPanelAvailable = isNorthPanelAvailable,
   )
+}
+
+internal fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
+  return editors.any { FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW.get(it, false) || EditorWindow.HIDE_TABS.get(it, false) }
 }
