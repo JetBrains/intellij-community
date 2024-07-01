@@ -18,3 +18,7 @@ expect annotation class <!LINE_MARKER("descr='Has actuals in [js, jvm] modules';
 expect object <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>SomeObject<!>()
 
 interface GoToCommonMainInterface
+
+expect interface <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>WithCompanion<!> {
+    companion <!LINE_MARKER("descr='Has actuals in [js, jvm] modules'; targets=[(text=js; icon=nodes/Module.svg); (text=jvm; icon=nodes/Module.svg)]")!>object<!> {}
+}

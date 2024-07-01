@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.*
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import java.awt.event.MouseEvent
@@ -70,7 +71,7 @@ class KotlinExpectActualLineMarkerProvider : LineMarkerProviderDescriptor() {
         if (!gutter.isEnabled) return false
 
         if (declaration.areMarkersForbidden()) return false
-        if (!declaration.hasExpectModifier() && declaration.containingClassOrObjectOrSelf()?.hasExpectModifier() != true) return false
+        if (!declaration.hasExpectModifier() && declaration.containingClassOrObject?.hasExpectModifier() != true) return false
         val anchor = declaration.expectOrActualAnchor
 
         val navigatableActualDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>? = anchor.markerDeclaration?.allNavigatableActualDeclarations()
