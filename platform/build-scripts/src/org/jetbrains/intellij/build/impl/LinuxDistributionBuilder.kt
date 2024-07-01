@@ -54,7 +54,6 @@ class LinuxDistributionBuilder(
         addNativeLauncher(distBinDir, targetPath, arch)
         copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.LINUX, arch), distBinDir)
         copyFileToDir(sourceBinDir.resolve("${arch.dirName}/fsnotifier"), distBinDir)
-        copyFileToDir(sourceBinDir.resolve("${arch.dirName}/libdbm.so"), distBinDir)
         generateBuildTxt(context, targetPath)
         copyDistFiles(context, targetPath, OsFamily.LINUX, arch)
 

@@ -569,7 +569,6 @@ open class IdeRootPane internal constructor(
       val visible = SystemInfo.isMacSystemMenu ||
                     isFullScreen ||
                     (!IdeFrameDecorator.isCustomDecorationActive() &&
-                     !(SystemInfoRt.isLinux && GlobalMenuLinux.isPresented()) &&
                      UISettings.shadowInstance.showMainMenu &&
                      !hideNativeLinuxTitle &&
                      (!isMenuButtonInToolbar || (ExperimentalUI.isNewUI() && isCompactHeader { computeMainActionGroups() })))
@@ -826,12 +825,7 @@ open class IdeRootPane internal constructor(
 }
 
 internal fun createMenuBar(coroutineScope: CoroutineScope, frame: JFrame, customMenuGroup: ActionGroup?): IdeJMenuBar {
-  if (SystemInfoRt.isLinux) {
-    return LinuxIdeMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
-  }
-  else {
     return IdeJMenuBar(coroutineScope = coroutineScope, frame = frame, customMenuGroup = customMenuGroup)
-  }
 }
 
 internal fun getPreferredWindowHeaderHeight(isCompactHeader: Boolean): Int = JBUI.scale(

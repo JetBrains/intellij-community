@@ -24,7 +24,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
-import com.intellij.platform.ide.menu.collectGlobalMenu
 import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
@@ -95,9 +94,6 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
       finally {
         uninstall()
       }
-    }
-    collectGlobalMenu(coroutineScope) { globalMenuPresent ->
-      button.isVisible = !globalMenuPresent
     }
   }
 

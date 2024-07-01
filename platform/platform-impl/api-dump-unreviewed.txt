@@ -20102,9 +20102,6 @@ a:com.intellij.openapi.wm.impl.InternalDecorator
 - a:isHeaderVisible():Z
 - isSplitUnsplitInProgress():Z
 - a:setHeaderVisible(Z):V
-com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler
-- com.sun.jna.Callback
-- a:handleEvent(I,I):V
 a:com.intellij.openapi.wm.impl.ListenableToolbarComboButton
 - com.intellij.openapi.wm.impl.ToolbarComboButton
 - <init>(com.intellij.openapi.wm.impl.ToolbarComboButtonModel):V
@@ -22115,18 +22112,6 @@ f:com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantStat
 f:com.intellij.platform.ide.impl.presentationAssistant.WinKeyStrokePresentationKt
 - sf:getWinKeyText(I):java.lang.String
 - sf:getWinModifiersText(I):java.lang.String
-f:com.intellij.platform.ide.menu.GlobalMenuLinux
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.wm.impl.LinuxGlobalMenuEventHandler
-- bindNewWindow(java.awt.Window):V
-- s:create(javax.swing.JFrame):com.intellij.platform.ide.menu.GlobalMenuLinux
-- dispose():V
-- handleEvent(I,I):V
-- s:isAvailable():Z
-- s:isPresented():Z
-- setRoots(java.util.List):V
-- toggle(Z):V
-- unbindWindow(java.awt.Window):V
 c:com.intellij.platform.ide.menu.IdeJMenuBar
 - javax.swing.JMenuBar
 - add(javax.swing.JMenu):javax.swing.JMenu
@@ -22150,8 +22135,6 @@ c:com.intellij.platform.ide.menu.IdeJMenuBar
 f:com.intellij.platform.ide.menu.IdeMainMenuActionCustomizer
 - <init>():V
 - customize(com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar,kotlin.coroutines.Continuation):java.lang.Object
-f:com.intellij.platform.ide.menu.LinuxIdeMenuBarKt
-- sf:collectGlobalMenu(kotlinx.coroutines.CoroutineScope,java.util.function.Consumer):V
 com.intellij.platform.impl.toolkit.ClientDesktopPeer
 - a:browse(java.net.URI):V
 com.intellij.platform.impl.toolkit.ClientToolkit

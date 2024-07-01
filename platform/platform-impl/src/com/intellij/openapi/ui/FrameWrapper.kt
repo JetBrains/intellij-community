@@ -28,8 +28,6 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
-import com.intellij.platform.ide.menu.GlobalMenuLinux
-import com.intellij.platform.ide.menu.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.*
 import com.intellij.ui.mac.screenmenu.Menu
@@ -162,12 +160,6 @@ open class FrameWrapper @JvmOverloads constructor(private val project: Project?,
     else {
       // unwrap the image before setting as frame's icon
       frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
-    }
-
-    if (SystemInfoRt.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
-      WindowManager.getInstance().getFrame(project)?.let { parentFrame ->
-        doBindAppMenuOfParent(frame, parentFrame)
-      }
     }
   }
 

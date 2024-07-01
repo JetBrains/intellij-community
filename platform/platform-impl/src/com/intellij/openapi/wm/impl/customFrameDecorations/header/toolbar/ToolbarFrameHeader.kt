@@ -18,7 +18,6 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.Sim
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.platform.ide.menu.IdeJMenuBar
-import com.intellij.platform.ide.menu.collectGlobalMenu
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowMoveListener
@@ -155,11 +154,6 @@ internal class ToolbarFrameHeader(private val coroutineScope: CoroutineScope,
           }
         }
       }
-    }
-    collectGlobalMenu(coroutineScope) { globalMenuPresent ->
-      ideMenuBar.isVisible = !globalMenuPresent
-      // Repaint gradient
-      repaint()
     }
   }
 

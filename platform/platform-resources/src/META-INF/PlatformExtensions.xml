@@ -1437,7 +1437,6 @@
 
 
     <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.IdeMainMenuActionCustomizer"/>
-    <actionConfigurationCustomizer implementation="com.intellij.platform.ide.menu.GlobalMenuLinux$MyActionTuner"/>
 
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductTitleInfoProvider"/>
     <titleInfoProvider implementation="com.intellij.openapi.wm.impl.simpleTitleParts.ProductVersionTitleInfoProvider"/>
