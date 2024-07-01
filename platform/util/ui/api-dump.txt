@@ -4652,6 +4652,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:defaultExperimentalToolbarFont():com.intellij.util.ui.JBFont
 - s:defaultStripeToolbarButtonIconPadding():com.intellij.util.ui.JBInsets
 - s:defaultStripeToolbarButtonIconPaddingForCompactMode():com.intellij.util.ui.JBInsets
+- s:defaultStripeToolbarButtonIconPaddingForNames():com.intellij.util.ui.JBInsets
 - s:defaultStripeToolbarButtonIconSize():I
 - s:defaultStripeToolbarButtonSize():com.intellij.util.ui.JBDimension
 - s:experimentalToolbarButtonIconSize():I
@@ -4664,8 +4665,7 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Toolbar
 - s:horizontalToolbarInsets():java.awt.Insets
 - s:mainToolbarButtonInsets():java.awt.Insets
 - s:mainToolbarButtonInsetsKey():java.lang.String
-- s:stripeToolbarButtonIconPadding():java.awt.Insets
-- s:stripeToolbarButtonIconPaddingForCompactMode():java.awt.Insets
+- s:stripeToolbarButtonIconPadding(Z,Z):java.awt.Insets
 - s:stripeToolbarButtonIconPaddingKey():java.lang.String
 - s:stripeToolbarButtonIconSize():I
 - s:stripeToolbarButtonIconSizeKey():java.lang.String

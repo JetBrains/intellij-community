@@ -6,7 +6,6 @@ import com.intellij.application.options.colors.SchemesPanel
 import com.intellij.application.options.colors.SchemesPanelFactory
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
-import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
@@ -524,7 +523,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 checkBox(cdShowToolWindowNames).gap(RightGap.SMALL).onApply {
                   ResizeStripeManager.applyShowNames()
                 }
-                icon(AllIcons.General.Beta)
               },
               { checkBox(cdRightToolWindowLayout) },
             )

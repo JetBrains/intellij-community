@@ -25,10 +25,8 @@ internal open class SquareStripeButtonLook(private val button: ActionButton) : I
   companion object {
     val ICON_PADDING: Insets
       get() {
-        if (UISettings.Companion.getInstance().compactMode && ResizeStripeManager.isShowNames()) {
-          return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingForCompactMode()
-        }
-        return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding()
+        return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPadding(UISettings.Companion.getInstance().compactMode,
+                                                                        ResizeStripeManager.isShowNames())
       }
   }
 

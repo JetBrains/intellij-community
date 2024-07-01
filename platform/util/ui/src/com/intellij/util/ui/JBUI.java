@@ -1259,12 +1259,12 @@ public final class JBUI {
         return 20;
       }
 
-      public static @NotNull Insets stripeToolbarButtonIconPadding() {
-        return insets(stripeToolbarButtonIconPaddingKey(), defaultStripeToolbarButtonIconPadding());
-      }
-
-      public static @NotNull Insets stripeToolbarButtonIconPaddingForCompactMode() {
-        return insets(stripeToolbarButtonIconPaddingKey(), defaultStripeToolbarButtonIconPaddingForCompactMode());
+      public static @NotNull Insets stripeToolbarButtonIconPadding(boolean compactMode, boolean showNames) {
+        return insets(stripeToolbarButtonIconPaddingKey(), compactMode
+                                                           ? defaultStripeToolbarButtonIconPaddingForCompactMode()
+                                                           : showNames
+                                                             ? defaultStripeToolbarButtonIconPaddingForNames()
+                                                             : defaultStripeToolbarButtonIconPadding());
       }
 
       public static @NotNull String stripeToolbarButtonIconPaddingKey() {
@@ -1275,8 +1275,12 @@ public final class JBUI {
         return insets(5);
       }
 
+      public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForNames() {
+        return insets(4);
+      }
+
       public static @NotNull JBInsets defaultStripeToolbarButtonIconPaddingForCompactMode() {
-        return insets(3);
+        return insets(3, 2, 4, 2);
       }
     }
 
