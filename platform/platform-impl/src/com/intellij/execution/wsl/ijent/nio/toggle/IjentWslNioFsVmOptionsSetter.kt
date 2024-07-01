@@ -11,6 +11,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
@@ -24,7 +25,6 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.concurrent.thread
 
 @VisibleForTesting
 object IjentWslNioFsVmOptionsSetter {
@@ -151,33 +151,19 @@ object IjentWslNioFsVmOptionsSetter {
             IjentWslNioFsToggler.instanceAsync().enableForAllWslDistributions()
           }
 
-          PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() ->
-            launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-              @Suppress("HardCodedStringLiteral")  // Not sure if Dev Mode requires i18n
-              val doThat = Messages.OK == Messages.showOkCancelDialog(
-                null,
-                changedOptions.joinToString(
-                  prefix = "This message is seen only in Dev Mode/Run from sources.<br/><br/>" +
-                           "The value of the registry flag for IJent FS doesn't match system properties.<br/>" +
-                           "Add the following VM options to the Dev Mode Run Configuration:<br/><pre>",
-                  separator = "<br/>",
-                  postfix = "</pre>",
-                ) { (k, v) ->
-                  "$k${v.orEmpty()}"
-                },
-                "IJent VM Options",
-                if (ApplicationManager.getApplication().isRestartCapable) "Restart" else "Shutdown",
-                "Cancel",
-                AllIcons.General.Warning,
-              )
-              if (doThat) {
-                thread(isDaemon = true) {
-                  // If it wasn't called in a separate thread, it would block the coroutine scope,
-                  // preventing the service to be disposed and preventing the IDE from exiting.
-                  ApplicationManagerEx.getApplicationEx().restart(true)
-                }
+          PluginManagerCore.isRunningFromSources() || AppMode.isDevServer() -> {
+            logger<IjentWslNioFsVmOptionsSetter>().warn(
+              changedOptions.joinToString(
+                prefix = "This message is seen only in Dev Mode/Run from sources.\n" +
+                         "The value of the registry flag `$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY` for IJent FS " +
+                         "doesn't match the VM options.\n" +
+                         "Add the following VM options to the Run Configuration:\n",
+                separator = "\n",
+              ) { (k, v) ->
+                "  $k${v.orEmpty()}"
               }
-            }
+            )
+          }
 
           else -> launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
             val doThat = Messages.OK == Messages.showOkCancelDialog(
