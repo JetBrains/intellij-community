@@ -132,7 +132,9 @@ public final class JavaFilePasteProvider implements PasteProvider {
         return aClass.getName();
       }
     }
-    return classes[0].getName();
+    PsiClass detectedClass = classes[0];
+    if (detectedClass instanceof PsiImplicitClass) return null;
+    return detectedClass.getName();
   }
 
   private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {
