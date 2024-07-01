@@ -27,6 +27,7 @@ import com.intellij.ui.speedSearch.SpeedSearch
 import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.FList
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
@@ -38,6 +39,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupActions.LocalBranchActions.constructIncomingOutgoingTooltip
+import git4idea.ui.branch.GitBranchesMatcherWrapper
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.BranchesTreeActionGroup
 import icons.DvcsImplIcons
 import org.jetbrains.annotations.NonNls
@@ -277,44 +279,46 @@ internal class FilteringBranchesTree(
 
   override fun createSpeedSearch(searchTextField: SearchTextField): SpeedSearchSupply =
     object : FilteringSpeedSearch(searchTextField) {
+      private var matcher = BranchesTreeMatcher(searchTextField.text)
+      private var bestMatch: BestMatch? = null
 
-      private val customWordMatchers = hashSetOf<MinusculeMatcher>()
+      override fun onMatchingChecked(userObject: BranchNodeDescriptor, matchingFragments: Iterable<TextRange>?, result: Matching) {
+        if (result == Matching.NONE || userObject.type == NodeType.GROUP_NODE) return
+        val text = getText(userObject) ?: return
+        val singleMatch = matchingFragments?.singleOrNull() ?: return
 
-      override fun matchingFragments(text: String): Iterable<TextRange?>? {
-        val allTextRanges = super.matchingFragments(text)
-        if (customWordMatchers.isEmpty()) return allTextRanges
-
-        val candidates = arrayListOf<List<TextRange>>()
-        allTextRanges?.let { candidates.add(it.toList()) }
-        for (wordMatcher in customWordMatchers) {
-          wordMatcher.matchingFragments(text)?.let { candidates.add(it.toList()) }
-        }
-        return candidates.maxByOrNull { fragments ->
-          fragments.sumOf { textRange -> textRange.endOffset - textRange.startOffset }
+        val matchingDegree = matcher.matchingDegree(text, valueStartCaseMatch = false, fragments = FList.singleton(singleMatch))
+        if (matchingDegree > (bestMatch?.matchingDegree ?: 0)) {
+          val node = searchModel.getNode(userObject)
+          bestMatch = BestMatch(matchingDegree, node)
         }
       }
+
+      override fun getMatcher(): MinusculeMatcher = matcher
 
       override fun updatePattern(string: String?) {
         super.updatePattern(string)
         onUpdatePattern(string)
       }
 
-      override fun onUpdatePattern(text: String?) {
-        customWordMatchers.clear()
-        customWordMatchers.addAll(buildCustomWordMatchers(text))
-      }
-
-      private fun buildCustomWordMatchers(text: String?): Set<MinusculeMatcher> {
-        if (text == null) return emptySet()
-
-        val wordMatchers = hashSetOf<MinusculeMatcher>()
-        for (word in StringUtil.split(text, " ")) {
-          val trimmedWord = word.trim() //otherwise Character.isSpaceChar would affect filtering
-          wordMatchers.add(
-            FixingLayoutMatcher("*$trimmedWord", NameUtil.MatchingCaseSensitivity.NONE, ""))
+      override fun updateSelection() {
+        val bestMatch = bestMatch
+        if (bestMatch == null) {
+          super.updateSelection()
+          return
         }
 
-        return wordMatchers
+        val selectionText = getText(selection?.getNodeDescriptor())
+
+        val selectionMatchingDegree = if (selectionText != null) matcher.matchingDegree(selectionText) else Int.MIN_VALUE
+        if (selectionMatchingDegree < bestMatch.matchingDegree) {
+          select(bestMatch.node)
+        }
+      }
+
+      override fun onUpdatePattern(text: String?) {
+        matcher = BranchesTreeMatcher(text)
+        bestMatch = null
       }
     }
 
@@ -538,3 +542,45 @@ internal class BranchesTreeStateProvider(tree: FilteringBranchesTree, disposable
     }
   }
 }
+
+private class BranchesTreeMatcher(private val rawPattern: String?) : MinusculeMatcher() {
+  private val matchers: List<MinusculeMatcher> = if (rawPattern.isNullOrBlank()) {
+    listOf(createMatcher(""))
+  }
+  else {
+    StringUtil.split(rawPattern, " ").map { word ->
+      val trimmedWord = word.trim() //otherwise Character.isSpaceChar would affect filtering
+      createMatcher(trimmedWord)
+    }
+  }
+
+  override fun getPattern(): String = rawPattern.orEmpty()
+
+  override fun matchingFragments(name: String): FList<TextRange>? {
+    val candidates = matchers.mapNotNull { matcher ->
+      matcher.matchingFragments(name)
+    }
+    val fragments = candidates.maxByOrNull { fragments ->
+      fragments.sumOf { textRange -> textRange.endOffset - textRange.startOffset }
+    }
+    return fragments
+  }
+
+  override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int =
+    matchers.singleOrNull()?.matchingDegree(name, valueStartCaseMatch, fragments)
+    ?: multipleMatchersMatchingDegree(fragments)
+
+  private fun multipleMatchersMatchingDegree(fragments: FList<out TextRange>?) =
+    if (fragments?.isNotEmpty() == true) PARTIAL_MATCH_DEGREE
+    else NO_MATCH_DEGREE
+
+  companion object {
+    const val NO_MATCH_DEGREE = 0
+    const val PARTIAL_MATCH_DEGREE = 1
+
+    private fun createMatcher(word: String) =
+      GitBranchesMatcherWrapper(FixingLayoutMatcher("*$word", NameUtil.MatchingCaseSensitivity.NONE, ""))
+  }
+}
+
+private data class BestMatch(val matchingDegree: Int, val node: BranchTreeNode)
