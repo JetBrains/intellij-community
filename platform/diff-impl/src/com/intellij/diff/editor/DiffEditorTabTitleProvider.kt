@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
@@ -20,6 +21,7 @@ import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
@@ -28,8 +30,19 @@ private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
     return if (isDiffOpenedInNewWindow(file)) title else title?.shorten()
   }
 
-  override fun getEditorTabTooltipText(project: Project, file: VirtualFile): @NlsContexts.Tooltip String? {
-    return getEditorTabName(project, file)
+  override suspend fun getEditorTabTitleAsync(project: Project, file: VirtualFile): String? {
+    if (file !is DiffVirtualFileWithTabName) {
+      return null
+    }
+
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
+    return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      file.getEditorTabName(project, fileEditorManager.getEditorList(file))
+    }
+  }
+
+  override fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): @NlsContexts.Tooltip String? {
+    return getEditorTabName(project, virtualFile)
   }
 
   private fun getEditorTabName(project: Project, file: VirtualFile): @NlsContexts.TabTitle String? {

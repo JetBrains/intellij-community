@@ -237,7 +237,7 @@ class EditorTabbedContainer internal constructor(
     }
 
     coroutineScope.launch {
-      val title = EditorTabPresentationUtil.getEditorTabTitle(window.manager.project, file)
+      val title = EditorTabPresentationUtil.getCustomEditorTabTitleAsync(window.manager.project, file) ?: return@launch
       withContext(Dispatchers.EDT) {
         tab.setText(title)
       }
