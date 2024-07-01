@@ -14,7 +14,6 @@ import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
-import javax.swing.JComponent
 
 // TODO Remove all this overengineering.
 //  It makes very little sense and breaks EDT/BGT contracts.
@@ -25,18 +24,14 @@ object ToolbarUtil {
   @NlsSafe
   val EMPTY_STRING = ""
 
-  fun createActionToolbar(actionGroups: List<List<AnAction>>): JComponent {
-    return createActionToolbar(ActionPlaces.UNKNOWN, actionGroups)
-  }
-
-  fun createToolbar(place: String, actionHolderGroups: List<List<ActionHolder>>, vararg additionalActions: AnAction): JComponent {
+  fun createToolbar(place: String, actionHolderGroups: List<List<ActionHolder>>, vararg additionalActions: AnAction): ActionToolbar {
     val actionGroups = actionHolderGroups.map { group ->
       group.map { ToolbarActionButton(it) }
     }
     return createActionToolbar(place, actionGroups, *additionalActions)
   }
 
-  private fun createActionToolbar(place: String, actionGroups: List<List<AnAction>>, vararg additionalActions: AnAction): JComponent {
+  fun createActionToolbar(place: String, actionGroups: List<List<AnAction>>, vararg additionalActions: AnAction): ActionToolbar {
     val actionGroup = DefaultActionGroup().apply {
       for ((index, actionGroup) in actionGroups.withIndex()) {
         if (index > 0) {
@@ -53,8 +48,7 @@ object ToolbarUtil {
         actionGroup.add(action)
       }
     }
-    val actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
-    return actionToolbar.component
+    return ActionManager.getInstance().createActionToolbar(place, actionGroup, true)
   }
 
   inline fun <reified A : AnAction>createAnActionButton(noinline onClick: () -> Unit): AnAction {

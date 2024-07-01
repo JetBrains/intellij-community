@@ -152,7 +152,7 @@ internal class TabbedMultiOutput(private val editor: Editor, parent: Disposable)
 
   private fun createTabToolbar(tabInfo: TabInfo): JComponent {
     val actionGroups = createTabActionGroups(tabInfo)
-    val toolbar = ToolbarUtil.createActionToolbar(actionGroups)
+    val toolbar = ToolbarUtil.createActionToolbar(javaClass.simpleName, actionGroups).component
     if (toolbar is ActionToolbarImpl) {
       toolbar.setForceMinimumSize(true)
     }
