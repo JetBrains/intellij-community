@@ -20,6 +20,7 @@ import org.jetbrains.intellij.build.impl.PatchOverwriteMode
 import org.jetbrains.intellij.build.impl.PlatformJarNames.TEST_FRAMEWORK_JAR
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.PluginLayout.Companion.plugin
+import org.jetbrains.intellij.build.impl.PluginLayout.Companion.pluginAuto
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiPredicate
@@ -167,6 +168,9 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
 
     val inheritedPluginLayouts = COMMUNITY_REPOSITORY_PLUGINS.removeAll { it.mainModule !in bundledPlugins }
     productLayout.pluginLayouts = inheritedPluginLayouts.addAll(listOf(
+      // TODO(b/352080200): figure out why the plugin layouts for 'intellij.copyright' and 'intellij.turboComplete' are needed here.
+      pluginAuto(listOf("intellij.copyright")),
+      pluginAuto(listOf("intellij.turboComplete")),
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
       CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community"),
