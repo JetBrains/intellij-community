@@ -129,7 +129,7 @@ internal class ChangeRecord(commitId: Int,
       if (fileName == GitSettingsLog.PLUGINS_FILE) return SettingsCategory.PLUGINS
 
       //workaround empty category
-      return getCategory(fileName) ?: SettingsCategory.OTHER
+      return getCategory(fileName)?.first ?: SettingsCategory.OTHER
     }
 
     val changesCategories = changes.map { getChangeCategory(it) }.distinct().sortedBy { getCategoryOrder(it) }.map { toString(it) }
