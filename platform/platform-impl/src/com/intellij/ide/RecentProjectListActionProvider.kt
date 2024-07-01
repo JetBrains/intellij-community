@@ -117,7 +117,7 @@ open class RecentProjectListActionProvider {
 
     if (displayName.isNullOrBlank()) {
       displayName = if (duplicates.contains(getProjectNameOnlyByPath(path))) {
-        if (Registry.`is`("ide.welcome.screen.branch.name", false)) {
+        if (Registry.`is`("ide.welcome.screen.branch.name", true)) {
           branch = recentProjectManager.getCurrentBranchName(path)
         }
         FileUtil.toSystemDependentName(path)
