@@ -64,7 +64,7 @@ class MergeImportUtil {
 
     @JvmStatic
     fun getImportMergeRange(project: Project?, psiFiles: MutableList<PsiFile>): MergeRange? {
-      if (project == null) return null
+      if (project == null || psiFiles.size != 3) return null
 
       val ranges = ArrayList<LineRange>()
       for (side in ThreeSide.entries) {
@@ -145,7 +145,7 @@ internal class ResolveConflictsInImportsToggleAction : ToggleAction() {
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return getMergeViewer(e)?.textSettings?.isAutoResolveImportConflicts ?: false
+    return getMergeViewer(e)?.textSettings?.isAutoResolveImportConflicts ?: true
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
