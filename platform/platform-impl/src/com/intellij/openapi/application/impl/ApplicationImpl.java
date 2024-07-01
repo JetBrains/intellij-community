@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.CommonBundle;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.configurationStore.StoreUtil;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.PluginException;
@@ -552,16 +553,18 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   }
 
   private void doExit(int flags, boolean restart, String @NotNull [] beforeRestart, int exitCode) {
-    Integer actualExitCode = null;
-    try {
-      actualExitCode = destructApplication(flags, restart, beforeRestart, exitCode);
-    }
-    catch (Throwable err) {
-      logErrorDuringExit("Failed to destruct the application", err);
-    }
-    finally {
-      if (actualExitCode != null) {
-        System.exit(actualExitCode);
+    try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
+      Integer actualExitCode = null;
+      try {
+        actualExitCode = destructApplication(flags, restart, beforeRestart, exitCode);
+      }
+      catch (Throwable err) {
+        logErrorDuringExit("Failed to destruct the application", err);
+      }
+      finally {
+        if (actualExitCode != null) {
+          System.exit(actualExitCode);
+        }
       }
     }
   }
