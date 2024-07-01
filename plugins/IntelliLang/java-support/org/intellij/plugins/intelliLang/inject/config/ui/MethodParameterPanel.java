@@ -373,19 +373,17 @@ public final class MethodParameterPanel extends AbstractInjectionPanel<MethodPar
     }
   }
 
-  private static class MyView extends TreeTableView implements DataProvider {
+  private static class MyView extends TreeTableView implements UiDataProvider {
     MyView(ListTreeTableModelOnColumns treeTableModel) {
       super(treeTableModel);
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-        Object userObject = TreeUtil.getUserObject(ContainerUtil.getFirstItem(getSelection()));
-        return userObject instanceof PsiElement ? userObject : null;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      Object userObject = TreeUtil.getUserObject(ContainerUtil.getFirstItem(getSelection()));
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        return userObject instanceof PsiElement o ? o : null;
+      });
     }
   }
 
