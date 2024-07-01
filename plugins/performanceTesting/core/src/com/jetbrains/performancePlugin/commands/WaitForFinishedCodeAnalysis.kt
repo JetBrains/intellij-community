@@ -4,10 +4,9 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
@@ -28,12 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurerService
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.UIUtil
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import java.time.Duration
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
@@ -133,7 +127,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
 
   fun waitAnalysisToFinish() {
     LOG.info("Waiting for code analysis to finish")
-    if ((ApplicationManager.getApplication() as ApplicationEx).isLightEditMode) {
+    if (LightEdit.owns(project)) {
       return
     }
     val timeout: Long = 5
