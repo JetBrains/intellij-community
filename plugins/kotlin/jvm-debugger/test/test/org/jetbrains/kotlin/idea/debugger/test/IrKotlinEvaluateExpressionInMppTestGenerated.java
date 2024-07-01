@@ -2107,6 +2107,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/privateClass.kt");
             }
 
+            @TestMetadata("privateFakeOverride.kt")
+            public void testPrivateFakeOverride() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateFakeOverride.kt");
+            }
+
             @TestMetadata("privateFieldInCompanion.kt")
             public void testPrivateFieldInCompanion() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
