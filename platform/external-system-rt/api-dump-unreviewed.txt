@@ -153,5 +153,3 @@ f:com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
 - s:setupDebugger(java.lang.String,java.lang.String,java.lang.String,java.lang.String):I
 - s:signalizeFinish(java.lang.String,java.lang.String):V
 - s:signalizeFinish(java.lang.String,java.lang.String,I):V
-c:com.intellij.platform.externalSystem.rt.ExternalSystemRtClass
-- <init>():V
