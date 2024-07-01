@@ -51,7 +51,7 @@ import java.util.function.Supplier;
  * @author Vladislav.Soroka
  */
 public class BuildView extends CompositeView<ExecutionConsole>
-  implements BuildProgressListener, ConsoleView, DataProvider, Filterable<ExecutionNode>, OccurenceNavigator, ObservableConsoleView,
+  implements BuildProgressListener, ConsoleView, Filterable<ExecutionNode>, OccurenceNavigator, ObservableConsoleView,
              RunContentActionsContributor {
   public static final String CONSOLE_VIEW_NAME = "consoleView";
   @ApiStatus.Experimental
@@ -237,6 +237,11 @@ public class BuildView extends CompositeView<ExecutionConsole>
     return myExecutionConsole;
   }
 
+  @ApiStatus.Internal
+  public @NotNull List<AnAction> getRestartActions() {
+    return myBuildDescriptor.getRestartActions();
+  }
+
   @Nullable
   @ApiStatus.Internal
   BuildTreeConsoleView getEventView() {
@@ -387,23 +392,15 @@ public class BuildView extends CompositeView<ExecutionConsole>
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (LangDataKeys.CONSOLE_VIEW.is(dataId)) {
-      return getConsoleView();
-    }
-    Object data = super.getData(dataId);
-    if (data != null) return data;
-    if (LangDataKeys.RUN_PROFILE.is(dataId)) {
-      ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
-      return environment == null ? null : environment.getRunProfile();
-    }
-    if (ExecutionDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
-      return myBuildDescriptor.getExecutionEnvironment();
-    }
-    if (RESTART_ACTIONS.is(dataId)) {
-      return myBuildDescriptor.getRestartActions();
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    ExecutionConsole consoleView = getConsoleView();
+    sink.set(LangDataKeys.CONSOLE_VIEW, consoleView instanceof ConsoleView o ? o : null);
+
+    ExecutionEnvironment environment = myBuildDescriptor.getExecutionEnvironment();
+    sink.set(LangDataKeys.RUN_PROFILE, environment == null ? null : environment.getRunProfile());
+    sink.set(ExecutionDataKeys.EXECUTION_ENVIRONMENT, myBuildDescriptor.getExecutionEnvironment());
+    sink.set(RESTART_ACTIONS, myBuildDescriptor.getRestartActions());
   }
 
   @Override
