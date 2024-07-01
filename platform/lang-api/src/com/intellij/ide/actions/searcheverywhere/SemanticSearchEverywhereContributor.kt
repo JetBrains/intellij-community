@@ -1,4 +1,4 @@
-package com.intellij.searchEverywhereMl
+package com.intellij.ide.actions.searcheverywhere
 
 import org.jetbrains.annotations.ApiStatus
 

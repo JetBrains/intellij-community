@@ -10,7 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.searchEverywhereMl.SemanticSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.searchEverywhereMl.semantics.providers.SemanticFilesProvider
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus

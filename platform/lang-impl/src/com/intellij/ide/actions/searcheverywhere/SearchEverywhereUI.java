@@ -1368,6 +1368,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       Object value = myListModel.getElementAt(i);
       selectedItems.add(value);
 
+      SearchEverywhereContributor<?> effectiveContributor =
+        contributor instanceof SearchEverywhereContributorWrapper wrapper ? wrapper.getEffectiveContributor() : contributor;
+
       String selectedTabContributorID = myHeader.getSelectedTab().getReportableID();
       //noinspection ConstantConditions
       String reportableContributorID = getReportableContributorID(contributor);
@@ -1378,6 +1381,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
       data.add(SearchEverywhereUsageTriggerCollector.SELECTED_ITEM_NUMBER.with(hasNotificationElement ? (i - 1) : i));
       data.add(SearchEverywhereUsageTriggerCollector.HAS_ONLY_SIMILAR_ELEMENT.with(hasNotificationElement));
+      data.add(SearchEverywhereUsageTriggerCollector.IS_ELEMENT_SEMANTIC.with(
+        effectiveContributor instanceof SemanticSearchEverywhereContributor semanticContributor &&
+        semanticContributor.isElementSemantic(value)));
       PsiElement psi = toPsi(value);
       if (psi != null) {
         data.add(EventFields.Language.with(psi.getLanguage()));
