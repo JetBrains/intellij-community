@@ -169,6 +169,10 @@ open class EditorComposite internal constructor(
   suspend fun waitForAvailable() {
     // make sure that init is started
     initDeferred.complete(Unit)
+    waitForAvailableWithoutTriggeringInit()
+  }
+
+  internal suspend fun waitForAvailableWithoutTriggeringInit() {
     fileEditorWithProviders.firstOrNull { it !== INITIAL_EMPTY }
   }
 
