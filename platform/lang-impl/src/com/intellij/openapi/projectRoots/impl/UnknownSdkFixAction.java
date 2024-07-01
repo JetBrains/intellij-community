@@ -70,5 +70,11 @@ public interface UnknownSdkFixAction {
      * @see #onSdkResolved(Sdk)
      */
     void onResolveFailed();
+
+    /**
+     * One of the final events of the resolution. It is called when the user cancelled SDK resolution.
+     * @see #onSdkResolved(Sdk)
+     */
+    void onResolveCancelled();
   }
 }

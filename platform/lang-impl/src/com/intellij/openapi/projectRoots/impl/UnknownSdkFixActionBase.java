@@ -38,6 +38,12 @@ public abstract class UnknownSdkFixActionBase implements UnknownSdkFixAction, Fi
         if (!myIsFinished.compareAndSet(false, true)) return;
         proxy.onResolveFailed();
       }
+
+      @Override
+      public void onResolveCancelled() {
+        if (!myIsFinished.compareAndSet(false, true)) return;
+        proxy.onResolveCancelled();
+      }
     };
   }
 

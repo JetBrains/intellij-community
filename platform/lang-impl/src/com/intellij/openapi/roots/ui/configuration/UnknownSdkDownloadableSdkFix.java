@@ -4,7 +4,9 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A download suggestion to fix a missing SDK by downloading it
@@ -31,6 +33,14 @@ public interface UnknownSdkDownloadableSdkFix extends UnknownSdkFixConfigurator 
   @NotNull
   default String getPresentableVersionString() {
     return getVersionString();
+  }
+
+  /**
+   * @return reason why a SDK lookup was initiated
+   */
+  @Nullable
+  default @Nls String getSdkLookupReason() {
+    return null;
   }
 
   /**

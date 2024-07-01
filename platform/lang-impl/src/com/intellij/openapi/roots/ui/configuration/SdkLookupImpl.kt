@@ -99,6 +99,10 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
     override fun onResolveFailed() {
       this@SdkLookupContext.onSdkResolved(null)
     }
+
+    override fun onResolveCancelled() {
+      this@SdkLookupContext.onSdkResolved(null)
+    }
   }
 
   override fun toString(): String = "SdkLookupContext($params)"
@@ -157,6 +161,8 @@ class SdkLookupImpl : SdkLookup {
 }
 
 private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
+  val lookupReason = lookup.lookupReason
+
   fun lookup() {
     val rootProgressIndicator = resolveProgressIndicator()
 
@@ -393,7 +399,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     resolvers
                         .asSequence()
                         .onEach { indicator.checkCanceled() }
-                        .mapNotNull { it.proposeDownload(unknownSdk, indicator) }
+                        .mapNotNull { it.proposeDownload(unknownSdk, indicator, lookupReason) }
                         .filter { versionFilter?.invoke(it.versionString) != false }
                         .onEach { indicator.checkCanceled() }
                         .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }

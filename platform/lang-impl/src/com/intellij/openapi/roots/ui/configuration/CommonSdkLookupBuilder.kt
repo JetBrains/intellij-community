@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import org.jetbrains.annotations.Nls
 
 internal data class CommonSdkLookupBuilder(
   override val project: Project? = null,
@@ -14,6 +15,8 @@ internal data class CommonSdkLookupBuilder(
   @ProgressTitle
   override val progressMessageTitle: String? = null,
   override val progressIndicator: ProgressIndicator? = null,
+  @Nls
+  override val lookupReason: String? = null,
 
   override val sdkName: String? = null,
 
@@ -40,6 +43,9 @@ internal data class CommonSdkLookupBuilder(
 
   override fun withProgressMessageTitle(@ProgressTitle message: String): CommonSdkLookupBuilder =
     copy(progressMessageTitle = message)
+
+  override fun withLookupReason(@Nls message: String): CommonSdkLookupBuilder =
+    copy(lookupReason = message)
 
   override fun withSdkName(name: String): CommonSdkLookupBuilder =
     copy(sdkName = name)

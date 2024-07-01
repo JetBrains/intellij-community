@@ -8,8 +8,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
-import com.intellij.util.Consumer
 import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.Nls
 
 /**
  * Use this service to resolve an SDK request to a given component allowing
@@ -64,6 +64,12 @@ interface SdkLookupBuilder {
 
   @Contract(pure = true)
   fun withProgressMessageTitle(@ProgressTitle message: String): SdkLookupBuilder
+
+  /**
+   * Specifies the reason for the SDK lookup.
+   */
+  @Contract(pure = true)
+  fun withLookupReason(@Nls message: String): SdkLookupBuilder
 
   /**
    * Use these SDKs to test first, the [withSdkName] option has a higher priority
@@ -156,6 +162,7 @@ interface SdkLookupParameters {
 
   val progressMessageTitle: String?
   val progressIndicator: ProgressIndicator?
+  val lookupReason: String?
 
   val sdkName: String?
 

@@ -6,6 +6,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase implements UnknownSdkFixAction {
   private @NotNull final UnknownSdkDownloadableSdkFix myFix;
@@ -48,6 +49,16 @@ final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase
                                         myFix.configureSdk(sdk);
                                         UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
                                       });
+  }
+
+  @Override
+  protected @NotNull String getDownloadDescription() {
+    return myFix.getDownloadDescription();
+  }
+
+  @Override
+  protected @Nullable String getSdkLookupReason() {
+    return myFix.getSdkLookupReason();
   }
 
   @Override

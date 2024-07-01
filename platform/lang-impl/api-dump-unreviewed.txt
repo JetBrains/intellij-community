@@ -21114,6 +21114,7 @@ com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 - getRegisteredSdkPrototype():com.intellij.openapi.projectRoots.Sdk
 com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction$Listener
 - java.util.EventListener
+- a:onResolveCancelled():V
 - a:onResolveFailed():V
 - a:onSdkNameResolved(com.intellij.openapi.projectRoots.Sdk):V
 - a:onSdkResolved(com.intellij.openapi.projectRoots.Sdk):V
@@ -21131,6 +21132,15 @@ a:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase
 - f:applySuggestionAsync(com.intellij.openapi.project.Project):V
 - f:applySuggestionBlocking(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.projectRoots.Sdk
 - pa:createTask():com.intellij.openapi.projectRoots.impl.UnknownSdkDownloadTask
+- pa:getDownloadDescription():java.lang.String
+- p:getSdkLookupReason():java.lang.String
+e:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
+- java.lang.Enum
+- sf:ALWAYS_ACCEPT:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
+- sf:ALWAYS_REJECT:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
+- sf:SHOW_POPUP:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
+- s:valueOf(java.lang.String):com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
+- s:values():com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction[]
 a:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionLocalBase
 - com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionBase
 - <init>():V
@@ -22349,6 +22359,7 @@ com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:onSdkResolved(kotlin.jvm.functions.Function1):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:testSuggestedSdkFirst(kotlin.jvm.functions.Function0):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:testSuggestedSdksFirst(kotlin.sequences.Sequence):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
+- a:withLookupReason(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProgressIndicator(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProgressMessageTitle(java.lang.String):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
 - a:withProject(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ui.configuration.SdkLookupBuilder
@@ -22386,6 +22397,7 @@ f:com.intellij.openapi.roots.ui.configuration.SdkLookupImpl
 - lookup(com.intellij.openapi.roots.ui.configuration.SdkLookupParameters):V
 - lookupBlocking(com.intellij.openapi.roots.ui.configuration.SdkLookupParameters):V
 com.intellij.openapi.roots.ui.configuration.SdkLookupParameters
+- a:getLookupReason():java.lang.String
 - a:getOnBeforeSdkSuggestionStarted():kotlin.jvm.functions.Function0
 - a:getOnDownloadableSdkSuggested():kotlin.jvm.functions.Function1
 - a:getOnDownloadingSdkDetected():kotlin.jvm.functions.Function1
@@ -22503,6 +22515,7 @@ com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 - a:createTask(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 - a:getDownloadDescription():java.lang.String
 - getPresentableVersionString():java.lang.String
+- getSdkLookupReason():java.lang.String
 - a:getVersionString():java.lang.String
 com.intellij.openapi.roots.ui.configuration.UnknownSdkFixConfigurator
 - a:configureSdk(com.intellij.openapi.projectRoots.Sdk):V
@@ -22518,6 +22531,7 @@ com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 - a:supportsResolution(com.intellij.openapi.projectRoots.SdkTypeId):Z
 com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver$UnknownSdkLookup
 - a:proposeDownload(com.intellij.openapi.roots.ui.configuration.UnknownSdk,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
+- proposeDownload(com.intellij.openapi.roots.ui.configuration.UnknownSdk,com.intellij.openapi.progress.ProgressIndicator,java.lang.String):com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
 - a:proposeLocalFix(com.intellij.openapi.roots.ui.configuration.UnknownSdk,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
 a:com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction
 - com.intellij.openapi.actionSystem.ToggleAction
