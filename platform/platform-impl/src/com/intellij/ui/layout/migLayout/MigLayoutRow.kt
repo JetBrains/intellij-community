@@ -144,21 +144,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var subRowsEnabled: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      subRows?.forEach {
-        it.enabled = value
-        it.subRowsEnabled = value
-      }
-
-      components.firstOrNull()?.parent?.repaint() // Repaint all dependent components in sync
-    }
-
   override var subRowsVisible: Boolean = true
     set(value) {
       if (field == value) {
@@ -174,9 +159,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         }
       }
     }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override var subRowIndent: Int = -1
 
   internal val isLabeledIncludingSubRows: Boolean
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
@@ -200,14 +182,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent,
+                           indent = newIndent,
                            incrementsIndent = incrementsIndent)
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
-      separatorRow.enabled = subRowsEnabled
-      separatorRow.subRowsEnabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
       separatorRow.subRowsVisible = subRowsVisible
       row.getOrCreateSubRowsList().add(separatorRow)
@@ -222,8 +202,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
     subRows.add(insertIndex, row)
 
-    row.enabled = subRowsEnabled
-    row.subRowsEnabled = subRowsEnabled
     row.visible = subRowsVisible
     row.subRowsVisible = subRowsVisible
 

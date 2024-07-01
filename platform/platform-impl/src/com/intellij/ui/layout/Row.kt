@@ -38,7 +38,7 @@ interface RowBuilder : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2")
+  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   fun row(label: @Nls String?, separated: Boolean = false, init: Row.() -> Unit): Row {
     return row(label?.let { Label(it) }, separated = separated, init)
   }
@@ -72,9 +72,9 @@ interface RowBuilder : BaseBuilder {
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use Kotlin UI DSL Version 2")
 abstract class Row : Cell(), RowBuilder {
-  @get:Deprecated("Use Kotlin UI DSL Version 2")
+  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2")
+  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
   abstract var enabled: Boolean
 
@@ -88,24 +88,7 @@ abstract class Row : Cell(), RowBuilder {
   @get:ApiStatus.ScheduledForRemoval
   @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
   @set:ApiStatus.ScheduledForRemoval
-  abstract var subRowsEnabled: Boolean
-
-  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @set:ApiStatus.ScheduledForRemoval
   abstract var subRowsVisible: Boolean
-
-  /**
-   * Indent for child rows of this row, expressed in steps (multiples of [SpacingConfiguration.indentLevel]). Replaces indent
-   * calculated from row nesting.
-   */
-  @get:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @get:ApiStatus.ScheduledForRemoval
-  @set:Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  @set:ApiStatus.ScheduledForRemoval
-  @Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-  abstract var subRowIndent: Int
 
   @PublishedApi
   @ApiStatus.ScheduledForRemoval
@@ -144,11 +127,4 @@ enum class GrowPolicy {
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use Kotlin UI DSL Version 2")
   MEDIUM_TEXT
-}
-
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use Kotlin UI DSL Version 2", level = DeprecationLevel.HIDDEN)
-fun Row.enableIf(predicate: ComponentPredicate) {
-  enabled = predicate()
-  predicate.addListener { enabled = it }
 }
