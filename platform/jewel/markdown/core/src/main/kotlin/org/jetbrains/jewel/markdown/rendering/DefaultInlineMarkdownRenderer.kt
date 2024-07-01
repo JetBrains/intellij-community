@@ -69,9 +69,8 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
                     withStyles(styling.inlineCode.withEnabled(enabled), child) { append(it.nativeNode.literal) }
                 }
 
-                is InlineMarkdown.HardLineBreak,
-                is InlineMarkdown.SoftLineBreak,
-                -> appendLine()
+                is InlineMarkdown.HardLineBreak -> appendLine()
+                is InlineMarkdown.SoftLineBreak -> append(" ")
 
                 is InlineMarkdown.HtmlInline -> {
                     if (styling.renderInlineHtml) {
