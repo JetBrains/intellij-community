@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gitlab.api
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect
 import com.fasterxml.jackson.annotation.JsonInclude
+import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.*
 import com.fasterxml.jackson.databind.introspect.VisibilityChecker
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -24,6 +25,7 @@ object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer
       .setTimeZone(TimeZone.getDefault())
       .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
       .configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false)
+      .configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false)
       .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
       .setSerializationInclusion(JsonInclude.Include.NON_NULL)
       .setVisibility(VisibilityChecker.Std(JsonAutoDetect.Visibility.NONE,
@@ -36,13 +38,13 @@ object GitLabRestJsonDataDeSerializer : JsonDataSerializer, JsonDataDeserializer
 
   // this is required to handle empty reader/stream without an exception
   override fun <T> fromJson(bodyReader: Reader, clazz: Class<T>): T? =
-    mapper.factory.createParser(bodyReader)
+    mapper.createParser(bodyReader)
       .readValueAsTree<JsonNode>()
       ?.let { mapper.treeToValue(it, clazz) }
 
   override fun <T> fromJson(bodyReader: Reader, clazz: Class<T>, vararg classArgs: Class<*>): T? {
     val type = mapper.typeFactory.constructParametricType(clazz, *classArgs)
-    return mapper.factory.createParser(bodyReader)
+    return mapper.createParser(bodyReader)
       .readValueAsTree<JsonNode>()
       ?.let { mapper.treeToValue(it, type) }
   }
