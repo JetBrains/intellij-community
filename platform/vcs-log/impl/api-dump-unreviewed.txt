@@ -1786,7 +1786,7 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - com.intellij.vcs.log.ui.table.TableWithProgress
 - com.intellij.ide.CopyProvider
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.vcs.log.ui.table.VcsLogCommitList
 - <init>(java.lang.String,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.impl.VcsLogUiProperties,com.intellij.vcs.log.ui.VcsLogColorManager,java.lang.Runnable,com.intellij.openapi.Disposable):V
 - addHighlighter(com.intellij.vcs.log.VcsLogHighlighter):V
@@ -1802,7 +1802,6 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - getColorManager():com.intellij.vcs.log.ui.VcsLogColorManager
 - f:getColumnViewIndex(com.intellij.vcs.log.ui.table.column.VcsLogColumn):I
 - getCommitColumn():javax.swing.table.TableColumn
-- getData(java.lang.String):java.lang.Object
 - p:getHoveredRowBackground():java.awt.Color
 - getId():java.lang.String
 - getListModel():com.intellij.vcs.log.ui.table.GraphTableModel
@@ -1835,6 +1834,7 @@ c:com.intellij.vcs.log.ui.table.VcsLogGraphTable
 - setCursor(java.awt.Cursor):V
 - p:setErrorEmptyText(java.lang.Throwable,java.lang.String):V
 - showTooltip(I,com.intellij.vcs.log.ui.table.column.VcsLogColumn):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updateDataPack(com.intellij.vcs.log.visible.VisiblePack,Z):V
 - p:updateEmptyText():V
 - viewportSet(javax.swing.JViewport):V
