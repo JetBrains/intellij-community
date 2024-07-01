@@ -1,26 +1,16 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
 import com.intellij.psi.util.startOffset
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyRecursiveElementVisitor
+import com.jetbrains.python.psi.PyStatementList
 
-class PythonCodeGenerationVisitor : EvaluationVisitor, PsiElementVisitor() {
-  private var codeFragment: CodeFragment? = null
-
-  override val language = Language.PYTHON
-  override val feature: String = "code-generation"
-
-  override fun getFile(): CodeFragment = codeFragment
-                                         ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
-
-  override fun visitFile(node: PsiFile) {
-    codeFragment = CodeFragment(node.textOffset, node.textLength).also {
-      PythonCodeGenerationPsiVisitor(it).visitFile(node)
-    }
+class PythonCodeGenerationVisitor : CodeGenerationVisitorBase(Language.PYTHON) {
+  override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {
+    return PythonCodeGenerationPsiVisitor(codeFragment)
   }
 }
 
