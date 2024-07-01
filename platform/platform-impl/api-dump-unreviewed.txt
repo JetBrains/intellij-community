@@ -7169,9 +7169,6 @@ f:com.intellij.ide.plugins.CountIcon
 f:com.intellij.ide.plugins.CreateAllServicesAndExtensionsActionKt
 - sf:ACTION_ID:java.lang.String
 - sf:performAction():V
-com.intellij.ide.plugins.CustomPluginRepoContributor
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- a:getRepoUrls():java.util.List
 f:com.intellij.ide.plugins.CustomPluginRepositoryService
 - com.intellij.ide.plugins.auth.PluginRepositoryAuthListener
 - <init>():V
