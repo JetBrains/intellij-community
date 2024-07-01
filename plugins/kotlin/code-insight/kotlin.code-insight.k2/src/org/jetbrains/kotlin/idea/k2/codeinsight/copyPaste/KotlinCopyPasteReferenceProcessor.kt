@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
+import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -45,7 +46,7 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.io.IOException
 import org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste.KotlinReferenceRestoringHelper as Helper
 
-class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>() {
+class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReferenceTransferableData>(), ReferenceCopyPasteProcessor {
     override fun collectTransferableData(
         file: PsiFile,
         editor: Editor,
