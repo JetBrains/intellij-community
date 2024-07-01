@@ -26604,7 +26604,7 @@ com.intellij.ui.dsl.builder.Cell
 - a:bold():com.intellij.ui.dsl.builder.Cell
 - a:comment(java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction):com.intellij.ui.dsl.builder.Cell
 - bs:comment$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
-- a:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.Cell
+- ba:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.Cell
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.Cell
 - a:enabled(Z):com.intellij.ui.dsl.builder.Cell
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Cell
@@ -26648,7 +26648,7 @@ f:com.intellij.ui.dsl.builder.Cell$DefaultImpls
 - bs:label$default(com.intellij.ui.dsl.builder.Cell,javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.CellBase
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.CellBase
-- a:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.CellBase
+- ba:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.CellBase
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.CellBase
 - a:enabled(Z):com.intellij.ui.dsl.builder.CellBase
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.CellBase
@@ -26674,7 +26674,6 @@ f:com.intellij.ui.dsl.builder.ComboBoxKt
 - sf:bindItem(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
 - sf:bindItem(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
 - sf:bindItem(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
-- bsf:bindItemNullable(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
 - sf:columns(com.intellij.openapi.ui.ComboBox,I):com.intellij.openapi.ui.ComboBox
 - sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
 - *sf:whenItemSelectedFromUi(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
@@ -26702,7 +26701,7 @@ com.intellij.ui.dsl.builder.Panel
 - bs:buttonsGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.ButtonsGroup
 - a:collapsibleGroup(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.CollapsibleRow
 - bs:collapsibleGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.CollapsibleRow
-- a:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.Panel
+- ba:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.Panel
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.Panel
 - a:customizeSpacingConfiguration(com.intellij.ui.dsl.builder.SpacingConfiguration,kotlin.jvm.functions.Function1):V
 - a:enabled(Z):com.intellij.ui.dsl.builder.Panel
@@ -26749,7 +26748,6 @@ f:com.intellij.ui.dsl.builder.PanelKt
 *:com.intellij.ui.dsl.builder.Placeholder
 - com.intellij.ui.dsl.builder.CellBase
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.Placeholder
-- a:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.Placeholder
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.Placeholder
 - a:enabled(Z):com.intellij.ui.dsl.builder.Placeholder
 - a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.Placeholder
@@ -26787,7 +26785,7 @@ com.intellij.ui.dsl.builder.Row
 - a:contextHelp(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - bs:contextHelp$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGapsY):com.intellij.ui.dsl.builder.Row
-- a:customize(com.intellij.ui.dsl.gridLayout.VerticalGaps):com.intellij.ui.dsl.builder.Row
+- ba:customize(com.intellij.ui.dsl.gridLayout.VerticalGaps):com.intellij.ui.dsl.builder.Row
 - a:dropDownLink(java.lang.Object,java.util.List):com.intellij.ui.dsl.builder.Cell
 - a:enabled(Z):com.intellij.ui.dsl.builder.Row
 - a:enabledIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
@@ -26859,7 +26857,6 @@ e:com.intellij.ui.dsl.builder.RowLayout
 - sf:DEFAULT_MAX_BUTTONS_COUNT:I
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.SegmentedButton
 - a:bind(com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.SegmentedButton
-- a:customize(com.intellij.ui.dsl.gridLayout.Gaps):com.intellij.ui.dsl.builder.SegmentedButton
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.SegmentedButton
 - a:enabled(Z):com.intellij.ui.dsl.builder.SegmentedButton
 - a:gap(com.intellij.ui.dsl.builder.RightGap):com.intellij.ui.dsl.builder.SegmentedButton
@@ -27113,18 +27110,16 @@ a:com.intellij.ui.layout.Cell
 - bf:button(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.CellBuilder
 - f:checkBox(java.lang.String):com.intellij.ui.layout.CellBuilder
 - bf:checkBox(java.lang.String,com.intellij.openapi.observable.properties.GraphProperty,java.lang.String):com.intellij.ui.layout.CellBuilder
-- f:checkBox(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String):com.intellij.ui.layout.CellBuilder
-- f:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String):com.intellij.ui.layout.CellBuilder
+- bf:checkBox(java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String):com.intellij.ui.layout.CellBuilder
+- bf:checkBox(java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String):com.intellij.ui.layout.CellBuilder
 - f:checkBox(java.lang.String,Z):com.intellij.ui.layout.CellBuilder
 - f:checkBox(java.lang.String,Z,java.lang.String):com.intellij.ui.layout.CellBuilder
-- bf:checkBox(java.lang.String,Z,java.lang.String,kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 - bs:checkBox$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.openapi.observable.properties.GraphProperty,java.lang.String,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bs:checkBox$default(com.intellij.ui.layout.Cell,java.lang.String,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.String,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bs:checkBox$default(com.intellij.ui.layout.Cell,java.lang.String,kotlin.reflect.KMutableProperty0,java.lang.String,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bs:checkBox$default(com.intellij.ui.layout.Cell,java.lang.String,Z,java.lang.String,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- bs:checkBox$default(com.intellij.ui.layout.Cell,java.lang.String,Z,java.lang.String,kotlin.jvm.functions.Function2,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bf:comboBox(javax.swing.ComboBoxModel,com.intellij.openapi.observable.properties.GraphProperty,javax.swing.ListCellRenderer):com.intellij.ui.layout.CellBuilder
-- f:comboBox(javax.swing.ComboBoxModel,com.intellij.ui.layout.PropertyBinding,javax.swing.ListCellRenderer):com.intellij.ui.layout.CellBuilder
+- bf:comboBox(javax.swing.ComboBoxModel,com.intellij.ui.layout.PropertyBinding,javax.swing.ListCellRenderer):com.intellij.ui.layout.CellBuilder
 - bf:comboBox(javax.swing.ComboBoxModel,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,javax.swing.ListCellRenderer):com.intellij.ui.layout.CellBuilder
 - bs:comboBox$default(com.intellij.ui.layout.Cell,javax.swing.ComboBoxModel,com.intellij.openapi.observable.properties.GraphProperty,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bs:comboBox$default(com.intellij.ui.layout.Cell,javax.swing.ComboBoxModel,com.intellij.ui.layout.PropertyBinding,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
@@ -27133,17 +27128,18 @@ a:com.intellij.ui.layout.Cell
 - a:component(javax.swing.JComponent,javax.swing.JComponent):com.intellij.ui.layout.CellBuilder
 - bf:getGrow():com.intellij.ui.layout.CCFlags
 - bf:getGrowX():com.intellij.ui.layout.CCFlags
-- bf:getGrowY():com.intellij.ui.layout.CCFlags
 - bf:getPushX():com.intellij.ui.layout.CCFlags
 - bf:getPushY():com.intellij.ui.layout.CCFlags
 - f:invoke(javax.swing.JComponent,com.intellij.ui.layout.CCFlags[],com.intellij.ui.layout.GrowPolicy,java.lang.String):com.intellij.ui.layout.CellBuilder
 - bs:invoke$default(com.intellij.ui.layout.Cell,javax.swing.JComponent,com.intellij.ui.layout.CCFlags[],com.intellij.ui.layout.GrowPolicy,java.lang.String,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
+- bf:label(java.lang.String,com.intellij.util.ui.JBFont,com.intellij.util.ui.UIUtil$FontColor):com.intellij.ui.layout.CellBuilder
+- bs:label$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.util.ui.JBFont,com.intellij.util.ui.UIUtil$FontColor,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bf:link(java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
 - bs:link$default(com.intellij.ui.layout.Cell,java.lang.String,com.intellij.util.ui.UIUtil$ComponentStyle,kotlin.jvm.functions.Function0,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
 - bf:scrollPane(java.awt.Component):com.intellij.ui.layout.CellBuilder
 - bf:spinner(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,I,I):com.intellij.ui.layout.CellBuilder
 - bs:spinner$default(com.intellij.ui.layout.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,I,I,I,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
-- f:textField(com.intellij.ui.layout.PropertyBinding,java.lang.Integer):com.intellij.ui.layout.CellBuilder
+- bf:textField(com.intellij.ui.layout.PropertyBinding,java.lang.Integer):com.intellij.ui.layout.CellBuilder
 - bf:textField(kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1,java.lang.Integer):com.intellij.ui.layout.CellBuilder
 - bf:textField(kotlin.reflect.KMutableProperty0,java.lang.Integer):com.intellij.ui.layout.CellBuilder
 - bs:textField$default(com.intellij.ui.layout.Cell,com.intellij.ui.layout.PropertyBinding,java.lang.Integer,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
@@ -27156,7 +27152,7 @@ com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
 - ba:enableIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.layout.CellBuilder
 - ba:enabled(Z):V
-- a:focused():com.intellij.ui.layout.CellBuilder
+- ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
 - a:growPolicy(com.intellij.ui.layout.GrowPolicy):com.intellij.ui.layout.CellBuilder
 - a:onApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.CellBuilder
@@ -27169,7 +27165,7 @@ com.intellij.ui.layout.CellBuilder
 - a:withGraphProperty(com.intellij.openapi.observable.properties.GraphProperty):com.intellij.ui.layout.CellBuilder
 - ba:withLargeLeftGap():com.intellij.ui.layout.CellBuilder
 - ba:withLeftGap():com.intellij.ui.layout.CellBuilder
-- a:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
+- ba:withValidationOnApply(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 - ba:withValidationOnInput(kotlin.jvm.functions.Function2):com.intellij.ui.layout.CellBuilder
 f:com.intellij.ui.layout.CellBuilder$DefaultImpls
 - bs:comment$default(com.intellij.ui.layout.CellBuilder,java.lang.String,I,Z,I,java.lang.Object):com.intellij.ui.layout.CellBuilder
@@ -27218,7 +27214,7 @@ c:com.intellij.ui.layout.LayoutBuilder
 - b:onGlobalApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:onGlobalIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:onGlobalReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
-- row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
+- b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - b:titledRow(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 com.intellij.ui.layout.LayoutBuilderImpl
@@ -27256,16 +27252,12 @@ a:com.intellij.ui.layout.Row
 - ba:alignRight():V
 - f:cell(Z,Z,kotlin.jvm.functions.Function1):V
 - bs:cell$default(com.intellij.ui.layout.Row,Z,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-- a:getEnabled():Z
-- ba:getSubRowIndent():I
-- ba:getSubRowsEnabled():Z
+- ba:getEnabled():Z
 - ba:getSubRowsVisible():Z
 - ba:getVisible():Z
 - ba:largeGapAfter():V
 - a:setCellMode(Z,Z,Z):V
-- a:setEnabled(Z):V
-- ba:setSubRowIndent(I):V
-- ba:setSubRowsEnabled(Z):V
+- ba:setEnabled(Z):V
 - ba:setSubRowsVisible(Z):V
 - ba:setVisible(Z):V
 com.intellij.ui.layout.RowBuilder
@@ -27278,7 +27270,7 @@ com.intellij.ui.layout.RowBuilder
 - ba:onGlobalApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - ba:onGlobalIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - ba:onGlobalReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
-- row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
+- b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
@@ -27287,7 +27279,7 @@ f:com.intellij.ui.layout.RowBuilder$DefaultImpls
 - bs:createChildRow$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,Z,java.lang.String,I,java.lang.Object):com.intellij.ui.layout.Row
 - bs:noteRow(com.intellij.ui.layout.RowBuilder,java.lang.String,kotlin.jvm.functions.Function1):V
 - bs:noteRow$default(com.intellij.ui.layout.RowBuilder,java.lang.String,kotlin.jvm.functions.Function1,I,java.lang.Object):V
-- s:row(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
+- bs:row(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - s:row(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
 - bs:row$default(com.intellij.ui.layout.RowBuilder,javax.swing.JLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.layout.Row
@@ -27300,11 +27292,9 @@ f:com.intellij.ui.layout.RowBuilderWithButtonGroupProperty
 - b:onGlobalApply(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:onGlobalIsModified(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
 - b:onGlobalReset(kotlin.jvm.functions.Function0):com.intellij.ui.layout.Row
-- row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
+- b:row(java.lang.String,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - row(javax.swing.JLabel,Z,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
 - b:titledRow(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.ui.layout.Row
-f:com.intellij.ui.layout.RowKt
-- bsf:enableIf(com.intellij.ui.layout.Row,com.intellij.ui.layout.ComponentPredicate):V
 f:com.intellij.ui.layout.ValidationInfoBuilder
 - <init>(javax.swing.JComponent):V
 - f:error(java.lang.String):com.intellij.openapi.ui.ValidationInfo
