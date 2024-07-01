@@ -538,7 +538,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
                                      targetFileMapper, getStartBuildEventSupplier(runner, processHandler, startBuildEvent, withResumeAction)
         );
 
-      processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
+      processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
       DefaultExecutionResult res = new DefaultExecutionResult(consoleView, processHandler, new DefaultActionGroup());
       res.setRestartActions(new JvmToggleAutoTestAction());
       return res;
@@ -559,7 +559,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         new MavenBuildEventProcessor(myConfiguration, buildView, descriptor, taskId, targetFileMapper, ctx ->
           new StartBuildEventImpl(descriptor, ""));
 
-      processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
+      processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor));
       if (emulateTerminal()) {
         buildView.attachToProcess(processHandler);
       }
