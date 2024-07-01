@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.vfs.getDirectory
 import com.intellij.testFramework.withProjectAsync
 import com.intellij.ui.UIBundle
@@ -93,18 +92,16 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
 
   suspend fun createProjectByWizard(
     group: String,
-    wait: Boolean = true,
-    configure: NewProjectWizardStep.() -> Unit
+    numProjectSyncs: Int = 1,
+    configure: NewProjectWizardStep.() -> Unit,
   ): Project {
     val wizard = createAndConfigureWizard(group, null, configure)
-    return closeOpenedProjectsIfFailAsync {
-      awaitAnyGradleProjectReload(wait = wait) {
-        blockingContext {
-          invokeAndWaitIfNeeded {
-            val project = NewProjectUtil.createFromWizard(wizard, null)!!
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-            project
-          }
+    return awaitOpenProjectConfiguration(numProjectSyncs) {
+      blockingContext {
+        invokeAndWaitIfNeeded {
+          val project = NewProjectUtil.createFromWizard(wizard, null)!!
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+          project
         }
       }
     }
@@ -113,18 +110,16 @@ abstract class GradleCreateProjectTestCase : GradleTestCase() {
   suspend fun createModuleByWizard(
     project: Project,
     group: String,
-    wait: Boolean = true,
-    configure: NewProjectWizardStep.() -> Unit
+    numProjectSyncs: Int = 1,
+    configure: NewProjectWizardStep.() -> Unit,
   ): Module? {
     val wizard = createAndConfigureWizard(group, project, configure)
-    return closeOpenedProjectsIfFailAsync {
-      awaitAnyGradleProjectReload(wait = wait) {
-        blockingContext {
-          invokeAndWaitIfNeeded {
-            val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
-            PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
-            module
-          }
+    return awaitProjectConfiguration(project, numProjectSyncs) {
+      blockingContext {
+        invokeAndWaitIfNeeded {
+          val module = NewModuleAction().createModuleFromWizard(project, null, wizard)
+          PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+          module
         }
       }
     }

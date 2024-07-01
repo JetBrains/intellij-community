@@ -12,6 +12,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputMessageDispatcher
+import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.observable.operation.OperationExecutionContext
 import com.intellij.openapi.observable.operation.OperationExecutionId
 import com.intellij.openapi.observable.operation.OperationExecutionStatus
@@ -22,35 +23,35 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.use
+import com.intellij.platform.backend.observation.Observation
+import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.observable.operation.core.waitForOperationAndPumpEdt
+import com.intellij.testFramework.withProjectAsync
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.plugins.gradle.execution.build.output.GradleOutputDispatcherFactory
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleTaskExecutionOperation
-import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 
-fun <R> waitForGradleProjectReload(externalProjectPath: String, action: ThrowableComputable<R, Throwable>): R {
-  return Disposer.newDisposable("waitForGradleProjectReload").use { disposable ->
-    getGradleProjectReloadOperation(externalProjectPath, disposable)
-      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action = action)
-  }
+suspend fun awaitGradleOpenProjectConfiguration(openProject: suspend () -> Project): Project {
+  return openProject()
+    .withProjectAsync { awaitGradleProjectConfiguration(it) }
 }
 
-fun <R> waitForAnyGradleProjectReload(action: ThrowableComputable<R, Throwable>): R {
-  return Disposer.newDisposable("waitForAnyGradleProjectReload").use { disposable ->
-    getGradleProjectReloadOperation(disposable)
-      .waitForOperationAndPumpEdt(10.seconds, 10.minutes, action = action)
-  }
+suspend fun <R> awaitGradleProjectConfiguration(project: Project, action: suspend () -> R): R {
+  return project.trackActivity(ExternalSystemActivityKey, action)
+    .also { awaitGradleProjectConfiguration(project) }
 }
 
-suspend fun <R> awaitAnyGradleProjectReload(action: suspend () -> R): R {
-  return Disposer.newDisposable("awaitAnyGradleProjectReload").use { disposable ->
-    getGradleProjectReloadOperation(disposable)
-      .awaitOperation(10.seconds, 10.minutes, action = action)
+private suspend fun awaitGradleProjectConfiguration(project: Project) {
+  withTimeout(10.minutes) {
+    Observation.awaitConfiguration(project) { message ->
+      println(message)
+    }
   }
 }
 

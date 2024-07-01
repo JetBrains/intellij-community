@@ -21,7 +21,7 @@ import com.intellij.openapi.roots.ui.configuration.SdkTestCase.Companion.assertS
 import com.intellij.openapi.roots.ui.configuration.SdkTestCase.TestSdkGenerator
 import com.intellij.testFramework.replaceService
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
-import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload
+import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleProjectConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
@@ -55,13 +55,13 @@ abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
   }
 
   suspend fun loadProject() {
-    awaitAnyGradleProjectReload {
+    awaitGradleProjectConfiguration(myProject) {
       linkAndSyncGradleProject(myProject, projectPath)
     }
   }
 
   suspend fun reloadProject() {
-    awaitAnyGradleProjectReload {
+    awaitGradleProjectConfiguration(myProject) {
       val importSpec = ImportSpecBuilder(myProject, externalSystemId)
       ExternalSystemUtil.refreshProject(projectPath, importSpec)
     }

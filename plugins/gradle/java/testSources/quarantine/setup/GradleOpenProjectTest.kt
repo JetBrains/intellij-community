@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
 import com.intellij.testFramework.utils.vfs.createFile
@@ -64,7 +65,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
 
-      openProject("project", wait = false)
+      openProject("project", numProjectSyncs = 0)
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
@@ -87,7 +88,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
 
-      importProject(projectInfo, wait = false)
+      importProject(projectInfo, numProjectSyncs = 0)
         .useProjectAsync {
           assertProjectState(it, projectInfo, linkedProjectInfo)
         }
@@ -172,7 +173,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           """.trimMargin())
       }
 
-      openProject("project", wait = false)
+      openProject("project", numProjectSyncs = 0)
         .useProjectAsync { project ->
           val gradleSettings = GradleSettings.getInstance(project)
           Assertions.assertEquals(0, gradleSettings.linkedProjectsSettings.size)
@@ -181,6 +182,7 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
   }
 
   @Test
+  @SystemProperty("intellij.progress.task.ignoreHeadless", "true")
   fun `test auto-link project from new gradle_xml`() {
     runBlocking {
       val projectInfo = getSimpleProjectInfo("project")
@@ -211,10 +213,10 @@ class GradleOpenProjectTest : GradleOpenProjectTestCase() {
           """.trimMargin())
       }
 
-      openProject("project", wait = false)
+      openProject("project",  numProjectSyncs = 0)
         .useProjectAsync { project ->
           assertModules(project, "project")
-          awaitAnyGradleProjectReload {
+          awaitProjectConfiguration(project) {
             writeAction {
               testRoot.createFile("project/.idea/gradle.xml")
                 .writeText("""

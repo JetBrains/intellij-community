@@ -146,7 +146,7 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
   @Test
   fun `test NPW properties suggestion`() {
     runBlocking {
-      createProjectByWizard(NEW_EMPTY_PROJECT, wait = false) {
+      createProjectByWizard(NEW_EMPTY_PROJECT, numProjectSyncs = 0) {
         baseData!!.name = "project"
         baseData!!.path = testRoot.path
       }.withProjectAsync { project ->
