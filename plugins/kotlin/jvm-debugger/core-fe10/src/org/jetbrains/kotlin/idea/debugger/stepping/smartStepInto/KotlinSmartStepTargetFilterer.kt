@@ -69,7 +69,9 @@ class KotlinSmartStepTargetFilterer(
         if (ordinal != currentCount) return false
         val nameMatches = if (methodInfo.isInternalMethod) internalNameMatches(name, methodInfo.name) else name == methodInfo.name
         if (!nameMatches) return false
-        val declaration = getDeclaration() ?: return false
+        // Declaration may be empty only for invoke functions
+        // In this case, there is only one possible signature, so it should match
+        val declaration = getDeclaration() ?: return methodInfo.isInvoke
         if (declaration is KtClass) {
             // it means the method is, in fact, the implicit primary constructor
             analyze(declaration) {
