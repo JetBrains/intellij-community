@@ -5838,6 +5838,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         public void testSyntheticExtensionPropertyAccess() throws Exception {
             runTest("../../shared/tests/testData/newJ2k/postProcessing/SyntheticExtensionPropertyAccess.java");
         }
+
+        @TestMetadata("unnecessaryNotNullAssertion.java")
+        public void testUnnecessaryNotNullAssertion() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/postProcessing/unnecessaryNotNullAssertion.java");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
