@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Contract;
@@ -281,6 +282,7 @@ public abstract class PythonCommonTestCase extends TestCase {
 
   protected static void assertNotParsed(PsiFile file) {
     assertInstanceOf(file, PyFileImpl.class);
+    if (file instanceof PyiFile) return;
     assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
                ((PyFileImpl)file).getTreeElement());
   }
