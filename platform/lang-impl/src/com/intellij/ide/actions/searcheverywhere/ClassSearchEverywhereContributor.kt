@@ -1,230 +1,161 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actions.searcheverywhere;
+package com.intellij.ide.actions.searcheverywhere
 
-import com.intellij.ide.actions.CopyReferenceAction;
-import com.intellij.ide.actions.GotoClassPresentationUpdater;
-import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewBuilder;
-import com.intellij.ide.structureView.StructureViewTreeElement;
-import com.intellij.ide.util.gotoByName.FilteringGotoByModel;
-import com.intellij.ide.util.gotoByName.GotoClassModel2;
-import com.intellij.ide.util.gotoByName.GotoClassSymbolConfiguration;
-import com.intellij.ide.util.gotoByName.LanguageRef;
-import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.lang.LanguageStructureViewBuilder;
-import com.intellij.lang.PsiStructureViewFactory;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.backend.navigation.NavigationRequest;
-import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.util.JavaCoroutines;
-import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.actions.CopyReferenceAction
+import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePluralized
+import com.intellij.ide.actions.GotoClassPresentationUpdater.getTabTitlePluralized
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFiltersStatisticsCollector.LangFilterCollector
+import com.intellij.ide.actions.searcheverywhere.footer.createPsiExtendedInfo
+import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.util.gotoByName.*
+import com.intellij.ide.util.gotoByName.LanguageRef.Companion.forAllLanguages
+import com.intellij.lang.LanguageStructureViewBuilder
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiElement
+import com.intellij.psi.codeStyle.NameUtil
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Nls
+import java.util.regex.Pattern
 
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+private val patternToDetectMembers = Pattern.compile("(.+)(#)(.*)")
 
-import static com.intellij.ide.actions.searcheverywhere.footer.ExtendedInfoImplKt.createPsiExtendedInfo;
-import static com.intellij.ide.util.gotoByName.ChooseByNamePopup.patternToDetectAnonymousClasses;
+open class ClassSearchEverywhereContributor(event: AnActionEvent)
+  : AbstractGotoSEContributor(event), EssentialContributor, SearchEverywherePreviewProvider {
+  private val filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT))
 
-/**
- * @author Konstantin Bulenkov
- */
-public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor implements EssentialContributor,
-                                                                                           SearchEverywherePreviewProvider {
-  private static final Pattern ourPatternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
-
-  private final PersistentSearchEverywhereContributorFilter<LanguageRef> filter;
-
-  public ClassSearchEverywhereContributor(@NotNull AnActionEvent event) {
-    super(event);
-
-    filter = createLanguageFilter(event.getRequiredData(CommonDataKeys.PROJECT));
-  }
-
-  @Override
-  public @NotNull @Nls String getGroupName() {
-    return GotoClassPresentationUpdater.getTabTitlePluralized();
-  }
-
-  @Override
-  public @NotNull String getFullGroupName() {
-    //noinspection HardCodedStringLiteral
-    return String.join("/", GotoClassPresentationUpdater.getActionTitlePluralized());
-  }
-
-  @Override
-  public int getSortWeight() {
-    return 100;
-  }
-
-  @Override
-  protected @NotNull FilteringGotoByModel<LanguageRef> createModel(@NotNull Project project) {
-    GotoClassModel2 model = new GotoClassModel2(project);
-    if (filter != null) {
-      model.setFilterItems(filter.getSelectedElements());
+  companion object {
+    @JvmStatic
+    fun createLanguageFilter(project: Project): PersistentSearchEverywhereContributorFilter<LanguageRef> {
+      val items = forAllLanguages()
+      val persistentConfig = GotoClassSymbolConfiguration.getInstance(project)
+      return PersistentSearchEverywhereContributorFilter(items, persistentConfig, LanguageRef::displayName, LanguageRef::icon)
     }
-    return model;
   }
 
-  @Override
-  public @NotNull List<AnAction> getActions(@NotNull Runnable onChanged) {
-    return doGetActions(filter, new SearchEverywhereFiltersStatisticsCollector.LangFilterCollector(), onChanged);
+  override fun getGroupName(): @Nls String = getTabTitlePluralized()
+
+  override fun getFullGroupName(): String = getActionTitlePluralized().joinToString("/")
+
+  override fun getSortWeight(): Int = 100
+
+  override fun createModel(project: Project): FilteringGotoByModel<LanguageRef> {
+    val model = GotoClassModel2(project)
+    model.setFilterItems(filter.selectedElements)
+    return model
   }
 
-  @Override
-  public @NotNull String filterControlSymbols(@NotNull String pattern) {
-    if (pattern.indexOf('#') != -1) {
-      pattern = applyPatternFilter(pattern, ourPatternToDetectMembers);
+  override fun getActions(onChanged: Runnable): List<AnAction> {
+    return doGetActions(filter = filter, statisticsCollector = LangFilterCollector(), onChanged = onChanged)
+  }
+
+  override fun filterControlSymbols(pattern: String): String {
+    var effectivePattern = pattern
+    if (effectivePattern.contains('#')) {
+      effectivePattern = applyPatternFilter(effectivePattern, patternToDetectMembers)
+    }
+    if (effectivePattern.contains('$')) {
+      effectivePattern = applyPatternFilter(effectivePattern, ChooseByNamePopup.patternToDetectAnonymousClasses)
     }
 
-    if (pattern.indexOf('$') != -1) {
-      pattern = applyPatternFilter(pattern, patternToDetectAnonymousClasses);
+    return super.filterControlSymbols(effectivePattern)
+  }
+
+  override fun isEmptyPatternSupported(): Boolean = true
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun getElementPriority(element: Any, searchPattern: String): Int {
+    return super.getElementPriority(element, searchPattern) + 5
+  }
+
+  override fun createExtendedInfo(): ExtendedInfo? = createPsiExtendedInfo()
+
+  override suspend fun createSourceNavigationRequest(element: PsiElement, file: VirtualFile, searchText: String): NavigationRequest? {
+    val memberName = getMemberName(searchText)
+    if (memberName != null) {
+      readAction {
+        findMember(memberPattern = memberName, fullPattern = searchText, psiElement = element, file = file)?.navigationRequest()
+      }?.let {
+        return it
+      }
     }
 
-    return super.filterControlSymbols(pattern);
+    return super.createSourceNavigationRequest(element, file, searchText)
   }
 
-  @Override
-  public boolean isEmptyPatternSupported() {
-    return true;
+  @Internal
+  class Factory : SearchEverywhereContributorFactory<Any?> {
+    override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<Any?> {
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(ClassSearchEverywhereContributor(initEvent))
+    }
+  }
+}
+
+private fun findMember(memberPattern: String, fullPattern: String, psiElement: PsiElement, file: VirtualFile): Navigatable? {
+  val factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiElement.language)
+  val builder = factory?.getStructureViewBuilder(psiElement.containingFile) ?: return null
+  val editors = FileEditorManager.getInstance(psiElement.project).getEditorList(file)
+  if (editors.isEmpty()) {
+    return null
   }
 
-  @Override
-  public int getElementPriority(@NotNull Object element, @NotNull String searchPattern) {
-    return super.getElementPriority(element, searchPattern) + 5;
-  }
-
-  @Override
-  public @Nullable ExtendedInfo createExtendedInfo() {
-    return createPsiExtendedInfo();
-  }
-
-  @Override
-  protected @Nullable Object createSourceNavigationRequest(
-    @NotNull PsiElement element,
-    @NotNull VirtualFile file,
-    @NotNull String searchText,
-    @NotNull Continuation<? super @Nullable NavigationRequest> $completion
-  ) {
-    return JavaCoroutines.suspendJava(continuation -> {
-      String memberName = getMemberName(searchText);
-      Navigatable delegate = memberName == null ? null : findMember(memberName, searchText, element, file);
-      continuation.resume(delegate == null ? null : delegate.navigationRequest());
-    }, $completion);
-  }
-
-  public static @Nullable String pathToAnonymousClass(Matcher matcher) {
-    if (matcher.matches()) {
-      String path = matcher.group(2);
-      if (path != null) {
-        path = path.trim();
-        if (path.endsWith("$") && path.length() >= 2) {
-          path = path.substring(0, path.length() - 2);
+  val view = builder.createStructureView(editors[0], psiElement.project)
+  try {
+    val element = findElement(view.treeModel.root, psiElement, 4) ?: return null
+    val matcher = NameUtil.buildMatcher(memberPattern).build()
+    var max = Int.MIN_VALUE
+    var target: Any? = null
+    for (treeElement in element.children) {
+      if (treeElement is StructureViewTreeElement) {
+        val value = treeElement.value
+        if (value is PsiElement && value is Navigatable && fullPattern == CopyReferenceAction.elementToFqn(value)) {
+          return value
         }
-        if (!path.isEmpty()) return path;
-      }
-    }
 
-    return null;
-  }
-
-  private static String getMemberName(String searchedText) {
-    final int index = searchedText.lastIndexOf('#');
-    if (index == -1) {
-      return null;
-    }
-
-    String name = searchedText.substring(index + 1).trim();
-    return StringUtil.isEmpty(name) ? null : name;
-  }
-
-  public static @Nullable Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
-    final PsiStructureViewFactory factory = LanguageStructureViewBuilder.getInstance().forLanguage(psiElement.getLanguage());
-    final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
-    List<FileEditor> editors = FileEditorManager.getInstance(psiElement.getProject()).getEditorList(file);
-    if (builder == null || editors.isEmpty()) {
-      return null;
-    }
-
-    final StructureView view = builder.createStructureView(editors.get(0), psiElement.getProject());
-    try {
-      final StructureViewTreeElement element = findElement(view.getTreeModel().getRoot(), psiElement, 4);
-      if (element == null) {
-        return null;
-      }
-
-      MinusculeMatcher matcher = NameUtil.buildMatcher(memberPattern).build();
-      int max = Integer.MIN_VALUE;
-      Object target = null;
-      for (TreeElement treeElement : element.getChildren()) {
-        if (treeElement instanceof StructureViewTreeElement) {
-          Object value = ((StructureViewTreeElement)treeElement).getValue();
-          if (value instanceof PsiElement && value instanceof Navigatable &&
-              fullPattern.equals(CopyReferenceAction.elementToFqn((PsiElement)value))) {
-            return (Navigatable)value;
-          }
-
-          String presentableText = treeElement.getPresentation().getPresentableText();
-          if (presentableText != null) {
-            final int degree = matcher.matchingDegree(presentableText);
-            if (degree > max) {
-              max = degree;
-              target = ((StructureViewTreeElement)treeElement).getValue();
-            }
-          }
-        }
-      }
-      return target instanceof Navigatable ? (Navigatable)target : null;
-    }
-    finally {
-      Disposer.dispose(view);
-    }
-  }
-
-  private static @Nullable StructureViewTreeElement findElement(StructureViewTreeElement node, PsiElement element, int hopes) {
-    Object value = node.getValue();
-    if (value instanceof PsiElement) {
-      if (((PsiElement)value).isEquivalentTo(element)) {
-        return node;
-      }
-      if (hopes != 0) {
-        for (TreeElement child : node.getChildren()) {
-          if (child instanceof StructureViewTreeElement) {
-            StructureViewTreeElement e = findElement((StructureViewTreeElement)child, element, hopes - 1);
-            if (e != null) {
-              return e;
-            }
+        val presentableText = treeElement.getPresentation().presentableText
+        if (presentableText != null) {
+          val degree = matcher.matchingDegree(presentableText)
+          if (degree > max) {
+            max = degree
+            target = treeElement.value
           }
         }
       }
     }
-    return null;
+    return target as? Navigatable
+  }
+  finally {
+    Disposer.dispose(view)
+  }
+}
+
+private fun findElement(node: StructureViewTreeElement, element: PsiElement, hopes: Int): StructureViewTreeElement? {
+  val value = node.value as? PsiElement ?: return null
+  if (value.isEquivalentTo(element)) {
+    return node
   }
 
-  public static final class Factory implements SearchEverywhereContributorFactory<Object> {
-    @Override
-    public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new ClassSearchEverywhereContributor(initEvent));
+  if (hopes != 0) {
+    for (child in node.children) {
+      if (child is StructureViewTreeElement) {
+        findElement(child, element, hopes - 1)?.let {
+          return it
+        }
+      }
     }
   }
+  return null
+}
 
-  static @NotNull PersistentSearchEverywhereContributorFilter<LanguageRef> createLanguageFilter(@NotNull Project project) {
-    List<LanguageRef> items = LanguageRef.forAllLanguages();
-    GotoClassSymbolConfiguration persistentConfig = GotoClassSymbolConfiguration.getInstance(project);
-    return new PersistentSearchEverywhereContributorFilter<>(items, persistentConfig, LanguageRef::getDisplayName, LanguageRef::getIcon);
-  }
+private fun getMemberName(searchedText: String): String? {
+  val index = searchedText.lastIndexOf('#')
+  return if (index == -1) null else searchedText.substring(index + 1).trim().ifEmpty { null }
 }

@@ -55,6 +55,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InputEvent
 import java.util.*
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 import javax.swing.ListCellRenderer
 
@@ -529,10 +530,24 @@ private fun getLineAndColumnRegexpGroup(text: String, groupNumber: Int): Int {
 }
 
 @Service(Service.Level.PROJECT)
-internal class SearchEverywhereContributorCoroutineScopeHolder(coroutineScope: CoroutineScope) {
+private class SearchEverywhereContributorCoroutineScopeHolder(coroutineScope: CoroutineScope) {
   @JvmField val coroutineScope: CoroutineScope = coroutineScope.childScope("SearchEverywhereContributorCoroutineScopeHolder")
 }
 
 private fun pathToAnonymousClass(searchedText: String): String? {
-  return ClassSearchEverywhereContributor.pathToAnonymousClass(patternToDetectAnonymousClasses.matcher(searchedText))
+  return pathToAnonymousClass(patternToDetectAnonymousClasses.matcher(searchedText))
+}
+
+internal fun pathToAnonymousClass(matcher: Matcher): String? {
+  if (matcher.matches()) {
+    var path = matcher.group(2)?.trim() ?: return null
+    if (path.endsWith('$') && path.length >= 2) {
+      path = path.substring(0, path.length - 2)
+    }
+    if (!path.isEmpty()) {
+      return path
+    }
+  }
+
+  return null
 }

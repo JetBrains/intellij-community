@@ -13979,23 +13979,21 @@ c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - com.intellij.ide.actions.searcheverywhere.EssentialContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
+- sf:Companion:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Companion
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+- sf:createLanguageFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - filterControlSymbols(java.lang.String):java.lang.String
-- s:findMember(java.lang.String,java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile):com.intellij.pom.Navigatable
 - getActions(java.lang.Runnable):java.util.List
 - getElementPriority(java.lang.Object,java.lang.String):I
 - getFullGroupName():java.lang.String
 - getGroupName():java.lang.String
 - getSortWeight():I
 - isEmptyPatternSupported():Z
-- s:pathToAnonymousClass(java.util.regex.Matcher):java.lang.String
-f:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Factory
-- com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
-- <init>():V
-- createContributor(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+f:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor$Companion
+- f:createLanguageFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 f:com.intellij.ide.actions.searcheverywhere.CloseSearchEverywherePreview
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
