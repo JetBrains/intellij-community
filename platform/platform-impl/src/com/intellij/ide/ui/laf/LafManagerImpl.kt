@@ -968,8 +968,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
       override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
-      override fun isSoftMultiChoice() = false
-
       override fun isSelected(e: AnActionEvent): Boolean {
         return ((if (isDark) preferredDarkEditorSchemeId else preferredLightEditorSchemeId)
                 ?: associatedToPreferredLafOrDefaultEditorColorSchemeName(isDark)) == scheme.baseName
@@ -999,7 +997,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
                                       private val editorSchemeId: String,
                                       private val isDark: Boolean) : DumbAwareToggleAction(name) {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
-    override fun isSoftMultiChoice() = false
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return if (isDark) {
