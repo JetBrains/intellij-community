@@ -71,14 +71,13 @@ open class CachedImageIcon private constructor(
   // isDark is not defined in most cases, and we use a global state at the call moment.
   private val attributes: IconAttributes = IconAttributes(),
   private val iconCache: ScaledIconCache = ScaledIconCache(),
-) : CopyableIcon, ScalableIcon, DarkIconProvider, IconWithToolTip {
+) : CopyableIcon, ScalableIcon, DarkIconProvider, IconPathProvider, IconWithToolTip {
   private var pathTransformModCount = -1
 
-  val originalPath: String?
+  override val originalPath: String?
     get() = originalLoader?.path
 
-  // TODO: rewrite to unique icon id
-  val expUIPath: String?
+  override val expUIPath: String?
     get() = originalLoader?.expUIPath
 
   @TestOnly
