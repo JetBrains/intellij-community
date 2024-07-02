@@ -14,7 +14,7 @@ class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStat
           private val LOG = LoggerFactory.getLogger()
       
           fun n(arg: String) {
-            <warning descr="Logging call not guarded by log condition">LOG.debug("test {}", arg)</warning>
+            <warning descr="Logging call not guarded by a logging condition">LOG.debug("test {}", arg)</warning>
           }
       }
     """.trimIndent())
@@ -27,7 +27,7 @@ class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStat
       
       internal class X {
           fun n(arg: String) {
-            <warning descr="Logging call not guarded by log condition">LOG.debug("test {}", arg)</warning>
+            <warning descr="Logging call not guarded by a logging condition">LOG.debug("test {}", arg)</warning>
           }
       
           companion object {
@@ -66,7 +66,7 @@ class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStat
               }
       
               if (LOG.isInfoEnabled) {
-                <warning descr="Logging call not guarded by log condition">LOG.debug("test" + arg)</warning> //todo!          
+                <warning descr="Logging call not guarded by a logging condition">LOG.debug("test" + arg)</warning> //todo!          
               }
       
               if (true && LOG.isDebugEnabled) {
@@ -112,11 +112,11 @@ class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStat
       
       internal class X {
           fun n1() {
-            <warning descr="Logging call not guarded by log condition">LOG.debug("test")</warning>
+            <warning descr="Logging call not guarded by a logging condition">LOG.debug("test")</warning>
           }
       
           fun n2() {
-            <warning descr="Logging call not guarded by log condition">LOG.debug("test")</warning>
+            <warning descr="Logging call not guarded by a logging condition">LOG.debug("test")</warning>
           }
       
           companion object {
@@ -133,28 +133,28 @@ class KotlinLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStat
       
       internal class X {
           fun n2(arg: String) {
-              <warning descr="Logging call not guarded by log condition">LOG.debug("test1" + arg)</warning>
+              <warning descr="Logging call not guarded by a logging condition">LOG.debug("test1" + arg)</warning>
               LOG.debug("test2" + arg)
           }
       
           fun n3(arg: String) {
-              <warning descr="Logging call not guarded by log condition">LOG.debug("test1" + arg)</warning>
+              <warning descr="Logging call not guarded by a logging condition">LOG.debug("test1" + arg)</warning>
               LOG.debug("test2" + arg)
               LOG.debug("test2" + arg)
           }
       
           fun constantCall(arg: String) {
               LOG.debug("test1")
-              <warning descr="Logging call not guarded by log condition">LOG.debug("test2" + arg)</warning>
+              <warning descr="Logging call not guarded by a logging condition">LOG.debug("test2" + arg)</warning>
           }
       
           fun beforeNotLog(arg: String) {
               constantCall(arg)
-              <warning descr="Logging call not guarded by log condition">LOG.debug("test2" + arg)</warning>
+              <warning descr="Logging call not guarded by a logging condition">LOG.debug("test2" + arg)</warning>
           }
       
           fun differentLevels(arg: String) {
-              <warning descr="Logging call not guarded by log condition">LOG.debug("test1" + arg)</warning>
+              <warning descr="Logging call not guarded by a logging condition">LOG.debug("test1" + arg)</warning>
               LOG.warn("test2" + arg)
           }
       
