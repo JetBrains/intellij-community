@@ -105,6 +105,7 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
@@ -451,18 +452,23 @@ open class FileEditorManagerImpl(
   private suspend fun dumbModeFinished(project: Project, fileEditorProviderManager: FileEditorProviderManager) {
     refreshIcons()
 
-    val fileToNewProviders = openedComposites.groupBy { it.file }.mapNotNull { (file, composites) ->
-      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(project, file, excludeIds = getEditorTypeIds(composites))
+    val fileToNewProviders = openedComposites.toList().mapNotNull { composite ->
+      if (composite.providerSequence.none()) {
+        // not initialized or invalid
+        return@mapNotNull null
+      }
+
+      val newProviders = fileEditorProviderManager.getDumbUnawareProviders(project, composite.file, excludeIds = getEditorTypeIds(composite))
       if (newProviders.isEmpty()) {
         null
       }
       else {
-        file to newProviders
+        ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = emptyList())
       }
     }
 
-    for ((file, newProviders) in fileToNewProviders) {
-      updateFileEditorProviders(file = file, newProviders = newProviders)
+    for (item in fileToNewProviders) {
+      updateFileEditorProviders(item)
     }
 
     // update for non-dumb-aware EditorTabTitleProviders
@@ -470,57 +476,53 @@ open class FileEditorManagerImpl(
   }
 
   private suspend fun rootsChanged(fileEditorProviderManager: FileEditorProviderManager) {
-    val providerChanges = openedComposites.groupBy { it.file }.mapNotNull { (file, composites) ->
-      val providers = fileEditorProviderManager.getProvidersAsync(project, file)
+    val fileToProviders = IdentityHashMap<VirtualFile, List<FileEditorProvider>>()
+    val providerChanges = openedComposites.toList().mapNotNull { composite ->
+      val file = composite.file
+      val providers = fileToProviders.getOrPut(file) { fileEditorProviderManager.getProvidersAsync(project, file) }
       val editorTypeIds = providers.mapTo(LinkedHashSet()) { it.editorTypeId }
-      val oldEditorTypeIds = getEditorTypeIds(composites)
+      val oldEditorTypeIds = getEditorTypeIds(composite)
+      if (oldEditorTypeIds.isEmpty()) {
+        // not initialized or invalid
+        return@mapNotNull null
+      }
+
       val newProviders = providers.filter { !oldEditorTypeIds.contains(it.editorTypeId) }
       val editorTypeIdsToRemove = oldEditorTypeIds.filter { !editorTypeIds.contains(it) }
       if (newProviders.isEmpty() && editorTypeIdsToRemove.isEmpty()) {
         null
       }
       else {
-        Triple(file, newProviders, editorTypeIdsToRemove)
+        ProviderChange(composite = composite, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
       }
     }
     if (providerChanges.isEmpty()) {
       return
     }
 
-    for ((file, newProviders, editorTypeIdsToRemove) in providerChanges) {
-      updateFileEditorProviders(file = file, newProviders = newProviders, editorTypeIdsToRemove = editorTypeIdsToRemove)
+    for (item in providerChanges) {
+      updateFileEditorProviders(item)
     }
 
     scheduleUpdateFileName(file = null)
   }
 
-  private suspend fun updateFileEditorProviders(
-    file: VirtualFile,
-    newProviders: List<FileEditorProvider>,
-    editorTypeIdsToRemove: List<String> = emptyList(),
-  ) {
+  private suspend fun updateFileEditorProviders(item: ProviderChange) {
     withContext(Dispatchers.EDT) {
-      val composites = getAllComposites(file)
-      for (composite in composites) {
-        for (editorTypeId in editorTypeIdsToRemove) {
-          composite.removeEditor(editorTypeId)
-        }
+      val composite = item.composite
+      for (editorTypeId in item.editorTypeIdsToRemove) {
+        composite.removeEditor(editorTypeId)
       }
 
-      for (composite in composites) {
-        for (provider in newProviders) {
-          composite.addEditor(editor = provider.createEditor(project, file), provider = provider)
-        }
+      for (provider in item.newProviders) {
+        composite.addEditor(editor = provider.createEditor(project, item.composite.file), provider = provider)
       }
 
       for (splitters in getAllSplitters()) {
-        splitters.updateFileBackgroundColorAsync(file)
+        splitters.updateFileBackgroundColorAsync(item.composite.file)
       }
     }
   }
-
-  private fun getEditorTypeIds(composites: List<EditorComposite>): Set<String> =
-    composites.asSequence().flatMap(EditorComposite::providerSequence).mapTo(HashSet()) { it.editorTypeId }
 
   @RequiresEdt
   fun initDockableContentFactory() {
@@ -2434,3 +2436,13 @@ fun navigateAndSelectEditor(editor: NavigatableFileEditor, descriptor: Navigatab
   }
   return false
 }
+
+private fun getEditorTypeIds(composite: EditorComposite): Set<String> {
+  return composite.providerSequence.mapTo(HashSet()) { it.editorTypeId }
+}
+
+private data class ProviderChange(
+  @JvmField val composite: EditorComposite,
+  @JvmField val newProviders: List<FileEditorProvider>,
+  @JvmField val editorTypeIdsToRemove: List<String>,
+)
