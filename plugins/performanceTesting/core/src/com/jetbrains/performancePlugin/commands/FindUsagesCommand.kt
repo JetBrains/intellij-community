@@ -6,6 +6,7 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.usages.impl.searchTargets
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.smartReadAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -61,7 +62,7 @@ class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAd
     var scopeRef: Scope? = null
     withContext(Dispatchers.EDT) {
       currentOTContext.makeCurrent().use {
-        val editor = FileEditorManager.getInstance(project).selectedTextEditor
+        val editor = project.serviceAsync<FileEditorManager>().selectedTextEditor
         if (editor == null) {
           throw Exception("No editor is opened")
         }
