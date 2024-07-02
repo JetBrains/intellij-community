@@ -8574,11 +8574,11 @@ f:com.intellij.vcs.commit.CommitCheckFailure$Unknown
 - sf:INSTANCE:com.intellij.vcs.commit.CommitCheckFailure$Unknown
 c:com.intellij.vcs.commit.CommitCheckFailure$WithDescription
 - com.intellij.vcs.commit.CommitCheckFailure
-- <init>(java.lang.String):V
-- f:getText():java.lang.String
+- <init>(com.intellij.openapi.util.text.HtmlChunk):V
+- f:getText():com.intellij.openapi.util.text.HtmlChunk
 f:com.intellij.vcs.commit.CommitCheckFailure$WithDetails
 - com.intellij.vcs.commit.CommitCheckFailure$WithDescription
-- <init>(java.lang.String,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
+- <init>(com.intellij.openapi.util.text.HtmlChunk,java.lang.String,java.lang.String,kotlin.jvm.functions.Function1):V
 - f:getViewDetails():kotlin.jvm.functions.Function1
 - f:getViewDetailsActionText():java.lang.String
 - f:getViewDetailsLinkText():java.lang.String
