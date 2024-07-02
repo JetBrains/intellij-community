@@ -6,6 +6,7 @@ import com.intellij.platform.ijent.fs.IjentFileInfo.Type.*
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo
 import com.intellij.platform.ijent.fs.IjentPosixFileInfo.Type.Symlink
 import com.intellij.platform.ijent.fs.IjentWindowsFileInfo
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.time.Instant
@@ -64,7 +65,8 @@ internal class IjentNioBasicFileAttributes(private val fileInfo: IjentFileInfo) 
 /** Similar to `sun.nio.fs.UnixFileKey` */
 internal data class IjentUnixFileKey(val dev: Long, val ino: Long)
 
-internal class IjentNioPosixFileAttributes(
+@VisibleForTesting
+class IjentNioPosixFileAttributes(
   private val fileInfo: IjentPosixFileInfo,
 ) : PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
   override fun owner(): UserPrincipal =

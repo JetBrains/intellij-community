@@ -11,6 +11,8 @@ import com.intellij.platform.ijent.IjentWindowsInfo
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URI
@@ -251,7 +253,9 @@ internal class IjentWslNioFileSystemProvider(
   }
 }
 
-private class IjentNioPosixFileAttributesWithDosAdapter(
+@VisibleForTesting
+@ApiStatus.Internal
+class IjentNioPosixFileAttributesWithDosAdapter(
   private val userInfo: IjentPosixInfo.User,
   private val fileInfo: PosixFileAttributes,
   private val nameStartsWithDot: Boolean,
