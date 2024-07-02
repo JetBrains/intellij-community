@@ -1393,6 +1393,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/filterSingleFunctionCall.kt");
         }
 
+        @TestMetadata("filterSmartStepIntoInterfaceImpl.kt")
+        public void testFilterSmartStepIntoInterfaceImpl() throws Exception {
+            runTest("../testData/stepping/custom/filterSmartStepIntoInterfaceImpl.kt");
+        }
+
         @TestMetadata("filterSmartStepWithInlineClass.kt")
         public void testFilterSmartStepWithInlineClass() throws Exception {
             runTest("../testData/stepping/custom/filterSmartStepWithInlineClass.kt");

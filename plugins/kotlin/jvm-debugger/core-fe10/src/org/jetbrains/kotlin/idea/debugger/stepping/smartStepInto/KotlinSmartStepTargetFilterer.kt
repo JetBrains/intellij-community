@@ -59,6 +59,7 @@ class KotlinSmartStepTargetFilterer(
             .handleMangling(methodInfo)
             .handleValueClassMethods(methodInfo)
             .handleDefaultArgs()
+            .handleDefaultInterfaces()
         return matches(updatedOwner, updatedName, updatedSignature, currentCount)
     }
 
@@ -139,6 +140,14 @@ private fun BytecodeSignature.handleDefaultArgs(): BytecodeSignature {
     return copy(
         name = name.substringBefore("\$default"),
         signature = buildSignature(signature, parametersCount - sourceParametersCount, fromStart = false)
+    )
+}
+
+private fun BytecodeSignature.handleDefaultInterfaces(): BytecodeSignature {
+    if (!owner.endsWith("\$DefaultImpls")) return this
+    return copy(
+        owner = owner.removeSuffix("\$DefaultImpls"),
+        signature = buildSignature(signature, 1, fromStart = true)
     )
 }
 
