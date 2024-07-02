@@ -2,7 +2,10 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -37,6 +40,32 @@ internal fun doGetUniqueNameEditorTabTitle(project: Project, file: VirtualFile):
   // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
   val uniqueFilePathBuilder = UniqueVFilePathBuilder.getInstance()
   var uniqueName = ReadAction.compute<String?, Throwable> {
+    if (uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
+      uniqueFilePathBuilder.getUniqueVirtualFilePath(project, file)
+    }
+    else {
+      uniqueFilePathBuilder.getUniqueVirtualFilePathWithinOpenedFileEditors(project, file)
+    }
+  }
+  uniqueName = getEditorTabText(
+    result = uniqueName,
+    separator = File.separator,
+    hideKnownExtensionInTabs = uiSettings.hideKnownExtensionInTabs,
+  )
+  return uniqueName.takeIf { uniqueName != file.name }
+}
+
+@NlsSafe
+internal suspend fun getUniqueNameEditorTabTitleAsync(project: Project, file: VirtualFile): String? {
+  val uiSettings = UISettings.instanceOrNull
+  if (uiSettings == null || !uiSettings.showDirectoryForNonUniqueFilenames || DumbService.isDumb(project)) {
+    return null
+  }
+
+  // Even though this is a 'tab title provider' it is used also when tabs are not shown, namely for building IDE frame title.
+  val uniqueFilePathBuilder = (ApplicationManager.getApplication() as ComponentManagerEx)
+                                .getServiceAsyncIfDefined(UniqueVFilePathBuilder::class.java) ?: return null
+  var uniqueName = readAction {
     if (uiSettings.editorTabPlacement == UISettings.TABS_NONE) {
       uniqueFilePathBuilder.getUniqueVirtualFilePath(project, file)
     }
