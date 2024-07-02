@@ -164,8 +164,14 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS, compiledData.compilerType)
             }
         } catch (e: Throwable) {
-            if (e !is EvaluateException && e !is Eval4JInterpretingException && !isUnitTestMode()) {
-                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE, compiledData.compilerType)
+            if (!isUnitTestMode()) {
+                if (e !is EvaluateException && e !is Eval4JInterpretingException) {
+                    KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+                        codeFragment.project,
+                        StatisticsEvaluationResult.FAILURE,
+                        compiledData.compilerType
+                    )
+                }
                 if (isApplicationInternalMode()) {
                     reportErrorWithAttachments(context, codeFragment, e,
                                                prepareBytecodes(compiledData),

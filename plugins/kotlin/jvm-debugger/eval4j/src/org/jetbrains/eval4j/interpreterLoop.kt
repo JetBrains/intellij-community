@@ -9,7 +9,6 @@ import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.tree.*
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame
 import org.jetbrains.org.objectweb.asm.util.Printer
-import java.util.*
 
 interface InterpreterResult {
     override fun toString(): String
@@ -54,6 +53,7 @@ abstract class ThrownFromEvalExceptionBase(cause: Throwable) : RuntimeException(
 class BrokenCode(cause: Throwable) : ThrownFromEvalExceptionBase(cause)
 
 // Interpreting exceptions should not be sent to EA
+// but, for now, report -- we want to analyze evaluation errors (they happen)
 class Eval4JInterpretingException(override val cause: Throwable) : RuntimeException(cause)
 
 class ThrownFromEvaluatedCodeException(val exception: ObjectValue) : RuntimeException() {
