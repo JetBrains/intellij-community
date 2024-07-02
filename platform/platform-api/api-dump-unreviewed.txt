@@ -3660,6 +3660,7 @@ c:com.intellij.openapi.ui.ComboBox
 - <init>(java.lang.Object[],I):V
 - addNotify():V
 - eventDispatched(java.awt.AWTEvent):V
+- getInputMethodRequests():java.awt.im.InputMethodRequests
 - f:getMinimumSize():java.awt.Dimension
 - getPopup():javax.swing.plaf.basic.ComboPopup
 - getPreferredSize():java.awt.Dimension

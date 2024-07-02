@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.components.fields.ExtendableTextField;
+import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,6 +20,7 @@ import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.im.InputMethodRequests;
 
 /**
  * Due to many bugs and "features" of the default {@link JComboBox} we provide our own "patch".
@@ -376,6 +378,16 @@ public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventLis
       if (myDelegate != null) {
         myDelegate.setItem(obj);
       }
+    }
+  }
+
+  @Override
+  public InputMethodRequests getInputMethodRequests() {
+    SpeedSearchSupply supply = SpeedSearchSupply.getSupply(this, true);
+    if (supply == null) {
+      return null;
+    } else {
+      return supply.getInputMethodRequests();
     }
   }
 }
