@@ -15,3 +15,10 @@
 λ 86 Highlight range: '{ it * 3 }'
 λ 91 Highlight range: '{ x -> x.let { 42 } }'
 λ 91 Highlight range: '{ 42 }'
+L 95 Highlight range: '    println() }'
+  Preview: Highlight whole line
+λ 95 Highlight range: '{ println() }'
+* 95 Highlight range: '    println() }'
+  Preview: Highlight whole line
+λ 97 Highlight range: '{}'
+λ 98 Highlight range: '{ /* boo! */ }'
