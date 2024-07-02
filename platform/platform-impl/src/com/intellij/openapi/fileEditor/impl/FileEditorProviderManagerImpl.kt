@@ -82,7 +82,7 @@ class FileEditorProviderManagerImpl
   }
 
   override suspend fun getDumbUnawareProviders(project: Project, file: VirtualFile, excludeIds: Set<String>): List<FileEditorProvider> {
-    return getProviders(project, file, dumUnawareOnly = true, excludeIds = excludeIds)
+    return getProviders(project = project, file = file, dumUnawareOnly = true, excludeIds = excludeIds)
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -147,7 +147,7 @@ class FileEditorProviderManagerImpl
                 file = file,
                 suppressors = suppressors,
                 pluginDescriptor = item.pluginDescriptor,
-              )
+              )?.takeIf { !dumUnawareOnly || !DumbService.isDumbAware(it) }
             }
           }
           catch (e: TimeoutCancellationException) {
