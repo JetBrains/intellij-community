@@ -161,7 +161,7 @@ public class VcsNotifier {
   @NotNull
   public Notification notifyWeakError(@NonNls @Nullable String displayId,
                                       @NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, displayId, "", message, NotificationType.ERROR);
+    return notify(toolWindowNotification(), displayId, "", message, NotificationType.ERROR);
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -169,7 +169,7 @@ public class VcsNotifier {
   public Notification notifyWeakError(@NonNls @Nullable String displayId,
                                       @NotificationTitle @NotNull String title,
                                       @NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.ERROR);
+    return notify(toolWindowNotification(), displayId, title, message, NotificationType.ERROR);
   }
 
   /**
@@ -178,7 +178,7 @@ public class VcsNotifier {
   @Deprecated(forRemoval = true)
   @NotNull
   public Notification notifySuccess(@NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, null, "", message, NotificationType.INFORMATION);
+    return notify(toolWindowNotification(), null, "", message, NotificationType.INFORMATION);
   }
 
   /**
@@ -188,14 +188,14 @@ public class VcsNotifier {
   @NotNull
   public Notification notifySuccess(@NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, null, title, message, NotificationType.INFORMATION);
+    return notify(toolWindowNotification(), null, title, message, NotificationType.INFORMATION);
   }
 
   @NotNull
   public Notification notifySuccess(@NonNls @Nullable String displayId,
                                     @NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.INFORMATION);
+    return notify(toolWindowNotification(), displayId, title, message, NotificationType.INFORMATION);
   }
 
   /**
@@ -206,7 +206,7 @@ public class VcsNotifier {
   public Notification notifySuccess(@NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message,
                                     @Nullable NotificationListener listener) {
-    return notify(NOTIFICATION_GROUP_ID, null, title, message, NotificationType.INFORMATION, listener);
+    return notify(toolWindowNotification(), null, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
@@ -214,7 +214,7 @@ public class VcsNotifier {
                                     @NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message,
                                     @Nullable NotificationListener listener) {
-    return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.INFORMATION, listener);
+    return notify(toolWindowNotification(), displayId, title, message, NotificationType.INFORMATION, listener);
   }
 
   /**
@@ -265,7 +265,7 @@ public class VcsNotifier {
                                  @NotificationTitle @NotNull String title,
                                  @NotificationContent @NotNull String message,
                                  @Nullable NotificationListener listener) {
-    return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.INFORMATION, listener);
+    return notify(toolWindowNotification(), displayId, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
@@ -304,7 +304,7 @@ public class VcsNotifier {
   @NotNull
   public Notification notifyWarning(@NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message) {
-    return notify(NOTIFICATION_GROUP_ID, null, title, message, NotificationType.WARNING);
+    return notify(toolWindowNotification(), null, title, message, NotificationType.WARNING);
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -321,7 +321,7 @@ public class VcsNotifier {
                                     @NotificationTitle @NotNull String title,
                                     @NotificationContent @NotNull String message,
                                     NotificationAction... actions) {
-    return notify(NOTIFICATION_GROUP_ID, displayId, title, message, NotificationType.WARNING, actions);
+    return notify(toolWindowNotification(), displayId, title, message, NotificationType.WARNING, actions);
   }
 
   @NotNull

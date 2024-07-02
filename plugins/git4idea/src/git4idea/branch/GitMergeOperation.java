@@ -185,7 +185,7 @@ class GitMergeOperation extends GitBranchOperation {
         new GitBranchWorker(myProject, myGit, myUiHandler).deleteBranch(myBranchNameToMerge, new ArrayList<>(getRepositories()));
       }
       case PROPOSE -> {
-        VcsNotifier.NOTIFICATION_GROUP_ID
+        VcsNotifier.toolWindowNotification()
           .createNotification("", new HtmlBuilder().appendRaw(message).toString(), NotificationType.INFORMATION)
           .setDisplayId(DELETE_BRANCH_ON_MERGE)
           .addAction(NotificationAction.createSimpleExpiring(
