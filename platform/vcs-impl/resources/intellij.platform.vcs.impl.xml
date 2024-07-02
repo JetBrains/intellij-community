@@ -50,6 +50,7 @@
     <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl"/>
     <intentionAction>
+      <language/>
       <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
     </intentionAction>
   </extensions>
