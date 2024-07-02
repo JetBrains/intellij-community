@@ -6,6 +6,7 @@ import com.intellij.diff.impl.DiffSettingsHolder.IncludeInNavigationHistory
 import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -17,7 +18,8 @@ import com.intellij.ui.docking.impl.DockManagerImpl
 abstract class DiffVirtualFileBase(name: String) :
   LightVirtualFile(name, DiffFileType.INSTANCE, ""),
   DiffContentVirtualFile, VirtualFileWithoutContent,
-  IdeDocumentHistoryImpl.OptionallyIncluded {
+  IdeDocumentHistoryImpl.OptionallyIncluded,
+  EditorHistoryManager.OptionallyIncluded {
   private val settings by lazy { DiffSettingsHolder.DiffSettings.getSettings() }
 
   init {
@@ -32,6 +34,9 @@ abstract class DiffVirtualFileBase(name: String) :
       IncludeInNavigationHistory.OnlyIfOpen ->
         FileEditorManager.getInstance(project).isFileOpen(this) // TODO: Check performance
     }
+
+  override fun isIncludedInEditorHistory(project: Project): Boolean =
+    settings.isIncludedInNavigationHistory == IncludeInNavigationHistory.Always
 
   override fun isWritable(): Boolean = false
 
