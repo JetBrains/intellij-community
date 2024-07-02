@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
+import com.intellij.codeInsight.daemon.impl.TrafficLightRendererContributor;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.ide.ui.UISettingsUtils;
@@ -12,14 +13,12 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -42,10 +41,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -232,7 +228,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
 
   public static boolean isCommitMessage(@NotNull PsiElement element) {
     Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
-    return document != null && document.getUserData(DATA_KEY) != null;
+    return document != null && isCommitMessage(document);
+  }
+
+  public static boolean isCommitMessage(@NotNull Document document) {
+    return document.getUserData(DATA_KEY) != null;
   }
 
   @Nullable
@@ -328,12 +328,6 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
           new InspectionProfileWrapper(CommitMessageInspectionProfile.getInstance(myProject)));
       }
       editor.putUserData(IntentionManager.SHOW_INTENTION_OPTIONS_KEY, false);
-
-      EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
-      ModalityState modality = ModalityState.defaultModalityState();
-      TrafficLightRenderer.setTrafficLightOnEditor(myProject, markupModel, modality, () -> {
-        return new ConditionalTrafficLightRenderer(myProject, editor.getDocument());
-      });
     }
   }
 
@@ -359,6 +353,16 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
         }
       }
       return false;
+    }
+  }
+
+  @ApiStatus.Internal
+  public static class CommitMessageTrafficLightRendererContributor implements TrafficLightRendererContributor {
+    @Override
+    public @Nullable TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
+      Project project = editor.getProject();
+      if (project == null || !isCommitMessage(editor.getDocument())) return null;
+      return new ConditionalTrafficLightRenderer(project, editor.getDocument());
     }
   }
 }
