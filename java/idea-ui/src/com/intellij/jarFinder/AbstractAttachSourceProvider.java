@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 public abstract class AbstractAttachSourceProvider implements AttachSourcesProvider {
 
@@ -73,12 +75,16 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
   protected class AttachExistingSourceAction implements AttachSourcesAction {
     private final @Nls(capitalization = Nls.Capitalization.Title) String myName;
     private final VirtualFile mySrcFile;
-    private final Library myLibrary;
+    private final Set<Library> myLibraries;
+
+    public AttachExistingSourceAction(VirtualFile srcFile, Collection<Library> libraries, @Nls(capitalization = Nls.Capitalization.Title) String actionName) {
+      mySrcFile = srcFile;
+      myLibraries = Set.copyOf(libraries);
+      myName = actionName;
+    }
 
     public AttachExistingSourceAction(VirtualFile srcFile, Library library, @Nls(capitalization = Nls.Capitalization.Title) String actionName) {
-      mySrcFile = srcFile;
-      myLibrary = library;
-      myName = actionName;
+      this(srcFile, List.of(library), actionName);
     }
 
     @Override
@@ -100,9 +106,12 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
 
       if (!mySrcFile.isValid()) return callback;
 
-      if (myLibrary != getLibraryFromOrderEntriesList(orderEntriesContainingFile)) return callback;
-
-      WriteAction.run(() -> addSourceFile(mySrcFile, myLibrary));
+      for (LibraryOrderEntry entry : orderEntriesContainingFile) {
+        Library library = entry.getLibrary();
+        if (library != null && myLibraries.contains(library)) {
+          WriteAction.run(() -> addSourceFile(mySrcFile, library));
+        }
+      }
 
       return callback;
     }
