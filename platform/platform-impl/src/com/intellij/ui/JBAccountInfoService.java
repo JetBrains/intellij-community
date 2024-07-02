@@ -51,6 +51,9 @@ public interface JBAccountInfoService {
   @SuppressWarnings("unused")
   @NotNull CompletableFuture<@NotNull LicenseListResult> getAvailableLicenses(@NotNull String productCode);
 
+  @SuppressWarnings("unused")
+  @NotNull CompletableFuture<@NotNull LicenseListResult> issueTrialLicense(@NotNull String productCode, @NotNull List<String> consentOptions);
+
   static @Nullable JBAccountInfoService getInstance() {
     return JBAccountInfoServiceHolder.INSTANCE;
   }
