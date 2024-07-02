@@ -248,7 +248,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
                      key="INSP.NAME.requirements" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyPackageRequirementsInspection"/>
     <localInspection language="Python" shortName="PyPep8Inspection" suppressId="PyPep8" bundle="messages.PyPsiBundle"
-                     key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WEAK WARNING"
+                     key="INSP.pep8.coding.style.violation" groupKey="INSP.GROUP.python" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.jetbrains.python.inspections.PyPep8Inspection" unfair="true"/>
     <localInspection language="Python" shortName="PyInterpreterInspection" suppressId="PyInterpreter" bundle="messages.PyPsiBundle"
                      key="INSP.NAME.invalid.interpreter" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING"
