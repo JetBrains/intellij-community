@@ -6,6 +6,12 @@
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
 
+    <group id="RunConfigurationGroup">
+      <action id="EditRunConfigurationsInNewUi" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction$EditRunConfigurationsInNewUiAction"/>
+      <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction$SaveTemporaryRunConfigurationExtraAction"/>
+      <action id="DeleteRunConfiguration" class="com.intellij.execution.actions.RunConfigurationsComboBoxAction$DeleteRunConfigurationExtraAction"/>
+    </group>
+
     <group id="RunContextGroup" popup="false">
       <group id="RunContextGroupInner">
         <!-- A dynamic group filled with executor actions -->

@@ -72,6 +72,7 @@ private const val DEBUG: String = ToolWindowId.DEBUG
 private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.configurations")
 
 @ApiStatus.Internal
+@JvmField
 val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
 
 private const val TAG_PINNED = "pinned"
