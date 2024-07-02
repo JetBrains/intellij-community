@@ -41,7 +41,7 @@ internal object JavaSettingsSerializer {
 
   fun loadJavaModuleSettings(rootManagerElement: Element,
                              context: SerializationContext,
-                             contentRotEntitySource: EntitySource ): JavaModuleSettingsEntity.Builder? {
+                             contentRootEntitySource: EntitySource ): JavaModuleSettingsEntity.Builder? {
     val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
     val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
     val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG)
@@ -53,7 +53,7 @@ internal object JavaSettingsSerializer {
     return if (inheritedCompilerOutput != null || compilerOutput != null || languageLevel != null || excludeOutput != null || compilerOutputForTests != null) {
       JavaModuleSettingsEntity(inheritedCompilerOutput = inheritedCompilerOutput?.toBoolean() ?: false,
                                                  excludeOutput = excludeOutput != null,
-                                                 entitySource = contentRotEntitySource
+                                                 entitySource = contentRootEntitySource
       ) {
         this.compilerOutput = compilerOutput?.let { context.virtualFileUrlManager.getOrCreateFromUrl(it) }
         this.compilerOutputForTests = compilerOutputForTests?.let { context.virtualFileUrlManager.getOrCreateFromUrl(it) }
@@ -61,7 +61,7 @@ internal object JavaSettingsSerializer {
       }
     }
     else if (context.isJavaPluginPresent) {
-      JavaModuleSettingsEntity(true, true, contentRotEntitySource)
+      JavaModuleSettingsEntity(true, true, contentRootEntitySource)
     }
     else null
   }
