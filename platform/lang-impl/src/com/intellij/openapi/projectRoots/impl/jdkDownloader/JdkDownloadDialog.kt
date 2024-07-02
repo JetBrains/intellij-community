@@ -221,7 +221,7 @@ internal class JdkDownloadDialog(
   val sdkType: SdkTypeId,
   private val mergedModel: JdkDownloaderMergedModel,
   okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk"),
-) : DialogWrapper(project, parentComponent, false, IdeModalityType.PROJECT) {
+) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE) {
   private val panel: JComponent
   private val versionComboBox : ComboBox<JdkVersionItem>
   private val vendorComboBox: JdkVersionVendorCombobox
