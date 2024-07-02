@@ -2,5 +2,7 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="eclipse.lsp4j.debug" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="eclipse.lsp4j.jsonrpc.debug" level="project" />
   </component>
 </module>

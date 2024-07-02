@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="eclipse.lsp4j.jsonrpc.debug" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.eclipse.lsp4j:org.eclipse.lsp4j.jsonrpc.debug:0.19.0">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/0.19.0/org.eclipse.lsp4j.jsonrpc.debug-0.19.0.jar">
+          <sha256sum>213b118ad663c96ee0a8812a0ad95deed8d03b95fce4da85988414b586e8bb2d</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/lsp4j/org.eclipse.lsp4j.jsonrpc.debug/0.19.0/org.eclipse.lsp4j.jsonrpc.debug-0.19.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
