@@ -146,8 +146,13 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
       }
     }
 
-    if (element instanceof PsiClass && seemsInternal((PsiClass) element)) {
-      return true;
+    if (element instanceof PsiClass clazz) {
+      if (seemsInternal(clazz)) {
+        return true;
+      }
+      if (myOptions.instantiableOnly && clazz.hasModifierProperty(PsiModifier.ABSTRACT) && clazz.hasModifierProperty(PsiModifier.SEALED)) {
+        return true;
+      }
     }
 
     if (element instanceof PsiImplicitClass) {
@@ -386,26 +391,31 @@ public final class JavaCompletionProcessor implements PsiScopeProcessor, Element
   }
 
   public static final class Options {
-    public static final Options DEFAULT_OPTIONS = new Options(true, true, false);
-    public static final Options CHECK_NOTHING = new Options(false, false, false);
+    public static final Options DEFAULT_OPTIONS = new Options(true, true, false, true);
+    public static final Options CHECK_NOTHING = new Options(false, false, false, false);
     final boolean checkAccess;
     final boolean filterStaticAfterInstance;
     final boolean showInstanceInStaticContext;
+    final boolean instantiableOnly;
 
-    private Options(boolean checkAccess, boolean filterStaticAfterInstance, boolean showInstanceInStaticContext) {
+    private Options(boolean checkAccess, boolean filterStaticAfterInstance, boolean showInstanceInStaticContext, boolean instantiableOnly) {
       this.checkAccess = checkAccess;
       this.filterStaticAfterInstance = filterStaticAfterInstance;
       this.showInstanceInStaticContext = showInstanceInStaticContext;
+      this.instantiableOnly = instantiableOnly;
     }
 
     public Options withCheckAccess(boolean checkAccess) {
-      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext, instantiableOnly);
     }
     public Options withFilterStaticAfterInstance(boolean filterStaticAfterInstance) {
-      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext, instantiableOnly);
     }
     public Options withShowInstanceInStaticContext(boolean showInstanceInStaticContext) {
-      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext);
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext, instantiableOnly);
+    }
+    public Options withInstantiableOnly(boolean instantiableOnly) {
+      return new Options(checkAccess, filterStaticAfterInstance, showInstanceInStaticContext, instantiableOnly);
     }
   }
 

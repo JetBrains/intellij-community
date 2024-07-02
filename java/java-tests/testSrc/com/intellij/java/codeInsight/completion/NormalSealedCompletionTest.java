@@ -51,4 +51,11 @@ public class NormalSealedCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "AddUserError.NameIsEmpty", "AddUserError.NameIsEmpty.T4", 
                                              "AddUserError.NameIsTooLong", "AddUserError.NameIsTooLong.T", "AddUserError.NameIsTooLong.T3");
   }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testNoAnonymousForSealedInterface() {
+    configure();
+    myFixture.completeBasic();
+    myFixture.assertPreferredCompletionItems(0, "FormatFlagsConversionMismatchException");
+  }
 }

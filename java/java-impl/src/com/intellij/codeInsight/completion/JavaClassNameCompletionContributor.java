@@ -103,7 +103,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
       for (final ExpectedTypeInfo info : ExpectedTypesProvider.getExpectedTypes(expr, true)) {
         final PsiType type = info.getType();
         final PsiClass psiClass = PsiUtil.resolveClassInType(type);
-        if (psiClass != null && psiClass.getName() != null) {
+        if (psiClass != null && psiClass.getName() != null && !(psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
           consumer.consume(createClassLookupItem(psiClass, inJavaContext));
         }
         final PsiType defaultType = info.getDefaultType();
@@ -144,7 +144,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
           else {
             Condition<PsiClass> condition = eachClass ->
               filter.isAcceptable(eachClass, insertedElement) &&
-              AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
+              AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext) &&
+              (!afterNew || !(eachClass.hasModifierProperty(PsiModifier.ABSTRACT) && eachClass.hasModifierProperty(PsiModifier.SEALED)));
             for (JavaPsiClassReferenceElement element : createClassLookupItems(psiClass, afterNew, JAVA_CLASS_INSERT_HANDLER, condition)) {
               element.setLookupString(prefix + element.getLookupString());
 

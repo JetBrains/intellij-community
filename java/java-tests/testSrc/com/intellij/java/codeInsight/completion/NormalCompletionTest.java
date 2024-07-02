@@ -527,14 +527,14 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   public void testLocalClassTwice() {
     configure();
     assertOrderedEquals(myFixture.getLookupElementStrings(), 
-                        "Zoooz", "Zooooo", "ZoneId", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
+                        "Zoooz", "Zooooo", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
   public void testLocalTopLevelConflict() {
     configure();
     assertOrderedEquals(myFixture.getLookupElementStrings(), 
-                        "Zoooz", "Zooooo", "ZoneId", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
+                        "Zoooz", "Zooooo", "ZoneRulesException", "ZoneRulesProvider", "ZipOutputStream");
   }
 
   @NeedsIndex.ForStandardLibrary
