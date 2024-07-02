@@ -73,8 +73,8 @@ internal class IjentNioPosixFileAttributes(
   override fun group(): GroupPrincipal =
     IjentPosixGroupPrincipal(fileInfo.permissions.group)
 
-  override fun permissions(): Set<PosixFilePermission> =
-    EnumSet.copyOf(PosixFilePermission.values().filter { pfp ->
+  override fun permissions(): Set<PosixFilePermission> {
+    val permissions = entries.filter { pfp ->
       when (pfp) {
         OWNER_READ -> fileInfo.permissions.ownerCanRead
         OWNER_WRITE -> fileInfo.permissions.ownerCanWrite
@@ -86,7 +86,9 @@ internal class IjentNioPosixFileAttributes(
         OTHERS_WRITE -> fileInfo.permissions.otherCanWrite
         OTHERS_EXECUTE -> fileInfo.permissions.otherCanExecute
       }
-    })
+    }
+    return if (permissions.isEmpty()) EnumSet.noneOf(PosixFilePermission::class.java) else EnumSet.copyOf(permissions)
+  }
 }
 
 class IjentPosixUserPrincipal(val uid: Int) : UserPrincipal {
