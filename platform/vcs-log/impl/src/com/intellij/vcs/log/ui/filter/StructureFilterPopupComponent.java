@@ -313,11 +313,6 @@ public class StructureFilterPopupComponent extends FilterPopupComponent<VcsLogFi
     }
 
     @Override
-    public boolean isSoftMultiChoice() {
-      return false;
-    }
-
-    @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       return isVisible(myRoot);
     }
