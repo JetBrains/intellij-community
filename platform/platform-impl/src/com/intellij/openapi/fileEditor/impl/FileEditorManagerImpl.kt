@@ -2400,7 +2400,8 @@ private suspend fun updateFileNames(allSplitters: Set<EditorsSplitters>, file: V
     for (window in splitters.windows()) {
       val composites = withContext(Dispatchers.EDT) { window.composites() }
       for (composite in composites) {
-        if (file != null && composite.file != file) {
+        // update names for other files with the same name, as it might affect UniqueNameEditorTabTitleProvider
+        if (file != null && composite.file != file && !composite.file.nameSequence.contentEquals(file.nameSequence)) {
           continue
         }
 
