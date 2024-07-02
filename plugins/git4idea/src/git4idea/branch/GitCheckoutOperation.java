@@ -185,7 +185,7 @@ class GitCheckoutOperation extends GitBranchOperation {
             builder.br().append(revisionNotFound);
           }
 
-          VcsNotifier.NOTIFICATION_GROUP_ID
+          VcsNotifier.toolWindowNotification()
             .createNotification("", builder.toString(), NotificationType.INFORMATION)
             .setDisplayId(CHECKOUT_SUCCESS)
             .addAction(NotificationAction.createSimple(GitBundle.messagePointer("checkout.operation.rollback.action"), () -> {
