@@ -3023,7 +3023,6 @@ c:com.intellij.execution.ui.AllRunConfigurationsToggle
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getBehavior():com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- isSoftMultiChoice():Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 a:com.intellij.execution.ui.BaseContentCloseListener

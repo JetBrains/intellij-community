@@ -510,7 +510,7 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       msm = MenuSelectionManager.defaultManager();
     }
     ActionMenuItem item = (ActionMenuItem)menuItem;
-    boolean keepMenuOpen = Utils.isKeepPopupOpen(item.getAnAction(), item.isKeepMenuOpen(), e);
+    boolean keepMenuOpen = Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e);
     if (!keepMenuOpen) {
       msm.clearSelectedPath();
     }

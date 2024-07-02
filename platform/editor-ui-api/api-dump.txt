@@ -1296,6 +1296,14 @@ c:com.intellij.openapi.actionSystem.DataContextWrapper
 - <init>(com.intellij.openapi.actionSystem.DataContext):V
 - getRawCustomData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DynamicActionGroup
+e:com.intellij.openapi.actionSystem.KeepPopupOnPerform
+- java.lang.Enum
+- sf:Always:com.intellij.openapi.actionSystem.KeepPopupOnPerform
+- sf:IfPreferred:com.intellij.openapi.actionSystem.KeepPopupOnPerform
+- sf:IfRequested:com.intellij.openapi.actionSystem.KeepPopupOnPerform
+- sf:Never:com.intellij.openapi.actionSystem.KeepPopupOnPerform
+- s:valueOf(java.lang.String):com.intellij.openapi.actionSystem.KeepPopupOnPerform
+- s:values():com.intellij.openapi.actionSystem.KeepPopupOnPerform[]
 f:com.intellij.openapi.actionSystem.KeyboardShortcut
 - com.intellij.openapi.actionSystem.Shortcut
 - <init>(javax.swing.KeyStroke,javax.swing.KeyStroke):V
@@ -1342,6 +1350,7 @@ f:com.intellij.openapi.actionSystem.Presentation
 - getHoveredIcon():javax.swing.Icon
 - getIcon():javax.swing.Icon
 - getIconSupplier():java.util.function.Supplier
+- getKeepPopupOnPerform():com.intellij.openapi.actionSystem.KeepPopupOnPerform
 - getMnemonic():I
 - getSelectedIcon():javax.swing.Icon
 - getText():java.lang.String
@@ -1376,6 +1385,7 @@ f:com.intellij.openapi.actionSystem.Presentation
 - setHoveredIcon(javax.swing.Icon):V
 - setIcon(javax.swing.Icon):V
 - setIconSupplier(java.util.function.Supplier):V
+- setKeepPopupOnPerform(com.intellij.openapi.actionSystem.KeepPopupOnPerform):V
 - setMultiChoice(Z):V
 - setPerformGroup(Z):V
 - setPopupGroup(Z):V

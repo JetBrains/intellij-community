@@ -11858,8 +11858,8 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenuItem
 - fireActionPerformed(java.awt.event.ActionEvent):V
 - f:getAnAction():com.intellij.openapi.actionSystem.AnAction
 - f:getFirstShortcutText():java.lang.String
+- f:getKeepPopupOnPerform():com.intellij.openapi.actionSystem.KeepPopupOnPerform
 - f:getSecondaryIcon():javax.swing.Icon
-- f:isKeepMenuOpen():Z
 - isSelected():Z
 - f:isToggleable():Z
 - menuSelectionChanged(Z):V
@@ -27921,13 +27921,13 @@ f:com.intellij.ui.popup.PopupFactoryImpl$ActionItem
 - getDescription():java.lang.String
 - getIcon(Z):javax.swing.Icon
 - getInlineItems():java.util.List
+- getKeepPopupOnPerform():com.intellij.openapi.actionSystem.KeepPopupOnPerform
 - getMnemonicChar():java.lang.Character
 - getSeparatorText():java.lang.String
 - getShortcut():com.intellij.openapi.actionSystem.ShortcutSet
 - getText():java.lang.String
 - getTooltip():java.lang.String
 - isEnabled():Z
-- isKeepPopupOpen():Z
 - isPerformGroup():Z
 - isPrependWithSeparator():Z
 - isSubstepSuppressed():Z
@@ -28058,9 +28058,9 @@ com.intellij.ui.popup.list.FilterableListPopupStep
 com.intellij.ui.popup.list.IconListPopupRenderer
 - a:isIconAt(java.awt.Point):Z
 f:com.intellij.ui.popup.list.InlineActionDescriptor
-- <init>(java.lang.Runnable,Z):V
+- <init>(java.lang.Runnable,com.intellij.openapi.actionSystem.KeepPopupOnPerform):V
 - f:executeAction():V
-- f:getClosesPopup():Z
+- f:getKeepPopupOnPerform():com.intellij.openapi.actionSystem.KeepPopupOnPerform
 f:com.intellij.ui.popup.list.InlineActionsUtilKt
 - sf:INLINE_BUTTON_MARKER:java.lang.String
 - sf:buttonWidth():I
