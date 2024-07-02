@@ -10,9 +10,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.ijent.community.buildConstants.ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS
-import com.intellij.platform.ijent.community.buildConstants.IJENT_BOOT_CLASSPATH_MODULE
-import com.intellij.platform.ijent.community.buildConstants.isIjentWslFsEnabledByDefaultForProduct
+import com.intellij.platform.ijent.community.buildConstants.*
 import com.intellij.util.PlatformUtils
 import com.intellij.util.lang.UrlClassLoader
 import com.intellij.util.system.CpuArch
@@ -27,9 +25,11 @@ import kotlin.io.path.invariantSeparatorsPathString
 
 internal class DevKitApplicationPatcher : RunConfigurationExtension() {
   @Suppress("SpellCheckingInspection")
-  override fun <T : RunConfigurationBase<*>> updateJavaParameters(configuration: T,
-                                                                  javaParameters: JavaParameters,
-                                                                  runnerSettings: RunnerSettings?) {
+  override fun <T : RunConfigurationBase<*>> updateJavaParameters(
+    configuration: T,
+    javaParameters: JavaParameters,
+    runnerSettings: RunnerSettings?,
+  ) {
     val project = configuration.project
     if (!PsiUtil.isIdeaProject(project)) {
       return
@@ -38,7 +38,7 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       return
     }
     val mainClass = configuration.runClass ?: return
-    
+
     passDataAboutBuiltInServer(javaParameters, project)
     val vmParameters = javaParameters.vmParametersList
     val module = configuration.configurationModule.module
@@ -91,13 +91,28 @@ internal class DevKitApplicationPatcher : RunConfigurationExtension() {
       vmParameters.add("-XX:ReservedCodeCacheSize=512m")
     }
 
-    if (isIjentWslFsEnabledByDefaultForProduct(vmParameters.getPropertyValue("idea.platform.prefix"))) {
-      vmParameters.addAll(ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS)
-      vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
-    }
+    enableIjentDefaultFsProvider(project, configuration, vmParameters)
 
     if (isDevBuild) {
       updateParametersForDevBuild(javaParameters, configuration, project)
+    }
+  }
+
+  private fun enableIjentDefaultFsProvider(
+    project: Project,
+    configuration: JavaRunConfigurationBase,
+    vmParameters: ParametersList,
+  ) {
+    if (!isIjentWslFsEnabledByDefaultForProduct(vmParameters.getPropertyValue("idea.platform.prefix"))) return
+
+    // Enable the IJent file system only when the new default FS provider class is available.
+    // It is required to let actual DevKit plugins work with branches without the FS provider class, like 241.
+    if (JUnitDevKitPatcher.loaderValid(project, null, IJENT_REQUIRED_DEFAULT_NIO_FS_PROVIDER_CLASS)) {
+      vmParameters.addAll(ENABLE_IJENT_WSL_FILE_SYSTEM_VMOPTIONS)
+      vmParameters.add("-Xbootclasspath/a:${configuration.workingDirectory}/out/classes/production/$IJENT_BOOT_CLASSPATH_MODULE")
+    }
+    else {
+      vmParameters.add("-D${IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY}=false")
     }
   }
 
