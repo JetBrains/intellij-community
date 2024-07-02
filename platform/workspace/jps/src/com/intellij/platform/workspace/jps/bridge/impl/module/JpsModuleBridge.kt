@@ -56,7 +56,7 @@ internal class JpsModuleBridge(private val project: JpsProjectBridge,
     getSerializer(entity.type?.name).loadProperties(null)
   }
   val javaModuleExtension: JpsJavaModuleExtensionBridge? by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    entity.javaSettings?.let { JpsJavaModuleExtensionBridge(it, this) }
+    JpsJavaModuleExtensionBridge(entity.javaSettings, this)
   }
   val testModuleProperties: JpsTestModuleProperties? by lazy(LazyThreadSafetyMode.PUBLICATION) {
     entity.testProperties?.let { JpsTestModulePropertiesBridge(it, this) }
