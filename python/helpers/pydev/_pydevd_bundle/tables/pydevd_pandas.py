@@ -61,13 +61,15 @@ def __get_data_slice(table, start, end):
 def _compute_sliced_data(table, fun, start_index=None, end_index=None):
     # type: (Union[pd.DataFrame, pd.Series], function, int, int) -> str
 
-    max_cols, max_colwidth = __get_tables_display_options()
+    max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
+    _jb_max_rows = pd.get_option('display.max_rows')
 
     pd.set_option('display.max_columns', max_cols)
     pd.set_option('display.max_colwidth', max_colwidth)
+    pd.set_option('display.max_rows', max_rows)
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
@@ -76,6 +78,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
+    pd.set_option('display.max_rows', _jb_max_rows)
 
     return data
 
@@ -251,8 +254,8 @@ def __categorical_to_df(table):
 
 # In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
-    # type: () -> Tuple[None, Union[int, None]]
+    # type: () -> Tuple[None, Union[int, None], None]
     import sys
     if sys.version_info < (3, 0):
-        return None, MAX_COLWIDTH_PYTHON_2
-    return None, None
+        return None, MAX_COLWIDTH_PYTHON_2, None
+    return None, None, None
