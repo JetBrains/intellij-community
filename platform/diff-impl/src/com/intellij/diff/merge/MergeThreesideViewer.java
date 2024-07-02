@@ -14,6 +14,8 @@ import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.statistics.MergeResultSource;
+import com.intellij.diff.statistics.MergeStatisticsCollector;
 import com.intellij.diff.tools.holders.EditorHolderFactory;
 import com.intellij.diff.tools.holders.TextEditorHolder;
 import com.intellij.diff.tools.simple.ThreesideTextDiffViewerEx;
@@ -69,6 +71,7 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,6 +106,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private final Action myLeftResolveAction;
   private final Action myRightResolveAction;
   protected final Action myAcceptResolveAction;
+  private MergeStatisticsAggregator myAggregator;
 
   @NotNull protected final MergeContext myMergeContext;
   @NotNull protected final TextMergeRequest myMergeRequest;
@@ -261,12 +265,13 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
             !MergeUtil.showExitWithoutApplyingChangesDialog(myTextMergeViewer, myMergeRequest, myMergeContext, myContentModified)) {
           return;
         }
-        doFinishMerge(result);
+        doFinishMerge(result, MergeResultSource.DIALOG_BUTTON);
       }
     };
   }
 
-  protected void doFinishMerge(@NotNull final MergeResult result) {
+  protected void doFinishMerge(@NotNull final MergeResult result, MergeResultSource source) {
+    logMergeResult(result, source);
     destroyChangedBlocks();
     myMergeContext.finishMerge(result);
   }
@@ -441,6 +446,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     myInitialRediffFinished = true;
     myContentModified = false;
     myCurrentIgnorePolicy = ignorePolicy;
+
+    // build initial statistics
+    int autoResolvableChanges = ContainerUtil.count(getAllChanges(), c -> canResolveChangeAutomatically(c, ThreeSide.BASE));
+
+    myAggregator = new MergeStatisticsAggregator(
+      getAllChanges().size(),
+      autoResolvableChanges,
+      getConflictsCount()
+    );
 
     if (getTextSettings().isAutoApplyNonConflictedChanges()) {
       if (hasNonConflictedChanges(ThreeSide.BASE)) {
@@ -646,8 +660,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         String message = DiffBundle.message("merge.all.changes.processed.message.text");
         DiffUtil.showSuccessPopup(message, point, this, () -> {
           if (isDisposed() || myLoadingPanel.isLoading()) return;
-          destroyChangedBlocks();
-          myMergeContext.finishMerge(MergeResult.RESOLVED);
+          doFinishMerge(MergeResult.RESOLVED, MergeResultSource.NOTIFICATION);
         });
       });
     }
@@ -830,6 +843,11 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
       return state;
     }
+
+    @Override
+    protected void onRangeManuallyEdit(int index) {
+      myAggregator.wasEdited(index);
+    }
   }
 
   //
@@ -1003,6 +1021,22 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
     @RequiresWriteLock
     protected abstract void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes);
+  }
+
+  @ApiStatus.Internal
+  void logMergeCancelled() {
+    logMergeResult(MergeResult.CANCEL, MergeResultSource.DIALOG_CLOSING);
+  }
+
+  private void logMergeResult(MergeResult mergeResult, MergeResultSource source) {
+    MergeStatisticsCollector.MergeResult statsResult = switch (mergeResult) {
+      case CANCEL -> MergeStatisticsCollector.MergeResult.CANCELED;
+      case RESOLVED -> MergeStatisticsCollector.MergeResult.SUCCESS;
+      case LEFT, RIGHT -> null;
+    };
+    if (statsResult == null) return;
+    myAggregator.setUnresolved(getChanges().size());
+    MergeStatisticsCollector.INSTANCE.logMergeFinished(myProject, statsResult, source, myAggregator);
   }
 
   private class IgnoreSelectedChangesSideAction extends ApplySelectedChangesActionBase {
