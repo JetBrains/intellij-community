@@ -1,16 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5Jimfs.showcases.resouces
+package com.intellij.platform.testFramework.junit5Jimfs.showcases.fixtures
 
-import com.intellij.platform.testFramework.junit5Jimfs.JimFsProvider
+import com.intellij.platform.testFramework.junit5Jimfs.jimFsFixture
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.resources.NoInject
-import com.intellij.testFramework.junit5.resources.ResourceExtensionApi
 import com.intellij.util.io.write
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.extension.RegisterExtension
 import java.nio.file.FileSystem
 
 /**
@@ -21,22 +18,20 @@ class JUnit5MethodLevelTempFsTest {
   companion object {
 
     @AfterAll
+    @JvmStatic
     fun ensureFsClosed() {
       assertFalse(ourFs.isOpen) // FS must be closed as it is JimFS
     }
 
-
-    @NoInject
     private lateinit var ourFs: FileSystem
   }
 
-  @JvmField
-  @RegisterExtension
-  val fsExt = ResourceExtensionApi.forProvider(JimFsProvider())
+  private val fsFixture = jimFsFixture()
 
 
   @Test
-  fun test(fs: FileSystem) {
+  fun test() {
+    val fs = fsFixture.get()
     assertTrue(fs.isOpen)
     ourFs = fs
     fs.rootDirectories.first().resolve("file").write("D")

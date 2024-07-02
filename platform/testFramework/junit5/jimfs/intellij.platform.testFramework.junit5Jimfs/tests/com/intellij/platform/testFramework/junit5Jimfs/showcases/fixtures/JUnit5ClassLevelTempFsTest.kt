@@ -1,21 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5Jimfs.showcases.resouces
+package com.intellij.platform.testFramework.junit5Jimfs.showcases.fixtures
 
-import com.intellij.platform.testFramework.junit5Jimfs.JimfsResource
+import com.intellij.platform.testFramework.junit5Jimfs.jimFsFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
 import org.junit.jupiter.api.Test
-import java.nio.file.FileSystem
 
 /**
  * Inject in-memory fs
  */
 @TestApplication
-@JimfsResource
 class JUnit5ClassLevelTempFsTest {
+  private companion object {
+    val fsFixture = jimFsFixture()
+  }
 
   @Test
-  fun test(fs: FileSystem) {
+  fun test() {
+    val fs = fsFixture.get()
     fs.rootDirectories.first().resolve("file").write("D")
   }
 
