@@ -60,4 +60,12 @@ class K2MppHighlightingIntegrationTest : AbstractKotlinMppGradleImportingTest() 
             publish("lib")
         }
     }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.0.0+")
+    fun testJvmMultifileClass() {
+        doTest {
+            publish("lib")
+        }
+    }
 }
