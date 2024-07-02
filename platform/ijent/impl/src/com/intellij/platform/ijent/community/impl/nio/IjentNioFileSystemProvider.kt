@@ -114,9 +114,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
       fs.fsBlocking {
         if (READ in options) {
-          IjentNioFileChannel.createWriting(fs, writeOptions)
-        } else {
           IjentNioFileChannel.createReadingWriting(fs, writeOptions)
+        } else {
+          IjentNioFileChannel.createWriting(fs, writeOptions)
         }
       }
     }
