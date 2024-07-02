@@ -313,7 +313,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step != null && item != null && step.isSelectable(item) &&
-          Utils.isKeepPopupOpen(item.getAction(), item.isKeepPopupOpen(), e)) {
+          Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e)) {
         step.performActionItem(item, e);
         step.updateStepItems(getList());
       }
@@ -340,7 +340,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       ActionItem item = ObjectUtils.tryCast(getList().getSelectedValue(), ActionItem.class);
       ActionPopupStep step = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (step != null && item != null && step.isSelectable(item) &&
-          item.isKeepPopupOpen() && item.getAction() instanceof ToggleAction toggle) {
+          item.getKeepPopupOnPerform() != KeepPopupOnPerform.Never && item.getAction() instanceof ToggleAction toggle) {
         AnActionEvent event = step.createAnActionEvent(toggle, keyEvent);
         ActionUtil.performDumbAwareWithCallbacks(toggle, event, () -> {
           toggle.setSelected(event, isRightKey);
@@ -902,7 +902,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public boolean isSubstepSuppressed() { return myAction instanceof ActionGroup && Utils.isSubmenuSuppressed(myPresentation); }
 
-    public boolean isKeepPopupOpen() { return myPresentation.isMultiChoice() || myAction instanceof KeepingPopupOpenAction; }
+    public @NotNull KeepPopupOnPerform getKeepPopupOnPerform() {
+      if (myAction instanceof KeepingPopupOpenAction) return KeepPopupOnPerform.Always;
+      return myPresentation.getKeepPopupOnPerform();
+    }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       String description = myPresentation.getDescription();

@@ -3,6 +3,7 @@ package com.intellij.ui.popup.list
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import java.awt.Point
 import java.awt.event.InputEvent
 import javax.swing.JComponent
@@ -19,10 +20,10 @@ class NonActionsPopupInlineSupport(private val myListPopup: ListPopupImpl) : Pop
   override fun getInlineAction(element: Any?, index: Int, event: InputEvent?): InlineActionDescriptor {
     if (index == 0 && hasMoreButton(element)) return InlineActionDescriptor(
       { myListPopup.showNextStepPopup(myListPopup.listStep.onChosen(element, false), element)},
-      false
+      KeepPopupOnPerform.Always
     )
 
-    return InlineActionDescriptor({}, false)
+    return InlineActionDescriptor({}, KeepPopupOnPerform.Always)
   }
 
   override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> =

@@ -1895,7 +1895,6 @@ a:com.intellij.openapi.actionSystem.ToggleAction
 - <init>(java.util.function.Supplier,javax.swing.Icon):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- isSoftMultiChoice():Z
 - a:setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.actionSystem.ToggleOptionAction

@@ -72,7 +72,8 @@ public final class Presentation implements Cloneable {
 
   private static final int IS_ENABLED = 0x1;
   private static final int IS_VISIBLE = 0x2;
-  private static final int IS_MULTI_CHOICE = 0x4;
+  private static final int IS_KEEP_POPUP_IF_REQUESTED = 0x4;
+  private static final int IS_KEEP_POPUP_IF_PREFERRED = 0x8;
   private static final int IS_POPUP_GROUP = 0x10;
   private static final int IS_PERFORM_GROUP = 0x20;
   private static final int IS_HIDE_GROUP_IF_EMPTY = 0x40;
@@ -416,8 +417,8 @@ public final class Presentation implements Cloneable {
   /**
    * For an action group presentation sets whether the action group is "performable" as an ordinary action or not.
    *
-   * @see com.intellij.openapi.actionSystem.impl.ActionMenu#SUPPRESS_SUBMENU
-   * @see com.intellij.openapi.actionSystem.impl.ActionButton#HIDE_DROPDOWN_ICON
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#SUPPRESS_SUBMENU
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#HIDE_DROPDOWN_ICON
    */
   public void setPerformGroup(boolean performing) {
     myFlags = BitUtil.set(myFlags, IS_PERFORM_GROUP, performing);
@@ -461,6 +462,33 @@ public final class Presentation implements Cloneable {
    */
   public void setApplicationScope(boolean applicationScope) {
     myFlags = BitUtil.set(myFlags, IS_APPLICATION_SCOPE, applicationScope);
+  }
+
+  /**
+   * For an action presentation in a popup sets whether a popup is closed or kept open
+   * when the action is performed.
+   * <p>
+   * {@link com.intellij.openapi.actionSystem.ToggleAction} use {@link KeepPopupOnPerform#Always} by default.
+   * The behavior is controlled by the {@link UISettings#getKeepPopupsForToggles} property.
+   *
+   * @see KeepPopupOnPerform
+   * @see UISettings#getKeepPopupsForToggles
+   */
+  public void setKeepPopupOnPerform(@NotNull KeepPopupOnPerform mode) {
+    boolean requestedBit = mode == KeepPopupOnPerform.IfRequested || mode == KeepPopupOnPerform.Always;
+    boolean preferredBit = mode == KeepPopupOnPerform.IfPreferred || mode == KeepPopupOnPerform.Always;
+    myFlags = BitUtil.set(myFlags, IS_KEEP_POPUP_IF_REQUESTED, requestedBit);
+    myFlags = BitUtil.set(myFlags, IS_KEEP_POPUP_IF_PREFERRED, preferredBit);
+  }
+
+  /** @see Presentation#setKeepPopupOnPerform(KeepPopupOnPerform) */
+  public @NotNull KeepPopupOnPerform getKeepPopupOnPerform() {
+    boolean requestedBit = BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_REQUESTED);
+    boolean preferedBit = BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_PREFERRED);
+    return requestedBit && preferedBit ? KeepPopupOnPerform.Always :
+           requestedBit ? KeepPopupOnPerform.IfRequested :
+           preferedBit ? KeepPopupOnPerform.IfPreferred :
+           KeepPopupOnPerform.Never;
   }
 
   /** @see Presentation#setPreferInjectedPsi(boolean) */
@@ -668,24 +696,12 @@ public final class Presentation implements Cloneable {
     return isEnabled() && isVisible();
   }
 
-  /**
-   * For an action presentation sets whether a menu or a popup is not closed when the action is performed,
-   * so more actions can be performed at once.
-   * <p>
-   * {@link com.intellij.openapi.actionSystem.ToggleAction} has this flag on by default in template presentation,
-   * and it is handled in a "soft" manner - only when specific modifier is applied (default: Control/Command).
-   * See {@link com.intellij.openapi.actionSystem.ToggleAction#isSoftMultiChoice()}.
-   * <p>
-   * Other actions have this flag off by default,
-   * and it is handled in a "hard" manner - always.
-   */
   public void setMultiChoice(boolean b) {
-    myFlags = BitUtil.set(myFlags, IS_MULTI_CHOICE, b);
+    setKeepPopupOnPerform(b ? KeepPopupOnPerform.Always : KeepPopupOnPerform.Never);
   }
 
-  /** @see Presentation#setMultiChoice(boolean) */
   public boolean isMultiChoice() {
-    return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
+    return getKeepPopupOnPerform() == KeepPopupOnPerform.Always;
   }
 
   @Override
@@ -693,29 +709,32 @@ public final class Presentation implements Cloneable {
     StringBuilder sb = new StringBuilder();
     sb.append(getText()).append(" (").append(descriptionSupplier.get()).append(")");
     sb.append(", flags=[");
-    int flagsPos = sb.length();
-    long mask;
-    if (BitUtil.isSet(myFlags, IS_TEMPLATE)) {
-      sb.append("template");
-      mask = Math.max(IS_VISIBLE, IS_ENABLED) << 1;
+    int start = sb.length();
+    appendFlag(myFlags, IS_TEMPLATE, sb, start, "template");
+    appendFlag(myFlags, IS_ENABLED, sb, start, "enabled");
+    appendFlag(myFlags, IS_VISIBLE, sb, start, "visible");
+    if (BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_REQUESTED) &&
+        BitUtil.isSet(myFlags, IS_KEEP_POPUP_IF_PREFERRED)) {
+      appendFlag(1, 1, sb, start, "keep_popup_always");
     }
-    else mask = 1;
-    for (; mask < IS_TEMPLATE; mask <<= 1) {
-      if (!BitUtil.isSet(myFlags, mask)) continue;
-      if (sb.length() > flagsPos) sb.append(", ");
-      if (mask == IS_ENABLED) sb.append("enabled");
-      else if (mask == IS_VISIBLE) sb.append("visible");
-      else if (mask == IS_MULTI_CHOICE) sb.append("multi_choice");
-      else if (mask == IS_POPUP_GROUP) sb.append("popup_group");
-      else if (mask == IS_PERFORM_GROUP) sb.append("perform_group");
-      else if (mask == IS_HIDE_GROUP_IF_EMPTY) sb.append("hide_group_if_empty");
-      else if (mask == IS_DISABLE_GROUP_IF_EMPTY) sb.append("disable_group_if_empty");
-      else if (mask == IS_APPLICATION_SCOPE) sb.append("application_scope");
-      else if (mask == IS_PREFER_INJECTED_PSI) sb.append("prefer_injected_psi");
-      else if (mask == IS_ENABLED_IN_MODAL_CONTEXT) sb.append("enabled_in_modal_context");
-      else sb.append(Long.toHexString(mask));
+    else {
+      appendFlag(myFlags, IS_KEEP_POPUP_IF_REQUESTED, sb, start, "keep_popup_if_requested");
+      appendFlag(myFlags, IS_KEEP_POPUP_IF_PREFERRED, sb, start, "keep_popup_if_preferred");
     }
+    appendFlag(myFlags, IS_POPUP_GROUP, sb, start, "popup_group");
+    appendFlag(myFlags, IS_PERFORM_GROUP, sb, start, "perform_group");
+    appendFlag(myFlags, IS_HIDE_GROUP_IF_EMPTY, sb, start, "hide_group_if_empty");
+    appendFlag(myFlags, IS_DISABLE_GROUP_IF_EMPTY, sb, start, "disable_group_if_empty");
+    appendFlag(myFlags, IS_APPLICATION_SCOPE, sb, start, "application_scope");
+    appendFlag(myFlags, IS_PREFER_INJECTED_PSI, sb, start, "prefer_injected_psi");
+    appendFlag(myFlags, IS_ENABLED_IN_MODAL_CONTEXT, sb, start, "enabled_in_modal_context");
     sb.append("]");
     return sb.toString();
+  }
+
+  private static void appendFlag(int flags, int mask, @NotNull StringBuilder sb, int start, @NotNull String maskName) {
+    if (!BitUtil.isSet(flags, mask)) return;
+    if (sb.length() > start) sb.append(", ");
+    sb.append(maskName);
   }
 }

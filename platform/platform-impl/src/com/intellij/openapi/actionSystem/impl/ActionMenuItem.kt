@@ -62,7 +62,7 @@ class ActionMenuItem internal constructor(action: AnAction,
   @NlsSafe
   private var description: String? = null
   private var isToggled = false
-  var isKeepMenuOpen: Boolean = false
+  var keepPopupOnPerform: KeepPopupOnPerform = KeepPopupOnPerform.Never
     private set
   val secondaryIcon: Icon?
     get() = if (UISettings.getInstance().showIconsInMenus) presentation.getClientProperty(ActionMenu.SECONDARY_ICON) else null
@@ -125,7 +125,9 @@ class ActionMenuItem internal constructor(action: AnAction,
     displayedMnemonicIndex = presentation.getDisplayedMnemonicIndex()
     updateIcon(presentation)
     description = presentation.description
-    isKeepMenuOpen = isKeepMenuOpen || presentation.isMultiChoice || actionRef.getAction() is KeepingPopupOpenAction
+    keepPopupOnPerform =
+      if (actionRef.getAction() is KeepingPopupOpenAction) KeepPopupOnPerform.Always
+      else presentation.keepPopupOnPerform
     if (screenMenuItemPeer != null) {
       screenMenuItemPeer.setLabel(text, accelerator)
       screenMenuItemPeer.setEnabled(isEnabled)

@@ -11,8 +11,12 @@ import java.util.function.Supplier;
 import static com.intellij.openapi.util.NlsActions.ActionText;
 
 /**
- * An action which has a selected state, and which toggles its selected state when performed.
+ * An action which has a "selected" state and which toggles it when performed.
  * Can be used to represent a menu item with a checkbox, or a toolbar button which keeps its pressed state.
+ * <p>
+ * Toggle actions are {@link KeepPopupOnPerform#IfPreferred} by default.
+ * Make it {@link KeepPopupOnPerform#IfRequested} if you want the toggle to keep its popup open only when
+ * the user explicitly requests that.
  */
 public abstract class ToggleAction extends AnAction implements Toggleable {
   public ToggleAction() {
@@ -42,25 +46,12 @@ public abstract class ToggleAction extends AnAction implements Toggleable {
     super(text, Presentation.NULL_STRING, icon);
   }
 
-  /**
-   * Set {@link Presentation#isMultiChoice()} flag on by default.
-   *
-   * @see #isSoftMultiChoice()
-   */
   @Override
   @NotNull
   Presentation createTemplatePresentation() {
     Presentation presentation = super.createTemplatePresentation();
-    presentation.setMultiChoice(true);
+    presentation.setKeepPopupOnPerform(KeepPopupOnPerform.IfPreferred);
     return presentation;
-  }
-
-  /**
-   * Tells whether multi-choice behavior is activated by specific modifier (aka "soft multi-choice")
-   * @see Presentation#isMultiChoice()
-   */
-  public boolean isSoftMultiChoice() {
-    return true;
   }
 
   @Override

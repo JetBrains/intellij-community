@@ -330,10 +330,12 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
 }
 
 open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification {
+  init {
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Always
+  }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
   override fun getBehavior(): ActionRemoteBehavior = ActionRemoteBehavior.FrontendThenBackend
-  override fun isSoftMultiChoice(): Boolean = false
 
   override fun isSelected(e: AnActionEvent): Boolean = RunConfigurationStartHistory.getInstance(e.project!!).state.allConfigurationsExpanded
 

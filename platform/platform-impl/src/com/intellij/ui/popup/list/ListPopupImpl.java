@@ -480,11 +480,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     Integer inlineButtonIndex = myList.getSelectedButtonIndex();
     if (inlineButtonIndex != null) {
-      InlineActionDescriptor actionDescriptor = myPopupInlineActionsSupport.getInlineAction(selectedValue, inlineButtonIndex, e);
-      if (actionDescriptor.getClosesPopup()) {
+      InlineActionDescriptor desc = myPopupInlineActionsSupport.getInlineAction(selectedValue, inlineButtonIndex, e);
+      if (!Utils.isKeepPopupOpen(desc.getKeepPopupOnPerform(), e)) {
         disposePopup(e);
       }
-      actionDescriptor.executeAction();
+      desc.executeAction();
       return true;
     }
 
@@ -506,7 +506,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (nextStep == PopupStep.FINAL_CHOICE &&
         parentValue instanceof PopupFactoryImpl.ActionItem item &&
-        Utils.isKeepPopupOpen(item.getAction(), item.isKeepPopupOpen(), e)) {
+        Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e)) {
       ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (actionPopupStep != null && actionPopupStep.isSelectable(item)) {
         actionPopupStep.updateStepItems(getList());
