@@ -839,7 +839,23 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
 
   @ApiStatus.Internal
   @RequiresEdt
-  public void markChangeResolvedWithAI(@NotNull TextMergeChange change) {
+  public void resolveChangeWithAiAnswer(@NotNull TextMergeChange change, @NotNull List<String> newContentLines) {
+    processChangesAndTransferData(Collections.singletonList(change), ThreeSide.BASE, (c) -> {
+      return replaceChangeWithAi(change, newContentLines);
+    });
+  }
+
+  private LineRange replaceChangeWithAi(@NotNull TextMergeChange change, @NotNull List<String> newContentLines) {
+    if (change.isResolved()) return null;
+
+    myModel.replaceChange(change.getIndex(), newContentLines);
+    markChangeResolvedWithAI(change);
+    return new LineRange(myModel.getLineStart(change.getIndex()), myModel.getLineEnd(change.getIndex()));
+  }
+
+  @ApiStatus.Internal
+  @RequiresEdt
+  private void markChangeResolvedWithAI(@NotNull TextMergeChange change) {
     myAggregator.wasResolvedByAi(change.getIndex());
     change.markChangeResolvedWithAI();
     markChangeResolved(change);
