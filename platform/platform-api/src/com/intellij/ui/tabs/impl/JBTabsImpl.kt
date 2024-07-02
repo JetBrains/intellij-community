@@ -2018,7 +2018,9 @@ open class JBTabsImpl internal constructor(
     val currentUnitsOffset = effectiveLayout.scrollOffset
     val updatedOffset = scrollBarModel.value
     effectiveLayout.scroll(updatedOffset - currentUnitsOffset)
-    relayout(forced = false, layoutNow = false)
+    SwingUtilities.invokeLater {
+      relayout(forced = false, layoutNow = false)
+    }
   }
 
   override fun doLayout() {
