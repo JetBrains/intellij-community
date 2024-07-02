@@ -756,7 +756,7 @@
           "brightness": 0.6
         }
       },
-      "FileHistory.Commit.selectedBranchBackground": "#1c2433",
+      "FileHistory.Commit.selectedBranchBackground": "#283044",
       "MarkerPopup": {
         "borderColor": "Gray4"
       },
