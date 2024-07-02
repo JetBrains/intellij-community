@@ -145,9 +145,9 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
   }
 
   @Override
-  public void notifyListeners() {
+  public void notifyLinesUpdate() {
     for (Listener listener : myListeners) {
-      listener.modelChanged();
+      listener.linesUpdated();
     }
   }
 
@@ -158,6 +158,9 @@ public final class StickyLinesModelImpl implements StickyLinesModel {
     }
     for (StickyLine line : getAllStickyLines()) {
       removeStickyLine(line);
+    }
+    for (Listener listener : myListeners) {
+      listener.linesRemoved();
     }
     if (project != null) {
       restartStickyLinesPass(project);

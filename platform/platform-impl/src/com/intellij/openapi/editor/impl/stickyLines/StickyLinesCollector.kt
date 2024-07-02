@@ -126,7 +126,7 @@ class StickyLinesCollector(private val project: Project, private val document: D
       ", old removed: ${outdatedLines.size}" +
       ", ${debugPsiFile(psiFile)}"
     }
-    stickyModel.notifyListeners()
+    stickyModel.notifyLinesUpdate()
   }
 
   private fun stickyLinesModel(psiFile: PsiFile): StickyLinesModel? {

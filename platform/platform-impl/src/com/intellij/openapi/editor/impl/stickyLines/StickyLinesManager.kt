@@ -102,8 +102,11 @@ internal class StickyLinesManager(
     }
   }
 
-  override fun modelChanged() {
+  override fun linesUpdated() {
     recalculateAndRepaintLines()
+  }
+
+  override fun linesRemoved() {
   }
 
   override fun dispose() {
