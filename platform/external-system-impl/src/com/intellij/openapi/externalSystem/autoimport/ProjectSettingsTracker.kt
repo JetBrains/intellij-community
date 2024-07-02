@@ -147,24 +147,27 @@ class ProjectSettingsTracker(
   }
 
   fun refreshChanges() {
-    submitSettingsFilesStatusUpdate(
-      operationName = "refreshChanges",
-      isRefreshVfs = true,
-      syncEvent = ::Revert,
+    submitSettingsFilesStatusUpdate("refreshChanges") {
+      isRefreshVfs = true
+      syncEvent = ::Revert
       changeEvent = ::externalInvalidate
-    ) {
-      projectTracker.scheduleChangeProcessing()
+      callback = { projectTracker.scheduleChangeProcessing() }
     }
   }
 
-  private fun submitSettingsFilesCollection(isInvalidateCache: Boolean = false, callback: (Set<String>) -> Unit) {
+  private fun submitSettingsFilesCollection(
+    isInvalidateCache: Boolean,
+    callback: (Set<String>) -> Unit,
+  ) {
     if (isInvalidateCache) {
       settingsAsyncSupplier.invalidate()
     }
     settingsAsyncSupplier.supply(parentDisposable, callback)
   }
 
-  private fun submitSettingsFilesRefresh(callback: (Set<String>) -> Unit) {
+  private fun submitSettingsFilesRefresh(
+    callback: (Set<String>) -> Unit,
+  ) {
     EdtAsyncSupplier.invokeOnEdt(::isAsyncChangesProcessing, parentDisposable) {
       val fileDocumentManager = FileDocumentManager.getInstance()
       fileDocumentManager.saveAllDocuments()
@@ -185,8 +188,8 @@ class ProjectSettingsTracker(
   private fun submitSettingsFilesCRCCalculation(
     operationName: String,
     settingsPaths: Set<String>,
-    isMergeSameCalls: Boolean = false,
-    callback: (Map<String, Long>) -> Unit
+    isMergeSameCalls: Boolean,
+    callback: (Map<String, Long>) -> Unit,
   ) {
     val builder = ReadAsyncSupplier.Builder { calculateSettingsFilesCRC(settingsPaths) }
       .shouldKeepTasksAsynchronous(::isAsyncChangesProcessing)
@@ -198,9 +201,9 @@ class ProjectSettingsTracker(
   }
 
   private fun submitSettingsFilesCollection(
-    isRefreshVfs: Boolean = false,
-    isInvalidateCache: Boolean = false,
-    callback: (Set<String>) -> Unit
+    isRefreshVfs: Boolean,
+    isInvalidateCache: Boolean,
+    callback: (Set<String>) -> Unit,
   ) {
     if (isRefreshVfs) {
       submitSettingsFilesRefresh(callback)
@@ -212,24 +215,31 @@ class ProjectSettingsTracker(
 
   private fun submitSettingsFilesStatusUpdate(
     operationName: String,
-    isMergeSameCalls: Boolean = false,
-    isReloadJustFinished: Boolean = false,
-    isInvalidateCache: Boolean = false,
-    isRefreshVfs: Boolean = false,
-    syncEvent: (Long) -> ProjectStatus.ProjectEvent,
-    changeEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
-    callback: () -> Unit
+    configureContext: SettingsFilesStatusUpdateContext.() -> Unit
   ) {
-    submitSettingsFilesCollection(isRefreshVfs, isInvalidateCache) { settingsPaths ->
+    val context = SettingsFilesStatusUpdateContext().apply(configureContext)
+    submitSettingsFilesCollection(context.isRefreshVfs, context.isInvalidateCache) { settingsPaths ->
       val operationStamp = currentTime()
-      submitSettingsFilesCRCCalculation(operationName, settingsPaths, isMergeSameCalls) { newSettingsFilesCRC ->
-        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, isReloadJustFinished)
-        val event = if (settingsFilesStatus.hasChanges()) changeEvent else syncEvent
-        if (event != null) {
-          projectStatus.update(event(operationStamp))
-        }
-        callback()
+      submitSettingsFilesCRCCalculation(operationName, settingsPaths, context.isMergeSameCalls) { newSettingsFilesCRC ->
+        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.isReloadJustFinished)
+        updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
+        context.callback?.invoke()
       }
+    }
+  }
+
+  private fun updateProjectStatus(
+    operationStamp: Long,
+    syncEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
+    changeEvent: ((Long) -> ProjectStatus.ProjectEvent)?,
+    settingsFilesStatus: SettingsFilesStatus,
+  ) {
+    val event = when (settingsFilesStatus.hasChanges()) {
+      true -> changeEvent
+      else -> syncEvent
+    }
+    if (event != null) {
+      projectStatus.update(event(operationStamp))
     }
   }
 
@@ -252,7 +262,17 @@ class ProjectSettingsTracker(
   @Serializable
   data class State(
     @JvmField val isDirty: Boolean = true,
-    @JvmField val settingsFiles: Map<String, Long> = emptyMap()
+    @JvmField val settingsFiles: Map<String, Long> = emptyMap(),
+  )
+
+  private class SettingsFilesStatusUpdateContext(
+    var isMergeSameCalls: Boolean = false,
+    var isReloadJustFinished: Boolean = false,
+    var isRefreshVfs: Boolean = false,
+    var isInvalidateCache: Boolean = false,
+    var syncEvent: ((Long) -> ProjectStatus.ProjectEvent)? = null,
+    var changeEvent: ((Long) -> ProjectStatus.ProjectEvent)? = null,
+    var callback: (() -> Unit)? = null,
   )
 
   private class SettingsFilesStatus(
@@ -301,25 +321,21 @@ class ProjectSettingsTracker(
     }
 
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
-      submitSettingsFilesStatusUpdate(
-        operationName = "onProjectReloadFinish",
-        isRefreshVfs = true,
-        isReloadJustFinished = true,
-        syncEvent = ::Synchronize,
+      submitSettingsFilesStatusUpdate("onProjectReloadFinish") {
+        isRefreshVfs = true
+        isReloadJustFinished = true
+        syncEvent = ::Synchronize
         changeEvent = ::externalInvalidate
-      ) {
-        applyChangesOperation.traceFinish()
+        callback = { applyChangesOperation.traceFinish() }
       }
     }
 
     override fun onSettingsFilesListChange() {
-      submitSettingsFilesStatusUpdate(
-        operationName = "onSettingsFilesListChange",
-        isInvalidateCache = true,
-        syncEvent = ::Revert,
-        changeEvent = ::externalModify,
-      ) {
-        projectTracker.scheduleChangeProcessing()
+      submitSettingsFilesStatusUpdate("onSettingsFilesListChange") {
+        isInvalidateCache = true
+        syncEvent = ::Revert
+        changeEvent = ::externalModify
+        callback = { projectTracker.scheduleChangeProcessing() }
       }
     }
   }
@@ -334,13 +350,10 @@ class ProjectSettingsTracker(
     }
 
     override fun apply() {
-      submitSettingsFilesStatusUpdate(
-        operationName = "ProjectSettingsListener.apply",
-        isMergeSameCalls = true,
-        syncEvent = ::Revert,
-        changeEvent = null
-      ) {
-        projectTracker.scheduleChangeProcessing()
+      submitSettingsFilesStatusUpdate("ProjectSettingsListener.apply") {
+        isMergeSameCalls = true
+        syncEvent = ::Revert
+        callback = { projectTracker.scheduleChangeProcessing() }
       }
     }
 
