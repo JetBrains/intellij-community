@@ -25,7 +25,19 @@ class GradleTaskModelBuilder : AbstractModelBuilderService() {
 
   override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): Any {
     val taskModel = DefaultGradleTaskModel()
-    taskModel.tasks = collectTasks(project)
+
+    // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
+    // This is tested by GradleTaskListIntegrationTest.testSyncWithGradleTaskListSkipped().
+    val skipTasks = try {
+      java.lang.String.valueOf(project.properties["idea.gradle.do.not.build.tasks"]).trim().toBoolean()
+    } catch (ignored: Throwable) {
+      false
+    }
+    if (skipTasks) {
+      taskModel.tasks = getTestTasks(project)
+    } else {
+      taskModel.tasks = collectTasks(project)
+    }
     return taskModel
   }
 
@@ -47,6 +59,21 @@ class GradleTaskModelBuilder : AbstractModelBuilderService() {
       externalTask.isInherited = false
       externalTask.type = getType(task)
       result[externalTask.name] = externalTask
+    }
+    return result
+  }
+
+  private fun getTestTasks(project: Project): Map<String, DefaultExternalTask> {
+    val result: MutableMap<String, DefaultExternalTask> = HashMap()
+    project.tasks.withType(AbstractTestTask::class.java).names.forEach { name: String ->
+      val externalTask = DefaultExternalTask()
+      externalTask.name = name
+      externalTask.isTest = true
+
+      val projectPath = project.path
+      val projectTaskPath = if (":" == projectPath) ":$name" else "$projectPath:$name"
+      externalTask.qName = projectTaskPath
+      result[name] = externalTask
     }
     return result
   }

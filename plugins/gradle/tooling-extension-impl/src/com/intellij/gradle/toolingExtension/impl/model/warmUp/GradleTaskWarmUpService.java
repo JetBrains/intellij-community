@@ -25,14 +25,24 @@ public class GradleTaskWarmUpService extends AbstractModelBuilderService {
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    GradleResultUtil.runOrRetryOnce(() -> {
-      if (TASKS_REFRESH_REQUIRED) {
-        refreshProjectTasks(project);
-      }
-    });
-    GradleResultUtil.runOrRetryOnce(() -> {
-      project.getTasks().forEach(__ -> {});
-    });
+    // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
+    // This is tested by TaskConfigurationNotTriggeredDuringSyncTest.testTasksAreNotConfiguredDuringSync().
+    boolean skipTasks;
+    try {
+      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim());
+    } catch (Throwable ignored) {
+      skipTasks = false;
+    }
+    if (!skipTasks) {
+      GradleResultUtil.runOrRetryOnce(() -> {
+        if (TASKS_REFRESH_REQUIRED) {
+          refreshProjectTasks(project);
+        }
+      });
+      GradleResultUtil.runOrRetryOnce(() -> {
+        project.getTasks().forEach(__ -> {});
+      });
+    }
     return null;
   }
 
