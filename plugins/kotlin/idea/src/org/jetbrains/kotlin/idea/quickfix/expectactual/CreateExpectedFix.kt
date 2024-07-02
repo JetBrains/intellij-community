@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
+import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeActual
 import org.jetbrains.kotlin.idea.core.overrideImplement.makeNotActual
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -169,7 +170,7 @@ class CreateExpectedClassFix(
         repairActualModifiers(originalElements + klass, resultDeclarations.toSet())
     }
 
-    generateClassOrObject(project, true, element, checker)
+    ExpectActualGenerationUtils.generateClassOrObject(project, this@block, true, element, checker)
 })
 
 private fun showUnknownTypeInDeclarationDialog(
@@ -296,7 +297,7 @@ class CreateExpectedCallableMemberFix(
     val descriptor = element.toDescriptor() as? CallableMemberDescriptor
     checker.existingTypeNames = targetExpectedClass?.getSuperNames()?.toSet().orEmpty()
     descriptor?.let {
-        generateCallable(
+        ExpectActualGenerationUtils.generateCallable(
             project,
             true,
             element,
