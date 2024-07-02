@@ -19,6 +19,7 @@ import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.serialization.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.runBlocking
@@ -30,6 +31,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading.*
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationViaWorkspaceModel
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 
 internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorkspaceModel {
   override fun loadModel(projectPath: Path, workspaceStorageCachePath: Path?, externalConfigurationDirectory: Path?, optionsPath: Path?, 
@@ -39,7 +41,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
     val pathVariables = optionsPath?.let { JpsGlobalSettingsLoading.computeAllPathVariables(it) } ?: emptyMap()
     val globalMacroExpander = JpsMacroExpander(pathVariables)
     val globalStorageFromCache = globalWorkspaceStoragePath?.let {
-      loadFromCacheFile(globalWorkspaceStoragePath, virtualFileUrlManager)
+      loadFromCacheFile(globalWorkspaceStoragePath, virtualFileUrlManager, ApplicationLevelUrlRelativizer(insideIdeProcess = false))
     }
     val globalStorage = globalStorageFromCache ?: loadGlobalStorage(optionsPath, virtualFileUrlManager, errorReporter, globalMacroExpander)
 
@@ -67,7 +69,8 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
     val configLocation = toConfigLocation(projectPath, virtualFileUrlManager)
     val contentReader = ProjectDirectJpsFileContentReader(configLocation.baseDirectoryUrl.toPath(), externalConfigurationDirectory, pathVariables)
     val storageFromCache = workspaceStorageCachePath?.let { 
-      loadFromCacheFile(workspaceStorageCachePath, virtualFileUrlManager)
+      val urlRelativizer = JpsProjectUrlRelativizer(configLocation.baseDirectoryUrl.toPath().invariantSeparatorsPathString, insideIdeProcess = false)
+      loadFromCacheFile(workspaceStorageCachePath, virtualFileUrlManager, urlRelativizer)
     }
     val projectStorage = storageFromCache ?: loadProjectStorage(virtualFileUrlManager, errorReporter, configLocation, contentReader, loadUnloadedModules)
     val additionalData = loadAdditionalData(configLocation, contentReader.projectComponentLoader)
@@ -78,8 +81,7 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
     return model
   }
 
-  private fun loadFromCacheFile(cachePath: Path, virtualFileUrlManager: VirtualFileUrlManager): EntityStorage? {
-    val urlRelativizer = null //todo
+  private fun loadFromCacheFile(cachePath: Path, virtualFileUrlManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer): EntityStorage? {
     val ijBuildVersion = "243.SNAPSHOT" //todo
     val serializer = EntityStorageSerializerImpl(JpsProcessEntityTypeResolver(), virtualFileUrlManager, urlRelativizer, ijBuildVersion)
     val storage = serializer.deserializeCache(cachePath).onFailure { logger.warn("Failed to load cache from $cachePath", it) }.getOrNull()

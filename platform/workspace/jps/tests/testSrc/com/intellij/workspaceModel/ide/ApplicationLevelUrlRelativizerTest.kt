@@ -18,7 +18,7 @@ import kotlin.test.assertEquals
 class ApplicationLevelUrlRelativizerTest {
 
   val disposableRule = DisposableRule()
-  private val urlRelativizer = ApplicationLevelUrlRelativizer()
+  private val urlRelativizer = ApplicationLevelUrlRelativizer(insideIdeProcess = true)
 
   @ParameterizedTest
   @MethodSource("paths to test")

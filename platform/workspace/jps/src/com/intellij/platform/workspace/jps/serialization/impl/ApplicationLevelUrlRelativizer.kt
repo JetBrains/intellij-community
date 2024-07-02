@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.platform.workspace.storage.impl.url.UrlRelativizerImpl
@@ -12,8 +12,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil
  * This class extends the UrlRelativizer class and utilizes path macros obtained
  * from the [org.jetbrains.jps.model.serialization.PathMacroUtil.getGlobalSystemMacros()].
  */
-open class ApplicationLevelUrlRelativizer : UrlRelativizerImpl(
-  PathMacroUtil.getGlobalSystemMacros().entries.map {
+open class ApplicationLevelUrlRelativizer(insideIdeProcess: Boolean) : UrlRelativizerImpl(
+  PathMacroUtil.getGlobalSystemMacros(insideIdeProcess).entries.map {
     Pair(it.key, it.value)
   }
 )

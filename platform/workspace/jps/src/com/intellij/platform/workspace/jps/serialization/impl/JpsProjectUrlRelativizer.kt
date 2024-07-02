@@ -20,7 +20,7 @@ import java.io.File
  * @param projectBaseDirPath path to the base directory of the project for which the base paths are calculated.
  */
 @ApiStatus.Internal
-class JpsProjectUrlRelativizer(private val projectBaseDirPath: String?) : ApplicationLevelUrlRelativizer() {
+class JpsProjectUrlRelativizer(private val projectBaseDirPath: String?, insideIdeProcess: Boolean) : ApplicationLevelUrlRelativizer(insideIdeProcess) {
 
   init {
     getBasePathsToAdd().forEach { pair ->

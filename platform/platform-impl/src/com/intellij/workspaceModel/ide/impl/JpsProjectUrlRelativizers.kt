@@ -7,4 +7,4 @@ import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun createJpsProjectUrlRelativizer(project: Project): UrlRelativizer = JpsProjectUrlRelativizer(project.basePath)
+fun createJpsProjectUrlRelativizer(project: Project): UrlRelativizer = JpsProjectUrlRelativizer(project.basePath, insideIdeProcess = true)
