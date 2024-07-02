@@ -42,7 +42,7 @@ private fun loadDetails(project: Project, data: VcsLogData, selection: VcsLogCom
   catch (e: VcsException) {
     val error = GitBundle.message("rebase.log.action.loading.commit.message.failed.message", selection.size)
     LOG.warn(error, e)
-    val notification = VcsNotifier.STANDARD_NOTIFICATION
+    val notification = VcsNotifier.standardNotification()
       .createNotification(error, NotificationType.ERROR)
       .setDisplayId(GitNotificationIdsHolder.COULD_NOT_LOAD_CHANGES_OF_COMMIT_LOG)
     VcsNotifier.getInstance(project).notify(notification)

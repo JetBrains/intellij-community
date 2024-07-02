@@ -25,7 +25,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.GitNotificationIdsHolder.TAG_REMOTE_DELETION_ERROR;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -117,7 +116,7 @@ class GitDeleteRemoteTagOperation extends GitBranchOperation {
   }
 
   private void notifySuccessWithEmptyTitle(@NotNull @NlsContexts.NotificationContent String message) {
-    Notification notification = STANDARD_NOTIFICATION.createNotification(message, NotificationType.INFORMATION);
+    Notification notification = VcsNotifier.standardNotification().createNotification(message, NotificationType.INFORMATION);
     notification.setDisplayId(GitNotificationIdsHolder.TAG_REMOTE_DELETION_SUCCESS);
     VcsNotifier.getInstance(myProject).notify(notification);
   }

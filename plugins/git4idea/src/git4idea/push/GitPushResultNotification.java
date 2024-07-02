@@ -116,7 +116,7 @@ final class GitPushResultNotification extends Notification {
     }
 
     NotificationGroup group = type == NotificationType.INFORMATION ?
-                              VcsNotifier.STANDARD_NOTIFICATION :
+                              VcsNotifier.standardNotification() :
                               VcsNotifier.importantNotification();
 
     GitPushResultNotification notification = new GitPushResultNotification(group.getDisplayId(), title, description, type);

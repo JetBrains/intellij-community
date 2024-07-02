@@ -201,13 +201,13 @@ abstract class GitMergeAction extends GitRepositoryAction {
         if (notificationData != null) {
           String title = getTitleForUpdateNotification(notificationData.getUpdatedFilesCount(), notificationData.getReceivedCommitsCount());
           String content = getBodyForUpdateNotification(notificationData.getFilteredCommitsCount());
-          notification = VcsNotifier.STANDARD_NOTIFICATION
+          notification = VcsNotifier.standardNotification()
             .createNotification(title, content, INFORMATION)
             .setDisplayId(GitNotificationIdsHolder.FILES_UPDATED_AFTER_MERGE)
             .addAction(NotificationAction.createSimple(GitBundle.message("action.NotificationAction.GitMergeAction.text.view.commits"), notificationData.getViewCommitAction()));
         }
         else {
-          notification = VcsNotifier.STANDARD_NOTIFICATION
+          notification = VcsNotifier.standardNotification()
             .createNotification(VcsBundle.message("message.text.all.files.are.up.to.date"), INFORMATION)
             .setDisplayId(GitNotificationIdsHolder.FILES_UP_TO_DATE);
         }
