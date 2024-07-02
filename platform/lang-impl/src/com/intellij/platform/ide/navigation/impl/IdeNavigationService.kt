@@ -144,7 +144,6 @@ private suspend fun navigateToSource(
         request = request,
         options = options,
         project = project,
-        openMode = FileEditorManagerImpl.OpenMode.DEFAULT,
         dataContext = dataContext,
       )
       return true
@@ -188,7 +187,6 @@ private suspend fun navigateNonSource(project: Project, request: NavigationReque
 
 private suspend fun navigateToSource(
   options: NavigationOptions.Impl,
-  openMode: FileEditorManagerImpl.OpenMode,
   request: SourceNavigationRequest,
   project: Project,
   dataContext: DataContext?,
@@ -215,7 +213,7 @@ private suspend fun navigateToSource(
         }
       }
 
-      if (openFile(request = request, project = project, options = options, openMode = openMode)) {
+      if (openFile(request = request, project = project, options = options)) {
         return
       }
     }
@@ -226,7 +224,6 @@ private suspend fun navigateToSource(
 
 private suspend fun openFile(
   options: NavigationOptions.Impl,
-  openMode: FileEditorManagerImpl.OpenMode,
   project: Project,
   request: SourceNavigationRequest,
 ): Boolean {
@@ -247,7 +244,7 @@ private suspend fun openFile(
     options = FileEditorOpenOptions(
       reuseOpen = true,
       requestFocus = options.requestFocus,
-      openMode = openMode,
+      openMode = if (options.openInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
     ),
   ).allEditors
   if (fileEditors.isEmpty()) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
-import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.ide.actions.GotoClassPresentationUpdater;
 import com.intellij.ide.structureView.StructureView;
@@ -23,11 +22,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.backend.navigation.NavigationRequest;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.JavaCoroutines;
+import kotlin.coroutines.Continuation;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,38 +114,17 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
   }
 
   @Override
-  protected @Nullable Navigatable createExtendedNavigatable(@NotNull PsiElement psi, @NotNull String searchText, int modifiers) {
-    Navigatable result = super.createExtendedNavigatable(psi, searchText, modifiers);
-    if (result != null) {
-      return result;
-    }
-
-    VirtualFile file = PsiUtilCore.getVirtualFile(psi);
-    String memberName = getMemberName(searchText);
-    if (file != null && memberName != null) {
-      Navigatable delegate = findMember(memberName, searchText, psi, file);
-      if (delegate != null) {
-        return new Navigatable() {
-          @Override
-          public void navigate(boolean requestFocus) {
-            NavigationUtil.activateFileWithPsiElement(psi, false);
-            delegate.navigate(true);
-          }
-
-          @Override
-          public boolean canNavigate() {
-            return delegate.canNavigate();
-          }
-
-          @Override
-          public boolean canNavigateToSource() {
-            return delegate.canNavigateToSource();
-          }
-        };
-      }
-    }
-
-    return null;
+  protected @Nullable Object createSourceNavigationRequest(
+    @NotNull PsiElement element,
+    @NotNull VirtualFile file,
+    @NotNull String searchText,
+    @NotNull Continuation<? super @Nullable NavigationRequest> $completion
+  ) {
+    return JavaCoroutines.suspendJava(continuation -> {
+      String memberName = getMemberName(searchText);
+      Navigatable delegate = memberName == null ? null : findMember(memberName, searchText, element, file);
+      continuation.resume(delegate == null ? null : delegate.navigationRequest());
+    }, $completion);
   }
 
   public static @Nullable String pathToAnonymousClass(Matcher matcher) {

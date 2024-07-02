@@ -725,6 +725,7 @@ open class EditorsSplitters internal constructor(
   }
 
   @JvmOverloads
+  @RequiresEdt
   fun openInRightSplit(file: VirtualFile, requestFocus: Boolean = true): EditorWindow? {
     val window = currentWindow ?: return null
     val parent = window.component.parent

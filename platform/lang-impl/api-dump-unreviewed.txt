@@ -13902,7 +13902,6 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - p:myScopeDescriptor:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - p:<init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - psf:applyPatternFilter(java.lang.String,java.util.regex.Pattern):java.lang.String
-- p:createExtendedNavigatable(com.intellij.psi.PsiElement,java.lang.String,I):com.intellij.pom.Navigatable
 - pa:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - p:createScopes():java.util.List
 - pf:doGetActions(com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter,com.intellij.ide.util.ElementsChooser$StatisticsCollector,java.lang.Runnable):java.util.List
@@ -13982,8 +13981,8 @@ c:com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor
 - com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewProvider
 - <init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
-- p:createExtendedNavigatable(com.intellij.psi.PsiElement,java.lang.String,I):com.intellij.pom.Navigatable
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
+- p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - filterControlSymbols(java.lang.String):java.lang.String
 - s:findMember(java.lang.String,java.lang.String,com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile):com.intellij.pom.Navigatable
 - getActions(java.lang.Runnable):java.util.List
@@ -14031,6 +14030,7 @@ c:com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
 - sf:createFileTypeFilter(com.intellij.openapi.project.Project):com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
 - p:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
+- p:createSourceNavigationRequest(com.intellij.psi.PsiElement,com.intellij.openapi.vfs.VirtualFile,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 - getActions(java.lang.Runnable):java.util.List
 - getDataForItem(java.lang.Object,java.lang.String):java.lang.Object
 - getElementPriority(java.lang.Object,java.lang.String):I

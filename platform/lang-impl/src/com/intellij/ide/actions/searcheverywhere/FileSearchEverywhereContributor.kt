@@ -14,13 +14,18 @@ import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.backend.navigation.NavigationRequests
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.ui.DirtyUI
@@ -98,6 +103,13 @@ open class FileSearchEverywhereContributor(event: AnActionEvent) : AbstractGotoS
     }
 
     return consumer.process(FoundItemDescriptor(element, degree))
+  }
+
+  override suspend fun createSourceNavigationRequest(element: PsiElement, file: VirtualFile, searchText: String): NavigationRequest? {
+    val navigationRequests = serviceAsync<NavigationRequests>()
+    return readAction {
+      navigationRequests.sourceNavigationRequest(project = project, file = file, offset = -1, elementRange = null)
+    }
   }
 
   final override suspend fun triggerLineOrColumnFeatureUsed(extendedNavigatable: Navigatable) {

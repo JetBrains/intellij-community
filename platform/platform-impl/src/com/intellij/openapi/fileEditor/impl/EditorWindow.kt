@@ -472,6 +472,7 @@ class EditorWindow internal constructor(
   }
 
   @JvmOverloads
+  @RequiresEdt
   fun split(
     orientation: Int,
     forceSplit: Boolean,
