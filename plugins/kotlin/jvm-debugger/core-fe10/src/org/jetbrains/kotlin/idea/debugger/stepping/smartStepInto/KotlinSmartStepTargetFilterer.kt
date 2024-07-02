@@ -55,12 +55,10 @@ class KotlinSmartStepTargetFilterer(
     }
 
     private fun KotlinMethodSmartStepTarget.shouldBeVisited(owner: String, name: String, signature: String, currentCount: Int): Boolean {
-        val actualName = name.trimIfMangledInBytecode(methodInfo.isNameMangledInBytecode)
-        // Inline class constructor argument is injected as the first
-        // argument in inline class' functions. This doesn't correspond
-        // with the PSI, so we delete the first argument from the signature
-        val updatedSignature = if (methodInfo.isInlineClassMember) signature.getSignatureWithoutFirstArgument() else signature
-        return matches(owner, actualName, updatedSignature, currentCount)
+        val (updatedOwner, updatedName, updatedSignature) = BytecodeSignature(owner, name, signature)
+            .handleMangling(methodInfo)
+            .handleValueClassMethods(methodInfo)
+        return matches(updatedOwner, updatedName, updatedSignature, currentCount)
     }
 
     private fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
@@ -101,9 +99,32 @@ class KotlinSmartStepTargetFilterer(
         }
 }
 
-private fun String.getSignatureWithoutFirstArgument(): String {
-    val type = Type.getType(this)
-    val arguments = type.argumentTypes.drop(1).joinToString("") { it.descriptor }
+private data class BytecodeSignature(val owner: String, val name: String, val signature: String)
+
+private fun BytecodeSignature.handleMangling(methodInfo: CallableMemberInfo): BytecodeSignature {
+    if (!methodInfo.isNameMangledInBytecode) return this
+    return copy(name = name.trimIfMangledInBytecode(true))
+}
+
+/**
+ * Inline class constructor argument is injected as the first
+ * argument in inline class' functions. This doesn't correspond
+ * with the PSI, so we delete the first argument from the signature
+ */
+private fun BytecodeSignature.handleValueClassMethods(methodInfo: CallableMemberInfo): BytecodeSignature {
+    if (!methodInfo.isInlineClassMember) return this
+    return copy(signature = buildSignature(signature, 1, fromStart = true))
+}
+
+private fun buildSignature(
+    originalSignature: String,
+    dropCount: Int,
+    fromStart: Boolean,
+): String {
+    val type = Type.getType(originalSignature)
+    val argumentTypes = type.argumentTypes
+    val remainingArgumentTypes = if (fromStart) argumentTypes.drop(dropCount) else argumentTypes.dropLast(dropCount)
+    val arguments = remainingArgumentTypes.joinToString("") { it.descriptor }
     return "($arguments)${type.returnType.descriptor}"
 }
 
