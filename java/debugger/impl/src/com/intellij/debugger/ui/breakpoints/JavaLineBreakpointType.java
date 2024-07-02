@@ -631,12 +631,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public static TextRange getTextRangeWithoutTrailingComments(@NotNull PsiElement psiElement) {
-    PsiElement lastChild = psiElement.getLastChild();
-    if (lastChild == null || !isWhiteSpaceOrComment(lastChild)) {
-      return psiElement.getTextRange();
-    }
-    while (isWhiteSpaceOrComment(lastChild)) {
-      lastChild = lastChild.getPrevSibling();
+    @NotNull PsiElement lastChild = psiElement;
+    @Nullable PsiElement prevChild = psiElement.getLastChild();
+    while (prevChild != null && isWhiteSpaceOrComment(prevChild)) {
+      lastChild = prevChild;
+      prevChild = prevChild.getPrevSibling();
     }
     return new TextRange(psiElement.getTextRange().getStartOffset(), lastChild.getTextRange().getEndOffset());
   }
