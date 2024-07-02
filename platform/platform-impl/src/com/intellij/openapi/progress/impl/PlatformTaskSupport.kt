@@ -77,8 +77,8 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     val taskJob = coroutineContext.job
     val pipe = cs.createProgressPipe()
     val showIndicatorJob = cs.showIndicator(project, taskJob, taskInfo(title, cancellation), pipe.progressUpdates())
-    progressStarted(title, cancellation, pipe.progressUpdates())
     try {
+      progressStarted(title, cancellation, pipe.progressUpdates())
       pipe.collectProgressUpdates(action)
     }
     finally {
