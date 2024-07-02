@@ -687,7 +687,6 @@ com.intellij.openapi.roots.ModuleRootModel
 - a:orderEntries():com.intellij.openapi.roots.OrderEnumerator
 - a:processOrder(com.intellij.openapi.roots.RootPolicy,java.lang.Object):java.lang.Object
 f:com.intellij.openapi.roots.ModuleRootModificationUtil
-- <init>():V
 - s:addContentRoot(com.intellij.openapi.module.Module,com.intellij.openapi.vfs.VirtualFile):V
 - s:addContentRoot(com.intellij.openapi.module.Module,java.lang.String):V
 - s:addDependency(com.intellij.openapi.module.Module,com.intellij.openapi.module.Module):V
