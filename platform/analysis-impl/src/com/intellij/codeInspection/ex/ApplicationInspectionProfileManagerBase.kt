@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeInspection.InspectionProfile
@@ -137,7 +137,8 @@ open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable cons
     private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledInspectionProfile")
 
     @JvmStatic
-    fun getInstanceBase(): ApplicationInspectionProfileManagerBase =
-      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManagerBase
+    fun getInstanceBase(): ApplicationInspectionProfileManagerBase {
+      return InspectionProfileManager.getInstance() as ApplicationInspectionProfileManagerBase
+    }
   }
 }

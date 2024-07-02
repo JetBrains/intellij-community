@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
-import com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 import com.intellij.configurationStore.*
 import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
 import com.intellij.diagnostic.VMOptions
@@ -34,6 +33,7 @@ import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.ExperimentalUI
@@ -183,7 +183,7 @@ class JbSettingsImporter(private val configDirPath: Path,
 
     // load code style scheme manager
     CodeStyleSchemes.getInstance()
-    ApplicationInspectionProfileManager.getInstanceImpl()
+    InspectionProfileManager.getInstance()
     val schemeManagerFactory = SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase
     schemeManagerFactory.process {
       progressIndicator.checkCanceled()
@@ -321,7 +321,7 @@ class JbSettingsImporter(private val configDirPath: Path,
     val retval = ArrayList<String>()
     for (entry in dir.listDirectoryEntries()) {
       if (entry.isRegularFile()) {
-        if (prefix.isNullOrEmpty()) {
+        if (prefix.isEmpty()) {
           retval.add(entry.name)
         }
         else {
