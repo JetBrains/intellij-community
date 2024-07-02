@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.core.filter
 import com.intellij.debugger.engine.SyntheticTypeComponentProvider
 import com.sun.jdi.*
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_IMPL_NAME_SUFFIX
+import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
 import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
 import org.jetbrains.kotlin.idea.debugger.isGeneratedErasedLambdaMethod
@@ -13,6 +14,7 @@ import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.org.objectweb.asm.Opcodes
 import kotlin.jvm.internal.FunctionReference
 import kotlin.jvm.internal.PropertyReference
+import com.android.tools.smali.dexlib2.Opcode
 
 class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
     override fun isSynthetic(typeComponent: TypeComponent?): Boolean {
@@ -91,8 +93,35 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
         return hasInterfaceWithImplementation(this)
     }
 
-    // Check that method contains only load and invokeStatic instructions. Note that if after load goes ldc instruction it could be checkParametersNotNull method invocation
     private fun hasOnlyInvokeStatic(m: Method): Boolean {
+        if (DexDebugFacility.isDex(m.virtualMachine())) {
+            return hasOnlyInvokeStaticART(m)
+        }
+        return hasOnlyInvokeStaticJVM(m)
+    }
+
+    private fun hasOnlyInvokeStaticART(m: Method): Boolean {
+        val instructions = m.bytecodes()
+        var i = 0
+        if (instructions.getOrNull(i) !in INVOKE_STATIC_ART_OPCODES) {
+            return false
+        }
+        // All INVOKE_STATIC* opcodes have the same format
+        i += Opcode.INVOKE_STATIC.format.size
+
+        when (instructions.getOrNull(i)) {
+            in RETURN_ART_OPCODES -> return true
+            in MOVE_RESULT_ART_OPCODES -> {
+                // All MOVE_RESULT* opcodes have the same format
+                i += Opcode.MOVE_RESULT.format.size
+            }
+            else -> return false
+        }
+        return instructions.getOrNull(i) in RETURN_ART_OPCODES
+    }
+
+    // Check that method contains only load and invokeStatic instructions. Note that if after load goes ldc instruction it could be checkParametersNotNull method invocation
+    private fun hasOnlyInvokeStaticJVM(m: Method): Boolean {
         val instructions = m.bytecodes()
         var i = 0
         var isALoad0BeforeStaticCall = false
@@ -139,7 +168,23 @@ class KotlinSyntheticTypeComponentProvider : SyntheticTypeComponentProvider {
     }
 }
 
+private operator fun List<Opcode>.contains(instruction: Byte?): Boolean {
+    if (instruction == null) return false
+    for (opcode in this) {
+        // The INVOKE_STATIC*, RETURN* and MOVE_RESULT* opcodes have the same
+        // value in all apis.
+        val arbitraryApiNumber = 0
+        if (opcode.apiToValueMap.get(arbitraryApiNumber)?.toByte() == instruction) {
+            return true
+        }
+    }
+    return false
+}
+
 private val LOAD_INSTRUCTIONS_WITH_INDEX = Opcodes.ILOAD.toByte()..Opcodes.ALOAD.toByte()
 private val LOAD_INSTRUCTIONS = (Opcodes.ALOAD + 1).toByte()..(Opcodes.IALOAD - 1).toByte()
 private val RETURN_INSTRUCTIONS = Opcodes.IRETURN.toByte()..Opcodes.RETURN.toByte()
 private val ICONST_INSTRUCTIONS = Opcodes.ICONST_M1..Opcodes.ICONST_5
+private val INVOKE_STATIC_ART_OPCODES = listOf(Opcode.INVOKE_STATIC, Opcode.INVOKE_STATIC_RANGE)
+private val RETURN_ART_OPCODES = listOf(Opcode.RETURN_VOID, Opcode.RETURN_OBJECT, Opcode.RETURN_WIDE, Opcode.RETURN)
+private val MOVE_RESULT_ART_OPCODES = listOf(Opcode.MOVE_RESULT, Opcode.MOVE_RESULT_WIDE, Opcode.MOVE_RESULT_OBJECT)
