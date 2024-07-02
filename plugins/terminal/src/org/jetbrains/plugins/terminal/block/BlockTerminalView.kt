@@ -248,8 +248,10 @@ internal class BlockTerminalView(
   }
 
   private fun updateTerminalSize() {
-    val newSize = getTerminalSize() ?: return
-    controller.resize(newSize)
+    if (getTerminalSizeInitializedFuture().isDone) {
+      val newSize = getTerminalSize() ?: return
+      controller.resize(newSize)
+    }
   }
 
   override fun getTerminalSize(): TermSize? {
