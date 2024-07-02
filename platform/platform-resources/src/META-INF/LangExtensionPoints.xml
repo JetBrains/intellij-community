@@ -259,7 +259,6 @@
     <extensionPoint name="programRunner" interface="com.intellij.execution.runners.ProgramRunner" dynamic="true"/>
     <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner" dynamic="true"/>
     <extensionPoint name="executor" interface="com.intellij.execution.Executor" dynamic="true"/>
-    <extensionPoint name="configurationExtraActionProvider" interface="com.intellij.execution.actions.ConfigurationExtraActionProvider" dynamic="true"/>
     <extensionPoint name="runToolbarProcess" interface="com.intellij.execution.runToolbar.RunToolbarProcess" dynamic="true"/>
     <extensionPoint name="executionTargetProvider" interface="com.intellij.execution.ExecutionTargetProvider" dynamic="true"/>
     <extensionPoint name="stepsBeforeRunProvider" interface="com.intellij.execution.BeforeRunTaskProvider" area="IDEA_PROJECT" dynamic="true"/>
