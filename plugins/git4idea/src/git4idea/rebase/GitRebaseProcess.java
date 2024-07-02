@@ -53,7 +53,6 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.*;
@@ -393,7 +392,7 @@ public class GitRebaseProcess {
 
   private void notifyNotAllConflictsResolved(@NotNull GitRepository conflictingRepository) {
     String description = GitRebaseUtils.mentionLocalChangesRemainingInStash(mySaver);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+    Notification notification = VcsNotifier.importantNotification()
       .createNotification(GitBundle.message("rebase.notification.conflict.title"), description, NotificationType.WARNING)
       .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_CONFLICTS)
       .addAction(createResolveNotificationAction(conflictingRepository))
@@ -416,7 +415,7 @@ public class GitRebaseProcess {
   }
 
   private void showStoppedForEditingMessage() {
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+    Notification notification = VcsNotifier.importantNotification()
       .createNotification(GitBundle.message("rebase.notification.editing.title"), "", NotificationType.INFORMATION)
       .setDisplayId(GitNotificationIdsHolder.REBASE_STOPPED_ON_EDITING)
       .addAction(CONTINUE_ACTION)
@@ -437,7 +436,7 @@ public class GitRebaseProcess {
     String title = myRebaseSpec.getOngoingRebase() == null
                    ? GitBundle.message("rebase.notification.failed.rebase.title")
                    : GitBundle.message("rebase.notification.failed.continue.title");
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+    Notification notification = VcsNotifier.importantNotification()
       .createNotification(title, descriptionBuilder.toString(), NotificationType.ERROR)
       .setDisplayId(GitNotificationIdsHolder.REBASE_FAILED)
       .addAction(RETRY_ACTION);

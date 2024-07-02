@@ -93,7 +93,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                             final @NotNull Collection<? extends GitRepository> repositories) {
     String title = unmergedFilesErrorTitle(operationName);
     String description = unmergedFilesErrorNotificationDescription(operationName);
-    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, description, NotificationType.ERROR)
+    VcsNotifier.importantNotification().createNotification(title, description, NotificationType.ERROR)
       .setDisplayId(UNRESOLVED_CONFLICTS)
       .addAction(NotificationAction.createSimple(
         GitBundle.messagePointer("branch.ui.handler.unmerged.files.error.resolve.conflicts.action.text"), () -> {
