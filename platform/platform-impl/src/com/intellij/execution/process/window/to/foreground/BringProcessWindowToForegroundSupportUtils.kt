@@ -1,9 +1,6 @@
 package com.intellij.execution.process.window.to.foreground
 
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.*
 import com.jetbrains.rd.util.getLogger
 import com.jetbrains.rd.util.trace
 import org.jetbrains.annotations.ApiStatus
@@ -15,7 +12,7 @@ private val terminalPIDKey = Key<Int?>("ProcessWindowUtils_TerminalPIDKey")
 private val terminalBroughtSuccessfullyKey = Key<Boolean>("ProcessWindowUtils_TerminalBroughtSuccessfullyKey")
 
 @ApiStatus.Internal
-fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderBase) : Boolean {
+fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderEx) : Boolean {
   if (!this.isApplicable())
     return false
 
@@ -30,7 +27,7 @@ fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHo
     .also { logger.trace { "Bringing cmd process to foreground : ${if (it) "succeeded" else "failed"}" } }
 }
 
-private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHolder: UserDataHolderBase, pid: Int): Boolean {
+private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHolder: UserDataHolderEx, pid: Int): Boolean {
   if (dataHolder.getUserData(terminalBroughtSuccessfullyKey) == false)
     return false
 
@@ -71,7 +68,7 @@ private fun tryFindParentProcess(pid: Int, parentProcessesWeLookingFor: List<Str
   return null
 }
 
-private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInForeground(dataHolder: UserDataHolderBase, pid: Int): Boolean {
+private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInForeground(dataHolder: UserDataHolder, pid: Int): Boolean {
   if (tryFindParentProcess(pid, listOf("cmd.exe")) == null) {
     logger.trace { "The process hasn't been launched under cmd.exe" }
     return false
