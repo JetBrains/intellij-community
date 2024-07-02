@@ -24,11 +24,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.*
 import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.MethodSignatureUtil
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.isAncestor
-import com.intellij.psi.util.parentOfType
+import com.intellij.psi.util.*
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.siyeh.ig.psiutils.TypeUtils
@@ -37,12 +33,9 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaReceiverParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -1802,19 +1795,24 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun processThisExpression(expr: KtThisExpression) {
         val exprType = expr.getKotlinType()
-        val descriptor =
-            ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol() as? KaReceiverParameterSymbol
-        if (descriptor != null && exprType != null) {
-            val function = descriptor.psi as? KtFunctionLiteral
-            val declType = descriptor.type
-            val varDesc = if (function != null) {
+        val symbol = ((expr.instanceReference as? KtNameReferenceExpression)?.reference as? KtReference)?.resolveToSymbol()
+        val varDesc: VariableDescriptor
+        if (symbol is KaReceiverParameterSymbol && exprType != null) {
+            val function = symbol.psi as? KtFunctionLiteral
+            val declType = symbol.type
+            varDesc = if (function != null) {
                 KtLambdaThisVariableDescriptor(function, declType.toDfType())
             } else {
                 KtThisDescriptor(declType.toDfType())
             }
             addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
             addImplicitConversion(declType, exprType)
-        } else {
+        } 
+        else if (symbol is KaClassSymbol && exprType != null) {
+            varDesc = KtThisDescriptor(TypeConstraints.exactClass(symbol.classDef()).asDfType())
+            addInstruction(JvmPushInstruction(factory.varFactory.createVariableValue(varDesc), KotlinExpressionAnchor(expr)))
+        }
+        else {
             addInstruction(PushValueInstruction(exprType.toDfType(), KotlinExpressionAnchor(expr)))
         }
     }

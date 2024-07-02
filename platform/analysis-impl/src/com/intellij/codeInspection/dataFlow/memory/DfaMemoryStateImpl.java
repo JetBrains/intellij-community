@@ -206,9 +206,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfType.BOTTOM) return; // likely uncompilable code or bad CFG
-    if (value instanceof DfaVariableValue && !ControlFlow.isTempVariable(var) &&
-        !ControlFlow.isTempVariable((DfaVariableValue)value) &&
-        (var.getQualifier() == null || !ControlFlow.isTempVariable(var.getQualifier()))) {
+    DfaVariableValue qualifier = var.getQualifier();
+    if (qualifier != null && !var.getDescriptor().isStable()) {
+      flushFields(new QualifierStatusMap(Set.of(qualifier), var.getDescriptor(), dfType));
+    }
+    if (value instanceof DfaVariableValue varValue && !ControlFlow.isTempVariable(var) &&
+        !ControlFlow.isTempVariable(varValue) &&
+        (qualifier == null || !ControlFlow.isTempVariable(qualifier))) {
       // assigning a = b when b is known to be null: could be ephemeral
       checkEphemeral(var, value);
     }
@@ -1371,7 +1375,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
     for (DfaVariableValue value : vars) {
+      DfType oldValue = getDfType(value);
       doFlush(value, true);
+      if (qualifierStatusMap.myFieldToFlush != null && qualifierStatusMap.myFieldToFlush.equals(value.getDescriptor())) {
+        recordVariableType(value, oldValue.join(qualifierStatusMap.myFieldValue));
+      }
     }
     myStack.replaceAll(val -> {
       DfType type = getDfType(val);
@@ -1674,14 +1682,33 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final class QualifierStatusMap {
     private final Int2ObjectMap<QualifierStatus> myMap = new Int2ObjectOpenHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
+    private final @Nullable VariableDescriptor myFieldToFlush;
+    private final @NotNull DfType myFieldValue;
     private final boolean myClosure;
 
     private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush, boolean closure) {
+      this(qualifiersToFlush, null, DfType.TOP, closure);
+    }
+
+    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush,
+                               @NotNull VariableDescriptor fieldToFlush,
+                               @NotNull DfType fieldValue) {
+      this(qualifiersToFlush, fieldToFlush, fieldValue, false);
+    }
+
+    private QualifierStatusMap(@Nullable Set<DfaValue> qualifiersToFlush, @Nullable VariableDescriptor fieldToFlush,
+                               @NotNull DfType fieldValue, boolean closure) {
       myQualifiersToFlush = qualifiersToFlush;
+      myFieldToFlush = fieldToFlush;
+      myFieldValue = fieldValue;
       myClosure = closure;
     }
 
     boolean shouldFlush(DfaVariableValue value) {
+      if (myFieldToFlush != null) {
+        return (value.getDescriptor().equals(myFieldToFlush) || value.containsCalls()) &&
+               shouldFlush(value.getQualifier(), value.containsCalls());
+      }
       return (myClosure ? value.canBeCapturedInClosure() : value.isFlushableByCalls()) &&
              shouldFlush(value.getQualifier(), value.containsCalls());
     }

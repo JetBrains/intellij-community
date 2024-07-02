@@ -49,6 +49,7 @@ class K2DataFlowInspectionTest : AbstractK2InspectionTest() {
     fun testEnumComparison() = doTest()
     fun testEnumOrdinal() = doTest()
     fun testExclamationK2() = doTest()
+    fun testFieldAliasing() = doTest()
     fun testForLoop() = doTest()
     fun testInRange() = doTest()
     fun testInIterable() = doTest()
