@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -13,12 +14,13 @@ import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
 import javax.swing.*
+import java.time.ZonedDateTime
 
 class NotebookBelowCellDelimiterPanel(
   val editor: EditorImpl,
   private val isExecutable: Boolean,
   private val cellTags: List<String>,
-  val cellNum: Int
+  val cellNum: Int,
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   private val plusTagButtonSize = JBUI.scale(18)
@@ -29,13 +31,17 @@ class NotebookBelowCellDelimiterPanel(
   }
   private var executionLabel: JLabel? = null
 
+  private val updateAlarm = Alarm()  // PY-72226
+  private var elapsedStartTime: ZonedDateTime? = null
+  private val updateElapsedTimeDelay = 100
+
   init {
     updateBackgroundColor()
     border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
 
     val addingTagsRow = (cellTags.isNotEmpty() && isExecutable && Registry.`is`("jupyter.cell.metadata.tags", false))
 
-    if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // // PY-72712
+    if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // PY-72712
   }
 
   private fun createExecutionLabel(): JLabel {
@@ -126,6 +132,27 @@ class NotebookBelowCellDelimiterPanel(
       remove(executionLabel)
       executionLabel = null
     }
+  }
+
+  private fun updateElapsedTime(@Nls elapsedText: String) = getOrCreateExecutionLabel().apply { text = elapsedText }
+
+  fun startElapsedTimeUpdate(startTime: ZonedDateTime?, diffFormatter: (ZonedDateTime, ZonedDateTime) -> String) {
+    // todo: do something about this formatter (circular dependencies issues)
+    startTime ?: return
+    elapsedStartTime = startTime
+    scheduleElapsedTimeUpdate(diffFormatter)
+  }
+
+  fun stopElapsedTimeUpdate() = updateAlarm.cancelAllRequests()
+
+  private fun scheduleElapsedTimeUpdate(diffFormatter: (ZonedDateTime, ZonedDateTime) -> String) {
+    updateAlarm.addRequest({
+      elapsedStartTime?.let { startTime ->
+        @NlsSafe val elapsedLabel = diffFormatter(startTime, ZonedDateTime.now())
+        updateElapsedTime(elapsedLabel)
+        updateAlarm.addRequest({ scheduleElapsedTimeUpdate(diffFormatter) }, updateElapsedTimeDelay)
+       }
+     }, updateElapsedTimeDelay)
   }
 
   private fun getOrCreateExecutionLabel(): JLabel {
