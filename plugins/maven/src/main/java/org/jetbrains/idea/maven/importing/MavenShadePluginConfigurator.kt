@@ -101,14 +101,21 @@ internal class MavenShadePluginConfigurator : MavenWorkspaceConfigurator {
     moduleIdToMavenProject: HashMap<ModuleId, MavenProject>
   ): Collection<MavenProject> {
     val dependentMavenProjects = mutableSetOf<MavenProject>()
+    val queue = ArrayDeque<MavenProject>()
 
-    val modules = mavenProjectToModules[this]!!
-    for (module in modules) {
-      val moduleDependencies = module.dependencies.filterIsInstance<ModuleDependency>()
-      for (moduleDependency in moduleDependencies) {
-        val mavenProject = moduleIdToMavenProject[moduleDependency.module] ?: continue
-        if (dependentMavenProjects.add(mavenProject)) {
-          dependentMavenProjects.addAll(mavenProject.collectDependentMavenProjects(mavenProjectToModules, moduleIdToMavenProject))
+    queue.add(this)
+
+    while (queue.isNotEmpty()) {
+      val currentProject = queue.removeFirst()
+
+      val modules = mavenProjectToModules[currentProject] ?: continue
+      for (module in modules) {
+        val moduleDependencies = module.dependencies.filterIsInstance<ModuleDependency>()
+        for (moduleDependency in moduleDependencies) {
+          val mavenProject = moduleIdToMavenProject[moduleDependency.module] ?: continue
+          if (dependentMavenProjects.add(mavenProject)) {
+            queue.add(mavenProject)
+          }
         }
       }
     }
