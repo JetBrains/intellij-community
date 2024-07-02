@@ -24,15 +24,17 @@ import kotlinx.coroutines.flow.asStateFlow
   name = "SemanticSearchSettings",
   storages = [Storage(value = "semantic-search-settings.xml", roamingType = RoamingType.DISABLED, exportable = true)]
 )
-class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
-                                             PersistentStateComponent<SearchEverywhereSemanticSettingsState> {
+class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettingsBase()
+
+abstract class SearchEverywhereSemanticSettingsBase : SearchEverywhereSemanticSettings,
+                                                      PersistentStateComponent<SearchEverywhereSemanticSettingsState> {
   private var state = SearchEverywhereSemanticSettingsState()
 
   private val isInternal by lazy { ApplicationManager.getApplication().isInternal }
   private val isEAP by lazy { ApplicationManager.getApplication().isEAP }
 
-  private val enabledInClassesTabFlow by lazy { MutableStateFlow(enabledInClassesTab) }
-  private val enabledInSymbolsTabFlow by lazy { MutableStateFlow(enabledInSymbolsTab) }
+  protected val enabledInClassesTabFlow by lazy { MutableStateFlow(enabledInClassesTab) }
+  protected val enabledInSymbolsTabFlow by lazy { MutableStateFlow(enabledInSymbolsTab) }
 
   override fun getEnabledInClassesTabState(): StateFlow<Boolean> = enabledInClassesTabFlow.asStateFlow()
   override fun getEnabledInSymbolsTabState(): StateFlow<Boolean> = enabledInSymbolsTabFlow.asStateFlow()
@@ -63,7 +65,7 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       val providerId = FileSearchEverywhereContributor::class.java.simpleName
       return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.files.enable") ||
              isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
-               SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
+        SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
     }
     set(newValue) {
       state.filesTabManuallySet = true
@@ -73,15 +75,19 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       }
     }
 
+  open fun getDefaultClassesEnabled(): Boolean {
+    val providerId = ClassSearchEverywhereContributor::class.java.simpleName
+    return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.classes.enable") ||
+           isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+      SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
+  }
+
   override var enabledInClassesTab: Boolean
     get() {
       if (state.classesTabManuallySet) {
         return state.manualEnabledInClassesTab
       }
-      val providerId = ClassSearchEverywhereContributor::class.java.simpleName
-      return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.classes.enable") ||
-             isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
-               SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
+      return getDefaultClassesEnabled()
     }
     set(newValue) {
       state.classesTabManuallySet = true
@@ -92,15 +98,19 @@ class SearchEverywhereSemanticSettingsImpl : SearchEverywhereSemanticSettings,
       enabledInClassesTabFlow.value = newValue
     }
 
+  open fun getDefaultSymbolsEnabled(): Boolean {
+    val providerId = SymbolSearchEverywhereContributor::class.java.simpleName
+    return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.symbols.enable") ||
+           isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
+      SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
+  }
+
   override var enabledInSymbolsTab: Boolean
     get() {
       if (state.symbolsTabManuallySet) {
         return state.manualEnabledInSymbolsTab
       }
-      val providerId = SymbolSearchEverywhereContributor::class.java.simpleName
-      return AdvancedSettings.getDefaultBoolean("search.everywhere.ml.semantic.symbols.enable") ||
-             isInternal || (isEAP && SearchEverywhereMlExperiment().getExperimentForTab(
-               SearchEverywhereTabWithMlRanking.findById(providerId)!!) == ENABLE_SEMANTIC_SEARCH)
+      return getDefaultSymbolsEnabled()
     }
     set(newValue) {
       state.symbolsTabManuallySet = true
