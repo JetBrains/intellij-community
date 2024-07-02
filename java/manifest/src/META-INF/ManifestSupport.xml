@@ -5,12 +5,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <fileType name="Manifest" implementationClass="org.jetbrains.lang.manifest.ManifestFileType" fileNamesCaseInsensitive="manifest.mf" fieldName="INSTANCE" language="Manifest"/>
     <lang.parserDefinition language="Manifest" implementationClass="org.jetbrains.lang.manifest.parser.ManifestParserDefinition"/>
+    <lang.psiStructureViewFactory language="Manifest" implementationClass="org.jetbrains.lang.manifest.structure.ManifestStructureViewFactory"/>
     <lang.syntaxHighlighterFactory language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.ManifestSyntaxHighlighterFactory"/>
     <annotator language="Manifest" implementationClass="org.jetbrains.lang.manifest.highlighting.HeaderAnnotator"/>
     <lang.elementManipulator forClass="org.jetbrains.lang.manifest.psi.HeaderValuePart"
                              implementationClass="org.jetbrains.lang.manifest.psi.impl.HeaderValuePartManipulator"/>
     <completion.contributor language="Manifest" implementationClass="org.jetbrains.lang.manifest.completion.ManifestCompletionContributor"/>
     <manifest.parser.provider implementation="org.jetbrains.lang.manifest.header.impl.StandardManifestHeaderParsers"/>
+    <navbar implementation="org.jetbrains.lang.manifest.structure.ManifestStructureAwareNavbar"/>
 
     <localInspection language="Manifest" groupKey="inspection.group"
                      enabledByDefault="true" level="ERROR" implementationClass="org.jetbrains.lang.manifest.highlighting.MissingFinalNewlineInspection"
