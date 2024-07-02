@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -342,6 +343,11 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
       if (editorMarkupModel != null) {
         editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
       }
+    }
+
+    @Override
+    public @NotNull AnalyzerStatus getStatus() {
+      return super.getStatus().withNavigation(false);
     }
 
     private boolean hasHighSeverities(int @NotNull [] errorCounts) {
