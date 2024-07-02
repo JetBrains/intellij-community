@@ -289,6 +289,7 @@ sealed interface IjentOpenedFile {
       WriteError>
 
     sealed interface WriteError : IjentFsError {
+      interface InvalidValue : WriteError, IjentFsError
       sealed interface ResourceExhausted : WriteError, IjentFsError.Other {
         interface DiskQuotaExceeded : ResourceExhausted, IjentFsError.Other
         interface FileSizeExceeded : ResourceExhausted, IjentFsError.Other

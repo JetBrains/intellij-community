@@ -50,11 +50,12 @@ internal fun IjentFsError.throwFileSystemException(): Nothing {
     is IjentFsError.UnknownFile -> IOException("File is not opened")
     is IjentOpenedFile.SeekError.InvalidValue -> throw IllegalArgumentException(message)
     is IjentFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
-    is IjentOpenedFile.Reader.ReadError.InvalidValue -> TODO()
+    is IjentOpenedFile.Reader.ReadError.InvalidValue -> throw IllegalArgumentException(message)
     is IjentFileSystemApi.DeleteException.DirNotEmpty -> DirectoryNotEmptyException(where.toString())
     is IjentOpenedFile.Writer.TruncateException.NegativeOffset,
     is IjentOpenedFile.Writer.TruncateException.OffsetTooBig -> throw IllegalArgumentException(message)
     is IjentOpenedFile.Writer.TruncateException.ReadOnlyFs -> throw NonWritableChannelException()
+    is IjentOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
   }
 }
 
