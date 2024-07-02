@@ -286,7 +286,7 @@ public final class X11UiUtil {
       }
     }
 
-    private Long findProcessWindow(long window, int pid, int recursionLevel) {
+    private Long findProcessWindow(long window, long pid, int recursionLevel) {
       if (recursionLevel > 100) {
         LOG.warn("Recursion level exceeded. Deep lying windows will be skipped");
         return null;
@@ -325,7 +325,7 @@ public final class X11UiUtil {
       }
     }
 
-    private boolean isProcessWindowOwner(Long window, int pid) {
+    private boolean isProcessWindowOwner(Long window, long pid) {
       long[] value;
       try {
         value = getWindowProperty(window, _NET_WM_PID, ANY_PROPERTY_TYPE, FORMAT_LONG);
@@ -540,7 +540,7 @@ public final class X11UiUtil {
   }
 
   @ApiStatus.Internal
-  public static Long findVisibleWindowByPid(int pid) {
+  public static Long findVisibleWindowByPid(long pid) {
     if (X11 == null) return null;
     try {
       var rootWindow = X11.getRootWindow(0);

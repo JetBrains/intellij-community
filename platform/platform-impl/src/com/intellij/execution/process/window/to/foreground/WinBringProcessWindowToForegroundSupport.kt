@@ -15,7 +15,7 @@ import com.sun.jna.platform.win32.WinDef
 private val logger = getLogger<WinBringProcessWindowToForegroundSupport>()
 
 internal class WinBringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupport {
-  override fun bring(pid: Int): Boolean {
+  override fun bring(pid: UInt): Boolean {
     val mainWindowHandle = User32Ex.INSTANCE.findMainWindow(pid) ?: run {
       logger.trace { "There's no window for \"$pid\" process" }
       return false
@@ -24,8 +24,8 @@ internal class WinBringProcessWindowToForegroundSupport : BringProcessWindowToFo
     return User32Ex.INSTANCE.SetForegroundWindow(mainWindowHandle).also { logger.trace { "SetForegroundWindow result: $it" } }
   }
 
-  private val windowsHandleKey = Key<MutableMap<Int, WinDef.HWND>>("WindowsHandleKey")
-  fun bringWindowWithName(pid: Int, dataHolder : UserDataHolder, name : String) : Boolean {
+  private val windowsHandleKey = Key<MutableMap<UInt, WinDef.HWND>>("WindowsHandleKey")
+  fun bringWindowWithName(pid: UInt, dataHolder : UserDataHolder, name : String) : Boolean {
     val cacheMap = dataHolder.getOrCreateUserData(windowsHandleKey) { mutableMapOf() }
 
     val winHandle = dataHolder.getUserData(windowsHandleKey)?.get(pid) ?: run {

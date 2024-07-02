@@ -17,8 +17,8 @@ internal class X11BringProcessWindowToForegroundSupport : BringProcessWindowToFo
     }
   }
 
-  override fun bring(pid: Int): Boolean {
-    val mainWindow = X11UiUtil.findVisibleWindowByPid(pid) ?: run {
+  override fun bring(pid: UInt): Boolean {
+    val mainWindow = X11UiUtil.findVisibleWindowByPid(pid.toLong()) ?: run {
       logger.trace { "No window in \"$pid\" process found" }
       return false
     }

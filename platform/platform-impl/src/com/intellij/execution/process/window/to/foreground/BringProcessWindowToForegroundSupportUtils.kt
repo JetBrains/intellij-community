@@ -8,11 +8,11 @@ import kotlin.jvm.optionals.getOrNull
 
 private val logger = getLogger<BringProcessWindowToForegroundSupport>()
 
-private val terminalPIDKey = Key<Int?>("ProcessWindowUtils_TerminalPIDKey")
+private val terminalPIDKey = Key<UInt?>("ProcessWindowUtils_TerminalPIDKey")
 private val terminalBroughtSuccessfullyKey = Key<Boolean>("ProcessWindowUtils_TerminalBroughtSuccessfullyKey")
 
 @ApiStatus.Internal
-fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHolderEx) : Boolean {
+fun BringProcessWindowToForegroundSupport.bring(pid: UInt, dataHolder: UserDataHolderEx) : Boolean {
   if (!this.isApplicable())
     return false
 
@@ -27,7 +27,7 @@ fun BringProcessWindowToForegroundSupport.bring(pid: Int, dataHolder: UserDataHo
     .also { logger.trace { "Bringing cmd process to foreground : ${if (it) "succeeded" else "failed"}" } }
 }
 
-private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHolder: UserDataHolderEx, pid: Int): Boolean {
+private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHolder: UserDataHolderEx, pid: UInt): Boolean {
   if (dataHolder.getUserData(terminalBroughtSuccessfullyKey) == false)
     return false
 
@@ -40,7 +40,7 @@ private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHol
         logger.trace { "Could find neither main window of $pid process, nor parent cmd process. Exiting" };
         return@getOrCreateUserData null
       }
-      ).pid().toInt()
+      ).pid().toUInt()
     }) {
       null -> false
       else -> bring(terminalPid)
@@ -49,8 +49,9 @@ private fun BringProcessWindowToForegroundSupport.tryBringTerminalWindow(dataHol
   return result.also { dataHolder.putUserDataIfAbsent(terminalBroughtSuccessfullyKey, it) }
 }
 
-private fun tryFindParentProcess(pid: Int, parentProcessesWeLookingFor: List<String>): ProcessHandle? {
-  val debuggeeProcess = ProcessHandle.allProcesses().filter { it.pid() == pid.toLong() }.findFirst().getOrNull()
+private fun tryFindParentProcess(pid: UInt, parentProcessesWeLookingFor: List<String>): ProcessHandle? {
+  val pidAsLong = pid.toLong()
+  val debuggeeProcess = ProcessHandle.allProcesses().filter { it.pid() == pidAsLong }.findFirst().getOrNull()
                         ?: run { logger.trace { "Can't find the process with pid $pid" }; return null }
 
   val ideProcess = ProcessHandle.current()
@@ -68,7 +69,7 @@ private fun tryFindParentProcess(pid: Int, parentProcessesWeLookingFor: List<Str
   return null
 }
 
-private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInForeground(dataHolder: UserDataHolder, pid: Int): Boolean {
+private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInForeground(dataHolder: UserDataHolder, pid: UInt): Boolean {
   if (tryFindParentProcess(pid, listOf("cmd.exe")) == null) {
     logger.trace { "The process hasn't been launched under cmd.exe" }
     return false
@@ -84,7 +85,7 @@ private fun WinBringProcessWindowToForegroundSupport.tryBringWindowsTerminalInFo
       .findFirst()
       .getOrNull()
       ?.pid()
-      ?.toInt()
+      ?.toUInt()
   } ?: return false
 
   // if there are more than 1 Debugger.Worker.exe window, we will bring none of them
