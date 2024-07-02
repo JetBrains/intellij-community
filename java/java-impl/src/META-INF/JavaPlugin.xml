@@ -2830,6 +2830,8 @@
       <add-to-group group-id="EditorContextBarMenu" anchor="last"/>
     </action>
 
+    <action id="DownloadJdkAction" class="com.intellij.ide.actions.DownloadJdkAction" icon="AllIcons.Actions.Download"/>
+
     <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
             class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
   </actions>
