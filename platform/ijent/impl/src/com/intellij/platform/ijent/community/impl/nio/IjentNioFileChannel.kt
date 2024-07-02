@@ -16,6 +16,9 @@ import java.nio.file.FileSystemException
 internal class IjentNioFileChannel private constructor(
   private val nioFs: IjentNioFileSystem,
   private val ijentOpenedFile: IjentOpenedFile,
+  // we keep stacktrace of the cause of closing for troubleshooting
+  @Volatile
+  private var closeOrigin: Throwable? = null
 ) : FileChannel() {
   companion object {
     @JvmStatic
@@ -43,6 +46,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun read(dsts: Array<out ByteBuffer>, offset: Int, length: Int): Long {
+    checkClosed()
     when (ijentOpenedFile) {
       is IjentOpenedFile.Reader -> Unit
       is IjentOpenedFile.Writer -> throw NonReadableChannelException()
@@ -66,6 +70,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun write(srcs: Array<out ByteBuffer>, offset: Int, length: Int): Long {
+    checkClosed()
     when (ijentOpenedFile) {
       is IjentOpenedFile.Writer -> Unit
       is IjentOpenedFile.Reader -> throw NonWritableChannelException()
@@ -113,12 +118,14 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun position(): Long {
+    checkClosed()
     return nioFs.fsBlocking {
       ijentOpenedFile.tell().getOrThrowFileSystemException()
     }
   }
 
   override fun position(newPosition: Long): FileChannel {
+    checkClosed()
     return nioFs.fsBlocking {
       ijentOpenedFile.seek(newPosition, IjentOpenedFile.SeekWhence.START).getOrThrowFileSystemException()
       this@IjentNioFileChannel
@@ -126,6 +133,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun size(): Long {
+    checkClosed()
     return nioFs.fsBlocking {
       return@fsBlocking when (val type = nioFs.ijent.fs.stat(ijentOpenedFile.path, false).getOrThrowFileSystemException().type) {
         is IjentFileInfo.Type.Regular -> type.size
@@ -136,27 +144,38 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun truncate(size: Long): FileChannel = apply {
+    checkClosed()
     val file = when (ijentOpenedFile) {
       is IjentOpenedFile.Writer -> ijentOpenedFile
       is IjentOpenedFile.Reader -> throw IOException("File ${ijentOpenedFile.path} is not open for writing")
     }
+    val currentSize = this.size()
     nioFs.fsBlocking {
-      try {
-        file.truncate(size)
-      } catch (e : IjentOpenedFile.Writer.TruncateException) {
-        e.throwFileSystemException()
+      if (size < currentSize) {
+        try {
+          file.truncate(size)
+        } catch (e : IjentOpenedFile.Writer.TruncateException) {
+          e.throwFileSystemException()
+        }
       }
+      val currentPosition = file.tell().getOrThrowFileSystemException()
+      file.seek(currentPosition.coerceIn(0, size), IjentOpenedFile.SeekWhence.START)
     }
     return this
   }
 
   override fun force(metaData: Boolean) {
+    checkClosed()
     TODO("Not yet implemented")
   }
 
   // todo the following two methods can recognize that they are working on the same IJent instance,
   // and therefore perform byte copying entirely on the remote side
   override fun transferTo(position: Long, count: Long, target: WritableByteChannel): Long {
+    checkClosed()
+    if (position < 0) {
+      throw IllegalArgumentException("Position $position is negative")
+    }
     val buf = ByteBuffer.allocate(count.toInt())
     var currentPosition = position
     var totalBytesWritten = 0
@@ -177,6 +196,10 @@ internal class IjentNioFileChannel private constructor(
   }
 
   override fun transferFrom(src: ReadableByteChannel, position: Long, count: Long): Long {
+    checkClosed()
+    if (position < 0) {
+      throw IllegalArgumentException("Position $position is negative")
+    }
     val buf = ByteBuffer.allocate(count.toInt())
     var currentPosition = 0;
     var totalBytesRead = 0;
@@ -201,6 +224,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   private fun readFromPosition(dst: ByteBuffer, position: Long?) : Int {
+    checkClosed()
     when (ijentOpenedFile) {
       is IjentOpenedFile.Reader -> Unit
       is IjentOpenedFile.Writer -> throw NonReadableChannelException()
@@ -223,6 +247,7 @@ internal class IjentNioFileChannel private constructor(
   }
 
   private fun writeToPosition(src: ByteBuffer, position: Long?): Int {
+    checkClosed()
     when (ijentOpenedFile) {
       is IjentOpenedFile.Writer -> Unit
       is IjentOpenedFile.Reader -> throw NonWritableChannelException()
@@ -244,17 +269,28 @@ internal class IjentNioFileChannel private constructor(
     throw UnsupportedOperationException()
 
   override fun lock(position: Long, size: Long, shared: Boolean): FileLock {
+    checkClosed()
     TODO("Not yet implemented")
   }
 
   override fun tryLock(position: Long, size: Long, shared: Boolean): FileLock? {
+    checkClosed()
     TODO("Not yet implemented")
   }
 
   @Throws(FileSystemException::class)
   override fun implCloseChannel() {
+    closeOrigin = Throwable()
     nioFs.fsBlocking {
       ijentOpenedFile.close()
+    }
+  }
+
+  @kotlin.jvm.Throws(ClosedChannelException::class)
+  private fun checkClosed() {
+    val origin = closeOrigin
+    if (origin != null) {
+      throw ClosedChannelException().apply { initCause(origin) }
     }
   }
 }
