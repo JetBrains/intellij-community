@@ -322,7 +322,7 @@ private suspend fun computeIdeFingerprint(
   val fingerprint = java.lang.Long.toUnsignedString(hasher.asLong, Character.MAX_RADIX)
   withContext(Dispatchers.IO) {
     Files.writeString(runDir.resolve("fingerprint.txt"), fingerprint)
-    //Files.writeString(runDir.resolve("fingerprint-debug.txt"), debug)
+    Files.writeString(runDir.resolve("fingerprint-debug.txt"), debug)
   }
   Span.current().addEvent("IDE fingerprint: $fingerprint")
 }
