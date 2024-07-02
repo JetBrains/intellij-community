@@ -1368,7 +1368,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     val initialSnapshot = MutableEntityStorage.create().also { builder ->
       repeat(times) {
         builder addEntity ParentMultipleEntity("Parent_$it", MySource) {
-          this.children = listOf(ChildMultipleEntity("Child", MySource))
+          this.children = List(5) { (ChildMultipleEntity("Child_$it", MySource)) }
         }
       }
     }.toSnapshot()
@@ -1383,7 +1383,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     PerformanceTestUtil.newPerformanceTest(testInfo.displayName) {
       builder.entities<ParentMultipleEntity>().forEach { parent ->
         builder.modifyParentMultipleEntity(parent) {
-          this.children += ChildMultipleEntity("Child_2", MySource)
+          this.children += List(10) { ChildMultipleEntity("Child_2_$it", MySource) }
         }
       }
     }
