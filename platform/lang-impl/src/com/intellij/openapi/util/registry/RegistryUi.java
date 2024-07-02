@@ -29,10 +29,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBFont;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.NamedColorUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +39,13 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Kirill Kalishev
@@ -138,18 +134,7 @@ public class RegistryUi implements Disposable {
     final TableSpeedSearch search = TableSpeedSearch.installOn(myTable);
     search.setFilteringMode(true);
 
-    myTable.setTransferHandler(new TransferHandler() {
-      @Override
-      public boolean importData(@NotNull TransferSupport support) {
-        String pastedText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
-        if (pastedText == null || search.isPopupActive()) {
-          return false;
-        }
-        search.showPopup(pastedText);
-        return true;
-      }
-    });
-
+    myTable.setTransferHandler(new RegistryTransferHandler(search));
 
     myTable.setRowSorter(new TableRowSorter<>(myTable.getModel()));
     myTable.registerKeyboardAction(
@@ -626,6 +611,101 @@ public class RegistryUi implements Disposable {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       restoreDefaults();
+    }
+  }
+
+  private static class RegistryTransferHandler extends TransferHandler {
+    private final @NotNull TableSpeedSearch mySearch;
+
+    private RegistryTransferHandler(@NotNull TableSpeedSearch search) {
+      mySearch = search;
+    }
+
+    @Override
+    public boolean importData(@NotNull TransferSupport support) {
+      String pastedText = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+      if (pastedText == null || mySearch.isPopupActive()) {
+        return false;
+      }
+      mySearch.showPopup(pastedText);
+      return true;
+    }
+
+    @Override
+    protected @Nullable Transferable createTransferable(JComponent c) {
+      // this is copy of javax.swing.plaf.basic.BasicTableUI.TableTransferHandler.createTransferable
+      // it's hidden under protected and package-private access, thus copy-pasted here
+
+      if (!(c instanceof JTable table)) {
+        return null;
+      }
+
+      if (!table.getRowSelectionAllowed() && !table.getColumnSelectionAllowed()) {
+        return null;
+      }
+
+      int[] rows = getSelectedRows(table);
+      int[] cols = getSelectedColumns(table);
+
+      if (rows == null || cols == null || rows.length == 0 || cols.length == 0) {
+        return null;
+      }
+
+      StringBuilder plainStr = new StringBuilder();
+      StringBuilder htmlStr = new StringBuilder();
+
+      htmlStr.append("<html>\n<body>\n<table>\n");
+
+      for (int i : rows) {
+        htmlStr.append("<tr>\n");
+        for (int j : cols) {
+          Object obj = table.getValueAt(i, j);
+          String val = ((obj == null) ? "" : obj.toString());
+          plainStr.append(val).append('\t');
+          htmlStr.append("  <td>").append(val).append("</td>\n");
+        }
+        // we want a newline at the end of each line and not a tab
+        plainStr.deleteCharAt(plainStr.length() - 1).append('\n');
+        htmlStr.append("</tr>\n");
+      }
+
+      // remove the last newline
+      plainStr.deleteCharAt(plainStr.length() - 1);
+      htmlStr.append("</table>\n</body>\n</html>");
+
+      return new TextTransferable(htmlStr.toString(), plainStr.toString());
+    }
+
+    private static int[] getSelectedColumns(@NotNull JTable table) {
+      if (table.getColumnSelectionAllowed()) {
+        return table.getSelectedColumns();
+      }
+      else {
+        return arrayOfConsequtiveNumbers(table.getColumnCount());
+      }
+    }
+
+    private static int[] getSelectedRows(@NotNull JTable table) {
+      if (table.getRowSelectionAllowed()) {
+        return table.getSelectedRows();
+      }
+      else {
+        int rowCount = table.getRowCount();
+        return arrayOfConsequtiveNumbers(rowCount);
+      }
+    }
+
+    private static int @NotNull [] arrayOfConsequtiveNumbers(int size) {
+      int[] array = new int[size];
+      for (int i = 0; i < size; i++) {
+        array[i] = i;
+      }
+      return array;
+    }
+
+    @Override
+    public int getSourceActions(JComponent c) {
+      return COPY;
     }
   }
 }
