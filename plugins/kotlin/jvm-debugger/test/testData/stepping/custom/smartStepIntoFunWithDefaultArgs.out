@@ -2,6 +2,7 @@ LineBreakpoint created at smartStepIntoFunWithDefaultArgs.kt:17
 LineBreakpoint created at smartStepIntoFunWithDefaultArgs.kt:22
 LineBreakpoint created at smartStepIntoFunWithDefaultArgs.kt:27
 LineBreakpoint created at smartStepIntoFunWithDefaultArgs.kt:32
+LineBreakpoint created at smartStepIntoFunWithDefaultArgs.kt:38
 Run Java
 Connected to the target VM
 smartStepIntoFunWithDefaultArgs.kt:17
@@ -12,6 +13,9 @@ smartStepIntoFunWithDefaultArgs.kt:27
 smartStepIntoFunWithDefaultArgs.kt:8
 smartStepIntoFunWithDefaultArgs.kt:32
 smartStepIntoFunWithDefaultArgs.kt:7
+smartStepIntoFunWithDefaultArgs.kt:38
+smartStepIntoFunWithDefaultArgs.kt:41
+smartStepIntoFunWithDefaultArgs.kt:38
 Disconnected from the target VM
 
 Process finished with exit code 0
