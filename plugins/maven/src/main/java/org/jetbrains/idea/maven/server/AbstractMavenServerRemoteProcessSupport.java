@@ -15,6 +15,8 @@ import org.jetbrains.idea.maven.buildtool.MavenImportEventProcessor;
 import org.jetbrains.idea.maven.execution.MavenSpyEventsBuffer;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.security.TokenReader;
+import org.jetbrains.idea.maven.server.ssl.SslDelegateHandlerConfirmingTrustManager;
+import org.jetbrains.idea.maven.server.ssl.SslDelegateHandlerStateMachine;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.io.IOException;
@@ -31,6 +33,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   @Nullable protected Consumer<ProcessEvent> onTerminate;
   private final MavenImportEventProcessor myImportEventProcessor;
   private final MavenSpyEventsBuffer myMavenSpyEventsBuffer;
+  private final SslDelegateHandlerStateMachine mySslDelegateHandlerStateMachine;
 
   public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk,
                                                  @Nullable String vmOptions,
@@ -46,7 +49,12 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
 
     myImportEventProcessor = new MavenImportEventProcessor(project);
     AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
-    myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> myDecoder.escapeText(l, k, myImportEventProcessor));
+    mySslDelegateHandlerStateMachine = new SslDelegateHandlerConfirmingTrustManager();
+
+    myMavenSpyEventsBuffer = new MavenSpyEventsBuffer((l, k) -> {
+      mySslDelegateHandlerStateMachine.addLine(l);
+      myDecoder.escapeText(l, k, myImportEventProcessor);
+    });
   }
 
 
@@ -65,6 +73,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
     if (handler.getProcessInput() == null) {
       return;
     }
+    mySslDelegateHandlerStateMachine.setOutput(handler.getProcessInput());
     OutputStreamWriter writer = new OutputStreamWriter(handler.getProcessInput(), StandardCharsets.UTF_8);
     try {
       writer.write(TokenReader.PREFIX + MavenRemoteObjectWrapper.ourToken);
@@ -89,7 +98,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
     if (eventConsumer != null) {
       eventConsumer.accept(event);
     }
-    
+
     if (event.getExitCode() == 0) {
       return;
     }

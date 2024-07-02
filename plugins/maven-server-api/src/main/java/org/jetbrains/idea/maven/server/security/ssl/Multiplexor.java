@@ -31,19 +31,13 @@ class Multiplexor {
       Integer key = Integer.parseInt(line);
       line = myScanner.nextLine();
       if (line.equals(SslIDEConfirmingTrustStore.DELEGATE_RESPONSE_ERROR)) {
-        line = myScanner.nextLine();
         CompletableFuture<String> future = requests.get(key);
-        if (future != null) future.completeExceptionally(new CertificateException(line));
+        if (future != null) future.completeExceptionally(new CertificateException());
       }
       else if (line.equals(SslIDEConfirmingTrustStore.DELEGATE_RESPONSE_OK)) {
         CompletableFuture<String> future = requests.get(key);
         if (future != null) future.complete("ok");
       }
-      else {
-        return;
-      }
-      myScanner.nextLine();
-      myScanner.nextLine();
     }
     catch (NumberFormatException ignore) {
     }

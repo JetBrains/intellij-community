@@ -1,13 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server.security.ssl;
 
-import sun.security.provider.X509Factory;
-
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -18,7 +15,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
 
-public class SslIDEConfirmingTrustStore {
+public final class SslIDEConfirmingTrustStore {
 
   public static final String CHECK_CLIENT_TRUSTED = "----------checkClientTrusted----------";
   public static final String CHECK_SERVER_TRUSTED = "----------checkServerTrusted----------";
@@ -29,6 +26,8 @@ public class SslIDEConfirmingTrustStore {
 
 
   private static final Multiplexor ourMultiplexor = new Multiplexor();
+  public static final String BEGIN_CERTIFICATE = "-----BEGIN CERTIFICATE-----";
+  public static final String END_CERTIFICATE = "-----END CERTIFICATE-----";
 
   public static void setup() {
     try {
@@ -56,7 +55,7 @@ public class SslIDEConfirmingTrustStore {
     }
 
     @SuppressWarnings("UseOfSystemOutOrSystemErr")
-    private void sendAndWaitForResponse(PrintStream out, Integer key) throws CertificateException {
+    private void sendAndWaitForResponse(String out, Integer key) throws CertificateException {
       synchronized (this) {
         System.out.println(out);
       }
@@ -69,7 +68,7 @@ public class SslIDEConfirmingTrustStore {
     }
 
     private void checkTrusted(X509Certificate[] chain, String authType, String methodSignature) throws CertificateException {
-      OutputStream os = new ByteArrayOutputStream();
+      ByteArrayOutputStream os = new ByteArrayOutputStream();
       Integer key = ourMultiplexor.getKey();
       try (PrintStream out = new PrintStream(os, false, "ISO-8859-1")) {
         out.println(IDE_DELEGATE_TRUST_MANAGER);
@@ -79,21 +78,19 @@ public class SslIDEConfirmingTrustStore {
         out.println(authType);
 
         for (X509Certificate certificate : chain) {
-          out.println(X509Factory.BEGIN_CERT);
+          out.println(BEGIN_CERTIFICATE);
 
           try {
             out.println(Base64.getMimeEncoder(80, "\n".getBytes(StandardCharsets.US_ASCII))
                           .encodeToString(certificate.getEncoded()));
-
-
           }
           catch (CertificateEncodingException e) {
             out.println("#ERROR: " + e.getMessage());
           }
-          out.println(X509Factory.END_CERT);
+          out.println(END_CERTIFICATE);
         }
         out.println(methodSignature);
-        sendAndWaitForResponse(out, key);
+        sendAndWaitForResponse(os.toString("ISO-8859-1"), key);
       }
       catch (UnsupportedEncodingException ignore) {
         throw new CertificateException("Unsupported encoding");
