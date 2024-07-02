@@ -224,4 +224,91 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    foo(title='Blade Runner', year=1982)
                    """);
   }
+
+  // PY-53693
+  public void testInitializingDataclassWithKwOnlyAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+
+                   @dataclass
+                   class MyClass:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+
+                   MyClass(0, b=0)
+                   MyClass(0, <warning descr="Unexpected argument">0</warning><warning descr="Parameter 'b' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDerivedDataclassWithKwOnlyAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+
+                   @dataclass
+                   class Base:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+
+                   @dataclass
+                   class Derived(Base):
+                       c: int
+                       ww: KW_ONLY
+                       d: int
+
+                   Derived(0, 0, b=0, d=0)
+                   Derived(0, 0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'd' unfilled">)</warning>
+                   Derived(0, 0, <warning descr="Unexpected argument">0</warning>, d=0<warning descr="Parameter 'b' unfilled">)</warning>
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDerivedDataclassWithOverridenAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+                                      
+                   @dataclass
+                   class Base:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+                                      
+                   @dataclass
+                   class Derived(Base):
+                       b: int
+
+                   Derived(0, 0)
+                   """);
+  }
+
+  // PY-53693
+  public void testInitializingDerivedDataclassWithOverridenKwOnlyAttribute() {
+    doTestByText("""
+                   from dataclasses import dataclass, KW_ONLY
+
+                   @dataclass
+                   class Base:
+                       a: int
+                       qq: KW_ONLY
+                       b: int
+
+                   @dataclass
+                   class Derived1(Base):
+                       qq: int
+
+                   Derived1(0, 0, b=0)
+                   Derived1(0, 0, <warning descr="Unexpected argument">0</warning><warning descr="Parameter 'b' unfilled">)</warning>
+                   
+                   @dataclass
+                   class Derived2(Base):
+                       ww: KW_ONLY
+                       qq: int
+
+                   Derived2(0, b=0, qq=0)
+                   Derived2(0, <warning descr="Unexpected argument">0</warning>, qq=0<warning descr="Parameter 'b' unfilled">)</warning>
+                   Derived2(0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'qq' unfilled">)</warning>
+                   """);
+  }
 }

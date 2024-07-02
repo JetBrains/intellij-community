@@ -31,6 +31,7 @@ object PyDataclassNames {
     const val DATACLASSES_ASDICT = "dataclasses.asdict"
     const val DATACLASSES_FIELD = "dataclasses.field"
     const val DATACLASSES_REPLACE = "dataclasses.replace"
+    const val DATACLASSES_KW_ONLY = "dataclasses.KW_ONLY"
     const val DUNDER_POST_INIT = "__post_init__"
     val DECORATOR_PARAMETERS = listOf("init", "repr", "eq", "order", "unsafe_hash", "frozen", "kw_only")
     val HELPER_FUNCTIONS = setOf(DATACLASSES_FIELDS, DATACLASSES_ASDICT, "dataclasses.astuple", DATACLASSES_REPLACE)
