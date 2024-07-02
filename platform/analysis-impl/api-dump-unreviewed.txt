@@ -3984,6 +3984,7 @@ f:com.intellij.profile.codeInspection.ProjectInspectionProfileManagerKt
 - sf:PROFILE_DIR:java.lang.String
 - sf:PROJECT_DEFAULT_PROFILE_NAME:java.lang.String
 a:com.intellij.psi.FilePropertyKeyImpl
+- com.intellij.psi.FilePropertyKey
 - sf:Companion:com.intellij.psi.FilePropertyKeyImpl$Companion
 - p:<init>(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute):V
 - sf:createPersistentEnumKey(java.lang.String,java.lang.String,I,java.lang.Class):com.intellij.psi.FilePropertyKey

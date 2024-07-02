@@ -50,6 +50,8 @@ import java.util.Objects;
  * For example, instead of pushing <code>SomeLanguageDialect</code> instances, push <code>someLanguageDialect.getName()</code> and
  * restore <code>SomeLanguageDialect</code> by name where needed.
  */
+@ApiStatus.Experimental
+@ApiStatus.OverrideOnly
 public interface FilePropertyPusher<T> {
   ExtensionPointName<FilePropertyPusher<?>> EP_NAME = ExtensionPointName.create("com.intellij.filePropertyPusher");
 
@@ -76,7 +78,6 @@ public interface FilePropertyPusher<T> {
   /**
    * After property was pushed it can be retrieved at any time using {@link FilePropertyKey#getPersistentValue(VirtualFile)}
    */
-  @ApiStatus.Internal
   default @NotNull FilePropertyKey<T> getFilePropertyKey() {
     return new InMemoryFilePropertyKeyImpl<>(getFileDataKey());
   }

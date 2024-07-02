@@ -14,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
  *
  * @param <T> type of value to store and retrieve
  */
-@ApiStatus.Internal
 @ApiStatus.Experimental
 public interface FilePropertyKey<T> {
   /**
