@@ -75,8 +75,10 @@ class LanguageAndRegionUi {
           }
           languageBox.bindItem(property)
 
-          connection.subscribe(LocalizationListener.UPDATE_TOPIC, Runnable {
-            model.selectedItem = LocalizationUtil.getLocale()
+          connection.subscribe(LocalizationListener.UPDATE_TOPIC, object : LocalizationListener {
+            override fun localeChanged() {
+              model.selectedItem = LocalizationUtil.getLocale()
+            }
           })
         }
         else {
