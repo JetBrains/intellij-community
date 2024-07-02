@@ -1,7 +1,5 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-import numpy as np
 import pandas as pd
-import typing
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH_PYTHON_2 = 100000
