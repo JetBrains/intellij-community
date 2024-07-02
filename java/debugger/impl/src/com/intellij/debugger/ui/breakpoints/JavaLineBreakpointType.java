@@ -169,13 +169,15 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
         XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
         if (elementPosition != null) {
+          PsiElement body = lambda.getBody();
+          LOG.assertTrue(body != null, "if we got an element, there must be a body");
           if (startMethodIsOuterLambda && lambda == startMethod) {
-            res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal));
+            res.add(0, new LineJavaBreakpointVariant(elementPosition, body, ordinal));
             mainMethodAdded = true;
           }
           else if (lambda != outerMethod) {
             lambdaCount++;
-            res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal));
+            res.add(new LambdaJavaBreakpointVariant(elementPosition, body, ordinal));
           }
           ordinal++;
         }
@@ -523,6 +525,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         }
         else {
           highlightedElement = getContainingMethod(lineBreakpoint);
+          if (highlightedElement instanceof PsiLambdaExpression lambda) {
+            highlightedElement = lambda.getBody();
+          }
         }
       }
     }

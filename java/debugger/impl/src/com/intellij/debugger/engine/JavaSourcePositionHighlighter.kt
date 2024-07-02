@@ -30,7 +30,7 @@ class JavaSourcePositionHighlighter : SourcePositionHighlighter(), DumbAware {
     // Highlight only lambda body in case of lambda breakpoint.
     val method = DebuggerUtilsEx.getContainingMethod(sourcePosition)
     if (method is PsiLambdaExpression) {
-      return method.textRange
+      return (method.body ?: method).textRange
     }
 
     return null
