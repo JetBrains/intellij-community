@@ -1038,7 +1038,8 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       TextMergeChange change = myAllMergeChanges.get(index);
       if (change.isResolvedWithAI()) {
         myAggregator.wasEditedAfterAi(index);
-      } else {
+      }
+      else {
         myAggregator.wasEdited(index);
       }
     }
