@@ -45,14 +45,20 @@ context(KaSession)
 @ApiStatus.Internal
 fun KaFunctionSymbol.getJvmInternalClassName(): String? {
     val classOrObject = getContainingClassOrObjectSymbol()
-    return if (classOrObject == null) {
-        val fileSymbol = containingFile ?: return null
-        val file = fileSymbol.psi as? KtFile ?: return null
-        JvmFileClassUtil.getFileClassInfoNoResolve(file).facadeClassFqName.asString().fqnToInternalName()
-    } else {
-        val classId = classOrObject.classId ?: return null
-        JvmClassName.internalNameByClassId(classId)
+    if (classOrObject != null) {
+        return classOrObject.getJvmInternalName()
     }
+    val fileSymbol = containingFile ?: return null
+    val file = fileSymbol.psi as? KtFile ?: return null
+    return JvmFileClassUtil.getFileClassInfoNoResolve(file).facadeClassFqName.asString().fqnToInternalName()
+}
+
+@ApiStatus.Internal
+fun KaClassSymbol.getJvmInternalName(): String? {
+    val classId = classId ?: return null
+    val internalName = JvmClassName.internalNameByClassId(classId)
+    if (internalName == "kotlin/Any") return "java/lang/Object"
+    return internalName
 }
 
 context(KaSession)

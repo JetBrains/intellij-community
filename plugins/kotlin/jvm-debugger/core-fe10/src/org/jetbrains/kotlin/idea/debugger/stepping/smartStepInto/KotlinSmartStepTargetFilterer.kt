@@ -9,6 +9,7 @@ import com.intellij.psi.PsiPrimitiveType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -19,6 +20,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInBytecode
 import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalClassName
+import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
@@ -70,7 +72,9 @@ class KotlinSmartStepTargetFilterer(
         val declaration = getDeclaration() ?: return false
         if (declaration is KtClass) {
             // it means the method is, in fact, the implicit primary constructor
-            return primaryConstructorMatches(declaration, owner, name, signature)
+            analyze(declaration) {
+                return primaryConstructorMatches(declaration, owner, name, signature)
+            }
         }
 
         val lightClassMethod by lazy { declaration.getLightClassMethod() }
@@ -82,9 +86,12 @@ class KotlinSmartStepTargetFilterer(
         return lightClassMethod!!.matches(owner, name, signature, debugProcess)
     }
 
+    context(KaSession)
     private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {
-        return name == "<init>" && signature == "()V" &&
-                owner.internalNameToFqn() == declaration.fqName?.asString()
+        if (name != "<init>" || signature != "()V") return false
+        val symbol = declaration.symbol as? KaClassSymbol ?: return false
+        val internalClassName = symbol.getJvmInternalName()
+        return owner == internalClassName
     }
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
