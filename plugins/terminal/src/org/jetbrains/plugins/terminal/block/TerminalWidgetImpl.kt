@@ -81,7 +81,9 @@ internal class TerminalWidgetImpl(
     wrapper.setContent(component)
     requestFocus()
 
-    return TerminalUiUtils.awaitComponentLayout(component, view).thenApply {
+    val future = view.getTerminalSizeInitializedFuture()
+    TerminalUiUtils.cancelFutureByTimeout(future, 2000, parentDisposable = view)
+    return future.thenApply {
       view.getTerminalSize()
     }
   }
@@ -138,6 +140,8 @@ internal class TerminalWidgetImpl(
     }
 
     override fun getTerminalSize(): TermSize? = null
+
+    override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> = CompletableFuture.completedFuture(Unit)
 
     override fun isFocused(): Boolean = false
 

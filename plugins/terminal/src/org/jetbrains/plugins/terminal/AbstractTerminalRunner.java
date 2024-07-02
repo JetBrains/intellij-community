@@ -28,8 +28,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils;
 import org.jetbrains.plugins.terminal.block.TerminalWidgetImpl;
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils;
 
 import java.awt.*;
 import java.util.Objects;
@@ -243,7 +243,9 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     if (terminalWidget instanceof TerminalWidgetImpl terminalWidgetImpl) {
       return terminalWidgetImpl.initialize(configuredOptions);
     }
-    return TerminalUiUtils.INSTANCE.awaitComponentLayout(terminalWidget.getComponent(), terminalWidget).thenApply(v -> {
+    var future = TerminalUiUtils.INSTANCE.getComponentSizeInitializedFuture(terminalWidget.getComponent());
+    TerminalUiUtils.INSTANCE.cancelFutureByTimeout(future, 2000, terminalWidget);
+    return future.thenApply(v -> {
       return terminalWidget.getTermSize();
     });
   }

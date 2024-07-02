@@ -10,7 +10,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -32,7 +32,6 @@ import com.intellij.terminal.TerminalColorPalette
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.DocumentUtil
-import com.intellij.util.TimeoutUtil
 import com.intellij.util.asSafely
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -138,46 +137,45 @@ internal object TerminalUiUtils {
     return TermSize(max(TerminalModel.MIN_WIDTH, size.columns), max(TerminalModel.MIN_HEIGHT, size.rows))
   }
 
-  @RequiresEdt(generateAssertion = false)
-  fun awaitComponentLayout(component: Component, parentDisposable: Disposable): CompletableFuture<Unit> {
+  @RequiresEdt
+  fun getComponentSizeInitializedFuture(component: Component): CompletableFuture<*> {
     val size = component.size
     if (size.width > 0 || size.height > 0) {
       return CompletableFuture.completedFuture(Unit)
     }
     if (!UIUtil.isShowing(component, false)) {
-      return CompletableFuture.failedFuture(IllegalStateException("component should be showing"))
+      return CompletableFuture.failedFuture<Unit>(IllegalStateException("component should be showing"))
     }
-    val result = CompletableFuture<Unit>()
-
-    val startNano = System.nanoTime()
-    val resizeListener: ComponentAdapter = object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
-        if (LOG.isDebugEnabled) {
-          LOG.info("Terminal component layout took " + TimeoutUtil.getDurationMillis(startNano) + "ms")
-        }
-        result.complete(Unit)
+    val componentResizedFuture = CompletableFuture<Unit>()
+    val resizedListener = object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        componentResizedFuture.complete(Unit)
       }
     }
-    component.addComponentListener(resizeListener)
+    component.addComponentListener(resizedListener)
+    componentResizedFuture.whenComplete { _, _ ->
+      component.removeComponentListener(resizedListener)
+    }
+    return componentResizedFuture
+  }
 
+  fun cancelFutureByTimeout(future: CompletableFuture<*>, timeoutMillis: Long, parentDisposable: Disposable) {
     val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, parentDisposable)
-    alarm.addRequest({
-                       result.completeExceptionally(IllegalStateException("Terminal component layout is timed out (>${TIMEOUT}ms)"))
-                     }, TIMEOUT, ModalityState.stateForComponent(component))
+    val request = Runnable {
+      future.completeExceptionally(IllegalStateException("Terminal component layout is timed out (>${timeoutMillis}ms)"))
+    }
+    alarm.addRequest(request, timeoutMillis, ModalityState.any())
 
     Disposer.register(alarm) {
-      if (!result.isDone) {
-        invokeLater(modalityState = ModalityState.stateForComponent(component)) {
-          result.completeExceptionally(IllegalStateException("parent disposed"))
+      if (!future.isDone) {
+        invokeLater(ModalityState.any()) {
+          future.completeExceptionally(IllegalStateException("parent disposed"))
         }
       }
     }
-    result.whenComplete { _, _ ->
+    future.whenComplete { _, _ ->
       Disposer.dispose(alarm)
-      component.removeComponentListener(resizeListener)
     }
-
-    return result
   }
 
   fun toFloatAndScale(value: Int): Float = JBUIScale.scale(value.toFloat())
@@ -253,8 +251,6 @@ internal object TerminalUiUtils {
     return TextStyleAdapter(TextStyle(TerminalColor(foregroundColorIndex), null), palette)
   }
 
-  private val LOG = logger<TerminalUiUtils>()
-  private const val TIMEOUT = 2000
   private const val TERMINAL_OUTPUT_CONTEXT_MENU = "Terminal.OutputContextMenu"
 
   const val GREEN_COLOR_INDEX: Int = 2

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 internal interface TerminalContentView : Disposable {
@@ -15,6 +16,11 @@ internal interface TerminalContentView : Disposable {
   fun connectToTty(ttyConnector: TtyConnector, initialTermSize: TermSize)
 
   fun getTerminalSize(): TermSize?
+
+  /**
+   * [getTerminalSize] calls can return incorrect values until this future is completed.
+   */
+  fun getTerminalSizeInitializedFuture(): CompletableFuture<*>
 
   fun isFocused(): Boolean
 
