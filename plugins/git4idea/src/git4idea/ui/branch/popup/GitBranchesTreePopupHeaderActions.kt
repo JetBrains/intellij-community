@@ -61,7 +61,6 @@ internal class GitBranchesTreePopupResizeAction :
 internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSynchronouslyAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     val projectExist = e.project != null
@@ -78,8 +77,6 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
 }
 
 internal class GitBranchesTreePopupGroupByPrefixAction : BranchGroupingAction(GroupingKey.GROUPING_BY_DIRECTORY) {
-
-  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -152,7 +149,6 @@ internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(
 internal class GitBranchesTreePopupFilterByAction : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -186,7 +182,6 @@ internal class GitBranchesTreePopupFilterByAction : DumbAwareToggleAction() {
 internal class GitBranchesTreePopupFilterByRepository : DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
-  override fun isSoftMultiChoice(): Boolean = false
 
   override fun update(e: AnActionEvent) {
     super.update(e)
