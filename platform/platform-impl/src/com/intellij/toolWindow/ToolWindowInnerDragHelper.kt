@@ -29,7 +29,7 @@ import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import javax.swing.*
 
-internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: ToolWindowPane) : MouseDragHelper<ToolWindowPane>(parent, pane) {
+internal class ToolWindowInnerDragHelper(parent: Disposable, val pane: JComponent) : MouseDragHelper<JComponent>(parent, pane) {
   private var sourceDecorator = null as InternalDecoratorImpl?
   private var sourceTopDecorator: InternalDecoratorImpl? = null
   private var myInitialIndex = -1

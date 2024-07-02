@@ -15,6 +15,7 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.InternalDecorator
@@ -835,16 +836,22 @@ class InternalDecoratorImpl internal constructor(
     }
 
     val divider = divider
-    disposable = Disposer.newCheckedDisposable()
-    HOVER_STATE_LISTENER.addTo(this, disposable!!)
+    val disposable = Disposer.newCheckedDisposable()
+    this.disposable = disposable
+    HOVER_STATE_LISTENER.addTo(this, disposable)
     updateActiveAndHoverState()
     if (divider != null) {
       val glassPane = rootPane.glassPane as IdeGlassPane
       val listener = ResizeOrMoveDocketToolWindowMouseListener(divider, glassPane, this)
-      glassPane.addMouseMotionPreprocessor(listener, disposable!!)
-      glassPane.addMousePreprocessor(listener, disposable!!)
+      glassPane.addMouseMotionPreprocessor(listener, disposable)
+      glassPane.addMousePreprocessor(listener, disposable)
     }
     contentUi.update()
+
+    if ((toolWindow.type == ToolWindowType.WINDOWED || toolWindow.type == ToolWindowType.FLOATING) &&
+        Registry.`is`("ide.allow.split.and.reorder.in.tool.window")) {
+      ToolWindowInnerDragHelper(disposable, this).start()
+    }
   }
 
   override fun removeNotify() {
