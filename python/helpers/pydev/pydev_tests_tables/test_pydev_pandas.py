@@ -110,14 +110,17 @@ def test_get_data_saves_display_options(setup_dataframe):
 
     max_columns_before = pd.get_option('display.max_columns')
     max_colwidth_before = pd.get_option('display.max_colwidth')
+    max_rows_before = pd.get_option('display.max_rows')
 
     pandas_tables_helpers.get_data(df)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
+    max_rows_after = pd.get_option('display.max_rows')
 
     assert max_columns_before == max_columns_after
     assert max_colwidth_before == max_colwidth_after
+    assert max_rows_before == max_rows_after
 
 
 def test_display_saves_display_options(setup_dataframe):
@@ -129,14 +132,17 @@ def test_display_saves_display_options(setup_dataframe):
 
     max_columns_before = pd.get_option('display.max_columns')
     max_colwidth_before = pd.get_option('display.max_colwidth')
+    max_rows_before = pd.get_option('display.max_rows')
 
     pandas_tables_helpers.display_data(df, start_index=0, end_index=2)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
+    max_rows_after = pd.get_option('display.max_rows')
 
     assert max_columns_before == max_columns_after
     assert max_colwidth_before == max_colwidth_after
+    assert max_rows_before == max_rows_after
 
 
 def test_convert_to_df_unnamed_series(setup_series_no_names):
