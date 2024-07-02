@@ -4,15 +4,15 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
-import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbar
-import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterToolbarManager
+import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterAddCellToolbarService
+import org.jetbrains.plugins.notebooks.ui.jupyterToolbar.JupyterAddNewCellToolbar
 import java.awt.GridBagLayout
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JPanel
 
-class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayout()) {
-  private var toolbar: JupyterToolbar? = null
+class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(GridBagLayout()) {
+  private var toolbar: JupyterAddNewCellToolbar? = null
   private val actionGroup = createActionGroup()
 
   init {
@@ -27,7 +27,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
   private fun recreateToolbar() {
     actionGroup ?: return
     toolbar?.let { remove(it) }
-    toolbar = JupyterToolbar(actionGroup, editor.contentComponent)
+    toolbar = JupyterAddNewCellToolbar(actionGroup, editor.contentComponent)
     add(toolbar)
     adjustToolbarBounds()
   }
@@ -56,7 +56,7 @@ class NotebookBelowLastCellPanelNew(val editor: EditorImpl) : JPanel(GridBagLayo
 
   private fun adjustToolbarBounds() {
     toolbar?.let { tb ->
-      tb.bounds = JupyterToolbarManager.calculateToolbarBounds(editor, this, tb)
+      tb.bounds = JupyterAddCellToolbarService.calculateToolbarBounds(editor, this, tb)
       revalidate()
       repaint()
     }
