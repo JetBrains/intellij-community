@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -341,7 +340,7 @@ public final class SvnUtil {
   }
 
   private static void notifyDatabaseError() {
-    VcsBalloonProblemNotifier.NOTIFICATION_GROUP
+    VcsNotifier.toolWindowNotification()
       .createNotification(SvnBundle.message("notification.content.can.not.access.working.copy.database"), NotificationType.ERROR)
       .notify(null);
   }
