@@ -4,17 +4,9 @@ package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
-import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
-import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
-import org.jetbrains.kotlin.idea.base.projectStructure.ideaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSourceInfo
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
@@ -28,14 +20,14 @@ import org.jetbrains.kotlin.platform.wasm.isWasm
 
 internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
-        return when (module) {
+        val scope = when (module) {
             is KaSourceModule -> {
                 @OptIn(Frontend10ApiUsage::class)
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
                 val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
 
-                return adjustScope(scope, module)
+                adjustScope(scope, module)
             }
 
             is KaDanglingFileModule -> {
@@ -44,7 +36,7 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                     getResolutionScope(module.contextModule)
                 )
 
-                return GlobalSearchScope.union(scopes)
+                GlobalSearchScope.union(scopes)
             }
 
             else -> {
@@ -58,6 +50,11 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                 }
                 GlobalSearchScope.union(allModules.map { it.contentScope })
             }
+        }
+        return if (module is KtSourceModuleByModuleInfo) {
+            KotlinResolveScopeEnlarger.enlargeScope(scope, module.ideaModule, isTestScope = false)
+        } else {
+            scope
         }
     }
 
