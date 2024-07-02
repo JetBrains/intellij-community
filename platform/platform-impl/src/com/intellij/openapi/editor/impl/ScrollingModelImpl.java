@@ -152,13 +152,10 @@ public final class ScrollingModelImpl implements ScrollingModelEx {
 
   private @NotNull Point stickyPanelAdjust(@NotNull Point targetLocation, @NotNull Rectangle viewRect) {
     if (supplier.getEditor() instanceof EditorImpl editor) {
-      var stickyLinesManager = editor.getStickyLinesPanel();
-      if (stickyLinesManager != null && editor.getSettings().areStickyLinesShown()) {
-        int height = stickyLinesManager.panelHeight();
-        if (height > 0) {
-          viewRect.height -= height;
-          return new Point(targetLocation.x, targetLocation.y - height);
-        }
+      int height = editor.getStickyLinesPanelHeight();
+      if (height > 0) {
+        viewRect.height -= height;
+        return new Point(targetLocation.x, targetLocation.y - height);
       }
     }
     return targetLocation;
