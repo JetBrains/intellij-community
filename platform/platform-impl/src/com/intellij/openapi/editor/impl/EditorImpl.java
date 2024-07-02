@@ -5815,8 +5815,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return myMouseListener;
   }
 
-  @Nullable StickyLinesManager getStickyLinesPanel() {
-    return myStickyLinesManager;
+  @ApiStatus.Internal
+  @Override
+  public int getStickyLinesPanelHeight() {
+    if (myStickyLinesManager == null || !getSettings().areStickyLinesShown()) {
+      return 0;
+    }
+    return myStickyLinesManager.panelHeight();
   }
 
   /**
