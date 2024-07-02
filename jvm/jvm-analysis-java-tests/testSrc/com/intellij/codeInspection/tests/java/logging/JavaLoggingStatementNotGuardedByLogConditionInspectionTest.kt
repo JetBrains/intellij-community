@@ -12,7 +12,7 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
       class X {
         private static final Logger LOG = LoggerFactory.getLogger(X.class);
         void n(String arg) {
-        <warning descr="Logging call not guarded by log condition">LOG.debug("test" + arg)</warning>;
+        <warning descr="Logging call not guarded by a logging condition">LOG.debug("test" + arg)</warning>;
         }
       }
     """.trimIndent())
@@ -38,7 +38,7 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
       class X {
         static final Logger LOG = LogManager.getLogger();
         void n(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test" + arg)</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test" + arg)</warning>;
         }
       }
     """.trimIndent())
@@ -81,7 +81,7 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
           }
           
           if(LOG.isInfoEnabled()) {
-            <warning descr="Logging call not guarded by log condition">LOG.debug("test" + arg)</warning>; //todo!          
+            <warning descr="Logging call not guarded by a logging condition">LOG.debug("test" + arg)</warning>; //todo!          
           }
           
           if(true && LOG.isDebugEnabled()) {
@@ -96,7 +96,7 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
           
           if(true) {
             if(true) {
-              <warning descr="Logging call not guarded by log condition">LOG.debug("test" + arg)</warning>;          
+              <warning descr="Logging call not guarded by a logging condition">LOG.debug("test" + arg)</warning>;          
             }          
           }
         }
@@ -143,10 +143,10 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
       class X {
         private static final Logger LOG = LoggerFactory.getLogger(X.class);
         void n1(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test")</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test")</warning>;
         }
         void n2(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test")</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test")</warning>;
         }
       }
     """.trimIndent())
@@ -159,28 +159,28 @@ class JavaLoggingStatementNotGuardedByLogConditionInspectionTest : LoggingStatem
       class X {
         private static final Logger LOG = LoggerFactory.getLogger(X.class);
         void n2(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test1" + arg)</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test1" + arg)</warning>;
           LOG.debug("test2" + arg);
         }
 
         void n3(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test1" + arg)</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test1" + arg)</warning>;
           LOG.debug("test2" + arg);
           LOG.debug("test2" + arg);
         }
         
         void constantCall(String arg) {
           LOG.debug("test1");
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test2" + arg)</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test2" + arg)</warning>;
         }
         
         void beforeNotLog(String arg) {
           constantCall(arg);
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test2" + arg)</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test2" + arg)</warning>;
         }
 
         void differentLevels(String arg) {
-          <warning descr="Logging call not guarded by log condition">LOG.debug("test1" + arg)</warning>;
+          <warning descr="Logging call not guarded by a logging condition">LOG.debug("test1" + arg)</warning>;
           LOG.warn("test2" + arg);
         }
       }
