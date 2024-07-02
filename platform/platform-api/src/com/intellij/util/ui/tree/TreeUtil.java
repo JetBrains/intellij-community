@@ -275,8 +275,14 @@ public final class TreeUtil {
    * @param paths to expand. See {@link #collectExpandedPaths(JTree, TreePath)}
    */
   public static void restoreExpandedPaths(final @NotNull JTree tree, final @NotNull List<? extends TreePath> paths){
-    for(int i = paths.size() - 1; i >= 0; i--){
-      tree.expandPath(paths.get(i));
+    if (isBulkExpandCollapseSupported(tree)) {
+      //noinspection unchecked
+      ((Tree)tree).expandPaths((Iterable<TreePath>)paths);
+    }
+    else {
+      for (int i = paths.size() - 1; i >= 0; i--) {
+        tree.expandPath(paths.get(i));
+      }
     }
   }
 
