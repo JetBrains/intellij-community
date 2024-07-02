@@ -11,10 +11,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * We can't place TOPIC in LocalizationStateService, or we get NoClassDefFoundError.
  */
 @Internal
-class LocalizationListener {
+interface LocalizationListener {
+  fun localeChanged()
+
   companion object {
     @Internal
     @Topic.AppLevel
-    val UPDATE_TOPIC: Topic<Runnable> = Topic(Runnable::class.java, Topic.BroadcastDirection.NONE, true)
+    val UPDATE_TOPIC: Topic<LocalizationListener> = Topic(LocalizationListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 }
