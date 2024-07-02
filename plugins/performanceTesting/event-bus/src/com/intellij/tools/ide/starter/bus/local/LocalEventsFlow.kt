@@ -50,6 +50,7 @@ class LocalEventsFlow : EventsFlow {
     val subscribersForEvent = subscribersLock.readLock().withLock {
       subscribers[eventClassName]
     }
+    val exceptions = mutableListOf<Throwable>()
     (subscribersForEvent as? CopyOnWriteArrayList<Subscriber<T>>)
       ?.map { subscriber ->
         LOG.info("Post event $eventClassName for $subscriber.")
@@ -70,9 +71,14 @@ class LocalEventsFlow : EventsFlow {
           it.join()
         }
         catch (e: CompletionException) {
-          throw e.cause ?: e
+          exceptions.add(e)
         }
       }
+
+    if (exceptions.isNotEmpty()) {
+      val exceptionsString = exceptions.joinToString(separator = "\n") { e -> "${exceptions.indexOf(e) + 1}) ${e.message}" }
+      throw IllegalArgumentException("Exceptions occurred while processing subscribers. $exceptionsString")
+    }
   }
 
   override fun unsubscribeAll() {

@@ -1,7 +1,6 @@
 package com.intellij.tools.ide.starter.bus.local
 
 import com.intellij.tools.ide.starter.bus.EventsBus
-import com.intellij.tools.ide.starter.bus.exceptions.EventBusException
 import com.intellij.tools.ide.starter.bus.events.Event
 import kotlinx.coroutines.delay
 import org.junit.jupiter.api.AfterEach
@@ -85,7 +84,8 @@ class WaitingForSubscribersTest {
     val duration = measureTime {
       try {
         EventsBus.postAndWaitProcessing(Event(), ignoreExceptions = false)
-      } catch (e: EventBusException) {
+      }
+      catch (e: Throwable) {
         gotException.set(true)
       }
     }
@@ -96,5 +96,37 @@ class WaitingForSubscribersTest {
     assertTrue(gotException.get())
     assertTrue(duration >= timeout)
     assertTrue(duration < timeout.plus(1.seconds))
+  }
+
+  @RepeatedTest(value = 5)
+  fun `should process all subscribers even if exception occurs in one subscriber`() {
+    val subscriberProcessedEvent = AtomicBoolean(false)
+    val gotException = AtomicBoolean(false)
+
+    val firstSubscriberDelay = 1.seconds
+    val secondSubscriberDelay = 3.seconds
+
+    EventsBus
+      .subscribe("First") { _: Event ->
+        delay(firstSubscriberDelay)
+        throw IllegalStateException("Exception")
+      }
+      .subscribe("Second") { _: Event ->
+        delay(secondSubscriberDelay)
+        subscriberProcessedEvent.set(true)
+      }
+
+    val eventDuration = measureTime {
+      try {
+        EventsBus.postAndWaitProcessing(Event(), ignoreExceptions = false)
+      }
+      catch (e: Throwable) {
+        gotException.set(true)
+      }
+    }
+
+    assertTrue(gotException.get())
+    checkIsEventProcessed(false) { subscriberProcessedEvent.get() }
+    assertTrue(eventDuration >= secondSubscriberDelay)
   }
 }
