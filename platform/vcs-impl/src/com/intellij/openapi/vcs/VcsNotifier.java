@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -19,14 +20,63 @@ import static com.intellij.util.ui.UIUtil.BR;
 import static com.intellij.util.ui.UIUtil.LINE_SEPARATOR;
 
 public class VcsNotifier {
+  /**
+   * @deprecated Use {@link #toolWindowNotification()} instead
+   */
+  @Deprecated
   public static final NotificationGroup NOTIFICATION_GROUP_ID =
-    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Messages");
+    Cancellation.forceNonCancellableSectionInClassInitializer(() -> toolWindowNotification());
+
+  /**
+   * @deprecated Use {@link #importantNotification()} instead
+   */
+  @Deprecated
   public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION =
-    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Messages");
+    Cancellation.forceNonCancellableSectionInClassInitializer(() -> importantNotification());
+
+  /**
+   * @deprecated Use {@link #standardNotification()} instead
+   */
+  @Deprecated
   public static final NotificationGroup STANDARD_NOTIFICATION =
-    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Notifications");
+    Cancellation.forceNonCancellableSectionInClassInitializer(() -> standardNotification());
+
+  /**
+   * @deprecated Use {@link #silentNotification()} instead
+   */
+  @Deprecated
   public static final NotificationGroup SILENT_NOTIFICATION =
-    NotificationGroupManager.getInstance().getNotificationGroup("Vcs Silent Notifications");
+    Cancellation.forceNonCancellableSectionInClassInitializer(() -> silentNotification());
+
+
+  /**
+   * {@link NotificationDisplayType#TOOL_WINDOW} balloon shown near the {@link com.intellij.openapi.wm.ToolWindowId#VCS} toolwindow button
+   */
+  public static @NotNull NotificationGroup toolWindowNotification() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Messages");
+  }
+
+  /**
+   * {@link NotificationDisplayType#BALLOON} notification that is hidden automatically.
+   */
+  public static @NotNull NotificationGroup standardNotification() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Notifications");
+  }
+
+  /**
+   * {@link NotificationDisplayType#STICKY_BALLOON} notification that is NOT hidden automatically on timer
+   */
+  public static @NotNull NotificationGroup importantNotification() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Important Messages");
+  }
+
+  /**
+   * {@link NotificationDisplayType#NONE} notification, that is visible in 'Notifications' toolwindow, but does not produce a balloon.
+   */
+  public static @NotNull NotificationGroup silentNotification() {
+    return NotificationGroupManager.getInstance().getNotificationGroup("Vcs Silent Notifications");
+  }
+
 
   protected final @NotNull Project myProject;
 
