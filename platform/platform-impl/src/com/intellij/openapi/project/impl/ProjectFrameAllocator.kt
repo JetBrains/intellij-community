@@ -4,6 +4,7 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
@@ -372,12 +373,17 @@ private fun CoroutineScope.scheduleInitFrame(
 private suspend fun restoreEditors(project: Project, fileEditorManager: FileEditorManagerImpl) {
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
+    // DaemonCodeAnalyzer wants DaemonCodeAnalyzerSettings
+    val daemonCodeAnalyzerSettingsJob = launch {
+      serviceAsync<DaemonCodeAnalyzerSettings>()
+    }
     launch {
       // WolfTheProblemSolver uses PsiManager
       project.serviceAsync<PsiManager>()
       project.serviceAsync<WolfTheProblemSolver>()
     }
     launch {
+      daemonCodeAnalyzerSettingsJob.join()
       project.serviceAsync<DaemonCodeAnalyzer>()
     }
 

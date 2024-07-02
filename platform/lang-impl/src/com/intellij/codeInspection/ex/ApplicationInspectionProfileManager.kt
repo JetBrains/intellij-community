@@ -1,4 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.codeInspection.ex
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -11,7 +13,10 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.Messages
@@ -44,27 +49,8 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
 
   companion object {
     @JvmStatic
-    fun getInstanceImpl(): ApplicationInspectionProfileManager =
-      InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
-
-    private fun registerProvidedSeverities() {
-      val map = HashMap<String, HighlightInfoType>()
-      SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
-        for (t in provider.severitiesHighlightInfoTypes) {
-          val highlightSeverity = t.getSeverity(null)
-          val icon = when (t) {
-            is HighlightInfoType.Iconable -> {
-              IconLoader.createLazy { (t as HighlightInfoType.Iconable).icon }
-            }
-            else -> null
-          }
-          map[highlightSeverity.name] = t
-          HighlightDisplayLevel.registerSeverity(highlightSeverity, t.attributesKey, icon)
-        }
-      }
-      if (map.isNotEmpty()) {
-        SeverityRegistrar.registerStandard(map)
-      }
+    fun getInstanceImpl(): ApplicationInspectionProfileManager {
+      return InspectionProfileManager.getInstance() as ApplicationInspectionProfileManager
     }
   }
 
@@ -112,5 +98,20 @@ open class ApplicationInspectionProfileManager @TestOnly @NonInjectable construc
     }
 
     return getProfile(path, false)
+  }
+}
+
+private fun registerProvidedSeverities() {
+  val map = HashMap<String, HighlightInfoType>()
+  SeveritiesProvider.EP_NAME.forEachExtensionSafe { provider ->
+    for (t in provider.severitiesHighlightInfoTypes) {
+      val highlightSeverity = t.getSeverity(null)
+      val icon = if (t is HighlightInfoType.Iconable) IconLoader.createLazy { t.icon } else null
+      map.put(highlightSeverity.name, t)
+      HighlightDisplayLevel.registerSeverity(highlightSeverity, t.attributesKey, icon)
+    }
+  }
+  if (map.isNotEmpty()) {
+    SeverityRegistrar.registerStandard(map)
   }
 }

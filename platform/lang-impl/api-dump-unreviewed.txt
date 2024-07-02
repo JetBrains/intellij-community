@@ -3792,15 +3792,6 @@ c:com.intellij.codeInsight.completion.impl.NegatingComparable
 - <init>(java.lang.Comparable):V
 - compareTo(com.intellij.codeInsight.completion.impl.NegatingComparable):I
 - force():V
-c:com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl
-- com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- java.lang.Cloneable
-- <init>():V
-- clone():com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl
-- getState():org.jdom.Element
-- isCodeHighlightingChanged(com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings):Z
-- loadState(org.jdom.Element):V
 c:com.intellij.codeInsight.daemon.DefaultGutterIconNavigationHandler
 - com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 - <init>(java.util.Collection,java.lang.String):V
