@@ -29,7 +29,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
 
     @OptIn(DelicateCoroutinesApi::class)
     val testScope = GlobalScope.childScope(context.displayName)
-    val pendingFixtures = ArrayList<Job>()
+    val pendingFixtures = ArrayList<Deferred<*>>()
     for (field: Field in testClass.declaredFields) {
       if (!TestFixture::class.java.isAssignableFrom(field.type)) {
         continue
@@ -43,7 +43,7 @@ internal class TestFixtureExtension : BeforeAllCallback,
     }
     @Suppress("SSBasedInspection")
     runBlocking {
-      pendingFixtures.joinAll()
+      pendingFixtures.awaitAll()
     }
     context.getStore(ExtensionContext.Namespace.GLOBAL).put("TestFixtureExtension", testScope)
   }

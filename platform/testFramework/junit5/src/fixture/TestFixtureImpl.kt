@@ -4,6 +4,7 @@ package com.intellij.testFramework.junit5.fixture
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
+import org.opentest4j.TestAbortedException
 
 internal class TestFixtureImpl<T>(
   private val debugString: String,
@@ -24,11 +25,13 @@ internal class TestFixtureImpl<T>(
       @OptIn(ExperimentalCoroutinesApi::class)
       return deferred.getCompleted().first
     }
-    catch (t: Throwable) {
+    catch (t: CancellationException) {
       throw IllegalStateException(t)
     }
+    catch (t: Throwable) {
+      throw t
+    }
   }
-
 
   fun init(testScope: CoroutineScope, uniqueId: String): Deferred<ScopedValue<T>> {
     val state = _state
@@ -47,6 +50,11 @@ internal class TestFixtureImpl<T>(
       return state as Deferred<ScopedValue<T>>
     }
     val deferred = CompletableDeferred<ScopedValue<T>>(parent = testScope.coroutineContext.job)
+    deferred.invokeOnCompletion { throwable ->
+      if (throwable != null) {
+        deferred.cancel(CancellationException(throwable.message, throwable))
+      }
+    }
     _state = deferred
     testScope.launch(CoroutineName(debugString)) {
       @Suppress("UNCHECKED_CAST")
@@ -65,6 +73,10 @@ internal class TestFixtureImpl<T>(
         }
         deferred.complete(ScopedValue(fixture, fixtureScope))
         tearDown
+      }
+      catch (t: TestAbortedException) {
+        deferred.completeExceptionally(t)
+        return@launch
       }
       catch (t: Throwable) {
         deferred.completeExceptionally(t)
