@@ -1807,6 +1807,11 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
                 runTest("testData/evaluation/singleBreakpoint/extractVariablesFromCall.kt");
             }
 
+            @TestMetadata("fakeOverrides.kt")
+            public void testFakeOverrides() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/fakeOverrides.kt");
+            }
+
             @TestMetadata("fieldGetters.kt")
             public void testFieldGetters() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/fieldGetters.kt");
@@ -1935,11 +1940,6 @@ public abstract class K1IdeK2CodeKotlinEvaluateExpressionInMppTestGenerated exte
             @TestMetadata("kClass.kt")
             public void testKClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/kClass.kt");
-            }
-
-            @TestMetadata("kFunctionInvoke.kt")
-            public void testKFunctionInvoke() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/kFunctionInvoke.kt");
             }
 
             @TestMetadata("kt12206BasePropertyWithoutBackingField.kt")

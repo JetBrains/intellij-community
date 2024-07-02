@@ -1,8 +1,9 @@
-LineBreakpoint created at kFunctionInvoke.kt:3
+LineBreakpoint created at fakeOverrides.kt:3
 Run Java
 Connected to the target VM
-kFunctionInvoke.kt:3
+fakeOverrides.kt:3
 Compile bytecode for 42.extInlineGenericFun()
+Compile bytecode for B().prop
 Disconnected from the target VM
 
 Process finished with exit code 0
