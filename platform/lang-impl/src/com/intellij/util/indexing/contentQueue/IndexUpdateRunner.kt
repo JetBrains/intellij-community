@@ -153,17 +153,28 @@ class IndexUpdateRunner(
       // BTW .forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) does almost the same thing, but it uses
       // channel(size: 0), i.e. rendezvous-channel. I setup channel(size: 8k), to have some buffering:
 
-      val channel = fileSet.filesOriginal.asChannel(this, bufferSize = 8192)
-      repeat(INDEXING_PARALLELIZATION) {
+      val bufferSize = fileSet.filesOriginal.size.coerceIn(INDEXING_PARALLELIZATION, 8192)
+      val channel = fileSet.filesOriginal.asChannel(this, bufferSize = bufferSize)
+      repeat(INDEXING_PARALLELIZATION) { workerNo ->
         launch {
-          for (fileIndexingRequest in channel) {
-            while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
-              delay(1)
+          try {
+            for (fileIndexingRequest in channel) {
+              while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
+                delay(1)
+              }
+
+              processRequestTask(fileIndexingRequest)
+
+              ensureActive()
             }
-
-            processRequestTask(fileIndexingRequest)
-
-            ensureActive()
+          }
+          //FIXME RC: for profiling, remove afterwards
+          catch (e: Throwable) {
+            LOG.info("Coroutine $workerNo finished exceptionally", e)
+            throw e
+          }
+          finally {
+            LOG.info("Coroutine $workerNo finished gracefully")
           }
         }
       }
@@ -191,7 +202,8 @@ class IndexUpdateRunner(
 
       indexer.indexOneFile(fileIndexingRequest, parentDisposableForInvokeLater, startTime, project, contentLoader, statistics)
     }
-    catch (e: ProcessCanceledException) {
+    catch (e: CancellationException) {
+      FileBasedIndexImpl.LOG.info("Indexing coroutine cancelled")
       throw e
     }
     catch (e: TooLargeContentException) {
@@ -489,6 +501,6 @@ private class UsedMemorySoftLimiter(private val softLimitOfTotalBytesUsed: Long)
 
   fun releaseBytes(bytesToRelease: Long) {
     val totalBytesInUse = totalBytesUsed.addAndGet(-bytesToRelease)
-    check(totalBytesInUse >= 0){ "Total bytes in use ($totalBytesInUse) is negative" }
+    check(totalBytesInUse >= 0) { "Total bytes in use ($totalBytesInUse) is negative" }
   }
 }
