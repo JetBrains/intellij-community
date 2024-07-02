@@ -10,6 +10,9 @@ import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
+import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
+import java.time.ZonedDateTime
 import kotlin.reflect.KClass
 
 class EditorCell(
@@ -35,19 +38,21 @@ class EditorCell(
 
   var visible: Boolean = true
     set(value) {
-      if(field == value) return
+      if (field == value) return
       field = value
 
-      if(value) {
+      if (value) {
         view?.let {
           Disposer.dispose(it)
           view = null
         }
-      } else {
+      }
+      else {
         if (view == null) {
           view = viewFactory(this).also { Disposer.register(this, it) }
           view?.selected = selected
           gutterAction?.let { view?.setGutterAction(it) }
+          view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
         }
       }
     }
@@ -61,6 +66,14 @@ class EditorCell(
     }
 
   private var gutterAction: AnAction? = null
+
+  private var executionCount: Int? = null
+
+  private var progressStatus: ProgressStatus? = null
+
+  private var executionStartTime: ZonedDateTime? = null
+
+  private var executionEndTime: ZonedDateTime? = null
 
   override fun dispose() {
     view?.let { Disposer.dispose(it) }
@@ -103,5 +116,30 @@ class EditorCell(
     return NotebookCellInlayController.Factory.EP_NAME.extensionList
       .filterIsInstance<NotebookCellInlayController.LazyFactory>()
       .firstOrNull { it.getControllerClass() == type.java }
+  }
+
+  fun updateOutputs() {
+    view?.updateOutputs()
+  }
+
+  fun onExecutionEvent(event: ExecutionEvent) {
+    when (event) {
+      is ExecutionEvent.ExecutionStarted -> {
+        executionStartTime = event.startTime
+        progressStatus = event.status
+      }
+      is ExecutionEvent.ExecutionStopped -> {
+        executionEndTime = event.endTime
+        progressStatus = event.status
+        executionCount = event.executionCount
+      }
+      is ExecutionEvent.ExecutionSubmitted -> {
+        progressStatus = event.status
+      }
+      is ExecutionEvent.ExecutionReset -> {
+        progressStatus = event.status
+      }
+    }
+    view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
   }
 }
