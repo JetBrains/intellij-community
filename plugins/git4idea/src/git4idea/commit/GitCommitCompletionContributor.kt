@@ -88,5 +88,5 @@ class GitCommitCompletionCharFilter : CharFilter() {
 
 private fun isCommitMessageFile(project: Project, file: PsiFile): Boolean {
   val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return false
-  return document.getUserData(CommitMessage.DATA_KEY) != null
+  return CommitMessage.isCommitMessage(document)
 }

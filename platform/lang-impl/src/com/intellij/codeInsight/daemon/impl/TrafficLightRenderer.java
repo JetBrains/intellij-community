@@ -77,6 +77,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
   private volatile long myHighlightingSettingsModificationCount;
 
+  /**
+   * Prefer using {@link TrafficLightRendererContributor} instead
+   */
   public static void setTrafficLightOnEditor(@NotNull Project project,
                                              @NotNull EditorMarkupModel editorMarkupModel,
                                              @NotNull ModalityState modalityState,

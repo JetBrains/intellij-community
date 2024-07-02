@@ -13,7 +13,7 @@ class RecentMessagesCommitCompletionContributor : CompletionContributor(), DumbA
     val file = parameters.originalFile
     val project = file.project
     val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
-    if (document.getUserData(CommitMessage.DATA_KEY) == null) return
+    if (!CommitMessage.isCommitMessage(document)) return
     if (parameters.invocationCount == 0) return
 
     result.caseInsensitive()
