@@ -164,7 +164,7 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      VcsNotifier.importantNotification()
         .createNotification(GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.title"),
                             GitBundle.message("stash.unstash.unresolved.conflict.warning.notification.message"),
                             NotificationType.WARNING)

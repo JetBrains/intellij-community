@@ -116,7 +116,7 @@ public class VcsNotifier {
                                   @NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
                                   boolean showDetailsAction) {
-    Notification notification = createNotification(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.ERROR, null);
+    Notification notification = createNotification(importantNotification(), displayId, title, message, NotificationType.ERROR, null);
     if (showDetailsAction) {
       addShowDetailsAction(myProject, notification);
     }
@@ -131,7 +131,7 @@ public class VcsNotifier {
   public Notification notifyError(@NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
                                   @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.ERROR, listener);
+    return notify(importantNotification(), null, title, message, NotificationType.ERROR, listener);
   }
 
   @NotNull
@@ -139,7 +139,7 @@ public class VcsNotifier {
                                   @NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
                                   @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.ERROR, listener);
+    return notify(importantNotification(), displayId, title, message, NotificationType.ERROR, listener);
   }
 
   @NotNull
@@ -147,7 +147,7 @@ public class VcsNotifier {
                                   @NotificationTitle @NotNull String title,
                                   @NotificationContent @NotNull String message,
                                   NotificationAction... actions) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.ERROR, actions);
+    return notify(importantNotification(), displayId, title, message, NotificationType.ERROR, actions);
   }
 
   @NotNull
@@ -225,7 +225,7 @@ public class VcsNotifier {
   public Notification notifyImportantInfo(@NotificationTitle @NotNull String title,
                                           @NotificationContent @NotNull String message,
                                           @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.INFORMATION, listener);
+    return notify(importantNotification(), null, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
@@ -233,14 +233,14 @@ public class VcsNotifier {
                                           @NotificationTitle @NotNull String title,
                                           @NotificationContent @NotNull String message,
                                           @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.INFORMATION, listener);
+    return notify(importantNotification(), displayId, title, message, NotificationType.INFORMATION, listener);
   }
 
   @NotNull
   public Notification notifyImportantInfo(@NonNls @Nullable String displayId,
                                           @NotificationTitle @NotNull String title,
                                           @NotificationContent @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.INFORMATION);
+    return notify(importantNotification(), displayId, title, message, NotificationType.INFORMATION);
   }
 
   /**
@@ -328,7 +328,7 @@ public class VcsNotifier {
   public Notification notifyImportantWarning(@NonNls @Nullable String displayId,
                                              @NotificationTitle @NotNull String title,
                                              @NotificationContent @NotNull String message) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.WARNING);
+    return notify(importantNotification(), displayId, title, message, NotificationType.WARNING);
   }
 
   @NotNull
@@ -347,7 +347,7 @@ public class VcsNotifier {
   public Notification notifyImportantWarning(@NotificationTitle @NotNull String title,
                                              @NotificationContent @NotNull String message,
                                              @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, null, title, message, NotificationType.WARNING, listener);
+    return notify(importantNotification(), null, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
@@ -355,7 +355,7 @@ public class VcsNotifier {
                                              @NotificationTitle @NotNull String title,
                                              @NotificationContent @NotNull String message,
                                              @Nullable NotificationListener listener) {
-    return notify(IMPORTANT_ERROR_NOTIFICATION, displayId, title, message, NotificationType.WARNING, listener);
+    return notify(importantNotification(), displayId, title, message, NotificationType.WARNING, listener);
   }
 
   @NotNull
@@ -379,7 +379,7 @@ public class VcsNotifier {
                                       @NotificationTitle @NotNull String title,
                                       @NotificationContent @NotNull String message,
                                       NotificationAction... actions) {
-    return notify(sticky ? IMPORTANT_ERROR_NOTIFICATION : STANDARD_NOTIFICATION,
+    return notify(sticky ? importantNotification() : STANDARD_NOTIFICATION,
                   displayId, title, message, NotificationType.INFORMATION, actions);
   }
 

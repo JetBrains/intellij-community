@@ -29,7 +29,7 @@ public final class LocalChangesWouldBeOverwrittenHelper {
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
 
 
-    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+    VcsNotifier.importantNotification()
       .createNotification(GitBundle.message("notification.title.git.operation.failed", StringUtil.capitalize(operationName)),
                           GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge"),
                           NotificationType.ERROR)

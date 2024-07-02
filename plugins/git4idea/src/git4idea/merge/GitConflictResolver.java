@@ -36,7 +36,6 @@ import java.util.*;
 
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static git4idea.GitNotificationIdsHolder.CANNOT_RESOLVE_CONFLICT;
 import static git4idea.GitNotificationIdsHolder.CONFLICT_RESOLVING_ERROR;
 
@@ -237,7 +236,7 @@ public class GitConflictResolver {
   }
 
   protected final void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING);
+    Notification notification = VcsNotifier.importantNotification().createNotification(title, content, NotificationType.WARNING);
     notification.setDisplayId(CANNOT_RESOLVE_CONFLICT);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();

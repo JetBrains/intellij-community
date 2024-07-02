@@ -58,7 +58,7 @@ class ShowNotificationCommitResultHandler(private val committer: VcsCommitter) :
       notificationType = NotificationType.WARNING
     }
 
-    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, notificationType)
+    val notification = VcsNotifier.importantNotification().createNotification(title, message, notificationType)
     notification.setDisplayId(displayId)
     notificationActions.forEach { notification.addAction(it) }
     VcsNotifier.addShowDetailsAction(committer.project, notification)

@@ -36,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
+import static com.intellij.openapi.vcs.VcsNotifier.importantNotification;
 
 public final class GitUntrackedFilesHelper {
 
@@ -128,7 +128,7 @@ public final class GitUntrackedFilesHelper {
       return GitUtil.findRefreshFileOrLog(absolutePath);
     });
 
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+    Notification notification = importantNotification()
       .createNotification(notificationTitle, notificationDesc, NotificationType.ERROR)
       .setDisplayId(GitNotificationIdsHolder.UNTRACKED_FIES_OVERWITTEN);
 

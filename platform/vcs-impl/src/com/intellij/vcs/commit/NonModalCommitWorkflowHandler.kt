@@ -66,7 +66,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     updateDefaultCommitActionName()
   }
 
-  private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.IMPORTANT_ERROR_NOTIFICATION.displayId,
+  private val checkinErrorNotifications = SingletonNotificationManager(VcsNotifier.importantNotification().displayId,
                                                                        NotificationType.ERROR)
 
   private val postCommitChecksHandler: PostCommitChecksHandler get() = PostCommitChecksHandler.getInstance(project)
