@@ -71,7 +71,7 @@ class NotebookCellInlayManager private constructor(
     }
   }
 
-  fun update(pointers: Collection<NotebookIntervalPointer>) = runInEdt {
+  private fun update(pointers: Collection<NotebookIntervalPointer>) = runInEdt {
     val linesList = pointers.mapNotNullTo(mutableListOf()) { it.get()?.lines }
     linesList.sortBy { it.first }
     linesList.mergeAndJoinIntersections(listOf())
