@@ -266,8 +266,8 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     // todo[akniazev]: this workaround should can be removed when PY-57134 is fixed
     val helperLocation = if (localSdk.sdkFlavor.getLanguageLevel(localSdk).isPython2) "py2only" else "py3only"
-    val path = PythonHelpersLocator.getHelpersRoot().toPath().resolve(helperLocation)
-    pythonExecution.applyHelperPackageToPythonPath(listOf(path.toString()), helpersAwareTargetRequest)
+    val path = PythonHelpersLocator.findPathInHelpers(helperLocation)
+    pythonExecution.applyHelperPackageToPythonPath(listOf(path), helpersAwareTargetRequest)
 
     pythonExecution.addParameter("rst2html_no_code")
     val targetProgressIndicator = TargetProgressIndicator.EMPTY

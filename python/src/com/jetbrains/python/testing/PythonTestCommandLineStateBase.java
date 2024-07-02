@@ -236,7 +236,7 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
     super.customizeEnvironmentVars(envs, passParentEnvs);
-    envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.getHelperPath("pycharm"));
+    envs.put("PYCHARM_HELPERS_DIR", PythonHelpersLocator.findPathInHelpers("pycharm"));
   }
 
   @Override
@@ -245,8 +245,10 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
                                                          boolean passParentEnvs) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs);
     var helpersTargetPath = helpersAwareTargetRequest.preparePyCharmHelpers();
+    // Community Helpers root should be first in the list
+    var communityTargetPathFun = helpersTargetPath.getHelpers().get(0).getTargetPathFun();
     Function<TargetEnvironment, String> targetPycharmHelpersPath =
-      TargetEnvironmentFunctions.getRelativeTargetPath(helpersTargetPath.getCommunityHelpers().getTargetPathFun(), "pycharm");
+      TargetEnvironmentFunctions.getRelativeTargetPath(communityTargetPathFun, "pycharm");
     envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
   }
 

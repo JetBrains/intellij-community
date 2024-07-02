@@ -12,8 +12,7 @@ class HelpersAwareLocalTargetEnvironmentRequest : HelpersAwareTargetEnvironmentR
 
   override fun preparePyCharmHelpers(): PythonHelpersMappings =
     PythonHelpersMappings(
-      communityHelpers = getPythonHelpers().mapToSelf(),
-      proHelpers = getPythonProHelpers()?.mapToSelf(),
+      getPythonHelpers().map { it.mapToSelf() }
     )
 }
 

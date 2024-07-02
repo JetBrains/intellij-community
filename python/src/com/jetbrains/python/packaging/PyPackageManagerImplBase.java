@@ -230,7 +230,7 @@ public abstract class PyPackageManagerImplBase extends PyPackageManager {
   }
 
   protected @Nullable String getHelperPath(final @NotNull String helper) throws ExecutionException {
-    return PythonHelpersLocator.getHelperPath(helper);
+    return PythonHelpersLocator.findPathInHelpers(helper);
   }
 
   protected static @NotNull List<String> makeSafeToDisplayCommand(@NotNull List<String> cmdline) {

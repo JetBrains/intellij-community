@@ -187,7 +187,7 @@ public class PySkeletonRefresher {
   }
 
   private static int readGeneratorVersion() {
-    File versionFile = PythonHelpersLocator.getHelperFile("generator3/version.txt");
+    File versionFile = PythonHelpersLocator.findFileInHelpers("generator3/version.txt");
     try (Reader reader = new InputStreamReader(new FileInputStream(versionFile), StandardCharsets.UTF_8)) {
       return PySkeletonHeader.fromVersionString(StreamUtil.readText(reader).trim());
     }

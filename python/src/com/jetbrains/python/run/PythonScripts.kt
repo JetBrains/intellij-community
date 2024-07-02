@@ -147,12 +147,7 @@ fun addHelperEntriesToPythonPath(envs: MutableMap<String, TargetEnvironmentFunct
                                  failOnError: Boolean = true): List<PathMapping> {
   val targetPlatform = helpersAwareTargetRequest.targetEnvironmentRequest.targetPlatform
   val pythonHelpersMappings = helpersAwareTargetRequest.preparePyCharmHelpers()
-  val pythonHelpersRoots =
-    listOfNotNull(
-      pythonHelpersMappings.communityHelpers,
-      pythonHelpersMappings.proHelpers
-    )
-      .map(PathMapping::localPath)
+  val pythonHelpersRoots = pythonHelpersMappings.helpers.map(PathMapping::localPath)
   val targetPathSeparator = targetPlatform.platform.pathSeparator
 
   fun <T> T?.onResolutionFailure(message: String): T? {
