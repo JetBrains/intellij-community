@@ -7,8 +7,11 @@ abstract class LineMatchingMethodVisitor(
     private val zeroBasedLineNumbers: ClosedRange<Int>
 ) : OpcodeReportingMethodVisitor() {
     protected var lineMatches = false
+        private set
     protected var currentLine = 0
+        private set
     protected var lineEverMatched = false
+        private set
 
     override fun visitLineNumber(line: Int, start: Label) {
         currentLine = line

@@ -212,6 +212,7 @@ private fun filterSmartStepTargets(
         private var stopCollectingVisitedTargets = false
 
         override fun readBytecodeInstructionOffset(offset: Int) {
+            targetFiltererAdapter.currentOffset = offset.toLong()
             if (!stopCollectingVisitedTargets && offset >= location.codeIndex()) {
                 unvisitedTargets = targetFilterer.getUnvisitedTargets()
                 stopCollectingVisitedTargets = true

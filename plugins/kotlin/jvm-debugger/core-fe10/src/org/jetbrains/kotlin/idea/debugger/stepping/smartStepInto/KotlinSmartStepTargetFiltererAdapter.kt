@@ -2,45 +2,40 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.PositionManager
-import com.intellij.debugger.jdi.GeneratedLocation
 import com.intellij.psi.util.parentOfType
 import com.sun.jdi.Location
-import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
-import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
+import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
 import org.jetbrains.kotlin.psi.KtNamedFunction
 
 class KotlinSmartStepTargetFiltererAdapter(
     lines: ClosedRange<Int>,
-    private val location: Location,
+    location: Location,
     private val positionManager: PositionManager,
     private val targetFilterer: KotlinSmartStepTargetFilterer
 ) : LineMatchingMethodVisitor(lines) {
-    private val inlineFunctionVariablesAndBorders = location.safeMethod()
-        ?.getInlineFunctionAndArgumentVariablesToBordersMap()
-        ?.toList()
-        .orEmpty()
+    private val inlineCalls = extractInlineCalls(location)
     private var inInline = false
+    internal var currentOffset: Long = -1
 
     public override fun reportOpcode(opcode: Int) {
         if (!lineEverMatched) return
-
-        val inlineCall = inlineFunctionVariablesAndBorders.firstOrNull {
-            currentLine in it.second.toLineNumberRange()
-        }
+        val inlineCall = inlineCalls.firstOrNull { currentOffset in it.bciRange }
         if (inlineCall == null) {
             inInline = false
             return
-        } else if (!inInline) {
-            val name = inlineCall.first.name()
-            if (name.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) {
-                val calledInlineFunction = positionManager.getCalledInlineFunction(location, currentLine)
-                if (calledInlineFunction != null) {
-                    targetFilterer.visitInlineFunction(calledInlineFunction)
-                }
-            }
-            inInline = true
         }
+
+        // Track only the inline calls on the same inlining level.
+        // We aim to check only the calls on the current line, so the calls inside inline functions should not be tracked here.
+        if (inInline) return
+        inInline = true
+
+        if (!inlineCall.variableName.isInlineFunctionMarkerVariableName) return
+
+        val calledInlineFunction = getCalledInlineFunction(positionManager, inlineCall.startLocation) ?: return
+        targetFilterer.visitInlineFunction(calledInlineFunction)
     }
 
     override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
@@ -50,11 +45,21 @@ class KotlinSmartStepTargetFiltererAdapter(
     }
 }
 
-private fun PositionManager.getCalledInlineFunction(location: Location, line: Int): KtNamedFunction? {
-    val methodName = location.safeMethod()?.name() ?: return null
-    val mockLocation = GeneratedLocation(location.declaringType(), methodName, line)
-    return getSourcePosition(mockLocation)?.elementAt?.parentOfType()
-}
+private data class InlineCallInfo(val variableName: String, val bciRange: LongRange, val startLocation: Location)
 
-private fun ClosedRange<Location>.toLineNumberRange() =
-    start.lineNumber()..endInclusive.lineNumber()
+private fun extractInlineCalls(location: Location): List<InlineCallInfo> = location.safeMethod()
+    ?.getInlineFunctionAndArgumentVariablesToBordersMap()
+    ?.toList()
+    .orEmpty()
+    .map { (variable, locationRange) ->
+        InlineCallInfo(
+            variableName = variable.name(),
+            bciRange = locationRange.start.codeIndex()..locationRange.endInclusive.codeIndex(),
+            startLocation = locationRange.start
+        )
+    }
+    // Filter already visible variable to support smart-step-into while inside an inline function
+    .filterNot { location.codeIndex() in it.bciRange }
+
+private fun getCalledInlineFunction(positionManager: PositionManager, location: Location): KtNamedFunction? =
+    positionManager.getSourcePosition(location)?.elementAt?.parentOfType<KtNamedFunction>()

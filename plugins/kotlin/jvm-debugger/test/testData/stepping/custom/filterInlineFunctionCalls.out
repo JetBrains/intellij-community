@@ -1,5 +1,6 @@
 LineBreakpoint created at filterInlineFunctionCalls.kt:50
 LineBreakpoint created at filterInlineFunctionCalls.kt:63
+LineBreakpoint created at filterInlineFunctionCalls.kt:83
 Run Java
 Connected to the target VM
 filterInlineFunctionCalls.kt:50
@@ -27,6 +28,10 @@ filterInlineFunctionCalls.kt:9
 filterInlineFunctionCalls.kt:10
 filterInlineFunctionCalls.kt:73
 filterInlineFunctionCalls.kt:4
+filterInlineFunctionCalls.kt:83
+filterInlineFunctionCalls.kt:88
+filterInlineFunctionCalls.kt:77
+filterInlineFunctionCalls.kt:88
 Disconnected from the target VM
 
 Process finished with exit code 0
