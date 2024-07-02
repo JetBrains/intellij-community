@@ -10,8 +10,6 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public interface JsonSchemaCompletionCustomizer {
   ExtensionPointName<JsonSchemaCompletionCustomizer> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonSchemaCompletionCustomizer");
 
@@ -32,7 +30,5 @@ public interface JsonSchemaCompletionCustomizer {
   /**
    * Whether to accept the completion item for a property
    */
-  default boolean acceptsPropertyCompletionItem(JsonSchemaObject parentSchema, String propertyName,
-                                                @Nullable List<String> nestedPath,
-                                                @NotNull PsiElement completionElement) { return true; }
+  default boolean acceptsPropertyCompletionItem(JsonSchemaObject propertySchema, @NotNull PsiElement completionElement) { return true; }
 }

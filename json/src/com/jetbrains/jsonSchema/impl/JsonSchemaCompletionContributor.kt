@@ -108,6 +108,11 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       insideStringLiteral = isInsideQuotedString
     }
 
+    private val customizers by lazy {
+      JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
+        .filter { it.isApplicable(originalPosition.containingFile) }
+    }
+
 
     fun work() {
       if (psiWalker == null) return
@@ -126,11 +131,17 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
         psiWalker.getParentPropertyAdapter(completionPsiElement)?.parentObject,
         completionType == CompletionType.SMART
       )
+      val completionCustomizer = customizers.singleOrNull()
       JsonSchemaResolver(myProject, rootSchema, position, schemaExpansionRequest)
         .resolve()
         .forEach { schema ->
-          schema.collectNestedCompletions(myProject, nestedCompletionsNode, null) { path, subSchema ->
-            processSchema(subSchema, isName, knownNames, path)
+          schema.collectNestedCompletions(myProject, nestedCompletionsNode) { path, subSchema ->
+            if (completionCustomizer?.acceptsPropertyCompletionItem(subSchema, completionPsiElement) == false)
+              CompletionNextStep.Stop
+            else {
+              processSchema(subSchema, isName, knownNames, path)
+              CompletionNextStep.Continue
+            }
           }
         }
 
@@ -178,15 +189,14 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
                                adapter: JsonPropertyAdapter?,
                                knownNames: MutableSet<String>,
                                completionPath: SchemaPath?) {
-      val customHandlers = JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
-        .filter { it.isApplicable(originalPosition.containingFile) }
       StreamEx.of(schema.propertyNames)
         .filter { name -> !forbiddenNames.contains(name) && !knownNames.contains(name) || adapter != null && name == adapter.name }
         .forEach { name ->
           knownNames.add(name)
-          if (customHandlers.size == 1 && !customHandlers[0].acceptsPropertyCompletionItem(schema, name, completionPath?.accessor(), completionPsiElement)) return@forEach
           val propertySchema = checkNotNull(schema.getPropertyByName(name))
-          addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
+          if (customizers.singleOrNull()?.acceptsPropertyCompletionItem(propertySchema, completionPsiElement) != false) {
+            addPropertyVariant(name, propertySchema, completionPath, adapter?.nameValueAdapter)
+          }
         }
     }
 
@@ -196,9 +206,6 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       suggestValuesForSchemaVariants(schema.allOf, isSurelyValue, completionPath)
 
       if (schema.enum != null && completionPath == null) {
-        // custom insert handlers are currently applicable only to enum values but can be extended later to cover more cases
-        val customHandlers = JsonSchemaCompletionCustomizer.EXTENSION_POINT_NAME.extensionList
-          .filter { it.isApplicable(originalPosition.containingFile) }
         val metadata = schema.enumMetadata
         val isEnumOrderSensitive = schema.readChildNodeValue(X_INTELLIJ_ENUM_ORDER_SENSITIVE).toBoolean()
         val anEnum = schema.enum
@@ -211,7 +218,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
             val description = valueMetadata?.get("description")
             val deprecated = valueMetadata?.get("deprecationMessage")
             val order = if (isEnumOrderSensitive) i else null
-            val handlers = customHandlers.mapNotNull { p -> p.createHandlerForEnumValue(schema, variant) }.toList()
+            val handlers = customizers.mapNotNull { p -> p.createHandlerForEnumValue(schema, variant) }.toList()
             addValueVariant(
               key = variant,
               description = description,
