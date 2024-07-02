@@ -77,7 +77,7 @@ class IncompleteDependenciesServiceImpl(private val project: Project) : Incomple
 
     if (stateAfter != stateBefore) {
       stateFlow.update { stateAfter }
-      if (stateAfter.isComplete) {
+      if (stateAfter.isComplete && !project.isDisposed) {
         PsiManager.getInstance(project).dropPsiCaches()
       }
     }
