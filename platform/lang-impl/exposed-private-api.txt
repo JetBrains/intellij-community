@@ -67,7 +67,6 @@ com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/platform/workspace/jps/entities/ModuleCustomImlDataEntity
 com/intellij/platform/workspace/jps/entities/ModuleGroupPathEntity
 com/intellij/platform/workspace/storage/VersionedEntityStorage
-com/intellij/psi/FilePropertyKey
 com/intellij/psi/codeStyle/CodeStyleSettingsServiceListener
 com/intellij/psi/impl/source/codeStyle/json/CodeStyleSchemeJsonDescriptor$PropertyListHolder
 com/intellij/psi/search/impl/VirtualFileEnumeration

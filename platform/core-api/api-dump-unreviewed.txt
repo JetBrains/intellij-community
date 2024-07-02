@@ -4182,6 +4182,9 @@ a:com.intellij.psi.FileContextProvider
 - a:getContextFolders(com.intellij.psi.PsiFile):java.util.Collection
 - s:getProvider(com.intellij.psi.PsiFile):com.intellij.psi.FileContextProvider
 - pa:isAvailable(com.intellij.psi.PsiFile):Z
+*:com.intellij.psi.FilePropertyKey
+- a:getPersistentValue(com.intellij.openapi.vfs.VirtualFile):java.lang.Object
+- a:setPersistentValue(com.intellij.openapi.vfs.VirtualFile,java.lang.Object):Z
 com.intellij.psi.FileResolveScopeProvider
 - a:getFileResolveScope():com.intellij.psi.search.GlobalSearchScope
 - a:ignoreReferencedElementAccessibility():Z
