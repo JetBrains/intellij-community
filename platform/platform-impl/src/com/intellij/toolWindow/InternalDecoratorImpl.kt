@@ -232,6 +232,7 @@ class InternalDecoratorImpl internal constructor(
   private var splitter: Splitter? = null
   private val componentsWithEditorLikeBackground = SmartList<Component>()
   private var tabActions: List<AnAction> = emptyList()
+  private val titleActions = mutableListOf<AnAction>()
 
   init {
     isFocusable = false
@@ -309,9 +310,15 @@ class InternalDecoratorImpl internal constructor(
       contentManager.addContent(content, dropIndex)
       return
     }
-    firstDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
+    firstDecorator = toolWindow.createCellDecorator().also {
+      it.setTabActions(tabActions)
+      it.setTitleActions(titleActions)
+    }
     attach(firstDecorator)
-    secondDecorator = toolWindow.createCellDecorator().also { it.setTabActions(tabActions) }
+    secondDecorator = toolWindow.createCellDecorator().also {
+      it.setTabActions(tabActions)
+      it.setTitleActions(titleActions)
+    }
     attach(secondDecorator)
     val contents = contentManager.contents.toMutableList()
     if (!contents.contains(content)) {
@@ -526,7 +533,11 @@ class InternalDecoratorImpl internal constructor(
   }
 
   fun setTitleActions(actions: List<AnAction>) {
-    header.setAdditionalTitleActions(actions)
+    titleActions.clear()
+    titleActions.addAll(actions)
+    updateTitleActions()
+    firstDecorator?.setTitleActions(actions)
+    secondDecorator?.setTitleActions(actions)
   }
 
   fun setTabActions(actions: List<AnAction>) {
@@ -534,6 +545,11 @@ class InternalDecoratorImpl internal constructor(
     contentUi.setTabActions(actions)
     firstDecorator?.setTabActions(actions)
     secondDecorator?.setTabActions(actions)
+  }
+
+  private fun updateTitleActions() {
+    val actions =  if (ClientProperty.get(this, HIDE_COMMON_TOOLWINDOW_BUTTONS) == true) emptyList() else titleActions
+    header.setAdditionalTitleActions(actions)
   }
 
   private inner class InnerPanelBorder(private val window: ToolWindowImpl) : Border {
@@ -881,6 +897,9 @@ class InternalDecoratorImpl internal constructor(
       val hideButtons = if (topScreenLocation == screenLocation) null else java.lang.Boolean.TRUE
       putClientProperty(HIDE_COMMON_TOOLWINDOW_BUTTONS, hideButtons)
     }
+    // Update title actions that could have been affected by setting the HIDE_COMMON_TOOLWINDOW_BUTTONS property.
+    updateTitleActions()
+
     if (!rectangle.equals(bounds)) {
       contentUi.update()
     }
