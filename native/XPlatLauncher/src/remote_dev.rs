@@ -465,6 +465,7 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "linux")]
 fn parse_bool_env_var(var_name: &str, default: bool) -> Result<bool> {
     Ok(parse_bool_env_var_optional(var_name)?.unwrap_or(default))
 }
