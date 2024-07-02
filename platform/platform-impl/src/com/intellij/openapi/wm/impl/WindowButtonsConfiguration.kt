@@ -78,35 +78,30 @@ private fun parseFromString(s: String): WindowButtonsConfiguration.State? {
     return null
   }
 
-  val leftIcons = iconAndButtons[0].split(",")
-  val rightIcons = iconAndButtons[1].split(",")
+  val leftIcons = stringsToWindowButtons(iconAndButtons[0].split(","))
+  val rightIcons = stringsToWindowButtons(iconAndButtons[1].split(","))
+  val buttons = leftIcons + rightIcons
 
-  val rightPosition = when {
-    leftIcons.contains("icon") -> true
-    rightIcons.contains("icon") -> false
-    else -> true
+  // Check on duplicate icons
+  for (button in buttons) {
+    if (buttons.count { it == button } != 1) {
+      return null
+    }
   }
 
-  val buttons = mutableListOf<WindowButtonsConfiguration.WindowButton>()
-  for (buttonString in leftIcons + rightIcons) {
-    val button = when (buttonString) {
+  return WindowButtonsConfiguration.State().apply {
+    this.rightPosition = leftIcons.isEmpty() || rightIcons.isNotEmpty()
+    this.buttons = buttons
+  }
+}
+
+private fun stringsToWindowButtons(strings: List<String>): List<WindowButtonsConfiguration.WindowButton> {
+  return strings.mapNotNull {
+    when (it) {
       "minimize" -> WindowButtonsConfiguration.WindowButton.MINIMIZE
       "maximize" -> WindowButtonsConfiguration.WindowButton.MAXIMIZE
       "close" -> WindowButtonsConfiguration.WindowButton.CLOSE
-      else -> continue
+      else -> null
     }
-
-    if (buttons.contains(button)) {
-      // Duplicate icons, undefined behavior
-      return null
-    }
-
-    buttons.add(button)
-  }
-
-
-  return WindowButtonsConfiguration.State().apply {
-    this.rightPosition = rightPosition
-    this.buttons = buttons
   }
 }
