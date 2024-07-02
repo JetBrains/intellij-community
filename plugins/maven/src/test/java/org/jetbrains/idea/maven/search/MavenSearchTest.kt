@@ -14,11 +14,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenSearchTest : MavenMultiVersionImportingTestCase() {
   @Test
-  fun `test searching POM files by module name`() = runBlocking(Dispatchers.EDT) {
+  fun `test searching POM files by module name`() = runBlocking {
     createProjectPom("""<groupId>test</groupId>
                      <artifactId>p1</artifactId>
                      <packaging>pom</packaging>
@@ -47,10 +48,12 @@ class MavenSearchTest : MavenMultiVersionImportingTestCase() {
                     <version>1</version>""")
     importProjectAsync()
 
-    val m1Psi = PsiManager.getInstance(project).findFile(m1File)
-    val m2Psi = PsiManager.getInstance(project).findFile(m2File)
-    UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
-    UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
+    withContext(Dispatchers.EDT) {
+      val m1Psi = PsiManager.getInstance(project).findFile(m1File)
+      val m2Psi = PsiManager.getInstance(project).findFile(m2File)
+      UsefulTestCase.assertContainsElements(lookForFiles("module1"), m1Psi)
+      UsefulTestCase.assertContainsElements(lookForFiles("module2"), m2Psi)
+    }
   }
 
   private fun lookForFiles(pattern: String): List<Any> =
