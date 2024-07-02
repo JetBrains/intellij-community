@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.jdi.ClassTypeImpl
 import com.sun.jdi.Location
 import com.sun.jdi.VMDisconnectedException
@@ -78,8 +79,13 @@ class KotlinStepOutRequestHint(
                If the execution reaches this suspend return instruction, the coroutine was suspended ->
                resume and wait till the resume breakpoint set at the caller method is reached.
              */
+            val filterThread = context.debugProcess.requestsManager.filterThread
+            thisLogger().debug("KotlinStepOutRequestHint#getNextStepDepth: stepping to the suspend RETURN in method ${currentLocation.method()?.name()}, filterThread = $filterThread, resumeLocationIndex = $returnAfterSuspendIndex, currentIndex = ${currentLocation.codeIndex()}")
             if (currentLocation.codeIndex() < returnAfterSuspendIndex) return StepRequest.STEP_OVER
-            if (currentLocation.codeIndex() == returnAfterSuspendIndex.toLong()) return RESUME
+            if (currentLocation.codeIndex() == returnAfterSuspendIndex.toLong()) {
+                thisLogger().debug("KotlinStepOutRequestHint#getNextStepDepth: reached suspend RETURN, currentIndex = ${currentLocation.codeIndex()} -> RESUME")
+                return RESUME
+            }
         }
         return super.getNextStepDepth(context)
     }

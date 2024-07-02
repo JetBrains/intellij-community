@@ -8,6 +8,7 @@ import com.intellij.debugger.statistics.Engine
 import com.intellij.debugger.statistics.StatisticsStorage.Companion.createSteppingToken
 import com.intellij.debugger.statistics.SteppingAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.xdebugger.XSourcePosition
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
@@ -59,10 +60,15 @@ object DebuggerSteppingHelper {
             object : RequestHint(stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OVER, myMethodFilter, parentHint) {
               override fun getNextStepDepth(context: SuspendContextImpl): Int {
                 if (context.frameProxy?.isOnSuspensionPoint() == true) {
+                    val filterThread = context.debugProcess.requestsManager.filterThread
                     // step till the next instruction after the resume location
+                    thisLogger().debug("createStepOverCommandForSuspendSwitch: stepping to the resumeLocation in method ${context.location?.method()?.name()}, filterThread = $filterThread, resumeLocationIndex = $nextCallAfterResume, currentIndex = ${context.location?.codeIndex()}")
                     val currentLocation = context.location ?: return super.getNextStepDepth(context)
                     if (currentLocation.codeIndex() < nextCallAfterResume) return StepRequest.STEP_OVER
-                    if (currentLocation.codeIndex() == nextCallAfterResume.toLong()) return STOP
+                    if (currentLocation.codeIndex() == nextCallAfterResume.toLong()) {
+                        thisLogger().debug("createStepOverCommandForSuspendSwitch: reached resumeLocation, currentIndex = ${currentLocation.codeIndex()} -> STOP")
+                        return STOP
+                    }
                 }
                 return super.getNextStepDepth(context)
               }
