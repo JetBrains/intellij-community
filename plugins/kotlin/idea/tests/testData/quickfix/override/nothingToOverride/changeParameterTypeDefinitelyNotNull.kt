@@ -8,3 +8,4 @@ class B : A() {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeMemberFunctionSignatureFix
+/* IGNORE_K2 */

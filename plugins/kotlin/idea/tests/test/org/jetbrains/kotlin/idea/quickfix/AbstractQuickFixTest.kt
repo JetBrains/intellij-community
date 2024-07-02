@@ -146,7 +146,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             assertTrue("no `called` event should happen: $calledEventIds", calledEventIds.isEmpty())
             return
         }
-        val calledId = calledEventIds.singleOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
+        //multiple, when chooser is provided
+        val calledId = calledEventIds.firstOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
 
         val fusDirectiveName = if (isFirPlugin) {
             "FUS_K2_QUICKFIX_NAME"

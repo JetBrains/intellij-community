@@ -2404,6 +2404,265 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/override/nothingToOverride")
+    public static class NothingToOverride extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("addFunction.kt")
+        public void testAddFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunction.kt");
+        }
+
+        @TestMetadata("addFunctionAbstractClass.kt")
+        public void testAddFunctionAbstractClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionAbstractClass.kt");
+        }
+
+        @TestMetadata("addFunctionInLocalDeclaration.kt")
+        public void testAddFunctionInLocalDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionInLocalDeclaration.kt");
+        }
+
+        @TestMetadata("addFunctionInterface.kt")
+        public void testAddFunctionInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionInterface.kt");
+        }
+
+        @TestMetadata("addFunctionNoBody.kt")
+        public void testAddFunctionNoBody() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionNoBody.kt");
+        }
+
+        @TestMetadata("addFunctionNonUnitReturnType.kt")
+        public void testAddFunctionNonUnitReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionNonUnitReturnType.kt");
+        }
+
+        @TestMetadata("addFunctionReciever.kt")
+        public void testAddFunctionReciever() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionReciever.kt");
+        }
+
+        @TestMetadata("addFunctionSealedClass.kt")
+        public void testAddFunctionSealedClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionSealedClass.kt");
+        }
+
+        @TestMetadata("addFunctionToReadOnlySupertype.kt")
+        public void testAddFunctionToReadOnlySupertype() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionToReadOnlySupertype.kt");
+        }
+
+        @TestMetadata("addFunctionTwoInterfaces.kt")
+        public void testAddFunctionTwoInterfaces() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionTwoInterfaces.kt");
+        }
+
+        @TestMetadata("addFunctionTwoSuperclasses.kt")
+        public void testAddFunctionTwoSuperclasses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionTwoSuperclasses.kt");
+        }
+
+        @TestMetadata("addFunctionWithAnnotations.kt")
+        public void testAddFunctionWithAnnotations() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionWithAnnotations.kt");
+        }
+
+        @TestMetadata("addFunctionWithoutDefaultValue.kt")
+        public void testAddFunctionWithoutDefaultValue() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addFunctionWithoutDefaultValue.kt");
+        }
+
+        @TestMetadata("addParameter.kt")
+        public void testAddParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addParameter.kt");
+        }
+
+        @TestMetadata("addParameterGenericClass.kt")
+        public void testAddParameterGenericClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addParameterGenericClass.kt");
+        }
+
+        @TestMetadata("addParameterMultiple.kt")
+        public void testAddParameterMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addParameterMultiple.kt");
+        }
+
+        @TestMetadata("addParameterPreserveVisibility.kt")
+        public void testAddParameterPreserveVisibility() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addParameterPreserveVisibility.kt");
+        }
+
+        @TestMetadata("addParameterTwoSuperinterfaces.kt")
+        public void testAddParameterTwoSuperinterfaces() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addParameterTwoSuperinterfaces.kt");
+        }
+
+        @TestMetadata("addParameterTwoSupertypes.kt")
+        public void testAddParameterTwoSupertypes() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addParameterTwoSupertypes.kt");
+        }
+
+        @TestMetadata("addPropertyAbstractClass.kt")
+        public void testAddPropertyAbstractClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addPropertyAbstractClass.kt");
+        }
+
+        @TestMetadata("addPropertyHasAnnotations.kt")
+        public void testAddPropertyHasAnnotations() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addPropertyHasAnnotations.kt");
+        }
+
+        @TestMetadata("addPropertyInterface.kt")
+        public void testAddPropertyInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addPropertyInterface.kt");
+        }
+
+        @TestMetadata("addPropertyOpenClass.kt")
+        public void testAddPropertyOpenClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addPropertyOpenClass.kt");
+        }
+
+        @TestMetadata("addTypeParameter.kt")
+        public void testAddTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addTypeParameter.kt");
+        }
+
+        @TestMetadata("addTypeParameter2.kt")
+        public void testAddTypeParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/addTypeParameter2.kt");
+        }
+
+        @TestMetadata("changeFunctionReciever.kt")
+        public void testChangeFunctionReciever() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeFunctionReciever.kt");
+        }
+
+        @TestMetadata("changeParameterType.kt")
+        public void testChangeParameterType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterType.kt");
+        }
+
+        @TestMetadata("changeParameterTypeAbstractSuperclass.kt")
+        public void testChangeParameterTypeAbstractSuperclass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeAbstractSuperclass.kt");
+        }
+
+        @TestMetadata("changeParameterTypeDefinitelyNotNull.kt")
+        public void testChangeParameterTypeDefinitelyNotNull() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeDefinitelyNotNull.kt");
+        }
+
+        @TestMetadata("changeParameterTypeInInterface.kt")
+        public void testChangeParameterTypeInInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeInInterface.kt");
+        }
+
+        @TestMetadata("changeParameterTypeMatchNames.kt")
+        public void testChangeParameterTypeMatchNames() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeMatchNames.kt");
+        }
+
+        @TestMetadata("changeParameterTypeModifyOrder.kt")
+        public void testChangeParameterTypeModifyOrder() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeModifyOrder.kt");
+        }
+
+        @TestMetadata("changeParameterTypeOpenOverride.kt")
+        public void testChangeParameterTypeOpenOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeOpenOverride.kt");
+        }
+
+        @TestMetadata("changeParameterTypeSingleExpressionFunction.kt")
+        public void testChangeParameterTypeSingleExpressionFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeSingleExpressionFunction.kt");
+        }
+
+        @TestMetadata("changeParameterTypeSuperInterface.kt")
+        public void testChangeParameterTypeSuperInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeParameterTypeSuperInterface.kt");
+        }
+
+        @TestMetadata("changeReturnType.kt")
+        public void testChangeReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeReturnType.kt");
+        }
+
+        @TestMetadata("changeTypeParameter.kt")
+        public void testChangeTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/changeTypeParameter.kt");
+        }
+
+        @TestMetadata("doNotLooseAnnotations.kt")
+        public void testDoNotLooseAnnotations() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/doNotLooseAnnotations.kt");
+        }
+
+        @TestMetadata("noDefaultValuesInOverride.kt")
+        public void testNoDefaultValuesInOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/noDefaultValuesInOverride.kt");
+        }
+
+        @TestMetadata("noOpenSuperFunction.kt")
+        public void testNoOpenSuperFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/noOpenSuperFunction.kt");
+        }
+
+        @TestMetadata("overrideJavaMethod.kt")
+        public void testOverrideJavaMethod() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/overrideJavaMethod.kt");
+        }
+
+        @TestMetadata("removeFunctionReciever.kt")
+        public void testRemoveFunctionReciever() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeFunctionReciever.kt");
+        }
+
+        @TestMetadata("removeOverride.kt")
+        public void testRemoveOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeOverride.kt");
+        }
+
+        @TestMetadata("removeParameter.kt")
+        public void testRemoveParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeParameter.kt");
+        }
+
+        @TestMetadata("removeParameterTwoInterfaces.kt")
+        public void testRemoveParameterTwoInterfaces() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeParameterTwoInterfaces.kt");
+        }
+
+        @TestMetadata("removeTypeParameter.kt")
+        public void testRemoveTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/removeTypeParameter.kt");
+        }
+
+        @TestMetadata("suspendFunction.kt")
+        public void testSuspendFunction() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/suspendFunction.kt");
+        }
+
+        @TestMetadata("suspendFunction2.kt")
+        public void testSuspendFunction2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/suspendFunction2.kt");
+        }
+
+        @TestMetadata("swapParametersGenericClass.kt")
+        public void testSwapParametersGenericClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/override/nothingToOverride/swapParametersGenericClass.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/override/typeMismatchOnOverride")
     public static class TypeMismatchOnOverride extends AbstractHighLevelQuickFixTest {
         @java.lang.Override

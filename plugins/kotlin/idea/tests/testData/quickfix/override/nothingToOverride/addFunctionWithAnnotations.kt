@@ -10,3 +10,4 @@ class C : I {
     <caret>override fun foo() {}
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionToSupertypeFix
+/* IGNORE_K2 */

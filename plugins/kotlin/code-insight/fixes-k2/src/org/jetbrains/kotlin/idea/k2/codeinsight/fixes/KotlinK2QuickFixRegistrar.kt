@@ -391,6 +391,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerFactory(DeprecationFixFactory.deprecatedError)
         registerFactory(DeprecationFixFactory.deprecatedWarning)
+
+        registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
     }
 
     private val optIn = KtQuickFixesListBuilder.registerPsiQuickFix {

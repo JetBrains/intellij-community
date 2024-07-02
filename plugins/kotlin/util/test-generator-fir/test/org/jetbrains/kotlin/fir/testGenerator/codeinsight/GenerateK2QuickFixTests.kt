@@ -30,6 +30,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/modifiers/suspend", pattern = pattern)
             model("$idea/quickfix/nullables", pattern = pattern)
             model("$idea/quickfix/override", pattern = pattern, isRecursive = false)
+            model("$idea/quickfix/override/nothingToOverride", pattern = pattern, isRecursive = false)
             model("$idea/quickfix/override/typeMismatchOnOverride", pattern = pattern, isRecursive = false)
             model("$idea/quickfix/removeRedundantSpreadOperator", pattern = pattern)
             model("$idea/quickfix/replaceInfixOrOperatorCall", pattern = pattern)
