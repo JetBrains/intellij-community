@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
+import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen
 import org.jetbrains.kotlin.codegen.CodeFragmentCodegen.Companion.getSharedTypeIfApplicable
@@ -13,12 +14,12 @@ import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.resolve.BindingContext
-import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 
 
 class OldFragmentCompilerCodegen(
@@ -69,7 +70,7 @@ class OldFragmentCompilerCodegen(
         val classes = collectGeneratedClasses(generationState)
         val methodSignature = getMethodSignature(methodDescriptor, parameterInfo, generationState)
         val functionSuffixes = getLocalFunctionSuffixes(parameterInfo.smartParameters, generationState.typeMapper)
-        return CodeFragmentCompiler.CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature)
+        return CodeFragmentCompiler.CompilationResult(classes, parameterInfo, functionSuffixes, methodSignature, CompilerType.OLD)
     }
 
     private fun collectGeneratedClasses(generationState: GenerationState): List<ClassToLoad> {

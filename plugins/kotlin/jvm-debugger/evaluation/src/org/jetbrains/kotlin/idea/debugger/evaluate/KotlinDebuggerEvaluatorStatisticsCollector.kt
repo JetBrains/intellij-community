@@ -12,10 +12,10 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 4)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 5)
 
     // fields
-    private val evaluatorField = EventFields.Enum<StatisticsEvaluator>("evaluator")
+    private val compilerField = EventFields.Enum<CompilerType>("compiler")
     private val resultField = EventFields.Enum<StatisticsEvaluationResult>("result")
     private val wrapTimeMsField = EventFields.Long("wrap_time_ms")
     private val analysisTimeMsField = EventFields.Long("analysis_time_ms")
@@ -25,21 +25,21 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     // events
     private val analysisCompilationEvent = GROUP.registerVarargEvent(
-        "analysis.compilation.result", evaluatorField, resultField,
+        "analysis.compilation.result", compilerField, resultField,
         wrapTimeMsField, analysisTimeMsField, compilationTimeMsField, wholeTimeField, interruptionsField
     )
     // no need to record evaluation time, as it reflects what user evaluates, not how effective our evaluation is
-    private val evaluationEvent = GROUP.registerEvent("evaluation.result", resultField)
+    private val evaluationEvent = GROUP.registerEvent("evaluation.result", resultField, compilerField)
     private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
 
     @JvmStatic
     internal fun logAnalysisAndCompilationResult(
-        project: Project?, evaluator: StatisticsEvaluator, evaluationResult: StatisticsEvaluationResult,
+        project: Project?, compilerType: CompilerType, evaluationResult: StatisticsEvaluationResult,
         stats: CodeFragmentCompilationStats
     ) {
         analysisCompilationEvent.log(
             project,
-            EventPair(evaluatorField, evaluator),
+            EventPair(compilerField, compilerType),
             EventPair(resultField, evaluationResult),
             EventPair(wrapTimeMsField, stats.wrapTimeMs),
             EventPair(analysisTimeMsField, stats.analysisTimeMs),
@@ -50,18 +50,14 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    internal fun logEvaluationResult(project: Project?, evaluationResult: StatisticsEvaluationResult) {
-        evaluationEvent.log(project, evaluationResult)
+    internal fun logEvaluationResult(project: Project?, evaluationResult: StatisticsEvaluationResult, compilerType: CompilerType) {
+        evaluationEvent.log(project, evaluationResult, compilerType)
     }
 
     @JvmStatic
     fun logFallbackToOldEvaluator(project: Project?) {
         fallbackToOldEvaluatorEvent.log(project)
     }
-}
-
-enum class StatisticsEvaluator {
-    OLD, IR, K2
 }
 
 enum class StatisticsEvaluationResult {

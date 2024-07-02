@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.LocalVariableDescriptor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
 import org.jetbrains.kotlin.idea.debugger.evaluate.DebuggerFieldPropertyDescriptor
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
@@ -213,7 +214,7 @@ class IRFragmentCompilerCodegen : FragmentCompilerCodegen {
                 parameterInfo.crossingBounds
             )
 
-        return CodeFragmentCompiler.CompilationResult(classes, newParameterInfo, mapOf(), methodSignature)
+        return CodeFragmentCompiler.CompilationResult(classes, newParameterInfo, mapOf(), methodSignature, CompilerType.IR)
     }
 
     private fun collectGeneratedClasses(generationState: GenerationState): List<ClassToLoad> {

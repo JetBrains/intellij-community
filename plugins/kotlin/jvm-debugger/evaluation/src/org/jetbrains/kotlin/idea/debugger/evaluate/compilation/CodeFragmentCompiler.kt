@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.internalNameToFqn
+import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
@@ -58,7 +59,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         val classes: List<ClassToLoad>,
         val parameterInfo: CodeFragmentParameterInfo,
         val localFunctionSuffixes: Map<CodeFragmentParameter.Dumb, String>,
-        val mainMethodSignature: MethodSignature
+        val mainMethodSignature: MethodSignature,
+        val compilerType: CompilerType
     )
 
     fun compile(

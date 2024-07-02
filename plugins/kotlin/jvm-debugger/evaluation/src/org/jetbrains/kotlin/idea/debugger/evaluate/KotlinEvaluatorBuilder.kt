@@ -161,15 +161,15 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
 
         return try {
             runEvaluation(context, compiledData).also {
-                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS)
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS, compiledData.compilerType)
             }
         } catch (e: Throwable) {
             if (e !is EvaluateException && e !is Eval4JInterpretingException && !isUnitTestMode()) {
-                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE)
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.FAILURE, compiledData.compilerType)
                 if (isApplicationInternalMode()) {
                     reportErrorWithAttachments(context, codeFragment, e,
                                                prepareBytecodes(compiledData),
-                                               "Can't perform evaluation")
+                                               "Can't perform evaluation. Compiled by ${compiledData.compilerType} compiler")
                 }
             }
             throw e
@@ -244,7 +244,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     private fun compiledCodeFragmentDataK2(context: ExecutionContext): CompiledCodeFragmentData {
         val stats = CodeFragmentCompilationStats()
         fun onFinish(status: StatisticsEvaluationResult) =
-            KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, StatisticsEvaluator.K2, status, stats)
+            KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, CompilerType.K2, status, stats)
         try {
             patchCodeFragment(context, codeFragment, stats)
 
@@ -293,7 +293,7 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                         val methodSignature = getMethodSignature(fragmentClass)
 
                         val parameterInfo = computeCodeFragmentParameterInfo(result)
-                        val ideCompilationResult = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature)
+                        val ideCompilationResult = CodeFragmentCompiler.CompilationResult(classes, parameterInfo, mapOf(), methodSignature, CompilerType.K2)
                         createCompiledDataDescriptor(ideCompilationResult)
                     }
                     is KaCompilationResult.Failure -> {
@@ -701,7 +701,8 @@ fun createCompiledDataDescriptor(result: CodeFragmentCompiler.CompilationResult)
         result.classes,
         dumbParameters,
         result.parameterInfo.crossingBounds,
-        result.mainMethodSignature
+        result.mainMethodSignature,
+        result.compilerType
     )
 }
 
@@ -712,4 +713,8 @@ internal fun getResolutionFacadeForCodeFragment(codeFragment: KtCodeFragment): R
     val filesToAnalyze = listOf(codeFragment)
     val kotlinCacheService = KotlinCacheService.getInstance(codeFragment.project)
     return kotlinCacheService.getResolutionFacadeWithForcedPlatform(filesToAnalyze, JvmPlatforms.unspecifiedJvmPlatform)
+}
+
+enum class CompilerType {
+    OLD, IR, K2
 }

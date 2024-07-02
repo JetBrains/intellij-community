@@ -6,9 +6,9 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.kotlin.idea.core.util.CodeFragmentUtils
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
+import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerType
 import org.jetbrains.kotlin.idea.debugger.evaluate.KotlinDebuggerEvaluatorStatisticsCollector
 import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluationResult
-import org.jetbrains.kotlin.idea.debugger.evaluate.StatisticsEvaluator
 import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
@@ -55,7 +55,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
     override fun onSuccess() {
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
-            StatisticsEvaluator.OLD,
+            CompilerType.OLD,
             StatisticsEvaluationResult.SUCCESS,
             stats
         )
@@ -65,7 +65,7 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         val exceptionToThrow = unwrapException(e) ?: throw e
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
-            StatisticsEvaluator.OLD,
+            CompilerType.OLD,
             StatisticsEvaluationResult.FAILURE,
             stats,
         )
@@ -124,7 +124,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
     override fun onSuccess() {
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
-            StatisticsEvaluator.IR,
+            CompilerType.IR,
             StatisticsEvaluationResult.SUCCESS,
             stats
         )
@@ -134,7 +134,7 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         val exceptionToReport = unwrapException(e) ?: throw e
         KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(
             codeFragment.project,
-            StatisticsEvaluator.IR,
+            CompilerType.IR,
             StatisticsEvaluationResult.FAILURE,
             stats
         )
