@@ -230,7 +230,10 @@ class EditorNotificationsImpl(private val project: Project,
           if (project.isDisposed) {
             return@launch
           }
-          val provider = adapter.createInstance<EditorNotificationProvider>(project) ?: continue
+          val provider = readAction {
+            // isDisposed is only valid within a read action; see documentation in ComponentManager.
+            if (project.isDisposed) null else adapter.createInstance<EditorNotificationProvider>(project)
+          } ?: continue
 
           coroutineContext.ensureActive()
 
