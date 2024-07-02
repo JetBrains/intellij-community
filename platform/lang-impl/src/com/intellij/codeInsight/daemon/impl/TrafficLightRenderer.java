@@ -404,7 +404,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     if (!statusItems.isEmpty()) {
       AnalyzerStatus result = new AnalyzerStatus(statusItems.get(0).getIcon(), title, "", myUIController).
-        withNavigation().
+        withNavigation(true).
         withState(state).
         withExpandedStatus(ContainerUtil.map(statusItems, i -> {
           TrafficLightStatusItemMetadata metadata = new TrafficLightStatusItemMetadata(i.getProblemCount(), i.getSeverity());
