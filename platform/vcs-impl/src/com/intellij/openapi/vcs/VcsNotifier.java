@@ -387,7 +387,7 @@ public class VcsNotifier {
   public Notification logInfo(@Nullable @NonNls String displayId,
                               @NotificationTitle @NotNull String title,
                               @NotificationContent @NotNull String message) {
-    return notify(SILENT_NOTIFICATION, displayId, title, message, NotificationType.INFORMATION);
+    return notify(silentNotification(), displayId, title, message, NotificationType.INFORMATION);
   }
 
   public void showNotificationAndHideExisting(@NotNull Notification notificationToShow) {
