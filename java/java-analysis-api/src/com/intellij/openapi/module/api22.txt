@@ -1,4 +1,5 @@
 jdk.jfr.events.StackFilter
+jdk.jfr.internal.Level
 jdk.xml.internal.JdkConstants#DTD_PROPNAME
 jdk.xml.internal.JdkConstants#JDKCATALOG_RESOLVE
 javax.xml.catalog.CatalogManager#catalogResolver(Catalog;CatalogResolver.NotFoundAction;)
@@ -24,6 +25,29 @@ java.lang.foreign.Arena
 java.lang.foreign.SymbolLookup
 java.lang.foreign.SegmentAllocator
 java.lang.reflect.ClassFileFormatVersion#RELEASE_22
+java.lang.classfile.attribute.StackMapFrameInfo.SimpleVerificationTypeInfo
+java.lang.classfile.components.ClassPrinter.Verbosity
+java.lang.classfile.components.ClassPrinter
+java.lang.classfile.Opcode.Kind
+java.lang.classfile.Opcode
+java.lang.classfile.constantpool.ConstantPoolException
+java.lang.classfile.TypeKind
+java.lang.classfile.ClassFile.ConstantPoolSharingOption
+java.lang.classfile.ClassFile.DeadCodeOption
+java.lang.classfile.ClassFile.DeadLabelsOption
+java.lang.classfile.ClassFile.DebugElementsOption
+java.lang.classfile.ClassFile.LineNumbersOption
+java.lang.classfile.ClassFile.ShortJumpsOption
+java.lang.classfile.ClassFile.StackMapsOption
+java.lang.classfile.ClassFile.AttributesProcessingOption
+java.lang.classfile.Signature.TypeArg.WildcardIndicator
+java.lang.classfile.Attributes
+java.lang.classfile.TypeAnnotation.TargetType
+java.lang.classfile.TypeAnnotation.TypePathComponent.Kind
+java.lang.classfile.AttributeMapper.AttributeStability
+java.lang.classfile.AttributeMapper
+java.lang.classfile.ClassFileTransform.ResolvedTransform
+java.lang.classfile.ClassHierarchyResolver
 java.lang.Class#forPrimitiveName(String;)
 java.lang.Module#isNativeAccessEnabled()
 java.lang.Character.UnicodeBlock#CJK_UNIFIED_IDEOGRAPHS_EXTENSION_I
@@ -33,6 +57,13 @@ java.text.ListFormat.Type
 java.text.ListFormat.Style
 java.text.ListFormat
 java.util.random.RandomGenerator#equiDoubles(double;double;boolean;boolean;)
+java.util.stream.Stream#gather(Gatherer<? super T,?,R>;)
+java.util.stream.Gatherer.Downstream
+java.util.stream.Gatherer.Integrator.Greedy
+java.util.stream.Gatherer.Integrator
+java.util.stream.Gatherer
+java.util.stream.Gatherers
+java.util.stream.GathererOp
 java.util.concurrent.ForkJoinPool#invokeAllUninterruptibly(Collection<? extends Callable<T>>;)
 java.util.concurrent.ForkJoinTask#adaptInterruptible(Runnable;T;)
 java.util.concurrent.ForkJoinTask#adaptInterruptible(Runnable;)
@@ -51,8 +82,10 @@ javax.crypto.interfaces.DHPublicKey#getParams()
 javax.crypto.interfaces.DHPrivateKey#getParams()
 jdk.jshell.execution.JdiInitiator#runListenProcess(String;int;List<String>;jdk.jshell.execution.JdiInitiator.ProcessStarted;)
 jdk.jshell.execution.JdiInitiator.ProcessStarted
+jdk.jshell.execution.LocalExecutionControl#LocalExecutionControl(ClassLoader;)
 jdk.jshell.execution.JdiDefaultExecutionControl.JdiStarter
 jdk.jshell.execution.JdiExecutionControlProvider#JdiExecutionControlProvider(JdiStarter;)
+jdk.jshell.execution.LocalExecutionControlProvider#createExecutionControl(ExecutionEnv;Map<String,String>;)
 com.sun.source.tree.Tree.Kind#ANY_PATTERN
 com.sun.source.tree.TreeVisitor#visitAnyPattern(AnyPatternTree;P;)
 com.sun.source.tree.AnyPatternTree
