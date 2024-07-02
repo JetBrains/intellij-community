@@ -34,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
@@ -84,6 +85,8 @@ public final class X11UiUtil {
     "wmii",
     "xmonad"
   );
+
+  private static final ConcurrentHashMap<String, Boolean> unsupportedCommands = new ConcurrentHashMap<>();
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final class Xlib {
@@ -587,6 +590,16 @@ public final class X11UiUtil {
   }
 
   private static @Nullable String exec(String errorMessage, String... command) {
+    if (command.length == 0) {
+      LOG.error(errorMessage, "No command provided");
+      return null;
+    }
+
+    if (unsupportedCommands.containsKey(command[0])) {
+      // Avoid running and logging unsupported commands
+      return null;
+    }
+
     try {
       Process process = new ProcessBuilder(command).start();
       if (!process.waitFor(5, TimeUnit.SECONDS)) {
@@ -604,6 +617,11 @@ public final class X11UiUtil {
     }
     catch (Exception e) {
       LOG.info(errorMessage, e);
+
+      if (e.getMessage().contains("No such file or directory")) {
+        unsupportedCommands.put(command[0], true);
+      }
+
       return null;
     }
   }
