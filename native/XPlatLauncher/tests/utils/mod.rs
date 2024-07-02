@@ -323,7 +323,7 @@ fn layout_launcher(
     // .
     // └── XPlatLauncher
     //     ├── bin/
-    //     │   └── xplat-launcher.exe | remote-dev-server.exe
+    //     │   └── xplat64.exe | remote-dev-server.exe
     //     │   └── xplat64.exe.vmoptions
     //     │   └── idea.properties
     //     ├── lib/
@@ -333,7 +333,7 @@ fn layout_launcher(
     //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
-        LauncherLocation::Standard => "bin\\xplat-launcher.exe",
+        LauncherLocation::Standard => "bin\\xplat64.exe",
         LauncherLocation::RemoteDev => "bin\\remote-dev-server.exe"
     };
     let dist_root = target_dir.join("XPlatLauncher");
