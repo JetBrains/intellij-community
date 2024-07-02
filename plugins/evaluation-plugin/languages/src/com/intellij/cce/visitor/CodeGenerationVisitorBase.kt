@@ -6,9 +6,9 @@ import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 
-abstract class CodeGenerationVisitorBase(override val language: Language) : EvaluationVisitor, PsiElementVisitor() {
+abstract class EvaluationVisitorBase(override val language: Language, override val feature: String) : EvaluationVisitor, PsiElementVisitor() {
   private var codeFragment: CodeFragment? = null
-  override val feature: String = "code-generation"
+
 
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
@@ -22,3 +22,7 @@ abstract class CodeGenerationVisitorBase(override val language: Language) : Eval
 
   protected abstract fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor
 }
+
+abstract class CodeGenerationVisitorBase(language: Language) : EvaluationVisitorBase(language, "code-generation")
+
+abstract class RenameVisitorBase(language: Language) : EvaluationVisitorBase(language, "rename")
