@@ -7,28 +7,20 @@ import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiManager
-import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.dom.index.PluginIdDependenciesIndex
-import org.jetbrains.idea.devkit.util.DescriptorUtil
 
-private class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
+internal class PluginDescriptorEditorTabTitleProvider : EditorTabTitleProvider {
+
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
-    if (PluginManagerCore.PLUGIN_XML != file.name || DumbService.isDumb(project)) {
+    if (PluginManagerCore.PLUGIN_XML != file.name ||
+        DumbService.isDumb(project)) {
       return null
     }
 
     val pluginId = ReadAction.compute<String?, Throwable> {
-      if (!file.isValid) return@compute null
-      val xmlFile = PsiManager.getInstance(project).findFile(file) as? XmlFile ?: return@compute null
-
-      DescriptorUtil.getIdeaPluginFileElement(xmlFile) ?: return@compute null
-
-      @Suppress("HardCodedStringLiteral")
-      PluginIdDependenciesIndex.getPluginId(project, file) ?: "<unknown>"
+      PluginIdDependenciesIndex.getPluginId(project, file)
     } ?: return null
 
-    @Suppress("HardCodedStringLiteral")
     return "${PluginManagerCore.PLUGIN_XML} (${pluginId})"
   }
 }
