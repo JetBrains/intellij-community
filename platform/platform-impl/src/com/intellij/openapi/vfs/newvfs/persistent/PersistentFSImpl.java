@@ -862,7 +862,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     PersistentFSRecordsStorage records = connection.getRecords();
     //TODO RC: ideally, this method shouldn't be protected by external myInputLock, but .updateRecord() should
     //         involve VFS internal locking to protect it from concurrent writes
-    ((IPersistentFSRecordsStorage)records).updateRecord(fileId, record -> {
+    records.updateRecord(fileId, record -> {
       int flags = record.getFlags();
       int newFlags = flags & ~(Flags.MUST_RELOAD_LENGTH | Flags.MUST_RELOAD_CONTENT);
       if (newFlags != flags) {

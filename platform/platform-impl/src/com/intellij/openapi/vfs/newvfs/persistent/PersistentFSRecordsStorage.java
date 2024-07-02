@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 @ApiStatus.Internal
-public interface PersistentFSRecordsStorage extends CleanableStorage, AutoCloseable {
+public interface PersistentFSRecordsStorage extends IPersistentFSRecordsStorage, CleanableStorage, AutoCloseable {
   int NULL_ID = FSRecords.NULL_FILE_ID;
   int MIN_VALID_ID = NULL_ID + 1;
 
@@ -110,6 +110,7 @@ public interface PersistentFSRecordsStorage extends CleanableStorage, AutoClosea
 
   int getGlobalModCount();
 
+  @Override
   int recordsCount();
 
   /** @return max fileId already allocated by this storage */
@@ -118,6 +119,7 @@ public interface PersistentFSRecordsStorage extends CleanableStorage, AutoClosea
   /** @return true if fileId is valid for the storage -- points to valid record */
   boolean isValidFileId(int fileId);
 
+  @Override
   boolean isDirty();
 
 
@@ -125,6 +127,7 @@ public interface PersistentFSRecordsStorage extends CleanableStorage, AutoClosea
   @SuppressWarnings("UnusedReturnValue")
   boolean processAllRecords(@NotNull FsRecordProcessor processor) throws IOException;
 
+  @Override
   void force() throws IOException;
 
   @Override
