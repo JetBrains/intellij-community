@@ -6,7 +6,6 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.MutableCollectionComboBoxModel
@@ -122,7 +121,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         val branches = repoMapping.gitRepository.branches.remoteBranches.filter {
           it.remote == remote
         }
-        replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
+        replaceAll(branches.sorted())
         selectedItem = currentRemoteBranch.takeIf { it != null && branches.contains(it) }
       }
       return branchModel
@@ -190,13 +189,10 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         it.remote == remote
       }
 
-      val branches = repo.branches.localBranches.sortedWith(BRANCHES_COMPARATOR) + remoteBranches.sortedWith(BRANCHES_COMPARATOR)
+      val branches = repo.branches.localBranches.sorted() + remoteBranches.sorted()
       branchModel.replaceAll(branches)
       branchModel.selectedItem = repo.currentBranch
     }
-
-    private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
-
 
     private fun <T : GitBranch> createBranchPopup(branchModel: ComboBoxModel<T>,
                                                   @Nls repoRowMessage: String,
