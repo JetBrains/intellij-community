@@ -68,6 +68,9 @@ class NewJavaToKotlinConverter(
             postProcessor.doAdditionalProcessing(MultipleFilesPostProcessingTarget(kotlinFiles), context) { phase, description ->
                 withProgressProcessor.updateState(fileIndex = null, phase = phase + phasesCount, description = description)
             }
+
+            PostprocessorExtensionsRunner.runRegisteredPostprocessors(project, kotlinFiles)
+
             FilesResult(kotlinFiles.map { it.text }, externalCodeProcessing)
         }
     }
