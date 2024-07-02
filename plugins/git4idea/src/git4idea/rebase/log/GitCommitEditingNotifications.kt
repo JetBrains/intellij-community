@@ -25,11 +25,11 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.NotificationContent content: String?,
   @NlsContexts.ProgressTitle undoProgressTitle: String,
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
-  @NlsContexts.ProgressTitle undoErrorTitle: String
+  @NlsContexts.ProgressTitle undoErrorTitle: String,
 ) {
   val project = repository.project
-  val notification = if (content.isNullOrEmpty()) VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
-  else VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, NotificationType.INFORMATION)
+  val notification = if (content.isNullOrEmpty()) VcsNotifier.standardNotification().createNotification(title, NotificationType.INFORMATION)
+  else VcsNotifier.standardNotification().createNotification(title, content, NotificationType.INFORMATION)
   notification.setDisplayId(GitNotificationIdsHolder.COMMIT_EDIT_SUCCESS)
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
@@ -79,7 +79,7 @@ private fun undoInBackground(
   @NlsContexts.ProgressTitle undoImpossibleTitle: String,
   @NlsContexts.ProgressTitle undoErrorTitle: String,
   result: GitCommitEditingOperationResult.Complete,
-  expireUndoAction: () -> Unit
+  expireUndoAction: () -> Unit,
 ) {
   ProgressManager.getInstance().run(object : Task.Backgroundable(project, undoProgressTitle) {
     override fun run(indicator: ProgressIndicator) {

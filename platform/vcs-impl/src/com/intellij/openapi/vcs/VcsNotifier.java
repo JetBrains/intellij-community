@@ -278,7 +278,7 @@ public class VcsNotifier {
   @NotNull
   public Notification notifyMinorWarning(@NonNls @Nullable String displayId,
                                          @NotificationContent @NotNull String message) {
-    return notify(STANDARD_NOTIFICATION, displayId, "", message, NotificationType.WARNING, (NotificationListener)null);
+    return notify(standardNotification(), displayId, "", message, NotificationType.WARNING, (NotificationListener)null);
   }
 
   @NotNull
@@ -286,7 +286,7 @@ public class VcsNotifier {
                                          @NotificationTitle @NotNull String title,
                                          @NotificationContent @NotNull String message,
                                          NotificationAction... actions) {
-    return notify(STANDARD_NOTIFICATION, displayId, title, message, NotificationType.WARNING, actions);
+    return notify(standardNotification(), displayId, title, message, NotificationType.WARNING, actions);
   }
 
   @NotNull
@@ -294,7 +294,7 @@ public class VcsNotifier {
                                          @NotificationTitle @NotNull String title,
                                          @NotificationContent @NotNull String message,
                                          @Nullable NotificationListener listener) {
-    return notify(STANDARD_NOTIFICATION, displayId, title, message, NotificationType.WARNING, listener);
+    return notify(standardNotification(), displayId, title, message, NotificationType.WARNING, listener);
   }
 
   /**
@@ -370,7 +370,7 @@ public class VcsNotifier {
                                       @NotificationTitle @NotNull String title,
                                       @NotificationContent @NotNull String message,
                                       NotificationAction... actions) {
-    return notify(STANDARD_NOTIFICATION, displayId, title, message, NotificationType.INFORMATION, actions);
+    return notify(standardNotification(), displayId, title, message, NotificationType.INFORMATION, actions);
   }
 
   @NotNull
@@ -379,7 +379,7 @@ public class VcsNotifier {
                                       @NotificationTitle @NotNull String title,
                                       @NotificationContent @NotNull String message,
                                       NotificationAction... actions) {
-    return notify(sticky ? importantNotification() : STANDARD_NOTIFICATION,
+    return notify(sticky ? importantNotification() : standardNotification(),
                   displayId, title, message, NotificationType.INFORMATION, actions);
   }
 

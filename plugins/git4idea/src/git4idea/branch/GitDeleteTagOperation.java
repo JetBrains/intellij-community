@@ -27,7 +27,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static git4idea.GitNotificationIdsHolder.TAG_DELETION_ROLLBACK_ERROR;
 import static git4idea.util.GitUIUtil.code;
 
@@ -86,7 +85,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
   @Override
   protected void notifySuccess() {
     String message = GitBundle.message("delete.tag.operation.deleted.tag", myTagName);
-    Notification notification = STANDARD_NOTIFICATION.createNotification("", message, NotificationType.INFORMATION);
+    Notification notification = VcsNotifier.standardNotification().createNotification("", message, NotificationType.INFORMATION);
     notification.setDisplayId(GitNotificationIdsHolder.TAG_DELETED);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer(
       "action.NotificationAction.GitDeleteTagOperation.text.restore"), () -> restoreInBackground(notification)));
@@ -116,7 +115,7 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected void rollback() {
     GitCompoundResult result = doRollback();
     if (result.totalSuccess()) {
-      Notification notification = STANDARD_NOTIFICATION.createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
+      Notification notification = VcsNotifier.standardNotification().createNotification(GitBundle.message("delete.tag.operation.rollback.successful"), GitBundle
           .message("delete.tag.operation.restored.tag", myTagName), NotificationType.INFORMATION);
       notification.setDisplayId(GitNotificationIdsHolder.TAG_RESTORED);
       myNotifier.notify(notification);

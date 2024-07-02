@@ -393,8 +393,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  private fun switchTracker(virtualFile: VirtualFile, document: Document,
-                            refreshExisting: Boolean = false) {
+  private fun switchTracker(
+    virtualFile: VirtualFile, document: Document,
+    refreshExisting: Boolean = false,
+  ) {
     val provider = getTrackerProvider(virtualFile, document)
 
     val oldTracker = trackers[document]?.tracker
@@ -409,8 +411,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  private fun installTracker(virtualFile: VirtualFile, document: Document,
-                             provider: LocalLineStatusTrackerProvider): LocalLineStatusTracker<*>? {
+  private fun installTracker(
+    virtualFile: VirtualFile, document: Document,
+    provider: LocalLineStatusTrackerProvider,
+  ): LocalLineStatusTracker<*>? {
     if (isDisposed) return null
     if (trackers[document] != null) return null
 
@@ -486,8 +490,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   @RequiresEdt
-  private fun refreshTracker(tracker: LocalLineStatusTracker<*>,
-                             provider: LocalLineStatusTrackerProvider) {
+  private fun refreshTracker(
+    tracker: LocalLineStatusTracker<*>,
+    provider: LocalLineStatusTrackerProvider,
+  ) {
     if (isDisposed) return
     if (provider !is LineStatusTrackerContentLoader) return
     loader.scheduleRefresh(RefreshRequest(tracker.document, provider))
@@ -939,9 +945,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  private class TrackerData(val tracker: LocalLineStatusTracker<*>,
-                            var contentInfo: ContentInfo? = null,
-                            var clmFilePath: FilePath? = null)
+  private class TrackerData(
+    val tracker: LocalLineStatusTracker<*>,
+    var contentInfo: ContentInfo? = null,
+    var clmFilePath: FilePath? = null,
+  )
 
   private class RefreshRequest(val document: Document, val loader: LineStatusTrackerContentLoader) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
@@ -951,8 +959,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  private class RefreshData(val content: TrackerContent,
-                            val contentInfo: ContentInfo)
+  private class RefreshData(
+    val content: TrackerContent,
+    val contentInfo: ContentInfo,
+  )
 
 
   private fun log(@NonNls message: String, file: VirtualFile?) {
@@ -1092,7 +1102,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private class InactiveRangesDamagedNotification(project: Project, val virtualFiles: Set<VirtualFile>)
-    : Notification(VcsNotifier.STANDARD_NOTIFICATION.displayId,
+    : Notification(VcsNotifier.standardNotification().displayId,
                    VcsBundle.message("lst.inactive.ranges.damaged.notification"),
                    NotificationType.INFORMATION) {
     init {

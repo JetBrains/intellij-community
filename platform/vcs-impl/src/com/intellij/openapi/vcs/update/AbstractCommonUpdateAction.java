@@ -51,7 +51,6 @@ import static com.intellij.configurationStore.StoreUtilKt.forPoorJavaClientOnlyS
 import static com.intellij.openapi.util.Predicates.nonNull;
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static com.intellij.openapi.util.text.StringUtil.nullize;
-import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.UPDATE_ACTIVITY;
 import static com.intellij.util.ui.UIUtil.BR;
 
@@ -479,7 +478,8 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
+      return VcsNotifier.standardNotification()
+        .createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
@@ -586,7 +586,8 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
           type = NotificationType.INFORMATION;
         }
         VcsNotifier.getInstance(myProject).notify(
-          STANDARD_NOTIFICATION.createNotification(content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
+          VcsNotifier.standardNotification().createNotification(content, type)
+            .setDisplayId(VcsNotificationIdsHolder.PROJECT_UPDATE_FINISHED));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 
