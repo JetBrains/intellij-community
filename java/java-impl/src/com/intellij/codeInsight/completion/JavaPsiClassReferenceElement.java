@@ -124,10 +124,10 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
 
     String tailText = locationString;
 
-    if (item instanceof PsiTypeLookupItem) {
-      if (((PsiTypeLookupItem)item).isIndicateAnonymous() &&
+    if (item instanceof PsiTypeLookupItem typeLookupItem) {
+      if (typeLookupItem.isIndicateAnonymous() &&
           (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) ||
-          ((PsiTypeLookupItem)item).isAddArrayInitializer()) {
+          typeLookupItem.isAddArrayInitializer()) {
         tailText = "{...}" + tailText;
       }
     }
@@ -143,8 +143,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
-    String forced = item instanceof JavaPsiClassReferenceElement ? ((JavaPsiClassReferenceElement)item).getForcedPresentableName() :
-                    item instanceof PsiTypeLookupItem ? ((PsiTypeLookupItem)item).getForcedPresentableName() :
+    String forced = item instanceof JavaPsiClassReferenceElement referenceElement ? referenceElement.getForcedPresentableName() :
+                    item instanceof PsiTypeLookupItem lookupItem ? lookupItem.getForcedPresentableName() :
                     null;
     if (forced != null) {
       return forced;
@@ -175,8 +175,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
       if(type == null){
         return "";
       }
-      if (type instanceof PsiClassType && ((PsiClassType)type).getParameters().length > 0) {
-        buffer.append(((PsiClassType)type).rawType().getPresentableText()).append("<...>");
+      if (type instanceof PsiClassType classType && classType.getParameters().length > 0) {
+        buffer.append(classType.rawType().getPresentableText()).append("<...>");
       } else {
         buffer.append(type.getPresentableText());
       }
