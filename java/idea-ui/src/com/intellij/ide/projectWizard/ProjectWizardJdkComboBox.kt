@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard
 import com.intellij.execution.wsl.WslPath
 import com.intellij.icons.AllIcons
 import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.actions.AddJdkService
 import com.intellij.ide.projectWizard.ProjectWizardJdkIntent.*
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.wizard.NewProjectWizardBaseData
@@ -14,7 +15,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.StdModuleTypes
@@ -260,7 +260,7 @@ class ProjectWizardJdkComboBox(
           }
 
           is AddJdkFromJdkListDownloader -> item.append(JavaUiBundle.message("jdk.download.item"))
-          is AddJdkFromPath -> item.append(JavaUiBundle.message("jdk.add.item"))
+          is AddJdkFromPath -> item.append(JavaUiBundle.message("action.AddJdkAction.text"))
 
           is DetectedJdk -> {
             item.append(value.version)
@@ -427,19 +427,17 @@ private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
 }
 
 private fun registerJdk(path: String, combo: ProjectWizardJdkComboBox) {
-  runReadAction {
-    SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())?.let {
-      JdkComboBoxCollector.jdkRegistered(it)
-      combo.detectedJDKs.find { detected -> FileUtil.pathsEqual(detected.home, path) }?.let { item ->
-        combo.removeItem(item)
-        combo.detectedJDKs.remove(item)
-      }
-      val comboItem = ExistingJdk(it)
-      val index = combo.lastRegisteredJdkIndex
-      combo.registered.add(comboItem)
-      combo.insertItemAt(ExistingJdk(it), index)
-      combo.selectedIndex = index
+  service<AddJdkService>().createJdkFromPath(path) {
+    JdkComboBoxCollector.jdkRegistered(it)
+    combo.detectedJDKs.find { detected -> FileUtil.pathsEqual(detected.home, path) }?.let { item ->
+      combo.removeItem(item)
+      combo.detectedJDKs.remove(item)
     }
+    val comboItem = ExistingJdk(it)
+    val index = combo.lastRegisteredJdkIndex
+    combo.registered.add(comboItem)
+    combo.insertItemAt(comboItem, index)
+    combo.selectedIndex = index
   }
 }
 

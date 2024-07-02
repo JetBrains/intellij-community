@@ -2831,6 +2831,7 @@
     </action>
 
     <action id="DownloadJdkAction" class="com.intellij.ide.actions.DownloadJdkAction" icon="AllIcons.Actions.Download"/>
+    <action id="AddJdkAction" class="com.intellij.ide.actions.AddJdkAction" icon="AllIcons.Nodes.PpJdk"/>
 
     <action id="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction"
             class="com.intellij.debugger.feedback.KotlinDebuggerFeedbackTestAction" internal="true"/>
