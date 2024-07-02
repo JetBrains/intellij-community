@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCell
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener
@@ -26,8 +25,6 @@ import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
 import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.util.*
-import kotlin.math.max
-import kotlin.math.min
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
@@ -64,13 +61,13 @@ class NotebookCellInlayManager private constructor(
 
   private fun updateAll() {
     if (initialized) {
-      updateConsequentInlays(0..editor.document.lineCount, force = false)
+      updateCells(cells, force = false)
     }
   }
 
   fun forceUpdateAll() = runInEdt {
     if (initialized) {
-      updateConsequentInlays(0..editor.document.lineCount, force = true)
+      updateCells(cells, force = true)
     }
   }
 
@@ -80,7 +77,7 @@ class NotebookCellInlayManager private constructor(
     linesList.mergeAndJoinIntersections(listOf())
 
     for (lines in linesList) {
-      updateConsequentInlays(lines, force = false)
+      updateCells(pointers.mapNotNull { it.get()?.ordinal }.sorted().map { cells[it] }, force = false)
     }
   }
 
@@ -90,6 +87,16 @@ class NotebookCellInlayManager private constructor(
 
   fun update(pointer: NotebookIntervalPointer) = runInEdt {
     update(SmartList(pointer))
+  }
+
+  private fun updateCells(cells: List<EditorCell>, force: Boolean = false) {
+    keepScrollingPositionWhile(editor) {
+      cells.forEach {
+        it.update(force)
+      }
+      updateCellsFolding(cells)
+      inlaysChanged()
+    }
   }
 
   private fun addViewportChangeListener() {
@@ -217,36 +224,8 @@ class NotebookCellInlayManager private constructor(
     EditorCellView(editor, notebookCellLines, cell, this).also { Disposer.register(cell, it) }
   }.also { Disposer.register(this, it) }
 
-  private fun ensureInlaysAndHighlightersExist(matchingCellsBeforeChange: List<NotebookCellLines.Interval>, logicalLines: IntRange) {
-    val interestingRange =
-      matchingCellsBeforeChange
-        .map { it.lines }
-        .takeIf { it.isNotEmpty() }
-        ?.let { min(logicalLines.first, it.first().first)..max(it.last().last, logicalLines.last) }
-      ?: logicalLines
-    updateConsequentInlays(interestingRange)
-  }
-
   private fun inlaysChanged() {
     changedListener?.inlaysChanged()
-  }
-
-  private fun updateConsequentInlays(interestingRange: IntRange, force: Boolean = false) {
-    ThreadingAssertions.softAssertReadAccess()
-    keepScrollingPositionWhile(editor) {
-      val matchingIntervals = notebookCellLines.getMatchingCells(interestingRange)
-
-      val matchingCells = matchingIntervals.map {
-        _cells[it.ordinal]
-      }
-      matchingCells.forEach {
-        it.update(force)
-      }
-
-      updateCellsFolding(matchingCells)
-
-      inlaysChanged()
-    }
   }
 
   private fun updateCellsFolding(editorCells: List<EditorCell>) {
@@ -261,22 +240,6 @@ class NotebookCellInlayManager private constructor(
                                               cell.view?.updateCellFolding()
                                             }
                                           }, true, false)
-  }
-
-  private fun NotebookCellLines.getMatchingCells(logicalLines: IntRange): List<NotebookCellLines.Interval> =
-    mutableListOf<NotebookCellLines.Interval>().also { result ->
-      // Since inlay appearance may depend from neighbour cells, adding one more cell at the start and at the end.
-      val iterator = intervalsIterator(logicalLines.first)
-      if (iterator.hasPrevious()) iterator.previous()
-      for (interval in iterator) {
-        result.add(interval)
-        if (interval.lines.first > logicalLines.last) break
-      }
-    }
-
-  @TestOnly
-  fun updateControllers(matchingCells: List<NotebookCellLines.Interval>, logicalLines: IntRange) {
-    ensureInlaysAndHighlightersExist(matchingCells, logicalLines)
   }
 
   companion object {
@@ -376,6 +339,10 @@ class NotebookCellInlayManager private constructor(
 
   fun getCell(index: Int): EditorCell {
     return cells[index]
+  }
+
+  fun getCell(pointer: NotebookIntervalPointer): EditorCell {
+    return getCell(pointer.get()!!.ordinal)
   }
 
   fun invalidateCells() {

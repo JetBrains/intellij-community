@@ -26,10 +26,12 @@ import org.jetbrains.plugins.notebooks.ui.visualization.NotebookLineMarkerRender
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookTextCellBackgroundLineMarkerRenderer
 import org.jetbrains.plugins.notebooks.ui.visualization.notebookAppearance
 import org.jetbrains.plugins.notebooks.visualization.*
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
+import java.time.ZonedDateTime
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.reflect.KClass
@@ -419,6 +421,11 @@ class EditorCellView(
 
   fun updateCellFolding() {
     controllers.forEach { it.updateCellFolding() }
+  }
+
+  fun updateExecutionStatus(executionCount: Int?, progressStatus: ProgressStatus?, startTime: ZonedDateTime?, endTime: ZonedDateTime?) {
+    _controllers.filterIsInstance<CellExecutionStatusView>().firstOrNull()
+      ?.updateExecutionStatus(executionCount, progressStatus, startTime, endTime)
   }
 
   inner class NotebookGutterLineMarkerRenderer(private val interval: NotebookCellLines.Interval) : NotebookLineMarkerRenderer() {
