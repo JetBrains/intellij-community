@@ -154,12 +154,46 @@ internal class IjentNioFileChannel private constructor(
     TODO("Not yet implemented")
   }
 
+  // todo the following two methods can recognize that they are working on the same IJent instance,
+  // and therefore perform byte copying entirely on the remote side
   override fun transferTo(position: Long, count: Long, target: WritableByteChannel): Long {
-    TODO("Not yet implemented")
+    val buf = ByteBuffer.allocate(count.toInt())
+    var currentPosition = position
+    var totalBytesWritten = 0
+    do {
+      val bytesRead = read(buf, currentPosition)
+      if (bytesRead <= 0) {
+        break
+      }
+      currentPosition += bytesRead
+      buf.flip()
+      val bytesWritten = target.write(buf)
+      if (bytesWritten <= 0) {
+        break
+      }
+      totalBytesWritten += bytesWritten
+    } while (true)
+    return totalBytesWritten.toLong()
   }
 
   override fun transferFrom(src: ReadableByteChannel, position: Long, count: Long): Long {
-    TODO("Not yet implemented")
+    val buf = ByteBuffer.allocate(count.toInt())
+    var currentPosition = 0;
+    var totalBytesRead = 0;
+    do {
+      val bytesRead = src.read(buf)
+      if (bytesRead == 0) {
+        break
+      }
+      totalBytesRead += bytesRead
+      buf.flip()
+      val bytesWritten = write(buf, position)
+      if (bytesWritten == 0) {
+        break
+      }
+      currentPosition += bytesWritten
+    } while (true)
+    return totalBytesRead.toLong()
   }
 
   override fun read(dst: ByteBuffer, position: Long): Int {
