@@ -77,33 +77,30 @@ class ProjectSettingsTracker(
 
   /**
    * Updates settings files status using new CRCs.
-   * @param isReloadJustFinished see [adjustCrc] for details
+   *
+   * @param reloadStatus see [adjustCrc] for details
    */
   private fun updateSettingsFilesStatus(
     operationName: String,
     newCRC: Map<String, Long>,
-    isReloadJustFinished: Boolean = false,
+    reloadStatus: ReloadStatus,
   ): SettingsFilesStatus {
     return settingsFilesStatus.updateAndGet {
       SettingsFilesStatus(it.oldCRC, newCRC)
-        .adjustCrc(operationName, isReloadJustFinished)
+        .adjustCrc(operationName, reloadStatus)
     }
   }
 
   /**
-   * Adjusts settings files status. It allows ignoring files modifications by rules from
-   * external system. For example some build systems needed to ignore files updates during reload.
+   * Adjusts settings files status.
+   *
+   * It allows ignoring files modifications by rules from an external system.
+   * For example, some build systems needed to ignore file updates during reload.
    *
    * @see ExternalSystemProjectAware.isIgnoredSettingsFileEvent
    */
-  private fun SettingsFilesStatus.adjustCrc(operationName: String, isReloadJustFinished: Boolean): SettingsFilesStatus {
+  private fun SettingsFilesStatus.adjustCrc(operationName: String, reloadStatus: ReloadStatus): SettingsFilesStatus {
     val modificationType = getModificationType()
-    val isReloadInProgress = applyChangesOperation.isOperationInProgress()
-    val reloadStatus = when {
-      isReloadJustFinished -> ReloadStatus.JUST_FINISHED
-      isReloadInProgress -> ReloadStatus.IN_PROGRESS
-      else -> ReloadStatus.IDLE
-    }
     val oldCRC = oldCRC.toMutableMap()
     for (path in updated) {
       val context = SettingsFilesModificationContext(UPDATE, modificationType, reloadStatus)
@@ -217,11 +214,16 @@ class ProjectSettingsTracker(
     operationName: String,
     configureContext: SettingsFilesStatusUpdateContext.() -> Unit
   ) {
-    val context = SettingsFilesStatusUpdateContext().apply(configureContext)
+    val context = SettingsFilesStatusUpdateContext(
+      reloadStatus = when (applyChangesOperation.isOperationInProgress()) {
+        true -> ReloadStatus.IN_PROGRESS
+        else -> ReloadStatus.IDLE
+      }
+    ).apply(configureContext)
     submitSettingsFilesCollection(context.isRefreshVfs, context.isInvalidateCache) { settingsPaths ->
       val operationStamp = currentTime()
       submitSettingsFilesCRCCalculation(operationName, settingsPaths, context.isMergeSameCalls) { newSettingsFilesCRC ->
-        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.isReloadJustFinished)
+        val settingsFilesStatus = updateSettingsFilesStatus(operationName, newSettingsFilesCRC, context.reloadStatus)
         updateProjectStatus(operationStamp, context.syncEvent, context.changeEvent, settingsFilesStatus)
         context.callback?.invoke()
       }
@@ -266,8 +268,8 @@ class ProjectSettingsTracker(
   )
 
   private class SettingsFilesStatusUpdateContext(
+    var reloadStatus: ReloadStatus,
     var isMergeSameCalls: Boolean = false,
-    var isReloadJustFinished: Boolean = false,
     var isRefreshVfs: Boolean = false,
     var isInvalidateCache: Boolean = false,
     var syncEvent: ((Long) -> ProjectStatus.ProjectEvent)? = null,
@@ -323,7 +325,7 @@ class ProjectSettingsTracker(
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {
       submitSettingsFilesStatusUpdate("onProjectReloadFinish") {
         isRefreshVfs = true
-        isReloadJustFinished = true
+        reloadStatus = ReloadStatus.JUST_FINISHED
         syncEvent = ::Synchronize
         changeEvent = ::externalInvalidate
         callback = { applyChangesOperation.traceFinish() }
