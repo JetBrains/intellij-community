@@ -11,7 +11,6 @@
     <orderEntry type="library" scope="TEST" name="kotlin.project.model" level="project" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="library" name="JUnit4" level="project" />
-    <orderEntry type="module" module-name="kotlin.plugin.k1" />
     <orderEntry type="module" module-name="kotlin.base.project-model" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
     <orderEntry type="module" module-name="kotlin.tests-common" />
