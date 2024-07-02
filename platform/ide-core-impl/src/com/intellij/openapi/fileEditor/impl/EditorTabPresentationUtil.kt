@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder
 import com.intellij.openapi.project.IndexNotReadyException
@@ -27,10 +26,7 @@ object EditorTabPresentationUtil {
     getCustomEditorTabTitleAsync(project, file)?.let {
       return it
     }
-    return readAction {
-      doGetUniqueNameEditorTabTitle(project = project, file = file)
-      ?: file.presentableName
-    }
+    return getUniqueNameEditorTabTitleAsync(project = project, file = file) ?: file.presentableName
   }
 
   @JvmStatic

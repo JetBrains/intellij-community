@@ -23,9 +23,8 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
-import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.indexing.DumbModeAccessType
 import com.intellij.util.indexing.FileBasedIndex
@@ -71,8 +70,8 @@ private fun getUniqueVirtualFilePath(
     file = file,
     skipNonOpenedFiles = skipNonOpenedFiles,
     scope = scope,
-  )
-  return if (builder == null) getName(file) else builder.getShortPath(file)
+  ) ?: return getName(file)
+  return builder.getShortPath(file)
 }
 
 private fun getUniqueVirtualFileNameBuilder(
@@ -97,8 +96,7 @@ private fun getUniqueVirtualFileNameBuilder(
   }
 
   val scopeToValueMap = data.value
-  val valueMap = scopeToValueMap.get(scope)
-                 ?: ConcurrencyUtil.cacheOrGet(scopeToValueMap, scope, ContainerUtil.createConcurrentSoftValueMap())
+  val valueMap = scopeToValueMap.computeIfAbsent(scope) { CollectionFactory.createConcurrentSoftValueMap() }
   val fileName = getName(file)
   var builder = valueMap.get(fileName)
 
@@ -185,12 +183,7 @@ private fun createAndCacheBuilders(
     path = if (path == null) "" else FileUtilRt.toSystemIndependentName(path)
     val builder = UniqueNameBuilder<VirtualFile>(path, File.separator)
     for (virtualFile in files) {
-      val presentablePath = if (virtualFile is VirtualFilePathWrapper) {
-        (virtualFile as VirtualFilePathWrapper).presentablePath
-      }
-      else {
-        virtualFile.path
-      }
+      val presentablePath = if (virtualFile is VirtualFilePathWrapper) virtualFile.presentablePath else virtualFile.path
       builder.addPath(virtualFile, presentablePath)
     }
     valueMap.put(fileName, builder)
