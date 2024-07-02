@@ -64,21 +64,22 @@ class KotlinSmartStepTargetFilterer(
     }
 
     private fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
-        if (methodInfo.name == name && ordinal == currentCount) {
-            val declaration = getDeclaration() ?: return false
-            if (declaration is KtClass) {
-                // it means the method is, in fact, the implicit primary constructor
-                return primaryConstructorMatches(declaration, owner, name, signature)
-            }
-
-            val lightClassMethod by lazy { declaration.getLightClassMethod() }
-            if (methodInfo.isInlineClassMember || lightClassMethod == null) {
-                // Cannot create light class for functions with inline classes
-                return matchesBySignature(declaration, owner, signature)
-            }
-            return lightClassMethod!!.matches(owner, name, signature, debugProcess)
+        if (ordinal != currentCount) return false
+        val nameMatches = if (methodInfo.isInternalMethod) internalNameMatches(name, methodInfo.name) else name == methodInfo.name
+        if (!nameMatches) return false
+        val declaration = getDeclaration() ?: return false
+        if (declaration is KtClass) {
+            // it means the method is, in fact, the implicit primary constructor
+            return primaryConstructorMatches(declaration, owner, name, signature)
         }
-        return false
+
+        val lightClassMethod by lazy { declaration.getLightClassMethod() }
+        // Cannot create light class for functions with inline classes
+        // Internal name check fails with light method
+        if (methodInfo.isInlineClassMember || methodInfo.isInternalMethod || lightClassMethod == null) {
+            return matchesBySignature(declaration, owner, signature)
+        }
+        return lightClassMethod!!.matches(owner, name, signature, debugProcess)
     }
 
     private fun primaryConstructorMatches(declaration: KtClass, owner: String, name: String, signature: String): Boolean {

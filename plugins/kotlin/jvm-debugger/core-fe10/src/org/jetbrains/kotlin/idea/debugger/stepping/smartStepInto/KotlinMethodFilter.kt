@@ -120,7 +120,7 @@ private fun getCurrentDeclaration(positionManager: PositionManager, location: Lo
 }
 
 // Internal methods has a '$<MODULE_NAME>' suffix
-private fun internalNameMatches(methodName: String, targetMethodName: String): Boolean {
+internal fun internalNameMatches(methodName: String, targetMethodName: String): Boolean {
     return methodName.startsWith("$targetMethodName\$")
 }
 
