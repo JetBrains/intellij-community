@@ -35,7 +35,7 @@ class EditorCellOutputs(
 
   var foldingsVisible: Boolean = false
     set(value) {
-      if(field != value) {
+      if (field != value) {
         field = value
         outputs.forEach { it.folding.visible = value }
       }
@@ -43,7 +43,7 @@ class EditorCellOutputs(
 
   var foldingsSelected: Boolean = false
     set(value) {
-      if(field != value) {
+      if (field != value) {
         field = value
         outputs.forEach { it.folding.selected = value }
       }
@@ -226,16 +226,17 @@ class EditorCellOutputs(
     showAbove = false,
     priority = editor.notebookAppearance.NOTEBOOK_OUTPUT_INLAY_PRIORITY,
     offset = computeInlayOffset(editor.document, interval().lines),
-  ).also {
-    it.renderer.asSafely<JComponent>()?.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent) {
+  ).also { inlay ->
+    inlay.renderer.asSafely<JComponent>()?.addComponentListener(object : ComponentAdapter() {
+      private fun update() {
         invalidate()
+        outputs.forEach { it.folding.updateBounds() }
       }
-      override fun componentMoved(e: ComponentEvent?) {
-        invalidate()
-      }
+
+      override fun componentResized(e: ComponentEvent) = update()
+      override fun componentMoved(e: ComponentEvent?) = update()
     })
-    Disposer.register(it) {
+    Disposer.register(inlay) {
       onInlayDisposed(this)
     }
   }
@@ -257,13 +258,15 @@ class EditorCellOutputs(
       pos,
     )
 
-    val outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable)
-    outputComponent.folding.visible = foldingsVisible
+    val outputComponent = EditorCellOutput(editor, collapsingComponent, newComponent.disposable).apply {
+      folding.visible = foldingsVisible
+      folding.selected = foldingsSelected
+    }
 
     _outputs.add(if (pos == -1) _outputs.size else pos, outputComponent)
     add(outputComponent)
 
-    // DS-1972 Without revalidation, the component would be just invalidated, and would be rendered only after anything else requests
+    // DS-1972 Without revalidation, the component would be just invalidated and would be rendered only after anything else requests
     // for repainting the editor.
     newComponent.component.revalidate()
   }
