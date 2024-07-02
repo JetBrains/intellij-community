@@ -16,7 +16,7 @@ import java.util.*
 
 @Internal
 object IndexStatisticGroup {
-  val GROUP = EventLogGroup("indexing.statistics", 14)
+  val GROUP = EventLogGroup("indexing.statistics", 15)
 
   private val indexIdField =
     EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator::class.java)
@@ -63,6 +63,7 @@ object IndexStatisticGroup {
   private val activityType = EventFields.Enum<IndexingActivityType>("indexing_activity_type") { type -> type.text }
   private val scanningIds = EventFields.LongList("scanning_ids")
   private val scanningType = EventFields.Enum<ScanningType>("type") { type -> type.name.lowercase(Locale.ENGLISH) }
+  private val isScanningTriggeredByIndexRestart = EventFields.Boolean("is_scanning_triggered_by_index_restart", "Indicates whether scanning was triggered by index restart. Particularly it happens when a language plugin is turned on/off")
   private val hasPauses = EventFields.Boolean("has_pauses")
 
   private val totalActivityTime = EventFields.Long("total_activity_time_with_pauses")
@@ -96,6 +97,7 @@ object IndexStatisticGroup {
     activityType,
     scanningIds,
     scanningType,
+    isScanningTriggeredByIndexRestart,
     hasPauses,
     totalActivityTime,
     totalActivityTimeWithoutPauses,
@@ -112,6 +114,7 @@ object IndexStatisticGroup {
     project: Project,
     indexingSessionId: Long,
     scanningId: Long,
+    isTriggeredByIndexRestart: Boolean,
     scanningType: ScanningType,
     hasPauses: Boolean,
     totalTimeWithPauses: Long,
@@ -127,6 +130,7 @@ object IndexStatisticGroup {
       this.indexingSessionId.with(indexingSessionId),
       this.activityType.with(IndexingActivityType.Scanning),
       this.scanningIds.with(listOf(scanningId)),
+      this.isScanningTriggeredByIndexRestart.with(isTriggeredByIndexRestart),
       this.scanningType.with(scanningType),
       this.hasPauses.with(hasPauses),
       this.totalActivityTime.with(totalTimeWithPauses),

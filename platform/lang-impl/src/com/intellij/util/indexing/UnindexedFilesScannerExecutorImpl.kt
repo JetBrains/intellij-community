@@ -214,7 +214,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                                                                 IndexingBundle.message("progress.indexing.scanning"),
                                                                 taskIndicator.getPauseReason())
 
-      val scanningHistory = ProjectScanningHistoryImpl(project, task.indexingReason, task.scanningType)
+      val scanningHistory = ProjectScanningHistoryImpl(project, task.indexingReason, task.scanningType, task.isTriggeredByIndexRestart)
       (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
         task.applyDelayedPushOperations(scanningHistory)
       }

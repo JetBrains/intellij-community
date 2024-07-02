@@ -77,7 +77,8 @@ class RescanIndexesAction : RecoveryAction {
     val historyFuture = UnindexedFilesScanner(project, false, false,
                                               predefinedIndexableFilesIterators, null, "Rescanning indexes recovery action",
                                               if (predefinedIndexableFilesIterators == null) ScanningType.FULL_FORCED else ScanningType.PARTIAL_FORCED, null,
-                                              false, trigger).queue()
+                                              shouldHideProgressInSmartMode = false,
+                                              forceReindexingTrigger = trigger).queue()
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +
              trigger.stubAndIndexingStampInconsistencies
