@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.refactoring.copy
 
 import com.intellij.ide.util.EditorHelper
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
@@ -228,7 +229,17 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
                 EditorHelper.openInEditor(refactoringResult.targetFile)
             }
         } catch (e: IncorrectOperationException) {
-            Messages.showMessageDialog(sourceData.project, e.message, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
+            ApplicationManager.getApplication().invokeLater(
+                Runnable {
+                    Messages.showMessageDialog(
+                        sourceData.project,
+                        e.message,
+                        RefactoringBundle.message("error.title"),
+                        Messages.getErrorIcon()
+                    )
+                },
+                ModalityState.nonModal()
+            )
         }
     }
 
