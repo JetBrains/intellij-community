@@ -12,9 +12,7 @@ internal class OnChangePanel : UISandboxPanel {
 
   override val title: String = "OnChange"
 
-  private val log = JBTextArea().apply {
-    isEditable = false
-  }
+  private lateinit var taLog: JBTextArea
 
   private var checkBoxValue = true
   private var radioButtonValue = true
@@ -79,14 +77,21 @@ internal class OnChangePanel : UISandboxPanel {
       }
 
       row {
-        scrollCell(log)
+        taLog = textArea()
           .align(Align.FILL)
+          .applyToComponent {
+            isEditable = false
+          }.component
       }.resizableRow()
     }
   }
 
   private fun log(component: JComponent, context: ChangeContext, text: String? = null) {
+    if (!::taLog.isInitialized) {
+      return
+    }
+
     val textLog = if (text == null) "" else "($text)"
-    log.text += "component = ${component::class.java.name}$textLog, binding = ${context.binding}, event: ${context.event}\n"
+    taLog.text += "component = ${component::class.java.name}$textLog, binding = ${context.binding}, event: ${context.event}\n"
   }
 }
