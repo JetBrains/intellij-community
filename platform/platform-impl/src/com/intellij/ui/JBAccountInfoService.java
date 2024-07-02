@@ -111,13 +111,21 @@ public interface JBAccountInfoService {
     HOBBY,
   }
 
-  sealed interface LicenseListResult permits LicenseListResult.FetchFailure,
-                                             LicenseListResult.LicenseList,
-                                             LicenseListResult.LoginRequired {
+  sealed interface LicenseListResult permits LicenseListResult.LicenseList,
+                                             LicenseListResult.LoginRequired,
+                                             LicenseListResult.FetchFailure,
+                                             LicenseListResult.TrialRejected {
     record LicenseList(@NotNull List<@NotNull JbaLicense> licenses) implements LicenseListResult { }
 
-    final class LoginRequired implements LicenseListResult {
-      public static final LoginRequired INSTANCE = new LoginRequired();
+    enum LoginRequired implements LicenseListResult {
+      INSTANCE
+    }
+
+    record TrialRejected(@NotNull Reason reason, @Nullable String url, @NotNull String message) implements LicenseListResult {
+      public enum Reason {
+        TRIAL_NOT_ALLOWED,
+        PAYMENT_PROOF_REQUIRED,
+      }
     }
 
     record FetchFailure(@NotNull String errorMessage) implements LicenseListResult { }
