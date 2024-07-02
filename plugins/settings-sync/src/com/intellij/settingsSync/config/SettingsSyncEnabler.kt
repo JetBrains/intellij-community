@@ -53,9 +53,7 @@ internal class SettingsSyncEnabler {
         updateResult = result
         if (result is UpdateResult.Success) {
           val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)
-          runBlockingCancellable {
-            saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
-          }
+
           settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(cloudEvent))
         }
       }

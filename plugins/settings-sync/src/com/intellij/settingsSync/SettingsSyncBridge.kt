@@ -128,6 +128,16 @@ class SettingsSyncBridge(
 
     settingsLog.logExistingSettings()
     try {
+      // We need to create this remote file before the first sync, otherwise the settings value (even if persisted) will be overwritten by
+      // the sync-server-side value when `com.intellij.settingsSync.CloudConfigServerCommunicator#currentSnapshotFilePath` applies
+      // the remote config received in the first sync.
+      if (SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled) {
+        remoteCommunicator.createFile(CROSS_IDE_SYNC_MARKER_FILE, "")
+      }
+      else {
+        remoteCommunicator.deleteFile(CROSS_IDE_SYNC_MARKER_FILE)
+      }
+
       when (initMode) {
         is InitMode.TakeFromServer -> applySnapshotFromServer(initMode.cloudEvent)
         InitMode.PushToServer -> mergeAndPush(previousState.idePosition, previousState.cloudPosition, FORCE_PUSH)
