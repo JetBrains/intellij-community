@@ -14,9 +14,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class TestVcsNotifier extends VcsNotifier {
-  private final List<NotificationGroup> VCS_GROUPS
-    = Arrays.asList(NOTIFICATION_GROUP_ID, IMPORTANT_ERROR_NOTIFICATION, STANDARD_NOTIFICATION, SILENT_NOTIFICATION);
-
   public TestVcsNotifier(@NotNull Project project) {
     super(project);
   }
@@ -36,10 +33,13 @@ public final class TestVcsNotifier extends VcsNotifier {
 
   @NotNull
   public List<Notification> getNotifications() {
+    List<NotificationGroup> vcsGroups
+      = Arrays.asList(toolWindowNotification(), importantNotification(), standardNotification(), silentNotification());
+
     NotificationGroupManager groupManager = NotificationGroupManager.getInstance();
     List<Notification> allNotifications = ActionCenter.getNotifications(myProject);
     return ContainerUtil.filter(allNotifications, it -> {
-      return VCS_GROUPS.contains(groupManager.getNotificationGroup(it.getGroupId()));
+      return vcsGroups.contains(groupManager.getNotificationGroup(it.getGroupId()));
     });
   }
 

@@ -607,6 +607,7 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - s:addShowDetailsAction(com.intellij.openapi.project.Project,com.intellij.notification.Notification):V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.VcsNotifier
 - hideAllNotificationsById(java.lang.String):V
+- s:importantNotification():com.intellij.notification.NotificationGroup
 - logInfo(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notify(com.intellij.notification.Notification):com.intellij.notification.Notification
 - notifyError(java.lang.String,java.lang.String):com.intellij.notification.Notification
@@ -644,6 +645,9 @@ c:com.intellij.openapi.vcs.VcsNotifier
 - notifyWeakError(java.lang.String,java.lang.String):com.intellij.notification.Notification
 - notifyWeakError(java.lang.String,java.lang.String,java.lang.String):com.intellij.notification.Notification
 - showNotificationAndHideExisting(com.intellij.notification.Notification):V
+- s:silentNotification():com.intellij.notification.NotificationGroup
+- s:standardNotification():com.intellij.notification.NotificationGroup
+- s:toolWindowNotification():com.intellij.notification.NotificationGroup
 c:com.intellij.openapi.vcs.VcsProjectSetProcessor
 - com.intellij.projectImport.ProjectSetProcessor
 - <init>():V
