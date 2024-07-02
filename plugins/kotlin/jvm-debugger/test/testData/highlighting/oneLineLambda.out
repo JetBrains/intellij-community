@@ -4,11 +4,11 @@ LineBreakpoint created at oneLineLambda.kt:13 lambdaOrdinal = 1
 Run Java
 Connected to the target VM
 oneLineLambda.kt:7
-Highlight lambda range: '{ number ->  number * 2 }'
+Highlight lambda range: 'number * 2'
 oneLineLambda.kt:9
-Highlight lambda range: '{ println(it) }'
+Highlight lambda range: 'println(it)'
 oneLineLambda.kt:13
-Highlight lambda range: '{ it }'
+Highlight lambda range: 'it'
 Disconnected from the target VM
 
 Process finished with exit code 0

@@ -8,20 +8,20 @@ LineBreakpoint created at multiLineLambda.kt:33 lambdaOrdinal = 2
 Run Java
 Connected to the target VM
 multiLineLambda.kt:7
-Highlight lambda range: '{ number -> number * 2
+Highlight lambda range: 'number * 2
 '
 multiLineLambda.kt:10
-Highlight lambda range: '{ println(it) }'
+Highlight lambda range: 'println(it)'
 multiLineLambda.kt:15
 Highlight whole line
 multiLineLambda.kt:18
-Highlight lambda range: '{ println(it) }'
+Highlight lambda range: 'println(it)'
 multiLineLambda.kt:23
 Highlight whole line
 multiLineLambda.kt:29
-Highlight lambda range: '            it }'
+Highlight lambda range: '            it'
 multiLineLambda.kt:33
-Highlight lambda range: '{ it
+Highlight lambda range: 'it
 '
 Disconnected from the target VM
 

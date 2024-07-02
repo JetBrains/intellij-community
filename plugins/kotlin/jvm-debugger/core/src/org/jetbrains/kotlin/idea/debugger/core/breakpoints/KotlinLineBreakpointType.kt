@@ -138,9 +138,10 @@ class KotlinLineBreakpointType :
         }
 
         lambdas.forEachIndexed { ordinal, lambda ->
-            val positionImpl = XSourcePositionImpl.createByElement(lambda)
+            val element = lambda.bodyExpression?.takeIf { it.textLength > 0 } ?: lambda
+            val positionImpl = XSourcePositionImpl.createByElement(element)
             if (positionImpl != null) {
-                result.add(LambdaJavaBreakpointVariant(positionImpl, lambda, ordinal))
+                result.add(LambdaJavaBreakpointVariant(positionImpl, element, ordinal))
             }
         }
 
