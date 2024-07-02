@@ -58,6 +58,7 @@ object EventsBus {
   }
 
   fun unsubscribeAll() {
+    LOG.info("Unsubscribing all events")
     SHARED_EVENTS_FLOW.unsubscribeAll()
     EVENTS_FLOW.unsubscribeAll()
   }

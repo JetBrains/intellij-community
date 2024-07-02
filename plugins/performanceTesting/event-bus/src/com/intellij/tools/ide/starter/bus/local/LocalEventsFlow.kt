@@ -39,7 +39,7 @@ class LocalEventsFlow : EventsFlow {
       // To avoid double subscriptions
       if (subscribers[eventClassName]?.any { it.subscriberName == subscriberObject } == true) return false
       val newSubscriber = Subscriber(subscriberObject, timeout, callback)
-      LOG.debug("New subscriber $newSubscriber for $eventClassName")
+      LOG.info("New subscriber $newSubscriber for $eventClassName")
       subscribers.computeIfAbsent(eventClassName) { CopyOnWriteArrayList() }.add(newSubscriber)
       return true
     }
@@ -52,7 +52,7 @@ class LocalEventsFlow : EventsFlow {
     }
     (subscribersForEvent as? CopyOnWriteArrayList<Subscriber<T>>)
       ?.map { subscriber ->
-        LOG.debug("Post event $eventClassName for $subscriber.")
+        LOG.info("Post event $eventClassName for $subscriber.")
         CompletableFuture.runAsync({
                                      LOG.debug("Start execution $eventClassName for $subscriber")
                                      runBlocking { subscriber.callback(event) }
