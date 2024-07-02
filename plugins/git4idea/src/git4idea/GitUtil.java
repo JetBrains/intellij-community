@@ -952,7 +952,7 @@ public final class GitUtil {
 
   public static void refreshVfsInRoots(@NotNull Collection<VirtualFile> roots) {
     RefreshVFsSynchronously.trace("refresh roots " + roots);
-    RefreshVFsSynchronously.refreshVirtualFiles(roots);
+    RefreshVFsSynchronously.refreshVirtualFilesRecursive(roots);
   }
 
   public static void updateAndRefreshChangedVfs(@NotNull GitRepository repository, @Nullable Hash startHash) {

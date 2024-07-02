@@ -63,6 +63,17 @@ object RefreshVFsSynchronously {
     }
   }
 
+  @JvmStatic
+  fun refreshVirtualFilesRecursive(files: Collection<VirtualFile>) {
+    if (files.isEmpty()) return
+    if (TRACE_LOG.isDebugEnabled) {
+      TRACE_LOG.debug("RefreshVFsSynchronously#refreshVirtualFilesRecursive: $files", Throwable())
+    }
+    runWithProgressText {
+      markDirtyAndRefresh(false, true, false, *files.toTypedArray())
+    }
+  }
+
   private fun refreshDeletedFiles(files: Collection<File>) {
     if (files.isEmpty()) return
     if (TRACE_LOG.isDebugEnabled) {

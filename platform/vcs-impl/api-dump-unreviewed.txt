@@ -7714,6 +7714,7 @@ f:com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 - bs:refresh$default(com.intellij.openapi.vcs.update.RefreshVFsSynchronously,java.util.Collection,Z,I,java.lang.Object):V
 - sf:refreshFiles(java.util.Collection):V
 - sf:refreshVirtualFiles(java.util.Collection):V
+- sf:refreshVirtualFilesRecursive(java.util.Collection):V
 - sf:trace(java.lang.String):V
 - sf:updateAllChanged(com.intellij.openapi.vcs.update.UpdatedFiles):V
 - sf:updateChanges(java.util.Collection):V
