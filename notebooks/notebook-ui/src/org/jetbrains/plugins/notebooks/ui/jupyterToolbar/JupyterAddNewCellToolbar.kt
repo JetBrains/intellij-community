@@ -20,9 +20,9 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String = ActionPlaces.EDITOR_INLAY) :
-  ActionToolbarImpl(place, actionGroup, true)  // PY-66455
-{
+class JupyterAddNewCellToolbar(  // PY-66455
+  actionGroup: ActionGroup, target: JComponent, place: String = ActionPlaces.EDITOR_INLAY
+) : ActionToolbarImpl(place, actionGroup, true) {
   init {
     val borderColor = when (NewUiValue.isEnabled()) {
       true -> JBColor.LIGHT_GRAY
@@ -57,11 +57,9 @@ class JupyterToolbar(actionGroup: ActionGroup, target: JComponent, place: String
   }
 
   fun getRespectiveLineNumberInEditor(editor: Editor): Int? {
-    val point = SwingUtilities.convertPoint(this, 0, this.height * 2, editor.contentComponent)
+    val point = SwingUtilities.convertPoint(this, 0, this.height, editor.contentComponent)
     val documentLineCount = editor.document.lineCount
-    var prospectiveLineNumber = point.y
-                                  .takeIf { it >= 0 }
-                                  ?.let { editor.xyToLogicalPosition(point).line } ?: return null
+    var prospectiveLineNumber = point.y.takeIf { it >= 0 }?.let { editor.xyToLogicalPosition(point).line } ?: return null
     if (prospectiveLineNumber >= documentLineCount) { prospectiveLineNumber = documentLineCount - 1 }
     return prospectiveLineNumber
   }

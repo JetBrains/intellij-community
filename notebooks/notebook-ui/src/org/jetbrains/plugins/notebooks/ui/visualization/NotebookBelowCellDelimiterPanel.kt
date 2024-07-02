@@ -23,7 +23,7 @@ class NotebookBelowCellDelimiterPanel(
   private val notebookAppearance = editor.notebookAppearance
   private val plusTagButtonSize = JBUI.scale(18)
   private val tagsSpacing = JBUI.scale(6)
-  private val delimiterHeight =   when (editor.editorKind.isDiff()) {
+  private val delimiterHeight = when (editor.editorKind.isDiff()) {
     true -> getJupyterCellSpacing(editor) / 2
     false -> editor.notebookAppearance.cellBorderHeight / 4
   }
