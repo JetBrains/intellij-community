@@ -98,6 +98,17 @@ final class CustomEntitiesCausingReindexTracker {
              !newContentRootEntity.getExcludedPatterns().equals(oldContentRootEntity.getExcludedPatterns());
     }
 
+    // The rootsChanged is not thrown if the order of root groups has changed. Root group - group of roots collected by type.
+    //   rootsChanged is still thrown if the order of roots inside one group changes.
+    if (newEntity instanceof LibraryEntity newLibraryEntity && oldEntity instanceof LibraryEntity oldLibraryEntity) {
+      if (newLibraryEntity.getTableId().equals(oldLibraryEntity.getTableId()) &&
+          newLibraryEntity.getRoots().size() == oldLibraryEntity.getRoots().size() &&
+          newLibraryEntity.getRoots().stream().collect(Collectors.groupingBy(o -> o.getType()))
+            .equals(oldLibraryEntity.getRoots().stream().collect(Collectors.groupingBy(o -> o.getType())))) {
+        return false;
+      }
+    }
+
     WorkspaceEntity entity = newEntity != null ? newEntity : oldEntity;
 
     // `rootsChanged` should not be thrown for changes in global libraries that are not presented in a project
