@@ -49,6 +49,7 @@ internal fun findViews(packageName: String): List<ViewInfo> {
                             val kFunc = it.kotlinFunction ?: return@mapNotNull null
                             if (kFunc.parameters.isNotEmpty() || kFunc.returnType.classifier != Unit::class) return@mapNotNull null
 
+                            @Suppress("UNCHECKED_CAST")
                             ViewInfo(
                                 title = annotation.title,
                                 position = annotation.position,

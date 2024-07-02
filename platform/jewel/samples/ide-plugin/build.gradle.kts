@@ -1,28 +1,27 @@
 plugins {
     jewel
     alias(libs.plugins.composeDesktop)
-    alias(libs.plugins.ideaGradlePlugin)
+    alias(libs.plugins.ideaPlugin)
     `android-studio-releases-generator`
 }
-
-intellij {
-    pluginName = "Jewel Demo"
-    plugins = listOf("org.jetbrains.kotlin")
-    version = libs.versions.idea.get()
-}
-
-// TODO remove this once the IJ Gradle plugin fixes their repositories bug
-// See https://github.com/JetBrains/gradle-intellij-plugin/issues/776
+// Because we need to define IJP dependencies, the dependencyResolutionManagement
+// from settings.gradle.kts is overridden and we have to redeclare everything here.
 repositories {
-    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
-    maven("https://www.jetbrains.com/intellij-repository/releases")
-    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
     google()
+    maven("https://maven.pkg.jetbrains.space/public/p/compose/dev")
     mavenCentral()
-
+    
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
+    intellijPlatform {
+        intellijIdeaCommunity(libs.versions.idea)
+        instrumentationTools()
+    }
+
     implementation(projects.ideLafBridge) {
         exclude(group = "org.jetbrains.kotlinx")
     }
@@ -37,12 +36,12 @@ dependencies {
     }
 }
 
-tasks {
-    // We don't have any settings in the demo plugin
-    buildSearchableOptions {
-        enabled = false
-    }
+intellijPlatform {
+    pluginConfiguration { name = "Jewel Demo" }
+    buildSearchableOptions  = false
+}
 
+tasks {
     runIde {
         systemProperties["org.jetbrains.jewel.debug"] = "true"
     }

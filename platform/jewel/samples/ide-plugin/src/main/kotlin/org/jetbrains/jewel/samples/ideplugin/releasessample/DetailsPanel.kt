@@ -5,11 +5,10 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.scale.JBUIScale.scale
-import com.intellij.ui.util.maximumHeight
 import com.intellij.util.ImageLoader
 import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -49,7 +48,7 @@ private class ItemDetailsPanel(
         if (bufferedImage != null) {
             val imageContainer =
                 ImageComponent(scope).apply {
-                    maximumHeight = scale(200)
+                    maximumSize = JBDimension(Int.MAX_VALUE, 200)
                     image = bufferedImage
                 }
 
