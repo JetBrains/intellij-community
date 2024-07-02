@@ -57,16 +57,20 @@ internal class TerminalPromptView(
   commandExecutor: TerminalCommandExecutor
 ) : PromptStateListener, Disposable {
   val controller: TerminalPromptController
+
   val component: JComponent
+    get() = promptPanel
+
+  private val promptPanel: TerminalPromptPanel
 
   val preferredFocusableComponent: JComponent
     get() = editor.contentComponent
 
   val terminalWidth: Int
     get() {
-      val visibleArea = editor.scrollingModel.visibleArea
+      val availableWidth = promptPanel.getAvailableContentWidth()
       val scrollBarWidth = editor.scrollPane.verticalScrollBar.width
-      return visibleArea.width - scrollBarWidth
+      return availableWidth - scrollBarWidth
     }
 
   val charSize: Dimension2D
@@ -91,8 +95,7 @@ internal class TerminalPromptView(
     toolbar = createToolbar(targetComponent = editor.contentComponent)
     toolbarSizeInitializedFuture = scheduleToolbarUpdate(toolbar)
 
-    val promptPanel = TerminalPromptPanel(editorTextField, toolbar.component)
-    component = promptPanel
+    promptPanel = TerminalPromptPanel(editorTextField, toolbar.component)
 
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
                                          TerminalUi.blockLeftInset + TerminalUi.cornerToBlockInset,
@@ -107,10 +110,10 @@ internal class TerminalPromptView(
         }
       }
     }
-    component.border = JBUI.Borders.compound(outerBorder, innerBorder)
+    promptPanel.border = JBUI.Borders.compound(outerBorder, innerBorder)
 
     // move focus to the prompt text field on mouse click in the area of the prompt
-    component.addMouseListener(object : MouseAdapter() {
+    promptPanel.addMouseListener(object : MouseAdapter() {
       override fun mousePressed(e: MouseEvent?) {
         IdeFocusManager.getInstance(project).requestFocus(editor.contentComponent, true)
       }
@@ -268,6 +271,11 @@ internal class TerminalPromptView(
       bottomComponent = component
       revalidate()
       repaint()
+    }
+
+    /** The resulting width of the [mainComponent] if we invoke [doLayout] right now. */
+    fun getAvailableContentWidth(): Int {
+      return width - insets.left - insets.right - sideComponent.preferredSize.width
     }
 
     override fun getPreferredSize(): Dimension {
