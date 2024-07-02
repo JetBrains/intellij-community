@@ -7,7 +7,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
   </component>
 </module>

@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/adt-branding/intellij.android.adt.branding.iml" />
+      <module fileurl="file://$PROJECT_DIR$/adt-branding/intellij.android.extra-libs-to-download.iml" filepath="$PROJECT_DIR$/adt-branding/intellij.android.extra-libs-to-download.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/plugin-community/intellij.ae.database.community.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/core/intellij.ae.database.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" filepath="$PROJECT_DIR$/plugins/feature-usage-database/counters/intellij.ae.database.counters.community.iml" />
