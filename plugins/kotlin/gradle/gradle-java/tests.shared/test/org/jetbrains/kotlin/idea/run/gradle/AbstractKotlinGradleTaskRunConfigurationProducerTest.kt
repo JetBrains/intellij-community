@@ -38,14 +38,18 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
     }
 
     @ParameterizedTest
-    @AllGradleVersionsSource
-    fun testOtherLineDontHaveConfiguration(gradleVersion: GradleVersion) {
+    @AllGradleVersionsSource("""
+        'getTasks().register("taskName") {
+            doLast { println("task<caret>Name") }
+        }',
+        'var taskName by tasks.registering {
+            doLast { println("task<caret>Name") }
+        }' 
+    """)
+    fun testOtherLineDontHaveConfiguration(gradleVersion: GradleVersion, taskDefinition: String) {
         assumeThatKotlinDslScriptsModelImportIsSupported(gradleVersion)
         testKotlinDslEmptyProject(gradleVersion) {
-            writeTextAndCommit("build.gradle.kts", """
-                getTasks().register("taskName") {
-                    doLast { println("no Run configuration <caret> here") }
-                }""".trimIndent())
+            writeTextAndCommit("build.gradle.kts", taskDefinition)
             assertNoConfigurationAtCaret()
         }
     }

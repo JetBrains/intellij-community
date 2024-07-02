@@ -57,8 +57,9 @@ private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String
 }
 
 private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
+    val stopAt = arrayOf(KtScriptInitializer::class.java, KtLambdaExpression::class.java)
     // A property element could contain e.g., `val taskName by tasks.registering{}` or `val taskName by tasks.creating{}`
-    val property = element.getParentOfType<KtProperty>(false, KtScriptInitializer::class.java) ?: return null
+    val property = element.getParentOfType<KtProperty>(false, *stopAt) ?: return null
     // `tasks.registering{}` would be a delegateExpression for the example above
     val delegateExpression = property.delegateExpression ?: return null
     val callExpression = delegateExpression.getPossiblyQualifiedCallExpression() ?: return null
