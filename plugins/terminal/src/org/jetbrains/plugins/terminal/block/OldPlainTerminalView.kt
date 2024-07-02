@@ -9,6 +9,8 @@ import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.TtyConnector
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
+import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.getComponentSizeInitializedFuture
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 
 /**
@@ -37,6 +39,10 @@ internal class OldPlainTerminalView(project: Project,
 
   override fun getTerminalSize(): TermSize? {
     return widget.terminalPanel.terminalSizeFromComponent
+  }
+
+  override fun getTerminalSizeInitializedFuture(): CompletableFuture<*> {
+    return getComponentSizeInitializedFuture(component)
   }
 
   override fun isFocused(): Boolean {

@@ -6,19 +6,25 @@ import com.intellij.ide.navigationToolbar.NavBarModelExtension
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionToolbarListener
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.CaretVisualAttributes
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
 import com.intellij.ui.border.CustomLineBorder
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletion
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryPresenter
@@ -32,10 +38,12 @@ import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
+import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.geom.Dimension2D
+import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -68,6 +76,9 @@ internal class TerminalPromptView(
   private val commandHistoryPresenter: CommandHistoryPresenter
   private val commandSearchPresenter: CommandSearchPresenter
 
+  private val toolbar: ActionToolbar
+  private val toolbarSizeInitializedFuture: CompletableFuture<*>
+
   init {
     val editorTextField = createPromptTextField(session)
     editor = editorTextField.getEditor(true) as EditorImpl
@@ -77,8 +88,10 @@ internal class TerminalPromptView(
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, controller)
     commandSearchPresenter = CommandSearchPresenter(project, editor, controller.model)
 
-    val toolbarComponent = createToolbarComponent(targetComponent = editor.contentComponent)
-    val promptPanel = TerminalPromptPanel(editorTextField, toolbarComponent)
+    toolbar = createToolbar(targetComponent = editor.contentComponent)
+    toolbarSizeInitializedFuture = scheduleToolbarUpdate(toolbar)
+
+    val promptPanel = TerminalPromptPanel(editorTextField, toolbar.component)
     component = promptPanel
 
     val innerBorder = JBUI.Borders.empty(TerminalUi.promptTopInset,
@@ -112,6 +125,11 @@ internal class TerminalPromptView(
         promptPanel.setBottomComponent(errorComponent)
       }
     }, parentDisposable = this)
+  }
+
+  /** Terminal width depends on toolbar size, because space for it is reserved */
+  fun getTerminalWidthInitializedFuture(): CompletableFuture<*> {
+    return toolbarSizeInitializedFuture
   }
 
   override fun commandHistoryStateChanged(showing: Boolean) {
@@ -179,14 +197,53 @@ internal class TerminalPromptView(
     return textField
   }
 
-  private fun createToolbarComponent(targetComponent: JComponent): JComponent {
+  private fun createToolbar(targetComponent: JComponent): ActionToolbar {
     val actionManager = ActionManager.getInstance()
     val toolbarGroup = actionManager.getAction("Terminal.PromptToolbar") as ActionGroup
     val toolbar = actionManager.createActionToolbar("TerminalPrompt", toolbarGroup, true)
     toolbar.targetComponent = targetComponent
     toolbar.component.isOpaque = false
     toolbar.component.border = JBUI.Borders.emptyRight(10)
-    return toolbar.component
+    return toolbar
+  }
+
+  /** After completion of the returned future, toolbar preferred size is guaranteed to be valid. */
+  @RequiresEdt
+  private fun scheduleToolbarUpdate(toolbar: ActionToolbar): CompletableFuture<*> {
+    val disposable = Disposer.newCheckedDisposable(this)
+    val future = CompletableFuture<Unit>()
+    Disposer.register(disposable) {
+      if (!future.isDone) {
+        future.completeExceptionally(IllegalStateException("parent disposed"))
+      }
+    }
+
+    val isDisposed = { disposable.isDisposed }
+    // Invoke later, because in the current implementation 'updateActionsAsync' is updating the actions in place.
+    // But the toolbar might not be added to the UI hierarchy yet -> don't have a correct data content.
+    invokeLater(expired = isDisposed, ModalityState.any()) {
+      // Prompt component that contains the toolbar is not visible on terminal opening.
+      // So we need to explicitly mark the toolbar as showing, so the update won't be aborted.
+      UIUtil.markAsShowing(toolbar.component, true)
+
+      toolbar.addListener(object : ActionToolbarListener {
+        override fun actionsUpdated() {
+          // Resume future completion later, because at this moment the update is not reflected on the toolbar state.
+          invokeLater(expired = isDisposed, ModalityState.any()) {
+            future.complete(Unit)
+          }
+        }
+      }, disposable)
+
+      future.whenComplete { _, _ ->
+        Disposer.dispose(disposable)
+        UIUtil.markAsShowing(toolbar.component, false)
+      }
+
+      toolbar.updateActionsAsync()
+    }
+
+    return future
   }
 
   override fun dispose() {}
