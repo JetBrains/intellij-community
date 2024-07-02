@@ -943,9 +943,16 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     }
 
     if (selectedConfiguration == null) {
+      // NOTE: we use a local variable, because `notYetAppliedInitialSelectedConfigurationId` is a mutable property that can change
+      //       between the assignment and the conditional
+      val configurationToApply = selectedConfigurationId ?: ""
+
+      notYetAppliedInitialSelectedConfigurationId = configurationToApply
+
       // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
-      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: ""
-      selectAnyConfiguration()
+      if (configurationToApply.isEmpty()) {
+        selectAnyConfiguration()
+      }
     }
   }
 
