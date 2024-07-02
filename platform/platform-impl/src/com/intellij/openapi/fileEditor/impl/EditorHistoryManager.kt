@@ -81,7 +81,22 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  interface IncludeInEditorHistoryFile
+  interface IncludeInEditorHistoryFile : OptionallyIncluded {
+    override fun isIncludedInEditorHistory(project: Project): Boolean = true
+  }
+
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  interface OptionallyIncluded {
+    fun isIncludedInEditorHistory(project: Project): Boolean
+  }
+
+  private fun isIncludedInHistory(file: VirtualFile): Boolean {
+    if (file is OptionallyIncluded) return file.isIncludedInEditorHistory(project)
+
+    // don't add files that cannot be found via VFM (light & etc.)
+    return VirtualFileManager.getInstance().findFileByUrl(file.url) != null
+  }
 
   /**
    * Makes file the most recent one
@@ -92,8 +107,8 @@ class EditorHistoryManager internal constructor(private val project: Project) : 
     fileEditorManager: FileEditorManagerEx,
   ) {
     ThreadingAssertions.assertEventDispatchThread()
-    // don't add files that cannot be found via VFM (light & etc.)
-    if (file !is IncludeInEditorHistoryFile && VirtualFileManager.getInstance().findFileByUrl(file.url) == null) {
+
+    if (!isIncludedInHistory(file)) {
       return
     }
 
