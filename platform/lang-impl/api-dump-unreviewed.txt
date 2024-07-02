@@ -21183,7 +21183,8 @@ f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkAuto
 - f:createResolverImpl(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver$UnknownSdkLookup
 - supportsResolution(com.intellij.openapi.projectRoots.SdkTypeId):Z
 f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadDialogKt
-- sf:buildJdkDownloaderModel(java.util.List):com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderModel
+- sf:buildJdkDownloaderModel(java.util.List,kotlin.jvm.functions.Function1):com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderModel
+- bs:buildJdkDownloaderModel$default(java.util.List,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderModel
 f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloadTask
 - com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 - <init>(com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallRequest,com.intellij.openapi.project.Project):V
@@ -21199,8 +21200,8 @@ f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloader
 - com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderBase
 - com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 - <init>():V
-- pickSdk(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 - f:prepareDownloadTask(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem,java.nio.file.Path,java.util.function.Consumer):V
+- showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk,java.util.function.Predicate,java.util.function.Consumer):V
 - showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 - supportsDownload(com.intellij.openapi.projectRoots.SdkTypeId):Z
 com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkDownloaderBase
@@ -22635,6 +22636,7 @@ com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 - *sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - getIconForDownloadAction(com.intellij.openapi.projectRoots.SdkTypeId):javax.swing.Icon
 - pickSdk(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk):com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
+- showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk,java.util.function.Predicate,java.util.function.Consumer):V
 - a:showDownloadUI(com.intellij.openapi.projectRoots.SdkTypeId,com.intellij.openapi.projectRoots.SdkModel,javax.swing.JComponent,com.intellij.openapi.projectRoots.Sdk,java.util.function.Consumer):V
 - a:supportsDownload(com.intellij.openapi.projectRoots.SdkTypeId):Z
 com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask

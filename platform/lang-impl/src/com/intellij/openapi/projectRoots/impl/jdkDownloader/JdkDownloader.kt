@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
 import java.util.function.Consumer
+import java.util.function.Predicate
 import javax.swing.JComponent
 
 private val LOG = logger<JdkDownloader>()
@@ -56,43 +57,50 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     return notSimpleJavaSdkTypeIfAlternativeExistsAndNotDependentSdkType().value(sdkTypeId)
   }
 
-  override fun showDownloadUI(sdkTypeId: SdkTypeId,
-                              sdkModel: SdkModel,
-                              parentComponent: JComponent,
-                              selectedSdk: Sdk?,
-                              sdkCreatedCallback: Consumer<in SdkDownloadTask>) {
-    val dataContext = DataManager.getInstance().getDataContext(parentComponent)
-    val project = CommonDataKeys.PROJECT.getData(dataContext)
+  override fun showDownloadUI(
+    sdkTypeId: SdkTypeId,
+    sdkModel: SdkModel,
+    parentComponent: JComponent?,
+    project: Project?,
+    selectedSdk: Sdk?,
+    sdkFilter: Predicate<Any>?,
+    sdkCreatedCallback: Consumer<in SdkDownloadTask>,
+  ) {
     if (project?.isDisposed == true) return
-    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project) ?: return
+    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, null, project, sdkFilter) ?: return
     prepareDownloadTask(project, jdkItem, jdkHome, sdkCreatedCallback)
   }
 
-  override fun pickSdk(sdkTypeId: SdkTypeId,
-                       sdkModel: SdkModel,
-                       parentComponent: JComponent,
-                       selectedSdk: Sdk?): SdkDownloadTask? {
+  override fun showDownloadUI(
+    sdkTypeId: SdkTypeId,
+    sdkModel: SdkModel,
+    parentComponent: JComponent,
+    selectedSdk: Sdk?,
+    sdkCreatedCallback: Consumer<in SdkDownloadTask>,
+  ) {
     val dataContext = DataManager.getInstance().getDataContext(parentComponent)
     val project = CommonDataKeys.PROJECT.getData(dataContext)
-    if (project?.isDisposed == true) return null
-    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project, ProjectBundle.message("dialog.button.select.jdk")) ?: return null
-    return JdkDownloadTask(jdkItem, JdkInstallRequestInfo(jdkItem, jdkHome), project)
+    if (project?.isDisposed == true) return
+    val (jdkItem, jdkHome) = pickJdkItem(sdkTypeId, parentComponent, dataContext, project, null) ?: return
+    prepareDownloadTask(project, jdkItem, jdkHome, sdkCreatedCallback)
   }
 
   private fun pickJdkItem(sdkTypeId: SdkTypeId,
-                          parentComponent: JComponent,
-                          dataContext: DataContext,
+                          parentComponent: JComponent?,
+                          dataContext: DataContext?,
                           project: Project?,
+                          sdkFilter: Predicate<Any>?,
                           okActionText: @NlsContexts.Button String = ProjectBundle.message("dialog.button.download.jdk")): Pair<JdkItem, Path>? {
-    val extension = dataContext.getData(JDK_DOWNLOADER_EXT)
-    return selectJdkAndPath(project, sdkTypeId, parentComponent, extension, okActionText)
+    val extension = dataContext?.getData(JDK_DOWNLOADER_EXT)
+    return selectJdkAndPath(project, sdkTypeId, parentComponent, extension, sdkFilter, okActionText)
   }
 
   private fun selectJdkAndPath(
     project: Project?,
     sdkTypeId: SdkTypeId,
-    parentComponent: JComponent,
+    parentComponent: JComponent?,
     extension: JdkDownloaderDialogHostExtension?,
+    sdkFilter: Predicate<Any>?,
     okActionText: @NlsContexts.Button String,
   ): Pair<JdkItem, Path>? {
     val items = try {
@@ -104,7 +112,7 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
             .downloadForUI(predicate = predicate, progress = it)
             .filter { extension.shouldIncludeItem(sdkTypeId, it) }
             .takeIf { it.isNotEmpty() }
-            ?.let { buildJdkDownloaderModel(it) }
+            ?.let { buildJdkDownloaderModel(it, { sdkFilter?.test(it) != false }) }
         }
 
         val allowWsl = extension.allowWsl()

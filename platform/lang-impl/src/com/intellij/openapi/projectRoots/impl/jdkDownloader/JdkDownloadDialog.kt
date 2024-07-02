@@ -125,11 +125,12 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
 
 private fun List<JdkVersionVendorItem>.sortedForUI() = this.sortedBy { it.item.product.packagePresentationText.toLowerCase() }
 
-fun buildJdkDownloaderModel(allItems: List<JdkItem>): JdkDownloaderModel {
+fun buildJdkDownloaderModel(allItems: List<JdkItem>, itemFilter: (JdkItem) -> Boolean = { true }): JdkDownloaderModel {
   @NlsSafe
   fun JdkItem.versionGroupId() = this.presentableMajorVersionString
 
   val groups =  allItems
+    .filter { itemFilter.invoke(it) }
     .groupBy { it.versionGroupId() }
     .mapValues { (jdkVersion, groupItems) ->
       val majorVersion = groupItems.first().jdkMajorVersion
