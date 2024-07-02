@@ -15,6 +15,7 @@ jobs:
       matrix:
         branch-name:
           - releases/233
+          - releases/241
           - main
 
     steps:

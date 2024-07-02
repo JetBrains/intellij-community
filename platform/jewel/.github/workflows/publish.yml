@@ -42,6 +42,7 @@ jobs:
       matrix:
         branch-name:
           - releases/233
+          - releases/241
 
     steps:
       - uses: actions/checkout@v4
