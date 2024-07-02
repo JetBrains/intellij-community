@@ -13288,6 +13288,7 @@ com.intellij.openapi.editor.ex.EditorEx
 - a:getScrollPane():javax.swing.JScrollPane
 - a:getScrollingModel():com.intellij.openapi.editor.ex.ScrollingModelEx
 - a:getSoftWrapModel():com.intellij.openapi.editor.ex.SoftWrapModelEx
+- *:getStickyLinesPanelHeight():I
 - a:getTextDrawingCallback():com.intellij.openapi.editor.impl.TextDrawingCallback
 - a:getVerticalScrollbarOrientation():I
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
