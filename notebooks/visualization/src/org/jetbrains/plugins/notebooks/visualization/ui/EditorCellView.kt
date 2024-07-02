@@ -69,8 +69,8 @@ class EditorCellView(
 
   private var mouseOver = false
 
-  // We are storing last lines range for highlighters to prevent highlighters recreation on same interval.
-  private var lastHighLightersLines: IntRange? = null
+  // We are storing last offsets for highlighters to prevent highlighters unnecessary recreation on same values.
+  private var lastHighLightersOffsets: IntRange? = null
 
   init {
     recreateControllers()
@@ -263,14 +263,14 @@ class EditorCellView(
   private fun updateCellHighlight() {
     val interval = intervalPointer.get() ?: error("Invalid interval")
 
-    if (interval.lines == lastHighLightersLines) {
-      return
-    }
-
-    lastHighLightersLines = IntRange(interval.lines.first, interval.lines.last)
-
     val startOffset = editor.document.getLineStartOffset(interval.lines.first)
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
+
+    val range = IntRange(startOffset, endOffset)
+    if (interval.lines == lastHighLightersOffsets) {
+      return
+    }
+    lastHighLightersOffsets = range
 
     removeCellHighlight()
 
