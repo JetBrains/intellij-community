@@ -24,10 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
-@Deprecated(forRemoval = true)
 /**
  * @deprecated use MavenRunConfigurationType instead
  */
+@Deprecated(forRemoval = true)
 public abstract class MavenExecutor {
   final MavenRunnerParameters myParameters;
   private final String myCaption;
