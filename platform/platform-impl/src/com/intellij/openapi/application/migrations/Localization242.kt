@@ -47,19 +47,20 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
  * @param descriptor the descriptor of the plugin to be checked
  * @return `true` if the plugin is a localization plugin; `false` otherwise
  */
- private fun isLocalizationPlugin(descriptor: IdeaPluginDescriptor): Boolean {
+private fun isLocalizationPlugin(descriptor: IdeaPluginDescriptor): Boolean {
   if (descriptor !is IdeaPluginDescriptorImpl) return false
   val extensionPoints = descriptor.epNameToExtensions
   val epName = "com.intellij.languageBundle"
   return extensionPoints.containsKey(epName)
 }
 
- private fun getLanguageTagFromDescriptor(descriptor: IdeaPluginDescriptor): String? {
-  if (descriptor !is IdeaPluginDescriptorImpl) return null
-  val extensionPoints = descriptor.epNameToExtensions
-  val epName = "com.intellij.languageBundle"
-  if (extensionPoints.containsKey(epName)) {
-    return extensionPoints[epName]?.firstOrNull()?.element?.attributes?.get("locale")
+private fun getLanguageTagFromDescriptor(descriptor: IdeaPluginDescriptor): String? {
+  return if (isLocalizationPlugin(descriptor)) {
+    val extensionPoints = (descriptor as IdeaPluginDescriptorImpl).epNameToExtensions
+    val epName = "com.intellij.languageBundle"
+    extensionPoints[epName]?.firstOrNull()?.element?.attributes?.get("locale")
   }
-  return null
+  else {
+    null
+  }
 }
