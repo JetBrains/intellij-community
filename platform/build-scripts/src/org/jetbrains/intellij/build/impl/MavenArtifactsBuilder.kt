@@ -14,6 +14,7 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
+import org.jetbrains.intellij.build.ZipSource
 import org.jetbrains.intellij.build.buildJar
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -408,7 +409,13 @@ private suspend fun layoutMavenArtifacts(modulesToPublish: Map<MavenArtifactData
         buildJar(
           targetFile = artifactDir.resolve(artifactData.coordinates.getFileName("", "jar")),
           sources = modulesWithSources.map {
-            DirSource(dir = context.getModuleOutputDir(it), excludes = commonModuleExcludes)
+            val moduleOutput = context.getModuleOutputDir(it)
+            if (moduleOutput.toString().endsWith(".jar")) {
+              ZipSource(file = moduleOutput, distributionFileEntryProducer = null, filter = createModuleSourcesNamesFilter(commonModuleExcludes))
+            }
+            else {
+              DirSource(dir = moduleOutput, excludes = commonModuleExcludes)
+            }
           },
         )
 
