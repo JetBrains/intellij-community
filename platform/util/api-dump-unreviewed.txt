@@ -2263,6 +2263,9 @@ com.intellij.ui.icons.CompositeIcon
 - a:getIconCount():I
 com.intellij.ui.icons.DarkIconProvider
 - a:getDarkIcon(Z):javax.swing.Icon
+com.intellij.ui.icons.IconPathProvider
+- a:getExpUIPath():java.lang.String
+- a:getOriginalPath():java.lang.String
 com.intellij.ui.icons.IconReplacer
 - replaceIcon(javax.swing.Icon):javax.swing.Icon
 com.intellij.ui.icons.ReplaceableIcon
