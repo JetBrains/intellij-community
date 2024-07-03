@@ -7,11 +7,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
+import com.intellij.openapi.roots.ProjectRootManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,7 +28,9 @@ class AddJdkAction : AnAction() {
     val sdk = JavaSdk.getInstance()
 
     SdkConfigurationUtil.selectSdkHome(sdk) { path ->
-      service<AddJdkService>().createJdkFromPath(path)
+      service<AddJdkService>().createJdkFromPath(path) {
+        e.project?.service<ConfigureJdkService>()?.setProjectJdkIfNull(it)
+      }
     }
   }
 }
@@ -39,6 +44,22 @@ class AddJdkService(private val coroutineScope: CoroutineScope) {
         SdkConfigurationUtil.createAndAddSDK(path, JavaSdk.getInstance())
       }
       if (jdk != null) onJdkAdded.invoke(jdk)
+    }
+  }
+}
+
+@Service(Service.Level.PROJECT)
+@ApiStatus.Internal
+class ConfigureJdkService(val project: Project, private val coroutineScope: CoroutineScope) {
+  fun setProjectJdkIfNull(sdk: Sdk) {
+    if (project.isDisposed) return
+    val rootsManager = ProjectRootManager.getInstance(project)
+    if (rootsManager.projectSdk == null) {
+      coroutineScope.launch {
+        writeAction {
+          rootsManager.projectSdk = sdk
+        }
+      }
     }
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DefaultProjectFactory
 import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownload
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
@@ -25,10 +26,12 @@ class DownloadJdkAction: AnAction() {
 
     if (downloadExtension != null) {
       downloadExtension.showDownloadUI(sdkType, ProjectSdksModel(), null, project, null, { true }) { task: SdkDownloadTask ->
+        val sdk: Sdk
         project.service<JdkDownloadService>().apply {
-          val sdk = setupInstallableSdk(task)
+          sdk = setupInstallableSdk(task)
           downloadSdk(sdk)
         }
+        project.service<ConfigureJdkService>().setProjectJdkIfNull(sdk)
       }
     } else {
       log.warn("No download extension found to download a JDK")
