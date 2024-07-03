@@ -1060,6 +1060,11 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
                 runTest("testData/evaluation/singleBreakpoint/frame/runToCursorSimple.kt");
             }
 
+            @TestMetadata("sequenceLambda.kt")
+            public void testSequenceLambda() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/frame/sequenceLambda.kt");
+            }
+
             @TestMetadata("showPropertiesFromMethods.kt")
             public void testShowPropertiesFromMethods() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");

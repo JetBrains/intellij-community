@@ -1,0 +1,19 @@
+LineBreakpoint created at sequenceLambda.kt:15
+Run Java
+Connected to the target VM
+sequenceLambda.kt:15
+CoroutinePreflightFrame invokeSuspend (sequenceLambda.kt:15)
+    JavaValue[field] foo = 123
+    JavaValue this (@apply): Context@uniqueID = sequenceLambda.Context@hashCode
+        DummyMessageValueNode = Class has no properties
+    JavaValue[local] this: kotlin.sequences.SequenceScope = kotlin.sequences.SequenceBuilderIterator@hashCode
+        JavaValue[field] state: int = 5 (SequenceBuilder.!EXT!)
+        JavaValue[field] nextValue: java.lang.Object = null (SequenceBuilder.!EXT!)
+        JavaValue[field] nextIterator: java.util.Iterator = null (SequenceBuilder.!EXT!)
+        JavaValue[field] nextStep: kotlin.coroutines.Continuation = null (SequenceBuilder.!EXT!)
+        JavaValue[getter] context: kotlin.coroutines.CoroutineContext (SequenceBuilder.!EXT!)
+    JavaValue[local] result: Unit@uniqueID = kotlin.Unit
+        DummyMessageValueNode = No fields to display
+Disconnected from the target VM
+
+Process finished with exit code 0
