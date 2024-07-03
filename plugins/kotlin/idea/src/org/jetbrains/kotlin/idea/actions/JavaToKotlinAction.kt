@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -72,6 +74,10 @@ class JavaToKotlinAction : AnAction() {
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
 
+            val question = KotlinBundle.message("action.j2k.correction.required")
+            val shouldProcessExternalFiles =
+                !askExternalCodeProcessing || Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES
+
             fun convertWithStatistics() {
                 val j2kKind = getJ2kKind(forceUsingOldJ2k)
                 val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
@@ -94,7 +100,7 @@ class JavaToKotlinAction : AnAction() {
             val result = converterResult ?: return emptyList()
             val externalCodeProcessing = result.externalCodeProcessing
             val externalCodeUpdate =
-                prepareExternalCodeUpdate(project, externalCodeProcessing, enableExternalCodeProcessing, askExternalCodeProcessing)
+                prepareExternalCodeUpdate(project, externalCodeProcessing, enableExternalCodeProcessing, shouldProcessExternalFiles)
 
             lateinit var newFiles: List<KtFile>
 
@@ -139,14 +145,13 @@ class JavaToKotlinAction : AnAction() {
             project: Project,
             processing: ExternalCodeProcessing?,
             isEnabled: Boolean,
-            shouldAsk: Boolean
+            shouldProcessExternalFiles: Boolean
         ): (() -> Unit)? {
             if (!isEnabled || processing == null) return null
 
             var result: (() -> Unit)? = null
-            val question = KotlinBundle.message("action.j2k.correction.required")
 
-            if (!shouldAsk || Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES) {
+            if (shouldProcessExternalFiles) {
                 runSynchronousProcess(project) {
                     runReadAction {
                         result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
@@ -224,8 +229,17 @@ class JavaToKotlinAction : AnAction() {
             enableExternalCodeProcessing: Boolean = true,
             askExternalCodeProcessing: Boolean = true,
             forceUsingOldJ2k: Boolean = false
-        ): List<KtFile> =
-            convertFiles(files, project, module, enableExternalCodeProcessing, askExternalCodeProcessing, forceUsingOldJ2k, defaultSettings)
+        ): List<KtFile> {
+            return convertFiles(
+                files,
+                project,
+                module,
+                enableExternalCodeProcessing,
+                askExternalCodeProcessing,
+                forceUsingOldJ2k,
+                defaultSettings
+            )
+        }
     }
 
     override fun actionPerformed(e: AnActionEvent) {
