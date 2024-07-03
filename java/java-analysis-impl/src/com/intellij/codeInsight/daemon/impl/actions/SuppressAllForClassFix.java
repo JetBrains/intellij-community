@@ -46,7 +46,7 @@ public class SuppressAllForClassFix extends SuppressFix {
     }
     while (container != null) {
       final PsiClass parentClass = PsiTreeUtil.getParentOfType(container, PsiClass.class);
-      if (parentClass == null && container instanceof PsiClass) {
+      if (parentClass == null && container instanceof PsiClass && !(container instanceof PsiImplicitClass)) {
         return container;
       }
       container = parentClass;
