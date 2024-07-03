@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.EmptyRunnable
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.impl.cache.impl.id.IdIndex
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.ConcurrencyUtil.newNamedThreadFactory
@@ -17,7 +18,9 @@ import com.intellij.util.TimeoutUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.FileIndexingResult.ApplicationMode
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.INDEXING_PARALLELIZATION
+import com.intellij.util.indexing.contentQueue.IndexUpdateRunner.Companion.TRACER
 import com.intellij.util.indexing.events.VfsEventsMerger
+import io.opentelemetry.context.Context
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
@@ -107,11 +110,11 @@ abstract class IndexWriter {
     private val USE_FAKE_WRITER: Boolean = getBooleanProperty("IndexWriter.USE_FAKE_WRITER", false)
     private val USE_COROUTINES: Boolean = getBooleanProperty("IndexWriter.USE_COROUTINES", false)
 
-    private val defaultParallelWriter: ParallelIndexWriter = when{
+    private val defaultParallelWriter: ParallelIndexWriter = when {
       USE_FAKE_WRITER -> FakeIndexWriter
       USE_COROUTINES -> ApplyViaCoroutinesWriter()
       else -> MultiThreadedWithSuspendIndexWriter()
-        //LegacyMultiThreadedIndexWriter()
+      //LegacyMultiThreadedIndexWriter()
     }
 
     @JvmStatic
@@ -329,12 +332,19 @@ class LegacyMultiThreadedIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) :
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
     // Schedule appliers to dedicated executors
     val updatesLeftCounter = AtomicInteger(workersToSchedule.cardinality())
+    val otelTelemetryContext = Context.current()
     for (executorIndex in 0 until workersCount) {
       if (workersToSchedule[executorIndex]) {
         //Schedule applyModifications() on all the writers that are applicable. Inside the method each
         // SingleIndexValueApplier inside decides for itself on which writer it is ready to run.
         scheduleIndexWriting(executorIndex) {
-          applyModificationsInExecutor(fileIndexingResult, executorIndex, updatesLeftCounter, finishCallback)
+          otelTelemetryContext.makeCurrent().use {
+            TRACER.spanBuilder("applyModificationsToIndex").setAttribute("i", executorIndex.toLong()).use {
+
+              applyModificationsInExecutor(fileIndexingResult, executorIndex, updatesLeftCounter, finishCallback)
+
+            }
+          }
         }
       }
     }
@@ -602,12 +612,19 @@ class MultiThreadedWithSuspendIndexWriter(workersCount: Int = TOTAL_WRITERS_NUMB
 
     // Schedule appliers to dedicated executors
     val updatesLeftCounter = AtomicInteger(workersToSchedule.cardinality())
+    val otelTelemetryContext = Context.current()
     for (executorIndex in 0 until workersCount) {
       if (workersToSchedule[executorIndex]) {
         //Schedule applyModifications() on all the writers that are applicable.
         // Inside the method each SingleIndexValueApplier decided on which writer it is ready to run.
         scheduleIndexWriting(executorIndex) {
-          applyModificationsInExecutor(fileIndexingResult, executorIndex, updatesLeftCounter, finishCallback)
+          otelTelemetryContext.makeCurrent().use {
+            TRACER.spanBuilder("applyModificationsToIndex").setAttribute("i", executorIndex.toLong()).use {
+
+              applyModificationsInExecutor(fileIndexingResult, executorIndex, updatesLeftCounter, finishCallback)
+
+            }
+          }
         }
       }
     }
@@ -860,12 +877,19 @@ class ApplyViaCoroutinesWriter(workersCount: Int = TOTAL_WRITERS_NUMBER) : Paral
     fileIndexingResult.addApplicationTimeNanos(System.nanoTime() - startedAtNs) //other parts will be added inside applyModifications()
     // Schedule appliers to dedicated coroutines:
     val updatesLeftCounter = AtomicInteger(workersToSchedule.cardinality())
+    val otelTelemetryContext = Context.current()
     for (workerIndex in 0 until workersCount) {
       if (workersToSchedule[workerIndex]) {
         //Schedule applyModifications() on all the writers that are applicable. Inside the method each
         // SingleIndexValueApplier/Remover decides for itself on which writer it is ready to run.
         channels[workerIndex].send {
-          applyModificationsInCoroutine(fileIndexingResult, workerIndex, updatesLeftCounter, finishCallback)
+          otelTelemetryContext.makeCurrent().use {
+            TRACER.spanBuilder("applyModificationsToIndex").setAttribute("i", workerIndex.toLong()).use {
+
+              applyModificationsInCoroutine(fileIndexingResult, workerIndex, updatesLeftCounter, finishCallback)
+
+            }
+          }
         }
       }
     }
@@ -991,4 +1015,3 @@ object FakeIndexWriter : ParallelIndexWriter() {
 
   override fun totalTimeIndexersSlept(unit: TimeUnit): Long = 0
 }
-

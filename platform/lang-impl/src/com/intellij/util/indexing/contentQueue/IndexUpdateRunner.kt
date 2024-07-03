@@ -18,6 +18,11 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType
+import com.intellij.platform.diagnostic.telemetry.IJTracer
+import com.intellij.platform.diagnostic.telemetry.Indexes
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.PathUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.IndexingFlag.unlockFile
@@ -45,6 +50,7 @@ class IndexUpdateRunner(
   fileBasedIndex: FileBasedIndexImpl,
   indexingRequest: IndexingRequestToken,
 ) {
+
 
   private val indexer: Indexer = Indexer(fileBasedIndex, indexingRequest)
 
@@ -130,9 +136,13 @@ class IndexUpdateRunner(
         }
       }
 
+
+
       processFileSetInParallel(project, fileSet) { fileIndexingRequest ->
         currentlyIndexedFileRef.set(fileIndexingRequest.file)
+
         indexOneFileHandleExceptions(fileIndexingRequest, project, project, contentLoader, fileSet.statistics)
+
         filesIndexed.incrementAndGet()
       }
 
@@ -145,40 +155,47 @@ class IndexUpdateRunner(
     fileSet: FileSet,
     processRequestTask: suspend (FileIndexingRequest) -> Unit,
   ) {
-    withContext(Dispatchers.Default + CoroutineName("Indexing(${project.locationHash}")) {
-      //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
-      // of distributing the load across available CPUs.
-      // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
-      // So an optimization: we use fixed number of coroutines (approx. = # available CPUs), and a channel:
-      // BTW .forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) does almost the same thing, but it uses
-      // channel(size: 0), i.e. rendezvous-channel. I setup channel(size: 8k), to have some buffering:
 
-      val bufferSize = fileSet.filesOriginal.size.coerceIn(INDEXING_PARALLELIZATION, 8192)
-      val channel = fileSet.filesOriginal.asChannel(this, bufferSize = bufferSize)
-      repeat(INDEXING_PARALLELIZATION) { workerNo ->
-        launch {
-          try {
-            for (fileIndexingRequest in channel) {
-              while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
-                delay(1)
+    TRACER.spanBuilder("doIndexFiles").setAttribute("files", fileSet.size().toLong()).useWithScope {
+      withContext(Dispatchers.Default + CoroutineName("Indexing(${project.locationHash}")) {
+        //Ideally, we should launch a coroutine for each file in a fileSet, and let the coroutine scheduler do it's job
+        // of distributing the load across available CPUs.
+        // But the fileSet could be quite large (10-100-1000k files), so it could be quite a load for a scheduler.
+        // So an optimization: we use fixed number of coroutines (approx. = # available CPUs), and a channel:
+        // BTW .forEachConcurrent(concurrency = INDEXING_PARALLELIZATION) does almost the same thing, but it uses
+        // channel(size: 0), i.e. rendezvous-channel. I setup channel(size: 8k), to have some buffering:
+
+        val bufferSize = fileSet.filesOriginal.size.coerceIn(INDEXING_PARALLELIZATION, 8192)
+        val channel = fileSet.filesOriginal.asChannel(this, bufferSize = bufferSize)
+        repeat(INDEXING_PARALLELIZATION) { workerNo ->
+          launch {
+            try {
+              for (fileIndexingRequest in channel) {
+                while (fileSet.shouldPause()) { // TODO: get rid of legacy suspender
+                  delay(1)
+                }
+
+                TRACER.spanBuilder("indexOneFile")
+                  .setAttribute("f", fileIndexingRequest.file.name)
+                  .setAttribute("i", workerNo.toLong())
+                  .useWithScope {
+                    processRequestTask(fileIndexingRequest)
+                  }
+
+                ensureActive()
               }
-
-              processRequestTask(fileIndexingRequest)
-
-              ensureActive()
             }
-          }
-          //FIXME RC: for profiling, remove afterwards
-          catch (e: Throwable) {
-            LOG.info("Coroutine $workerNo finished exceptionally", e)
-            throw e
-          }
-          finally {
-            LOG.info("Coroutine $workerNo finished gracefully")
+            //FIXME RC: for profiling, remove afterwards
+            catch (e: Throwable) {
+              LOG.info("Coroutine $workerNo finished exceptionally", e)
+              throw e
+            }
+            finally {
+              LOG.info("Coroutine $workerNo finished gracefully")
+            }
           }
         }
       }
-
       //TODO RC: assumed implicit knowledge that defaultParallelWriter is the writer responsible for the
       //         index writing down the stack. But what if it is not?
       IndexWriter.defaultParallelWriter().waitCurrentIndexingToFinish()
@@ -297,6 +314,7 @@ class IndexUpdateRunner(
       // Propagate ProcessCanceledException and unchecked exceptions. The latter fails the whole indexing.
       val loadingResult: ContentLoadingResult = loadContent(file, loader)
 
+
       val contentLoadingTime: Long = System.nanoTime() - startTime
 
       val fileContent = loadingResult.cachedFileContent
@@ -357,6 +375,10 @@ class IndexUpdateRunner(
 
   companion object {
     internal val LOG = Logger.getInstance(IndexUpdateRunner::class.java)
+
+    private val VERBOSE_INDEXES: Scope = Scope(Indexes.name, Indexes.parent, verbose = true)
+
+    internal val TRACER: IJTracer = TelemetryManager.getTracer(VERBOSE_INDEXES)
 
     /** Number indexing tasks to run in parallel */
     val INDEXING_PARALLELIZATION: Int = UnindexedFilesUpdater.getMaxNumberOfIndexingThreads()
