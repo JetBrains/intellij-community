@@ -6,7 +6,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
 import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
@@ -39,7 +38,7 @@ internal fun CallableMemberInfo(
         isSuspend = isSuspend,
         isInlineClassMember = symbol.isInsideInlineClass(),
         hasInlineClassInParameters = symbol.containsInlineClassInParameters(),
-        isInternalMethod = symbol is KaSymbolWithVisibility && symbol.visibility == KaSymbolVisibility.INTERNAL,
+        isInternalMethod = symbol.visibility == KaSymbolVisibility.INTERNAL,
         isExtension = symbol.isExtension,
         isInline = symbol is KaNamedFunctionSymbol && symbol.isInline,
         name = effectiveName,
