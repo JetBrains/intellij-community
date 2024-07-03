@@ -2,11 +2,12 @@ package smartStepIntoAsyncLambda
 
 fun lambdaInSequence() {
     val ranges = listOf(1, 2, 3)
+    val seq = ranges.asSequence()
     // SMART_STEP_INTO_BY_INDEX: 1
     // STEP_OUT: 1
     // RESUME: 1
     //Breakpoint!
-    ranges.asSequence()
+    seq
         .map {
             it
         }
