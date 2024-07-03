@@ -8,7 +8,4 @@
  * All classes in this package aren't supposed to be used in external code.
  * </p>
  */
-@ApiStatus.Internal
 package com.intellij.workspaceModel.ide.legacyBridge;
-
-import org.jetbrains.annotations.ApiStatus;

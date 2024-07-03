@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ProjectLibraryTableBridge : ProjectLibraryTable {
-  @ApiStatus.Internal
   fun getModifiableModel(diff: MutableEntityStorage): LibraryTable.ModifiableModel
 }
