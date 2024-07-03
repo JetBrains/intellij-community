@@ -293,6 +293,11 @@ public abstract class K2IntroduceFunctionTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/privateSetter.kt");
         }
 
+        @TestMetadata("quotedName.kt")
+        public void testQuotedName() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/extractFunction/basic/quotedName.kt");
+        }
+
         @TestMetadata("refInReturn.kt")
         public void testRefInReturn() throws Exception {
             runTest("../../idea/tests/testData/refactoring/extractFunction/basic/refInReturn.kt");

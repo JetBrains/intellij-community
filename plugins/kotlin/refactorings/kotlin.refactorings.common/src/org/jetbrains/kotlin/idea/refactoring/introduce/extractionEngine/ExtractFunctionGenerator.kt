@@ -150,7 +150,7 @@ abstract class ExtractFunctionGenerator<KotlinType, ExtractionResult : IExtracti
                         is ExpressionValue -> resultExpression
                         is Jump -> if (it.conditional) psiFactory.createExpression("false") else null
                         is ParameterUpdate -> psiFactory.createExpression(it.parameter.nameForRef)
-                        is Initializer -> psiFactory.createExpression(it.initializedDeclaration.name!!)
+                        is Initializer -> psiFactory.createExpression(it.initializedDeclaration.name!!.quoteIfNeeded())
                         else -> throw IllegalArgumentException("Unknown output value: $it")
                     }
                 }
