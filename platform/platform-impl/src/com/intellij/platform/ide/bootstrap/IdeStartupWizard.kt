@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.time.Duration
@@ -27,7 +28,8 @@ val isIdeStartupDialogEnabled: Boolean
 
 val isIdeStartupWizardEnabled: Boolean
   get() = !ApplicationManagerEx.isInIntegrationTest() &&
-          System.getProperty("intellij.startup.wizard", "true").toBoolean()
+          System.getProperty("intellij.startup.wizard", "true").toBoolean() &&
+          !PlatformUtils.isCLion()
 
 @ExperimentalCoroutinesApi
 internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
