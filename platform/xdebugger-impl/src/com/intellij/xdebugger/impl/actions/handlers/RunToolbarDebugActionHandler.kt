@@ -118,7 +118,7 @@ open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugActionHandler()
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     dataContext?.getData(CommonDataKeys.PROJECT)?.let { pr ->
       RunWidgetResumeManager.getInstance(pr).let {
-        return it.isSecondVersionAvailable() && (session.isReadOnly || !session.isPauseActionSupported)
+        return session.isReadOnly || !session.isPauseActionSupported
       }
     }
     return false

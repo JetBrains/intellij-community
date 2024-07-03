@@ -2141,12 +2141,6 @@ c:com.intellij.xdebugger.impl.runToolbar.ConfigurationXDebuggerResumeAction
 - com.intellij.xdebugger.impl.runToolbar.XDebuggerResumeAction
 - <init>():V
 - getResumeHandler():com.intellij.xdebugger.impl.actions.handlers.XDebuggerResumeHandler
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.xdebugger.impl.runToolbar.CurrentSessionXDebuggerResumeAction
-- com.intellij.xdebugger.impl.runToolbar.XDebuggerResumeAction
-- <init>():V
-- getResumeHandler():com.intellij.xdebugger.impl.actions.handlers.CurrentSessionXDebuggerResumeHandler
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.runToolbar.InlineXDebuggerResumeAction
 - com.intellij.xdebugger.impl.runToolbar.XDebuggerResumeAction
 - <init>(com.intellij.execution.RunnerAndConfigurationSettings):V

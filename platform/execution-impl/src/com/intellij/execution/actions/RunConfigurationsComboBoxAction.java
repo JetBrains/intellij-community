@@ -16,6 +16,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -527,9 +528,11 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       myProject = project;
       myConfiguration = configuration;
       // TODO remove when BackendAsyncActionHost.isNewActionUpdateEnabled is inlined
-      if (ClientId.getCurrentOrNull() != null) {
+      if (ClientId.getCurrentOrNull() != null && !Registry.is("rdct.new.async.actions", true)) {
         Presentation p = getTemplatePresentation().clone();
-        update(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT));
+        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT);
+        Utils.initUpdateSession(event);
+        update(event);
         getTemplatePresentation().copyFrom(p, null, true);
       }
     }

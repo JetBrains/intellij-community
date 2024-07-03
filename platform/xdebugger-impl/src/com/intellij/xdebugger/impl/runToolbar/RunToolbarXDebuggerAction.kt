@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutorActionStatus
 import com.intellij.execution.InlineResumeCreator
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.runToolbar.*
-import com.intellij.execution.ui.RunWidgetResumeManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
@@ -67,37 +66,10 @@ class InlineXDebuggerResumeAction(configurationSettings: RunnerAndConfigurationS
   }
 }
 
-class CurrentSessionXDebuggerResumeAction : XDebuggerResumeAction() {
-  private val currentSessionHandler = CurrentSessionXDebuggerResumeHandler()
-  override fun getResumeHandler(): CurrentSessionXDebuggerResumeHandler {
-    return currentSessionHandler
-  }
-
-  override fun update(event: AnActionEvent) {
-    event.project?.let {
-      if(!RunWidgetResumeManager.getInstance(it).isFirstVersionAvailable()) {
-        event.presentation.isEnabledAndVisible = false
-        return
-      }
-    }
-    super.update(event)
-  }
-}
-
 open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
   private val handler = XDebuggerResumeHandler()
   override fun getResumeHandler(): XDebuggerResumeHandler {
     return handler
-  }
-
-  override fun update(event: AnActionEvent) {
-    event.project?.let {
-      if(!RunWidgetResumeManager.getInstance(it).isSecondVersionAvailable()) {
-        event.presentation.isEnabledAndVisible = false
-        return
-      }
-    }
-    super.update(event)
   }
 }
 

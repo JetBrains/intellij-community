@@ -3228,9 +3228,6 @@ f:com.intellij.execution.ui.RunWidgetResumeManager
 - sf:Companion:com.intellij.execution.ui.RunWidgetResumeManager$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - f:getDebugDescriptor(com.intellij.execution.RunnerAndConfigurationSettings):com.intellij.execution.ui.RunContentDescriptor
-- f:isFirstVersionAvailable():Z
-- f:isSecondVersionAvailable():Z
-- f:shouldMoveRun():Z
 f:com.intellij.execution.ui.RunWidgetResumeManager$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.execution.ui.RunWidgetResumeManager
 f:com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor

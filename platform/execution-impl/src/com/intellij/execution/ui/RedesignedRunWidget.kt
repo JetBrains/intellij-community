@@ -4,6 +4,7 @@
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
+import com.intellij.execution.actions.ExecutorAction
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
@@ -11,9 +12,11 @@ import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.impl.isOfSameType
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionIdProvider
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -22,10 +25,8 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -33,7 +34,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -57,6 +58,7 @@ import java.awt.Component
 import java.awt.Graphics
 import java.awt.Insets
 import java.awt.event.InputEvent
+import java.util.function.Predicate
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingConstants
@@ -68,56 +70,9 @@ internal const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH: Int = 33 + CONFIGURAT
 class RunWidgetResumeManager(private val project: Project) {
   companion object {
     fun getInstance(project: Project): RunWidgetResumeManager = project.service()
-
-    private val isSecondActive: Boolean
-      get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.show.resume.second", true)
-  }
-
-  private val isResumeActive: Boolean
-    get() = ExperimentalUI.isNewUI() && Registry.`is`("ide.experimental.ui.show.resume", true) && isDebugStarted()
-
-  fun isFirstVersionAvailable(): Boolean = isResumeActive && !isSecondActive
-
-  fun isSecondVersionAvailable(): Boolean = isResumeActive && isSecondActive
-
-  fun shouldMoveRun(): Boolean {
-    if (!isResumeActive) {
-      return false
-    }
-
-    if (isFirstVersionAvailable()) {
-      return true
-    }
-
-    if (isSecondVersionAvailable()) {
-      return RunManagerEx.getInstanceEx(project).selectedConfiguration?.let { conf ->
-        getDebugDescriptor(conf) != null
-      } ?: false
-    }
-
-    return false
   }
 
   fun getDebugDescriptor(configuration: RunnerAndConfigurationSettings): RunContentDescriptor? {
-    return getStarted(configuration = configuration)
-  }
-
-  private fun isDebugStarted(): Boolean {
-    val executionManager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return false
-
-    return ExecutionManagerImpl.getAllDescriptors(project).asSequence()
-      .filter { isActive(it) == true }
-      .flatMap { executionManager.getExecutors(it) }
-      .firstOrNull { it.id == ToolWindowId.DEBUG } != null
-  }
-
-  private fun isActive(processDescriptor: RunContentDescriptor): Boolean? {
-    return processDescriptor.processHandler?.let {
-      !it.isProcessTerminating && !it.isProcessTerminated
-    }
-  }
-
-  private fun getStarted(configuration: RunnerAndConfigurationSettings): RunContentDescriptor? {
     val executionManager = ExecutionManagerImpl.getInstance(project)
     return executionManager.getRunningDescriptors { configuration === it }.firstOrNull {
       executionManager.getExecutors(it).firstOrNull { it.id == ToolWindowId.DEBUG } != null
@@ -126,31 +81,37 @@ class RunWidgetResumeManager(private val project: Project) {
 }
 
 private fun createRunActionToolbar(): ActionToolbar {
-  val toolbarId = "RunToolbarMainActionGroup"
-  return ActionManager.getInstance().createActionToolbar(
-    ActionPlaces.NEW_UI_RUN_TOOLBAR,
-    ActionManager.getInstance().getAction(toolbarId) as ActionGroup,
-    true
-  ).apply {
-    targetComponent = null
-    setReservePlaceAutoPopupIcon(false)
-    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
-    if (this is ActionToolbarImpl) {
-      isOpaque = false
-      setMinimumButtonSize {
-        JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
-      }
-      setForceMinimumSize(true)
-      setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
-      setCustomButtonLook(RunWidgetButtonLook())
-      border = null
+  val group = object : ActionGroup(), DumbAware {
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
+      if (e == null) return emptyArray()
+      return arrayOf(e.actionManager.getAction("RunToolbarMainActionGroup"))
+    }
+
+    override fun postProcessVisibleChildren(visibleChildren: List<AnAction>, updateSession: UpdateSession): List<AnAction?> {
+      return filterOutRunIfDebugResumeIsPresent(visibleChildren)
     }
   }
+  val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_UI_RUN_TOOLBAR, group, true)
+  toolbar.targetComponent = null
+  toolbar.setReservePlaceAutoPopupIcon(false)
+  toolbar.layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+  toolbar.component.isOpaque = false
+  toolbar.component.border = null
+  if (toolbar is ActionToolbarImpl) {
+    toolbar.setMinimumButtonSize {
+      JBUI.size(JBUI.CurrentTheme.RunWidget.actionButtonWidth(), JBUI.CurrentTheme.RunWidget.toolbarHeight())
+    }
+    toolbar.setForceMinimumSize(true)
+    toolbar.setActionButtonBorder(JBUI.CurrentTheme.RunWidget::toolbarBorderDirectionalGap, JBUI.CurrentTheme.RunWidget::toolbarBorderHeight)
+    toolbar.setCustomButtonLook(RunWidgetButtonLook())
+  }
+  return toolbar
 }
 
 private val runToolbarDataKey = Key.create<Boolean>("run-toolbar-data")
 
 private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
+
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent): Unit = error("Should not be invoked")
@@ -211,18 +172,11 @@ class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val selectedInDebug = e?.project?.let { project ->
-      RunWidgetResumeManager.getInstance(project).shouldMoveRun()
-    } ?: false
-    val list = if (selectedInDebug)
-      listOf(IdeActions.ACTION_DEFAULT_DEBUGGER)
-    else
-      listOf(IdeActions.ACTION_DEFAULT_RUNNER, IdeActions.ACTION_DEFAULT_DEBUGGER)
-
-    val topLevelRunActions = list.mapNotNull {
-      ActionManager.getInstance().getAction(it)
-    }
-    return topLevelRunActions.toTypedArray()
+    e ?: return emptyArray()
+    return arrayOf(
+      e.actionManager.getAction(IdeActions.ACTION_DEFAULT_RUNNER),
+      e.actionManager.getAction(IdeActions.ACTION_DEFAULT_DEBUGGER)
+    )
   }
 }
 
@@ -404,14 +358,15 @@ private class MoreRunToolbarActions : TogglePopupAction(
 ), DumbAware {
   override fun getActionGroup(e: AnActionEvent): ActionGroup? {
     val project = e.project ?: return null
+    val parentGroup = ActionToolbar.findToolbarBy(e.inputEvent?.source as? JComponent)?.actionGroup
+    val exclude = executorFilterByParentGroupFactory(parentGroup)
     val selectedConfiguration = RunManager.getInstance(project).selectedConfiguration
     val result = when {
       selectedConfiguration != null -> {
-        val exclude = if (RunWidgetResumeManager.getInstance(project).shouldMoveRun()) excludeDebug else excludeRunAndDebug
         object : RunConfigurationsComboBoxAction.SelectConfigAction(project, selectedConfiguration) {
           override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
             val additionalGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(configuration, true)
-            return (listOf(additionalGroup) + getDefaultChildren(exclude)).toTypedArray()
+            return (listOf(additionalGroup) + getDefaultChildren(exclude(e))).toTypedArray()
           }
         }
       }
@@ -419,7 +374,7 @@ private class MoreRunToolbarActions : TogglePopupAction(
         object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
           override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
             val additionalGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(null, true)
-            return (listOf(additionalGroup) + getDefaultChildren(excludeRunAndDebug)).toTypedArray()
+            return (listOf(additionalGroup) + getDefaultChildren(exclude(e))).toTypedArray()
           }
         }
       }
@@ -449,14 +404,25 @@ private class MoreRunToolbarActions : TogglePopupAction(
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
-internal val excludeRunAndDebug: (Executor) -> Boolean = {
-  // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
-  it.id != ToolWindowId.RUN && it.id != ToolWindowId.DEBUG
+internal fun filterOutRunIfDebugResumeIsPresent(actions: List<AnAction>): List<AnAction> {
+  val hasPause = actions.find { it.javaClass.name.endsWith("XDebuggerResumeAction") } != null
+  if (!hasPause) return actions
+  return actions.filter { (it as? ExecutorAction)?.id != ToolWindowId.RUN }
 }
 
-internal val excludeDebug: (Executor) -> Boolean = {
-  // Cannot use DefaultDebugExecutor.EXECUTOR_ID because of module dependencies
-  it.id != ToolWindowId.DEBUG
+internal fun executorFilterByParentGroupFactory(parentGroup: ActionGroup?): (AnActionEvent?) -> Predicate<Executor>? {
+  return { event ->
+    if (event == null || parentGroup == null) {
+      null
+    }
+    else {
+      val set = event.updateSession.expandedChildren(parentGroup)
+        .filterIsInstance<ActionIdProvider>()
+        .map { it.id }
+        .toSet()
+      Predicate { !set.contains(it.id) }
+    }
+  }
 }
 
 @ApiStatus.Internal
@@ -474,14 +440,16 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
   }
 
   override fun createPopup(actionGroup: ActionGroup, e: AnActionEvent, disposeCallback: () -> Unit): ListPopup {
-    return RunConfigurationsActionGroupPopup(actionGroup, e.dataContext, disposeCallback)
+    val component = e.getData(IdeFrame.KEY)?.component ?: e.inputEvent?.component!!
+    val dataContext = DataManager.getInstance().getDataContext(component)
+    return RunConfigurationsActionGroupPopup(actionGroup, dataContext, disposeCallback)
   }
 
   override fun update(e: AnActionEvent) {
     super.update(e)
 
-    val actionManager = ApplicationManager.getApplication().serviceIfCreated<ActionManager>()
-    (actionManager?.getAction("RunConfiguration") as? RunConfigurationsComboBoxAction ?: return).update(e)
+    val delegate = e.actionManager.getAction("RunConfiguration") as? RunConfigurationsComboBoxAction ?: return
+    delegate.update(e)
     e.presentation.icon?.let {
       e.presentation.icon = adjustIconForHeader(it)
     }

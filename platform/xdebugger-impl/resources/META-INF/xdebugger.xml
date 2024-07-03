@@ -140,9 +140,6 @@
     <action class="com.intellij.xdebugger.impl.runToolbar.ConfigurationXDebuggerResumeAction">
       <add-to-group group-id="compositeResumeGroup"/>
     </action>
-    <action class="com.intellij.xdebugger.impl.runToolbar.CurrentSessionXDebuggerResumeAction">
-      <add-to-group group-id="compositeResumeGroup"/>
-    </action>
     <group id="XDebugger.AttachGroup">
       <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>
