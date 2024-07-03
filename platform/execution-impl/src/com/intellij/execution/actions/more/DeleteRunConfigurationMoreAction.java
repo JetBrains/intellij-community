@@ -20,11 +20,8 @@ final class DeleteRunConfigurationMoreAction
                           @NotNull Project project,
                           @NotNull RunnerAndConfigurationSettings configuration) {
     Presentation presentation = e.getPresentation();
-    presentation.setText(ExecutionBundle.message("choose.run.popup.delete"));
-    presentation.setDescription(ExecutionBundle.message("choose.run.popup.delete.description"));
     presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null);
-
-    e.getPresentation().setEnabledAndVisible(true);
+    presentation.setEnabledAndVisible(true);
   }
 
   @Override
