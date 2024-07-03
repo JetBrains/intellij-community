@@ -12,10 +12,8 @@ import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
@@ -23,6 +21,7 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHApiLoadingErrorHandler
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModelImpl
+import java.util.concurrent.CancellationException
 
 @ApiStatus.Experimental
 interface GHPRChangesViewModel : CodeReviewChangesViewModel<GHCommit> {
@@ -37,7 +36,7 @@ internal class GHPRChangesViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
   private val dataContext: GHPRDataContext,
-  private val dataProvider: GHPRDataProvider
+  private val dataProvider: GHPRDataProvider,
 ) : GHPRChangesViewModel {
   private val cs = parentCs.childScope()
 
@@ -61,12 +60,20 @@ internal class GHPRChangesViewModelImpl(
     }.stateIn(cs, SharingStarted.Eagerly, listOf())
 
   private val changesContainer: StateFlow<Result<CodeReviewChangesContainer>?> =
-    dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).map {
-    runCatching {
-      dataProvider.changesData.loadChanges()
-    }.map {
-      CodeReviewChangesContainer(it.changes, it.commits.map { it.sha }, it.changesByCommits)
-    }
+    dataProvider.changesData.changesNeedReloadSignal.withInitial(Unit).mapNotNull {
+      try {
+        val changes = dataProvider.changesData.loadChanges()
+        Result.success(
+          CodeReviewChangesContainer(changes.changes, changes.commits.map { it.sha }, changes.changesByCommits)
+        )
+      }
+      catch (e: CancellationException) {
+        currentCoroutineContext().ensureActive()
+        null
+      }
+      catch (e: Exception) {
+        Result.failure(e)
+      }
     }.stateInNow(cs, null)
 
   private val delegate = CodeReviewChangesViewModelDelegate.create(cs, changesContainer.filterNotNull()) { changes, changeList ->
