@@ -19,14 +19,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author Mikhail Golubev
- */
-public class JsonLiteralAnnotator implements Annotator {
+final class JsonLiteralAnnotator implements Annotator {
 
-  private static final class Holder {
-    private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
-  }
+  private final boolean isDebug = ApplicationManager.getApplication().isUnitTestMode();
 
   @Override
   public boolean isDumbAware() {
@@ -77,9 +72,9 @@ public class JsonLiteralAnnotator implements Annotator {
     }
   }
 
-  private static void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+  private void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (JsonPsiUtil.isPropertyKey(element)) {
-      if (Holder.DEBUG) {
+      if (isDebug) {
         holder.newAnnotation(HighlightSeverity.INFORMATION, JsonBundle.message("annotation.property.key")).textAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY).create();
       }
       else {
