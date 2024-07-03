@@ -869,7 +869,8 @@
       "termsAndConditionsForeground": "Gray7",
       "separatorColor": "Gray3",
       "LicenseList": {
-        "licenseDetailsForeground": "Gray9"
+        "licenseDetailsForeground": "Gray9",
+        "separatorColor": "Gray4"
       },
       "LicenseServer": {
         "separatorColor": "Gray3"
