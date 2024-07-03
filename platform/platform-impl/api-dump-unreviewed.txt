@@ -27981,10 +27981,6 @@ com.intellij.ui.popup.list.FilterableListPopupStep
 - a:updateFilter(java.lang.String):V
 com.intellij.ui.popup.list.IconListPopupRenderer
 - a:isIconAt(java.awt.Point):Z
-f:com.intellij.ui.popup.list.InlineActionDescriptor
-- <init>(java.lang.Runnable,com.intellij.openapi.actionSystem.KeepPopupOnPerform):V
-- f:executeAction():V
-- f:getKeepPopupOnPerform():com.intellij.openapi.actionSystem.KeepPopupOnPerform
 f:com.intellij.ui.popup.list.InlineActionsUtilKt
 - sf:INLINE_BUTTON_MARKER:java.lang.String
 - sf:buttonWidth():I
@@ -27997,7 +27993,7 @@ c:com.intellij.ui.popup.list.ListPopupImpl
 - com.intellij.openapi.ui.popup.ListPopup
 - com.intellij.openapi.ui.popup.ListPopupStep$ListPopupModelListener
 - com.intellij.ui.popup.NextStepHandler
-- pf:myPopupInlineActionsSupport:com.intellij.ui.popup.list.PopupInlineActionsSupport
+- pf:myInlineActionsSupport:com.intellij.ui.popup.list.PopupInlineActionsSupport
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.ui.popup.ListPopupStep):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.ui.popup.WizardPopup,com.intellij.openapi.ui.popup.ListPopupStep,java.lang.Object):V
 - <init>(com.intellij.openapi.ui.popup.ListPopupStep):V
@@ -28066,30 +28062,6 @@ com.intellij.ui.popup.list.ListPopupWrapper
 - s:getRootPopup(com.intellij.openapi.ui.popup.ListPopup):com.intellij.openapi.ui.popup.ListPopup
 f:com.intellij.ui.popup.list.ListPopupWrapper$Companion
 - f:getRootPopup(com.intellij.openapi.ui.popup.ListPopup):com.intellij.openapi.ui.popup.ListPopup
-f:com.intellij.ui.popup.list.NonActionsPopupInlineSupport
-- sf:Companion:com.intellij.ui.popup.list.PopupInlineActionsSupport$Companion
-- <init>(com.intellij.ui.popup.list.ListPopupImpl):V
-- calcButtonIndex(java.lang.Object,java.awt.Point):java.lang.Integer
-- calcExtraButtonsCount(java.lang.Object):I
-- getActiveButtonIndex(javax.swing.JList):java.lang.Integer
-- getActiveExtraButtonToolTipText(javax.swing.JList,java.lang.Object):java.lang.String
-- getExtraButtons(javax.swing.JList,java.lang.Object,Z):java.util.List
-- getInlineAction(java.lang.Object,I,java.awt.event.InputEvent):com.intellij.ui.popup.list.InlineActionDescriptor
-- bs:getInlineAction$default(com.intellij.ui.popup.list.PopupInlineActionsSupport,java.lang.Object,I,java.awt.event.InputEvent,I,java.lang.Object):com.intellij.ui.popup.list.InlineActionDescriptor
-- hasExtraButtons(java.lang.Object):Z
-- isMoreButton(java.lang.Object,I):Z
-f:com.intellij.ui.popup.list.PopupInlineActionsSupportImpl
-- sf:Companion:com.intellij.ui.popup.list.PopupInlineActionsSupport$Companion
-- <init>(com.intellij.ui.popup.list.ListPopupImpl):V
-- calcButtonIndex(java.lang.Object,java.awt.Point):java.lang.Integer
-- calcExtraButtonsCount(java.lang.Object):I
-- getActiveButtonIndex(javax.swing.JList):java.lang.Integer
-- getActiveExtraButtonToolTipText(javax.swing.JList,java.lang.Object):java.lang.String
-- getExtraButtons(javax.swing.JList,java.lang.Object,Z):java.util.List
-- getInlineAction(java.lang.Object,I,java.awt.event.InputEvent):com.intellij.ui.popup.list.InlineActionDescriptor
-- bs:getInlineAction$default(com.intellij.ui.popup.list.PopupInlineActionsSupport,java.lang.Object,I,java.awt.event.InputEvent,I,java.lang.Object):com.intellij.ui.popup.list.InlineActionDescriptor
-- hasExtraButtons(java.lang.Object):Z
-- isMoreButton(java.lang.Object,I):Z
 c:com.intellij.ui.popup.list.PopupListElementRenderer
 - com.intellij.ui.popup.list.GroupedItemsListRenderer
 - sf:CUSTOM_KEY_STROKE_TEXT:com.intellij.openapi.util.Key

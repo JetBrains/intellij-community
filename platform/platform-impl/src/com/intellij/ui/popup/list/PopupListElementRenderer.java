@@ -82,7 +82,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       }
     });
     myPopup = aPopup;
-    myInlineActionsSupport = PopupInlineActionsSupport.Companion.create(myPopup);
+    myInlineActionsSupport = PopupInlineActionsSupportKt.createSupport(myPopup);
   }
 
   public ListPopupImpl getPopup() {
@@ -405,24 +405,29 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       .setDefaultWeightY(1.0);
 
     boolean isSelectable = step.isSelectable(value);
+    Integer activeButtonIndex;
     java.util.List<JComponent> extraButtons;
     if (!isSelectable) {
+      activeButtonIndex = null;
       extraButtons = Collections.emptyList();
-    } else {
-      extraButtons = myInlineActionsSupport.getExtraButtons(list, value, isSelected);
+    }
+    else {
+      activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
+      extraButtons = myInlineActionsSupport.createExtraButtons(
+        value, isSelected, !isSelected || activeButtonIndex == null ? -1 : activeButtonIndex);
     }
 
     if (!extraButtons.isEmpty()) {
       myButtonSeparator.setVisible(true);
       extraButtons.forEach(comp -> myButtonPane.add(comp, gb.next()));
-      Integer activeButtonIndex = myInlineActionsSupport.getActiveButtonIndex(list);
       // We ONLY need to update the tooltip if there's an active inline action button.
       // Otherwise, it's set earlier from the main action.
       // If there is an active button without a tooltip, we still need to set the tooltip
       // to null, otherwise it'll look ugly, as if the inline action button has the same
       // tooltip as the main action.
-      if (activeButtonIndex != null) {
-        myRendererComponent.setToolTipText(myInlineActionsSupport.getActiveExtraButtonToolTipText(list, value));
+      if (activeButtonIndex != null && activeButtonIndex < extraButtons.size()) {
+        String text = myInlineActionsSupport.getToolTipText(value, activeButtonIndex);
+        myRendererComponent.setToolTipText(text);
       }
     }
     else if (!hasNextIcon && myInlineActionsSupport.hasExtraButtons(value)){

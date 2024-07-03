@@ -7,9 +7,8 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import java.awt.Point
 import java.awt.event.InputEvent
 import javax.swing.JComponent
-import javax.swing.JList
 
-class NonActionsPopupInlineSupport(private val myListPopup: ListPopupImpl) : PopupInlineActionsSupport {
+internal class NonActionsPopupInlineSupport(private val myListPopup: ListPopupImpl) : PopupInlineActionsSupport {
   override fun calcExtraButtonsCount(element: Any?): Int = if (hasMoreButton(element)) 1 else 0
 
   override fun calcButtonIndex(element: Any?, point: Point): Int? {
@@ -17,28 +16,32 @@ class NonActionsPopupInlineSupport(private val myListPopup: ListPopupImpl) : Pop
     return calcButtonIndex(myListPopup.list, 1, point)
   }
 
-  override fun getInlineAction(element: Any?, index: Int, event: InputEvent?): InlineActionDescriptor {
-    if (index == 0 && hasMoreButton(element)) return InlineActionDescriptor(
-      { myListPopup.showNextStepPopup(myListPopup.listStep.onChosen(element, false), element)},
-      KeepPopupOnPerform.Always
-    )
-
-    return InlineActionDescriptor({}, KeepPopupOnPerform.Always)
+  override fun getToolTipText(element: Any?, index: Int): String? = when {
+    isMoreButton(element, index) -> IdeBundle.message("inline.actions.more.actions.text")
+    else -> null
   }
 
-  override fun getExtraButtons(list: JList<*>, value: Any?, isSelected: Boolean): List<JComponent> =
-    if (hasMoreButton(value) && isSelected) listOf(createExtraButton (AllIcons.Actions.More, getActiveButtonIndex(list) == 0))
-    else emptyList()
+  override fun getKeepPopupOnPerform(element: Any?, index: Int): KeepPopupOnPerform {
+    return KeepPopupOnPerform.Always
+  }
 
-  override fun getActiveExtraButtonToolTipText(list: JList<*>, value: Any?): String? =
-    if (hasMoreButton(value) && getActiveButtonIndex(list) == 0) IdeBundle.message("inline.actions.more.actions.text")
-    else null
+  override fun performAction(element: Any?, index: Int, event: InputEvent?) {
+    if (isMoreButton(element, index)) {
+      myListPopup.showNextStepPopup(myListPopup.listStep.onChosen(element, false), element)
+    }
+  }
 
-  override fun getActiveButtonIndex(list: JList<*>): Int? = (list as? ListPopupImpl.ListWithInlineButtons)?.selectedButtonIndex
+  override fun createExtraButtons(value: Any?, isSelected: Boolean, activeButtonIndex: Int): List<JComponent> = when {
+    hasMoreButton(value) && isSelected -> listOf(
+      createExtraButton(AllIcons.Actions.More, activeButtonIndex == 0))
+    else -> emptyList()
+  }
 
-  override fun isMoreButton(element: Any?, index: Int): Boolean = hasMoreButton(element) && index == 0
+  override fun isMoreButton(element: Any?, index: Int): Boolean {
+    return hasMoreButton(element) && index == 0
+  }
 
-  private fun hasMoreButton(element: Any?) = myListPopup.listStep.hasSubstep(element)
-                                             && !myListPopup.isShowSubmenuOnHover
-                                             && myListPopup.listStep.isFinal(element)
+  private fun hasMoreButton(element: Any?): Boolean {
+    return myListPopup.listStep.hasSubstep(element) && !myListPopup.isShowSubmenuOnHover && myListPopup.listStep.isFinal(element)
+  }
 }

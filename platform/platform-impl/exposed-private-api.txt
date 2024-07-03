@@ -103,7 +103,6 @@ com/intellij/ui/BalloonImpl$AbstractPosition
 com/intellij/ui/components/fields/ExpandableSupport$Content
 com/intellij/ui/popup/PopupComponentFactory$PopupType
 com/intellij/ui/popup/list/PopupInlineActionsSupport
-com/intellij/ui/popup/list/PopupInlineActionsSupport$Companion
 com/intellij/ui/wizard/WizardCallback
 com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
 com/intellij/util/concurrency/ChildContext
