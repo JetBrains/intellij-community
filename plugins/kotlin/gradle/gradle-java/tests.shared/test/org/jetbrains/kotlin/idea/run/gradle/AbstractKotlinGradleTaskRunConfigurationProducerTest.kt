@@ -24,8 +24,10 @@ abstract class AbstractKotlinGradleTaskRunConfigurationProducerTest : AbstractKo
         taskName : 'tasks.create<Task>("taskName<caret>") {}',
         help     : 'tasks.named("help<caret>") {}',
         
+        taskName : 'val task<caret>Name by tasks.registering',
         taskName : 'val task<caret>Name by tasks.registering {}',
         taskName : 'val task<caret>Name by tasks.registering(Task::class) {}',
+        taskName : 'var task<caret>Name by tasks.creating',
         taskName : 'var task<caret>Name by tasks.creating {}',
         taskName : 'var task<caret>Name by tasks.creating(Task::class) {}'
     """)
