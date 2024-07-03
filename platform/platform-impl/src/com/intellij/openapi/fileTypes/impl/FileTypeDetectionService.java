@@ -104,7 +104,7 @@ final class FileTypeDetectionService implements Disposable {
     if (!Objects.equals(prevDetectors, getDetectorListString())) {
       onDetectorListChange();
     }
-    reDetectExecutor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("FileTypeManager Redetect", coroutineScope);
+    reDetectExecutor = AppJavaExecutorUtil.createBoundedTaskExecutor("FileTypeManager Redetect", coroutineScope);
   }
 
   @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -398,7 +398,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private void awakeReDetectExecutor() {
-    reDetectExecutor.schedule(() -> {
+    reDetectExecutor.execute(() -> {
       List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);
       synchronized (filesToRedetect) {
         for (int i = 0; i < CHUNK_SIZE; i++) {

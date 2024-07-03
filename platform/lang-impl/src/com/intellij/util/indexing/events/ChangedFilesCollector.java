@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.history.LocalHistory;
@@ -21,11 +21,13 @@ import com.intellij.psi.stubs.StubIndexImpl;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.ui.UIUtil;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.TimeoutCancellationException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -51,10 +53,13 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
     }
   };
 
-  private final Executor
-    myVfsEventsExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileBasedIndex Vfs Event Processor");
+  private final CoroutineDispatcherBackedExecutor vfsEventsExecutor;
   private final AtomicInteger myScheduledVfsEventsWorkers = new AtomicInteger();
   private final FileBasedIndexImpl myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+
+  ChangedFilesCollector(@NotNull CoroutineScope coroutineScope) {
+    vfsEventsExecutor = AppJavaExecutorUtil.createBoundedTaskExecutor("FileBasedIndex Vfs Event Processor", coroutineScope);
+  }
 
   @Override
   protected void iterateIndexableFiles(@NotNull VirtualFile file, @NotNull ContentIterator iterator) {
@@ -150,34 +155,36 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
   }
 
   public void ensureUpToDateAsync() {
-    if (getEventMerger().getApproximateChangesCount() >= 20 && myScheduledVfsEventsWorkers.compareAndSet(0, 1)) {
-      if (DumbServiceImpl.isSynchronousTaskExecution()) {
-        ensureUpToDate();
-        return;
-      }
+    if (getEventMerger().getApproximateChangesCount() < 20 || !myScheduledVfsEventsWorkers.compareAndSet(0, 1)) {
+      return;
+    }
 
-      myVfsEventsExecutor.execute(() -> {
-        try {
-          processFilesInReadActionWithYieldingToWriteAction();
+    if (DumbServiceImpl.isSynchronousTaskExecution()) {
+      ensureUpToDate();
+      return;
+    }
 
-          if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
-            for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-              try {
-                FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
-              }
-              catch (AlreadyDisposedException | ProcessCanceledException ignored) {
-              }
-              catch (Exception e) {
-                LOG.error(e);
-              }
+    vfsEventsExecutor.execute(() -> {
+      try {
+        processFilesInReadActionWithYieldingToWriteAction();
+
+        if (Registry.is("try.starting.dumb.mode.where.many.files.changed")) {
+          for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+            try {
+              FileBasedIndexProjectHandler.scheduleReindexingInDumbMode(project);
+            }
+            catch (AlreadyDisposedException | ProcessCanceledException ignored) {
+            }
+            catch (Exception e) {
+              LOG.error(e);
             }
           }
         }
-        finally {
-          myScheduledVfsEventsWorkers.decrementAndGet();
-        }
-      });
-    }
+      }
+      finally {
+        myScheduledVfsEventsWorkers.decrementAndGet();
+      }
+    });
   }
 
   public void processFilesToUpdateInReadAction() {
@@ -286,23 +293,27 @@ public final class ChangedFilesCollector extends IndexedFilesListener {
 
   private void processFilesInReadActionWithYieldingToWriteAction() {
     while (getEventMerger().hasChanges()) {
-      ReadAction.nonBlocking(() -> processFilesToUpdateInReadAction()).executeSynchronously();
+      ReadAction.nonBlocking((Callable<Void>)() -> {
+        processFilesToUpdateInReadAction();
+        return null;
+      }).executeSynchronously();
     }
   }
 
   @TestOnly
-  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) throws Exception {
+  public void waitForVfsEventsExecuted(long timeout, @NotNull TimeUnit unit) {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      ((BoundedTaskExecutor)myVfsEventsExecutor).waitAllTasksExecuted(timeout, unit);
+      vfsEventsExecutor.waitAllTasksExecuted(timeout, unit);
       return;
     }
+
     long deadline = System.nanoTime() + unit.toNanos(timeout);
     while (System.nanoTime() < deadline) {
       try {
-        ((BoundedTaskExecutor)myVfsEventsExecutor).waitAllTasksExecuted(100, TimeUnit.MILLISECONDS);
+        vfsEventsExecutor.waitAllTasksExecuted(100, TimeUnit.MILLISECONDS);
         return;
       }
-      catch (TimeoutException e) {
+      catch (TimeoutCancellationException e) {
         UIUtil.dispatchAllInvocationEvents();
       }
     }

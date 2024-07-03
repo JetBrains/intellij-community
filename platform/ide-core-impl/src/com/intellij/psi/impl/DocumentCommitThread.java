@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -26,9 +26,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.ObjectUtilsRt;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.ui.EDT;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -36,21 +38,22 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public final class DocumentCommitThread implements Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
 
-  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Commit Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
+  private final CoroutineDispatcherBackedExecutor executor;
   private volatile boolean isDisposed;
 
   static DocumentCommitThread getInstance() {
     return (DocumentCommitThread)ApplicationManager.getApplication().getService(DocumentCommitProcessor.class);
   }
 
-  DocumentCommitThread() {
+  DocumentCommitThread(@NotNull CoroutineScope coroutineScope) {
+    executor = AppJavaExecutorUtil.createBoundedTaskExecutor("Document Commit Pool", coroutineScope);
   }
 
   @Override
@@ -113,7 +116,8 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     }
     else {
       // while we were messing around transferring things to background thread, the ViewProvider can become obsolete
-      // when e.g. virtual file was renamed. store new provider to retain it from GC
+      // when e.g., virtual file was renamed.
+      // store new provider to retain it from GC
       task.cachedViewProvider = viewProvider;
 
       for (PsiFile file : viewProvider.getAllFiles()) {
@@ -145,7 +149,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
         assert !documentManager.isInUncommittedSet(document);
       }
       if (!success && viewProvider != null && viewProvider.isEventSystemEnabled()) {
-        // add document back to the queue
+        // add a document back to the queue
         commitAsynchronously(project, documentManager, document, "Re-added back", task.myCreationModality, viewProvider);
       }
     };
@@ -172,16 +176,16 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
   // NB: failures applying EDT tasks are not handled - i.e., failed documents are added back to the queue and the method returns
   public void waitForAllCommits(long timeout, @NotNull TimeUnit timeUnit) throws ExecutionException, InterruptedException, TimeoutException {
     if (!ApplicationManager.getApplication().isDispatchThread()) {
-      while (!((BoundedTaskExecutor)executor).isEmpty()) {
-        ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
+      while (!executor.isEmpty()) {
+        executor.waitAllTasksExecuted(timeout, timeUnit);
       }
       return;
     }
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
 
     EDT.dispatchAllInvocationEvents();
-    while (!((BoundedTaskExecutor)executor).isEmpty()) {
-      ((BoundedTaskExecutor)executor).waitAllTasksExecuted(timeout, timeUnit);
+    while (!executor.isEmpty()) {
+      executor.waitAllTasksExecuted(timeout, timeUnit);
       EDT.dispatchAllInvocationEvents();
     }
   }
@@ -222,9 +226,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (!(o instanceof CommitTask)) return false;
-
-      CommitTask task = (CommitTask)o;
+      if (!(o instanceof CommitTask task)) return false;
 
       return Comparing.equal(document, task.document) && project.equals(task.project);
     }

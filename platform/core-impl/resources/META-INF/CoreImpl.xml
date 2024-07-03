@@ -46,8 +46,6 @@
                         serviceImplementation="com.intellij.diagnostic.PluginProblemReporterImpl"/>
     <projectService serviceInterface="com.intellij.psi.PsiManager"
                     serviceImplementation="com.intellij.psi.impl.PsiManagerImpl" preload="true"/>
-    <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
-                        serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
     <projectService serviceInterface="com.intellij.psi.SmartPointerManager"
                     serviceImplementation="com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.PsiDirectoryFactory"

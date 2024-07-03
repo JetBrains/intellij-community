@@ -2488,12 +2488,6 @@ f:com.intellij.psi.impl.DebugUtil
 c:com.intellij.psi.impl.DebugUtil$IncorrectTreeStructureException
 - java.lang.RuntimeException
 - getElement():com.intellij.lang.ASTNode
-f:com.intellij.psi.impl.DocumentCommitThread
-- com.intellij.openapi.Disposable
-- commitAsynchronously(com.intellij.openapi.project.Project,com.intellij.psi.impl.PsiDocumentManagerBase,com.intellij.openapi.editor.Document,java.lang.Object,com.intellij.openapi.application.ModalityState,com.intellij.psi.FileViewProvider):V
-- commitSynchronously(com.intellij.openapi.editor.Document,com.intellij.openapi.project.Project,com.intellij.psi.PsiFile):V
-- dispose():V
-- waitForAllCommits(J,java.util.concurrent.TimeUnit):V
 a:com.intellij.psi.impl.ElementBase
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.openapi.util.Iconable

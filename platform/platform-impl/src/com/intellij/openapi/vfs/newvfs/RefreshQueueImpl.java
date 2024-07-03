@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static com.intellij.util.concurrency.AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor;
+import static com.intellij.util.concurrency.AppJavaExecutorUtil.createBoundedTaskExecutor;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
@@ -48,8 +48,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private int myActivityCounter;
 
   public RefreshQueueImpl(@NotNull CoroutineScope coroutineScope) {
-    myQueue = createSingleTaskApplicationPoolExecutor("RefreshQueue Pool", coroutineScope);
-    myEventProcessingQueue = createSingleTaskApplicationPoolExecutor("Async Refresh Event Processing", coroutineScope);
+    myQueue = createBoundedTaskExecutor("RefreshQueue Pool", coroutineScope);
+    myEventProcessingQueue = createBoundedTaskExecutor("Async Refresh Event Processing", coroutineScope);
   }
 
   void execute(@NotNull RefreshSessionImpl session) {
@@ -74,7 +74,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
     if (LOG.isDebugEnabled()) LOG.debug("Queue session with id=" + session.hashCode());
     var queuedAt = System.nanoTime();
-    myQueue.schedule(() -> {
+    myQueue.execute(() -> {
       var timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
       startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
       var events = new AtomicReference<Collection<VFileEvent>>();
@@ -115,7 +115,7 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
               VfsUsageCollector.logEventProcessing(
                 evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
             })
-            .submit(myEventProcessingQueue::schedule)
+            .submit(myEventProcessingQueue)
             .onProcessed(__ -> stopIndicator())
             .onError(t -> {
               if (!myRefreshIndicator.isCanceled()) {

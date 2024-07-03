@@ -122,8 +122,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -297,8 +296,8 @@ public final class BuildManager implements Disposable {
   private volatile boolean myBuildProcessDebuggingEnabled;
 
   public BuildManager(@NotNull CoroutineScope coroutineScope) {
-    myRequestsProcessor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager RequestProcessor Pool", coroutineScope);
-    myAutomakeTrigger = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager Auto-Make Trigger", coroutineScope);
+    myRequestsProcessor = AppJavaExecutorUtil.createBoundedTaskExecutor("BuildManager RequestProcessor Pool", coroutineScope);
+    myAutomakeTrigger = AppJavaExecutorUtil.createBoundedTaskExecutor("BuildManager Auto-Make Trigger", coroutineScope);
 
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
@@ -324,7 +323,7 @@ public final class BuildManager implements Disposable {
           synchronized (myUnprocessedEvents) {
             myUnprocessedEvents.addAll(events);
           }
-          myAutomakeTrigger.schedule(() -> {
+          myAutomakeTrigger.execute(() -> {
             if (!application.isDisposed()) {
               ReadAction.run(()-> {
                 if (application.isDisposed()) {
@@ -525,7 +524,7 @@ public final class BuildManager implements Disposable {
   }
 
   public void runCommand(@NotNull Runnable command) {
-    myRequestsProcessor.schedule(command);
+    myRequestsProcessor.execute(command);
   }
 
   private void doNotify(final Supplier<Collection<? extends File>> pathsProvider, final boolean notifyDeletion) {

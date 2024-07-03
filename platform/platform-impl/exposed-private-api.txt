@@ -67,7 +67,6 @@ com/intellij/openapi/updateSettings/impl/InternalPluginResults
 com/intellij/openapi/updateSettings/impl/PlatformUpdates
 com/intellij/openapi/updateSettings/impl/PlatformUpdates$Loaded
 com/intellij/openapi/updateSettings/impl/pluginsAdvertisement/InstallAndEnableTask
-com/intellij/openapi/vfs/encoding/EncodingManagerImpl$State
 com/intellij/openapi/vfs/impl/http/HttpVirtualFileImpl
 com/intellij/openapi/vfs/newvfs/persistent/FSRecordsImpl
 com/intellij/openapi/vfs/newvfs/persistent/PersistentFSConnection
