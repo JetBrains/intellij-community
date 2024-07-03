@@ -148,7 +148,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
       LOG.debug(counters + " computed for prefix '" + result.getPrefixMatcher().getPrefix() + "' in " + duration + " ms");
       if (TRACING_WITH_SPUTNIK_ENABLED) {
         //noinspection UseOfSystemOutOrSystemErr
-        System.out.println("\1h('Importable names completion','%d')".formatted((duration / 10) * 10));
+        System.out.printf("\1h('Importable names completion','%d')%n", (duration / 10) * 10);
       }
     });
   }
