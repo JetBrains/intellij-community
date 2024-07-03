@@ -4,7 +4,6 @@ package training.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import training.learn.OpenLessonActivities
 import training.util.learningToolWindow
 
 private class OpenLearnPanel : DumbAwareAction() {
@@ -14,9 +13,11 @@ private class OpenLearnPanel : DumbAwareAction() {
       val toolWindow = learningToolWindow(project) ?: return
       toolWindow.show()
     }
-    else {
-      OpenLessonActivities.openLearnProjectFromWelcomeScreen(null)
-    }
+  }
+
+  override fun update(e: AnActionEvent) {
+    val project = e.project
+    e.presentation.isEnabledAndVisible = project != null && learningToolWindow(project) != null
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
