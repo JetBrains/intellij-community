@@ -2460,6 +2460,15 @@ public final class JBUI {
           return LICENSE_DETAILS_COLOR;
         }
       }
+
+      public static final class LicenseServer {
+        private static final @NotNull Color SEPARATOR_COLOR =
+          JBColor.namedColor("LicenseDialog.LicenseServer.separatorColor", 0xEBECF0, 0x393B40);
+
+        public static @NotNull Color getSeparatorColor() {
+          return SEPARATOR_COLOR;
+        }
+      }
     }
   }
 

@@ -870,6 +870,9 @@
       "separatorColor": "Gray3",
       "LicenseList": {
         "licenseDetailsForeground": "Gray9"
+      },
+      "LicenseServer": {
+        "separatorColor": "Gray3"
       }
     },
 
