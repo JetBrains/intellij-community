@@ -318,7 +318,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     }
 
     List<HighlightInfo> infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
-    MyInterruptingVisitor.assertHighlighted(infos);
+    MyInterruptingVisitor.assertExistMy(infos);
     assertEquals("[S, C]", log.toString());
 
     INTERRUPT.set(false);
@@ -333,7 +333,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
     }
     infos = DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject());
-    MyInterruptingVisitor.assertHighlighted(infos);
+    MyInterruptingVisitor.assertExistMy(infos);
     assertEquals("[S, F]", log.toString());
   }
 
@@ -373,7 +373,7 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
       return new MyInterruptingVisitor();
     }
 
-    private static void assertHighlighted(List<? extends HighlightInfo> infos) {
+    private static void assertExistMy(List<? extends HighlightInfo> infos) {
       assertTrue("HighlightInfo is missing. All available infos are: "+infos, ContainerUtil.exists(infos, info -> info.getDescription().equals("MY3: CMT")));
     }
   }
@@ -541,5 +541,23 @@ public class DaemonHighlightVisitorRespondToChangesTest extends DaemonAnalyzerTe
     catch (InterruptedException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public void testTodoRehighlightsItselfEvenOnSmallChanges() {
+    @Language("JAVA")
+    String text = """
+      class X {
+        // TODO<caret>
+      }
+      """;
+    configureByText(JavaFileType.INSTANCE, text);
+
+    assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+
+    backspace();
+    assertEmpty(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
+
+    type('O');
+    assertOneElement(ContainerUtil.filter(doHighlighting(HighlightSeverity.INFORMATION), h -> h.type.equals(HighlightInfoType.TODO)));
   }
 }
