@@ -133,14 +133,15 @@ impl<'a> Drop for TestEnvironment<'a> {
 }
 
 pub fn prepare_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
-    match prepare_test_env_impl(launcher_location, true) {
-        Ok(x) => x,
-        Err(e) => panic!("Failed to prepare test environment: {:?}", e),
-    }
+    prepare_custom_test_env(launcher_location, None, true)
 }
 
-pub fn prepare_no_jbr_test_env<'a>(launcher_location: LauncherLocation) -> TestEnvironment<'a> {
-    match prepare_test_env_impl(launcher_location, false) {
+pub fn prepare_custom_test_env<'a>(
+    launcher_location: LauncherLocation,
+    dir_suffix: Option<&str>,
+    with_jbr: bool
+) -> TestEnvironment<'a> {
+    match prepare_test_env_impl(launcher_location, dir_suffix, with_jbr) {
         Ok(x) => x,
         Err(e) => panic!("Failed to prepare test environment: {:?}", e),
     }
@@ -156,7 +157,11 @@ struct TestEnvironmentShared {
     temp_dir: TempDir
 }
 
-fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool) -> Result<TestEnvironment<'a>> {
+fn prepare_test_env_impl<'a>(
+    launcher_location: LauncherLocation,
+    dir_suffix: Option<&str>,
+    with_jbr: bool
+) -> Result<TestEnvironment<'a>> {
     INIT.call_once(|| {
         let shared = init_test_environment_once().context("Failed to init shared test environment").unwrap();
         unsafe {
@@ -166,7 +171,8 @@ fn prepare_test_env_impl<'a>(launcher_location: LauncherLocation, with_jbr: bool
 
     let shared_env = unsafe { SHARED.as_ref() }.expect("Shared test environment should have already been initialized");
 
-    let temp_dir = Builder::new().prefix("xplat_launcher_test_").tempdir().context("Failed to create temp directory")?;
+    let prefix = if let Some(s) = dir_suffix { format!("launcher_test_{s}_") } else { "launcher_test_".to_string() };
+    let temp_dir = Builder::new().prefix(&prefix).tempdir().context("Failed to create temp directory")?;
     let temp_path = temp_dir.path().canonicalize()?.strip_ns_prefix()?;
 
     let (dist_root, launcher_path) = layout_launcher(launcher_location, with_jbr, &temp_path, shared_env)?;
