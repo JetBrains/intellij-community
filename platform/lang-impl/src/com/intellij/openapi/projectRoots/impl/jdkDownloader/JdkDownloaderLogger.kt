@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.java.JdkVersionDetector
 object JdkDownloaderLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 2)
+  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 3)
 
   private const val UNKNOWN_VENDOR = "Unknown"
   private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
