@@ -9,6 +9,7 @@ import com.intellij.ide.startup.importSettings.models.Settings
 import com.intellij.ide.startup.importSettings.transfer.backend.providers.vscode.parsers.*
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.CoroutineScope
 import java.io.File
 import java.io.IOException
@@ -41,7 +42,20 @@ class VSCodeSettingsProcessor(private val scope: CoroutineScope) {
     private val timeAfterLastModificationToConsiderTheInstanceRecent = Duration.ofHours(365 * 24) // one year
   }
 
-  fun willDetectAtLeastSomething(): Boolean = generalSettingsFile.exists()
+  fun willDetectAtLeastSomething(): Boolean {
+    if (generalSettingsFile.exists())
+      return true
+
+    if (!pluginsDirectory.exists() || !pluginsDirectory.isDirectory)
+      return false
+    val pluginsDirEntries = pluginsDirectory.listFiles() ?: return false  // no extensions and config file
+
+    for (pluginDirEntry in pluginsDirEntries) {
+      if (pluginDirEntry.isDirectory)
+        return true
+    }
+    return false
+  }
 
   fun isInstanceRecentEnough(): Boolean {
     try {
