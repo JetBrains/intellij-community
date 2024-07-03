@@ -153,10 +153,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     private val projectIfNotDisposed: Project? get() = project.takeUnless(Project::isDisposed)
 
     private fun compilationFinished() {
-        val compiledModules = runReadAction {
+        val (compiledModules, projectPath) = runReadAction {
             projectIfNotDisposed?.let {
                 val manager = ModuleManager.getInstance(it)
-                dirtyScopeHolder.compilationAffectedModules.mapNotNull(manager::findModuleByName)
+                val compiledModules = dirtyScopeHolder.compilationAffectedModules.mapNotNull(manager::findModuleByName)
+                compiledModules to it.basePath
             }
         } ?: return
 
@@ -171,7 +172,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
                 compilerActivityFinished(compiledModules)
             }
 
-            if (activeBuildCount == 0) openStorage()
+            if (activeBuildCount == 0) openStorage(projectPath)
         }
     }
 
@@ -203,13 +204,15 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         closeStorage()
     }
 
-    private fun openStorage() {
+    private fun openStorage(projectPath: String?) {
         if (storage != null) {
             LOG.warn("already opened – will be overridden")
             closeStorage()
         }
 
-        storage = KotlinCompilerReferenceIndexStorage.open(project)
+        storage = projectPath?.let {
+            KotlinCompilerReferenceIndexStorage.open(project, it)
+        }
     }
 
     private fun closeStorage() {
