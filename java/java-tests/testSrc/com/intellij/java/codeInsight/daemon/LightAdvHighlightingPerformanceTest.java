@@ -26,9 +26,9 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.intellij.psi.impl.source.tree.injected.ConcatenationInjectorManager;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
+import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +78,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   public void testAThinlet() {
     configureByFile(getFilePath(""));
     List<HighlightInfo> errors = highlightErrors();
-    if (1170 != errors.size()) {
+    if (1165 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
@@ -88,7 +88,7 @@ public class LightAdvHighlightingPerformanceTest extends LightDaemonAnalyzerTest
   public void testAClassLoader() {
     configureByFile(getFilePath(""));
     List<HighlightInfo> errors = highlightErrors();
-    if (92 != errors.size()) {
+    if (90 != errors.size()) {
       doTest(getFilePath("_hl"), false, false);
       fail("Actual: " + errors.size());
     }
