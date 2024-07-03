@@ -69,14 +69,14 @@ object RepositoryBrowser {
       id = TOOLWINDOW_ID,
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
-      stripeTitle = { VcsBundle.message("RepositoryBrowser.toolwindow.name") },
+      stripeTitle = VcsBundle.messagePointer("RepositoryBrowser.toolwindow.name"),
       icon = getIcon()
     ))
     ContentManagerWatcher.watchContentManager(toolWindow, toolWindow.contentManager)
     return toolWindow
   }
 
-  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindow.Repositories else null
+  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindows.Repositories else null
 }
 
 class RepositoryBrowserPanel(
