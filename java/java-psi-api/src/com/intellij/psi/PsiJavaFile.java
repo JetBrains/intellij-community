@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,4 +89,48 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBas
    */
   @Nullable
   PsiJavaModule getModuleDeclaration();
+
+  /**
+   * @return the array of implicitly imported static members.
+   */
+  @ApiStatus.Experimental
+  default @NotNull StaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
+    return StaticMember.EMPTY_ARRAY;
+  }
+
+  /**
+   * Class representing a static member represented implicitly imported static members.
+   * if memberName is `*`, it is on demand import
+   */
+  @ApiStatus.Experimental
+  class StaticMember {
+    public static final @NotNull StaticMember @NotNull [] EMPTY_ARRAY = new StaticMember[0];
+
+    private final @NotNull String myContainingClass;
+    private final @NotNull String myMemberName;
+
+    private StaticMember(@NotNull String containingClass, @NotNull String memberName) {
+      myContainingClass = containingClass;
+      myMemberName = memberName;
+    }
+
+    @NotNull
+    public String getContainingClass() {
+      return myContainingClass;
+    }
+
+    @NotNull
+    public String getMemberName() {
+      return myMemberName;
+    }
+
+    public boolean isOnDemand() {
+      return "*".equals(myMemberName);
+    }
+
+    @NotNull
+    public static StaticMember create(@NotNull String containingClass, @NotNull String memberName) {
+      return new StaticMember(containingClass, memberName);
+    }
+  }
 }

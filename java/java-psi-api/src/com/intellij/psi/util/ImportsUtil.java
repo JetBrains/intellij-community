@@ -2,7 +2,6 @@
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 
 public final class ImportsUtil {
-  private static final Key<Boolean> IS_IMPLICIT = Key.create("IMPORT_IS_IMPLICIT");
 
   private ImportsUtil() {
   }
@@ -88,13 +86,5 @@ public final class ImportsUtil {
       }
     }
     return false;
-  }
-
-  public static void markAsImplicitImport(@NotNull PsiImportStatementBase importStatement) {
-    importStatement.putUserData(IS_IMPLICIT, Boolean.TRUE);
-  }
-
-  public static boolean isImplicitImport(@NotNull PsiImportStatementBase importStatement) {
-    return importStatement.getUserData(IS_IMPLICIT) == Boolean.TRUE;
   }
 }

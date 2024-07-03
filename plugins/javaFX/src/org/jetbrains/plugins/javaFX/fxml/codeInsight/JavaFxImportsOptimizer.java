@@ -17,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
@@ -42,12 +43,12 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     if (vFile == null || !ProjectRootManager.getInstance(project).getFileIndex().isInSourceContent(vFile)) {
       return EmptyRunnable.INSTANCE;
     }
-    final @NotNull List<ImportHelper.Import> names = new ArrayList<>();
+    final @NotNull List<ImportUtils.Import> names = new ArrayList<>();
     final Set<String> demandedForNested = new HashSet<>();
     collectNamesToImport(names, demandedForNested, (XmlFile)file);
     names.sort((o1, o2) -> StringUtil.compare(o1.name(), o2.name(), true));
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
-    final @NotNull List<ImportHelper.Import> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
+    final @NotNull List<ImportUtils.Import> sortedNames = ImportHelper.sortItemsAccordingToSettings(names, settings);
     final Map<String, Boolean> onDemand = new HashMap<>();
     ImportHelper.collectOnDemandImports(sortedNames, settings, onDemand);
     for (String s : demandedForNested) {
@@ -55,7 +56,7 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     }
     final Set<String> imported = new HashSet<>();
     final List<String> imports = new ArrayList<>();
-    for (ImportHelper.Import anImport : sortedNames) {
+    for (ImportUtils.Import anImport : sortedNames) {
       final String qName = anImport.name();
       final String packageName = StringUtil.getPackageName(qName);
       if (imported.contains(packageName) || imported.contains(qName)) {
@@ -94,13 +95,13 @@ public final class JavaFxImportsOptimizer implements ImportOptimizer {
     };
   }
 
-  private static void collectNamesToImport(final @NotNull List<ImportHelper.Import> names,
+  private static void collectNamesToImport(final @NotNull List<ImportUtils.Import> names,
                                            final @NotNull Collection<String> demandedForNested,
                                            @NotNull XmlFile file) {
     file.accept(new JavaFxUsedClassesVisitor() {
       @Override
       protected void appendClassName(String fqn) {
-        names.add(new ImportHelper.Import(fqn, false));
+        names.add(new ImportUtils.Import(fqn, false));
       }
 
       @Override

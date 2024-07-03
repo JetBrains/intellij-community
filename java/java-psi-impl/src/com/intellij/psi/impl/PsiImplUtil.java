@@ -44,6 +44,7 @@ import java.util.*;
 
 public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
+  private static final String JAVA_IO_IO = "java.io.IO";
 
   private PsiImplUtil() { }
 
@@ -846,27 +847,28 @@ public final class PsiImplUtil {
     }
   }
 
-  public static PsiImportStaticStatement[] getImplicitStaticImports(@NotNull PsiFile file) {
-    PsiImportStaticStatement[] staticImports = new PsiImportStaticStatement[1];
-    int counter = 0;
-
+  /**
+   * Retrieves the implicit static imports for the given file.
+   *
+   * @param file the file for which to retrieve implicit static imports
+   * @return an array of static members representing the implicit static imports
+   */
+  @ApiStatus.Experimental
+  public static @NotNull PsiJavaFile.StaticMember @NotNull[] getImplicitStaticImports(@NotNull PsiFile file) {
+    List<PsiJavaFile.StaticMember> staticImports = new ArrayList<>();
     // java.lang.StringTemplate.STR
     if (PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, file)) {
-      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
-      final PsiClass aClass = psiFacade.findClass(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, file.getResolveScope());
-      if (aClass != null) {
-        final PsiImportStaticStatement stringTemplate = psiFacade.getElementFactory().createImportStaticStatement(aClass, "STR");
-        staticImports[counter++] = stringTemplate;
+      staticImports.add(PsiJavaFile.StaticMember.create(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, "STR"));
+    }
+
+    // java.io.IO.* for implicit classes
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) && file instanceof PsiJavaFile) {
+      PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
+        staticImports.add(PsiJavaFile.StaticMember.create(JAVA_IO_IO, "*"));
       }
     }
 
-    // preparation of results
-    if (counter < staticImports.length) {
-      staticImports = Arrays.copyOf(staticImports, counter);
-    }
-    for (PsiImportStaticStatement statement : staticImports) {
-      ImportsUtil.markAsImplicitImport(statement);
-    }
-    return staticImports;
+    return staticImports.toArray(PsiJavaFile.StaticMember.EMPTY_ARRAY);
   }
 }

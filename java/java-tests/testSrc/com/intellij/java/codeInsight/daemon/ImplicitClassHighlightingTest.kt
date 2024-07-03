@@ -2,7 +2,11 @@
 package com.intellij.java.codeInsight.daemon
 
 import com.intellij.JavaTestUtil
+import com.intellij.pom.java.JavaFeature
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.psi.PsiCallExpression
+import com.intellij.psi.PsiExpressionStatement
+import com.intellij.psi.PsiJavaFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -64,6 +68,24 @@ class ImplicitClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     val highlightings = myFixture.doHighlighting().filter { it?.description?.contains("Duplicate class") ?: false }
     UsefulTestCase.assertNotEmpty(highlightings)
+  }
+
+  fun testImplicitIoImport() {
+    IdeaTestUtil.withLevel(module, JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.minimumLevel, Runnable {
+      myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void println(Object obj) {}    
+        }
+        
+        """.trimIndent())
+      val psiFile = myFixture.configureByFile(getTestName(false) + ".java")
+      myFixture.checkHighlighting()
+      val statement = (psiFile as PsiJavaFile).classes[0].methods[0].body!!.statements[0] as PsiExpressionStatement
+      val resolveMethod = (statement.expression as PsiCallExpression).resolveMethod()
+      assertNotNull(resolveMethod)
+    })
   }
 
   private fun doTest() {
