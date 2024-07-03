@@ -75,7 +75,7 @@ abstract class AbstractKotlinInplaceIntroducer<D : KtNamedDeclaration>(
             return it.replaced(KtPsiFactory(myProject).createDeclaration(exprText))
         }
 
-        val occurrenceExprText = (myExpr as? KtProperty)?.name ?: exprText
+        val occurrenceExprText = (myExpr as? KtProperty)?.name?.quoteIfNeeded() ?: exprText
         return leaf
             .getNonStrictParentOfType<KtSimpleNameExpression>()
             ?.replaced(KtPsiFactory(myProject).createExpression(occurrenceExprText))

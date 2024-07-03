@@ -139,7 +139,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             val nameValidator = CollectingNameValidator(targetParent.getValueParameters().mapNotNull { it.name }, bodyValidator)
 
             if (physicalExpression is KtProperty && !isUnitTestMode()) {
-                suggestedNames.addIfNotNull(physicalExpression.name)
+                suggestedNames.addIfNotNull(physicalExpression.name?.quoteIfNeeded())
             }
             suggestedNames.addAll(KotlinNameSuggester.suggestNamesByType(expressionType, targetParent, nameValidator, "p"))
             suggestedNames
