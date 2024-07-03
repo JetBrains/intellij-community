@@ -36,7 +36,7 @@ class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, 
     }
 
     EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
-    List<EditorWindow> siblings = window == null ? Collections.emptyList() : window.getSiblings();
+    List<EditorWindow> siblings = window == null ? Collections.emptyList() : window.getSiblings$intellij_platform_ide_impl();
     if (siblings.size() != 1) {
       return;
     }
@@ -78,6 +78,6 @@ class MoveEditorToOppositeTabGroupAction extends AnAction implements DumbAware, 
     if (!closeSource && FileEditorManagerImpl.forbidSplitFor(vFile)) {
       return false;
     }
-    return window.getSiblings().size() == 1;
+    return window.getSiblings$intellij_platform_ide_impl().size() == 1;
   }
 }

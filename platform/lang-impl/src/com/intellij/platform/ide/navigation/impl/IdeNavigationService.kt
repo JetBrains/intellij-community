@@ -32,6 +32,7 @@ import com.intellij.platform.ide.navigation.NavigationService
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
+import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -239,20 +240,21 @@ private suspend fun openFile(
     }
   }
 
-  val fileEditors = fileEditorManager.openFile(
+  val composite = fileEditorManager.openFile(
     file = file,
     options = FileEditorOpenOptions(
       reuseOpen = true,
       requestFocus = options.requestFocus,
       openMode = if (options.openInRightSplit) FileEditorManagerImpl.OpenMode.RIGHT_SPLIT else FileEditorManagerImpl.OpenMode.DEFAULT,
     ),
-  ).allEditors
+  )
+
+  val fileEditors = composite.allEditors
   if (fileEditors.isEmpty()) {
     return false
   }
 
   val elementRange = if (options.preserveCaret) request.elementRangeMarker?.takeIf { it.isValid }?.textRange else null
-  val currentCompositeForFile = fileEditorManager.getComposite(file) as? EditorComposite
   if (elementRange != null) {
     for (editor in fileEditors) {
       if (editor is TextEditor) {
@@ -270,18 +272,21 @@ private suspend fun openFile(
   }
 
   val descriptor = OpenFileDescriptor(project, file, offset)
-  suspend fun tryNavigate(filter: (NavigatableFileEditor) -> Boolean): Boolean {
+  suspend fun tryNavigate(fileEditors: Sequence<FileEditor>): Boolean {
     for (editor in fileEditors) {
       // try to navigate opened editor
-      if (editor is NavigatableFileEditor &&
-          filter(editor) &&
-          withContext(Dispatchers.EDT) { navigateAndSelectEditor(editor, descriptor, currentCompositeForFile) }) {
-        return true
+      if (editor is NavigatableFileEditor) {
+        val navigated = withContext(Dispatchers.EDT) {
+          navigateAndSelectEditor(editor = editor, descriptor = descriptor, composite = composite as? EditorComposite)
+        }
+        if (navigated) {
+          return true
+        }
       }
     }
     return false
   }
 
-  val selected = currentCompositeForFile?.selectedWithProvider?.fileEditor
-  return tryNavigate { selected === it } || tryNavigate { selected !== it }
+  val selected = (composite as? EditorComposite)?.selectedWithProvider?.fileEditor
+  return tryNavigate(sequenceOfNotNull(selected)) || tryNavigate(fileEditors.asSequence().filter { it != selected })
 }

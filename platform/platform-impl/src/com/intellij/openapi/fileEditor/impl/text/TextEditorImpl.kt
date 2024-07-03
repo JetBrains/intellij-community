@@ -192,11 +192,11 @@ open class TextEditorImpl @Internal constructor(
     return StructureViewBuilder.getProvider().getStructureViewBuilder(file.fileType, file, project)
   }
 
-  override fun canNavigateTo(navigatable: Navigatable): Boolean {
+  final override fun canNavigateTo(navigatable: Navigatable): Boolean {
     return navigatable is OpenFileDescriptor && (navigatable.line >= 0 || navigatable.offset >= 0)
   }
 
-  override fun navigateTo(navigatable: Navigatable) {
+  final override fun navigateTo(navigatable: Navigatable) {
     (navigatable as OpenFileDescriptor).navigateIn(editor)
   }
 

@@ -15150,7 +15150,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorWindow
 - f:getSelectedEditor():com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
 - f:getSelectedEditor(Z):com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite
 - f:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
-- f:getSiblings():java.util.List
 - f:getSize():java.awt.Dimension
 - f:getTabCount():I
 - sf:getTabLimit():I
@@ -15576,7 +15575,7 @@ c:com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 - pf:project:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,kotlin.Pair):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
-- canNavigateTo(com.intellij.pom.Navigatable):Z
+- f:canNavigateTo(com.intellij.pom.Navigatable):Z
 - dispose():V
 - f:firePropertyChange(java.lang.String,java.lang.Object,java.lang.Object):V
 - getComponent():com.intellij.openapi.fileEditor.impl.text.TextEditorComponent
@@ -15590,7 +15589,7 @@ c:com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 - f:isEditorLoaded():Z
 - isModified():Z
 - isValid():Z
-- navigateTo(com.intellij.pom.Navigatable):V
+- f:navigateTo(com.intellij.pom.Navigatable):V
 - removePropertyChangeListener(java.beans.PropertyChangeListener):V
 - setState(com.intellij.openapi.fileEditor.FileEditorState):V
 - setState(com.intellij.openapi.fileEditor.FileEditorState,Z):V
