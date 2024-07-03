@@ -30,6 +30,7 @@ import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -478,6 +479,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     valuesSelected(selection);
 
+    Object onlyItem = ContainerUtil.getOnlyItem(selection);
+    if (e instanceof MouseEvent me && onlyItem != null) {
+      myMouseMotionListener.updateSelectedButtonIndex(me.getPoint());
+    }
+
     Integer inlineButtonIndex = myList.getSelectedButtonIndex();
     if (inlineButtonIndex != null) {
       KeepPopupOnPerform keepPopup = myInlineActionsSupport.getKeepPopupOnPerform(selectedValue, inlineButtonIndex);
@@ -502,10 +508,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
 
-    Object parentValue = selection.size() == 1 ? selectedValue : null;
-
     if (nextStep == PopupStep.FINAL_CHOICE &&
-        parentValue instanceof PopupFactoryImpl.ActionItem item &&
+        onlyItem instanceof PopupFactoryImpl.ActionItem item &&
         Utils.isKeepPopupOpen(item.getKeepPopupOnPerform(), e)) {
       ActionPopupStep actionPopupStep = ObjectUtils.tryCast(getListStep(), ActionPopupStep.class);
       if (actionPopupStep != null && actionPopupStep.isSelectable(item)) {
@@ -514,7 +518,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       }
     }
 
-    return handleNextStep(nextStep, parentValue, e);
+    return handleNextStep(nextStep, onlyItem, e);
   }
 
   protected void handleRightKeyPressed(@NotNull KeyEvent keyEvent) {
@@ -671,10 +675,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     @Override
     public void mouseMoved(MouseEvent e) {
       if (!isMouseMoved(e.getLocationOnScreen())) return;
-
       Point point = e.getPoint();
       int index = myList.locationToIndex(point);
-
       if (isSelectableAt(index)) {
         if (index != myLastSelectedIndex && !isMovingToSubmenu(e)) {
           myExtendMode = calcExtendMode(index);
@@ -690,22 +692,31 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           restartTimer();
           myLastSelectedIndex = index;
         }
-
-        Object element = myListModel.getElementAt(index);
-        if (element != null && myInlineActionsSupport.hasExtraButtons(element)) {
-          Integer buttonIndex = myInlineActionsSupport.calcButtonIndex(element, point);
-          boolean changed = myList.setSelectedButtonIndex(buttonIndex);
-          if (changed) {
-            getContent().repaint();
-          }
-        }
       }
       else {
         myList.clearSelection();
         myLastSelectedIndex = -1;
       }
+      if (updateSelectedButtonIndex(point)) {
+        getContent().repaint();
+      }
 
       notifyParentOnChildSelection();
+    }
+
+    boolean updateSelectedButtonIndex(Point point) {
+      int index = myList.locationToIndex(point);
+      if (index < 0 || !isSelectableAt(index)) {
+        return myList.setSelectedButtonIndex(null);
+      }
+      else {
+        Object element = myListModel.getElementAt(index);
+        if (element != null && myInlineActionsSupport.hasExtraButtons(element)) {
+          Integer buttonIndex = myInlineActionsSupport.calcButtonIndex(element, point);
+          return myList.setSelectedButtonIndex(buttonIndex);
+        }
+      }
+      return false;
     }
 
     private @NotNull ExtendMode calcExtendMode(int index) {

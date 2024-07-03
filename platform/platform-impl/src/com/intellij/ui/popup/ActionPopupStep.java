@@ -42,7 +42,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final Condition<? super AnAction> myPreselectActionCondition;
   private @NotNull BiFunction<DataContext, AnAction, DataContext> mySubStepContextAdjuster = (c, a) -> c;
 
-  /** @deprecated {@link #ActionPopupStep(List, String, Supplier, String, PresentationFactory, boolean, Condition, boolean, boolean)}*/
+  /** @deprecated {@link #ActionPopupStep(List, String, Supplier, String, PresentationFactory, ActionPopupOptions)} instead */
   @Deprecated(forRemoval = true)
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
                          @PopupTitle @Nullable String title,
@@ -88,7 +88,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<? super AnAction> preselectActionCondition,
-                                                              @NotNull List<? extends PopupFactoryImpl.ActionItem> items) {
+                                                              @NotNull List<PopupFactoryImpl.ActionItem> items) {
     int defaultOptionIndex = 0;
     if (preselectActionCondition != null) {
       for (int i = 0; i < items.size(); i++) {
@@ -121,7 +121,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return new ActionPopupStep(items, title, contextSupplier, actionPlace, presentationFactory, stepOptions);
   }
 
-  /** @deprecated Use {@link #createActionItems(ActionGroup, DataContext, String, PresentationFactory, boolean, boolean, boolean, boolean)} instead */
+  /** @deprecated Use {@link #createActionItems(ActionGroup, DataContext, String, PresentationFactory, ActionPopupOptions)} instead */
   @Deprecated(forRemoval = true)
   public static @NotNull List<PopupFactoryImpl.ActionItem> createActionItems(@NotNull ActionGroup actionGroup,
                                                                              @NotNull DataContext dataContext,
@@ -308,12 +308,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       dataContext, myActionPlace, myPresentationFactory,
       () -> {
         for (PopupFactoryImpl.ActionItem actionItem : values) {
-          Presentation presentation = myPresentationFactory.getPresentation(actionItem.getAction());
-          actionItem.updateFromPresentation(presentation, myActionPlace);
-          for (PopupFactoryImpl.ActionItem inlineActionItem : actionItem.getInlineItems()) {
-            presentation = myPresentationFactory.getPresentation(inlineActionItem.getAction());
-            inlineActionItem.updateFromPresentation(presentation, myActionPlace);
-          }
+          actionItem.updateFromPresentation(myPresentationFactory, myActionPlace);
         }
       }
     );
