@@ -121,6 +121,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private final Action myRightResolveAction;
   protected final Action myAcceptResolveAction;
   private MergeStatisticsAggregator myAggregator;
+  private ChangeReferenceProcessor myChangeReferenceProcessor;
 
   @NotNull protected final MergeContext myMergeContext;
   @NotNull protected final TextMergeRequest myMergeRequest;
@@ -408,6 +409,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
         if (getTextSettings().isAutoResolveImportConflicts()) {
           initPsiFiles();
+          myChangeReferenceProcessor = new ChangeReferenceProcessor(myProject, getEditor(), myPsiFiles);
           return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
         }
         return null;
@@ -936,92 +938,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     }
     onChangeResolved(change);
     myModel.invalidateHighlighters(change.getIndex());
-  }
-
-  private void transferReferences(@NotNull ThreeSide side,
-                                  @NotNull List<? extends TextMergeChange> changes,
-                                  @NotNull List<RangeMarker> newRanges) {
-    try {
-      List<PsiFile> files = myPsiFiles;
-      if (myProject == null ||
-          !getTextSettings().isAutoResolveImportConflicts() ||
-          files.size() != 3 ||
-          ContainerUtil.exists(files, file -> !file.isValid())) {
-        return;
-      }
-      for (int i = 0; i < changes.size(); i++) {
-        TextMergeChange change = changes.get(i);
-        RangeMarker marker = newRanges.get(i);
-        if (side == ThreeSide.BASE && change.isConflict()) {
-          transferReferences(Side.LEFT, files, change, marker, true);
-          transferReferences(Side.RIGHT, files, change, marker, true);
-        }
-        else {
-          Side sourceSide = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
-          transferReferences(sourceSide, files, change, marker, false);
-        }
-      }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      LOG.error(e);
-    }
-  }
-
-  private void transferReferences(Side sourceSide,
-                                  List<PsiFile> files,
-                                  TextMergeChange change,
-                                  RangeMarker rangeMarker,
-                                  Boolean processInnerFragments) {
-    ThreeSide sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-    Document sourceDocument = getContent(sourceThreeSide).getDocument();
-    PsiFile psiFile = sourceSide.select(files.get(0), files.get(2));
-    int startOffset = sourceDocument.getLineStartOffset(change.getStartLine(sourceThreeSide));
-    int endOffset = sourceDocument.getLineEndOffset(change.getEndLine(sourceThreeSide) - 1);
-    if (processInnerFragments) {
-      MergeInnerDifferences innerFragments = change.getInnerFragments();
-      if (innerFragments != null) {
-        innerFragments.get(sourceThreeSide).forEach(fragment -> {
-          if (!fragment.isEmpty()) {
-            String text = getEditor().getDocument().getText(rangeMarker.getTextRange());
-            int fragmentStartOffset = startOffset + fragment.getStartOffset();
-            TextRange range = new TextRange(fragmentStartOffset, fragmentStartOffset + fragment.getLength());
-            String fragmentText = sourceDocument.getText(range);
-            int offset = text.indexOf(fragmentText);
-            if (offset >= 0) {
-              List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, range.getStartOffset(), range.getEndOffset());
-              RangeMarker marker =
-                sourceDocument.createRangeMarker(rangeMarker.getStartOffset() + offset,
-                                                 range.getStartOffset() + offset + fragment.getLength());
-              data.forEach(processorData -> processorData.process(myProject, getEditor(ThreeSide.BASE), marker, 0, new Ref<>(false)));
-            }
-          }
-        });
-      }
-
-      return;
-    }
-    List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, startOffset, endOffset);
-    data.forEach(processorData -> processorData.process(myProject, getEditor(ThreeSide.BASE), rangeMarker, 0, new Ref<>(false)));
-  }
-
-  private @NotNull List<ProcessorData<?>> createReferenceData(@NotNull ThreeSide side, PsiFile psiFile, int startOffset, int endOffset) {
-    return ContainerUtil.mapNotNull(
-      CopyPastePostProcessor.EP_NAME.getExtensionList(),
-      processor -> processor instanceof ReferenceCopyPasteProcessor
-                   ? createProcessorData(processor, side, psiFile, startOffset, endOffset)
-                   : null);
-  }
-
-  private @NotNull <T extends TextBlockTransferableData> ProcessorData<T> createProcessorData(@NotNull CopyPastePostProcessor<T> processor,
-                                                                                              @NotNull ThreeSide sourceSide,
-                                                                                              @NotNull PsiFile psiFile,
-                                                                                              int startOffset,
-                                                                                              int endOffset) {
-    List<T> processorData = processor.collectTransferableData(psiFile, getEditor(sourceSide), new int[]{startOffset}, new int[]{endOffset});
-    return new ProcessorData<>(processor, processorData);
   }
 
   protected class MyMergeModel extends MergeModelBase<TextMergeChange.State> {
