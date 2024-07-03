@@ -6,7 +6,8 @@ import com.intellij.ui.mac.foundation.Foundation
 internal class MacBringProcessWindowToForegroundSupport : BringProcessWindowToForegroundSupport {
   override fun bring(pid: UInt): Boolean {
     val nsRunningApplicationClass = Foundation.getObjcClass("NSRunningApplication")
-    val nsApplication = Foundation.invoke(nsRunningApplicationClass, "runningApplicationWithProcessIdentifier:", pid)
+    val macAcceptableIntPid = pid.toInt()
+    val nsApplication = Foundation.invoke(nsRunningApplicationClass, "runningApplicationWithProcessIdentifier:", macAcceptableIntPid)
     return Foundation.invoke(nsApplication, "activateWithOptions:", 1).booleanValue()
   }
 }
