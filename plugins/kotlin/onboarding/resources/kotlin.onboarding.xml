@@ -42,6 +42,11 @@
             description="In how many seconds after the start of K2 usage to show the survey"
             defaultValue="345600"
             restartRequired="false"/>
+    <registryKey
+            key="k2.feedback.survey.ide.version.number"
+            description="The version of IDE to show survey in"
+            defaultValue="2024.2"
+            restartRequired="false"/>
   </extensions>
 
 </idea-plugin>
