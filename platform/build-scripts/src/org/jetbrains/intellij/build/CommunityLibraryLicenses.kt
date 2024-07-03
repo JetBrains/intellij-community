@@ -756,7 +756,11 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://github.com/mathjax/MathJax/blob/master/LICENSE").apache(),
 
 
-    LibraryLicense(name = "Maven archetype common", libraryName = "apache.maven.archetype.common:3.2.1",
+    LibraryLicense(name = "Maven archetype catalog", libraryName = "apache.maven.archetype.catalog-no-trans:321",
+                   url = "https://maven.apache.org/archetype/archetype-common/index.html")
+      .apache("https://github.com/apache/maven-archetype"),
+
+    LibraryLicense(name = "Maven archetype common", libraryName = "apache.maven.archetype.common-no-trans:3.2.1",
                    url = "https://maven.apache.org/archetype/archetype-common/index.html")
       .apache("https://github.com/apache/maven-archetype"),
 

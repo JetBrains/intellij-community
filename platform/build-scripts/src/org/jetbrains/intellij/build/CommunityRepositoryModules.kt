@@ -98,7 +98,9 @@ object CommunityRepositoryModules {
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
       spec.withModuleLibrary(libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common:3.2.1", moduleName = "intellij.maven.server.indexer",
+      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
 
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
