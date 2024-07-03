@@ -14,6 +14,7 @@ import com.intellij.platform.workspace.jps.bridge.impl.module.JpsModuleBridge
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.entities.exModuleOptions
+import com.intellij.platform.workspace.jps.bridge.JpsModuleExtensionBridge
 import com.intellij.platform.workspace.jps.serialization.impl.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -30,6 +31,8 @@ import org.jetbrains.jps.model.serialization.*
 import org.jetbrains.jps.model.serialization.JpsProjectConfigurationLoading.*
 import org.jetbrains.jps.model.serialization.impl.JpsModuleSerializationDataExtensionImpl
 import org.jetbrains.jps.model.serialization.impl.JpsSerializationViaWorkspaceModel
+import org.jetbrains.jps.plugin.JpsPluginManager
+import org.jetbrains.jps.service.JpsServiceManager
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 
@@ -218,6 +221,9 @@ internal class JpsSerializationViaWorkspaceModelImpl : JpsSerializationViaWorksp
         }
       }
       serializerExtension.loadModuleOptions(module, rootElement)
+    }
+    JpsServiceManager.getInstance().getExtensions(JpsModuleExtensionBridge::class.java).forEach { extensionBridge ->
+      extensionBridge.loadModuleExtensions(moduleEntity, module)
     }
   }
 

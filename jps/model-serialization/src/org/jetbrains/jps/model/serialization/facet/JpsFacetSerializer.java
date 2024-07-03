@@ -46,7 +46,7 @@ public final class JpsFacetSerializer {
   }
 
   @Nullable
-  private static JpsFacetConfigurationSerializer<?> getModuleExtensionSerializer(@NotNull String typeId) {
+  public static JpsFacetConfigurationSerializer<?> getModuleExtensionSerializer(@NotNull String typeId) {
     for (JpsModelSerializerExtension extension : JpsModelSerializerExtension.getExtensions()) {
       for (JpsFacetConfigurationSerializer<?> serializer : extension.getFacetConfigurationSerializers()) {
         if (serializer.getFacetTypeId().equals(typeId)) {
