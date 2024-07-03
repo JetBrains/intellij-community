@@ -147,8 +147,24 @@ fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.cont
 @ApiStatus.Experimental
 suspend fun <M, I> DiffViewerBase.showCodeReview(
   modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
-  modelKey: Key<M>,
-  rendererFactory: RendererFactory<I, JComponent>
+  rendererFactory: RendererFactory<I, JComponent>,
+): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
+  showCodeReview(modelFactory, null, rendererFactory)
+}
+
+/**
+ * Create editor models for diff editors via [modelFactory] and show inlays and gutter controls
+ * Inlays are created via [rendererFactory]
+ *
+ * @param M editor inlays and controls model
+ * @param I inlay model
+ * @param modelKey will be used to store model in editor user data keys
+ */
+@ApiStatus.Experimental
+suspend fun <M, I> DiffViewerBase.showCodeReview(
+  modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
+  modelKey: Key<M>? = null,
+  rendererFactory: RendererFactory<I, JComponent>,
 ): Nothing where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val viewer = this
   withContext(Dispatchers.Main + CoroutineName("Code review diff UI")) {
@@ -205,7 +221,7 @@ suspend fun <M, I> DiffViewerBase.showCodeReview(
   }
 }
 
-private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>, rendererFactory: RendererFactory<I, JComponent>): Nothing
+private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>?, rendererFactory: RendererFactory<I, JComponent>): Nothing
   where I : CodeReviewInlayModel, M : CodeReviewEditorModel<I> {
   val editor = this
   coroutineScope {
@@ -217,12 +233,16 @@ private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>, r
       renderInlays(model.inlays, HashingUtil.mappingStrategy(CodeReviewInlayModel::key)) { rendererFactory(it) }
     }
 
-    putUserData(modelKey, model)
+    if (modelKey != null) {
+      putUserData(modelKey, model)
+    }
+    putUserData(CodeReviewCommentableEditorModel.KEY, model)
     try {
       awaitCancellation()
     }
     finally {
-      withContext(NonCancellable) {
+      putUserData(CodeReviewCommentableEditorModel.KEY, null)
+      if (modelKey != null) {
         putUserData(modelKey, null)
       }
     }

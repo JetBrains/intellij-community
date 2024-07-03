@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.editor
 
-import com.intellij.diff.util.LineRange
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.StateFlow
 
@@ -10,11 +9,11 @@ import kotlinx.coroutines.flow.StateFlow
  * This model should exist in the same scope as the gutter
  * One model - one gutter
  */
-interface CodeReviewEditorGutterControlsModel {
+interface CodeReviewEditorGutterControlsModel : CodeReviewCommentableEditorModel {
   val gutterControlsState: StateFlow<ControlsState?>
 
   @RequiresEdt
-  fun requestNewComment(lineIdx: Int)
+  override fun canCreateComment(lineIdx: Int): Boolean = gutterControlsState.value?.isLineCommentable(lineIdx) == true
 
   @RequiresEdt
   fun toggleComments(lineIdx: Int)
@@ -27,11 +26,5 @@ interface CodeReviewEditorGutterControlsModel {
     fun isLineCommentable(lineIdx: Int): Boolean
   }
 
-  interface WithMultilineComments : CodeReviewEditorGutterControlsModel {
-    @RequiresEdt
-    fun canCreateComment(lineRange: LineRange): Boolean
-
-    @RequiresEdt
-    fun requestNewComment(lineRange: LineRange)
-  }
+  interface WithMultilineComments : CodeReviewCommentableEditorModel.WithMultilineComments
 }

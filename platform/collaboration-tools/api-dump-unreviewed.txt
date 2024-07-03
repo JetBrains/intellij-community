@@ -1288,6 +1288,18 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - *sf:controlInlaysIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function2):V
 - sf:controlReviewIn(com.intellij.diff.tools.util.base.DiffViewerBase,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2):V
 - *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:showCodeReview(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
+- *bs:showCodeReview$default(com.intellij.diff.tools.util.base.DiffViewerBase,kotlin.jvm.functions.Function3,com.intellij.openapi.util.Key,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
+- *sf:Companion:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
+- a:canCreateComment(I):Z
+- a:requestNewComment(I):V
+*f:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$Companion
+- f:getKEY():com.intellij.openapi.util.Key
+*:com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
+- a:canCreateComment(com.intellij.diff.util.LineRange):Z
+- a:requestNewComment(com.intellij.diff.util.LineRange):V
 *c:com.intellij.collaboration.ui.codereview.editor.CodeReviewComponentInlayRenderer
 - com.intellij.openapi.editor.ComponentInlayRenderer
 - <init>(javax.swing.JComponent):V
@@ -1316,16 +1328,15 @@ f:com.intellij.collaboration.ui.codereview.diff.viewer.DiffViewerUtilKt
 - f:render(com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor,kotlin.coroutines.Continuation):java.lang.Object
 - f:setupIn(kotlinx.coroutines.CoroutineScope,com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterActionableChangesModel,com.intellij.openapi.editor.Editor):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel
+- canCreateComment(I):Z
 - a:getGutterControlsState():kotlinx.coroutines.flow.StateFlow
-- a:requestNewComment(I):V
 - a:toggleComments(I):V
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$ControlsState
 - a:getLinesWithComments():java.util.Set
 - a:isLineCommentable(I):Z
 *:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel$WithMultilineComments
-- com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsModel
-- a:canCreateComment(com.intellij.diff.util.LineRange):Z
-- a:requestNewComment(com.intellij.diff.util.LineRange):V
+- com.intellij.collaboration.ui.codereview.editor.CodeReviewCommentableEditorModel$WithMultilineComments
 *f:com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
 - com.intellij.openapi.editor.markup.ActiveGutterRenderer
 - com.intellij.openapi.editor.markup.LineMarkerRenderer

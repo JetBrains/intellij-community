@@ -98,7 +98,13 @@ private suspend fun showReview(settings: GithubPullRequestsProjectUISettings, fi
     launchNow {
       editor.renderInlays(model.inlays, HashingUtil.mappingStrategy(GHPREditorMappedComponentModel::key)) { createRenderer(it) }
     }
-    awaitCancellation()
+    editor.putUserData(CodeReviewCommentableEditorModel.KEY, model)
+    try {
+      awaitCancellation()
+    }
+    finally {
+      editor.putUserData(CodeReviewCommentableEditorModel.KEY, null)
+    }
   }
 }
 
