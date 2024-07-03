@@ -49,6 +49,7 @@ class KotlinSmartStepTargetFilterer(
     fun visitOrdinaryFunction(owner: String, name: String, signature: String) {
         val currentCount = functionCounter.increment("$owner.$name$signature") - 1
         for ((i, target) in targets.withIndex()) {
+            if (targetWasVisited[i]) continue
             if (target.shouldBeVisited(owner, name, signature, currentCount)) {
                 targetWasVisited[i] = true
                 break
