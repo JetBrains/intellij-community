@@ -325,6 +325,7 @@ internal class StickyLineComponent(private val editor: EditorEx) : JComponent() 
         }
         MouseEvent.MOUSE_CLICKED -> {
           if (!isPopup) {
+            this@StickyLineComponent.requestFocusInWindow() // in case of focused tool window IJPL-157157
             // wrap into command to support "Back navigation" IJPL-591
             CommandProcessor.getInstance().executeCommand(
               editor.project,
