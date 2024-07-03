@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents a Java {@code import module} statement.
  */
-public interface PsiImportModuleStatement extends PsiImportStatementBase {
+public interface PsiImportModuleStatement extends PsiImportDeclaration {
   /**
    * The empty array of PSI module import statements which can be reused to avoid unnecessary allocations.
    */

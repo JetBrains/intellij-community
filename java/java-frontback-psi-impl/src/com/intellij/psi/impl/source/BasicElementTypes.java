@@ -95,8 +95,10 @@ public interface BasicElementTypes extends JavaTokenType, JavaDocTokenType, Basi
     BASIC_PROVIDES_STATEMENT);
 
   ParentAwareTokenSet BASIC_IMPORT_STATEMENT_BASE_BIT_SET = ParentAwareTokenSet.create(BASIC_IMPORT_STATEMENT,
-                                                                                       BASIC_IMPORT_STATIC_STATEMENT,
-                                                                                       BASIC_IMPORT_MODULE_STATEMENT);
+                                                                                       BASIC_IMPORT_STATIC_STATEMENT);
+  ParentAwareTokenSet BASIC_IMPORT_STATEMENT_DECLARATION_BIT_SET = ParentAwareTokenSet.create(BASIC_IMPORT_STATEMENT,
+                                                                                              BASIC_IMPORT_STATIC_STATEMENT,
+                                                                                              BASIC_IMPORT_MODULE_STATEMENT);
   TokenSet BASIC_CLASS_KEYWORD_BIT_SET =
     TokenSet.create(CLASS_KEYWORD, INTERFACE_KEYWORD, ENUM_KEYWORD, RECORD_KEYWORD);
   ParentAwareTokenSet BASIC_MEMBER_BIT_SET = ParentAwareTokenSet.create(BASIC_CLASS, BASIC_FIELD, BASIC_ENUM_CONSTANT,
