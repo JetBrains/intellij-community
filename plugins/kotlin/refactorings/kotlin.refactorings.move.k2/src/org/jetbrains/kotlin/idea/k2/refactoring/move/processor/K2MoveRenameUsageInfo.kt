@@ -124,14 +124,14 @@ sealed class K2MoveRenameUsageInfo(
      * moved in this move operation.
      */
     class Source(
-        element: KtReferenceExpression,
+        element: KtElement,
         reference: KtReference,
         referencedElement: PsiNamedElement,
         val isInternal: Boolean
     ) : K2MoveRenameUsageInfo(element, reference, referencedElement) {
         @OptIn(KaAllowAnalysisOnEdt::class)
         override fun isUpdatable(movedElements: List<KtNamedDeclaration>): Boolean = allowAnalysisOnEdt {
-            val refExpr = element as KtSimpleNameExpression
+            val refExpr = element as? KtSimpleNameExpression ?: return false
             if (!refExpr.canBeUsedInImport()) return false
             if (refExpr.parentOfType<KtImportDirective>(withSelf = false) != null) return true
             if (refExpr.isUnqualifiable()) return true
@@ -196,9 +196,9 @@ sealed class K2MoveRenameUsageInfo(
             return isExtensionReference() || isCallableReferenceExpressionWithoutQualifier()
         }
 
-        fun refresh(refExpr: KtReferenceExpression, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
-            val reference = (refExpr.mainReference as? KtReference) ?: return this
-            return Source(refExpr, reference, referencedElement, isInternal)
+        fun refresh(element: KtElement, referencedElement: PsiNamedElement): K2MoveRenameUsageInfo {
+            val reference = element.mainReference ?: return this
+            return Source(element, reference, referencedElement, isInternal)
         }
 
         override fun retarget(to: PsiNamedElement): PsiElement? {
@@ -273,7 +273,8 @@ sealed class K2MoveRenameUsageInfo(
             return ReferencesSearch.search(declaration, declaration.useScope).findAll()
                 .filter { !declaration.isAncestor(it.element) } // exclude internal usages
                 .mapNotNull { ref ->
-                    if (ref is KtSimpleNameReference) {
+                    val element = ref.element
+                    if (ref is KtReference && element is KtElement) {
                         Source(ref.element, ref, declaration.nameDeterminant(), false)
                     } else {
                         val lightElements = declaration.toLightElements()

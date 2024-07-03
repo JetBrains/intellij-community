@@ -112,12 +112,12 @@ fun createCopyTarget(
 ): Pair<KtFile, Map<KtNamedDeclaration, KtNamedDeclaration>> {
     /** Collects physical to non-physical usage-infos. */
     fun KtFile.collectOldToNewUsageInfos(oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>): List<Pair<K2MoveRenameUsageInfo, K2MoveRenameUsageInfo>> {
-        return collectDescendantsOfType<KtSimpleNameExpression>().mapNotNull { refExpr ->
-            val usageInfo = refExpr.internalUsageInfo
+        return collectDescendantsOfType<KtReferenceExpression>().mapNotNull { element ->
+            val usageInfo = element.internalUsageInfo
             val referencedElement = (usageInfo as? K2MoveRenameUsageInfo.Source)?.referencedElement ?: return@mapNotNull null
             val newReferencedElement = oldToNewMap[referencedElement] ?: referencedElement
             if (!newReferencedElement.isValid || newReferencedElement !is PsiNamedElement) return@mapNotNull null
-            usageInfo to usageInfo.refresh(refExpr, newReferencedElement)
+            usageInfo to usageInfo.refresh(element, newReferencedElement)
         }
     }
 
