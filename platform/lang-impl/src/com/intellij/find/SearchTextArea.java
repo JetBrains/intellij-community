@@ -23,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -49,6 +48,7 @@ import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.awt.event.InputEvent.*;
@@ -361,13 +361,13 @@ public class SearchTextArea extends JBPanel<SearchTextArea> implements PropertyC
       FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(project);
       String[] recent = mySearchMode ? findInProjectSettings.getRecentFindStrings()
                                      : findInProjectSettings.getRecentReplaceStrings();
-      JBList<String> historyList = new JBList<>(ArrayUtil.reverseArray(recent));
-      Dimension size = historyList.getPreferredSize();
-      size.width = Math.min(size.width, getWidth() + 200);
-      historyList.setPreferredSize(size);
-      historyList.getAccessibleContext()
-        .setAccessibleName(FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
-      Utils.showCompletionPopup(SearchTextArea.this, historyList, null, myTextArea, null);
+
+      Utils.showCompletionPopup(SearchTextArea.this,
+                                Arrays.stream(ArrayUtil.reverseArray(recent)).toList(),
+                                null,
+                                myTextArea,
+                                null,
+                                FindBundle.message(mySearchMode ? "find.search.history" : "find.replace.history"));
     }
   }
 
