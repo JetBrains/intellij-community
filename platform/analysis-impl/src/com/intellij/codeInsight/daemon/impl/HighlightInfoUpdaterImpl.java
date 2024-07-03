@@ -341,7 +341,7 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
 
       for (HighlightInfo info : newInfos) {
         if (info.isFileLevelAnnotation()) {
-          RangeHighlighterEx salvagedHighlighter = toReuse.pickupHighlighterFromGarbageBin(0, psiFile.getTextLength(), -409423948);
+          RangeHighlighterEx salvagedHighlighter = toReuse.pickupFileLevelRangeHighlighter(psiFile.getTextLength());
           HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);
 
           if (oldFileInfo != null) {

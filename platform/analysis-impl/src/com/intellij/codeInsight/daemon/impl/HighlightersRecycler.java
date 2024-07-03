@@ -78,6 +78,10 @@ final class HighlightersRecycler implements HighlighterRecyclerPickup {
   static boolean isBeingRecycled(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(BEING_RECYCLED_KEY) != null;
   }
+
+  @Nullable RangeHighlighterEx pickupFileLevelRangeHighlighter(int fileTextLength) {
+    return pickupHighlighterFromGarbageBin(0, fileTextLength, -409423948);
+  }
 }
 interface HighlighterRecyclerPickup {
   RangeHighlighterEx pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer);
