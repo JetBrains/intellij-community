@@ -19,7 +19,7 @@ final class ProductModes {
    */
   public static @NotNull RuntimeModuleId getIncompatibleRootModule(@NotNull ProductMode mode) {
     switch (mode) {
-      case FRONTEND: return RuntimeModuleId.module("intellij.platform.localIde");
+      case FRONTEND: return RuntimeModuleId.module("intellij.platform.monolith");
       
       //this module doesn't exist yet, it will be added when we need to use it
       case LOCAL_IDE: return RuntimeModuleId.module("intellij.platform.frontend");

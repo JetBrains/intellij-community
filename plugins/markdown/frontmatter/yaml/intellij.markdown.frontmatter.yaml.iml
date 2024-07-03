@@ -12,6 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.yaml" />
-    <orderEntry type="module" module-name="intellij.platform.localIde" />
+    <orderEntry type="module" module-name="intellij.platform.monolith" />
   </component>
 </module>

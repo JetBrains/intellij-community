@@ -104,11 +104,11 @@ class ProductModulesLoaderTest {
       tempDirectory.rootPath,
       RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
       RawRuntimeModuleDescriptor.create("intellij.platform.frontend", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("intellij.platform.localIde", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.monolith", emptyList(), emptyList()),
       RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
       RawRuntimeModuleDescriptor.create("plugin.common", emptyList(), listOf("plugin")),
       RawRuntimeModuleDescriptor.create("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend")),
-      RawRuntimeModuleDescriptor.create("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.localIde")),
+      RawRuntimeModuleDescriptor.create("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.monolith")),
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "plugin.common", "plugin.frontend", "plugin.localIde")
 

@@ -12,6 +12,6 @@
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.images" />
-    <orderEntry type="module" module-name="intellij.platform.localIde" />
+    <orderEntry type="module" module-name="intellij.platform.monolith" />
   </component>
 </module>
