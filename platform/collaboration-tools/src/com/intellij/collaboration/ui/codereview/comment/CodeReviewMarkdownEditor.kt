@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFileFactory
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.JBColor
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
@@ -65,14 +64,6 @@ internal object CodeReviewMarkdownEditor {
         setVerticalScrollbarVisible(true)
       }
       contentComponent.setFocusCycleRoot(false)
-      component.isOpaque = false
-
-      val fieldBackground = JBColor.lazy {
-        if (component.isEnabled) UIUtil.getTextFieldBackground() else UIUtil.getTextFieldDisabledBackground()
-      }
-      component.background = fieldBackground
-      // TODO: handle theme change
-      backgroundColor = fieldBackground
     }
   }
 
