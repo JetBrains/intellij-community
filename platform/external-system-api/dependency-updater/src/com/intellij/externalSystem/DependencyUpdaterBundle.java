@@ -2,12 +2,14 @@ package com.intellij.externalSystem;
 
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class DependencyUpdaterBundle extends DynamicBundle {
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = PATH_TO_BUNDLE) String key, Object @NotNull ... params) {

@@ -148,10 +148,6 @@ com.intellij.buildsystem.model.unified.UnifiedDependencyRepositoryConverter
 - f:updateDependency(com.intellij.openapi.module.Module,com.intellij.buildsystem.model.unified.UnifiedDependency,com.intellij.buildsystem.model.unified.UnifiedDependency):V
 *f:com.intellij.externalSystem.DependencyModifierService$Companion
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.externalSystem.DependencyModifierService
-f:com.intellij.externalSystem.DependencyUpdaterBundle
-- com.intellij.DynamicBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 *:com.intellij.externalSystem.ExternalDependencyModificator
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:addDependency(com.intellij.openapi.module.Module,com.intellij.buildsystem.model.unified.UnifiedDependency):V
