@@ -430,6 +430,7 @@ object CommunityRepositoryModules {
       spec.withModule("intellij.android.server-flags", "android.jar")
       spec.withModule("intellij.android.codenavigation", "android.jar")
       spec.withModule("intellij.android.execution.common", "android.jar")
+      spec.withModule("intellij.android.avd", "android.jar")
 
       spec.withModule("intellij.android.safemode", "android.jar")
 
