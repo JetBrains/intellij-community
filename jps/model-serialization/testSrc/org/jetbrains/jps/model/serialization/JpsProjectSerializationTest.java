@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -272,7 +271,7 @@ public class JpsProjectSerializationTest {
   @Test
   public void testLoadIdeaProject() throws IOException {
     long start = System.nanoTime();
-    JpsProject project = JpsSerializationManager.getInstance().loadProject(PathManager.getHomePath(), Collections.emptyMap());
+    JpsProject project = JpsSerializationManager.getInstance().loadModel(PathManager.getHomePath(), null).getProject();
     assertFalse(project.getModules().isEmpty());
     System.out.println("JpsProjectSerializationTest: " + project.getModules().size() + " modules, " + project.getLibraryCollection().getLibraries().size() + " libraries and " +
                        JpsArtifactService.getInstance().getArtifacts(project).size() + " artifacts loaded in " + TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start) + "ms");
