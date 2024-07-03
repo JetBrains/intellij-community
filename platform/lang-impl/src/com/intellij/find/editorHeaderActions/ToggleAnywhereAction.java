@@ -3,9 +3,12 @@ package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform;
 
 public final class ToggleAnywhereAction extends EditorHeaderSetSearchContextAction {
   public ToggleAnywhereAction() {
     super(FindBundle.message("search.context.title.anywhere"), FindModel.SearchContext.ANY);
+
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
   }
 }
