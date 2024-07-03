@@ -7,7 +7,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.LocalDate;
+import java.time.Instant;
 import java.util.EventListener;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -98,7 +98,7 @@ public interface JBAccountInfoService {
     @NotNull JBAData jbaUser,
     @NotNull LicenseType type,
     @NotNull String licensedTo,
-    @NotNull LocalDate expiresOn
+    @NotNull Instant expiresOn
   ) { }
 
   enum LicenseType {
