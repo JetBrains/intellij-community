@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -27,15 +29,26 @@ internal fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
 }
 
 internal fun isTaskNameCandidate(element: PsiElement): Boolean =
-    element.safeAs<KtStringTemplateExpression>()
-        ?.parent.safeAs<KtValueArgument>()
-        ?.parent.safeAs<KtValueArgumentList>()
-        ?.parent is KtCallExpression
+    isStringArgumentInCallExpression(element)
+            || isIdentifierInPropertyWithDelegate(element)
 
 internal fun findTaskNameAround(element: PsiElement): String? {
     return findTaskNameInSurroundingCallExpression(element)
         ?: findTaskNameInSurroundingProperty(element)
 }
+
+private fun isStringArgumentInCallExpression(element: PsiElement) =
+    element.safeAs<KtStringTemplateExpression>()
+        ?.parent.safeAs<KtValueArgument>()
+        ?.parent.safeAs<KtValueArgumentList>()
+        ?.parent is KtCallExpression
+
+/** Returns `true` for `taskName` element in example: `val taskName by tasks.registering() { }` */
+private fun isIdentifierInPropertyWithDelegate(element: PsiElement): Boolean =
+    element.safeAs<LeafPsiElement>()
+        ?.takeIf { it.elementType == KtTokens.IDENTIFIER }
+        ?.parent.safeAs<KtProperty>()?.hasDelegateExpression()
+        ?: false
 
 private fun findTaskNameInSurroundingCallExpression(element: PsiElement): String? {
     val callExpression = element.getParentOfType<KtCallExpression>(false, KtScriptInitializer::class.java) ?: return null
