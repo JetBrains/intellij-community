@@ -696,14 +696,6 @@ public final class Presentation implements Cloneable {
     return isEnabled() && isVisible();
   }
 
-  public void setMultiChoice(boolean b) {
-    setKeepPopupOnPerform(b ? KeepPopupOnPerform.Always : KeepPopupOnPerform.Never);
-  }
-
-  public boolean isMultiChoice() {
-    return getKeepPopupOnPerform() == KeepPopupOnPerform.Always;
-  }
-
   @Override
   public @NonNls String toString() {
     StringBuilder sb = new StringBuilder();

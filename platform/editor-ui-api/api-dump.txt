@@ -1364,7 +1364,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - isEnabled():Z
 - isEnabledAndVisible():Z
 - isHideGroupIfEmpty():Z
-- isMultiChoice():Z
 - isPerformGroup():Z
 - isPopupGroup():Z
 - isTemplate():Z
@@ -1386,7 +1385,6 @@ f:com.intellij.openapi.actionSystem.Presentation
 - setIcon(javax.swing.Icon):V
 - setIconSupplier(java.util.function.Supplier):V
 - setKeepPopupOnPerform(com.intellij.openapi.actionSystem.KeepPopupOnPerform):V
-- setMultiChoice(Z):V
 - setPerformGroup(Z):V
 - setPopupGroup(Z):V
 - setSelectedIcon(javax.swing.Icon):V
