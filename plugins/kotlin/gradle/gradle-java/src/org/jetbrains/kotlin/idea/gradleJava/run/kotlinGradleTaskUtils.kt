@@ -3,14 +3,11 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
@@ -62,17 +59,16 @@ private fun findTaskNameInSurroundingProperty(element: PsiElement): String? {
     val property = element.getParentOfType<KtProperty>(false, *stopAt) ?: return null
     // `tasks.registering{}` would be a delegateExpression for the example above
     val delegateExpression = property.delegateExpression ?: return null
-    val callExpression = delegateExpression.getPossiblyQualifiedCallExpression() ?: return null
-    return analyze(callExpression) {
-        val resolvedCall = callExpression.resolveToCall() ?: return null
-        val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
-        if (!doesCustomizeTask(functionCall)) return null
+    return analyze(delegateExpression) {
+        val resolvedCall = delegateExpression.resolveToCall() ?: return null
+        val singleCall = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+        if (!doesCustomizeTask(singleCall)) return null
         val taskName = property.symbol.name.identifier
         taskName
     }
 }
 
-private fun doesCustomizeTask(functionCall: KaFunctionCall<*>): Boolean {
+private fun doesCustomizeTask(functionCall: KaCallableMemberCall<*, *>): Boolean {
     val callableId = functionCall.partiallyAppliedSymbol.symbol.callableId ?: return false
     val methodName = callableId.callableName.identifier
     val classFqName = getReceiverClassFqName(functionCall)
@@ -82,7 +78,7 @@ private fun doesCustomizeTask(functionCall: KaFunctionCall<*>): Boolean {
             || isMethodOfProject(methodName, classFqName)
 }
 
-private fun getReceiverClassFqName(functionCall: KaFunctionCall<*>): FqName? {
+private fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): FqName? {
     val type = functionCall.partiallyAppliedSymbol.extensionReceiver?.type
         ?: functionCall.partiallyAppliedSymbol.dispatchReceiver?.type
     return type?.symbol?.classId?.asSingleFqName()
