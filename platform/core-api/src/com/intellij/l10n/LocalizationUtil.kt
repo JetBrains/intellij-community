@@ -206,7 +206,7 @@ object LocalizationUtil {
 
   @Internal
   fun getAllAvailableLocales(): Pair<List<Locale>, Map<Locale, String>> {
-    val list = ArrayList<Locale>()
+    val list = HashSet<Locale>()
     val map = HashMap<Locale, String>()
 
     for (bundleEP in getAllLanguageBundleExtensions()) {
