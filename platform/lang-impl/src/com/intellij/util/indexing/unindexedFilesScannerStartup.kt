@@ -12,6 +12,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.VfsRootAccessNotAllowedError
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason
+import com.intellij.util.indexing.InitialScanningSkipReporter.FullScanningReason.*
+import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision
+import com.intellij.util.indexing.InitialScanningSkipReporter.NotSeenIdsBasedFullScanningDecision.*
+import com.intellij.util.indexing.InitialScanningSkipReporter.SourceOfScanning
 import com.intellij.util.indexing.ReusingPersistentFilterCondition.IS_FILTER_LOADED_FROM_DISK
 import com.intellij.util.indexing.UnindexedFilesScanner.Companion.LOG
 import com.intellij.util.indexing.dependencies.AppIndexingDependenciesService
@@ -48,7 +53,9 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           coroutineScope: CoroutineScope,
                                           indexingReason: String,
                                           fullScanningType: ScanningType,
-                                          partialScanningType: ScanningType): Job {
+                                          partialScanningType: ScanningType,
+                                          registeredIndexesWereCorrupted: Boolean,
+                                          sourceOfScanning: SourceOfScanning): Job {
   FileBasedIndex.getInstance().loadIndexes()
   val isFilterInvalidated = initialScanningLock.withLock {
     (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
@@ -66,12 +73,19 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
     LOG.info("Full scanning on startup will be skipped for project ${project.name}")
+    InitialScanningSkipReporter.reportInitialScanningSkipped(project, sourceOfScanning)
     scheduleDirtyFilesScanning(project, notSeenIds as AllNotSeenDirtyFileIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
                                coroutineScope, indexingReason, partialScanningType)
   }
   else {
     LOG.info("Full scanning on startup will NOT be skipped for project ${project.name} because of following unsatisfied conditions:\n" +
              skippingScanningUnsatisfiedConditions.joinToString("\n") { "${it.name}: ${it.explain(scanningCheckState)}" })
+    val reasonsForFullScanning = skippingScanningUnsatisfiedConditions.flatMap { it.getFullScanningReasons(scanningCheckState) }
+    InitialScanningSkipReporter.reportInitialScanningScheduled(project,
+                                                               sourceOfScanning,
+                                                               registeredIndexesWereCorrupted,
+                                                               reasonsForFullScanning,
+                                                               scanningCheckState.notSeenIds.getFullScanningDecision())
     scheduleFullScanning(project, notSeenIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
                          filterUpToDateUnsatisfiedConditions.isEmpty(), coroutineScope, indexingReason, fullScanningType)
   }
@@ -199,12 +213,14 @@ private fun OrphanDirtyFilesQueue.getNotSeenIds(project: Project, projectQueue: 
 
 private sealed interface GetNotSeenDirtyFileIdsResult {
   fun explain(): String
+  fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision
 }
 
 private data object ProjectDirtyFilesQueuePointsToIncorrectPosition : GetNotSeenDirtyFileIdsResult {
   override fun explain(): String {
     return "Project dirty files queue points to an index in orphan queue at index larger than number of files that orphan queue ever had"
   }
+  override fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision = NoSkipDirtyFileQueuePintsToIncorrectPosition
 }
 
 private class DirtyFileIdsWereMissed(val orphanDirtyFilesQueue: OrphanDirtyFilesQueue, val projectQueue: ProjectDirtyFilesQueue) : GetNotSeenDirtyFileIdsResult {
@@ -213,10 +229,12 @@ private class DirtyFileIdsWereMissed(val orphanDirtyFilesQueue: OrphanDirtyFiles
            "orphanQueue.fileIds.size=${orphanDirtyFilesQueue.fileIds.size}, " +
            "projectQueue.lastSeenIndexInOrphanQueue=${projectQueue.lastSeenIndexInOrphanQueue}"
   }
+  override fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision = NoSkipDirtyFileIdsWereMissed
 }
 
 private class AllNotSeenDirtyFileIds(val result: Collection<Int>) : GetNotSeenDirtyFileIdsResult {
   override fun explain(): String = "All not seen ids are known: $result"
+  override fun getFullScanningDecision(): NotSeenIdsBasedFullScanningDecision = DirtyFileIdsCompatibleWithFullScanningSkip
 }
 
 private suspend fun findProjectFiles(project: Project, dirtyFilesIds: Collection<Int>, limit: Int = -1): List<VirtualFile> {
@@ -268,28 +286,28 @@ private class FilterCheckState(val project: Project,
                                val isFilterInvalidated: Boolean,
                                val appCurrent: AppIndexingDependenciesToken)
 
-private enum class ReusingPersistentFilterCondition {
-  IS_PERSISTENT_FILTER_ENABLED {
+private enum class ReusingPersistentFilterCondition(val reason: FullScanningReason) {
+  IS_PERSISTENT_FILTER_ENABLED(FilterIncompatibleAsPersistentFilterIsDisabled) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       return usePersistentFilesFilter()
     }
   },
-  IS_FILTER_LOADED_FROM_DISK {
+  IS_FILTER_LOADED_FROM_DISK(FilterIncompatibleAsNotLoadedFromDisc) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       return state.filterHolder.wasDataLoadedFromDisk(state.project)
     }
   },
-  IS_SCANNING_COMPLETED {
+  IS_SCANNING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningCompleted()
     }
   },
-  FILTER_IS_NOT_INVALIDATED {
+  FILTER_IS_NOT_INVALIDATED(FilterIncompatibleAsFilterIsInvalidated) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       return !state.isFilterInvalidated
     }
   },
-  INDEXING_REQUEST_ID_DID_NOT_CHANGE_AFTER_LAST_SCANNING {
+  INDEXING_REQUEST_ID_DID_NOT_CHANGE_AFTER_LAST_SCANNING(FilterIncompatibleAsAppIndexingRequestIdChangedSinceLastScanning) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       val projectService = state.project.getService(ProjectIndexingDependenciesService::class.java)
       return state.appCurrent.toInt() == projectService.getAppIndexingRequestIdOfLastScanning()
@@ -307,22 +325,30 @@ private enum class SkippingFullScanningCondition {
   ALLOWED {
     override fun canSkipFullScanning(state: SkippingScanningCheckState): Boolean = state.allowSkippingFullScanning
     override fun explain(state: SkippingScanningCheckState): String = "Full scanning was requested"
+    override fun getFullScanningReasons(state: SkippingScanningCheckState): List<FullScanningReason> = listOf(CodeCallerForbadeSkipping)
   },
   FILTER_IS_NOT_UP_TO_DATE {
     override fun canSkipFullScanning(state: SkippingScanningCheckState): Boolean = state.filterUpToDateUnsatisfiedConditions.isEmpty()
     override fun explain(state: SkippingScanningCheckState): String = "Persistent indexable files filter is NOT up-to-date because of following unsatisfied conditions: ${state.filterUpToDateUnsatisfiedConditions}"
+    override fun getFullScanningReasons(state: SkippingScanningCheckState): List<FullScanningReason> =
+      state.filterUpToDateUnsatisfiedConditions.map {
+        it.reason
+      }
   },
   REGISTRY_FILE_IS_ON {
     override fun canSkipFullScanning(state: SkippingScanningCheckState): Boolean = Registry.`is`("full.scanning.on.startup.can.be.skipped")
     override fun explain(state: SkippingScanningCheckState): String = "Registry flag 'full.scanning.on.startup.can.be.skipped' is turned off"
+    override fun getFullScanningReasons(state: SkippingScanningCheckState): List<FullScanningReason> = listOf(RegistryForbadeSkipping)
   },
   DIRTY_FILE_IDS_WERE_MISSED {
     override fun canSkipFullScanning(state: SkippingScanningCheckState): Boolean = state.notSeenIds is AllNotSeenDirtyFileIds
     override fun explain(state: SkippingScanningCheckState): String = state.notSeenIds.explain()
+    override fun getFullScanningReasons(state: SkippingScanningCheckState): List<FullScanningReason> = emptyList()
   };
 
   abstract fun canSkipFullScanning(state: SkippingScanningCheckState): Boolean
   abstract fun explain(state: SkippingScanningCheckState): String
+  abstract fun getFullScanningReasons(state: SkippingScanningCheckState): List<FullScanningReason>
 }
 
 private class ResultOfClearIndexesForDirtyFiles(val projectDirtyFilesFromProjectQueue: List<VirtualFile>, val projectDirtyFilesFromOrphanQueue: List<VirtualFile>)
