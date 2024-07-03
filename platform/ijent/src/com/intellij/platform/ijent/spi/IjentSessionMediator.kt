@@ -15,8 +15,12 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.time.ZonedDateTime
+import java.time.format.DateTimeParseException
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.toKotlinDuration
 
 /**
  * A wrapper for a [Process] that runs IJent. The wrapper logs stderr lines, waits for the exit code, terminates the process in case
@@ -102,15 +106,54 @@ private suspend fun ijentProcessStderrLogger(process: Process, ijentId: IjentId,
   }
 }
 
+private val ijentLogMessageRegex = Regex(
+  """
+(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+\S*)
+\s+
+(\w+)
+\s+
+(.*)
+""",
+  RegexOption.COMMENTS,
+)
+
 private fun logIjentStderr(ijentId: IjentId, line: String) {
-  when (line.splitToSequence(spacesRegex).drop(1).take(1).firstOrNull()) {
-    "TRACE" -> LOG.trace { "$ijentId log: $line" }
-    "DEBUG" -> LOG.debug { "$ijentId log: $line" }
-    "INFO" -> LOG.info("$ijentId log: $line")
-    "WARN" -> LOG.warn("$ijentId log: $line")
-    "ERROR" -> LOG.error("$ijentId log: $line")
-    else -> LOG.debug { "$ijentId log: $line" }
+  val hostDateTime = ZonedDateTime.now()
+
+  val (rawRemoteDateTime, level, message) =
+    ijentLogMessageRegex.matchEntire(line)?.destructured
+    ?: run {
+      LOG.debug { "$ijentId log: $line" }
+      return
+    }
+
+  val dateTimeDiff = try {
+    java.time.Duration.between(ZonedDateTime.parse(rawRemoteDateTime), hostDateTime).toKotlinDuration()
   }
+  catch (_: DateTimeParseException) {
+    LOG.debug { "$ijentId log: $line" }
+    return
+  }
+
+  val logger: (String) -> Unit = when (level) {
+    "TRACE" -> if (LOG.isTraceEnabled) LOG::trace else return
+    "INFO" -> LOG::info
+    "WARN" -> LOG::warn
+    "ERROR" -> LOG::error
+    else -> if (LOG.isDebugEnabled) LOG::debug else return
+  }
+
+  logger(buildString {
+    append(ijentId)
+    append(" log: ")
+    if (dateTimeDiff.absoluteValue > 50.milliseconds) {  // The timeout is taken at random.
+      append(rawRemoteDateTime)
+      append(" (time diff ")
+      append(dateTimeDiff)
+      append(") ")
+    }
+    append(message)
+  })
 }
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -158,8 +201,6 @@ private suspend fun collectLines(lastStderrMessages: SharedFlow<String?>, stderr
       stderr.append("\n")
     }
 }
-
-private val spacesRegex = Regex(" +")
 
 @OptIn(DelicateCoroutinesApi::class)
 private suspend fun ijentProcessFinalizer(ijentId: IjentId, mediator: IjentSessionMediator) {
