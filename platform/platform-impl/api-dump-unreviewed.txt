@@ -29251,15 +29251,19 @@ a:com.intellij.util.ui.ReloadablePanel
 com.intellij.util.ui.ReloadablePanel$DataProvider
 - a:getCachedValues():java.util.Set
 - a:updateValuesAsynchronously():V
-*f:com.intellij.util.ui.RestartDialog
-- *sf:Companion:com.intellij.util.ui.RestartDialog$Companion
+*:com.intellij.util.ui.RestartDialog
+- a:showRestartRequired():V
+*f:com.intellij.util.ui.RestartDialogImpl
+- com.intellij.util.ui.RestartDialog
+- *sf:Companion:com.intellij.util.ui.RestartDialogImpl$Companion
 - <init>():V
 - sf:restartWithConfirmation():V
+- showRestartRequired():V
 - sf:showRestartRequired(Z,Z):I
-*f:com.intellij.util.ui.RestartDialog$Companion
+*f:com.intellij.util.ui.RestartDialogImpl$Companion
 - f:restartWithConfirmation():V
 - f:showRestartRequired(Z,Z):I
-- bs:showRestartRequired$default(com.intellij.util.ui.RestartDialog$Companion,Z,Z,I,java.lang.Object):I
+- bs:showRestartRequired$default(com.intellij.util.ui.RestartDialogImpl$Companion,Z,Z,I,java.lang.Object):I
 f:com.intellij.util.ui.SwingHelper
 - sf:ELLIPSIS:java.lang.String
 - sf:ERROR_STR:java.lang.String
