@@ -22,7 +22,7 @@ private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
                               .toList() + UNKNOWN_VENDOR
 
 class JavaLanguageVersionsCollector : ProjectUsagesCollector() {
-  private val group = EventLogGroup("java.language", 4)
+  private val group = EventLogGroup("java.language", 5)
 
   private val feature = EventFields.Int("feature")
   private val minor = EventFields.Int("minor")
