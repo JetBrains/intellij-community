@@ -164,6 +164,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
             return;
           }
 
+          updateIcon();
+
           highlighter.setGutterIconRenderer(createGutterIconRenderer());
           highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);
           highlighter.setEditorFilter(XLineBreakpointImpl::isHighlighterAvailableIn);
@@ -172,10 +174,10 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           redrawInlineInlays();
         }
         else {
+          updateIcon();
+
           markupModel = null;
         }
-
-        updateIcon();
 
         if (markupModel == null) {
           markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), false);
