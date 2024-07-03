@@ -14,6 +14,7 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.psi.util.CachedValue
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.KotlinSourceRootType
@@ -137,6 +139,18 @@ class KtSourceModuleByModuleInfoForOutsider(
             scopeWithFakeFile
         }
     }
+}
+
+@ApiStatus.Internal
+class KtScriptLibraryModuleByModuleInfo(libraryInfo: LibraryInfo, private val scriptFile: VirtualFile): KtLibraryModuleByModuleInfo(libraryInfo), KaScriptDependencyModule {
+    override val file: KtFile?
+        get() = PsiManager.getInstance(project).findFile(scriptFile) as? KtFile
+}
+
+@ApiStatus.Internal
+class KtScriptLibrarySourceModuleByModuleInfo(moduleInfo: LibrarySourceInfo, private val scriptFile: VirtualFile): KtLibrarySourceModuleByModuleInfo(moduleInfo), KaScriptDependencyModule{
+    override val file: KtFile?
+        get() = PsiManager.getInstance(project).findFile(scriptFile) as? KtFile
 }
 
 fun ModuleSourceInfo.collectDependencies(collectionMode: ModuleDependencyCollector.CollectionMode): List<KaModule> {
@@ -265,7 +279,7 @@ class KtSdkLibraryModuleByModuleInfo(val moduleInfo: SdkInfo) : KtModuleByModule
     override val project: Project get() = moduleInfo.project
 }
 
-class KtLibrarySourceModuleByModuleInfo(
+open class KtLibrarySourceModuleByModuleInfo(
     private val moduleInfo: LibrarySourceInfo
 ) : KtModuleByModuleInfoBase(moduleInfo), KaLibrarySourceModule {
     override val libraryName: String
