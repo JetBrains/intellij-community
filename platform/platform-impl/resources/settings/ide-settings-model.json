@@ -7719,7 +7719,29 @@
       "scope": "app",
       "pluginId": "com.intellij",
       "classFqn": "com.intellij.util.text.DateTimeFormatManager",
-      "storage": "ui-datetime.xml"
+      "storage": "ui-datetime.xml",
+      "properties": [
+        {
+          "name": "dateFormatPattern",
+          "type": "String",
+          "javaType": "java.lang.String"
+        },
+        {
+          "name": "overrideSystemDateFormat",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "prettyFormattingAllowed",
+          "type": "Boolean",
+          "javaType": "boolean"
+        },
+        {
+          "name": "use24HourTime",
+          "type": "Boolean",
+          "javaType": "boolean"
+        }
+      ]
     },
     {
       "name": "Vcs.Log.Big.Repositories",
