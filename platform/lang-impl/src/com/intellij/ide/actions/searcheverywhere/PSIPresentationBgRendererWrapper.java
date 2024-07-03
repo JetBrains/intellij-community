@@ -150,7 +150,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
       return new FoundItemDescriptor<>(new ItemWithPresentation<>(elementDescriptor.getItem(), presentation), elementDescriptor.getWeight());
     }
 
-    LOG.error("Found items expected to be implementations of com.intellij.navigation.NavigationItem. But item [" + elementDescriptor.getItem().getClass() + "] is not");
+    LOG.error("Found items expected to be PsiItems or to have [com.intellij.navigation.ItemPresentation] field. But item [" + elementDescriptor.getItem().getClass() + "] is not");
     TargetPresentation presentation = calcFallbackPresentation(elementDescriptor.getItem());
     return new FoundItemDescriptor<>(new ItemWithPresentation<>(elementDescriptor.getItem(), presentation), elementDescriptor.getWeight());
   }
