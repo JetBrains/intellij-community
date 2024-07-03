@@ -24,8 +24,10 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -2353,7 +2355,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       }
     }
 
-    GutterIconClickCollectors.CLICKED.log(project, language, renderer.getFeatureId(), pluginInfo);
+    GutterIconClickCollectors.logClick(project, language, renderer.getFeatureId(), isDumbMode(), pluginInfo);
   }
 
   private boolean isDumbMode() {
@@ -2913,16 +2915,36 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   };
 
   private static final class GutterIconClickCollectors extends CounterUsagesCollector {
-    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 4);
-    private static final EventId3<Language, String, PluginInfo> CLICKED =
-      GROUP.registerEvent("clicked",
-                          EventFields.Language,
-                          EventFields.StringValidatedByCustomRule("icon_id", PluginInfoValidationRule.class),
-                          EventFields.PluginInfo);
+    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 5);
+
+    private static final BooleanEventField IS_DUMB_MODE = EventFields.Boolean("dumb");
+    private static final StringEventField ICON = EventFields.StringValidatedByCustomRule("icon_id", PluginInfoValidationRule.class);
+
+    private static final VarargEventId CLICKED = GROUP.registerVarargEvent(
+      "clicked",
+      EventFields.Language,
+      ICON,
+      IS_DUMB_MODE,
+      EventFields.PluginInfo
+    );
 
     @Override
     public EventLogGroup getGroup() {
       return GROUP;
+    }
+
+    public static void logClick(@Nullable Project project,
+                                @Nullable Language language,
+                                @NotNull String icon,
+                                boolean isDumb,
+                                @Nullable PluginInfo pluginInfo) {
+      CLICKED.log(
+        project,
+        EventFields.Language.with(language),
+        ICON.with(icon),
+        IS_DUMB_MODE.with(isDumb),
+        EventFields.PluginInfo.with(pluginInfo)
+      );
     }
   }
 
