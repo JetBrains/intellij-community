@@ -5521,12 +5521,6 @@ f:com.intellij.ide.actions.ToolWindowMoveAction$Group
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
-f:com.intellij.ide.actions.ToolWindowShowNamesAction
-- com.intellij.openapi.project.DumbAwareToggleAction
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 c:com.intellij.ide.actions.ToolWindowTabRenameActionBase
 - com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 - <init>(java.lang.String,java.lang.String):V
