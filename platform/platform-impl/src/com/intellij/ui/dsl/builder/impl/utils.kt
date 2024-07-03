@@ -43,7 +43,16 @@ enum class DslComponentPropertyInternal {
    *
    * Value: Throwable
    */
-  CREATION_STACKTRACE
+  CREATION_STACKTRACE,
+
+  /**
+   * Preferred columns width for DslLabel when [MAX_LINE_LENGTH_WORD_WRAP] mode is used.
+   * A temporary workaround of IJPL-62164, will be removed later.
+   *
+   * Value: Int
+   */
+  @ApiStatus.Experimental
+  PREFERRED_COLUMNS_LABEL_WORD_WRAP
 }
 
 /**
