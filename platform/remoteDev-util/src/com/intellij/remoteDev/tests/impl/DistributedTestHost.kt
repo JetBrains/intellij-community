@@ -29,10 +29,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
 import com.intellij.remoteDev.tests.impl.utils.getArtifactsFileName
 import com.intellij.remoteDev.tests.impl.utils.runLogged
-import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
-import com.intellij.remoteDev.tests.modelGenerated.RdProductType
-import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
-import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
+import com.intellij.remoteDev.tests.modelGenerated.*
 import com.intellij.ui.AppIcon
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.EDT.isCurrentThreadEdt
@@ -56,7 +53,9 @@ import java.io.File
 import java.net.InetAddress
 import java.time.LocalTime
 import javax.imageio.ImageIO
+import kotlin.coroutines.CoroutineContext
 import kotlin.reflect.full.createInstance
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.toJavaDuration
@@ -164,42 +163,44 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val map = testClassObject.initAgent(agentInfo)
+          val (actionsMap, dimensionRequests) = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-          // Advice for processing events
-          session.runNextAction.setSuspendPreserveClientId { _, parameters ->
-            val actionTitle = parameters.title
-            val actionParameters = parameters.parameters
-            val queue = map[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
-            val action = queue.remove()
-            val timeout = action.timeout
+          val agentContext = when (session.agentInfo.agentType) {
+            RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
+            RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
+            RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol)
+          }
+
+
+          suspend fun <T> runNext(
+            actionTitle: String,
+            timeout: Duration,
+            contextGetter: () -> CoroutineContext,
+            requestFocusBeforeStart: Boolean?,
+            action: suspend () -> T,
+          ): T {
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local before test method starts" }
               LOG.info("'$actionTitle': received action execution request")
 
-              val providedContext = action.coroutineContextGetter.invoke()
+              val providedContext = contextGetter.invoke()
               val clientId = providedContext.clientId() ?: ClientId.current
 
-              return@setSuspendPreserveClientId withContext(providedContext + clientId.asContextElement()) {
+              return withContext(providedContext + clientId.asContextElement()) {
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when test method starts" }
-                if (!app.isHeadlessEnvironment && isNotRdHost && (action.requestFocusBeforeStart ?: isCurrentThreadEdt())) {
+                if (!app.isHeadlessEnvironment && isNotRdHost && (requestFocusBeforeStart ?: isCurrentThreadEdt())) {
                   requestFocus(actionTitle)
                 }
 
                 assert(ClientId.current == clientId) { "ClientId '${ClientId.current}' should equal $clientId one when after request focus" }
-                val agentContext = when (session.agentInfo.agentType) {
-                  RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, protocol)
-                  RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, protocol)
-                  RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, protocol)
-                }
 
                 val result = runLogged(actionTitle, timeout) {
-                  action.action(agentContext, actionParameters)
+                  action()
                 }
 
                 // Assert state
@@ -213,7 +214,32 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               throw ex
             }
           }
+
+          // Advice for processing events
+          session.runNextAction.setSuspendPreserveClientId { _, parameters ->
+            val actionTitle = parameters.title
+            val queue = actionsMap[actionTitle] ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val action = queue.remove()
+
+            return@setSuspendPreserveClientId runNext(actionTitle, action.timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
+              action.action(agentContext, parameters.parameters)
+            }
+          }
+
+
+          session.runNextActionGetComponentData.setSuspendPreserveClientId { _, parameters ->
+            val actionTitle = parameters.title
+            val queue = dimensionRequests[actionTitle]
+                        ?: error("There is no Action with name '$actionTitle', something went terribly wrong")
+            val action = queue.remove()
+            val timeout = action.timeout
+
+            return@setSuspendPreserveClientId runNext(actionTitle, timeout, action.coroutineContextGetter, action.requestFocusBeforeStart) {
+              action.action(agentContext, parameters.parameters)
+            }
+          }
         }
+
         // actually doesn't really preserve clientId, not really important here
         // https://youtrack.jetbrains.com/issue/RDCT-653/setSuspendPreserveClientId-with-custom-dispatcher-doesnt-preserve-ClientId
         session.isResponding.setSuspendPreserveClientId(handlerScheduler = Dispatchers.Default.asRdScheduler) { _, _ ->

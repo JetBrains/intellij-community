@@ -2,7 +2,7 @@ package com.intellij.remoteDev.tests
 
 import org.jetbrains.annotations.ApiStatus
 import java.lang.reflect.Method
-import java.util.Queue
+import java.util.*
 
 /**
  * This internal interface should be implemented by distributed tests
@@ -10,7 +10,7 @@ import java.util.Queue
  */
 @ApiStatus.Internal
 interface DistributedTestPlayer {
-  fun initAgent(agent: AgentInfo): Map<String, Queue<AgentAction>>
+  fun initAgent(agent: AgentInfo): Pair<Map<String, Queue<AgentAction>>, Map<String, Queue<AgentActionGetComponentData>>>
 
   fun performInit(method: Method)
 }

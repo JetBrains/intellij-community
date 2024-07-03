@@ -56,6 +56,11 @@ object DistributedTestModel : Ext(TestRoot) {
     field("parameters", immutableList(string).nullable)
   }
 
+  private val RdTestComponentData = structdef {
+    field("width", int)
+    field("height", int)
+  }
+
   private val RdTestSession = classdef {
     field("agentInfo", RdAgentInfo)
     field("testClassName", string.nullable)
@@ -70,6 +75,7 @@ object DistributedTestModel : Ext(TestRoot) {
     call("forceLeaveAllModals", bool, void).async
     call("closeProjectIfOpened", void, bool).async
     call("runNextAction", RdTestActionParameters, string.nullable).async
+    call("runNextActionGetComponentData", RdTestActionParameters, RdTestComponentData).async
     call("requestFocus", string, bool).async
     call("visibleFrameNames", void, immutableList(string)).async
     call("projectsNames", void, immutableList(string)).async
