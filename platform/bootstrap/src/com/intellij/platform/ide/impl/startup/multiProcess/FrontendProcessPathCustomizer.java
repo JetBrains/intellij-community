@@ -96,21 +96,26 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
    */
   private static void updatePathSelectorForCommunityEditions(@NotNull List<String> args) {
     String pathsSelector = PathManager.getPathsSelector();
+    if (pathsSelector == null) return;
+    
     String ideaUltimateSelector = "IntelliJIdea";
     String pycharmProfessionalSelector = "PyCharm";
-    if (pathsSelector == null || !pathsSelector.startsWith(ideaUltimateSelector) && !pathsSelector.startsWith(pycharmProfessionalSelector)
-        || args.size() < 2 || !"thinClient".equals(args.get(0))) {
+    String pycharmCommunitySelector = "PyCharmCE";
+    boolean isIdeaUltimateInstallation = pathsSelector.startsWith(ideaUltimateSelector);
+    boolean isPyCharmProfessionalInstallation = pathsSelector.startsWith(pycharmProfessionalSelector) && 
+                                               !pathsSelector.startsWith(pycharmCommunitySelector);
+    if (!isIdeaUltimateInstallation && !isPyCharmProfessionalInstallation || args.size() < 2 || !"thinClient".equals(args.get(0))) {
       return;
     }
 
     try {
       var uri = new URI(args.get(1));
       var productCode = UriUtilKt.getFragmentParameters(uri).get("p");
-      if (productCode.equals("IC") && pathsSelector.startsWith(ideaUltimateSelector)) {
+      if (productCode.equals("IC") && isIdeaUltimateInstallation) {
         PathManager.setPathSelector("IdeaIC" + pathsSelector.substring(ideaUltimateSelector.length()));
       }
-      else if (productCode.equals("PC") && pathsSelector.startsWith(pycharmProfessionalSelector)) {
-        PathManager.setPathSelector("PyCharmCE" + pathsSelector.substring(pycharmProfessionalSelector.length()));
+      else if (productCode.equals("PC") && isPyCharmProfessionalInstallation) {
+        PathManager.setPathSelector(pycharmCommunitySelector + pathsSelector.substring(pycharmProfessionalSelector.length()));
       }
     }
     catch (URISyntaxException e) {
