@@ -78,7 +78,17 @@ public enum JavaFeature {
                     LanguageLevel.JDK_19_PREVIEW, LanguageLevel.JDK_20_PREVIEW),
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
   SEQUENCED_COLLECTIONS(LanguageLevel.JDK_21, "feature.sequenced.collections"),
-  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
+  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates") {
+    @Override
+    public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
+      return super.isSufficient(useSiteLevel) && !useSiteLevel.isAtLeast(LanguageLevel.JDK_23);
+    }
+
+    @Override
+    public boolean isLimited() {
+      return true;
+    }
+  },
   UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_22, "feature.unnamed.vars") {
     @Override
     public boolean isSufficient(@NotNull LanguageLevel useSiteLevel) {
