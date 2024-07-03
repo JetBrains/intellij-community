@@ -184,6 +184,9 @@ public abstract class SuspendContextImpl extends XSuspendContext implements Susp
 
       cancelAllPostponed();
       if (callResume) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resuming " + this);
+        }
         resumeImpl();
       }
     }

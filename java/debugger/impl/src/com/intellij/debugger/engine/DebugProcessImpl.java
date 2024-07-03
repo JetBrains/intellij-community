@@ -1093,6 +1093,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void dispose() {
+    LOG.debug("Debug has been finished");
     Disposer.dispose(myDisposable);
     myRequestManager.setThreadFilter(null);
   }

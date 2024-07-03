@@ -69,7 +69,7 @@ public class SuspendManagerImpl implements SuspendManager {
             myFrozenThreads.remove(getEventThread());
             getEventThread().resume();
             if (LOG.isDebugEnabled()) {
-              LOG.debug("Thread resumed : " + getEventThread().toString());
+              LOG.debug("Thread resumed : " + getEventThread());
             }
           }
           case EventRequest.SUSPEND_NONE -> LOG.debug("None resumed");
@@ -112,7 +112,8 @@ public class SuspendManagerImpl implements SuspendManager {
     myEventContexts.addFirst(suspendContext);
     suspends++;
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Push context : Suspends = " + suspends);
+      LOG.debug("Push context : " + suspendContext);
+      LOG.debug("Suspends = " + suspends);
     }
 
     if (DebuggerUtils.isAlwaysSuspendThreadBeforeSwitch()) {
