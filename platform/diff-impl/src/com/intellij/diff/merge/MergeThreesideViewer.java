@@ -951,15 +951,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       }
       for (int i = 0; i < changes.size(); i++) {
         TextMergeChange change = changes.get(i);
-        Side sourceSide = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
-        ThreeSide sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
-        Document sourceDocument = getContent(sourceThreeSide).getDocument();
-        PsiFile psiFile = sourceSide.select(files.get(0), files.get(2));
-        int startOffset = sourceDocument.getLineStartOffset(change.getStartLine(sourceThreeSide));
-        int endOffset = sourceDocument.getLineEndOffset(change.getEndLine(sourceThreeSide) - 1);
-        List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, startOffset, endOffset);
         RangeMarker marker = newRanges.get(i);
-        data.forEach(processorData -> processorData.process(myProject, getEditor(ThreeSide.BASE), marker, 0, new Ref<>(false)));
+        Side sourceSide = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
+        transferReferences(sourceSide, files, change, marker);
       }
     }
     catch (ProcessCanceledException e) {
@@ -968,6 +962,19 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     catch (Exception e) {
       LOG.error(e);
     }
+  }
+
+  private void transferReferences(Side sourceSide,
+                                  List<PsiFile> files,
+                                  TextMergeChange change,
+                                  RangeMarker rangeMarker) {
+    ThreeSide sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
+    Document sourceDocument = getContent(sourceThreeSide).getDocument();
+    PsiFile psiFile = sourceSide.select(files.get(0), files.get(2));
+    int startOffset = sourceDocument.getLineStartOffset(change.getStartLine(sourceThreeSide));
+    int endOffset = sourceDocument.getLineEndOffset(change.getEndLine(sourceThreeSide) - 1);
+    List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, startOffset, endOffset);
+    data.forEach(processorData -> processorData.process(myProject, getEditor(ThreeSide.BASE), rangeMarker, 0, new Ref<>(false)));
   }
 
   private @NotNull List<ProcessorData<?>> createReferenceData(@NotNull ThreeSide side, PsiFile psiFile, int startOffset, int endOffset) {
