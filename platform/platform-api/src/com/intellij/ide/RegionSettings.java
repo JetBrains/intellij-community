@@ -6,8 +6,6 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.prefs.BackingStoreException;
-
 /**
  * @see Region
  */
@@ -35,11 +33,6 @@ public final class RegionSettings {
   public static @NotNull Region getRegion() {
     String name = Prefs.get(REGION_CODE_KEY, Region.NOT_SET.externalName());
     return Region.fromExternalName(name);
-  }
-
-  @ApiStatus.Internal
-  public static void flush() throws BackingStoreException {
-    Prefs.flush(REGION_CODE_KEY);
   }
 
   /**
