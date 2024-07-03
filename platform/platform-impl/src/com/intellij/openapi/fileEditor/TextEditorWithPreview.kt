@@ -32,11 +32,11 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.EDT
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil.addAwtListener
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.event.AWTEventListener
@@ -45,10 +45,7 @@ import java.awt.event.KeyEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.util.function.Supplier
-import javax.swing.Icon
-import javax.swing.JComponent
-import javax.swing.JLayeredPane
-import javax.swing.SwingUtilities
+import javax.swing.*
 
 private val PARENT_SPLIT_EDITOR_KEY = Key.create<TextEditorWithPreview>("parentSplit")
 
@@ -105,18 +102,20 @@ open class TextEditorWithPreview @JvmOverloads constructor(
       }
       host.adjustEditorsVisibility(layout)
 
-      val panel = JBUI.Panels.simplePanel(splitter).addToTop(toolbarWrapper)
-      if (host.isShowFloatingToolbar) {
+      if (host.isShowFloatingToolbar && toolbarWrapper.isLeftToolbarEmpty) {
         toolbarWrapper.isVisible = false
-        val layeredPane = MyEditorLayeredComponentWrapper(panel)
+        val layeredPane = MyEditorLayeredComponentWrapper(splitter)
         component = layeredPane
         val toolbarGroup = toolbarWrapper.rightToolbar.actionGroup
         val toolbar = LayoutActionsFloatingToolbar(parentComponent = layeredPane, actionGroup = toolbarGroup, parentDisposable = host)
-        layeredPane.add(panel, JLayeredPane.DEFAULT_LAYER as Any)
+        layeredPane.add(splitter, JLayeredPane.DEFAULT_LAYER as Any)
         layeredPane.add(toolbar, JLayeredPane.POPUP_LAYER as Any)
-        host.registerToolbarListeners(panel, toolbar)
+        host.registerToolbarListeners(splitter, toolbar)
       }
       else {
+        val panel = JPanel(BorderLayout())
+        panel.add(splitter, BorderLayout.CENTER)
+        panel.add(toolbarWrapper, BorderLayout.NORTH)
         component = panel
       }
     }
@@ -183,7 +182,7 @@ open class TextEditorWithPreview @JvmOverloads constructor(
   override fun getComponent(): JComponent = ui.value.component
 
   protected open val isShowFloatingToolbar: Boolean
-    get() = Registry.`is`("ide.text.editor.with.preview.show.floating.toolbar") && (ui.valueIfInitialized?.toolbarWrapper?.isLeftToolbarEmpty ?: true)
+    get() = Registry.`is`("ide.text.editor.with.preview.show.floating.toolbar")
 
   protected open val isShowActionsInTabs: Boolean
     get() = isNewUI() && getInstance().editorTabPlacement != UISettings.TABS_NONE
