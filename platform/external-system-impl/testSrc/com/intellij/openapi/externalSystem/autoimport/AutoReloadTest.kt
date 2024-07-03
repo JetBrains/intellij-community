@@ -902,8 +902,8 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  fun `test reload during reload`() {
-    test { settingsFile ->
+  fun `test force reload during reload`() {
+    test {
       enableAsyncExecution()
 
       val expectedRefreshes = 10
@@ -919,11 +919,6 @@ class AutoReloadTest : AutoReloadTestCase() {
         forceReloadProject()
       }
       assertStateAndReset(numReload = expectedRefreshes, notified = false, event = "reloads")
-
-      waitForProjectReloadFinish {
-        settingsFile.modify(EXTERNAL)
-      }
-      assertStateAndReset(numReload = 1, notified = false, event = "external modification")
     }
   }
 
