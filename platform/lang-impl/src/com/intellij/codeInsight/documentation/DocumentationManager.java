@@ -49,6 +49,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
@@ -1704,8 +1705,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
       @Nls String doc = onHover ? provider.generateHoverDoc(element, originalPsi)
                                 : provider.generateDoc(element, originalPsi);
-      if (element instanceof PsiFile) {
-        @Nls String fileDoc = generateFileDoc((PsiFile)element, doc == null);
+      if (element instanceof PsiFileSystemItem) {
+        @Nls String fileDoc = generateFileDoc((PsiFileSystemItem)element, doc == null);
         if (fileDoc != null) {
           return doc == null ? fileDoc : doc + fileDoc;
         }
@@ -1715,8 +1716,22 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Internal
-  public static @Nls @Nullable String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
-    VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
+  public static @Nls @Nullable String generateFileDoc(@NotNull PsiFileSystemItem psiFile, boolean withUrl) {
+    VirtualFile fileOrArchiveRoot = PsiUtilCore.getVirtualFile(psiFile);
+    VirtualFile file;
+    if (psiFile instanceof PsiDirectory) {
+      if (fileOrArchiveRoot != null && fileOrArchiveRoot.getFileSystem() instanceof ArchiveFileSystem fileSystem
+          && fileOrArchiveRoot.equals(fileSystem.getRootByEntry(fileOrArchiveRoot))) {
+        file = fileSystem.getLocalByEntry(fileOrArchiveRoot);
+      }
+      else {
+        //we don't show meaningful information for real directories
+        return null;
+      }
+    }
+    else {
+      file = fileOrArchiveRoot;
+    }
     File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
     BasicFileAttributes attr = null;
     try {
@@ -1730,7 +1745,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Nls String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
     var content = List.of(
       getVcsStatus(psiFile.getProject(), file),
-      getScope(psiFile.getProject(), file),
+      getScope(psiFile.getProject(), fileOrArchiveRoot),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.size.label")),
         HtmlChunk.nbsp(),

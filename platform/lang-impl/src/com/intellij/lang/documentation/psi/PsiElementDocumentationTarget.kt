@@ -18,7 +18,7 @@ import com.intellij.platform.backend.documentation.*
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.createSmartPointer
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -113,7 +113,7 @@ class PsiElementDocumentationTarget private constructor(
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
                       ?: sourceElement
     val doc = provider.getDocumentationParts(targetElement, originalPsi)
-    if (targetElement is PsiFile) {
+    if (targetElement is PsiFileSystemItem) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
         return if (doc == null)
