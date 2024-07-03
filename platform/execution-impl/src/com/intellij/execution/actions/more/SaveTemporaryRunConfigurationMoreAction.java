@@ -20,10 +20,7 @@ final class SaveTemporaryRunConfigurationMoreAction
                           @NotNull Project project,
                           @NotNull RunnerAndConfigurationSettings configuration) {
     Presentation presentation = e.getPresentation();
-    presentation.setText(ExecutionBundle.message("choose.run.popup.save"));
-    presentation.setDescription(ExecutionBundle.message("choose.run.popup.save.description"));
     presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null);
-
     presentation.setEnabledAndVisible(configuration.isTemporary());
   }
 
