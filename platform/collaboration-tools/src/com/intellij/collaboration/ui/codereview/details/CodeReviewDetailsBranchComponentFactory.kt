@@ -13,6 +13,7 @@ import com.intellij.collaboration.ui.util.popup.PopupItemPresentation
 import com.intellij.collaboration.ui.util.popup.SimplePopupItemRenderer
 import com.intellij.collaboration.ui.util.popup.showAndAwait
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.awt.RelativePoint
@@ -23,6 +24,7 @@ import icons.DvcsImplIcons
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
 import java.awt.Dimension
+import java.awt.datatransfer.StringSelection
 import java.awt.event.ActionListener
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -33,7 +35,7 @@ object CodeReviewDetailsBranchComponentFactory {
 
   fun create(
     scope: CoroutineScope,
-    branchesVm: CodeReviewBranchesViewModel
+    branchesVm: CodeReviewBranchesViewModel,
   ): JComponent {
     val statusIcon = InlineIconButton(DvcsImplIcons.BranchLabel).apply {
       actionListener = ActionListener { branchesVm.showBranches() }
@@ -77,6 +79,7 @@ object CodeReviewDetailsBranchComponentFactory {
           if (branchesVm.canShowInLog) {
             add(ReviewAction.ShowInLog)
           }
+          add(ReviewAction.CopyBranchName)
         }
         JBPopupFactory.getInstance().createPopupChooserBuilder(actions)
           .setRenderer(popupActionsRenderer(source, hasRemoteBranch))
@@ -85,6 +88,9 @@ object CodeReviewDetailsBranchComponentFactory {
             return@setItemChosenCallback when (action) {
               is ReviewAction.Checkout -> branchesVm.fetchAndCheckoutRemoteBranch()
               is ReviewAction.ShowInLog -> branchesVm.fetchAndShowInLog()
+              is ReviewAction.CopyBranchName -> {
+                CopyPasteManager.getInstance().setContents(StringSelection(source))
+              }
             }
           }
           .createPopup()
@@ -106,6 +112,7 @@ private fun popupActionsRenderer(sourceBranch: String, hasRemoteBranch: Boolean)
       is ReviewAction.ShowInLog -> PopupItemPresentation.Simple(
         CollaborationToolsBundle.message("review.details.branch.show.remote.in.git.log", sourceBranch)
       )
+      is ReviewAction.CopyBranchName -> PopupItemPresentation.Simple(CollaborationToolsBundle.message("review.details.branch.copy.name"))
     }
   }
 }
@@ -113,4 +120,5 @@ private fun popupActionsRenderer(sourceBranch: String, hasRemoteBranch: Boolean)
 private sealed interface ReviewAction {
   data object Checkout : ReviewAction
   data object ShowInLog : ReviewAction
+  data object CopyBranchName : ReviewAction
 }
