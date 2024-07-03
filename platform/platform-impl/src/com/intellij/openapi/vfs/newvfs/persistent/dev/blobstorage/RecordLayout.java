@@ -282,6 +282,19 @@ abstract class RecordLayout {
                             final int length,
                             final int redirectTo,
                             final ByteBuffer payload) {
+        final int packedCapacity = getPackedCapacity(capacity, length);
+        final int first5BitsOfCapacity = packedCapacity >> CAPACITY_BITS_1;
+        final byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_LARGE | first5BitsOfCapacity);
+
+        final int headerBytes1_4 = Integer.rotateRight(packedCapacity & CAPACITY_MASK_1, CAPACITY_BITS_1)
+                                   | (length & LENGTH_MASK);
+
+        target.put(offset, headerByte0);
+        target.putInt(offset + 1, headerBytes1_4);
+        target.put(offset + HEADER_SIZE, payload, payload.position(), length);
+      }
+
+      private static int getPackedCapacity(int capacity, int length) {
         if (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
           throw new IllegalArgumentException("capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
         }
@@ -292,16 +305,7 @@ abstract class RecordLayout {
         if ((capacityOverFirstBucket % OFFSET_BUCKET) != 0) {
           throw new IllegalArgumentException("capacity-MIN (=" + capacityOverFirstBucket + ") must be rounded up to " + OFFSET_BUCKET);
         }
-        final int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
-        final int first5BitsOfCapacity = packedCapacity >> CAPACITY_BITS_1;
-        final byte headerByte0 = (byte)(RECORD_TYPE_ACTUAL | RECORD_SIZE_TYPE_LARGE | first5BitsOfCapacity);
-
-        final int headerBytes1_4 = Integer.rotateRight(packedCapacity & CAPACITY_MASK_1, CAPACITY_BITS_1)
-                                   | (length & LENGTH_MASK);
-
-        target.put(offset, headerByte0);
-        target.putInt(offset + 1, headerBytes1_4);
-        target.put(offset + HEADER_SIZE, payload, payload.position(), length);
+        return capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
       }
 
       @Override
@@ -476,6 +480,18 @@ abstract class RecordLayout {
                           final int length,
                           final int redirectToId,
                           final ByteBuffer payload) {
+      final int packedCapacity = getPackedCapacity(capacity);
+
+      final byte headerByte0 = (byte)(RECORD_TYPE_PADDING
+                                      | (((packedCapacity >> CAPACITY_BITS_2) >> CAPACITY_BITS_1) & CAPACITY_MASK_0));
+      final byte headerByte1 = (byte)((packedCapacity >> CAPACITY_BITS_2) & CAPACITY_MASK_1);
+      final byte headerByte2 = (byte)(packedCapacity & CAPACITY_MASK_2);
+      target.put(offset, headerByte0);
+      target.put(offset + 1, headerByte1);
+      target.put(offset + 2, headerByte2);
+    }
+
+    private static int getPackedCapacity(int capacity) {
       if (capacity < MIN_CAPACITY || capacity > MAX_CAPACITY) {
         throw new IllegalArgumentException(
           "PaddingRecord capacity(" + capacity + ") must be in [" + MIN_CAPACITY + ".." + MAX_CAPACITY + "]");
@@ -485,15 +501,7 @@ abstract class RecordLayout {
         throw new IllegalArgumentException("capacity-MIN (=" + capacityOverFirstBucket + ") must be rounded up to " + OFFSET_BUCKET);
       }
 
-      final int packedCapacity = capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
-
-      final byte headerByte0 = (byte)(RECORD_TYPE_PADDING
-                                      | (((packedCapacity >> CAPACITY_BITS_2) >> CAPACITY_BITS_1) & CAPACITY_MASK_0));
-      final byte headerByte1 = (byte)((packedCapacity >> CAPACITY_BITS_2) & CAPACITY_MASK_1);
-      final byte headerByte2 = (byte)(packedCapacity & CAPACITY_MASK_2);
-      target.put(offset, headerByte0);
-      target.put(offset + 1, headerByte1);
-      target.put(offset + 2, headerByte2);
+      return capacityOverFirstBucket >> OFFSET_BUCKET_BITS;
     }
 
     @Override
