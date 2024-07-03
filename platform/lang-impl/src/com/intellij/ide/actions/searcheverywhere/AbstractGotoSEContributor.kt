@@ -402,7 +402,9 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
 
         suspend {
           @Suppress("DEPRECATION")
-          val navigationOptions = NavigationOptions.defaultOptions().openInRightSplit((modifiers and InputEvent.SHIFT_MASK) != 0)
+          val navigationOptions = NavigationOptions.defaultOptions()
+            .openInRightSplit((modifiers and InputEvent.SHIFT_MASK) != 0)
+            .preserveCaret(true)
           if (extendedNavigatable == null) {
             if (file == null) {
               LOG.warn("Cannot navigate to invalid PsiElement (psiElement=$psiElement, selected=$selected)")
