@@ -10,6 +10,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
+import org.eclipse.jgit.dircache.DirCache
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
@@ -493,6 +494,47 @@ internal class GitSettingsLogTest {
     settingsLog.restoreStateAt(state1Hash.toString())
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("options/editor.xml", "State 1")
+    }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-13080"])
+  fun `drop and reinit settings sync if cannot init`() {
+    val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
+    val editorContent = "editorContent"
+    val state1 = "State 1"
+
+    editorXml.writeText(editorContent)
+    val settingsLog = initializeGitSettingsLog(editorXml)
+
+    settingsLog.applyIdeState(settingsSnapshot {
+      fileState("options/editor.xml", state1)
+    }, "Local changes")
+    val indexFile = getRepository().indexFile
+
+    val size = 16384
+    val zeroBytesArray = ByteArray(size)
+    indexFile.writeBytes(zeroBytesArray)
+    assertEquals(size.toLong(), indexFile.length())
+
+    val editorXmlSync = settingsSyncStorage / "options" / "editor.xml"
+    assertEquals(state1, editorXmlSync.readText())
+    try {
+      DirCache.read(getRepository())
+    }
+    catch (ex: Exception) {
+    }
+
+    initializeGitSettingsLog(editorXml)
+    getRepository().indexFile.length()
+    assertNotEquals(size, indexFile.length())
+    assertTrue(editorXmlSync.exists() && editorXmlSync.readText() == editorContent)
+
+    try {
+      DirCache.read(getRepository())
+    }
+    catch (ex: Exception) {
+      fail("Shouldn't fail: ${ex.message}")
     }
   }
 

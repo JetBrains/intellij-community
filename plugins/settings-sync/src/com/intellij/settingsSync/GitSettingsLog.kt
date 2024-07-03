@@ -49,9 +49,11 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val initialSnapshotProvider: (SettingsSnapshot) -> SettingsSnapshot
 ) : SettingsLog, Disposable {
 
-  private lateinit var repository: Repository
+  private val FIVE_SECONDS = 5000
 
+  private lateinit var repository: Repository
   private lateinit var git: Git
+
 
   private val master: Ref get() = repository.findRef(MASTER_REF_NAME)!!
   private val ide: Ref get() = repository.findRef(IDE_REF_NAME)!!
@@ -66,10 +68,10 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
 
   override fun initialize() {
     configureJGit()
-    initRepository()
+    initAndCheckRepository(canRetry = true)
   }
 
-  private fun initRepository() {
+  private fun initAndCheckRepository(canRetry: Boolean) {
     val dotGit: Path = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
     git = Git(repository)
@@ -79,17 +81,19 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
       LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       addInitialCommit(repository)
-    } else {
-      val rootLockEntries = dotGit.listDirectoryEntries("*.lock")
-      val headsLockEntries = (dotGit / "refs" / "heads").listDirectoryEntries("*.lock")
-      val FIVE_SECONDS = 5000
-      for(lock in rootLockEntries + headsLockEntries) {
-        if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
-          FileUtil.delete(lock)
-        } else {
-          // Repository is currently in process of operating.
-          // Shouldn't delete the lock, otherwise we'll damage the repo. Just log instead
-          LOG.warn("Found new lock (${lock.fileName}) modified ${lock.getLastModifiedTime().toInstant()}. Repo initialization might fail")
+    }
+    else {
+      checkLocks(dotGit)
+      if (!isRepositoryConsistent()) {
+        if (!canRetry) {
+          throw RuntimeException("Settings Sync local repository is corrupted after retry. Will not enable settings sync")
+        }
+        LOG.warn("Settings Sync repository is corrupted, removing it")
+        if (FileUtil.delete(settingsSyncStorage.toFile())) {
+          initAndCheckRepository(canRetry = false)
+        }
+        else {
+          throw RuntimeException("Settings Sync local repository is corrupted and cannot be deleted. Will not enable settings sync")
         }
       }
     }
@@ -99,6 +103,38 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
     createBranchIfNeeded(MASTER_REF_NAME, newRepository)
     createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
     createBranchIfNeeded(IDE_REF_NAME, newRepository)
+  }
+
+  private fun checkLocks(dotGit: Path) {
+    val rootLockEntries = dotGit.listDirectoryEntries("*.lock")
+    val headsLockEntries = (dotGit / "refs" / "heads").listDirectoryEntries("*.lock")
+    for (lock in rootLockEntries + headsLockEntries) {
+      if (System.currentTimeMillis() - lock.getLastModifiedTime().toMillis() > FIVE_SECONDS) {
+        FileUtil.delete(lock)
+      }
+      else {
+        // Repository is currently in process of operating.
+        // Shouldn't delete the lock, otherwise we'll damage the repo. Just log instead
+        LOG.warn("Found new lock (${lock.fileName}) modified ${lock.getLastModifiedTime().toInstant()}. Repo initialization might fail")
+      }
+    }
+  }
+
+  private fun isRepositoryConsistent(): Boolean {
+    try {
+      LOG.info("Checking consistency of the repository...")
+      val commits = git.log().call().toList()
+      commits.forEach {
+        LOG.debug("Found local commit ${it.short}")
+      }
+      val status = git.status().call()
+      LOG.info("Local repository has ${commits.size}. Status: ${if (status.isClean) "Clean" else "Dirty"}")
+      return true
+    }
+    catch (ex: Exception) {
+      LOG.warn("An exception occurred while checking repository consistency. Will delete the repository", ex)
+      return false
+    }
   }
 
   private fun configureJGit() {
@@ -127,7 +163,10 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun addInitialCommit(repository: Repository) {
-    val gitignore = settingsSyncStorage.resolve(".gitignore").createParentDirectories().createFile()
+    val gitignore = settingsSyncStorage.resolve(".gitignore")
+    if (!gitignore.exists()) {
+      gitignore.createParentDirectories().createFile()
+    }
     gitignore.write("""
           event-log-metadata
           jdbc-drivers
@@ -382,9 +421,9 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
         conflictingFiles -= pluginJsonPath
       }
       if (conflictingFiles.isNotEmpty()) {
-        if (conflictingFiles.any { !it.startsWith(PathManager.OPTIONS_DIRECTORY) && !it.startsWith(METAINFO_FOLDER)  })
+        if (conflictingFiles.any { !it.startsWith(PathManager.OPTIONS_DIRECTORY) && !it.startsWith(METAINFO_FOLDER) })
           SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.SCHEMES)
-        if (conflictingFiles.any { it.startsWith(PathManager.OPTIONS_DIRECTORY)}) {
+        if (conflictingFiles.any { it.startsWith(PathManager.OPTIONS_DIRECTORY) }) {
           SettingsSyncEventsStatistics.MERGE_CONFLICT_OCCURRED.log(SettingsSyncEventsStatistics.MergeConflictType.OPTIONS)
         }
       }
@@ -431,7 +470,8 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
 
       git.add().addFilepattern(".").call()
       commit(buildCommitMessage(getLocalApplicationInfo(), commitHash), null, false)
-    } catch (e: GitAPIException) {
+    }
+    catch (e: GitAPIException) {
       NotificationService.getInstance().notifySateRestoreFailed()
       LOG.error("Failed to restore state to hash = $commitHash", e)
     }
@@ -467,10 +507,12 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
     return treeIterator
   }
 
-  private fun <T : Any> mergeSettingsProviderFile(settingsProvider: SettingsProvider<T>,
-                                                  relativePath: String,
-                                                  ideBranchTip: RevCommit,
-                                                  cloudBranchTip: RevCommit): String {
+  private fun <T : Any> mergeSettingsProviderFile(
+    settingsProvider: SettingsProvider<T>,
+    relativePath: String,
+    ideBranchTip: RevCommit,
+    cloudBranchTip: RevCommit,
+  ): String {
     return smartMergeFile(relativePath, ideBranchTip, cloudBranchTip,
                           deserializer = { settingsProvider.deserialize(it) },
                           serializer = { settingsProvider.serialize(it) },
@@ -492,7 +534,8 @@ class GitSettingsLog(private val settingsSyncStorage: Path,
     cloudBranchTip: RevCommit,
     serializer: (T) -> String,
     deserializer: (String) -> T,
-    merger: (T?, T, T) -> T): String {
+    merger: (T?, T, T) -> T,
+  ): String {
     val ideContent = getFileContentInBranch(relativePath, ideBranchTip)
     val ideState = deserializer(ideContent)
     val cloudContent = getFileContentInBranch(relativePath, cloudBranchTip)
