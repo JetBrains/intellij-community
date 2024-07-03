@@ -122,7 +122,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     val productMode = if (currentProductModeId != ProductMode.LOCAL_IDE.id) {
       currentProductModeId
     } else if (detectClionNova()) {
-      ProductMode.NOVA.id
+      "nova"
     } else {
       null
     }
