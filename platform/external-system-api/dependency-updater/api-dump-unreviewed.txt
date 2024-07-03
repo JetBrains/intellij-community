@@ -1,5 +1,3 @@
-f:com.intellij.buildsystem.model.BatchOperationsKt
-- sf:performOperationOnEach(java.lang.Iterable,com.intellij.buildsystem.model.OperationType,kotlin.jvm.functions.Function1):java.util.List
 com.intellij.buildsystem.model.BuildDependency
 - com.intellij.buildsystem.model.OperationItem
 - a:getDisplayName():java.lang.String
@@ -7,34 +5,6 @@ com.intellij.buildsystem.model.BuildDependency$Coordinates
 - a:getDisplayName():java.lang.String
 com.intellij.buildsystem.model.BuildDependencyRepository
 - com.intellij.buildsystem.model.OperationItem
-com.intellij.buildsystem.model.BuildManager
-- a:addDependency(com.intellij.buildsystem.model.BuildDependency):com.intellij.buildsystem.model.OperationFailure
-- a:addRepository(com.intellij.buildsystem.model.BuildDependencyRepository):com.intellij.buildsystem.model.OperationFailure
-- a:doBatch(java.util.Set,java.util.Set,java.util.Set,java.util.Set):java.util.List
-- bs:doBatch$default(com.intellij.buildsystem.model.BuildManager,java.util.Set,java.util.Set,java.util.Set,java.util.Set,I,java.lang.Object):java.util.List
-- a:listDependencies():java.util.Collection
-- a:listRepositories():java.util.Collection
-- a:removeDependency(com.intellij.buildsystem.model.BuildDependency):com.intellij.buildsystem.model.OperationFailure
-- a:removeRepository(com.intellij.buildsystem.model.BuildDependencyRepository):com.intellij.buildsystem.model.OperationFailure
-f:com.intellij.buildsystem.model.BuildScriptEntryMetadata
-- <init>(I,I,I,I,java.lang.String):V
-- f:component1():I
-- f:component2():I
-- f:component3():I
-- f:component4():I
-- f:component5():java.lang.String
-- f:copy(I,I,I,I,java.lang.String):com.intellij.buildsystem.model.BuildScriptEntryMetadata
-- bs:copy$default(com.intellij.buildsystem.model.BuildScriptEntryMetadata,I,I,I,I,java.lang.String,I,java.lang.Object):com.intellij.buildsystem.model.BuildScriptEntryMetadata
-- equals(java.lang.Object):Z
-- f:getEndColumn():I
-- f:getEndLine():I
-- f:getRawText():java.lang.String
-- f:getStartColumn():I
-- f:getStartLine():I
-- hashCode():I
-com.intellij.buildsystem.model.BuildSystem
-- com.intellij.buildsystem.model.BuildManager
-- a:getName():java.lang.String
 f:com.intellij.buildsystem.model.DeclaredDependency
 - <init>(com.intellij.buildsystem.model.unified.UnifiedDependency,com.intellij.openapi.actionSystem.DataContext):V
 - <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.actionSystem.DataContext):V
@@ -43,51 +13,7 @@ f:com.intellij.buildsystem.model.DeclaredDependency
 - f:getDataContext():com.intellij.openapi.actionSystem.DataContext
 - f:getPsiElement():com.intellij.psi.PsiElement
 - f:getUnifiedDependency():com.intellij.buildsystem.model.unified.UnifiedDependency
-f:com.intellij.buildsystem.model.DependencyConflictException
-- java.lang.RuntimeException
-- com.intellij.buildsystem.model.OperationFailureException
-- <init>(com.intellij.buildsystem.model.BuildDependency):V
-c:com.intellij.buildsystem.model.DependencyInfo
-- <init>(com.intellij.buildsystem.model.BuildDependency,com.intellij.buildsystem.model.BuildScriptEntryMetadata):V
-- getDependency():com.intellij.buildsystem.model.BuildDependency
-- getMetadata():com.intellij.buildsystem.model.BuildScriptEntryMetadata
-f:com.intellij.buildsystem.model.DependencyNotFoundException
-- java.lang.RuntimeException
-- com.intellij.buildsystem.model.OperationFailureException
-- <init>(com.intellij.buildsystem.model.BuildDependency):V
-f:com.intellij.buildsystem.model.OperationFailure
-- <init>(com.intellij.buildsystem.model.OperationType,com.intellij.buildsystem.model.OperationItem,java.lang.Throwable):V
-- f:component1():com.intellij.buildsystem.model.OperationType
-- f:component2():com.intellij.buildsystem.model.OperationItem
-- f:component3():java.lang.Throwable
-- f:copy(com.intellij.buildsystem.model.OperationType,com.intellij.buildsystem.model.OperationItem,java.lang.Throwable):com.intellij.buildsystem.model.OperationFailure
-- bs:copy$default(com.intellij.buildsystem.model.OperationFailure,com.intellij.buildsystem.model.OperationType,com.intellij.buildsystem.model.OperationItem,java.lang.Throwable,I,java.lang.Object):com.intellij.buildsystem.model.OperationFailure
-- equals(java.lang.Object):Z
-- f:getError():java.lang.Throwable
-- f:getItem():com.intellij.buildsystem.model.OperationItem
-- f:getOperationType():com.intellij.buildsystem.model.OperationType
-- hashCode():I
-com.intellij.buildsystem.model.OperationFailureException
 com.intellij.buildsystem.model.OperationItem
-e:com.intellij.buildsystem.model.OperationType
-- java.lang.Enum
-- sf:ADD:com.intellij.buildsystem.model.OperationType
-- sf:REMOVE:com.intellij.buildsystem.model.OperationType
-- s:getEntries():kotlin.enums.EnumEntries
-- s:valueOf(java.lang.String):com.intellij.buildsystem.model.OperationType
-- s:values():com.intellij.buildsystem.model.OperationType[]
-f:com.intellij.buildsystem.model.RepositoryConflictException
-- java.lang.RuntimeException
-- com.intellij.buildsystem.model.OperationFailureException
-- <init>(com.intellij.buildsystem.model.BuildDependencyRepository):V
-c:com.intellij.buildsystem.model.RepositoryInfo
-- <init>(com.intellij.buildsystem.model.BuildDependencyRepository,com.intellij.buildsystem.model.BuildScriptEntryMetadata):V
-- getMetadata():com.intellij.buildsystem.model.BuildScriptEntryMetadata
-- getRepository():com.intellij.buildsystem.model.BuildDependencyRepository
-f:com.intellij.buildsystem.model.RepositoryNotFoundException
-- java.lang.RuntimeException
-- com.intellij.buildsystem.model.OperationFailureException
-- <init>(com.intellij.buildsystem.model.BuildDependencyRepository):V
 f:com.intellij.buildsystem.model.unified.UnifiedCoordinates
 - com.intellij.buildsystem.model.BuildDependency$Coordinates
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
@@ -116,8 +42,6 @@ f:com.intellij.buildsystem.model.unified.UnifiedDependency
 - getDisplayName():java.lang.String
 - f:getScope():java.lang.String
 - hashCode():I
-com.intellij.buildsystem.model.unified.UnifiedDependencyConverter
-- a:convert(com.intellij.buildsystem.model.BuildDependency):com.intellij.buildsystem.model.unified.UnifiedDependency
 f:com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 - com.intellij.buildsystem.model.BuildDependencyRepository
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
@@ -132,8 +56,6 @@ f:com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 - f:getName():java.lang.String
 - f:getUrl():java.lang.String
 - hashCode():I
-com.intellij.buildsystem.model.unified.UnifiedDependencyRepositoryConverter
-- a:convert(com.intellij.buildsystem.model.BuildDependencyRepository):com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 *f:com.intellij.externalSystem.DependencyModifierService
 - *sf:Companion:com.intellij.externalSystem.DependencyModifierService$Companion
 - <init>(com.intellij.openapi.project.Project):V
