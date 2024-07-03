@@ -102,6 +102,9 @@ data class TabListOptions(
 
   @JvmField val paintFocus: Boolean = false,
   @JvmField val isTabDraggingEnabled: Boolean = false,
+
+  @JvmField val tabPosition: JBTabsPosition = JBTabsPosition.top,
+  @JvmField val hideTabs: Boolean = false,
 )
 
 @DirtyUI
@@ -170,6 +173,7 @@ open class JBTabsImpl internal constructor(
     }
   }
 
+  // must be defined _before_ effectiveLayout
   @Suppress("MemberVisibilityCanBePrivate")
   internal var tabListOptions: TabListOptions = tabListOptions
     private set
@@ -219,9 +223,8 @@ open class JBTabsImpl internal constructor(
   private var dataProvider: DataProvider? = null
   private val deferredToRemove = WeakHashMap<Component, Component>()
 
-  // must be defined _before_ effectiveLayout
-  final override var tabsPosition: JBTabsPosition = JBTabsPosition.top
-    private set
+  final override val tabsPosition: JBTabsPosition
+    get() = tabListOptions.tabPosition
 
   @JvmField
   internal var effectiveLayout: TabLayout = createRowLayout()
@@ -2049,8 +2052,8 @@ open class JBTabsImpl internal constructor(
         lastLayoutPass = effectiveLayout.layoutTable(visible)
       }
 
-      centerizeEntryPointToolbarPosition()
-      centerizeMoreToolbarPosition()
+      centerEntryPointToolbarPosition()
+      centerMoreToolbarPosition()
 
       moveDraggedTabLabel()
 
@@ -2070,7 +2073,7 @@ open class JBTabsImpl internal constructor(
     }
   }
 
-  private fun centerizeMoreToolbarPosition() {
+  private fun centerMoreToolbarPosition() {
     val moreRect = lastLayoutPass!!.moreRect
     val mComponent = moreToolbar!!.component
     if (!moreRect.isEmpty) {
@@ -2092,7 +2095,7 @@ open class JBTabsImpl internal constructor(
     mComponent.putClientProperty(LAYOUT_DONE, true)
   }
 
-  private fun centerizeEntryPointToolbarPosition() {
+  private fun centerEntryPointToolbarPosition() {
     val eComponent = (if (entryPointToolbar == null) null else entryPointToolbar!!.component) ?: return
     val entryPointRect = lastLayoutPass!!.entryPointRect
     if (!entryPointRect.isEmpty && tabCount > 0) {
@@ -2758,14 +2761,14 @@ open class JBTabsImpl internal constructor(
 
   final override fun getIndexOf(tabInfo: TabInfo): Int = getVisibleInfos().indexOf(tabInfo)
 
-  final override var isHideTabs: Boolean = false
-    get() = field || isHideTopPanel
+  final override var isHideTabs: Boolean
+    get() = tabListOptions.hideTabs || isHideTopPanel
     set(value) {
-      if (field == value) {
+      if (tabListOptions.hideTabs == value) {
         return
       }
 
-      field = value
+      tabListOptions = tabListOptions.copy(hideTabs = value)
       relayout(forced = true, layoutNow = false)
     }
 
@@ -2978,7 +2981,7 @@ open class JBTabsImpl internal constructor(
     }
   }
 
-  override fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation {
+  final override fun setSideComponentVertical(vertical: Boolean): JBTabsPresentation {
     horizontalSide = !vertical
     for (each in visibleInfos) {
       each.changeSupport.firePropertyChange(TabInfo.ACTION_GROUP, "new1", "new2")
@@ -2987,19 +2990,19 @@ open class JBTabsImpl internal constructor(
     return this
   }
 
-  override fun setSideComponentOnTabs(onTabs: Boolean): JBTabsPresentation {
+  final override fun setSideComponentOnTabs(onTabs: Boolean): JBTabsPresentation {
     isSideComponentOnTabs = onTabs
     relayout(true, false)
     return this
   }
 
-  override fun setSideComponentBefore(before: Boolean): JBTabsPresentation {
+  final override fun setSideComponentBefore(before: Boolean): JBTabsPresentation {
     isSideComponentBefore = before
     relayout(true, false)
     return this
   }
 
-  override fun setSingleRow(singleRow: Boolean): JBTabsPresentation {
+  final override fun setSingleRow(singleRow: Boolean): JBTabsPresentation {
     tabListOptions = tabListOptions.copy(singleRow = singleRow)
     updateRowLayout()
     return this
@@ -3007,13 +3010,10 @@ open class JBTabsImpl internal constructor(
 
   open fun useSmallLabels(): Boolean = false
 
-  override val isSingleRow: Boolean
-    get() = tabListOptions.singleRow
+  open val isSingleRow: Boolean
+    get() = tabListOptions.singleRow || tabsPosition == JBTabsPosition.left || tabsPosition == JBTabsPosition.right
 
-  val isSideComponentVertical: Boolean
-    get() = !horizontalSide
-
-  override fun setUiDecorator(decorator: UiDecorator?): JBTabsPresentation {
+  final override fun setUiDecorator(decorator: UiDecorator?): JBTabsPresentation {
     uiDecorator = decorator ?: defaultDecorator
     applyDecoration()
     return this
@@ -3023,12 +3023,12 @@ open class JBTabsImpl internal constructor(
     uiDecorator = value
   }
 
-  override fun setUI(newUI: ComponentUI) {
+  final override fun setUI(newUI: ComponentUI) {
     super.setUI(newUI)
     applyDecoration()
   }
 
-  override fun updateUI() {
+  final override fun updateUI() {
     super.updateUI()
     SwingUtilities.invokeLater {
       applyDecoration()
@@ -3086,6 +3086,7 @@ open class JBTabsImpl internal constructor(
   @Suppress("removal", "OVERRIDE_DEPRECATION")
   override fun getDataProvider(): DataProvider? = dataProvider
 
+  @Suppress("removal", "OVERRIDE_DEPRECATION")
   override fun setDataProvider(dataProvider: DataProvider): JBTabsImpl {
     this.dataProvider = dataProvider
     return this
@@ -3134,7 +3135,7 @@ open class JBTabsImpl internal constructor(
   }
 
   final override fun setTabsPosition(position: JBTabsPosition): JBTabsPresentation {
-    this.tabsPosition = position
+    tabListOptions = tabListOptions.copy(tabPosition = position)
     val divider = splitter.divider
     if (position.isSide && divider.parent == null) {
       add(divider)
@@ -3463,7 +3464,7 @@ private class AccessibleTabPage(
 
   override fun getAccessibleChildrenCount(): Int {
     // Expose the tab content only if it is active, as the content for
-    // inactive tab does be usually not ready (i.e., may never have been activated).
+    // inactive tab does be usually not ready (i.e., may have never been activated).
     return if (parent.selectedInfo == tabInfo && component is Accessible) 1 else 0
   }
 
@@ -3634,10 +3635,4 @@ private class TitleAction(
   }
 }
 
-private fun isToDeferRemoveForLater(c: JComponent): Boolean {
-  return c.rootPane != null
-}
-
-private fun isChanged(oldObject: Any?, newObject: Any?): Boolean {
-  return !Comparing.equal(oldObject, newObject)
-}
+private fun isToDeferRemoveForLater(c: JComponent): Boolean = c.rootPane != null

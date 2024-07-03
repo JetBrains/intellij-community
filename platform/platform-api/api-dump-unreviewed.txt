@@ -10713,7 +10713,6 @@ e:com.intellij.ui.tabs.JBTabsPosition
 com.intellij.ui.tabs.JBTabsPresentation
 - a:getTabsPosition():com.intellij.ui.tabs.JBTabsPosition
 - a:isHideTabs():Z
-- a:isSingleRow():Z
 - a:setAlphabeticalMode(Z):com.intellij.ui.tabs.JBTabsPresentation
 - a:setEmptyText(java.lang.String):com.intellij.ui.tabs.JBTabsPresentation
 - a:setFirstTabOffset(I):V

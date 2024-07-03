@@ -7,7 +7,6 @@ import java.awt.Insets
 
 interface JBTabsPresentation {
   var isHideTabs: Boolean
-  val isSingleRow: Boolean
 
   fun setPaintFocus(paintFocus: Boolean): JBTabsPresentation
 
