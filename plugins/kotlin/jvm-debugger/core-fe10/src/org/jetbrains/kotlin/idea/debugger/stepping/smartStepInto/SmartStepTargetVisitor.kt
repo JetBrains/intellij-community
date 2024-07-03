@@ -13,8 +13,8 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -88,10 +88,11 @@ class SmartStepTargetVisitor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun recordProperty(expression: KtExpression, symbol: KaPropertySymbol): Boolean {
-        val targetType = (expression as? KtNameReferenceExpression)?.computeTargetType()
+        if (expression !is KtNameReferenceExpression && expression !is KtCallableReferenceExpression) return false
+        val targetType = expression.computeTargetType()
         if (symbol is KaSyntheticJavaPropertySymbol) {
             val propertyAccessSymbol = when (targetType) {
-                KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.javaGetterSymbol
+                KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN -> symbol.javaGetterSymbol
                 KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.javaSetterSymbol
             } ?: return false
             val declaration = propertyAccessSymbol.psi
@@ -103,7 +104,7 @@ class SmartStepTargetVisitor(
         }
 
         val propertyAccessSymbol = when (targetType) {
-            KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN, null -> symbol.getter
+            KtNameReferenceExpressionUsage.PROPERTY_GETTER, KtNameReferenceExpressionUsage.UNKNOWN -> symbol.getter
             KtNameReferenceExpressionUsage.PROPERTY_SETTER -> symbol.setter
         } ?: return false
         if (propertyAccessSymbol.isDefault) return false
@@ -155,7 +156,7 @@ class SmartStepTargetVisitor(
     private fun propertyAccessLabel(symbol: KaPropertySymbol, propertyAccessSymbol: KaDeclarationSymbol) =
         "${symbol.name}.${KotlinMethodSmartStepTarget.calcLabel(propertyAccessSymbol)}"
 
-    private fun KtNameReferenceExpression.computeTargetType(): KtNameReferenceExpressionUsage {
+    private fun KtExpression.computeTargetType(): KtNameReferenceExpressionUsage {
         val potentialLeftHandSide = parent as? KtQualifiedExpression ?: this
         val binaryExpr =
             potentialLeftHandSide.parent as? KtBinaryExpression ?: return KtNameReferenceExpressionUsage.PROPERTY_GETTER
@@ -320,8 +321,7 @@ class SmartStepTargetVisitor(
     override fun visitSimpleNameExpression(expression: KtSimpleNameExpression) {
         if (checkLineRangeFits(expression.getLineRange())) {
             analyze(expression) {
-                val resolvedCall = expression.resolveToCall() as? KaSuccessCallInfo ?: return
-                val variableAccessCall = resolvedCall.call as? KaVariableAccessCall ?: return
+                val variableAccessCall = expression.resolveToCall()?.successfulCallOrNull<KaVariableAccessCall>() ?: return
                 val symbol = variableAccessCall.partiallyAppliedSymbol.symbol as? KaPropertySymbol ?: return
                 recordProperty(expression, symbol)
             }

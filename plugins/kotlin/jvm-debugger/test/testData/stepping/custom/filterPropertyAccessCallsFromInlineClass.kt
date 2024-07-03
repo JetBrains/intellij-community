@@ -21,6 +21,10 @@ fun testPropertyAccess(d: D) {
     // SMART_STEP_TARGETS_EXPECTED_NUMBER: 1
     consumer(d.x)
 
+    // SMART_STEP_TARGETS_EXPECTED_NUMBER: 2
+    //Breakpoint!
+    d.x = producer()
+
     // STEP_OVER: 1
     //Breakpoint!
     stopHere()

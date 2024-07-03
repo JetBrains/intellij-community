@@ -1,5 +1,6 @@
 LineBreakpoint created at filterPropertyAccessCallsFromInlineClass.kt:17
 LineBreakpoint created at filterPropertyAccessCallsFromInlineClass.kt:26
+LineBreakpoint created at filterPropertyAccessCallsFromInlineClass.kt:30
 Run Java
 Connected to the target VM
 filterPropertyAccessCallsFromInlineClass.kt:17
@@ -7,9 +8,10 @@ filterPropertyAccessCallsFromInlineClass.kt:22
 filterPropertyAccessCallsFromInlineClass.kt:7
 filterPropertyAccessCallsFromInlineClass.kt:22
 filterPropertyAccessCallsFromInlineClass.kt:26
-filterPropertyAccessCallsFromInlineClass.kt:31
+filterPropertyAccessCallsFromInlineClass.kt:30
+filterPropertyAccessCallsFromInlineClass.kt:35
 filterPropertyAccessCallsFromInlineClass.kt:8
-filterPropertyAccessCallsFromInlineClass.kt:32
+filterPropertyAccessCallsFromInlineClass.kt:36
 Disconnected from the target VM
 
 Process finished with exit code 0
