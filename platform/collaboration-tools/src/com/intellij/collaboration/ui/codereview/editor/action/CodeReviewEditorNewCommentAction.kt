@@ -7,6 +7,7 @@ import com.intellij.diff.util.LineRange
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.DumbAwareAction
@@ -28,8 +29,9 @@ internal class CodeReviewEditorNewCommentAction
     }
     e.presentation.isVisible = true
 
+    val caret = editor.caretModel.currentCaret
     if (model is CodeReviewCommentableEditorModel.WithMultilineComments) {
-      val selectedRange = editor.getSelectedLinesRange()
+      val selectedRange = caret.getSelectedLinesRange().takeIf { it?.isEmpty == false }
       if (selectedRange != null) {
         e.presentation.text = CollaborationToolsBundle.message("review.editor.action.add.comment.multiline.text")
         e.presentation.description = CollaborationToolsBundle.message("review.editor.action.add.comment.multiline.description")
@@ -38,7 +40,7 @@ internal class CodeReviewEditorNewCommentAction
       }
     }
 
-    val caretLine = editor.caretModel.logicalPosition.line.takeIf { it >= 0 }
+    val caretLine = caret.logicalPosition.line.takeIf { it >= 0 }
     e.presentation.text = CollaborationToolsBundle.message("review.editor.action.add.comment.text")
     e.presentation.description = CollaborationToolsBundle.message("review.editor.action.add.comment.description")
     e.presentation.isEnabled = caretLine != null && model.canCreateComment(caretLine)
@@ -47,10 +49,11 @@ internal class CodeReviewEditorNewCommentAction
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR) as? EditorEx ?: return
     val model = editor.getUserData(CodeReviewCommentableEditorModel.KEY) ?: return
+    val caret = editor.caretModel.currentCaret
     val scrollingModel = editor.scrollingModel
 
     if (model is CodeReviewCommentableEditorModel.WithMultilineComments) {
-      val selectedRange = editor.getSelectedLinesRange()
+      val selectedRange = caret.getSelectedLinesRange().takeIf { it?.isEmpty == false }
       if (selectedRange != null) {
         scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
         scrollingModel.runActionOnScrollingFinished {
@@ -60,17 +63,21 @@ internal class CodeReviewEditorNewCommentAction
       }
     }
 
-    val caretLine = editor.caretModel.logicalPosition.line.takeIf { it >= 0 } ?: return
+    val caretLine = caret.logicalPosition.line.takeIf { it >= 0 } ?: return
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
     scrollingModel.runActionOnScrollingFinished {
       model.requestNewComment(caretLine)
     }
   }
 
-  private fun EditorEx.getSelectedLinesRange(): LineRange? {
-    if (!selectionModel.hasSelection()) return null
-    return with(selectionModel) {
-      LineRange(editor.offsetToLogicalPosition(selectionStart).line, editor.offsetToLogicalPosition(selectionEnd).line)
+  private fun Caret.getSelectedLinesRange(): LineRange? =
+    selectionRange.let {
+      if (it.length == 0) {
+        null
+      }
+      else {
+        LineRange(editor.offsetToLogicalPosition(it.startOffset).line,
+                  editor.offsetToLogicalPosition(it.endOffset).line)
+      }
     }
-  }
 }
