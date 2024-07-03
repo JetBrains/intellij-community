@@ -76,7 +76,7 @@ internal class GHPRFilesManagerImpl(private val project: Project,
   override suspend fun closeNewPrFile() {
     val file = newPRDiffFile.get() ?: return
     withContext(Dispatchers.EDT) {
-      val fileManager = serviceAsync<FileEditorManager>()
+      val fileManager = project.serviceAsync<FileEditorManager>()
       writeAction {
         CodeReviewFilesUtil.closeFilesSafely(fileManager, listOf(file))
       }
