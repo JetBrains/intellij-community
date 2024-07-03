@@ -181,6 +181,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Restart = load("actions/restart.svg", "expui/run/restart.svg", -1074337097, 2);
     /** 16x16 */ public static final @NotNull Icon RestartDebugger = load("actions/restartDebugger.svg", "expui/run/restartDebug.svg", 893306448, 10);
     /** 16x16 */ public static final @NotNull Icon RestartFrame = load("actions/restartFrame.svg", "expui/run/restartFrame.svg", 251948842, 2);
+    /** 16x16 */ public static final @NotNull Icon RestartStop = load("expui/actions/restartStop.svg", 1857418841, 2);
     /** 16x16 */ public static final @NotNull Icon Resume = load("actions/resume.svg", "expui/run/resume.svg", 1214638615, 10);
     /** 16x16 */ public static final @NotNull Icon Rollback = load("actions/rollback.svg", "expui/vcs/revert.svg", 2087548212, 2);
     /** 16x16 */ public static final @NotNull Icon Run_anything = load("actions/run_anything.svg", "expui/general/runAnything.svg", -1562827983, 2);

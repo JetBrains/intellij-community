@@ -165,6 +165,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:Restart:javax.swing.Icon
 - sf:RestartDebugger:javax.swing.Icon
 - sf:RestartFrame:javax.swing.Icon
+- sf:RestartStop:javax.swing.Icon
 - sf:Resume:javax.swing.Icon
 - sf:Rollback:javax.swing.Icon
 - sf:RunAll:javax.swing.Icon
