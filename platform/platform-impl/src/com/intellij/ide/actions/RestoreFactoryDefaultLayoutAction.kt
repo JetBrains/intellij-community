@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
@@ -14,7 +15,7 @@ class RestoreFactoryDefaultLayoutAction : DumbAwareToggleAction() {
   }
 
   init {
-    templatePresentation.isMultiChoice = false
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.BGT

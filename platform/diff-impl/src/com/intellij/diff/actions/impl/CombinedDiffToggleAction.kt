@@ -8,6 +8,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.project.DumbAware
@@ -18,7 +19,7 @@ internal class CombinedDiffToggleAction : ToggleAction(), DumbAware {
     super.update(e)
     val diffModeToggle = getDiffModeToggle(e)
     e.presentation.isEnabledAndVisible = diffModeToggle != null
-    e.presentation.isMultiChoice = false
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.Never
 
     val needNewBadge = diffModeToggle != null && !diffModeToggle.isCombinedDiffEnabled && CombinedDiffRegistry.showBadge()
     e.presentation.putClientProperty(ActionMenu.SECONDARY_ICON, if (needNewBadge) AllIcons.General.New_badge else null)
