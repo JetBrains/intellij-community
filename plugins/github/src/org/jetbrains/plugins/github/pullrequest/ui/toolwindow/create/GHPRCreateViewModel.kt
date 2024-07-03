@@ -24,6 +24,7 @@ import git4idea.push.GitPushOperation
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushSupport
 import git4idea.push.GitPushTarget
+import git4idea.remote.hosting.infoStateIn
 import git4idea.remote.hosting.knownRepositories
 import git4idea.repo.GitRemote
 import git4idea.validators.GitRefNameValidator
@@ -130,29 +131,36 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
     .stateInNow(cs, branchesWithProgress.value.branches)
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  override val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?> = branchesWithProgress.transformLatest { branches ->
-    val commits = try {
-      branches.commitsRequest?.await()
-    }
-    catch (ce: CancellationException) {
-      currentCoroutineContext().ensureActive()
-      null
-    }
-    catch (e: Exception) {
-      emit(ComputedResult.failure(e))
-      return@transformLatest
-    }
-    if (commits == null) {
-      emit(null)
-    }
-    else if (commits.isEmpty()) {
-      emit(ComputedResult.success(null))
-    }
-    else coroutineScope {
-      val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
-      val vm = GHPRCreateChangesViewModel(project, settings, this, dataContext,
-                                          branches.branches.baseBranch!!, branches.branches.headBranch!!, commits)
-      emit(ComputedResult.success(vm))
+  override val changesVm: StateFlow<ComputedResult<GHPRCreateChangesViewModel?>?> = branchesWithProgress.flatMapLatest { branches ->
+    val baseBranch = branches.branches.baseBranch ?: return@flatMapLatest flowOf(null)
+    val headBranch = branches.branches.headBranch ?: return@flatMapLatest flowOf(null)
+
+    branches.commitsRequest.transformLatest<Deferred<List<VcsCommitMetadata>>?, ComputedResult<GHPRCreateChangesViewModel?>?> { commitsRequest ->
+      val commits = try {
+        commitsRequest?.await()
+      }
+      catch (ce: CancellationException) {
+        currentCoroutineContext().ensureActive()
+        null
+      }
+      catch (e: Exception) {
+        emit(ComputedResult.failure(e))
+        return@transformLatest
+      }
+      if (commits == null) {
+        emit(null)
+      }
+      else if (commits.isEmpty()) {
+        emit(ComputedResult.success(null))
+      }
+      else {
+        coroutineScope {
+          val settings = project.serviceAsync<GithubPullRequestsProjectUISettings>()
+          val vm = GHPRCreateChangesViewModel(project, settings, this, dataContext,
+                                              baseBranch, headBranch, commits)
+          emit(ComputedResult.success(vm))
+        }
+      }
     }
   }.stateInNow(cs, null)
   override val diffVm = GHPRCreateDiffViewModel(project, cs)
@@ -196,15 +204,10 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
 
     cs.launchNow {
       branchesWithProgress.collectScoped {
-        if (!titleSetAutomatically) {
-          currentCoroutineContext().cancel()
-          return@collectScoped
-        }
         val headBranch = it.branches.headBranch ?: return@collectScoped
-        val commits = runCatching {
-          it.commitsRequest?.await()
-        }.getOrNull() ?: return@collectScoped
-        setTitleFromFirstCommitOrBranch(headBranch, commits)
+        it.commitsRequest.collectScoped { commitsRequest ->
+          setTitleFromFirstCommitOrBranch(headBranch, commitsRequest)
+        }
       }
     }
 
@@ -238,7 +241,12 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
     }
   }
 
-  private fun setTitleFromFirstCommitOrBranch(headBranch: GitBranch, commits: List<VcsCommitMetadata>) {
+  private suspend fun setTitleFromFirstCommitOrBranch(headBranch: GitBranch, commitsRequest: Deferred<List<VcsCommitMetadata>>?) {
+    if (!titleSetAutomatically) {
+      currentCoroutineContext().cancel()
+      return
+    }
+    val commits = runCatching { commitsRequest?.await() }.getOrNull() ?: return
     titleLock.withLock {
       val singleCommit = commits.singleOrNull()
       titleText.value = singleCommit?.subject ?: headBranch.name
@@ -283,7 +291,7 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
 
   override fun create(isDraft: Boolean) {
     val branchesWithProgress = branchesWithProgress.value
-    if (branchesWithProgress.commitsRequest?.isCompleted != true) return
+    if (branchesWithProgress.commitsRequest.value?.isCompleted != true) return
     if (branchesWithProgress.existingPrRequest?.isCompleted != true) return
 
     val branches = branchesWithProgress.branches
@@ -398,24 +406,29 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
       return
     }
 
-    val commitsRequest = branchesWithProgress.commitsRequest ?: run {
-      emit(null)
-      return
-    }
     val existingPrRequest = branchesWithProgress.existingPrRequest ?: run {
       emit(null)
       return
     }
 
-    computeEmitting {
-      checkBranches(baseBranch, headBranch, commitsRequest, existingPrRequest)
+    branchesWithProgress.commitsRequest.collectScoped { commitsRequest ->
+      if (commitsRequest == null) {
+        emit(null)
+      }
+      else {
+        computeEmitting {
+          checkBranches(baseBranch, headBranch, commitsRequest, existingPrRequest)
+        }
+      }
     }
   }
 
-  private suspend fun checkBranches(baseBranch: GitRemoteBranch,
-                                    headBranch: GitBranch,
-                                    commitsRequest: Deferred<List<VcsCommitMetadata>>,
-                                    existingPrRequest: Deferred<GHPRIdentifier?>): BranchesCheckResult {
+  private suspend fun checkBranches(
+    baseBranch: GitRemoteBranch,
+    headBranch: GitBranch,
+    commitsRequest: Deferred<List<VcsCommitMetadata>>,
+    existingPrRequest: Deferred<GHPRIdentifier?>,
+  ): BranchesCheckResult {
     val commits = commitsRequest.await()
     if (commits.isEmpty()) {
       return BranchesCheckResult.NoChanges(baseBranch, headBranch)
@@ -434,17 +447,36 @@ internal class GHPRCreateViewModelImpl(override val project: Project,
   private inner class BranchesStateWithProgress(val branches: BranchesState) {
     private val loadingCs = cs.childScope("BranchStatesLoader", Dispatchers.IO)
 
-    val commitsRequest: Deferred<List<VcsCommitMetadata>>? = loadCommitsAsync()
+    private val _commitsRequest = MutableStateFlow<Deferred<List<VcsCommitMetadata>>?>(null)
+    val commitsRequest: StateFlow<Deferred<List<VcsCommitMetadata>>?> = _commitsRequest.asStateFlow()
     val existingPrRequest: Deferred<GHPRIdentifier?>? = findExistingPrAsync()
 
-    private fun loadCommitsAsync(): Deferred<List<VcsCommitMetadata>>? {
-      val repository = branches.headRepo?.gitRepository ?: return null
-      val baseBranch = branches.baseBranch ?: return null
-      val headBranch = branches.headBranch ?: return null
+    init {
+      initCommitsLoader()
+    }
 
-      return loadingCs.async(start = CoroutineStart.LAZY) {
-        coroutineToIndicator {
-          GitLogUtil.collectMetadata(repository.project, repository.root, "${baseBranch.name}..${headBranch.name}").commits
+    private fun initCommitsLoader() {
+      val repository = branches.headRepo?.gitRepository ?: return
+      val baseBranch = branches.baseBranch ?: return
+      val headBranch = branches.headBranch ?: return
+
+      cs.launchNow {
+        repository.infoStateIn(this).distinctUntilChangedBy {
+          it.remoteBranchesWithHashes[baseBranch] to
+            when (headBranch) {
+              is GitRemoteBranch -> it.remoteBranchesWithHashes[headBranch]
+              is GitLocalBranch -> it.localBranchesWithHashes[headBranch]
+              else -> null
+            }
+        }.collectLatest {
+          _commitsRequest.update {
+            it?.cancel()
+            loadingCs.async(start = CoroutineStart.LAZY) {
+              coroutineToIndicator {
+                GitLogUtil.collectMetadata(repository.project, repository.root, "${baseBranch.name}..${headBranch.name}").commits
+              }
+            }
+          }
         }
       }
     }
