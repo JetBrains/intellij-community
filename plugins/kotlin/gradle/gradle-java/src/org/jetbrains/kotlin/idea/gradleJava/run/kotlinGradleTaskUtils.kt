@@ -28,24 +28,28 @@ internal fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
     return file.name.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
 }
 
-internal fun isTaskNameCandidate(element: PsiElement): Boolean =
-    isStringArgumentInCallExpression(element)
+internal fun isTaskNameLineMarkerCandidate(element: PsiElement): Boolean {
+    if (element !is LeafPsiElement) return false
+    return isOpenQuoteOfStringArgumentInCall(element)
             || isIdentifierInPropertyWithDelegate(element)
+}
 
 internal fun findTaskNameAround(element: PsiElement): String? {
     return findTaskNameInSurroundingCallExpression(element)
         ?: findTaskNameInSurroundingProperty(element)
 }
 
-private fun isStringArgumentInCallExpression(element: PsiElement) =
-    element.safeAs<KtStringTemplateExpression>()
+/** Returns `true` for the first quote `"` before`taskName` in example: `tasks.register("taskName")` */
+private fun isOpenQuoteOfStringArgumentInCall(leafElement: LeafPsiElement) =
+    leafElement.takeIf { it.elementType == KtTokens.OPEN_QUOTE }
+        ?.parent.safeAs<KtStringTemplateExpression>()
         ?.parent.safeAs<KtValueArgument>()
         ?.parent.safeAs<KtValueArgumentList>()
         ?.parent is KtCallExpression
 
 /** Returns `true` for `taskName` element in example: `val taskName by tasks.registering() { }` */
-private fun isIdentifierInPropertyWithDelegate(element: PsiElement): Boolean =
-    element.safeAs<LeafPsiElement>()
+private fun isIdentifierInPropertyWithDelegate(leafElement: LeafPsiElement): Boolean =
+    leafElement.safeAs<LeafPsiElement>()
         ?.takeIf { it.elementType == KtTokens.IDENTIFIER }
         ?.parent.safeAs<KtProperty>()?.hasDelegateExpression()
         ?: false
