@@ -15,6 +15,11 @@ class KotlinCodeGenerationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
   override fun getFile(): CodeFragment = codeFragment
                                          ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
 
+  override fun visitKtFile(file: KtFile) {
+    codeFragment = CodeFragment(file.textOffset, file.textLength)
+    super.visitKtFile(file)
+  }
+
   override fun visitNamedFunction(function: KtNamedFunction) {
     codeFragment?.addChild(
       CodeToken(function.text, function.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
