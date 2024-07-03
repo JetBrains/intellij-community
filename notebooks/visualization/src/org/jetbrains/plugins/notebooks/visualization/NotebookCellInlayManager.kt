@@ -4,6 +4,7 @@ import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -308,7 +309,7 @@ class NotebookCellInlayManager private constructor(
     val wronglyPlacedInlays = editor.inlayModel.getBlockElementsInRange(0, editor.document.textLength)
       .filter { it.offset !in inlaysOffsets }
     if (wronglyPlacedInlays.isNotEmpty()) {
-      error("Expected offsets: $inlaysOffsets. Wrongly placed inlays: $wronglyPlacedInlays")
+      thisLogger().error("Expected offsets: $inlaysOffsets. Wrongly placed offsets: ${wronglyPlacedInlays.map { it.offset }} of inlays $wronglyPlacedInlays, for file = '${editor.virtualFile?.name}'")
     }
   }
 
