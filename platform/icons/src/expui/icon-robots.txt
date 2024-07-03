@@ -33,5 +33,5 @@ skip: general/settings@20x20.svg
 skip: general/search@20x20.svg
 skip: general/moreHorizontal@20x20.svg
 skip: toolbar/*20x20.svg
-skip: toolwindow/*20x20.svg
+skip: toolwindows/*20x20.svg
 skip: codeWithMe/*20x20.svg

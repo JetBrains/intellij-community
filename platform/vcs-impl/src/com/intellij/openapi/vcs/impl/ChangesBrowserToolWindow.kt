@@ -50,7 +50,7 @@ object ChangesBrowserToolWindow {
       id = TOOLWINDOW_ID,
       anchor = ToolWindowAnchor.LEFT,
       canCloseContent = true,
-      stripeTitle = { VcsBundle.message("ChangesBrowserToolWindow.toolwindow.name") },
+      stripeTitle = VcsBundle.messagePointer("ChangesBrowserToolWindow.toolwindow.name"),
       icon = getIcon() // Toolwindow icon won't update without restarting IDE
     ))
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
@@ -58,7 +58,7 @@ object ChangesBrowserToolWindow {
     return toolWindow
   }
 
-  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindow.Changes else null
+  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindows.Changes else null
 }
 
 private class ChangesBrowserToolWindowTreeEditorDiffPreview(tree: ChangesTree)
