@@ -443,6 +443,13 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
+  public @NotNull PsiImportStaticStatement createImportStaticStatementFromText(@NotNull String classFullyQualifiedName, @NotNull String memberName) throws IncorrectOperationException {
+    PsiJavaFile aFile = createDummyJavaFile("import static " + classFullyQualifiedName + "." + memberName + ";");
+    PsiImportStatementBase statement = extractImport(aFile, true);
+    return (PsiImportStaticStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
+  }
+
+  @Override
   public @NotNull PsiParameterList createParameterList(String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder();
     builder.append("void method(");

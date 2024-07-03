@@ -3,16 +3,15 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiImportListStub;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> implements PsiImportList {
   private volatile Map<String,PsiImportStatement> myClassNameToImportMap;
@@ -54,11 +53,7 @@ public class PsiImportListImpl extends JavaStubPsiElement<PsiImportListStub> imp
 
   @Override
   public PsiImportStaticStatement @NotNull [] getImportStaticStatements() {
-    final PsiImportStaticStatement[] explicitStaticImports =
-      getStubOrPsiChildren(IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
-    final PsiImportStaticStatement[] implicitStaticImports =
-      PsiImplUtil.getImplicitStaticImports(getContainingFile());
-    return ArrayUtil.mergeArrays(explicitStaticImports, implicitStaticImports);
+    return getStubOrPsiChildren(IMPORT_STATIC_STATEMENT_BIT_SET, PsiImportStaticStatementImpl.ARRAY_FACTORY);
   }
 
   @Override

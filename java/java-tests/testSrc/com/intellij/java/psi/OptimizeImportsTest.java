@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -29,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
@@ -88,8 +90,43 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
   public void testStringTemplates() {
-    doTest();
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.STRING_TEMPLATES.getMinimumLevel(), () -> {
+      myFixture.addClass("""
+      package java.lang;
+      
+      public interface StringTemplate {
+        Processor<String, RuntimeException> STR = StringTemplate::interpolate;
+      }
+      """);
+      doTest();
+    });
   }
+
+  public void testImplicitIoImport1() {
+    implicitIoImport();
+  }
+
+  private void implicitIoImport() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel(), () -> {
+      myFixture.addClass("""
+        package java.io;
+        
+        public final class IO {
+          public static void println(Object obj) {}
+        }
+        """);
+      doTest();
+    });
+  }
+
+  public void testImplicitIoImport2() {
+    implicitIoImport();
+  }
+  
+  public void testImplicitIoImport3() {
+    implicitIoImport();
+  }
+  
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
 

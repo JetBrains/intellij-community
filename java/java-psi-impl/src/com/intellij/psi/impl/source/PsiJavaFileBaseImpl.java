@@ -332,15 +332,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         }
       }
     }
-    for (PsiImportStaticStatement staticImport : getImportStaticStatements()) {
+    for (PsiImportStaticStatement staticImport : ContainerUtil.append(getImplicitlyImportedStaticStatements(), getImportStaticStatements())) {
       String name = staticImport.getReferenceName();
       if (name != null) {
         staticImports.putValue(name, staticImport);
       }
-    }
-
-    for (PsiImportStaticStatement staticImport : PsiImplUtil.getImplicitStaticImports(this)) {
-      staticImports.putValue(staticImport.getReferenceName(), staticImport);
     }
 
     Map<String, Iterable<ResultWithContext>> result = new LinkedHashMap<>();
@@ -428,7 +424,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processOnDemandStaticImports(@NotNull ResolveState state, @NotNull StaticImportFilteringProcessor processor) {
-    for (PsiImportStaticStatement importStaticStatement : getImportStaticStatements()) {
+    for (PsiImportStaticStatement importStaticStatement : ContainerUtil.append(getImplicitlyImportedStaticStatements(), getImportStaticStatements())) {
       if (!importStaticStatement.isOnDemand()) continue;
       PsiClass targetElement = importStaticStatement.resolveTargetClass();
       if (targetElement != null) {
@@ -527,6 +523,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
+  public @NotNull StaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
+    return PsiImplUtil.getImplicitStaticImports(this);
+  }
+
+  @Override
   public void clearCaches() {
     super.clearCaches();
     putUserData(LANGUAGE_LEVEL_KEY, null);
@@ -536,6 +537,12 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   public void setOriginalFile(@NotNull PsiFile originalFile) {
     super.setOriginalFile(originalFile);
     clearCaches();
+  }
+
+  private List<PsiImportStaticStatement> getImplicitlyImportedStaticStatements() {
+    PsiElementFactory factory = PsiElementFactory.getInstance(getProject());
+    return ContainerUtil.map(getImplicitlyImportedStaticMembers(),
+                             member -> factory.createImportStaticStatementFromText(member.getContainingClass(), member.getMemberName()));
   }
 
   private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");
