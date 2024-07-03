@@ -42,10 +42,13 @@ class KotlinGradleProjectReferenceProvider: AbstractKotlinGradleReferenceProvide
             ?.takeIf { it.startsWith(GRADLE_SEPARATOR) } ?: return null
         val callableId = analyzeSurroundingCallExpression(element.parent) ?: return null
 
-        if (callableId.callableName != GRADLE_DSL_PROJECT ||
-            (!(callableId.packageName == GRADLE_DSL_PACKAGE ||
+        if (callableId.callableName != GRADLE_DSL_PROJECT) return null
+
+        // either from pure gradle dsl
+        if (!(callableId.packageName == GRADLE_DSL_PACKAGE ||
+                    // or from kotlin gradle plugin
                     (callableId.packageName == KGP_PACKAGE && callableId.className == KOTLIN_DEPENDENCY_HANDLER_CLASS))
-                    )) {
+        ) {
             return null
         }
 
