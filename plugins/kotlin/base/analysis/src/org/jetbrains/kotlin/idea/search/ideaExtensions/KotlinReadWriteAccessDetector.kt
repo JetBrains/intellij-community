@@ -18,7 +18,7 @@ class KotlinReadWriteAccessDetector : ReadWriteAccessDetector() {
         val INSTANCE = KotlinReadWriteAccessDetector()
     }
 
-    override fun isReadWriteAccessible(element: PsiElement) = element is KtVariableDeclaration || element is KtParameter
+    override fun isReadWriteAccessible(element: PsiElement) = element is KtVariableDeclaration || element is KtParameter || JavaReadWriteAccessDetector().isReadWriteAccessible(element)
 
     override fun isDeclarationWriteAccess(element: PsiElement) = isReadWriteAccessible(element)
 
