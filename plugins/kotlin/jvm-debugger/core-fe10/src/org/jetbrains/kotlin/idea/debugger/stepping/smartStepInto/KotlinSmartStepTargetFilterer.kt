@@ -75,6 +75,12 @@ class KotlinSmartStepTargetFilterer(
         // In this case, there is only one possible signature, so it should match
         val declaration = getDeclaration() ?: return methodInfo.isInvoke
         if (declaration is KtClass) {
+            // Standard methods may be also resolved to a class
+            when (name) {
+                "toString" -> return signature == "()Ljava/lang/String;"
+                "hashCode" -> return signature == "()I"
+                "equals" -> return signature == "(Ljava/lang/Object;)Z"
+            }
             // it means the method is, in fact, the implicit primary constructor
             analyze(declaration) {
                 return primaryConstructorMatches(declaration, owner, name, signature)
