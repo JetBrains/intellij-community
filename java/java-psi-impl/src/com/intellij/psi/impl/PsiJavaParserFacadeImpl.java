@@ -272,7 +272,7 @@ public class PsiJavaParserFacadeImpl implements PsiJavaParserFacade {
     if (context instanceof PsiImportStaticStatement && !((PsiImportStaticStatement)context).isOnDemand()) {
       return STATIC_IMPORT_REF;
     }
-    else if (context instanceof PsiImportModuleStatement && !((PsiImportModuleStatement)context).isOnDemand()) {
+    else if (context instanceof PsiImportModuleStatement) {
       return MODULE_IMPORT_REF;
     }
     else if (context instanceof PsiNewExpression && PsiUtil.isAvailable(JavaFeature.DIAMOND_TYPES, context)) {
