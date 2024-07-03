@@ -65,8 +65,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
                                                       val indexingReason: String,
                                                       val scanningType: ScanningType,
                                                       private val startCondition: Future<*>?,
-                                                      val isTriggeredByIndexRestart: Boolean = false,
-                                                      private val shouldHideProgressInSmartMode: Boolean? = null,
+                                                      private val shouldHideProgressInSmartMode: Boolean?= null,
                                                       private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
                                                       private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false) : FilesScanningTask, Closeable {
 
@@ -91,10 +90,9 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
 
   constructor(project: Project,
               indexingReason: String,
-              shouldHideProgressInSmartMode: Boolean?) : this(project, false, false, null, null, indexingReason, ScanningType.FULL, null,
-                                                              isTriggeredByIndexRestart =  false,
-                                                              shouldHideProgressInSmartMode = shouldHideProgressInSmartMode,
-                                                              forceReindexingTrigger = null)
+              shouldHideProgressInSmartMode: Boolean?) : this(project, false, false, null, null, indexingReason, ScanningType.FULL,
+                                                              null, shouldHideProgressInSmartMode,
+                                                              null)
 
   constructor(project: Project,
               predefinedIndexableFilesIterators: List<IndexableFilesIterator>?,
@@ -172,7 +170,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(private val myProject: Pro
       reason,
       ScanningType.merge(scanningType, oldTask.scanningType),
       startCondition ?: oldTask.startCondition,
-      isTriggeredByIndexRestart || oldTask.isTriggeredByIndexRestart,
       mergedHideProgress,
       mergedPredicate,
       allowCheckingForOutdatedIndexesUsingFileModCount || oldTask.allowCheckingForOutdatedIndexesUsingFileModCount

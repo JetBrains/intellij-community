@@ -170,7 +170,7 @@ class ProjectScanningHistoryImplTest {
   }
 
   private fun withHistory(changer: (history: ProjectScanningHistoryImpl, instant: Instant) -> Unit): ProjectScanningHistoryImpl {
-    val history = ProjectScanningHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL, false)
+    val history = ProjectScanningHistoryImpl(DummyProject.getInstance(), "test", ScanningType.FULL)
     changer.invoke(history, Instant.now())
     history.scanningFinished()
     return history

@@ -85,8 +85,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
                                                          !wasCorrupted,
                                                          true,
                                                          myCoroutineScope,
-                                                         "On project open",
-                                                         false);
+                                                         "On project open");
     forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 

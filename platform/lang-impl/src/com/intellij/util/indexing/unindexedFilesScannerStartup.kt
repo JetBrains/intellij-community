@@ -46,8 +46,7 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
                                           allowSkippingFullScanning: Boolean,
                                           requireReadingIndexableFilesIndexFromDisk: Boolean,
                                           coroutineScope: CoroutineScope,
-                                          indexingReason: String,
-                                          isTriggeredByIndexRestart: Boolean): Job {
+                                          indexingReason: String): Job {
   FileBasedIndex.getInstance().loadIndexes()
   val isFilterInvalidated = initialScanningLock.withLock {
     (project as UserDataHolderEx).putUserDataIfAbsent(FIRST_SCANNING_REQUESTED, FirstScanningState.REQUESTED)
@@ -65,14 +64,12 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
     LOG.info("Full scanning on startup will be skipped for project ${project.name}")
-    scheduleDirtyFilesScanning(project, notSeenIds as AllNotSeenDirtyFileIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
-                               coroutineScope, indexingReason, isTriggeredByIndexRestart)
+    scheduleDirtyFilesScanning(project, notSeenIds as AllNotSeenDirtyFileIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue, coroutineScope, indexingReason)
   }
   else {
     LOG.info("Full scanning on startup will NOT be skipped for project ${project.name} because of following unsatisfied conditions:\n" +
              skippingScanningUnsatisfiedConditions.joinToString("\n") { "${it.name}: ${it.explain(scanningCheckState)}" })
-    scheduleFullScanning(project, notSeenIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue, filterUpToDateUnsatisfiedConditions.isEmpty(),
-                         coroutineScope, indexingReason, isTriggeredByIndexRestart)
+    scheduleFullScanning(project, notSeenIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue, filterUpToDateUnsatisfiedConditions.isEmpty(), coroutineScope, indexingReason)
   }
 }
 
@@ -118,8 +115,7 @@ private fun scheduleFullScanning(project: Project,
                                  projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                  isFilterUpToDate: Boolean,
                                  coroutineScope: CoroutineScope,
-                                 indexingReason: String,
-                                 isTriggeredByIndexRestart: Boolean): Job {
+                                 indexingReason: String): Job {
   val someDirtyFilesScheduledForIndexing = if (notSeenIds is AllNotSeenDirtyFileIds) coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, notSeenIds.result.plus(additionalOrphanDirtyFiles), projectDirtyFilesQueue, false)
   }
@@ -127,8 +123,7 @@ private fun scheduleFullScanning(project: Project,
 
   UnindexedFilesScanner(project, true, isFilterUpToDate, null, null, indexingReason,
                         ScanningType.FULL_ON_PROJECT_OPEN, someDirtyFilesScheduledForIndexing.asCompletableFuture(),
-                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds,
-                        isTriggeredByIndexRestart = isTriggeredByIndexRestart)
+                        allowCheckingForOutdatedIndexesUsingFileModCount = notSeenIds !is AllNotSeenDirtyFileIds)
     .queue()
   return someDirtyFilesScheduledForIndexing
 }
@@ -141,8 +136,7 @@ private fun scheduleDirtyFilesScanning(project: Project,
                                        additionalOrphanDirtyFiles: Collection<Int>,
                                        projectDirtyFilesQueue: ProjectDirtyFilesQueue,
                                        coroutineScope: CoroutineScope,
-                                       indexingReason: String,
-                                       isTriggeredByIndexRestart: Boolean): Job {
+                                       indexingReason: String): Job {
   val projectDirtyFiles = coroutineScope.async(Dispatchers.IO) {
     clearIndexesForDirtyFiles(project, notSeenIds.result.plus(additionalOrphanDirtyFiles), projectDirtyFilesQueue, true)
   }
@@ -151,8 +145,7 @@ private fun scheduleDirtyFilesScanning(project: Project,
   val iterators = listOf(DirtyFilesIndexableFilesIterator(projectDirtyFilesFromProjectQueue, false),
                          DirtyFilesIndexableFilesIterator(projectDirtyFilesFromOrphanQueue, true))
   UnindexedFilesScanner(project, true, true, iterators, null,
-                        indexingReason, ScanningType.PARTIAL_ON_PROJECT_OPEN, projectDirtyFiles.asCompletableFuture(),
-                        isTriggeredByIndexRestart = isTriggeredByIndexRestart)
+                        indexingReason, ScanningType.PARTIAL_ON_PROJECT_OPEN, projectDirtyFiles.asCompletableFuture())
     .queue()
   return projectDirtyFiles
 }

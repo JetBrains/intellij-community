@@ -46,7 +46,6 @@ interface ProjectScanningHistory : ProjectIndexingActivityHistory {
   val indexingActivitySessionId: Long
   val scanningReason: String?
   val scanningSessionId: Long
-  val isTriggeredByIndexRestart: Boolean
   val times: ScanningTimes
   val scanningStatistics: List<JsonScanningStatistics>
 

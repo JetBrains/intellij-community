@@ -131,7 +131,6 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
               requireReadingIndexableFilesIndexFromDisk = !allowSkippingFullScanning,
               coroutineScope = (project as ComponentManagerEx).getCoroutineScope(),
               indexingReason = "On FileBasedIndexTumbler.turnOn (reason=$reason)",
-              isTriggeredByIndexRestart = true,
             )
             indexesCleanupJob.forgetProjectDirtyFilesOnCompletion(fileBasedIndex, project, projectDirtyFilesQueue, registeredIndexes.orphanDirtyFilesQueue.untrimmedSize)
           }

@@ -26,9 +26,7 @@ private val indexingActivitySessionIdSequencer = AtomicLong()
 @ApiStatus.Internal
 data class ProjectScanningHistoryImpl(override val project: Project,
                                       override val scanningReason: String?,
-                                      private val scanningType: ScanningType,
-                                      override val isTriggeredByIndexRestart: Boolean
-) : ProjectScanningHistory {
+                                      private val scanningType: ScanningType) : ProjectScanningHistory {
   companion object {
     private val scanningSessionIdSequencer = AtomicLong()
     private val log = thisLogger()

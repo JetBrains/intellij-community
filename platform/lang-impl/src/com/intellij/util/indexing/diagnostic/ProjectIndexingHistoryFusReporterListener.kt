@@ -22,7 +22,6 @@ internal class ProjectIndexingHistoryFusReporterListener : ProjectIndexingActivi
       history.project,
       history.indexingActivitySessionId,
       history.scanningSessionId,
-      history.isTriggeredByIndexRestart,
       times.scanningType,
       pausedDurationMillis != 0L,
       totalTimeWithPausesMillis,
