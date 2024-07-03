@@ -49,7 +49,7 @@ inline fun inlineFunThrowException() {
     // STEP_OVER: 2
     // RESUME: 1
     //Breakpoint!
-    val a = "aaa"
+    val a = "1"
     synchronized(a) {
         throw IllegalArgumentException()
     }
