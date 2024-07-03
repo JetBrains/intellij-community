@@ -851,7 +851,7 @@ open class FileEditorManagerImpl(
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
-        openInRightSplit(file)?.let {
+        openInRightSplit(file, options.requestFocus)?.let {
           return it
         }
       }
@@ -897,9 +897,12 @@ open class FileEditorManagerImpl(
     }
     else if (mode == OpenMode.RIGHT_SPLIT) {
       withContext(Dispatchers.EDT) {
-        openInRightSplit(file)
-      }?.let {
-        return it
+        openInRightSplit(file, options.requestFocus)
+      }?.let { composite ->
+        if (composite is EditorComposite) {
+          composite.waitForAvailable()
+        }
+        return composite
       }
     }
 
@@ -974,9 +977,8 @@ open class FileEditorManagerImpl(
       if (currentWindow != null && currentWindow.inSplitter() &&
           currentWindow.tabCount == 1 &&
           currentWindow.selectedComposite?.selectedEditor === currentEditor) {
-        val siblingWindow = currentWindow.getSiblings().firstOrNull()
-        if (siblingWindow != null) {
-          return siblingWindow
+        currentWindow.siblings().firstOrNull()?.let {
+          return it
         }
       }
     }
@@ -1000,18 +1002,21 @@ open class FileEditorManagerImpl(
     }.retrofit()
   }
 
-  private fun openInRightSplit(file: VirtualFile): FileEditorComposite? {
-    val active = splitters
-    val window = active.currentWindow
-    if (window == null || window.inSplitter() && file == window.selectedFile && file == window.files().lastOrNull()) {
-      // already in right splitter
-      return null
+  @RequiresEdt
+  private fun openInRightSplit(file: VirtualFile, requestFocus: Boolean): FileEditorComposite? {
+    val window = splitters.currentWindow ?: return null
+    if (window.inSplitter()) {
+      val composite = window.siblings().lastOrNull()?.composites()?.firstOrNull { it.file == file }
+      if (composite != null) {
+        // already in right splitter
+        if (requestFocus) {
+          window.setCurrentCompositeAndSelectTab(composite)
+          focusEditorOnComposite(composite = composite, splitters = window.owner)
+        }
+        return composite
+      }
     }
-
-    val split = active.openInRightSplit(file) ?: return null
-    val editorsWithProviders = split.composites().flatMap(EditorComposite::allEditorsWithProviders).toList()
-    return FileEditorComposite.createFileEditorComposite(allEditors = editorsWithProviders.map { it.fileEditor },
-                                                         allProviders = editorsWithProviders.map { it.provider })
+    return window.owner.openInRightSplit(file)?.composites()?.firstOrNull { it.file == file }
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")

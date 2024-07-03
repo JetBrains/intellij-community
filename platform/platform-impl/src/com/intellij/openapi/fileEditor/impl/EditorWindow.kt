@@ -434,7 +434,7 @@ class EditorWindow internal constructor(
 
   // we must select tab in the same EDT event (same command) - IdeDocumentHistoryImpl rely on that
   @RequiresEdt
-  private fun setCurrentCompositeAndSelectTab(composite: EditorComposite) {
+  internal fun setCurrentCompositeAndSelectTab(composite: EditorComposite) {
     tabbedPane.tabs.tabs.find { it.composite == composite }?.let {
       tabbedPane.editorTabs.select(info = it, requestFocus = false)
     }
@@ -486,7 +486,7 @@ class EditorWindow internal constructor(
     }
 
     if (!forceSplit && inSplitter()) {
-      val target = getSiblings()[0]
+      val target = siblings().first()
       val selectedComposite = selectedComposite
       if (virtualFile != null && selectedComposite != null) {
         owner.manager.openFileImpl(
@@ -589,12 +589,15 @@ class EditorWindow internal constructor(
   }
 
   @Deprecated("Use getSiblings()", ReplaceWith("getSiblings()"))
-  fun findSiblings(): Array<EditorWindow> = getSiblings().toTypedArray()
+  fun findSiblings(): Array<EditorWindow> = siblings().toList().toTypedArray()
 
-  fun getSiblings(): List<EditorWindow> {
+  internal fun getSiblings(): List<EditorWindow> = siblings().toList()
+
+  @RequiresEdt
+  internal fun siblings(): Sequence<EditorWindow> {
     checkConsistency()
-    val splitter = (component.parent as? Splitter) ?: return emptyList()
-    return owner.windows().filter { it != this@EditorWindow && SwingUtilities.isDescendingFrom(it.component, splitter) }.toList()
+    val splitter = (component.parent as? Splitter) ?: return emptySequence()
+    return owner.windows().filter { it != this@EditorWindow && SwingUtilities.isDescendingFrom(it.component, splitter) }
   }
 
   fun requestFocus(forced: Boolean) {
@@ -735,8 +738,7 @@ class EditorWindow internal constructor(
     }
 
     if (owner.currentWindow.let { it == this || it == null }) {
-      val siblings = getSiblings()
-      owner.setCurrentWindow(window = siblings.firstOrNull(), requestFocus = true)
+      owner.setCurrentWindow(window = siblings().firstOrNull(), requestFocus = true)
     }
 
     val splitter = component.parent as Splitter

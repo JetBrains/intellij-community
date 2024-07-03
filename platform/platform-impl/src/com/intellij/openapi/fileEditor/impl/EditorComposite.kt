@@ -602,8 +602,12 @@ open class EditorComposite internal constructor(
 
   fun setSelectedEditor(editor: FileEditor) {
     val newSelection = fileEditorWithProviders.value.firstOrNull { it.fileEditor == editor }
-    LOG.assertTrue(newSelection != null, "Unable to find editor=$editor")
-    setSelectedEditor(newSelection!!)
+    if (newSelection == null) {
+      LOG.error("Unable to find editor=$editor")
+    }
+    else {
+      setSelectedEditor(newSelection)
+    }
   }
 
   fun setSelectedEditor(editorWithProvider: FileEditorWithProvider) {
