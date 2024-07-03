@@ -16,7 +16,7 @@ import java.util.*
 
 @Internal
 object IndexStatisticGroup {
-  val GROUP = EventLogGroup("indexing.statistics", 14)
+  val GROUP = EventLogGroup("indexing.statistics", 17)
 
   private val indexIdField =
     EventFields.StringValidatedByCustomRule("index_id", IndexIdRuleValidator::class.java)
