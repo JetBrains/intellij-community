@@ -5,11 +5,12 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp() = runBlocking {
     super.setUp()
 
     importProjectAsync("""
@@ -20,7 +21,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindModelPropertyFromReference() = runBlocking(Dispatchers.EDT) {
+  fun testFindModelPropertyFromReference() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -29,13 +30,15 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{project.version}</description>
                        """.trimIndent())
 
-    assertSearchResults(projectPom,
-                        findTag("project.name"),
-                        findTag("project.description"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResults(projectPom,
+                          findTag("project.name"),
+                          findTag("project.description"))
+    }
   }
 
   @Test
-  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking(Dispatchers.EDT) {
+  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -44,13 +47,15 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{pom.version}</description>
                        """.trimIndent())
 
-    assertSearchResults(projectPom,
-                        findTag("project.name"),
-                        findTag("project.description"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResults(projectPom,
+                          findTag("project.name"),
+                          findTag("project.description"))
+    }
   }
 
   @Test
-  fun testFindUsagesFromTag() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesFromTag() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -59,13 +64,15 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    assertSearchResults(projectPom,
-                        findTag("project.name"),
-                        findTag("project.description"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResults(projectPom,
+                          findTag("project.name"),
+                          findTag("project.description"))
+    }
   }
 
   @Test
-  fun testFindUsagesFromTagValue() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesFromTagValue() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -73,11 +80,13 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <name>${'$'}{project.version}</name>
                        """.trimIndent())
 
-    assertSearchResults(projectPom, findTag("project.name"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResults(projectPom, findTag("project.name"))
+    }
   }
 
   @Test
-  fun testFindUsagesFromProperty() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesFromProperty() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -88,11 +97,13 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertSearchResultsInclude(projectPom, findTag("project.name"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResultsInclude(projectPom, findTag("project.name"))
+    }
   }
 
   @Test
-  fun testFindUsagesForEnvProperty() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesForEnvProperty() = runBlocking {
     createProjectPom("""
   <groupId>test</groupId>
   <artifactId>module1</artifactId>
@@ -101,11 +112,13 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   <description>${"$"}{env.${envVar}}</description>
   """.trimIndent())
 
-    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+    }
   }
 
   @Test
-  fun testFindUsagesForSystemProperty() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesForSystemProperty() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -114,11 +127,13 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{user.home}</description>
                        """.trimIndent())
 
-    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+    withContext(Dispatchers.EDT) {
+      assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+    }
   }
 
   @Test
-  fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
     importProjectAsync("""
@@ -139,12 +154,14 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${user<caret>.home}abc")
 
-    val result = search(f)
-    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
+    withContext(Dispatchers.EDT) {
+      val result = search(f)
+      assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
+    }
   }
 
   @Test
-  fun testHighlightingFromTag() = runBlocking(Dispatchers.EDT) {
+  fun testHighlightingFromTag() = runBlocking {
     createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
@@ -153,8 +170,10 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    assertHighlighted(projectPom,
-                      HighlightPointer(findTag("project.name"), "project.version"),
-                      HighlightPointer(findTag("project.description"), "version"))
+    withContext(Dispatchers.EDT) {
+      assertHighlighted(projectPom,
+                        HighlightPointer(findTag("project.name"), "project.version"),
+                        HighlightPointer(findTag("project.description"), "version"))
+    }
   }
 }
