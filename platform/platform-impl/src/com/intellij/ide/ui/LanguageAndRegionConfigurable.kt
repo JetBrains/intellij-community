@@ -14,7 +14,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
@@ -113,7 +112,7 @@ class LanguageAndRegionUi {
       }
 
       panel.row(IdeBundle.message("combobox.region")) {
-        val helpUrl = (HelpManager.getInstance() as HelpManagerImpl).getHelpUrl("region-settings")
+        val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
 
         val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
         val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)

@@ -3641,7 +3641,7 @@ f:com.intellij.formatting.visualLayer.VisualFormattingLayerServiceKt
 c:com.intellij.help.impl.HelpManagerImpl
 - com.intellij.openapi.help.HelpManager
 - <init>():V
-- getHelpUrl(java.lang.String):java.lang.String
+- s:getHelpUrl(java.lang.String):java.lang.String
 - invokeHelp(java.lang.String):V
 f:com.intellij.help.impl.MacHelpUtil
 - <init>():V
