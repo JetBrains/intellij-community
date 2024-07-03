@@ -49,6 +49,21 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
 
+  fun hoverItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
+    findItemIndex(itemText, fullMatch)?.let { index ->
+      if (offset == null) {
+        hoverItemAtIndex(index)
+      } else {
+        val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
+        println("cellBounds: ${cellBounds}")
+        val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
+        check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
+        robot.moveMouse(component, cellOffset)
+      }
+    } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
+  }
+
+
   fun clickItemAtIndex(index: Int) = fixture.clickItemAtIndex(index)
 
   fun collectIconsAtIndex(index: Int) = fixture.collectIconsAtIndex(index)
