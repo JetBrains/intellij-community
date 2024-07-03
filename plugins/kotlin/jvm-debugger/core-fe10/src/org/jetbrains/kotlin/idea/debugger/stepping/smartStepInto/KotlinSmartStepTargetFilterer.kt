@@ -64,6 +64,8 @@ class KotlinSmartStepTargetFilterer(
             .handleValueClassMethods(methodInfo)
             .handleDefaultArgs()
             .handleDefaultInterfaces()
+            .handleAccessMethods()
+            .handleInvokeSuspend(methodInfo)
         return matches(updatedOwner, updatedName, updatedSignature, currentCount)
     }
 
@@ -172,6 +174,18 @@ private fun BytecodeSignature.handleDefaultInterfaces(): BytecodeSignature {
         signature = buildSignature(signature, 1, fromStart = true)
     )
 }
+
+private fun BytecodeSignature.handleAccessMethods(): BytecodeSignature {
+    if (!name.startsWith("access\$")) return this
+    return copy(name = name.removePrefix("access\$"))
+}
+
+private fun BytecodeSignature.handleInvokeSuspend(methodInfo: CallableMemberInfo): BytecodeSignature {
+    if (!methodInfo.isSuspend || !methodInfo.isInvoke) return this
+    if (methodInfo.name != "invokeSuspend" || name != "invoke") return this
+    return copy(name = "invokeSuspend")
+}
+
 
 private fun buildSignature(
     originalSignature: String,
