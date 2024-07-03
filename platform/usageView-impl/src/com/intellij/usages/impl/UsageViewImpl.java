@@ -48,8 +48,8 @@ import com.intellij.usages.impl.rules.UsageFilteringRules;
 import com.intellij.usages.rules.*;
 import com.intellij.usages.similarity.usageAdapter.SimilarUsage;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,6 +62,8 @@ import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -91,6 +93,7 @@ public class UsageViewImpl implements UsageViewEx {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
 
   private final UsageNodeTreeBuilder myBuilder;
+  @NotNull private final CoroutineScope coroutineScope;
   private MyPanel myRootPanel; // accessed in EDT only
   private JTree myTree; // accessed in EDT only
   private final ScheduledFuture<?> myFireEventsFuture;
@@ -168,9 +171,7 @@ public class UsageViewImpl implements UsageViewEx {
   private boolean myExpandingCollapsing;
   private final UsageViewTreeCellRenderer myUsageViewTreeCellRenderer;
   @Nullable private Action myRerunAction;
-  private final ExecutorService updateRequests = AppExecutorUtil
-    .createBoundedApplicationPoolExecutor("Usage View Update Requests", AppExecutorUtil.getAppExecutorService(),
-                                          JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final CoroutineDispatcherBackedExecutor updateRequests;
   private final List<ExcludeListener> myExcludeListeners = ContainerUtil.createConcurrentList();
   private final Set<Pair<Class<? extends PsiReference>, Language>> myReportedReferenceClasses
     = ConcurrentCollectionFactory.createConcurrentSet();
@@ -193,9 +194,11 @@ public class UsageViewImpl implements UsageViewEx {
 
   @ApiStatus.Internal
   public UsageViewImpl(@NotNull Project project,
+                       @NotNull CoroutineScope coroutineScope,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
                        @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
+    this.coroutineScope = coroutineScope;
     // fire events every 50 ms, not more often to batch requests
     myUniqueIdentifier = COUNTER.getAndIncrement();
     myFireEventsFuture =
@@ -303,6 +306,8 @@ public class UsageViewImpl implements UsageViewEx {
         }
       }
     };
+    updateRequests = AppJavaExecutorUtil
+      .createBoundedTaskExecutor("Usage View Update Requests", coroutineScope, JobSchedulerImpl.getJobPoolParallelism());
   }
 
   @Override
@@ -1312,7 +1317,7 @@ public class UsageViewImpl implements UsageViewEx {
   public void waitForUpdateRequestsCompletion() {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     try {
-      ((BoundedTaskExecutor)updateRequests).waitAllTasksExecuted(10, TimeUnit.MINUTES);
+      updateRequests.waitAllTasksExecuted(10, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       LOG.error(e);
@@ -1503,8 +1508,7 @@ public class UsageViewImpl implements UsageViewEx {
 
   private void queueUpdateBulk(@NotNull List<? extends Node> toUpdate, @NotNull Runnable onCompletedInEdt) {
     if (toUpdate.isEmpty() || isDisposed()) return;
-    ReadAction
-      .nonBlocking(() -> {
+    ReadAction.nonBlocking((Callable<?>)() -> {
         for (Node node : toUpdate) {
           try {
             node.update(edtFireTreeNodesChangedQueue);
@@ -1512,6 +1516,7 @@ public class UsageViewImpl implements UsageViewEx {
           catch (IndexNotReadyException ignore) {
           }
         }
+        return null;
       })
       .expireWith(this)
       .finishOnUiThread(ModalityState.defaultModalityState(), __ -> onCompletedInEdt.run())
@@ -1610,18 +1615,23 @@ public class UsageViewImpl implements UsageViewEx {
 
   @Override
   public void dispose() {
-    ThreadingAssertions.assertEventDispatchThread();
-    disposeUsageContextPanels();
-    isDisposed = true;
-    myUpdateAlarm.cancelAllRequests();
-    fusRunnable = null; // Release reference to this
+    try {
+      ThreadingAssertions.assertEventDispatchThread();
+      disposeUsageContextPanels();
+      isDisposed = true;
+      myUpdateAlarm.cancelAllRequests();
+      fusRunnable = null; // Release reference to this
 
-    cancelCurrentSearch();
-    myRerunAction = null;
-    if (myTree != null) {
-      ToolTipManager.sharedInstance().unregisterComponent(myTree);
+      cancelCurrentSearch();
+      myRerunAction = null;
+      if (myTree != null) {
+        ToolTipManager.sharedInstance().unregisterComponent(myTree);
+      }
+      disposeSmartPointers();
     }
-    disposeSmartPointers();
+    finally {
+      JobKt.getJob(coroutineScope.getCoroutineContext()).cancel(null);
+    }
   }
 
   private void disposeSmartPointers() {
