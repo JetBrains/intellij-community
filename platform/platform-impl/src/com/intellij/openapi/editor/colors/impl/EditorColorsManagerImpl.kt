@@ -379,7 +379,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   override fun getActiveVisibleScheme(): EditorColorsScheme? {
     val scheme = schemeManager.activeScheme
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly && !scheme.isVisible) {
-      return null
+      return scheme.parentScheme
     }
     return scheme?.let { getEditableCopy(it) } ?: scheme
   }
