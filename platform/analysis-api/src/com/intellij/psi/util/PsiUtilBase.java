@@ -66,7 +66,8 @@ public final class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   public static @Nullable PsiElement getElementAtCaret(@NotNull Editor editor) {
     Project project = editor.getProject();
     if (project == null) return null;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+    CodeInsightContext context = EditorContextManager.getEditorContext(editor, project);
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument(), context);
     return file == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
   }
 
