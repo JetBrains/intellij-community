@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.actions.JvmSmartStepIntoErrorReporter
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler
 import com.intellij.debugger.actions.JvmSmartStepIntoHandler.SmartStepIntoDetectionStatus
 import com.intellij.debugger.actions.SmartStepTarget
@@ -17,6 +18,7 @@ import com.intellij.debugger.statistics.DebuggerStatistics
 import com.intellij.debugger.statistics.Engine
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parents
 import com.intellij.util.Range
@@ -27,9 +29,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.compute
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinDebuggerSettings
-import org.jetbrains.kotlin.idea.debugger.base.util.DexDebugFacility
-import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
-import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.getContainingBlockOrMethod
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -96,7 +96,8 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         }
         var targets = findSmartStepTargets(expression, lines)
         if (session != null) {
-            targets = calculateSmartStepTargetsToShow(targets, session.process, lines.toClosedRange())
+            val context = SmartStepIntoContext(expression, session.process, position, lines.toClosedRange())
+            targets = calculateSmartStepTargetsToShow(targets, context)
         } else {
             DebuggerStatistics.logSmartStepIntoTargetsDetection(position.file.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
         }
@@ -112,20 +113,18 @@ private fun findSmartStepTargets(element: KtElement, lines: Range<Int>): List<Sm
     return targets.toList()
 }
 
-private fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarget>, debugProcess: DebugProcessImpl, lines: ClosedRange<Int>): List<SmartStepTarget> {
+private fun calculateSmartStepTargetsToShow(targets: List<SmartStepTarget>, context: SmartStepIntoContext): List<SmartStepTarget> {
     val methodTargets = targets.filterIsInstance<KotlinMethodSmartStepTarget>()
-    val notYetExecutedMethodTargets = methodTargets.filterAlreadyExecuted(debugProcess, lines).toHashSet()
+    val notYetExecutedMethodTargets = methodTargets.filterAlreadyExecuted(context).toHashSet()
     val targetsToShow = targets.filter { it !is KotlinMethodSmartStepTarget || it in notYetExecutedMethodTargets }
     val removed = methodTargets.toHashSet() - notYetExecutedMethodTargets
     fixOrdinalsAfterFiltering(targets, removed)
     return targetsToShow
 }
 
-private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
-    debugProcess: DebugProcessImpl,
-    lines: ClosedRange<Int>
-): List<KotlinMethodSmartStepTarget> {
+private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(context: SmartStepIntoContext): List<KotlinMethodSmartStepTarget> {
     DebuggerManagerThreadImpl.assertIsManagerThread()
+    val debugProcess = context.debugProcess
     if (isEmpty()) {
         DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.SUCCESS)
         return this
@@ -139,7 +138,7 @@ private fun List<KotlinMethodSmartStepTarget>.filterAlreadyExecuted(
         DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
         return this
     }
-    return filterSmartStepTargets(location, lines, this, debugProcess)
+    return filterSmartStepTargets(location, this, context)
 }
 
 private fun fixOrdinalsAfterFiltering(all: List<SmartStepTarget>, removed: Set<KotlinMethodSmartStepTarget>) {
@@ -194,10 +193,10 @@ private fun Range<Int>.coerceAtLeast(value: Int): Range<Int> =
 
 private fun filterSmartStepTargets(
     location: Location,
-    lines: ClosedRange<Int>,
     targets: List<KotlinMethodSmartStepTarget>,
-    debugProcess: DebugProcessImpl
+    context: SmartStepIntoContext,
 ): List<KotlinMethodSmartStepTarget> {
+    val (expression, debugProcess, position, lines) = context
     val method = location.safeMethod() ?: run {
         DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.BYTECODE_NOT_AVAILABLE)
         return targets
@@ -229,14 +228,28 @@ private fun filterSmartStepTargets(
         }
     }, true)
 
-    // We failed to filter out all smart step targets during the traversal of the whole method, so
-    // we can't guarantee the correctness of filtering.
-    if (targetFilterer.getUnvisitedTargets().isNotEmpty()) {
-        DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.TARGETS_MISMATCH)
+    val unvisitedAtTheEnd = targetFilterer.getUnvisitedTargets()
+    if (unvisitedAtTheEnd.isNotEmpty()) {
+        val targetStrings = unvisitedAtTheEnd.map { "Target(name=${it.methodInfo.name}, ordinal=${it.ordinal})" }
+        val session = debugProcess.session
+        if (Registry.`is`("debugger.kotlin.report.smart.step.into.targets.detection.failure")) {
+            JvmSmartStepIntoErrorReporter.report(expression, session, position, "Failed to locate target calls: $targetStrings")
+        }
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(session?.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.TARGETS_MISMATCH)
+        // We failed to filter out all smart step targets during the traversal of the whole method, so
+        // we can't guarantee the correctness of filtering.
         return targets
+    } else {
+        DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.SUCCESS)
     }
-    DebuggerStatistics.logSmartStepIntoTargetsDetection(debugProcess.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.SUCCESS)
     return unvisitedTargets!!
 }
 
 private fun Range<Int>.toClosedRange() = from..to
+
+private data class SmartStepIntoContext(
+    val expression: KtElement,
+    val debugProcess: DebugProcessImpl,
+    val position: SourcePosition,
+    val lines: ClosedRange<Int>,
+)
