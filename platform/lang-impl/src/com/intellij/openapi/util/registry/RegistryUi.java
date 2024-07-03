@@ -30,6 +30,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -632,80 +633,64 @@ public class RegistryUi implements Disposable {
     }
 
     @Override
-    protected @Nullable Transferable createTransferable(JComponent c) {
-      // this is copy of javax.swing.plaf.basic.BasicTableUI.TableTransferHandler.createTransferable
-      // it's hidden under protected and package-private access, thus copy-pasted here
-
-      if (!(c instanceof JTable table)) {
-        return null;
-      }
-
-      if (!table.getRowSelectionAllowed() && !table.getColumnSelectionAllowed()) {
-        return null;
-      }
-
-      int[] rows = getSelectedRows(table);
-      int[] cols = getSelectedColumns(table);
-
-      if (rows == null || cols == null || rows.length == 0 || cols.length == 0) {
-        return null;
-      }
-
-      StringBuilder plainStr = new StringBuilder();
-      StringBuilder htmlStr = new StringBuilder();
-
-      htmlStr.append("<html>\n<body>\n<table>\n");
-
-      for (int i : rows) {
-        htmlStr.append("<tr>\n");
-        for (int j : cols) {
-          Object obj = table.getValueAt(i, j);
-          String val = ((obj == null) ? "" : obj.toString());
-          plainStr.append(val).append('\t');
-          htmlStr.append("  <td>").append(val).append("</td>\n");
-        }
-        // we want a newline at the end of each line and not a tab
-        plainStr.deleteCharAt(plainStr.length() - 1).append('\n');
-        htmlStr.append("</tr>\n");
-      }
-
-      // remove the last newline
-      plainStr.deleteCharAt(plainStr.length() - 1);
-      htmlStr.append("</table>\n</body>\n</html>");
-
-      return new TextTransferable(htmlStr.toString(), plainStr.toString());
-    }
-
-    private static int[] getSelectedColumns(@NotNull JTable table) {
-      if (table.getColumnSelectionAllowed()) {
-        return table.getSelectedColumns();
-      }
-      else {
-        return arrayOfConsequtiveNumbers(table.getColumnCount());
-      }
-    }
-
-    private static int[] getSelectedRows(@NotNull JTable table) {
-      if (table.getRowSelectionAllowed()) {
-        return table.getSelectedRows();
-      }
-      else {
-        int rowCount = table.getRowCount();
-        return arrayOfConsequtiveNumbers(rowCount);
-      }
-    }
-
-    private static int @NotNull [] arrayOfConsequtiveNumbers(int size) {
-      int[] array = new int[size];
-      for (int i = 0; i < size; i++) {
-        array[i] = i;
-      }
-      return array;
+    public int getSourceActions(JComponent c) {
+      return COPY;
     }
 
     @Override
-    public int getSourceActions(JComponent c) {
-      return COPY;
+    protected @Nullable Transferable createTransferable(JComponent c) {
+      JTable table = (JTable)c;
+
+      int[] selectedRows = table.getSelectedRows();
+      if (selectedRows == null || selectedRows.length == 0) {
+        return null;
+      }
+
+      String htmlText = buildHtmlText(table, selectedRows);
+      String plainText = buildPlainText(table, selectedRows);
+
+      return new TextTransferable(htmlText, plainText);
+    }
+
+    private static @NotNull String buildPlainText(@NotNull JTable table, int[] rows) {
+      StringBuilder stringBuilder = new StringBuilder();
+      int lastRow = rows[rows.length - 1];
+
+      int columnCount = table.getColumnCount();
+      for (int row : rows) {
+        for (int col = 0; col < columnCount; col++) {
+          String text = getItemAsString(table, row, col);
+          stringBuilder.append(text);
+          if (col + 1 != columnCount) {
+            stringBuilder.append('\t');
+          }
+        }
+        if (lastRow != row) {
+          stringBuilder.append('\n');
+        }
+      }
+
+      return stringBuilder.toString();
+    }
+
+    private static @NotNull String buildHtmlText(@NotNull JTable table, int[] rows) {
+      HtmlBuilder builder = new HtmlBuilder();
+      int columnCount = table.getColumnCount();
+      for (int row : rows) {
+        HtmlBuilder rowItem = new HtmlBuilder();
+        for (int col = 0; col < columnCount; col++) {
+          @NonNls String text = getItemAsString(table, row, col);
+          HtmlChunk.Element item = new HtmlBuilder().append(text).wrapWith("td");
+          rowItem.append(item);
+        }
+        builder.append(rowItem.wrapWith("tr"));
+      }
+      return builder.wrapWith("table").wrapWith("body").wrapWith("html").toString();
+    }
+
+    private static String getItemAsString(@NonNls JTable table, int row, int col) {
+      Object obj = table.getValueAt(row, col);
+      return (obj == null) ? "" : obj.toString();
     }
   }
 }
