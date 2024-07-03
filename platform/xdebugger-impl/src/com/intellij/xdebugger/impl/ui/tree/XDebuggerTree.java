@@ -34,6 +34,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -131,6 +132,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final TreeExpansionListener myTreeExpansionListener;
   private final XDebuggerPinToTopManager myPinToTopManager;
   private XDebuggerTreeRestorer myCurrentRestorer;
+  @Nullable private TreeSpeedSearch myTreeSpeedSearch;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -244,14 +246,23 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   /**
+   * Called to find an element with this name in the tree and request its focus.
+   */
+  @ApiStatus.Internal
+  public void findElementAndRequestFocus(String searchQuery) {
+    if (myTreeSpeedSearch == null) return;
+    myTreeSpeedSearch.findAndSelectElement(searchQuery);
+  }
+
+  /**
    * Called from the tree constructor during initialization. Override if the speed search is not required for a derived class.
    */
   protected void installSpeedSearch() {
     if (Registry.is("debugger.variablesView.rss")) {
-      XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
+      myTreeSpeedSearch = XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
     }
     else {
-      TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
+      myTreeSpeedSearch = TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
     }
   }
 
