@@ -2,8 +2,9 @@ package com.intellij.driver.sdk
 
 import com.intellij.driver.client.ProjectRef
 import com.intellij.driver.client.Remote
+import com.intellij.driver.model.RdTarget
 
-@Remote("com.intellij.openapi.project.Project")
+@Remote("com.intellij.openapi.project.Project", rdTarget = RdTarget.FRONTEND)
 interface Project : ProjectRef {
   fun isOpen(): Boolean
   fun isInitialized(): Boolean
