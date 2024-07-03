@@ -338,7 +338,16 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       val file = findOrCreateFile(SETTINGS_FILE)
       val projectAware = ProjectAwareWrapper(ProjectAware(myProject, projectId, autoImportAware), it)
       register(projectAware, parentDisposable = it)
-      DummyExternalSystemTestBench(projectAware).test(file)
+      DummyExternalSystemTestBench(projectAware).apply {
+        assertStateAndReset(
+          numReload = 1,
+          numReloadStarted = 1,
+          numReloadFinished = 1,
+          event = "register project without cache"
+        )
+
+        test(file)
+      }
     }
   }
 
@@ -365,7 +374,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       AutoImportProjectTracker.State() to AutoImportProjectTrackerSettings.State(),
     test: SimpleTestBench.() -> Unit
   ): Pair<AutoImportProjectTracker.State, AutoImportProjectTrackerSettings.State> {
-    projectAware.resetAssertionCounters()
     return withProjectTracker(state) {
       register(projectAware, parentDisposable = it)
       SimpleTestBench(projectAware).test()
@@ -379,7 +387,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       register(projectAware, parentDisposable = it)
 
       SimpleTestBench(projectAware).apply {
-        assertState(
+        assertStateAndReset(
           numReload = 1,
           numSettingsAccess = 1,
           notified = false,
@@ -390,12 +398,10 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
         )
 
         val settingsFile = createSettingsVirtualFile(relativePath)
-        assertState(numReload = 1, numSettingsAccess = 2, notified = true, event = "settings file is created")
+        assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = true, event = "settings file is created")
 
         scheduleProjectReload()
-        assertState(numReload = 2, numSettingsAccess = 3, notified = false, event = "project is reloaded")
-
-        resetAssertionCounters()
+        assertStateAndReset(numReload = 1, numSettingsAccess = 1, notified = false, event = "project is reloaded")
 
         test(settingsFile)
       }
@@ -459,8 +465,6 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
     fun setModificationTypeAdjustingRule(rule: (path: String, type: ExternalSystemModificationType) -> ExternalSystemModificationType) =
       projectAware.modificationTypeAdjustingRule.set(rule)
 
-    fun resetAssertionCounters() = projectAware.resetAssertionCounters()
-
     fun createSettingsVirtualFile(relativePath: String): VirtualFile {
       registerSettingsFile(relativePath)
       return createFile(relativePath)
@@ -477,14 +481,14 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       }
     }
 
-    fun assertState(
+    fun assertStateAndReset(
       numReload: Int? = null,
       numSettingsAccess: Int? = null,
       numSubscribing: Int? = null,
       numUnsubscribing: Int? = null,
       autoReloadType: AutoReloadType = SELECTIVE,
       notified: Boolean,
-      event: String
+      event: String,
     ) {
       assertProjectAware(projectAware, numReload, numSettingsAccess, numSubscribing, numUnsubscribing, event)
       assertProjectTrackerSettings(autoReloadType, event = event)
@@ -492,6 +496,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
         true -> assertNotificationAware(projectAware.projectId, event = event)
         else -> assertNotificationAware(event = event)
       }
+      projectAware.resetAssertionCounters()
     }
 
     fun waitForProjectReloadFinish(numExpectedReloads: Int = 1, action: () -> Unit) {
@@ -513,6 +518,22 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
   }
 
   inner class DummyExternalSystemTestBench(val projectAware: ProjectAwareWrapper) {
+
+    fun resetAssertionCounters() = projectAware.resetAssertionCounters()
+
+    fun assertStateAndReset(
+      numReload: Int? = null,
+      numReloadStarted: Int? = null,
+      numReloadFinished: Int? = null,
+      numSubscribing: Int? = null,
+      numUnsubscribing: Int? = null,
+      autoReloadType: AutoReloadType = SELECTIVE,
+      event: String,
+    ) {
+      assertState(numReload, numReloadStarted, numReloadFinished, numSubscribing, numUnsubscribing, autoReloadType, event)
+      resetAssertionCounters()
+    }
+
     fun assertState(numReload: Int? = null,
                     numReloadStarted: Int? = null,
                     numReloadFinished: Int? = null,
