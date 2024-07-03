@@ -17,39 +17,52 @@ mod tests {
 
     #[test]
     fn classpath_test() {
-        let dump = run_launcher(LauncherRunSpec::standard().with_dump().assert_status()).dump();
-        let classpath = &dump.systemProperties["java.class.path"];
+        let test = prepare_test_env(LauncherLocation::Standard);
+        classpath_test_impl(&test);
+    }
 
-        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
-
-        let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
-        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+    #[test]
+    fn classpath_test_on_unicode_path() {
+        let suffix = "δοκιμή-परीक्षा-시험";
+        let test = prepare_custom_test_env(LauncherLocation::Standard, Some(suffix), true);
+        classpath_test_impl(&test);
     }
 
     #[test]
     #[cfg(target_os = "windows")]
     fn classpath_test_on_unc() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
-        let test_unc = test_orig.to_unc();
-        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
-        let classpath = &dump.systemProperties["java.class.path"];
-
-        assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
-
-        let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
-        assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+        let test = test_orig.to_unc();
+        classpath_test_impl(&test);
     }
 
     #[test]
     #[cfg(target_os = "windows")]
     fn classpath_test_on_ns_prefixed_path() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
-        let test_unc = test_orig.to_ns_prefix();
-        let dump = run_launcher_ext(&test_unc, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+        let test = test_orig.to_ns_prefix();
+        classpath_test_impl(&test);
+    }
+
+    #[test]
+    #[cfg(target_os = "windows")]
+    fn classpath_test_on_acp() {
+        use windows::Win32::Globalization::{CP_ACP, MB_ERR_INVALID_CHARS, MultiByteToWideChar};
+
+        let acp_chars = [0xc0, 0xc1, 0xc2, 0xc3];
+        let mut ucs_chars = vec![0u16; 4];
+        let ucs_len = unsafe { MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &acp_chars, Some(&mut ucs_chars)) };
+        assert_eq!(ucs_len, 4, "MultiByteToWideChar={} err={}", ucs_len, std::io::Error::last_os_error());
+        let utf_str = String::from_utf16(&ucs_chars).unwrap();
+
+        let test = prepare_custom_test_env(LauncherLocation::Standard, Some(&utf_str), true);
+        classpath_test_impl(&test);
+    }
+
+    fn classpath_test_impl(test: &TestEnvironment) {
+        let dump = run_launcher_ext(test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
         let classpath = &dump.systemProperties["java.class.path"];
-
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
-
         let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
         assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
     }
@@ -253,7 +266,7 @@ mod tests {
 
     #[test]
     fn selecting_jdk_home_env_runtime_test() {
-        let test = prepare_no_jbr_test_env(LauncherLocation::Standard);
+        let test = prepare_custom_test_env(LauncherLocation::Standard, None, false);
         let expected_rt = test.create_jbr_link("_jdk_home_jbr");
         let env = HashMap::from([("JDK_HOME", expected_rt.to_str().unwrap())]);
 
@@ -263,7 +276,7 @@ mod tests {
 
     #[test]
     fn selecting_java_home_env_runtime_test() {
-        let test = prepare_no_jbr_test_env(LauncherLocation::Standard);
+        let test = prepare_custom_test_env(LauncherLocation::Standard, None, false);
         let expected_rt = test.create_jbr_link("_java_home_jbr");
         let env = HashMap::from([("JAVA_HOME", expected_rt.to_str().unwrap())]);
 
