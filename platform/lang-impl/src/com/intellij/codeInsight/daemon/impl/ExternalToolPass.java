@@ -45,7 +45,7 @@ import java.util.function.Function;
 public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
-  private final List<MyData<?,?>> myAnnotationData = new ArrayList<>();
+  private final List<MyData<?,?>> myAnnotationData = Collections.synchronizedList(new ArrayList<>());
   private volatile @NotNull List<? extends HighlightInfo> myHighlightInfos = Collections.emptyList();
 
   private static final class MyData<K,V> {

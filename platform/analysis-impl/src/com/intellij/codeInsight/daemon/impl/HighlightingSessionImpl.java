@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -299,19 +300,23 @@ public final class HighlightingSessionImpl implements HighlightingSession {
   }
 
   @Deprecated
-  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights, int group, boolean cleanOldHighlights) {
+  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> fileLevelHighlights, int group, boolean cleanOldHighlights, @NotNull HighlightersRecycler recycler) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     PsiFile psiFile = getPsiFile();
     boolean shouldUpdate = !fileLevelHighlights.isEmpty() || codeAnalyzer.hasFileLevelHighlights(group, psiFile);
     if (shouldUpdate) {
+      List<RangeHighlighter> reusedHighligters = ContainerUtil.map(fileLevelHighlights, __->recycler.pickupFileLevelRangeHighlighter(psiFile.getTextLength()));
+
       Future<?> future = EdtExecutorService.getInstance().submit(() -> {
         if (project.isDisposed() || isCanceled()) return;
         if (cleanOldHighlights) {
           codeAnalyzer.cleanFileLevelHighlights(group, psiFile);
         }
-        for (HighlightInfo fileLevelInfo : fileLevelHighlights) {
-          codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, null);
+        for (int i = 0; i < fileLevelHighlights.size(); i++) {
+          HighlightInfo fileLevelInfo = fileLevelHighlights.get(i);
+          RangeHighlighter reused = reusedHighligters.get(i);
+          codeAnalyzer.addFileLevelHighlight(group, fileLevelInfo, psiFile, reused);
         }
       });
       pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
@@ -323,11 +328,9 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {
-      if (!project.isDisposed()) {
-        if (!isCanceled()) {
-          codeAnalyzer.removeFileLevelHighlight(getPsiFile(), oldFileLevelInfo);
-          codeAnalyzer.addFileLevelHighlight(oldFileLevelInfo.getGroup(), newFileLevelInfo, getPsiFile(), toReuse);
-        }
+      if (!project.isDisposed() && !isCanceled()) {
+        codeAnalyzer.removeFileLevelHighlight(getPsiFile(), oldFileLevelInfo);
+        codeAnalyzer.addFileLevelHighlight(oldFileLevelInfo.getGroup(), newFileLevelInfo, getPsiFile(), toReuse);
       }
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
