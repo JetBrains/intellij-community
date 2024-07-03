@@ -15,6 +15,7 @@
   -->
 <idea-plugin>
   <extensionPoints>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.codeStyle.ReferenceAdjuster" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.codeStyle.ReferenceAdjuster"/>
     </extensionPoint>

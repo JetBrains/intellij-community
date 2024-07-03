@@ -99,6 +99,7 @@
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.repositoryLibrary" beanClass="com.intellij.jarRepository.RepositoryLibraryDefinition"
                     dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.encapsulateFields.Helper" beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.encapsulateFields.EncapsulateFieldHelper"/>
@@ -132,6 +133,7 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
     </extensionPoint>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.safeDelete.JavaSafeDeleteDelegate"/>
@@ -179,6 +181,7 @@
     <extensionPoint qualifiedName="com.intellij.java.consoleDecorator"
                     interface="com.intellij.execution.application.JavaConsoleDecorator" dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.OrderRootTypeUI"
                     beanClass="com.intellij.openapi.extensions.KeyedFactoryEPBean"
                     dynamic="true">
@@ -245,6 +248,7 @@
     <extensionPoint qualifiedName="com.intellij.java.compiler" area="IDEA_PROJECT"
                     interface="com.intellij.compiler.impl.javaCompiler.BackendCompiler" dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="com.intellij.configuration.ModuleStructureExtension" dynamic="true"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureExtension"/>
 

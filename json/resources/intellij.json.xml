@@ -178,8 +178,10 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory"
                     interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ContentAwareSchemaFileProvider"
                     interface="com.jetbrains.jsonSchema.extension.ContentAwareJsonSchemaFileProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonSchemaGotoDeclarationSuppressor" dynamic="true"

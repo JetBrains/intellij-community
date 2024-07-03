@@ -34,6 +34,7 @@
 
     <extensionPoint name="inspectionToolProvider" interface="com.intellij.codeInspection.InspectionToolProvider" dynamic="true"/>
     <extensionPoint name="dynamicInspectionsProvider" interface="com.intellij.codeInspection.ex.DynamicInspectionsProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="codeInspection.InspectionExtension" interface="com.intellij.codeInspection.lang.InspectionExtensionsFactory" dynamic="true"/>
     <extensionPoint name="inspectionsReportConverter" interface="com.intellij.codeInspection.InspectionsReportConverter" dynamic="true"/>
 

@@ -144,6 +144,7 @@
                     beanClass="com.intellij.platform.ProjectTemplateEP" dynamic="true"/>
 
     <extensionPoint name="ideStartupWizard" interface="com.intellij.platform.ide.bootstrap.IdeStartupWizard" dynamic="false"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="ApplicationLoadListener" interface="com.intellij.ide.ApplicationLoadListener" dynamic="false"/>
     <extensionPoint name="ideEventQueueDispatcher" interface="com.intellij.ide.IdeEventQueue$EventDispatcher" dynamic="true"/>
 
@@ -337,12 +338,18 @@
 
     <extensionPoint name="cachesInvalidator" interface="com.intellij.ide.caches.CachesInvalidator" dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.DiffTool" interface="com.intellij.diff.DiffTool" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.MergeTool" interface="com.intellij.diff.merge.MergeTool" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.DiffExtension" interface="com.intellij.diff.DiffExtension" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.lang.DiffIgnoredRangeProvider" interface="com.intellij.diff.lang.DiffIgnoredRangeProvider" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.impl.DiffToolSubstitutor" interface="com.intellij.diff.impl.DiffToolSubstitutor" dynamic="true"/>
     <extensionPoint name="diff.editor.diffRequestProcessorEditorCustomizer" interface="com.intellij.diff.editor.DiffRequestProcessorEditorCustomizer" dynamic="true"/>
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.merge.external.AutomaticExternalMergeTool" interface="com.intellij.diff.merge.external.AutomaticExternalMergeTool" dynamic="true"/>
     <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
 
@@ -354,10 +361,12 @@
                     interface="com.intellij.execution.ExecutionActionSuppressor"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.actions.ShowDiffAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="diff.actions.ShowStandaloneDiffAction.ExtensionProvider"
                     interface="com.intellij.openapi.actionSystem.AnActionExtensionProvider"
                     dynamic="true"/>
@@ -411,6 +420,7 @@
     <extensionPoint name="iconMapperSuppressor" beanClass="java.lang.Object" dynamic="false"/>
     <extensionPoint name="uiChangeListener" interface="com.intellij.ui.ExperimentalUI$Listener" dynamic="true"/>
 
+    <!--suppress PluginXmlValidity -->
     <extensionPoint name="tree.CustomLanguageASTComparator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.psi.tree.CustomLanguageASTComparator"/>
     </extensionPoint>
