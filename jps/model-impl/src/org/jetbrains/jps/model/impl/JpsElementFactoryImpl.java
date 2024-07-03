@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.*;
+import org.jetbrains.jps.model.ex.JpsReferenceCustomFactory;
 import org.jetbrains.jps.model.library.JpsLibraryReference;
 import org.jetbrains.jps.model.library.JpsLibraryType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
@@ -33,9 +34,12 @@ import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.module.impl.JpsModuleImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleReferenceImpl;
 import org.jetbrains.jps.model.module.impl.JpsModuleSourceRootImpl;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 @ApiStatus.Internal
 public final class JpsElementFactoryImpl extends JpsElementFactory {
+  private volatile Boolean hasCustomReferenceFactory;
+  
   @Override
   public JpsModel createModel() {
     return new JpsModelImpl();
@@ -72,6 +76,13 @@ public final class JpsElementFactoryImpl extends JpsElementFactory {
   @NotNull
   @Override
   public JpsModuleReference createModuleReference(@NotNull String moduleName) {
+    if (hasCustomReferenceFactory()) {
+      for (JpsReferenceCustomFactory extension : JpsServiceManager.getInstance().getExtensions(JpsReferenceCustomFactory.class)) {
+        if (extension.isEnabled()) {
+          return extension.createModuleReference(moduleName);
+        }
+      }
+    }
     return new JpsModuleReferenceImpl(moduleName);
   }
 
@@ -79,6 +90,13 @@ public final class JpsElementFactoryImpl extends JpsElementFactory {
   @Override
   public JpsLibraryReference createLibraryReference(@NotNull String libraryName,
                                                     @NotNull JpsElementReference<? extends JpsCompositeElement> parentReference) {
+    if (hasCustomReferenceFactory()) {
+      for (JpsReferenceCustomFactory extension : JpsServiceManager.getInstance().getExtensions(JpsReferenceCustomFactory.class)) {
+        if (extension.isEnabled()) {
+          return extension.createLibraryReference(libraryName, parentReference);
+        }
+      }
+    }
     return new JpsLibraryReferenceImpl(libraryName, parentReference);
   }
 
@@ -88,6 +106,20 @@ public final class JpsElementFactoryImpl extends JpsElementFactory {
     return new JpsSdkReferenceImpl<>(sdkName, sdkType, createGlobalReference());
   }
 
+  private boolean hasCustomReferenceFactory() {
+    if (hasCustomReferenceFactory == null) {
+      boolean hasEnabledFactory = false;
+      for (JpsReferenceCustomFactory extension : JpsServiceManager.getInstance().getExtensions(JpsReferenceCustomFactory.class)) {
+        if (extension.isEnabled()) {
+          hasEnabledFactory = true;
+          break;
+        }
+      }
+      hasCustomReferenceFactory = hasEnabledFactory;
+    }
+    return hasCustomReferenceFactory;
+  }
+  
   @NotNull
   @Override
   public JpsElementReference<JpsProject> createProjectReference() {
