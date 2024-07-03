@@ -66,6 +66,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.EverythingGlobalScope;
@@ -1092,7 +1093,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         if (psiElement == null) return null;
 
         PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : null;
-        if (psiFile == null) return new UsageInfo(psiElement);
+        if (psiFile == null) {
+          if (psiElement instanceof PsiFileSystemItem pfsi) {
+            VirtualFile vFile = pfsi.getVirtualFile();
+            PsiFile file = vFile == null ? null : psiElement.getManager().findFile(vFile);
+            if (file != null) {
+              return new UsageInfo(file);
+            }
+          }
+          return new UsageInfo(psiElement);
+        }
 
         StructureViewBuilder structureViewBuilder = LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(psiFile);
         if (!(structureViewBuilder instanceof TreeBasedStructureViewBuilder)) return new UsageInfo(psiElement);
