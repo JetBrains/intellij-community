@@ -6,7 +6,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowMoveAction
-import com.intellij.ide.actions.ToolWindowShowNamesAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -296,7 +295,7 @@ private fun createPopupGroup(toolWindow: ToolWindowImpl): DefaultActionGroup {
   group.add(createMoveGroup())
   group.addSeparator()
   if (ResizeStripeManager.enabled()) {
-    group.add(ToolWindowShowNamesAction())
+    group.add(ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!)
   }
   return group
 }

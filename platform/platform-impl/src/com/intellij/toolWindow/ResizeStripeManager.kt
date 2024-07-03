@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
-import com.intellij.ide.actions.ToolWindowShowNamesAction
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.OnePixelDivider
@@ -45,7 +47,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     myComponent.addMouseListener(object : PopupHandler() {
       override fun invokePopup(component: Component, x: Int, y: Int) {
         if (enabled()) {
-          val action = ToolWindowShowNamesAction()
+          val action = ActionManager.getInstance().getAction("ToolWindowShowNamesAction")!!
           val group = object : ActionGroup() {
             override fun getChildren(e: AnActionEvent?) = arrayOf(action)
           }

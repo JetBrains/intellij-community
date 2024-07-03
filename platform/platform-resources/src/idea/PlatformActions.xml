@@ -1683,5 +1683,7 @@
     </group>
 
     <action id="plugins.autoupdate.repository.view" class="com.intellij.openapi.application.PluginsAutoUpdateRepositoryViewAction" internal="true"/>
+
+    <action id="ToolWindowShowNamesAction" class="com.intellij.ide.actions.ToolWindowShowNamesAction"/>
   </actions>
 </idea-plugin>
