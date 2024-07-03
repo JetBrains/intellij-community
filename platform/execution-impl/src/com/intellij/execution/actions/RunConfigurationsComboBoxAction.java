@@ -10,16 +10,13 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.execution.ui.RedesignedRunWidgetKt;
-import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
-import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements.WriteAccess;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -52,8 +49,6 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance(RunConfigurationsComboBoxAction.class);
-
   private static final String BUTTON_MODE = "ButtonMode";
   private static final String RUN_CONFIGURATION_GROUP_ID = "RunConfigurationGroup";
 
@@ -597,107 +592,6 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
-    }
-  }
-
-  static final class EditRunConfigurationsInNewUiAction extends EditRunConfigurationsAction {
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      if (!ExperimentalUI.isNewUI()) {
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-      super.update(e);
-    }
-  }
-
-  static final class SaveTemporaryRunConfigurationExtraAction
-    extends BaseRunConfigurationExtraAction implements WriteAccess {
-
-    @Override
-    protected void doUpdate(@NotNull AnActionEvent e, Project project, @NotNull RunnerAndConfigurationSettings configuration) {
-      Presentation presentation = e.getPresentation();
-      presentation.setText(ExecutionBundle.message("choose.run.popup.save"));
-      presentation.setDescription(ExecutionBundle.message("choose.run.popup.save.description"));
-      presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.MenuSaveall : null);
-
-      presentation.setEnabledAndVisible(configuration.isTemporary());
-    }
-
-    @Override
-    protected void doActionPerformed(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
-      RunManager.getInstance(project).makeStable(configuration);
-    }
-  }
-
-  static final class DeleteRunConfigurationExtraAction
-    extends BaseRunConfigurationExtraAction implements WriteAccess {
-
-    @Override
-    protected void doUpdate(@NotNull AnActionEvent e, Project project, @NotNull RunnerAndConfigurationSettings configuration) {
-      Presentation presentation = e.getPresentation();
-      presentation.setText(ExecutionBundle.message("choose.run.popup.delete"));
-      presentation.setDescription(ExecutionBundle.message("choose.run.popup.delete.description"));
-      presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.Cancel : null);
-
-      e.getPresentation().setEnabledAndVisible(true);
-    }
-
-    @Override
-    protected void doActionPerformed(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
-      ChooseRunConfigurationPopup.deleteConfiguration(project, configuration, null);
-    }
-  }
-
-  @ApiStatus.Internal
-  public static abstract class BaseRunConfigurationExtraAction extends AnAction {
-
-    protected abstract void doUpdate(@NotNull AnActionEvent e,
-                                     @NotNull Project project,
-                                     @NotNull RunnerAndConfigurationSettings configuration);
-
-    protected abstract void doActionPerformed(@NotNull Project project,
-                                              @NotNull RunnerAndConfigurationSettings configuration);
-
-    @Override
-    public final @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-    @Override
-    public final void update(@NotNull AnActionEvent e) {
-      Project project = e.getData(CommonDataKeys.PROJECT);
-      if (project == null) {
-        LOG.trace("project is not specified in data context");
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      RunnerAndConfigurationSettings configuration = e.getData(RunToolbarPopupKt.RUN_CONFIGURATION_KEY);
-      if (configuration == null) {
-        LOG.trace("run configuration information is not specified in data context");
-        e.getPresentation().setEnabledAndVisible(false);
-        return;
-      }
-
-      doUpdate(e, project, configuration);
-    }
-
-    @Override
-    public final void actionPerformed(@NotNull AnActionEvent e) {
-      Project project = e.getData(CommonDataKeys.PROJECT);
-      if (project == null) {
-        LOG.warn("project is not specified in data context");
-        return;
-      }
-
-      RunnerAndConfigurationSettings configuration = e.getData(RunToolbarPopupKt.RUN_CONFIGURATION_KEY);
-      if (configuration == null) {
-        LOG.warn("run configuration information is not specified in data context");
-        return;
-      }
-
-      doActionPerformed(project, configuration);
     }
   }
 }
