@@ -179,7 +179,7 @@ public final class AnnotationDocGenerator {
       HelpManager helpManager = HelpManager.getInstance();
       if (helpManager instanceof HelpManagerImpl) {
         String id = isInferred ? "inferred.annotations" : "external.annotations";
-        String helpUrl = ApplicationManager.getApplication().isUnitTestMode() ? id : ((HelpManagerImpl)helpManager).getHelpUrl(id);
+        String helpUrl = ApplicationManager.getApplication().isUnitTestMode() ? id : HelpManagerImpl.getHelpUrl(id);
         if (helpUrl != null) {
           HtmlChunk.link(helpUrl, DocumentationMarkup.EXTERNAL_LINK_ICON).appendTo(buffer);
         }
