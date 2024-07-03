@@ -7,9 +7,11 @@ import com.intellij.ide.ui.IdeUiService
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.ide.navigation.NavigationOptions
@@ -19,7 +21,9 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.tree.ExpandOnDoubleClick
 import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -197,7 +201,13 @@ object EditSourceOnDoubleClickHandler {
         (project as ComponentManagerEx).getCoroutineScope().launch(ClientId.coroutineContext()) {
           val options = NavigationOptions.defaultOptions().requestFocus(true).preserveCaret(true)
           project.serviceAsync<NavigationService>().navigate(asyncContext, options)
-          whenPerformed?.run()
+          whenPerformed?.let { task ->
+            withContext(Dispatchers.EDT) {
+              blockingContext {
+                task.run()
+              }
+            }
+          }
         }
       }
       else {
