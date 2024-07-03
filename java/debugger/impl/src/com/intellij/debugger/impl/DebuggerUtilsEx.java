@@ -1169,13 +1169,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static boolean methodMatches(@NotNull PsiMethod psiMethod,
                                       String className,
-                                      String name,
+                                      @Nullable String name,
                                       String signature,
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
       if (containingClass != null &&
-          JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
+          (name == null || JVMNameUtil.getJVMMethodName(psiMethod).equals(name)) &&
           JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature)) {
         String methodClassName = JVMNameUtil.getClassVMName(containingClass);
         if (Objects.equals(methodClassName, className)) {

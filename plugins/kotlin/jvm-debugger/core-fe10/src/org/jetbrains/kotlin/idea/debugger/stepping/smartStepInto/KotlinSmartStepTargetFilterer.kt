@@ -80,13 +80,17 @@ class KotlinSmartStepTargetFilterer(
             }
         }
 
-        val lightClassMethod by lazy { declaration.getLightClassMethod() }
-        // Cannot create light class for functions with inline classes
-        // Internal name check fails with light method
-        if (methodInfo.isInlineClassMember || methodInfo.isInternalMethod || lightClassMethod == null) {
-            return matchesBySignature(declaration, owner, signature)
+        if (!methodInfo.isInlineClassMember) {
+            // Cannot create light class for functions with inline classes
+            val lightMethod = declaration.getLightClassMethod()
+            // Do not match by name, as it was already checked
+            val lightMethodMatch = lightMethod?.matches(owner, signature, debugProcess)
+            // Light method match still can fail in some Kotlin-specific cases (e.g., setter/getter signature)
+            if (lightMethodMatch == true) {
+                return true
+            }
         }
-        return lightClassMethod!!.matches(owner, name, signature, debugProcess)
+        return matchesBySignature(declaration, owner, signature)
     }
 
     context(KaSession)
@@ -181,11 +185,11 @@ private fun KtDeclaration.getLightClassMethod(): PsiMethod? =
         else -> null
     }
 
-private fun PsiMethod.matches(className: String, methodName: String, signature: String, debugProcess: DebugProcessImpl): Boolean =
+private fun PsiMethod.matches(className: String, signature: String, debugProcess: DebugProcessImpl): Boolean =
     DebuggerUtilsEx.methodMatches(
         this,
         className.internalNameToFqn(),
-        methodName,
+        null,
         signature,
         debugProcess
     )
