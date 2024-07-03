@@ -300,7 +300,7 @@ public final class JavaRearranger implements Rearranger<JavaElementArrangementEn
         return javaSettings.BLANK_LINES_AROUND_INITIALIZER;
       }
       else {
-        return commonSettings.BLANK_LINES_AROUND_FIELD;
+        return target.hasAnnotation() ? javaSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS : commonSettings.BLANK_LINES_AROUND_FIELD;
       }
     }
     else if (METHOD.equals(target.getType())) {

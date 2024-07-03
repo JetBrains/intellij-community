@@ -557,6 +557,10 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
       entry.addModifier(PACKAGE_PRIVATE);
     }
+
+    if (modifierList.getAnnotations().length > 0) {
+      entry.setHasAnnotation();
+    }
   }
 
   // Visitor that search dependencies (calls of other methods, that declared in this class, or method reference usages) for given method
