@@ -123,6 +123,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean ALIGN_MULTILINE_TEXT_BLOCKS = false;
 
   public int BLANK_LINES_AROUND_INITIALIZER = 1;
+  public int BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS = 0;
 
   public static final int FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED = 1;
   public static final int FULLY_QUALIFY_NAMES_ALWAYS = 2;

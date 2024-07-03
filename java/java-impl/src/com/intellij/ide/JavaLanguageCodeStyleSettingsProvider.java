@@ -305,6 +305,15 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER",
                                 JavaBundle.message("editbox.blanklines.around.initializer"),
                                 getInstance().BLANK_LINES);
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD",
+        JavaBundle.message("editbox.blank.lines.field.without.annotations"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS",
+                                JavaBundle.message("editbox.blank.lines.field.with.annotations"),
+                                getInstance().BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showAllStandardOptions();
