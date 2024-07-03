@@ -9,6 +9,7 @@ import com.intellij.psi.PsiPrimitiveType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
@@ -103,7 +104,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean {
         analyze(declaration) {
-            val symbol = declaration.symbol as? KaFunctionSymbol ?: return false
+            val symbol = declaration.symbol as? KaCallableSymbol ?: return false
             val declarationSignature = symbol.getJvmSignature()
             val declarationInternalName = symbol.getJvmInternalClassName()
             return signature == declarationSignature && owner.isSubClassOf(declarationInternalName)
@@ -208,10 +209,12 @@ private fun String.isSubClassOf(baseInternalName: String?): Boolean {
 }
 
 context(KaSession)
-private fun KaFunctionSymbol.getJvmSignature(): String? {
+private fun KaCallableSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
     val receiver = receiverType?.jvmName(element) ?: ""
-    val parameterTypes = valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
+    val parameterTypes = if (this is KaFunctionSymbol) {
+        valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
+    } else ""
     val returnType = returnType.jvmName(element) ?: return null
     return "($receiver$parameterTypes)$returnType"
 }

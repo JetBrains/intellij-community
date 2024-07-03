@@ -43,7 +43,7 @@ fun KtDeclaration.getClassName(): String? = analyze(this) {
 
 context(KaSession)
 @ApiStatus.Internal
-fun KaFunctionSymbol.getJvmInternalClassName(): String? {
+fun KaCallableSymbol.getJvmInternalClassName(): String? {
     val classOrObject = getContainingClassOrObjectSymbol()
     if (classOrObject != null) {
         return classOrObject.getJvmInternalName()
@@ -63,7 +63,7 @@ fun KaClassSymbol.getJvmInternalName(): String? {
 
 context(KaSession)
 @ApiStatus.Internal
-fun KaFunctionSymbol.getContainingClassOrObjectSymbol(): KaClassSymbol? {
+fun KaCallableSymbol.getContainingClassOrObjectSymbol(): KaClassSymbol? {
     var symbol = containingSymbol
     while (symbol != null) {
         if (symbol is KaClassSymbol) return symbol
