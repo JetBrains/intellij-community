@@ -41,3 +41,17 @@ fun printableString(toPrint: String): String {
   }
   return resultString
 }
+
+fun Driver.setRegistry(key: String, value: String) {
+  utility(Registry::class).get(key).setValue(value)
+}
+
+@Remote("com.intellij.openapi.util.registry.Registry")
+interface Registry {
+  fun get(key: String): RegistryValue
+}
+
+@Remote("com.intellij.openapi.util.registry.RegistryValue")
+interface RegistryValue {
+  fun setValue(value: String)
+}
