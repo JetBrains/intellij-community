@@ -442,7 +442,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
                boolean defaultExpandValue,
                boolean hasFavorites) {
       super();
-      getTemplatePresentation().setMultiChoice(true);
+      getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Always);
       myProject = project;
       mySettingName = settingName;
       myDefaultExpandValue = defaultExpandValue;
