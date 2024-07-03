@@ -19,6 +19,7 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.FileDropManager
 import com.intellij.openapi.editor.containsFileDropTargets
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -88,7 +89,6 @@ class EditorTabbedContainer internal constructor(
     }
 
     editorTabs = EditorTabs(coroutineScope = coroutineScope, parentDisposable = disposable, window = window)
-    setTabPlacement(UISettings.getInstance().editorTabPlacement)
 
     dragOutDelegate = EditorTabbedContainerDragOutDelegate(window = window, editorTabs = editorTabs)
 
@@ -524,6 +524,18 @@ private class EditorTabs(
     singleRow = UISettings.getInstance().scrollTabLayoutInEditor,
     requestFocusOnLastFocusedComponent = true,
     isTabDraggingEnabled = true,
+    tabPosition = when (val tabPlacement = UISettings.getInstance().editorTabPlacement) {
+      SwingConstants.TOP -> JBTabsPosition.top
+      SwingConstants.BOTTOM -> JBTabsPosition.bottom
+      SwingConstants.LEFT -> JBTabsPosition.left
+      SwingConstants.RIGHT -> JBTabsPosition.right
+      UISettings.TABS_NONE -> JBTabsPosition.top
+      else -> {
+        logger<EditorTabs>().error("Unknown tab placement code=$tabPlacement")
+        JBTabsPosition.top
+      }
+    },
+    hideTabs = UISettings.getInstance().editorTabPlacement == UISettings.TABS_NONE,
   ),
 ), ComponentWithMnemonics, EditorWindowHolder, CloseTarget {
   private val _entryPointActionGroup: DefaultActionGroup

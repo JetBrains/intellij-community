@@ -179,7 +179,7 @@ public abstract class SingleRowLayoutStrategy {
 
     @Override
     public boolean isSideComponentOnTabs() {
-      return !myTabs.isSideComponentVertical() && myTabs.isSideComponentOnTabs();
+      return myTabs.getHorizontalSide() && myTabs.isSideComponentOnTabs();
     }
 
     @Override

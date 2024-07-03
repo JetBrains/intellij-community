@@ -3,7 +3,11 @@ package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.tabs.*;
+import com.intellij.ui.tabs.JBTabs;
+import com.intellij.ui.tabs.JBTabsPosition;
+import com.intellij.ui.tabs.TabInfo;
+import com.intellij.ui.tabs.TabsListener;
+import com.intellij.ui.tabs.impl.JBEditorTabs;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,11 +21,11 @@ import java.util.concurrent.CopyOnWriteArraySet;
 
 // used externally - cannot be final
 public class JBTabsPaneImpl implements TabbedPane {
-  private final JBTabs tabs;
+  private final JBEditorTabs tabs;
   private final CopyOnWriteArraySet<ChangeListener> listeners = new CopyOnWriteArraySet<>();
 
   public JBTabsPaneImpl(@Nullable Project project, int tabPlacement, @NotNull Disposable parent) {
-    tabs = JBTabsFactory.createEditorTabs(project, parent);
+    tabs = new JBEditorTabs(project, parent);
     tabs.getPresentation()
       .setAlphabeticalMode(false)
       .setPaintFocus(true)
@@ -76,14 +80,18 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public void setTabPlacement(int tabPlacement) {
-    JBTabsPosition position = switch (tabPlacement) {
+    JBTabsPosition position = swingConstantToEnum(tabPlacement);
+    tabs.setTabsPosition(position);
+  }
+
+  private static @NotNull JBTabsPosition swingConstantToEnum(int tabPlacement) {
+    return switch (tabPlacement) {
       case SwingConstants.TOP -> JBTabsPosition.top;
       case SwingConstants.BOTTOM -> JBTabsPosition.bottom;
       case SwingConstants.LEFT -> JBTabsPosition.left;
       case SwingConstants.RIGHT -> JBTabsPosition.right;
       default -> throw new IllegalArgumentException("Invalid tab placement code=" + tabPlacement);
     };
-    tabs.getPresentation().setTabsPosition(position);
   }
 
   @Override
@@ -177,7 +185,7 @@ public class JBTabsPaneImpl implements TabbedPane {
 
   @Override
   public int getTabLayoutPolicy() {
-    return tabs.getPresentation().isSingleRow() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT;
+    return tabs.isSingleRow() ? JTabbedPane.SCROLL_TAB_LAYOUT : JTabbedPane.WRAP_TAB_LAYOUT;
   }
 
   @Override
