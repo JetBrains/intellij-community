@@ -135,7 +135,7 @@ internal class SquareStripeButton(action: SquareAnActionButton, val toolWindow: 
           val text = toolWindow.stripeShortTitleProvider?.get() ?: toolWindow.stripeTitleProvider.get()
           val button = this@SquareStripeButton
           val insets = button.insets
-          val textOffset = if (UISettings.Companion.getInstance().compactMode) 6 else 8
+          val textOffset = if (UISettings.Companion.getInstance().compactMode) 4 else 6
           val x = insets.left + JBUI.scale(textOffset)
           val y = iconPosition.y + JBUI.scale(3)
           val totalWidth = button.width - insets.left - insets.right - JBUI.scale(textOffset * 2)
