@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.diagnostic.ScanningType;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,9 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
                                                          !wasCorrupted,
                                                          true,
                                                          myCoroutineScope,
-                                                         "On project open");
+                                                         "On project open",
+                                                         ScanningType.FULL_ON_PROJECT_OPEN,
+                                                         ScanningType.PARTIAL_ON_PROJECT_OPEN);
     forgetProjectDirtyFilesOnCompletion(indexesCleanupJob, fileBasedIndex, project, projectDirtyFilesQueue, orphanQueue.getUntrimmedSize());
   }
 
