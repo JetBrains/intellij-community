@@ -952,8 +952,14 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       for (int i = 0; i < changes.size(); i++) {
         TextMergeChange change = changes.get(i);
         RangeMarker marker = newRanges.get(i);
-        Side sourceSide = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
-        transferReferences(sourceSide, files, change, marker);
+        if (side == ThreeSide.BASE && change.isConflict()) {
+          transferReferences(Side.LEFT, files, change, marker, true);
+          transferReferences(Side.RIGHT, files, change, marker, true);
+        }
+        else {
+          Side sourceSide = side.select(Side.LEFT, change.isChange(Side.LEFT) ? Side.LEFT : Side.RIGHT, Side.RIGHT);
+          transferReferences(sourceSide, files, change, marker, false);
+        }
       }
     }
     catch (ProcessCanceledException e) {
@@ -967,12 +973,36 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   private void transferReferences(Side sourceSide,
                                   List<PsiFile> files,
                                   TextMergeChange change,
-                                  RangeMarker rangeMarker) {
+                                  RangeMarker rangeMarker,
+                                  Boolean processInnerFragments) {
     ThreeSide sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT);
     Document sourceDocument = getContent(sourceThreeSide).getDocument();
     PsiFile psiFile = sourceSide.select(files.get(0), files.get(2));
     int startOffset = sourceDocument.getLineStartOffset(change.getStartLine(sourceThreeSide));
     int endOffset = sourceDocument.getLineEndOffset(change.getEndLine(sourceThreeSide) - 1);
+    if (processInnerFragments) {
+      MergeInnerDifferences innerFragments = change.getInnerFragments();
+      if (innerFragments != null) {
+        innerFragments.get(sourceThreeSide).forEach(fragment -> {
+          if (!fragment.isEmpty()) {
+            String text = getEditor().getDocument().getText(rangeMarker.getTextRange());
+            int fragmentStartOffset = startOffset + fragment.getStartOffset();
+            TextRange range = new TextRange(fragmentStartOffset, fragmentStartOffset + fragment.getLength());
+            String fragmentText = sourceDocument.getText(range);
+            int offset = text.indexOf(fragmentText);
+            if (offset >= 0) {
+              List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, range.getStartOffset(), range.getEndOffset());
+              RangeMarker marker =
+                sourceDocument.createRangeMarker(rangeMarker.getStartOffset() + offset,
+                                                 range.getStartOffset() + offset + fragment.getLength());
+              data.forEach(processorData -> processorData.process(myProject, getEditor(ThreeSide.BASE), marker, 0, new Ref<>(false)));
+            }
+          }
+        });
+      }
+
+      return;
+    }
     List<ProcessorData<?>> data = createReferenceData(sourceThreeSide, psiFile, startOffset, endOffset);
     data.forEach(processorData -> processorData.process(myProject, getEditor(ThreeSide.BASE), rangeMarker, 0, new Ref<>(false)));
   }
@@ -1159,7 +1189,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
       Document document = getContent(ThreeSide.BASE).getDocument();
       List<RangeMarker> markers = ContainerUtil.map(newRanges, range ->
         document.createRangeMarker(document.getLineStartOffset(range.start), document.getLineEndOffset(range.end)));
-      transferReferences(side, changes, markers);
+      myChangeReferenceProcessor.process(side, changes, markers);
     }
   }
 
