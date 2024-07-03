@@ -100,7 +100,14 @@ public abstract class PersistentFS extends ManagingFS {
 
   public abstract byte @NotNull [] contentsToByteArray(int contentId) throws IOException;
 
-  public abstract byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean cacheContent) throws IOException;
+  /**
+   * Same as {@linkplain #contentsToByteArray(VirtualFile)}, but allows explicitly stating that loaded content should not
+   * be put into the VFS content cache
+   *
+   * @param mayCacheContent {@code true} = caching is allowed (platform may decide itself if caching is needed or not),
+   *                        {@code false} = caching is NOT allowed (platform will not cache content).
+   */
+  public abstract byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException;
 
   public abstract int acquireContent(@NotNull VirtualFile file);
 

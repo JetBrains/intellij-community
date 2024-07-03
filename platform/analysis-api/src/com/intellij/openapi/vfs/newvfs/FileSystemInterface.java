@@ -47,6 +47,12 @@ public interface FileSystemInterface {
 
   @NotNull VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile newParent, @NotNull String copyName) throws IOException;
 
+  /**
+   * Returns content of a virtual file as a byte array. File content can be obtained eiter from VFS cache or real file system. Side
+   * effect of this method is that the content may be cached in the VFS cache.
+   *
+   * @see com.intellij.openapi.vfs.newvfs.persistent.PersistentFS#contentsToByteArray(VirtualFile, boolean)
+   */
   byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException;
 
   /** Does NOT strip the BOM from the beginning of the stream, unlike the {@link VirtualFile#getInputStream()} */

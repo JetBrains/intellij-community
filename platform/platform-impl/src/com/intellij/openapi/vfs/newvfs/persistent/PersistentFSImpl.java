@@ -785,6 +785,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
+  /** {@inheritDoc} */
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     // We _should_ cache every local file's content, because the local history feature and Perforce offline mode depend on the cache
@@ -793,6 +794,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return contentsToByteArray(file, cacheContent);
   }
 
+  /** {@inheritDoc} */
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file, boolean mayCacheContent) throws IOException {
 
