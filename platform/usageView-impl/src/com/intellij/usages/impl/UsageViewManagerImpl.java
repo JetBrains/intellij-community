@@ -140,7 +140,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
   @Override
   public @Nullable UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                 @NotNull Factory<? extends UsageSearcher> searcherFactory,
+                                                 @NotNull Supplier<? extends UsageSearcher> searcherFactory,
                                                  boolean showPanelIfOnlyOneUsage,
                                                  boolean showNotFoundMessage,
                                                  @NotNull UsageViewPresentation presentation,
@@ -153,7 +153,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   private UsageView doSearchAndShow(UsageTarget @NotNull [] searchFor,
-                                    @NotNull Factory<? extends UsageSearcher> searcherFactory,
+                                    @NotNull Supplier<? extends UsageSearcher> searcherFactory,
                                     @NotNull UsageViewPresentation presentation,
                                     @NotNull FindUsagesProcessPresentation processPresentation,
                                     @Nullable UsageViewStateListener listener) {

@@ -103,7 +103,7 @@ public class UsageViewImpl implements UsageViewEx {
   private final UsageTarget[] myTargets;
   private UsageGroupingRule[] myGroupingRules;
   private final UsageFilteringRuleState myFilteringRulesState = UsageFilteringRuleStateService.createFilteringRuleState();
-  private final Factory<? extends UsageSearcher> myUsageSearcherFactory;
+  private final Supplier<? extends UsageSearcher> myUsageSearcherFactory;
   private final @NotNull Project myProject;
 
   private volatile boolean mySearchInProgress = true;
@@ -197,7 +197,7 @@ public class UsageViewImpl implements UsageViewEx {
                        @NotNull CoroutineScope coroutineScope,
                        @NotNull UsageViewPresentation presentation,
                        UsageTarget @NotNull [] targets,
-                       @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
+                       @Nullable Supplier<? extends UsageSearcher> usageSearcherFactory) {
     this.coroutineScope = coroutineScope;
     // fire events every 50 ms, not more often to batch requests
     myUniqueIdentifier = COUNTER.getAndIncrement();
@@ -1778,7 +1778,7 @@ public class UsageViewImpl implements UsageViewEx {
   public boolean canPerformReRun() {
     if (myRerunAction != null && myRerunAction.isEnabled()) return allTargetsAreValid();
     try {
-      return myUsageSearcherFactory != null && allTargetsAreValid() && myUsageSearcherFactory.create() != null;
+      return myUsageSearcherFactory != null && allTargetsAreValid() && myUsageSearcherFactory.get() != null;
     }
     catch (PsiInvalidElementAccessException e) {
       return false;

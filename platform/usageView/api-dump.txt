@@ -349,7 +349,7 @@ a:com.intellij.usages.UsageViewManager
 - a:getSelectedUsageView():com.intellij.usages.UsageView
 - s:isSelfUsage(com.intellij.usages.Usage,com.intellij.usages.UsageTarget[]):Z
 - a:searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,com.intellij.usages.FindUsagesProcessPresentation,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):V
-- a:searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,Z,Z,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):com.intellij.usages.UsageView
+- a:searchAndShowUsages(com.intellij.usages.UsageTarget[],java.util.function.Supplier,Z,Z,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):com.intellij.usages.UsageView
 - a:showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation):com.intellij.usages.UsageView
 - a:showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.UsageView
 com.intellij.usages.UsageViewManager$UsageViewStateListener
