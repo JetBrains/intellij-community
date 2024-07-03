@@ -1408,6 +1408,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/filterSmartStepWithInlineClass.kt");
         }
 
+        @TestMetadata("filterSuspendCalls.kt")
+        public void testFilterSuspendCalls() throws Exception {
+            runTest("../testData/stepping/custom/filterSuspendCalls.kt");
+        }
+
         @TestMetadata("finallyBlock.kt")
         public void testFinallyBlock() throws Exception {
             runTest("../testData/stepping/custom/finallyBlock.kt");

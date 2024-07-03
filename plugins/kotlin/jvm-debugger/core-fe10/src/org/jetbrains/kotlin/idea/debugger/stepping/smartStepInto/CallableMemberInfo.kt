@@ -33,7 +33,7 @@ internal fun CallableMemberInfo(
     name: String = symbol.methodName()
 ): CallableMemberInfo {
     val isInvoke = symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke
-    val isSuspend = symbol is KaNamedFunctionSymbol && symbol.isSuspend
+    val isSuspend = symbol.isSuspend()
     val effectiveName = if (isInvoke && isSuspend) "invokeSuspend" else name
     return CallableMemberInfo(
         isInvoke = isInvoke,
@@ -48,6 +48,8 @@ internal fun CallableMemberInfo(
     )
 }
 
+internal fun KaFunctionSymbol.isSuspend(): Boolean = this is KaNamedFunctionSymbol && this.isSuspend
+
 context(KaSession)
 internal fun KaFunctionSymbol.containsInlineClassInValueArguments(): Boolean =
     valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
@@ -60,3 +62,4 @@ private fun KaFunctionSymbol.methodName() = when (this) {
 
 context(KaSession)
 internal fun KaFunctionSymbol.isInsideInlineClass(): Boolean = getContainingClassOrObjectSymbol()?.isInlineClass() == true
+

@@ -218,11 +218,16 @@ context(KaSession)
 private fun KaCallableSymbol.getJvmSignature(): String? {
     val element = psi ?: return null
     val receiver = receiverType?.jvmName(element) ?: ""
+    val isSuspend = this is KaFunctionSymbol && isSuspend()
     val parameterTypes = if (this is KaFunctionSymbol) {
         valueParameters.map { it.returnType.jvmName(element) ?: return null }.joinToString("")
     } else ""
-    val returnType = returnType.jvmName(element) ?: return null
-    return "($receiver$parameterTypes)$returnType"
+    val returnType = when {
+        isSuspend -> "Ljava/lang/Object;"
+        else -> returnType.jvmName(element) ?: return null
+    }
+    val continuationParameter = if (isSuspend) "Lkotlin/coroutines/Continuation;" else ""
+    return "($receiver$parameterTypes$continuationParameter)$returnType"
 }
 
 context(KaSession)
