@@ -21,6 +21,10 @@ import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.util.Collection;
 
+/**
+ * This class is supposed to be used in the implementation of {@link JpsServiceManager} only. Other code must use {@link JpsServiceManager}
+ * instead.
+ */
 @ApiStatus.Internal
 public abstract class JpsPluginManager {
   @NotNull
