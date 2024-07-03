@@ -119,6 +119,6 @@ class GitBranchesTreeMultiRepoModel(
     }
   }
 
-  private fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, repositories, null, commonLocalBranchesTree, commonRemoteBranchesTree)
+  private fun getPreferredBranch(): GitReference? =
+    getPreferredBranch(project, repositories, null, commonLocalBranchesTree, commonRemoteBranchesTree, commonTagsTree)
 }

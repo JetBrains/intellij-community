@@ -323,9 +323,9 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   }
 
   private fun toggleFavorite(userObject: Any?) {
-    val branchUnderRepository = userObject as? RefUnderRepository
-    val reference = userObject as? GitReference ?: branchUnderRepository?.ref ?: return
-    val repositories = branchUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
+    val refUnderRepository = userObject as? RefUnderRepository
+    val reference = userObject as? GitReference ?: refUnderRepository?.ref ?: return
+    val repositories = refUnderRepository?.repository?.let(::listOf) ?: treeStep.affectedRepositories
     val branchType = GitRefType.of(reference)
     val branchManager = project.service<GitBranchManager>()
     val anyNotFavorite = repositories.any { repository -> !branchManager.isFavorite(branchType, repository, reference.name) }
@@ -624,8 +624,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
     if (selected != null) {
       val userObject = TreeUtil.getUserObject(selected)
       val point = e?.point
-      val branchUnderRepository = userObject as? RefUnderRepository
-      val reference = userObject as? GitReference ?: branchUnderRepository?.ref
+      val refUnderRepository = userObject as? RefUnderRepository
+      val reference = userObject as? GitReference ?: refUnderRepository?.ref
       if (point != null && reference != null && isMainIconAt(point, reference)) {
         toggleFavorite(userObject)
         return

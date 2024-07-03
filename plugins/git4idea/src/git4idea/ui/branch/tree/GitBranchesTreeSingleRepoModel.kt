@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
-import git4idea.GitBranch
 import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
@@ -26,7 +25,7 @@ import kotlin.properties.Delegates.observable
 open class GitBranchesTreeSingleRepoModel(
   protected val project: Project,
   protected val repository: GitRepository,
-  private val topLevelActions: List<Any> = emptyList()
+  private val topLevelActions: List<Any> = emptyList(),
 ) : AbstractTreeModel(), GitBranchesTreeModel {
 
   private val actionsSeparator = GitBranchesTreePopup.createTreeSeparator()
@@ -120,9 +119,7 @@ open class GitBranchesTreeSingleRepoModel(
   private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
     val branchesMap: Map<String, Any> = when {
       RecentNode == branchType -> recentCheckoutBranchesTree.tree
-      TagsNode == branchType -> {
-        tagsTree.tree
-      }
+      TagsNode == branchType -> tagsTree.tree
       GitBranchType.LOCAL == branchType -> localBranchesTree.tree
       GitBranchType.REMOTE == branchType -> remoteBranchesTree.tree
       else -> emptyMap()
@@ -146,8 +143,8 @@ open class GitBranchesTreeSingleRepoModel(
     }
   }
 
-  protected fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, listOf(repository), nameMatcher, localBranchesTree, remoteBranchesTree, recentCheckoutBranchesTree)
+  protected fun getPreferredBranch(): GitReference? =
+    getPreferredBranch(project, listOf(repository), nameMatcher, localBranchesTree, remoteBranchesTree, tagsTree, recentCheckoutBranchesTree)
 
   override fun filterBranches(matcher: MinusculeMatcher?) {
     nameMatcher = matcher

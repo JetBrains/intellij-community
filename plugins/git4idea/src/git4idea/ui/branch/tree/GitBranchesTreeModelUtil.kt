@@ -163,7 +163,8 @@ internal fun getPreferredBranch(project: Project,
                                 branchNameMatcher: MinusculeMatcher?,
                                 localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>,
                                 remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
-                                recentBranchesTree: LazyRefsSubtreeHolder<GitReference> = localBranchesTree): GitBranch? {
+                                tagsTree: LazyRefsSubtreeHolder<GitTag>,
+                                recentBranchesTree: LazyRefsSubtreeHolder<GitReference> = localBranchesTree, ): GitReference? {
   if (branchNameMatcher == null) {
     return getPreferredBranch(project, repositories, localBranchesTree.sortedValues)
   }
@@ -171,8 +172,9 @@ internal fun getPreferredBranch(project: Project,
   val recentMatch = recentBranchesTree.topMatch as? GitBranch
   val localMatch = localBranchesTree.topMatch as? GitBranch
   val remoteMatch = remoteBranchesTree.topMatch as? GitBranch
+  val tagMatch = tagsTree.topMatch
 
-  return recentMatch ?: localMatch ?: remoteMatch
+  return recentMatch ?: localMatch ?: remoteMatch ?: tagMatch
 }
 
 internal fun getPreferredBranch(
@@ -209,13 +211,13 @@ internal fun getPreferredBranch(
 
 internal fun getLocalAndRemoteTopLevelNodes(localBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>,
                                             remoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>,
-                                            tagsTree: LazyRefsSubtreeHolder<GitTag>,
+                                            tagsTree: LazyRefsSubtreeHolder<GitTag>? = null,
                                             recentCheckoutBranchesTree: LazyRefsSubtreeHolder<GitReference>? = null): List<Any> {
   return listOfNotNull(
     if (recentCheckoutBranchesTree != null && !recentCheckoutBranchesTree.isEmpty()) GitBranchesTreeModel.RecentNode else null,
     if (!localBranchesTree.isEmpty()) GitBranchType.LOCAL else null,
     if (!remoteBranchesTree.isEmpty()) GitBranchType.REMOTE else null,
-    if (!tagsTree.isEmpty()) TagsNode else null
+    if (tagsTree != null && !tagsTree.isEmpty()) TagsNode else null
   )
 }
 

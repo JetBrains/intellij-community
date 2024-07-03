@@ -175,14 +175,14 @@ class GitBranchesTreeMultiRepoFilteringModel(
   }
 
   private fun getPreferredBranch(): Any? =
-    getPreferredBranch(project, repositories, nameMatcher, commonLocalBranchesTree, commonRemoteBranchesTree)
-    ?: getPreferredBranchUnderFirstNonEmptyRepo()
+    getPreferredBranch(project, repositories, nameMatcher, commonLocalBranchesTree, commonRemoteBranchesTree, commonTagsTree)
+    ?: getPreferredRefUnderFirstNonEmptyRepo()
 
-  private fun getPreferredBranchUnderFirstNonEmptyRepo(): RefUnderRepository? {
+  private fun getPreferredRefUnderFirstNonEmptyRepo(): RefUnderRepository? {
     val nonEmptyRepo = repositories.firstOrNull(repositoriesWithBranchesTree::isNotEmpty) ?: return null
 
     return repositoriesWithBranchesTree[nonEmptyRepo]
-      .let { getPreferredBranch(project, listOf(nonEmptyRepo), nameMatcher, it.localBranches, it.remoteBranches) }
+      .let { getPreferredBranch(project, listOf(nonEmptyRepo), nameMatcher, it.localBranches, it.remoteBranches, it.tags) }
       ?.let { RefUnderRepository(nonEmptyRepo, it) }
   }
 
@@ -236,7 +236,7 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
     val tags by lazy {
       LazyRefsSubtreeHolder(listOf(repository),
-                            GitRepositoryManager.getInstance(project).repositories.flatMap { it.tagHolder.getTags().keys }.distinct(),
+                            repository.tagHolder.getTags().keys,
                             project.service<GitBranchManager>().getFavoriteBranches(GitTagType), nameMatcher,
                             ::isPrefixGrouping)
     }

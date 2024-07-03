@@ -14,6 +14,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import git4idea.GitTag
 import git4idea.config.GitVcsSettings
 import git4idea.util.StringScanner
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -40,7 +41,7 @@ class GitTagHolder(val repository: GitRepository) {
   }
 
   fun reload() {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       updateSemaphore.withPermit {
         updateState()
       }
