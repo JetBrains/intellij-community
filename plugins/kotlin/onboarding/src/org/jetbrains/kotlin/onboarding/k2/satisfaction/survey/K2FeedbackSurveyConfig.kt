@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.onboarding.k2.satisfaction.survey
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
@@ -17,7 +18,7 @@ class K2FeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
     override val lastDayOfFeedbackCollection: LocalDate = LocalDate(2024, 11, 1)
     override val requireIdeEAP: Boolean = false
 
-    private val suitableIdeVersion = "2024.2"
+    private val suitableIdeVersion = Registry.stringValue("k2.feedback.survey.ide.version.number")
 
     override fun checkIdeIsSuitable(): Boolean {
         return PlatformUtils.isIdeaUltimate() || PlatformUtils.isIdeaCommunity()
