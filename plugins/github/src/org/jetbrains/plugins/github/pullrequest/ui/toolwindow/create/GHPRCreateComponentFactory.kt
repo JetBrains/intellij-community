@@ -403,6 +403,7 @@ internal object GHPRCreateComponentFactory {
             }
             else -> Unit
           }
+          revalidate()
 
           try {
             awaitCancellation()
