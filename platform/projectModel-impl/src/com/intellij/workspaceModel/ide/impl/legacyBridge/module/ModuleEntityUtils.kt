@@ -11,11 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 
 /**
- * Consider rewriting your code to use [ModuleEntity] directly. This method was introduced to simplify the first
- * step of migration to [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel] and lately will
- * be removed.
- *
- * @return corresponding [com.intellij.openapi.module.Module] or `null` if this entity isn't added to the project model yet.
+ * Use [com.intellij.workspaceModel.ide.legacyBridge.findModule] from API instead.
  */
 @Obsolete
 @ApiStatus.Internal

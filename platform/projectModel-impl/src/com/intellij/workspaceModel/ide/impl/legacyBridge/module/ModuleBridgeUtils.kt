@@ -9,9 +9,10 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * @return corresponding [com.intellij.platform.workspace.storage.bridgeEntities.ModuleEntity] or null if module isn't associated with entity yet
+ * Use [com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity] from API instead.
  */
 @ApiStatus.Internal
+@ApiStatus.Obsolete
 fun ModuleBridge.findModuleEntity(entityStorage: EntityStorage): ModuleEntity? {
   return entityStorage.moduleMap.getEntities(this).firstOrNull() as ModuleEntity?
 }
