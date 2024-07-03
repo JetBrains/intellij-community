@@ -4,10 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.ui.editor
 import com.intellij.collaboration.async.collectScoped
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterChangesRenderer
-import com.intellij.collaboration.ui.codereview.editor.CodeReviewEditorGutterControlsRenderer
-import com.intellij.collaboration.ui.codereview.editor.ReviewInEditorUtil
-import com.intellij.collaboration.ui.codereview.editor.renderInlays
+import com.intellij.collaboration.ui.codereview.editor.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.collaboration.util.getOrNull
@@ -93,7 +90,14 @@ internal class GitLabMergeRequestEditorReviewController(private val project: Pro
           createRenderer(it, fileVm.avatarIconsProvider)
         }
       }
-      awaitCancellation()
+
+      editor.putUserData(CodeReviewCommentableEditorModel.KEY, model)
+      try {
+        awaitCancellation()
+      }
+      finally {
+        editor.putUserData(CodeReviewCommentableEditorModel.KEY, null)
+      }
     }
   }
 

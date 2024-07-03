@@ -19,7 +19,6 @@ import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.util.cancelOnDispose
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -68,7 +67,7 @@ class GitLabMergeRequestDiffExtension : DiffExtension() {
 
             viewer.showCodeReview({ locationToLine, lineToLocations ->
                                     DiffEditorModel(this, changeVm, locationToLine, lineToLocations)
-                                  }, DiffEditorModel.KEY, { createRenderer(it, changeVm.avatarIconsProvider) })
+                                  }, { createRenderer(it, changeVm.avatarIconsProvider) })
           }
         }
       }.cancelOnDispose(viewer)
@@ -142,9 +141,5 @@ private class DiffEditorModel(
 
   private data class GutterState(override val linesWithComments: Set<Int>) : CodeReviewEditorGutterControlsModel.ControlsState {
     override fun isLineCommentable(lineIdx: Int): Boolean = true
-  }
-
-  companion object {
-    val KEY: Key<DiffEditorModel> = Key.create("GitLab.Editor.Gutter.Review.Model")
   }
 }

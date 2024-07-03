@@ -28,8 +28,7 @@ internal class GHPRReviewFileEditorModel internal constructor(
   private val changesModel: MutableCodeReviewEditorGutterChangesModel = MutableCodeReviewEditorGutterChangesModel()
 ) : CodeReviewEditorGutterChangesModel by changesModel,
     CodeReviewEditorGutterActionableChangesModel,
-    CodeReviewEditorInlaysModel<GHPREditorMappedComponentModel>,
-    CodeReviewEditorGutterControlsModel {
+    CodeReviewEditorModel<GHPREditorMappedComponentModel> {
 
   private val postReviewRanges = MutableStateFlow<List<Range>?>(null)
 
