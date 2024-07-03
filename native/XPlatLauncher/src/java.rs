@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::thread;
-use std::ffi::{c_void, CString};
+use std::ffi::{c_char, c_int, c_void, CStr, CString};
 use std::path::Path;
-use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Mutex;
+use std::thread;
 use std::thread::JoinHandle;
 
 use anyhow::{anyhow, bail, Context, Error, Result};
@@ -12,6 +12,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JValue};
 use jni::sys::{jboolean, jint, jsize};
 use log::{debug, error};
+
 use crate::{jvm_property, ui};
 
 #[cfg(target_os = "macos")]
@@ -21,9 +22,6 @@ use {
     core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate,
                                CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
 };
-
-#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
-use std::ffi::{c_char, CStr, c_int};
 
 #[cfg(target_os = "windows")]
 const JVM_LIB_REL_PATH: &str = "bin\\server\\jvm.dll";
@@ -35,12 +33,11 @@ const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
-#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 #[no_mangle]
-extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList) -> jint {
+extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> jint {
     extern "C" {
-        fn vfprintf(fp: *const c_void, format: *const c_char, args: va_list::VaList) -> c_int;
-        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: va_list::VaList) -> c_int;
+        fn vfprintf(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
+        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
     }
 
     match &mut *HOOK_MESSAGES.lock().unwrap() {
@@ -54,16 +51,6 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_l
             len
         }
     }
-}
-
-#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
-fn get_vfprintf_hook_pointer() -> *mut c_void {
-    vfprintf_hook as *mut c_void
-}
-
-#[cfg(all(target_os = "windows", target_arch = "aarch64"))]
-fn get_vfprintf_hook_pointer() -> *mut c_void {
-    std::ptr::null_mut()
 }
 
 #[no_mangle]
@@ -227,13 +214,10 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
         extraInfo: abort_hook as *mut c_void,
     });
 
-    let hook_pointer = get_vfprintf_hook_pointer();
-    if !hook_pointer.is_null() {
-        jni_options.push(jni::sys::JavaVMOption {
-            optionString: CString::new("vfprintf")?.into_raw(),
-            extraInfo: hook_pointer,
-        });
-    }
+    jni_options.push(jni::sys::JavaVMOption {
+        optionString: CString::new("vfprintf")?.into_raw(),
+        extraInfo: vfprintf_hook as *mut c_void,
+    });
 
     for opt in vm_options {
         jni_options.push(jni::sys::JavaVMOption {
