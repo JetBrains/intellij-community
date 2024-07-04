@@ -396,8 +396,8 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       final PsiExpression qualifier = copy.getMethodExpression().getQualifierExpression();
       if (qualifier != null) {
         qualifier.delete();
-        PsiMethod method = copy.resolveMethod();
-        if (methodCall.resolveMethod() == method || method == null) {
+        JavaResolveResult resolveResult = copy.resolveMethodGenerics();
+        if (methodCall.resolveMethod() == resolveResult.getElement() || !resolveResult.isValidResult()) {
           return null;
         }
         return createQualifiedThisExpression();
