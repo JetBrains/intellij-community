@@ -43,16 +43,22 @@ object CodeReviewCreateReviewUIUtil {
       component.font = titleFont
 
       if (this !is EditorEx) return@apply
-      setPlaceholder(emptyText)
+      configurePlaceholder(emptyText)
       setScrollbarsBackground()
     }
 
   fun createDescriptionEditor(project: Project, emptyText: @Nls String = ""): Editor =
     CodeReviewMarkdownEditor.create(project, true, false).apply {
       if (this !is EditorEx) return@apply
-      setPlaceholder(emptyText)
+      configurePlaceholder(emptyText)
+      setShowPlaceholderWhenFocused(true)
       setScrollbarsBackground()
     }
+
+  private fun EditorEx.configurePlaceholder(emptyText: @Nls String) {
+    setPlaceholder(emptyText)
+    setShowPlaceholderWhenFocused(true)
+  }
 
   private fun EditorEx.setScrollbarsBackground() {
     val editorBackground = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
