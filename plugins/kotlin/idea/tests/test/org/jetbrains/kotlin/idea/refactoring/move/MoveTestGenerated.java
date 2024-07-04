@@ -249,6 +249,11 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
             runTest("testData/refactoring/moveFile/kotlin/typeRefWithArguments/typeRefWithArguments.test");
         }
 
+        @TestMetadata("kotlin/unresolvedUsageUpdate/unresolvedUsageUpdate.test")
+        public void testKotlin_unresolvedUsageUpdate_UnresolvedUsageUpdate() throws Exception {
+            runTest("testData/refactoring/moveFile/kotlin/unresolvedUsageUpdate/unresolvedUsageUpdate.test");
+        }
+
         @TestMetadata("kotlin/withoutUsages/withoutUsages.test")
         public void testKotlin_withoutUsages_WithoutUsages() throws Exception {
             runTest("testData/refactoring/moveFile/kotlin/withoutUsages/withoutUsages.test");

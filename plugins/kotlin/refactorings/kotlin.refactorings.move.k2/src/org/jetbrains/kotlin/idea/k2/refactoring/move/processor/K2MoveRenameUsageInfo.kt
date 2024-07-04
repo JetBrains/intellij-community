@@ -137,10 +137,10 @@ sealed class K2MoveRenameUsageInfo(
             if (refExpr.isUnqualifiable()) return true
             val refChain = (refExpr.getTopmostParentQualifiedExpressionForReceiver() ?: refExpr)
                 .collectDescendantsOfType<KtSimpleNameExpression>()
-                .filter { it.canBeUsedInImport() }
+                .filter { it.canBeUsedInImport() && it.isNameDeterminantInQualifiedChain() }
             return if (isInternal) {
                 // for internal usages, update the first name determinant in the call chain
-                refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.isNameDeterminantInQualifiedChain() } == refExpr
+                refChain.firstOrNull() == refExpr
             } else {
                 // for external usages, update the first reference to a moved element
                 refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.mainReference.resolve() in movedElements } == refExpr

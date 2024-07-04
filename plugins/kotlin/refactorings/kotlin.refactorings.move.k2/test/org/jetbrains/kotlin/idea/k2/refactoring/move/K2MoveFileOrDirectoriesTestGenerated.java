@@ -150,6 +150,11 @@ public class K2MoveFileOrDirectoriesTestGenerated extends AbstractK2MoveFileOrDi
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/typeRefWithArguments/typeRefWithArguments.test");
     }
 
+    @TestMetadata("kotlin/unresolvedUsageUpdate/unresolvedUsageUpdate.test")
+    public void testKotlin_unresolvedUsageUpdate_UnresolvedUsageUpdate() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/unresolvedUsageUpdate/unresolvedUsageUpdate.test");
+    }
+
     @TestMetadata("kotlin/withoutUsages/withoutUsages.test")
     public void testKotlin_withoutUsages_WithoutUsages() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveFile/kotlin/withoutUsages/withoutUsages.test");
