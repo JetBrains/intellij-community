@@ -4,7 +4,8 @@ package org.jetbrains.plugins.terminal.action
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ExperimentalUI
@@ -33,7 +34,8 @@ internal class EnableBlockTerminalUiAction : DumbAwareToggleAction(TerminalBundl
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.project != null && ExperimentalUI.isNewUI()
-    e.presentation.putClientProperty(ActionMenu.SECONDARY_ICON, AllIcons.General.Beta)
+    e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, AllIcons.General.Beta)
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
