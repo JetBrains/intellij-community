@@ -3,12 +3,14 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Experimental
 @ApiStatus.NonExtendable
 interface ExternalSystemSettingsFilesModificationContext {
 
   /**
-   * Aggregated event for file. For example events CREATE and UPDATE
-   * will be merged into CREATE event. UPDATE and DELETE into DELETE.
+   * Aggregated event for file.
+   *
+   * For example, events CREATE and UPDATE will be merged into CREATE event, UPDATE and DELETE into DELETE.
    */
   val event: Event
 

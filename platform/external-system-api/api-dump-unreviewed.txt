@@ -138,11 +138,11 @@ e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 - s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus[]
-com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext
+*:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext
 - a:getEvent():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
 - a:getModificationType():com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
 - a:getReloadStatus():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
-e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
+*e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
 - java.lang.Enum
 - sf:CREATE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
 - sf:DELETE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
@@ -150,7 +150,7 @@ e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModi
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event
 - s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$Event[]
-e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
+*e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
 - java.lang.Enum
 - sf:IDLE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
 - sf:IN_PROGRESS:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
