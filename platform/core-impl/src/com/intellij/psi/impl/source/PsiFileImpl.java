@@ -496,7 +496,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isPhysical() {
-    // TODO[ik] remove this shit with dummy file system
     return getViewProvider().isEventSystemEnabled();
   }
 
