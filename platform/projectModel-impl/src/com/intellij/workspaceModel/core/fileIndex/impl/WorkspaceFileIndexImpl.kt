@@ -26,6 +26,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import com.intellij.util.Query
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
@@ -278,6 +279,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     return entity?.takeIf { it.getEntityInterface() == entityClass } as E?
   }
 
+  @RequiresReadLock
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
     getMainIndexData().visitFileSets(visitor)
   }

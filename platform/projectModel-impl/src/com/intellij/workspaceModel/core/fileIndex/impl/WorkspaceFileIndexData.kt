@@ -22,6 +22,7 @@ interface WorkspaceFileIndexData {
                   includeExternalSourceSets: Boolean,
                   includeCustomKindSets: Boolean): WorkspaceFileInternalInfo
 
+  @RequiresReadLock
   fun visitFileSets(visitor: WorkspaceFileSetVisitor)
 
   /**

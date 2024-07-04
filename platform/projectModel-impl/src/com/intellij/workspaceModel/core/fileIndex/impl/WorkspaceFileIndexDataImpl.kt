@@ -20,6 +20,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
 import com.intellij.util.SlowOperations
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.workspaceModel.core.fileIndex.*
@@ -154,23 +156,26 @@ internal class WorkspaceFileIndexDataImpl(private val contributorList: List<Work
     nonIncrementalContributors.updateIfNeeded(fileSets, fileSetsByPackagePrefix, nonExistingFilesRegistry)
   }
 
+  @RequiresReadLock
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
+    ThreadingAssertions.assertReadAccess()
     val start = Nanoseconds.now()
-
-    ensureIsUpToDate()
-    val action = { storedFileSet: StoredFileSet ->
-      when (storedFileSet) {
-        is WorkspaceFileSetImpl -> {
-          visitor.visitIncludedRoot(storedFileSet)
+    try {
+      ensureIsUpToDate()
+      for (value in fileSets.values) {
+        value.forEach { storedFileSet: StoredFileSet ->
+          when (storedFileSet) {
+            is WorkspaceFileSetImpl -> {
+              visitor.visitIncludedRoot(storedFileSet)
+            }
+            is ExcludedFileSet -> Unit
+          }
         }
-        is ExcludedFileSet -> Unit
       }
     }
-    for (value in fileSets.values) {
-      value.forEach(action)
+    finally {
+      WorkspaceFileIndexDataMetrics.visitFileSetsTimeNanosec.addElapsedTime(start)
     }
-
-    WorkspaceFileIndexDataMetrics.visitFileSetsTimeNanosec.addElapsedTime(start)
   }
 
   fun processFileSets(virtualFile: VirtualFile, action: (StoredFileSet) -> Unit) = WorkspaceFileIndexDataMetrics.processFileSetsTimeNanosec.addMeasuredTime {
