@@ -8,7 +8,9 @@ import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileCha
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VirtualFilesChangesProvider(private val isIgnoreInternalChanges: Boolean) : FilesChangesProvider, VirtualFileChangesListener {
   private val eventDispatcher = EventDispatcher.create(FilesChangesListener::class.java)
 

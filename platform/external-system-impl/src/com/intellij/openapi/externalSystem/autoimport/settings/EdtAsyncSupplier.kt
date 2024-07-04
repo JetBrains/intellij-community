@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.autoimport.settings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EdtAsyncSupplier<R>(
   private val supplier: () -> R,
   private val shouldKeepTasksAsynchronous: () -> Boolean

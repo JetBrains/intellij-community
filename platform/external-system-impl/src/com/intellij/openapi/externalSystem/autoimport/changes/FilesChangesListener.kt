@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 /**
@@ -10,6 +11,7 @@ import java.util.*
  * Call sequence of [init], [onFileChange] and [apply] must be called on the same thread,
  * but threads may be different for different call sequences.
  */
+@ApiStatus.Internal
 interface FilesChangesListener : EventListener {
   fun init() {}
 

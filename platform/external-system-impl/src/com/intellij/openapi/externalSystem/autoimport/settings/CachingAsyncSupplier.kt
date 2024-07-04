@@ -2,9 +2,11 @@
 package com.intellij.openapi.externalSystem.autoimport.settings
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import java.util.concurrent.atomic.AtomicReference
 
+@ApiStatus.Internal
 class CachingAsyncSupplier<R>(private val supplier: AsyncSupplier<R>) : AsyncSupplier<R> {
 
   private val cache = AtomicReference<AsyncPromise<R>>()

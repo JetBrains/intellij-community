@@ -2,7 +2,9 @@
 package com.intellij.openapi.externalSystem.autoimport.changes
 
 import com.intellij.openapi.Disposable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface FilesChangesProvider {
   fun subscribe(listener: FilesChangesListener, parentDisposable: Disposable)
 }

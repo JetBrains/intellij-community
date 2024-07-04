@@ -14,7 +14,9 @@ import com.intellij.openapi.observable.operation.core.whenOperationFinished
 import com.intellij.openapi.observable.operation.core.whenOperationStarted
 import com.intellij.psi.ExternalChangeAction
 import com.intellij.util.EventDispatcher
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DocumentsChangesProvider(private val isIgnoreExternalChanges: Boolean) : FilesChangesProvider, DocumentListener {
   private val eventDispatcher = EventDispatcher.create(FilesChangesListener::class.java)
 
