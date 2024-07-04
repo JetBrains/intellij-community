@@ -243,6 +243,10 @@ fun isOnSuspendReturnOrReenter(location: Location): Boolean {
 }
 
 private fun doesMethodHaveSwitcher(location: Location): Boolean {
+    if (DexDebugFacility.isDex(location.virtualMachine())) {
+        return false
+    }
+
     var result = false
     MethodBytecodeUtil.visit(location.method(), object : MethodVisitor(Opcodes.API_VERSION) {
         override fun visitFieldInsn(opcode: Int, owner: String, name: String, descriptor: String) {
@@ -449,7 +453,11 @@ private class CoroutineStateMachineVisitor(method: Method, private val resumeLoc
 }
 
 fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Int {
-    val resumedMethod = resumedLocation?.safeMethod() ?: return -1;
+    val resumedMethod = resumedLocation?.safeMethod() ?: return -1
+    if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
+        return -1
+    }
+
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumedLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
     return visitor.firstReturnAfterSuspensionOffset
@@ -457,6 +465,10 @@ fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Int {
 
 fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Int {
     val resumedMethod = resumeLocation?.safeMethod() ?: return -1
+    if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
+        return -1
+    }
+
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumeLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
     return visitor.nextCallOffset
