@@ -31,7 +31,7 @@ public final class ActionPopupOptions {
   }
 
   public static @NotNull ActionPopupOptions mnemonicsAndDisabled() {
-    return new ActionPopupOptions(false, false, false, true, -1, true, null, -1);
+    return new ActionPopupOptions(false, false, true, true, -1, false, null, -1);
   }
 
   public static @NotNull ActionPopupOptions forStep(boolean showDisabledActions,
