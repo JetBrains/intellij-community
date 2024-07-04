@@ -41,6 +41,8 @@ public final class ExplicitToImplicitClassMigrationInspection extends AbstractBa
           return;
         }
 
+        if (aClass.getAnnotations().length > 0) return;
+
         PsiElement lBrace = aClass.getLBrace();
         PsiElement rBrace = aClass.getRBrace();
         if (lBrace == null || rBrace == null) {
