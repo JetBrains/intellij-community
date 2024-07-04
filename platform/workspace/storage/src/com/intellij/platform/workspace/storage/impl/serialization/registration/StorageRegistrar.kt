@@ -25,7 +25,6 @@ import com.intellij.platform.workspace.storage.impl.serialization.TypeInfo
 import com.intellij.platform.workspace.storage.impl.serialization.serializer.*
 import com.intellij.platform.workspace.storage.metadata.model.*
 import com.intellij.platform.workspace.storage.metadata.model.PropertyMetadata
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.SmartList
 import com.intellij.util.containers.BidirectionalMultiMap
 import com.intellij.util.containers.ContainerUtil
@@ -59,6 +58,8 @@ internal class StorageClassesRegistrar(
 
     // Prohibited structure. See serializer for details
     kryo.register(Int2IntOpenHashMap::class.java, Int2IntOpenHashMapSerializer())
+
+    kryo.register(serializerUtil.virtualFileUrlImplementationClass, serializerUtil.getVirtualFileUrlSerializer())
 
     kryo.register(EntityId::class.java, serializerUtil.getEntityIdSerializer())
     kryo.register(HashMultimap::class.java, HashMultimapSerializer())
@@ -103,7 +104,6 @@ internal class StorageClassesRegistrar(
   }
 
   private fun registerDefaultSerializers(kryo: Kryo) {
-    kryo.addDefaultSerializer(VirtualFileUrl::class.java, serializerUtil.getVirtualFileUrlSerializer())
     kryo.addDefaultSerializer(List::class.java, DefaultListSerializer::class.java)
     kryo.addDefaultSerializer(Set::class.java, DefaultSetSerializer::class.java)
     kryo.addDefaultSerializer(Map::class.java, DefaultMapSerializer::class.java)
