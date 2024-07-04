@@ -50,12 +50,15 @@ internal class DefaultIjentSessionProvider : IjentSessionProvider {
  * The process terminates automatically only when the IDE exits, or if [IjentApi.close] is called explicitly.
  * [com.intellij.platform.ijent.bindToScope] may be useful for terminating the IJent process earlier.
  */
-suspend fun connectToRunningIjent(ijentName: String, platform: IjentPlatform, process: Process): IjentApi =
-  IjentSessionRegistry.instanceAsync().register(ijentName) { ijentId ->
+suspend fun connectToRunningIjent(ijentName: String, platform: IjentPlatform, process: Process): IjentApi {
+  val ijentSessionRegistry = IjentSessionRegistry.instanceAsync()
+  val ijentId = ijentSessionRegistry.register(ijentName, oneOff = true) { ijentId ->
     val mediator = IjentSessionMediator.create(process, ijentId)
     mediator.expectedErrorCode = IjentSessionMediator.ExpectedErrorCode.ZERO
     IjentSessionProvider.instanceAsync().connect(platform, mediator)
   }
+  return ijentSessionRegistry.get(ijentId)
+}
 
 /** A specialized overload of [connectToRunningIjent] */
 suspend fun connectToRunningIjent(ijentName: String, platform: IjentPlatform.Posix, process: Process): IjentPosixApi =

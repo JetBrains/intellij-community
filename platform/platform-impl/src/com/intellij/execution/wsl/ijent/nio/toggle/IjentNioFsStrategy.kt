@@ -7,6 +7,7 @@ import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
 import com.intellij.util.containers.forEachGuaranteed
@@ -79,7 +80,9 @@ class IjentWslNioFsToggleStrategy(
   suspend fun switchToIjentFs(distro: WSLDistribution) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
-      val ijentFs = WslIjentManager.instanceAsync().getIjentApi(distro, null, false).fs
+      val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) {
+        WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
+      }
       ijentFsProvider.newFileSystem(
         URI("ijent", "wsl", "/${distro.id}", null, null),
         IjentNioFileSystemProvider.newFileSystemMap(ijentFs),
@@ -104,7 +107,10 @@ class IjentWslNioFsToggleStrategy(
   }
 
   fun switchToTracingWsl9pFs(distro: WSLDistribution) {
-    ownFileSystems.compute(distro) { underlyingProvider, _, _ ->
+    ownFileSystems.compute(distro) { underlyingProvider, ownFs, actualFs ->
+      actualFs?.close()
+      ownFs?.close()
+
       TracingFileSystemProvider(underlyingProvider).getLocalFileSystem()
     }
   }

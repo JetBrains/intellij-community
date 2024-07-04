@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
-/** [IjentSessionRegistry] creates instances of this class. */
+/** [IjentSessionRegistry.register] creates instances of this class. */
 class IjentId internal constructor(val id: String) {
   override fun toString(): String = "IjentId($id)"
 
