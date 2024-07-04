@@ -4,7 +4,6 @@ package com.intellij.platform.instanceContainer.internal
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.instanceContainer.InstanceContainer
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
-import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineName
@@ -21,8 +20,8 @@ class InstanceContainerImpl(
 
   override fun toString(): String {
     val state = _state
-    return if (state is PersistentMap<*, *>) {
-      "Container $containerName { registered: ${state.size} }"
+    return if (state is InstanceContainerState) {
+      "Container $containerName { registered: ${state.holders.size} }"
     }
     else {
       "Container $containerName (disposed)"
