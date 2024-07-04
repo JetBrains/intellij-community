@@ -26,8 +26,7 @@ class SingletonNotificationManager(private val groupId: String, private val type
       oldNotification.expire()
     }
 
-    val group = NotificationGroupManager.getInstance().getNotificationGroup(groupId)
-    val newNotification = object : Notification(group.displayId, title, content, type) {
+    val newNotification = object : Notification(groupId, title, content, type) {
       override fun expire() {
         super.expire()
         notification.compareAndSet(this, null)
