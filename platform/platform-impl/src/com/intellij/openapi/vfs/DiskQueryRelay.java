@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -68,6 +68,10 @@ public final class DiskQueryRelay<Param, Result> {
    * inside the {@code task} block.
    */
   public static <Result, E extends Exception> Result compute(@NotNull ThrowableComputable<Result, E> task) throws E, ProcessCanceledException {
+    if (!isInCancellableContext()) {
+      return task.compute();
+    }
+
     Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(task::compute);
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
