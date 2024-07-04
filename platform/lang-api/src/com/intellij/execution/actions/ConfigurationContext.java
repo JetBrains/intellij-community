@@ -52,7 +52,7 @@ public class ConfigurationContext {
   private boolean myInitialized;
   private boolean myMultipleSelection;
   private volatile Ref<RunnerAndConfigurationSettings> myExistingConfiguration;
-  private final Module myModule;
+  private final @Nullable Module myModule;
   private final RunConfiguration myRuntimeConfiguration;
   private final DataContext myDataContext;
   private final String myPlace;
@@ -368,7 +368,7 @@ public class ConfigurationContext {
     return myConfiguration == null ? myLocation.getProject() : myConfiguration.getConfiguration().getProject();
   }
 
-  public Module getModule() {
+  public @Nullable Module getModule() {
     return myModule;
   }
 

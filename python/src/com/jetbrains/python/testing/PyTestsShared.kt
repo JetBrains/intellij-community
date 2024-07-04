@@ -44,18 +44,21 @@ import com.intellij.util.ThreeState
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.extensions.*
 import com.jetbrains.python.packaging.PyPackageManager
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.reflection.DelegationProperty
+import com.jetbrains.python.reflection.Properties
+import com.jetbrains.python.reflection.Property
+import com.jetbrains.python.reflection.getProperties
 import com.jetbrains.python.run.*
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
 import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.python.sdk.PythonSdkUtil
-import com.jetbrains.python.reflection.DelegationProperty
-import com.jetbrains.python.reflection.Properties
-import com.jetbrains.python.reflection.Property
-import com.jetbrains.python.reflection.getProperties
 import com.jetbrains.python.testing.doctest.PythonDocTestUtil
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
@@ -880,7 +883,8 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
   }
 
   override fun cloneTemplateConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings {
-    return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(context.module))
+    val module = context.module ?: throw IllegalArgumentException("Module should not be null")
+    return cloneTemplateConfigurationStatic(context, findConfigurationFactoryFromSettings(module))
   }
 
   override fun createConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {

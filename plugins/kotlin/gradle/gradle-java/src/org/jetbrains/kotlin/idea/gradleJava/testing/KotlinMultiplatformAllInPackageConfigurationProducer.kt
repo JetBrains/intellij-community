@@ -37,7 +37,8 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
             return emptyList()
 
         val psiLocation = context.psiLocation ?: return emptyList()
-        val sourceElement = getSourceElement(context.module, psiLocation) ?: return emptyList()
+        val module = context.module ?: return emptyList()
+        val sourceElement = getSourceElement(module, psiLocation) ?: return emptyList()
         val wildcardFilter = createTestFilterFrom(element)
         val tasks = mppTestTasksChooser.listAvailableTasks(listOf(sourceElement))
 
