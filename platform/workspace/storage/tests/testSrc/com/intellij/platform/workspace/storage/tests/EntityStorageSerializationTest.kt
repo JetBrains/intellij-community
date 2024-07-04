@@ -336,6 +336,7 @@ private val usedCacheVersionPrefixes: List<String> = listOf("v", "version")
 
 // Use '#' instead of '$' to separate the subclass of the class
 private val expectedKryoRegistration = """
+  com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
   com.google.common.collect.HashMultimap
   com.intellij.platform.workspace.storage.impl.containers.Int2IntWithDefaultMap
   com.intellij.platform.workspace.storage.ConnectionId

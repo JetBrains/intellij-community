@@ -97,6 +97,12 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     return add(relativePath, id2NodeMapping.get(parentVfu.id))
   }
 
+  /**
+   * Returns class of instances produced by [createVirtualFileUrl], it's used during serialization. 
+   */
+  public open val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
+    get() = VirtualFileUrlImpl::class.java
+
   protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
     return VirtualFileUrlImpl(id, manager)
   }

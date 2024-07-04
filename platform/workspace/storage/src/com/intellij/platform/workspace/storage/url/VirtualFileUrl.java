@@ -21,6 +21,7 @@ import java.util.List;
  * Also, it's possible to automatically update references in entities when corresponding files are moved or renamed. Currently, it's 
  * implemented to specific types of entities only in {@link com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.VirtualFileUrlWatcher VirtualFileUrlWatcher}.
  */
+@ApiStatus.NonExtendable
 public interface VirtualFileUrl {
   /**
    * Returns URL in the Virtual File System format.
