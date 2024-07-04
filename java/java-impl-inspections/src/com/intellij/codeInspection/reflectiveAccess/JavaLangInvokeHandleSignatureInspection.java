@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -206,6 +207,7 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
                                   @NotNull PsiReferenceExpression factoryMethodExpression,
                                   @NotNull ProblemsHolder holder) {
     if (!ownerClass.isExact()) return;
+    if (!isStaticExpected && isSignaturePolymorphic(ownerClass, methodName)) return;
     final PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(methodName, true);
     if (methods.length == 0) {
       holder.registerProblem(methodNameExpression, JavaErrorBundle.message("cannot.resolve.method", methodName));
@@ -252,6 +254,22 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
         }
       }
     }
+  }
+
+  private static boolean isSignaturePolymorphic(@NotNull ReflectiveClass ownerClass,
+                                                @NotNull String methodName) {
+    if ("java.lang.invoke.MethodHandle".equals(ownerClass.getPsiClass().getQualifiedName())) {
+      return methodName.equals("invoke") || methodName.equals("invokeExact");
+    }
+    if ("java.lang.invoke.VarHandle".equals(ownerClass.getPsiClass().getQualifiedName())) {
+      try {
+        //noinspection ResultOfMethodCallIgnored
+        VarHandle.AccessMode.valueFromMethodName(methodName);
+        return true;
+      } catch (IllegalArgumentException ignored) {
+      }
+    }
+    return false;
   }
 
 
