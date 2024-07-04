@@ -129,6 +129,11 @@ internal class GitBranchesTreePopupShowTagsAction :
     }
     e.getRequiredData(GitBranchesTreePopupBase.POPUP_KEY).refresh()
   }
+
+  companion object {
+    fun isSelected(project: Project?): Boolean =
+      project != null && project.let(GitVcsSettings::getInstance).showTags()
+  }
 }
 
 internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {

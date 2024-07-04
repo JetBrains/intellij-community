@@ -102,12 +102,12 @@
       <reference ref="Annotate"/>
       <reference ref="Compare.SameVersion"/>
       <reference ref="Compare.Selected"/>
-      <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithBranchAction"/>
+      <action id="Git.CompareWithBranch" class="git4idea.actions.GitCompareWithRefAction">
+        <synonym key="action.Git.CompareWithTag.text"/>
+      </action>
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference id="Vcs.ShowHistoryForBlock"/>
     </group>
-
-    <action id="Git.CompareWithTag" class="git4idea.actions.GitCompareWithTagAction"/>
 
     <group id="Git.MainMenu.FileActions" class="git4idea.actions.GitFileActionGroup" popup="true">
       <reference ref="Git.FileActions"/>
@@ -213,11 +213,18 @@
       <action id="git.branches.popup.filter.by.action" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByAction"/>
       <action id="git.branches.popup.filter.by.repository" class="git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository"/>
       <separator/>
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
+      <action id="git.branches.group.by.prefix" class="git4idea.ui.branch.popup.GitBranchesTreePopupGroupByPrefixAction"/>
       <action class="git4idea.ui.branch.popup.GitBranchesTreePopupTrackReposSynchronouslyAction"/>
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupShowTagsAction"/>
-      <action class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
+      <action id="git.branches.show.recent" class="git4idea.ui.branch.popup.GitBranchesTreePopupShowRecentBranchesAction"/>
+      <action id="git.branches.show.tags" class="git4idea.ui.branch.popup.GitBranchesTreePopupShowTagsAction"/>
+      <action id="git.branches.popup.resize" class="git4idea.ui.branch.popup.GitBranchesTreePopupResizeAction"/>
+    </group>
+
+    <group id="Git.Compare.With.Branch.Popup.Settings" class="git4idea.ui.branch.popup.GitBranchesTreePopupSettings" icon="AllIcons.Actions.More">
+      <reference ref="git.branches.group.by.prefix"/>
+      <reference ref="git.branches.show.recent"/>
+      <reference ref="git.branches.show.tags"/>
+      <reference ref="git.branches.popup.resize"/>
     </group>
 
     <group id="Git.Branches.List">
