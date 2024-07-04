@@ -56,7 +56,7 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     boolean wasCorrupted = registeredIndexes.getWasCorrupted();
 
     Path projectQueueFile = getQueueFile(project);
-    ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, wasCorrupted, ManagingFS.getInstance().getCreationTimestamp());
+    ProjectDirtyFilesQueue projectDirtyFilesQueue = PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().getCreationTimestamp());
 
     // Add project to various lists in read action to make sure that
     // they are not added to lists during disposing of project (in this case project may be stuck forever in those lists)
