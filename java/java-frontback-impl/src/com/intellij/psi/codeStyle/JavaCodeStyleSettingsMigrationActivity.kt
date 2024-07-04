@@ -1,12 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle
 
-import com.intellij.application.options.CodeStyle
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.psi.codeStyle.CodeStyleScheme.PROJECT_SCHEME_NAME
 
+/**
+ * JavaCodeStyleSettingsMigrationActivity is responsible for migrating the Java code style settings
+ * for both application-wide and project-specific schemes.
+ * All customs schemes are stored on the application level and therefore, two [SimplePersistentStateComponent] are required
+ * Note, migration will not happen in case new schemes will be added.
+ */
 class JavaCodeStyleSettingsMigrationActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     val applicationMigrationState = JavaCodeStyleSettingsApplicationMigrationManager.getInstance().state
@@ -14,15 +19,13 @@ class JavaCodeStyleSettingsMigrationActivity : ProjectActivity {
 
     if (!applicationMigrationState.areSchemesMigrated) {
       CodeStyleSchemes.getInstance().allSchemes.forEach { scheme ->
-        if (scheme.name != PROJECT_SCHEME_NAME) {
-          migrateSettings(scheme.codeStyleSettings)
-        }
+        migrateSettings(scheme.codeStyleSettings)
       }
       applicationMigrationState.areSchemesMigrated = true
     }
 
     if (!projectMigrationState.areSchemesMigrated) {
-      val settings = CodeStyle.getSettings(project)
+      val settings = CodeStyleSettingsManager.getInstance(project).mainProjectCodeStyle ?: return
       migrateSettings(settings)
       projectMigrationState.areSchemesMigrated = true
     }
