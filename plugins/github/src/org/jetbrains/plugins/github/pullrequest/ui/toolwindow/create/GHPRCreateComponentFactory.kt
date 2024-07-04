@@ -177,7 +177,17 @@ internal object GHPRCreateComponentFactory {
         }
       }
     }
-    val textPanel = JPanel(null).apply {
+    val textPanel = object : JPanel(null) {
+      override fun addNotify() {
+        super.addNotify()
+        InternalDecoratorImpl.componentWithEditorBackgroundAdded(this)
+      }
+
+      override fun removeNotify() {
+        super.removeNotify()
+        InternalDecoratorImpl.componentWithEditorBackgroundRemoved(this)
+      }
+    }.apply {
       isOpaque = true
       background = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
       InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
@@ -300,7 +310,7 @@ internal object GHPRCreateComponentFactory {
 
   private fun CoroutineScope.createChangesPanel(changeListVm: CodeReviewChangeListViewModel): JComponent =
     CodeReviewChangeListComponentFactory.createIn(this, changeListVm, null,
-                                                         message("pull.request.commit.does.not.contain.changes")).also {
+                                                  message("pull.request.commit.does.not.contain.changes")).also {
       it.installPopupHandler(ActionManager.getInstance().getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
     }
 
@@ -440,16 +450,20 @@ private fun createCommitsPopupPresenter(commit: VcsCommitMetadata) = CommitPrese
   committedDate = Date(commit.authorTime)
 )
 
-private fun CoroutineScope.createReviewersListPanelHandle(vm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer>,
-                                                          avatarIconsProvider: GHAvatarIconsProvider) =
+private fun CoroutineScope.createReviewersListPanelHandle(
+  vm: LabeledListPanelViewModel<GHPullRequestRequestedReviewer>,
+  avatarIconsProvider: GHAvatarIconsProvider,
+) =
   LabeledListPanelHandle(this, vm,
                          message("pull.request.no.reviewers"),
                          message("pull.request.reviewers"),
                          { UserLabel(it, avatarIconsProvider) },
                          GHUIUtil.SelectionPresenters.PRReviewers(avatarIconsProvider))
 
-private fun CoroutineScope.createAssigneesListPanelHandle(vm: LabeledListPanelViewModel<GHUser>,
-                                                          avatarIconsProvider: GHAvatarIconsProvider) =
+private fun CoroutineScope.createAssigneesListPanelHandle(
+  vm: LabeledListPanelViewModel<GHUser>,
+  avatarIconsProvider: GHAvatarIconsProvider,
+) =
   LabeledListPanelHandle(this, vm,
                          message("pull.request.unassigned"),
                          message("pull.request.assignees"),
