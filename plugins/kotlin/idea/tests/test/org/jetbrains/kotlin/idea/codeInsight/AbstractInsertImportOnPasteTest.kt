@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndRemoveRedundantEmptyLinesAtTheEnd
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -35,6 +36,7 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
     private val TODO_INVESTIGATE_DIRECTIVE = "// TODO: Investigation is required"
     private val NO_ERRORS_DUMP_DIRECTIVE = "// NO_ERRORS_DUMP"
     private val DELETE_DEPENDENCIES_BEFORE_PASTE_DIRECTIVE = "// DELETE_DEPENDENCIES_BEFORE_PASTE"
+    private val BLOCK_CODE_FRAGMENT_DIRECTIVE = "// BLOCK_CODE_FRAGMENT"
     private val NAME_COUNT_TO_USE_STAR_IMPORT_DIRECTIVE = "// NAME_COUNT_TO_USE_STAR_IMPORT:"
     private val PACKAGES_TO_USE_STAR_IMPORTS_DIRECTIVE = "// PACKAGE_TO_USE_STAR_IMPORTS:"
 
@@ -80,7 +82,21 @@ abstract class AbstractInsertImportOnPasteTest : AbstractCopyPasteTest() {
         withCustomCompilerOptions(testFileText, project, module) {
             val dependencyPsiFile1 = configureByDependencyIfExists(getTestFileNameWithExtension(".dependency.kt"))
             val dependencyPsiFile2 = configureByDependencyIfExists(getTestFileNameWithExtension(".dependency.java"))
-            myFixture.configureByFile(testFileName)
+
+            val isCodeFragment = InTextDirectivesUtils.isDirectiveDefined(testFileText, BLOCK_CODE_FRAGMENT_DIRECTIVE)
+
+            if (isCodeFragment) {
+                val contextFileName = getTestFileNameWithExtension(".context.kt")
+                val contextKtFile = configureByDependencyIfExists(contextFileName) as KtFile
+
+                val selectedText = testFile.readText().substringAfter("<selection>").substringBefore("</selection>")
+                val codeFragment = KtPsiFactory(project).createBlockCodeFragment(selectedText, contextKtFile)
+
+                myFixture.configureFromExistingVirtualFile(codeFragment.virtualFile)
+            } else {
+                myFixture.configureByFile(testFileName)
+            }
+
             myFixture.performEditorAction(cutOrCopy)
 
             if (InTextDirectivesUtils.isDirectiveDefined(testFileText, DELETE_DEPENDENCIES_BEFORE_PASTE_DIRECTIVE)) {

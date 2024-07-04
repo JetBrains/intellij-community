@@ -115,6 +115,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
                 runTest("testData/copyPaste/imports/ClassWithDoc.kt");
             }
 
+            @TestMetadata("CodeFragment.kt")
+            public void testCodeFragment() throws Exception {
+                runTest("testData/copyPaste/imports/CodeFragment.kt");
+            }
+
             @TestMetadata("Constructor.kt")
             public void testConstructor() throws Exception {
                 runTest("testData/copyPaste/imports/Constructor.kt");
@@ -675,6 +680,11 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
             @TestMetadata("ClassWithDoc.kt")
             public void testClassWithDoc() throws Exception {
                 runTest("testData/copyPaste/imports/ClassWithDoc.kt");
+            }
+
+            @TestMetadata("CodeFragment.kt")
+            public void testCodeFragment() throws Exception {
+                runTest("testData/copyPaste/imports/CodeFragment.kt");
             }
 
             @TestMetadata("Constructor.kt")

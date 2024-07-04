@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -54,6 +55,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         endOffsets: IntArray
     ): List<KotlinReferenceTransferableData> {
         if (file !is KtFile || DumbService.getInstance(file.project).isDumb) return listOf()
+
+        if (file is KtCodeFragment) return listOf()
 
         check(startOffsets.size == endOffsets.size) {
             "startOffsets ${startOffsets.contentToString()} has to have the same size as endOffsets ${endOffsets.contentToString()}"
