@@ -3,7 +3,6 @@ package com.michaelbaranov.microba;
 import com.michaelbaranov.microba.calendar.ui.basic.BasicCalendarPaneUI;
 import com.michaelbaranov.microba.calendar.ui.basic.BasicDatePickerUI;
 import com.michaelbaranov.microba.common.MicrobaComponent;
-import com.michaelbaranov.microba.gradient.ui.basic.BasicGradientUI;
 import com.michaelbaranov.microba.marker.ui.basic.BasicMarkerBarUI;
 import com.michaelbaranov.microba.marker.ui.metal.MetalMarkerBarUI;
 import com.michaelbaranov.microba.marker.ui.motif.MotifMarkerBarUI;
@@ -55,8 +54,6 @@ public class Microba {
     UIManager.put(packagePrefix + "calendar.ui.basic.BasicCalendarPaneUI", BasicCalendarPaneUI.class);
     UIManager.put("microba.DatePickerUI", packagePrefix + "calendar.ui.basic.BasicDatePickerUI");
     UIManager.put(packagePrefix + "calendar.ui.basic.BasicDatePickerUI", BasicDatePickerUI.class);
-    UIManager.put("microba.GradientUI", packagePrefix + "gradient.ui.basic.BasicGradientUI");
-    UIManager.put(packagePrefix + "gradient.ui.basic.BasicGradientUI", BasicGradientUI.class);
     UIManager.put("microba.MarkerBarUI", packagePrefix + "marker.ui.basic.BasicMarkerBarUI");
     UIManager.put(packagePrefix + "marker.ui.basic.BasicMarkerBarUI", BasicMarkerBarUI.class);
 

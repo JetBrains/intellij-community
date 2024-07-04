@@ -30,11 +30,6 @@ MarkerBar
 * Horizontal/vertical alignment
 * Flipped marks
 
-GradientBar
-* Key-point based palette
-* Linear color interpolation
-* Horizontal/vertical alignment
-
 FAQ
 -----------
 [Wiki - FAQ](https://github.com/tdbear/microba/wiki/FAQ)
