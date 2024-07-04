@@ -833,6 +833,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
     init {
       ActionUtil.copyFrom(this, "ToggleContentUiTypeMode")
+
+      templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
     }
 
     override fun update(e: AnActionEvent) {
