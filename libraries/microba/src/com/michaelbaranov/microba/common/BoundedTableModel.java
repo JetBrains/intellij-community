@@ -9,8 +9,7 @@ import java.beans.PropertyChangeListener;
  * The upper and lower bound values are introduced to further describe table
  * data. For example, <code>BoundedTableModel</code> is used as a data model
  * for <code>{@link com.michaelbaranov.microba.marker.MarkerBar}</code>,
- * <code>{@link com.michaelbaranov.microba.gradient.GradientBar}</code>,
- * <code>{@link com.michaelbaranov.microba.gradienteditor.GradientEditor}</code>
+ * <code>{@link com.michaelbaranov.microba.gradient.GradientBar}</code>
  * 
  * @version 0.1 (rev. 13 Aug 2005)
  * @author Michael Baranov <a

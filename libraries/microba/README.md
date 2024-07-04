@@ -31,7 +31,6 @@ MarkerBar
 * Flipped marks
 
 GradientBar
-GradientEditor
 * Key-point based palette
 * Linear color interpolation
 * Horizontal/vertical alignment
