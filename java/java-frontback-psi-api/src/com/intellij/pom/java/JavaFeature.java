@@ -107,11 +107,9 @@ public enum JavaFeature {
    */
   RECORD_PATTERNS_IN_FOR_EACH(LanguageLevel.JDK_X, "feature.record.patterns.in.for.each",
                               LanguageLevel.JDK_20_PREVIEW),
-  /**
-   * Implementation for java 23
-   */
-  PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_X, "feature.primitive.types.in.patterns"),
-  IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_X, "feature.implicit.import.in.implicit.classes"),
+
+  PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
+  IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes"),
   ;
 
   private final @NotNull LanguageLevel myLevel;
