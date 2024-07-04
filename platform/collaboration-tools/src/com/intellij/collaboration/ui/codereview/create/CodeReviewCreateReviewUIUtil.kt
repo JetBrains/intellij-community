@@ -4,9 +4,11 @@ package com.intellij.collaboration.ui.codereview.create
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.comment.CodeReviewMarkdownEditor
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -38,14 +40,25 @@ object CodeReviewCreateReviewUIUtil {
 
   fun createTitleEditor(project: Project, emptyText: @Nls String = ""): Editor =
     CodeReviewMarkdownEditor.create(project, true, true).apply {
-      (this as? EditorEx)?.setPlaceholder(emptyText)
       component.font = titleFont
+
+      if (this !is EditorEx) return@apply
+      setPlaceholder(emptyText)
+      setScrollbarsBackground()
     }
 
   fun createDescriptionEditor(project: Project, emptyText: @Nls String = ""): Editor =
     CodeReviewMarkdownEditor.create(project, true, false).apply {
-      (this as? EditorEx)?.setPlaceholder(emptyText)
+      if (this !is EditorEx) return@apply
+      setPlaceholder(emptyText)
+      setScrollbarsBackground()
     }
+
+  private fun EditorEx.setScrollbarsBackground() {
+    val editorBackground = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
+    scrollPane.horizontalScrollBar?.background = editorBackground
+    scrollPane.verticalScrollBar?.background = editorBackground
+  }
 
   fun createCommitListCellRenderer(): ListCellRenderer<VcsCommitMetadata> = CodeReviewTwoLinesCommitRenderer()
 }
