@@ -1,6 +1,6 @@
 {
   "name": "asciidoctor-vscode",
-  "version": "3.2.4-dev",
+  "version": "3.3.2-dev",
   "description": "%description%",
   "license": "MIT",
   "contributes": {
