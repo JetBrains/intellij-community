@@ -117,9 +117,15 @@ fun NewProjectWizardStep.projectWizardJdkComboBox(
       updateGraphProperties(combo, sdkProperty, sdkDownloadTaskProperty, selectedJdkProperty)
     }
     .onApply {
+      val selected = combo.selectedItem
+
+      if (selected is DetectedJdk) {
+        registerJdk(selected.home, combo)
+      }
+
       context.projectJdk = sdkProperty.get()
 
-      when (val selected = combo.selectedItem) {
+      when (selected) {
         is NoJdk -> JdkComboBoxCollector.noJdkSelected()
         is DownloadJdk -> JdkComboBoxCollector.jdkDownloaded((selected.task as JdkDownloadTask).jdkItem)
       }
@@ -396,10 +402,6 @@ class ProjectWizardJdkComboBox(
         selectAndAddJdk(this)
         selectedItem
       }
-      is DetectedJdk -> {
-        registerJdk(anObject.home, this)
-        selectedItem
-      }
       else -> anObject
     }
     super.setSelectedItem(toSelect)
@@ -422,7 +424,11 @@ class ProjectWizardJdkComboBox(
 private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   combo.popup?.hide()
   SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance()) { path: String ->
-    registerJdk(path, combo)
+    val version = JavaSdk.getInstance().getVersionString(path)
+    val comboItem = DetectedJdk(version ?: "", path)
+    combo.detectedJDKs.add(comboItem)
+    combo.addItem(comboItem)
+    combo.selectedItem = comboItem
   }
 }
 
