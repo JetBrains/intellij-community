@@ -7,6 +7,7 @@ import javax.swing.Icon
 class ActionToGutterRendererAdapter(private val action: AnAction) : GutterIconRenderer() {
 
   private val icon = action.templatePresentation.icon ?: error("Action has no assigned icon")
+
   override fun equals(other: Any?): Boolean {
     return icon == (other as? ActionToGutterRendererAdapter)?.icon
   }
@@ -20,5 +21,7 @@ class ActionToGutterRendererAdapter(private val action: AnAction) : GutterIconRe
   override fun getClickAction(): AnAction {
     return action
   }
+
+  override fun isNavigateAction() = true
 
 }
