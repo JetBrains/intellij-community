@@ -1,8 +1,5 @@
-// "Convert implicitly declared class into regular class" "true-preview"
-
-//many comments
-
 public class beforeAdjustComments {
+    //many comments
     private final String field = "field";
 
     //many comments

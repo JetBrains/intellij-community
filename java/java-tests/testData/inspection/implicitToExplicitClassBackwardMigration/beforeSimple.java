@@ -1,5 +1,3 @@
-// "Convert implicitly declared class into regular class" "true-preview"
-
 private final String field = "field";
 
 public static void main() {

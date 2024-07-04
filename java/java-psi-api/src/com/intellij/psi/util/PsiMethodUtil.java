@@ -248,6 +248,12 @@ public final class PsiMethodUtil {
     return findMainMethod(aClass);
   }
 
+  /**
+   * Determines if the given class has a main method and can be launched.
+   *
+   * @param aClass the class to check for a main method.
+   * @return true if the class has a main method, false otherwise.
+   */
   public static boolean hasMainInClass(@NotNull final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return false;
     return hasMainMethod(aClass);
