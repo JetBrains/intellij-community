@@ -23,13 +23,6 @@ DatePicker
 * Color overriding (NEW)
 * Flexible, extensible
 
-MarkerBar
-* Multiple draggable marks
-* Immovable marks
-* Colored marks
-* Horizontal/vertical alignment
-* Flipped marks
-
 FAQ
 -----------
 [Wiki - FAQ](https://github.com/tdbear/microba/wiki/FAQ)
