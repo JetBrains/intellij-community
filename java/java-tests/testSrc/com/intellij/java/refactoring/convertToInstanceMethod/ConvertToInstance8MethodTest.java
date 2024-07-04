@@ -13,6 +13,7 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
 
   public void testConflictingMembers() { doTest(0); }
   public void testNoConflictingMembers() { doTest(0); }
+  public void testNoConflictingMembers2() { doTest(0); }
 
   public void testThisInsteadOfNoQualifier() {
     doTest(0);
