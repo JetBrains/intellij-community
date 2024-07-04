@@ -96,6 +96,7 @@ class CommitsBrowserComponentBuilder(private val project: Project,
       viewport.isOpaque = false
       horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     }
+    ScrollableContentBorder.setup(commitsScrollPane, Side.TOP)
 
     val commitsBrowserComponent = OnePixelSplitter(true, "Github.PullRequest.Commits.Browser", 0.7f).apply {
       firstComponent = commitsScrollPane
