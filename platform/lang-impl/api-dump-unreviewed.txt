@@ -2441,7 +2441,6 @@ f:com.intellij.codeInsight.CodeInsightUtilBase
 - prepareFileForWrite(com.intellij.psi.PsiFile):Z
 - preparePsiElementForWrite(com.intellij.psi.PsiElement):Z
 - preparePsiElementsForWrite(java.util.Collection):Z
-- preparePsiElementsForWrite(com.intellij.psi.PsiElement[]):Z
 - prepareVirtualFilesForWrite(com.intellij.openapi.project.Project,java.util.Collection):Z
 f:com.intellij.codeInsight.CodeInsightWorkspaceSettings
 - com.intellij.openapi.util.SimpleModificationTracker
