@@ -29,6 +29,7 @@ import java.util.*
 
 class NotebookCellInlayManager private constructor(
   val editor: EditorImpl,
+  private val shouldCheckInlayOffsets: Boolean,
 ) : Disposable, NotebookIntervalPointerFactory.ChangeListener {
   private val notebookCellLines = NotebookCellLines.get(editor)
 
@@ -255,8 +256,8 @@ class NotebookCellInlayManager private constructor(
 
   companion object {
     @JvmStatic
-    fun install(editor: EditorImpl) {
-      val notebookCellInlayManager = NotebookCellInlayManager(editor).also { Disposer.register(editor.disposable, it) }
+    fun install(editor: EditorImpl, shouldCheckInlayOffsets: Boolean) {
+      val notebookCellInlayManager = NotebookCellInlayManager(editor, shouldCheckInlayOffsets).also { Disposer.register(editor.disposable, it) }
       editor.putUserData(isFoldingEnabledKey, Registry.`is`("jupyter.editor.folding.cells"))
       NotebookIntervalPointerFactory.get(editor).changeListeners.addListener(notebookCellInlayManager, editor.disposable)
       notebookCellInlayManager.initialize()
@@ -310,6 +311,8 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun checkInlayOffsets() {
+    if (!shouldCheckInlayOffsets) return
+
     val inlaysOffsets = buildSet {
       for (cell in _cells) {
         add(editor.document.getLineStartOffset(cell.interval.lines.first))
