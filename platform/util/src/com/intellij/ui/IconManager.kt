@@ -6,6 +6,7 @@ package com.intellij.ui
 import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.ui.icons.IconPathProvider
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.ApiStatus
@@ -63,7 +64,7 @@ interface IconManager {
   @Internal
   fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
-  @ApiStatus.Internal
+  @Internal
   fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
 
   fun createEmptyIcon(icon: Icon): Icon = icon
@@ -119,9 +120,8 @@ private object DummyIconManager : IconManager {
 
   override fun loadRasterizedIcon(path: String, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon = DummyIconImpl(path)
 
-  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon {
-    return loadRasterizedIcon(path, classLoader, cacheKey, flags)
-  }
+  override fun loadRasterizedIcon(path: String, expUIPath: String?, classLoader: ClassLoader, cacheKey: Int, flags: Int): Icon
+    = DummyIconImpl(path, expUIPath)
 
   override fun createLayeredIcon(instance: Iconable, icon: Icon, flags: Int): RowIcon {
     val icons = arrayOfNulls<Icon>(2)
@@ -199,21 +199,23 @@ private class DummyRowIcon : DummyIconImpl, RowIcon {
   override fun replaceBy(replacer: IconReplacer): Icon = this
 }
 
-private open class DummyIconImpl(private val path: String) : ScalableIcon, DummyIcon {
+private open class DummyIconImpl(override val originalPath: String, override val expUIPath: String? = null) : ScalableIcon, DummyIcon, IconPathProvider {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
   }
+
+  constructor(path: String) : this(path, null)
 
   override fun getIconWidth(): Int = 16
 
   override fun getIconHeight(): Int = 16
 
-  override fun hashCode(): Int = path.hashCode()
+  override fun hashCode(): Int = originalPath.hashCode()
 
   override fun equals(other: Any?): Boolean {
-    return this === other || other is DummyIconImpl && other.path == path
+    return this === other || other is DummyIconImpl && other.originalPath == originalPath
   }
 
-  override fun toString(): String = path
+  override fun toString(): String = originalPath
 
   override fun getScale(): Float = 1f
 
