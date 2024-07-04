@@ -5,6 +5,7 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -18,7 +19,12 @@ import kotlin.io.path.Path
 import kotlin.io.path.inputStream
 import kotlin.io.path.isRegularFile
 
-internal object WhatsNewInVisionContentProvider {
+open class WhatsNewInVisionContentProvider {
+
+  companion object {
+    suspend fun getInstance(): WhatsNewInVisionContentProvider = serviceAsync()
+  }
+
   suspend fun isAvailable(): Boolean {
     return content.checkAvailability()
   }
@@ -42,7 +48,7 @@ internal object WhatsNewInVisionContentProvider {
   @Serializable
   internal data class PublicVar(val value: String, val description: String)
 
-  private fun getResourceName(): String {
+  protected fun getResourceName(): String {
     val fileName = "vision.json"
     val appName = ApplicationNamesInfo.getInstance().productName.lowercase()
     val isEap = ApplicationInfo.getInstance().isEAP
@@ -56,11 +62,14 @@ internal object WhatsNewInVisionContentProvider {
     }"
   }
 
+  protected open fun getResource(): ContentSource =
+    ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getResourceName())
+
   private val content: ContentSource by lazy {
     System.getProperty(PROPERTY_WHATS_NEW_VISION_JSON)?.let { testResourcePath ->
       logger.info("What's New test mode engaged: loading resource from \"$testResourcePath\".")
       PathContentSource(Path(testResourcePath))
-    } ?: ResourceContentSource(WhatsNewInVisionContentProvider::class.java.classLoader, getResourceName())
+    } ?: getResource()
   }
 
   private val json = Json { ignoreUnknownKeys = true }
@@ -75,7 +84,7 @@ private const val PROPERTY_WHATS_NEW_VISION_JSON = "intellij.whats.new.vision.js
 
 private val logger = logger<WhatsNewInVisionContentProvider>()
 
-private interface ContentSource {
+interface ContentSource {
   suspend fun openStream(): InputStream?
   suspend fun checkAvailability(): Boolean
 }
@@ -87,7 +96,7 @@ private class PathContentSource(private val path: Path) : ContentSource {
     path.isRegularFile()
   }
 }
-private class ResourceContentSource(private val classLoader: ClassLoader, private val resourceName: String) : ContentSource {
+class ResourceContentSource(private val classLoader: ClassLoader, private val resourceName: String) : ContentSource {
   override suspend fun openStream(): InputStream? = withContext(Dispatchers.IO) {
     classLoader.getResourceAsStream(resourceName)
   }
