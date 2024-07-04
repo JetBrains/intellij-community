@@ -2,12 +2,10 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.collaboration.async.cancelledWith
-import com.intellij.collaboration.async.classAsCoroutineName
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.util.getOrNull
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -17,31 +15,33 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
-import com.intellij.vcs.log.data.DataPackChangeListener
-import com.intellij.vcs.log.impl.VcsProjectLog
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.launch
+import git4idea.remote.hosting.GitRemoteBranchesUtil
+import git4idea.remote.hosting.HostedGitRepositoryRemoteBranch
+import git4idea.remote.hosting.infoFlow
+import git4idea.repo.GitRepository
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
 import java.util.*
 
-internal class GHPRDataProviderRepositoryImpl(private val project: Project,
-                                              parentCs: CoroutineScope,
-                                              private val detailsService: GHPRDetailsService,
-                                              private val reviewService: GHPRReviewService,
-                                              private val filesService: GHPRFilesService,
-                                              private val commentService: GHPRCommentService,
-                                              private val changesService: GHPRChangesService,
-                                              private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>)
+internal class GHPRDataProviderRepositoryImpl(
+  parentCs: CoroutineScope,
+  private val repositoryService: GHPRRepositoryDataService,
+  private val detailsService: GHPRDetailsService,
+  private val reviewService: GHPRReviewService,
+  private val filesService: GHPRFilesService,
+  private val commentService: GHPRCommentService,
+  private val changesService: GHPRChangesService,
+  private val timelineLoaderFactory: (GHPRIdentifier) -> GHListLoader<GHPRTimelineItem>,
+)
   : GHPRDataProviderRepository {
   private val cs = parentCs.childScope(javaClass.name)
 
@@ -90,19 +90,9 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
       }
     }
 
-    VcsProjectLog.runWhenLogIsReady(project) {
-      if (!parentDisposable.isDisposed) {
-        val dataPackListener = DataPackChangeListener {
-          providerCs.launch {
-            detailsData.signalDetailsNeedReload()
-          }
-        }
-
-        it.dataManager.addDataPackChangeListener(dataPackListener)
-        Disposer.register(parentDisposable, Disposable {
-          it.dataManager.removeDataPackChangeListener(dataPackListener)
-        })
-      }
+    providerCs.launch {
+      detailsData.launchDetailsReloadOnHeadRevChange(repositoryService.repositoryCoordinates.serverPath,
+                                                     repositoryService.repositoryMapping.gitRepository)
     }
 
     val changesData = GHPRChangesDataProviderImpl(providerCs, changesService, { detailsData.loadDetails().refs }, id)
@@ -174,6 +164,29 @@ internal class GHPRDataProviderRepositoryImpl(private val project: Project,
   private interface DetailsLoadedListener : EventListener {
     fun onDetailsLoaded(details: GHPullRequest)
   }
+}
+
+/**
+ * Signal details reload when PR branches hashes are changed (if there are known remote branches corresponding to PR branches)
+ */
+private suspend fun GHPRDetailsDataProviderImpl.launchDetailsReloadOnHeadRevChange(
+  server: GithubServerPath,
+  repository: GitRepository,
+): Nothing {
+  val remoteBranchDescriptor = loadedDetailsState.filterNotNull().map { details ->
+    details.getHeadRemoteDescriptor(server)?.let {
+      HostedGitRepositoryRemoteBranch(it, details.headRefName)
+    }
+  }.filterNotNull().distinctUntilChanged()
+
+  combine(remoteBranchDescriptor, repository.infoFlow()) { descriptor, repoInfo ->
+    GitRemoteBranchesUtil.findRemoteBranch(repoInfo, descriptor)?.let { repoInfo.remoteBranchesWithHashes[it] }?.asString()
+  }.filterNotNull().distinctUntilChanged()
+    .drop(1).collectLatest {
+      delay(2000) // some delay to let the server consume changes
+      signalDetailsNeedReload()
+    }
+  awaitCancellation()
 }
 
 private val GHPullRequest.refs: GHPRBranchesRefs
