@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
@@ -33,6 +34,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,6 +47,7 @@ import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.messages.Topic
@@ -234,6 +237,19 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       dndManager.registerTarget(MyDnDTarget(), list, this)
     }
     listModel.syncModel()
+
+    project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, createExecutionListener { executorId, env, reason ->
+      ApplicationManager.getApplication().invokeLater {
+        if (list.isShowing) {
+          (myStep as ActionPopupStep).updateStepItems(list)
+          val focused = StackingPopupDispatcher.getInstance().focusedPopup
+          if (focused != this@RunConfigurationsActionGroupPopup &&
+            focused is ListPopupImpl) {
+            (focused.step as ActionPopupStep).updateStepItems(focused.list)
+          }
+        }
+      }
+    })
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -394,6 +410,9 @@ private fun createRunConfigurationWithInlines(project: Project,
       StopConfigurationInlineAction(activeExecutor, conf)
     else null))
     .filterNotNull()
+  inlineActions.forEach {
+    it.templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
 
   val inlineActionGroup = DefaultActionGroup(inlineActions)
   val exclude = executorFilterByParentGroupFactory(DefaultActionGroup(inlineActions))
@@ -438,6 +457,9 @@ private fun createCurrentFileWithInlineActions(project: Project,
     RunCurrentFileExecutorAction(debugExecutor),
     debugRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
   ).filterNotNull()
+  inlineActions.forEach {
+    it.templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
 
   val exclude = executorFilterByParentGroupFactory(DefaultActionGroup(inlineActions))
   return object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
