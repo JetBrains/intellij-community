@@ -86,17 +86,18 @@ public abstract class ExecutorAction extends DumbAwareAction {
                   DumbService.isDumb(project));
   }
 
-  private boolean canRun(RunnerAndConfigurationSettings settings, ExecutionTarget target, boolean isDumb) {
+  private boolean canRun(@NotNull RunnerAndConfigurationSettings settings,
+                         @Nullable ExecutionTarget target,
+                         boolean isDumb) {
     if (isDumb && !settings.getType().isDumbAware()) return false;
 
     String executorId = getExecutor().getId();
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
-    if (configuration instanceof CompoundRunConfiguration) {
-      if (ExecutionTargetManager.getInstance(project).getTargetsFor(configuration).isEmpty()) return false;
+    if (configuration instanceof CompoundRunConfiguration comp) {
+      if (ExecutionTargetManager.getInstance(project).getTargetsFor(comp).isEmpty()) return false;
 
-      List<SettingsAndEffectiveTarget> subConfigurations =
-        ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets();
+      List<SettingsAndEffectiveTarget> subConfigurations = comp.getConfigurationsWithEffectiveRunTargets();
       if (subConfigurations.isEmpty()) return false;
 
       RunManager runManager = RunManager.getInstance(project);
@@ -121,7 +122,8 @@ public abstract class ExecutorAction extends DumbAwareAction {
     else if (!ExecutionTargetManager.canRun(configuration, target)) {
       return false;
     }
-    return !ExecutionManager.getInstance(project).isStarting(executorId, runner.getRunnerId());
+    return !ExecutionManager.getInstance(project).isStarting(
+      settings.getUniqueID(), executorId, runner.getRunnerId());
   }
 
   private static boolean isValid(RunnerAndConfigurationSettings settings) {

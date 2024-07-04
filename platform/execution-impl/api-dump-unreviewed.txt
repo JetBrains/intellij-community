@@ -197,25 +197,6 @@ f:com.intellij.execution.ExecutionTargetManagerImpl
 - setActiveTarget(com.intellij.execution.ExecutionTarget):V
 - setRunManager(com.intellij.execution.impl.RunManagerImpl):V
 - update():V
-f:com.intellij.execution.ExecutorRegistryImpl
-- com.intellij.execution.ExecutorRegistry
-- sf:RUNNERS_GROUP:java.lang.String
-- sf:RUN_CONTEXT_EXECUTORS_GROUP:java.lang.String
-- sf:RUN_CONTEXT_GROUP:java.lang.String
-- sf:RUN_CONTEXT_GROUP_MORE:java.lang.String
-- <init>():V
-- getExecutorById(java.lang.String):com.intellij.execution.Executor
-- initExecutorActions(com.intellij.execution.Executor,com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar):V
-c:com.intellij.execution.ExecutorRegistryImpl$ExecutorAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>(com.intellij.execution.Executor):V
-f:com.intellij.execution.ExecutorRegistryImpl$RunnerHelper
-- <init>():V
-- s:canRun(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):Z
-- s:canRun(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,com.intellij.openapi.util.Ref):Z
-- s:run(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.actionSystem.DataContext,com.intellij.execution.Executor):V
-- s:runSubProcess(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.actionSystem.DataContext,com.intellij.execution.Executor,java.util.function.Consumer):V
 f:com.intellij.execution.ExternalizablePath
 - com.intellij.openapi.util.JDOMExternalizable
 - <init>():V
@@ -924,7 +905,7 @@ c:com.intellij.execution.impl.ExecutionManagerImpl
 - getRunningDescriptors(com.intellij.openapi.util.Condition):java.util.List
 - getRunningProcesses():com.intellij.execution.process.ProcessHandler[]
 - sf:isProcessRunning(com.intellij.execution.ui.RunContentDescriptor):Z
-- isStarting(java.lang.String,java.lang.String):Z
+- isStarting(java.lang.String,java.lang.String,java.lang.String):Z
 - restartRunProfile(com.intellij.execution.runners.ExecutionEnvironment):V
 - restartRunProfile(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.execution.ExecutionTarget,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.execution.process.ProcessHandler,java.util.function.Consumer):V
 - f:setForceCompilationInTests(Z):V

@@ -34,6 +34,7 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
@@ -336,7 +337,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
     }
 
-    public static boolean canRun(@NotNull Project project, @NotNull Executor executor, RunConfiguration configuration) {
+    public static boolean canRun(@NotNull Project project,
+                                 @NotNull Executor executor,
+                                 @NotNull RunConfiguration configuration) {
       return canRun(project, executor, configuration, null);
     }
 
@@ -366,8 +369,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
 
       for (SettingsAndEffectiveTarget pair : pairs) {
         RunConfiguration configuration = pair.getConfiguration();
-        if (configuration instanceof CompoundRunConfiguration) {
-          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets(), executor, isStartingTracker)) {
+        if (configuration instanceof CompoundRunConfiguration o) {
+          if (!canRun(project, o.getConfigurationsWithEffectiveRunTargets(), executor, isStartingTracker)) {
             return false;
           }
           continue;
@@ -377,7 +380,9 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         if (runner == null || !ExecutionTargetManager.canRun(configuration, pair.getTarget())) {
           return false;
         }
-        else if (ExecutionManager.getInstance(project).isStarting(executor.getId(), runner.getRunnerId())) {
+        else if (ExecutionManager.getInstance(project).isStarting(
+          RunnerAndConfigurationSettingsImpl.getUniqueIdFor(configuration),
+          executor.getId(), runner.getRunnerId())) {
           if (isStartingTracker != null) isStartingTracker.set(true);
           else return false;
         }

@@ -109,11 +109,12 @@ abstract class ExecutionManager {
   abstract fun restartRunProfile(environment: ExecutionEnvironment)
 
   fun isStarting(environment: ExecutionEnvironment): Boolean {
-    return isStarting(environment.executor.id, environment.runner.runnerId)
+    return isStarting(environment.runnerAndConfigurationSettings?.uniqueID ?: "",
+                      environment.executor.id, environment.runner.runnerId)
   }
 
   @ApiStatus.Internal
-  abstract fun isStarting(executorId: String, runnerId: String): Boolean
+  abstract fun isStarting(configurationId: String, executorId: String, runnerId: String): Boolean
 
   @ApiStatus.Experimental
   abstract fun executePreparationTasks(environment: ExecutionEnvironment, currentState: RunProfileState): Promise<Any?>

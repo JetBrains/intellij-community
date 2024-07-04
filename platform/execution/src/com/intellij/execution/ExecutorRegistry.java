@@ -25,15 +25,16 @@ public abstract class ExecutorRegistry {
   @Nullable
   public abstract Executor getExecutorById(@NotNull String executorId);
 
-  /**
-   * Consider to use {@link ExecutionManager#isStarting(ExecutionEnvironment)}
-   */
+  /** @deprecated Use {@link ExecutionManager#isStarting(ExecutionEnvironment)} */
   @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated(forRemoval = true)
   public final boolean isStarting(@NotNull Project project, @NotNull String executorId, @NotNull String runnerId) {
-    return ExecutionManager.getInstance(project).isStarting(executorId, runnerId);
+    return ExecutionManager.getInstance(project).isStarting("", executorId, runnerId);
   }
 
+  /** @deprecated Use {@link ExecutionManager#isStarting(ExecutionEnvironment)} */
   @SuppressWarnings("MethodMayBeStatic")
+  @Deprecated(forRemoval = true)
   public final boolean isStarting(@NotNull ExecutionEnvironment environment) {
     return ExecutionManager.getInstance(environment.getProject()).isStarting(environment);
   }

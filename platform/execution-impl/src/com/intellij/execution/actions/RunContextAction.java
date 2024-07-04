@@ -98,7 +98,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     presentation.setVisible(b.second);
   }
 
-  private Pair<Boolean, Boolean> isEnabledAndVisible(ConfigurationContext context) {
+  private Pair<Boolean, Boolean> isEnabledAndVisible(@NotNull ConfigurationContext context) {
     RunnerAndConfigurationSettings configuration = findExisting(context);
     if (configuration == null) {
       configuration = context.getConfiguration();
@@ -110,7 +110,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
 
     Project project = context.getProject();
-    return Pair.create(!ExecutionManager.getInstance(project).isStarting(myExecutor.getId(), runner.getRunnerId()), true);
+    return Pair.create(!ExecutionManager.getInstance(project).isStarting(
+      configuration.getUniqueID(), myExecutor.getId(), runner.getRunnerId()), true);
   }
 
   @Override

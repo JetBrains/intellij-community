@@ -8,5 +8,4 @@ com/intellij/internal/statistic/eventLog/events/ObjectEventData
 com/intellij/internal/statistic/eventLog/events/ObjectListEventField
 com/intellij/internal/statistic/eventLog/events/StringEventField
 com/intellij/internal/statistic/eventLog/events/VarargEventId
-com/intellij/openapi/actionSystem/ex/ActionRuntimeRegistrar
 com/intellij/openapi/actionSystem/remoting/ActionRemoteBehavior

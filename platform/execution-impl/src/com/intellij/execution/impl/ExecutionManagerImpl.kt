@@ -208,7 +208,10 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
   private fun processNotStarted(environment: ExecutionEnvironment, activity: StructuredIdeActivity?, e : Throwable? = null) {
     RunConfigurationUsageTriggerCollector.logProcessFinished(activity, RunConfigurationFinishType.FAILED_TO_START)
     val executorId = environment.executor.id
-    inProgress.remove(InProgressEntry(executorId, environment.runner.runnerId))
+    val inProgressEntry = InProgressEntry(
+      environment.runnerAndConfigurationSettings?.uniqueID ?: "",
+      executorId, environment.runner.runnerId)
+    inProgress.remove(inProgressEntry)
     environment.callback?.processNotStarted(e)
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processNotStarted(executorId, environment, e)
   }
@@ -263,7 +266,10 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
     }
 
     val executor = environment.executor
-    inProgress.add(InProgressEntry(executor.id, environment.runner.runnerId))
+    val inProgressEntry = InProgressEntry(
+      environment.runnerAndConfigurationSettings?.uniqueID ?: "",
+      executor.id, environment.runner.runnerId)
+    inProgress.add(inProgressEntry)
     project.messageBus.syncPublisher(EXECUTION_TOPIC).processStartScheduled(executor.id, environment)
     registerRecentExecutor(environment)
 
@@ -306,7 +312,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
                   project.messageBus.syncPublisher(EXECUTION_TOPIC).processStarting(executor.id, environment, processHandler)
                   processHandler.startNotify()
                 }
-                inProgress.remove(InProgressEntry(executor.id, environment.runner.runnerId))
+                inProgress.remove(inProgressEntry)
                 project.messageBus.syncPublisher(EXECUTION_TOPIC).processStarted(executor.id, environment, processHandler)
 
                 val listener = ProcessExecutionListener(project, executor.id, environment, descriptor, activity)
@@ -590,9 +596,9 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
           // a new rerun has been requested before starting this one, ignore this rerun
           return
         }
-
+        val inProgressEntry = InProgressEntry(configuration?.uniqueID ?: "", environment.executor.id, environment.runner.runnerId)
         if ((configuration != null && !configuration.type.isDumbAware && DumbService.getInstance(project).isDumb)
-            || inProgress.contains(InProgressEntry(environment.executor.id, environment.runner.runnerId))) {
+            || inProgress.contains(inProgressEntry)) {
           awaitTermination(this, 100)
           return
         }
@@ -738,10 +744,13 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
             editConfigurationUntilSuccess(environment, assignNewId)
           }
           else {
-            inProgress.add(InProgressEntry(environment.executor.id, environment.runner.runnerId))
+            val inProgressEntry = InProgressEntry(
+              environment.runnerAndConfigurationSettings?.uniqueID  ?: "",
+              environment.executor.id, environment.runner.runnerId)
+            inProgress.add(inProgressEntry)
             ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
               .finishOnUiThread(ModalityState.nonModal()) { canRun ->
-                inProgress.remove(InProgressEntry(environment.executor.id, environment.runner.runnerId))
+                inProgress.remove(inProgressEntry)
                 if (canRun) {
 
                   executeConfiguration(environment, environment.runner, assignNewId, this.project,
@@ -828,8 +837,13 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
     ExecutionUtil.handleExecutionError(environment, e)
   }
 
-  override fun isStarting(executorId: String, runnerId: String): Boolean {
-    return inProgress.contains(InProgressEntry(executorId, runnerId))
+  override fun isStarting(configurationId: String, executorId: String, runnerId: String): Boolean {
+    if (configurationId != "") {
+      return inProgress.contains(InProgressEntry(configurationId, executorId, runnerId))
+    }
+    else {
+      return inProgress.any { it.executorId == executorId && it.runnerId == runnerId  }
+    }
   }
 
   private fun awaitTermination(request: Runnable, delayMillis: Long) {
@@ -1088,7 +1102,7 @@ private class ProcessExecutionListener(private val project: Project,
   }
 }
 
-private data class InProgressEntry(val executorId: String, val runnerId: String)
+private data class InProgressEntry(val configId: String, val executorId: String, val runnerId: String)
 
 private data class RunningConfigurationEntry(
   val descriptor: RunContentDescriptor,
