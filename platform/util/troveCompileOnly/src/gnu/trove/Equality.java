@@ -8,6 +8,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.Objects;
 
+/**
+ * @deprecated This class is used to support the old Kotlin JPS plugin (1.6.*) bundled in Spring 2.*
+ * Please don't use it in your code and don't remove (KTIJ-29067)
+ */
+@Deprecated
 @ApiStatus.Internal
 public interface Equality<T> {
   boolean equals(T o1, T o2);
@@ -17,7 +22,7 @@ public interface Equality<T> {
 
   @SuppressWarnings("unchecked")
   static <T> Equality<T> createIdentityEquality() {
-    return (Equality<T>) Proxy.newProxyInstance(
+    return (Equality<T>)Proxy.newProxyInstance(
       Equality.class.getClassLoader(),
       new Class<?>[]{Equality.class},
       new InvocationHandler() {
@@ -34,7 +39,7 @@ public interface Equality<T> {
 
   @SuppressWarnings("unchecked")
   static <T> Equality<T> createCanonicalEquality() {
-    return (Equality<T>) Proxy.newProxyInstance(
+    return (Equality<T>)Proxy.newProxyInstance(
       Equality.class.getClassLoader(),
       new Class<?>[]{Equality.class},
       new InvocationHandler() {
