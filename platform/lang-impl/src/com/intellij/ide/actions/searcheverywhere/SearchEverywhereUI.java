@@ -1098,7 +1098,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
             VirtualFile vFile = pfsi.getVirtualFile();
             PsiFile file = vFile == null ? null : psiElement.getManager().findFile(vFile);
             if (file != null) {
-              return new UsageInfo(file);
+              return new UsageInfo(file, 0, 0, true);
             }
           }
           return new UsageInfo(psiElement);
