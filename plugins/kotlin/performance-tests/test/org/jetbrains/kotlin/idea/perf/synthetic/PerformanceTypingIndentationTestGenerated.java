@@ -695,6 +695,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenEntryArrow.after.kt");
             }
 
+            @TestMetadata("WhenEntryArrowNoIndentBeforeArrow.after.kt")
+            public void testWhenEntryArrowNoIndentBeforeArrow() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenEntryArrowNoIndentBeforeArrow.after.kt");
+            }
+
             @TestMetadata("WhenWithCondition.after.kt")
             public void testWhenWithCondition() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/controlFlowConstructions/WhenWithCondition.after.kt");

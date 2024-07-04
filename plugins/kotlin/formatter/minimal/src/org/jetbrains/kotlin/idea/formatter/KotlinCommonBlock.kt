@@ -754,7 +754,7 @@ abstract class KotlinCommonBlock(
             delimiterType,
             EOL_COMMENT,
             in WHITESPACES,
-            -> return false
+                -> return false
         }
 
         val psi = childElement.psi ?: return false
@@ -1067,10 +1067,15 @@ private val INDENT_RULES = arrayOf(
 
     strategy("Block in when entry")
         .within(WHEN_ENTRY)
-        .notForType(BLOCK, WHEN_CONDITION_EXPRESSION, WHEN_CONDITION_IN_RANGE, WHEN_CONDITION_IS_PATTERN, ELSE_KEYWORD)
-        // don't add an indent when the condition is missing
-        .forElement { !(it.elementType == ARROW && it.treeParent.startOffset == it.startOffset) }
+        .notForType(BLOCK, WHEN_CONDITION_EXPRESSION, WHEN_CONDITION_IN_RANGE, WHEN_CONDITION_IS_PATTERN, ELSE_KEYWORD, ARROW)
         .set(Indent.getNormalIndent()),
+
+    strategy("Indent before arrow on new line")
+        .within(WHEN_ENTRY)
+        .forType(ARROW)
+        // don't add an indent when the condition is missing
+        .forElement { it.treeParent.startOffset != it.startOffset }
+        .set { if (it.kotlinCustomSettings.INDENT_BEFORE_ARROW_ON_NEW_LINE) Indent.getNormalIndent() else Indent.getNoneIndent() },
 
     strategy("Parameter list")
         .within(VALUE_PARAMETER_LIST)
