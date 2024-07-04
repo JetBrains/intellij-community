@@ -1424,7 +1424,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BranchNode = load("vcs/branchNode.svg", "expui/general/vcs.svg", -1691291258, 0);
     /** 16x16 */ public static final @NotNull Icon Changelist = load("vcs/changelist.svg", "expui/", -676612903, 2);
     /** 16x16 */ public static final @NotNull Icon Clone = load("vcs/clone.svg", 1374345994, 2);
-    /** 16x16 */ public static final @NotNull Icon CommitNode = load("vcs/commitNode.svg", 334394479, 0);
+    /** 16x16 */ public static final @NotNull Icon CommitNode = load("vcs/commitNode.svg", "expui/vcs/commit.svg", 334394479, 0);
     /** 16x16 */ public static final @NotNull Icon Equal = load("vcs/equal.svg", -1196383288, 2);
     /** 16x16 */ public static final @NotNull Icon Fetch = load("vcs/fetch.svg", "expui/", -1252692037, 2);
     /** 16x16 */ public static final @NotNull Icon Folders = load("vcs/folders.svg", 1810604817, 2);

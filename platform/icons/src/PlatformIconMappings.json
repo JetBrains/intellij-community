@@ -873,7 +873,10 @@
     "vcs": {
       "diff.svg": "actions/diff.svg",
       "changes.svg": "actions/listChanges.svg",
-      "commit.svg": "actions/commit.svg",
+      "commit.svg": [
+        "actions/commit.svg",
+        "vcs/commitNode.svg"
+      ],
       "revert.svg": "actions/rollback.svg",
       "update.svg": "actions/checkOut.svg",
       "fetch.svg": "vcs/fetch.svg",
