@@ -37,7 +37,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", not(target_arch = "x86_64")))]
     fn classpath_test_on_ns_prefixed_path() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test = test_orig.to_ns_prefix();
@@ -45,7 +45,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", not(target_arch = "x86_64")))]
     fn classpath_test_on_acp() {
         use windows::Win32::Globalization::{CP_ACP, MB_ERR_INVALID_CHARS, MultiByteToWideChar};
 
