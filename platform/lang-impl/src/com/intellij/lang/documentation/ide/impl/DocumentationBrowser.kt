@@ -1,9 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
-import com.intellij.codeInsight.documentation.DocumentationInteractionCollector.logDownloadFinished
 import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.lang.documentation.ide.impl.DocumentationUsageCollector.logDownloadFinished
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.model.Pointer

@@ -1,15 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.impl
 
+import com.intellij.codeInsight.documentation.actions.DocumentationDownloader
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.project.Project
 
 object DocumentationUsageCollector: CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("documentation", 3)
+  private val GROUP = EventLogGroup("documentation", 4)
+
+  private val DOWNLOAD_FINISHED_EVENT = GROUP.registerEvent("quick.doc.download.finished",
+                                                            EventFields.Class("handler"),
+                                                            EventFields.Boolean("success")
+  )
 
   val QUICK_DOC_SHOWN = GROUP.registerEvent("quick.doc.shown")
 
@@ -22,6 +29,9 @@ object DocumentationUsageCollector: CounterUsagesCollector() {
     EventFields.Boolean("lookup_active"),
   )
 
+  fun logDownloadFinished(project: Project, handlerClass: Class<out DocumentationDownloader>, success: Boolean) {
+    DOWNLOAD_FINISHED_EVENT.log(project, handlerClass, success)
+  }
 }
 
 enum class DocumentationLinkProtocol {
