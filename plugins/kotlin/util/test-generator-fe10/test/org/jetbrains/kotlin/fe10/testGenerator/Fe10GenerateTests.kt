@@ -1377,6 +1377,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
         }
 
         testClass<AbstractMultiPlatformCompletionTest> {
+            model("multiPlatform/actualDeclaration", isRecursive = false, pattern = DIRECTORY)
             model("multiPlatform/classDeclaration", isRecursive = false, pattern = DIRECTORY)
             model("multiPlatform/functionDeclaration", isRecursive = false, pattern = DIRECTORY)
         }

@@ -304,6 +304,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
         }
 
         testClass<AbstractK2MultiPlatformCompletionTest> {
+            model("multiPlatform/actualDeclaration", isRecursive = false, pattern = DIRECTORY)
             model("multiPlatform/classDeclaration", isRecursive = false, pattern = DIRECTORY)
             model("multiPlatform/functionDeclaration", isRecursive = false, pattern = DIRECTORY)
         }

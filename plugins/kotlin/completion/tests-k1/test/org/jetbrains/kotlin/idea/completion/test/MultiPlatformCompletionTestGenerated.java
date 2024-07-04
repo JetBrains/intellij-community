@@ -20,6 +20,30 @@ import org.junit.runner.RunWith;
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class MultiPlatformCompletionTestGenerated extends AbstractMultiPlatformCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/multiPlatform/actualDeclaration")
+    public static class ActualDeclaration extends AbstractMultiPlatformCompletionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actualFun")
+        public void testActualFun() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualFun/");
+        }
+
+        @TestMetadata("actualVal")
+        public void testActualVal() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualVal/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/multiPlatform/classDeclaration")
     public static class ClassDeclaration extends AbstractMultiPlatformCompletionTest {
         @java.lang.Override
