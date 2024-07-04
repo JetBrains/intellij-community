@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 
@@ -15,6 +16,11 @@ internal sealed class TerminalSwitchPromptStyleAction(private val style: Termina
     if (state) {
       BlockTerminalOptions.getInstance().promptStyle = style
     }
+  }
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
