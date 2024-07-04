@@ -189,6 +189,9 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
             info.registerFix(fix, null, null, null, null);
           }
         }
+        if (patternType instanceof PsiPrimitiveType) {
+          HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, info);
+        }
         errorSink.accept(info);
         return true;
       }
@@ -206,6 +209,9 @@ public class PatternsInSwitchBlockHighlightingModel extends SwitchBlockHighlight
             (!IncompleteModelUtil.isPotentiallyConvertible(mySelectorType, patternType, label))) {
           HighlightInfo.Builder error =
             HighlightUtil.createIncompatibleTypeHighlightInfo(mySelectorType, patternType, elementToReport.getTextRange(), 0);
+          if (mySelectorType instanceof PsiPrimitiveType) {
+            HighlightUtil.registerIncreaseLanguageLevelFixes(mySelector, JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS, error);
+          }
           errorSink.accept(error);
           return true;
         }
