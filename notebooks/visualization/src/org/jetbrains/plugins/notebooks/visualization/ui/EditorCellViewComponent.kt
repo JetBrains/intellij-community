@@ -46,6 +46,8 @@ abstract class EditorCellViewComponent {
 
   abstract fun calculateBounds(): Rectangle
 
+  fun isValid(): Boolean = valid
+
   fun validate() {
     if (!valid) {
       doLayout()
