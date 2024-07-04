@@ -1,14 +1,17 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleJava.testing
 
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.project.modules
 import com.intellij.psi.PsiPackage
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.gradleJava.extensions.KotlinMultiplatformCommonProducersProvider
 import org.jetbrains.kotlin.idea.gradleJava.run.MultiplatformTestTasksChooser
 import org.jetbrains.kotlin.idea.gradleJava.run.isProvidedByMultiplatformProducer
+import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.plugins.gradle.execution.test.runner.AllInPackageGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
 
@@ -47,5 +50,20 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
 
     override fun isProducedByCommonProducer(configuration: ConfigurationFromContext): Boolean {
         return configuration.isProducedBy(this.javaClass)
+    }
+
+    override fun findExistingConfiguration(context: ConfigurationContext): RunnerAndConfigurationSettings? {
+        val existingConfiguration = super.findExistingConfiguration(context)
+        if (existingConfiguration == null) {
+            // it might be cheaper to check existing configuration than to determine a module platform on cold start
+            return null
+        }
+
+        val module = context.module ?: return null
+        if (module.platform.isCommon()) {
+            return null
+        }
+
+        return existingConfiguration
     }
 }
