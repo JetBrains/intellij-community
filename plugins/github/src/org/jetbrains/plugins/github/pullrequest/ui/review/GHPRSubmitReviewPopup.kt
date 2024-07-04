@@ -13,6 +13,7 @@ import com.intellij.util.ui.InlineIconButton
 import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -25,6 +26,9 @@ import javax.swing.JPanel
 internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitReviewViewModel>() {
   override fun CoroutineScope.createActionsComponent(vm: GHPRSubmitReviewViewModel): JPanel {
     val cs = this
+    val hasAnyCommentFlow = combine(vm.text, vm.draftCommentsCount) { text, comments ->
+      text.isNotEmpty() || comments > 0
+    }
     val buttons = buildList<JComponent> {
       if (!vm.viewerIsAuthor) {
         object : InstallButton(GithubBundle.message("pull.request.review.submit.approve.button"), true) {
@@ -37,7 +41,7 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
         JButton(GithubBundle.message("pull.request.review.submit.request.changes")).apply {
           isOpaque = false
         }.apply {
-          bindDisabledIn(cs, vm.isBusy)
+          bindDisabledIn(cs, vm.isBusy.combine(hasAnyCommentFlow) { busy, hasAnyComment -> busy || !hasAnyComment })
           addActionListener { vm.submit(GHPullRequestReviewEvent.REQUEST_CHANGES) }
         }.let(::add)
       }
@@ -46,7 +50,7 @@ internal object GHPRSubmitReviewPopup : CodeReviewSubmitPopupHandler<GHPRSubmitR
         isOpaque = false
         toolTipText = GithubBundle.message("pull.request.review.submit.comment.description")
       }.apply {
-        bindDisabledIn(cs, vm.isBusy)
+        bindDisabledIn(cs, vm.isBusy.combine(hasAnyCommentFlow) { busy, hasAnyComment -> busy || !hasAnyComment })
         addActionListener { vm.submit(GHPullRequestReviewEvent.COMMENT) }
       }.let(::add)
     }
