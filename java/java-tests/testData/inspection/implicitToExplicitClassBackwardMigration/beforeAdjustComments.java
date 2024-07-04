@@ -1,5 +1,3 @@
-// "Convert implicitly declared class into regular class" "true-preview"
-
 //many comments
 private final String field = "field";
 
