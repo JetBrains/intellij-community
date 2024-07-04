@@ -4,6 +4,7 @@ package com.intellij.java.codeInspection;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.ExplicitToImplicitClassMigrationInspection;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,6 @@ public class ExplicitToImplicitClassMigrationInspectionInspectionTest extends Li
 
   @Override
   protected LanguageLevel getLanguageLevel() {
-    return LanguageLevel.JDK_22_PREVIEW;
+    return JavaFeature.IMPLICIT_CLASSES.getMinimumLevel();
   }
 }
