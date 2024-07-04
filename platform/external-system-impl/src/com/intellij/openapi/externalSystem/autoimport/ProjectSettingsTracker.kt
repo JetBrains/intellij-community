@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Companion.isAsyncChangesProcessing
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.*
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalInvalidate
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent.Companion.externalModify
@@ -14,7 +14,10 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ProjectEvent
 import com.intellij.openapi.externalSystem.autoimport.changes.AsyncFilesChangesListener.Companion.subscribeOnDocumentsAndVirtualFilesChanges
 import com.intellij.openapi.externalSystem.autoimport.changes.FilesChangesListener
 import com.intellij.openapi.externalSystem.autoimport.changes.NewFilesListener.Companion.whenNewFilesCreated
-import com.intellij.openapi.externalSystem.autoimport.settings.*
+import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.BackgroundAsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.CachingAsyncSupplier
+import com.intellij.openapi.externalSystem.autoimport.settings.ReadAsyncSupplier
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
 import com.intellij.openapi.externalSystem.util.calculateCrc
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -99,23 +102,26 @@ class ProjectSettingsTracker(
    *
    * @see ExternalSystemProjectAware.isIgnoredSettingsFileEvent
    */
-  private fun SettingsFilesStatus.adjustCrc(operationName: String, reloadStatus: ReloadStatus): SettingsFilesStatus {
+  private fun SettingsFilesStatus.adjustCrc(
+    operationName: String,
+    reloadStatus: ReloadStatus,
+  ): SettingsFilesStatus {
     val modificationType = getModificationType()
     val oldCRC = oldCRC.toMutableMap()
     for (path in updated) {
-      val context = SettingsFilesModificationContext(UPDATE, modificationType, reloadStatus)
+      val context = SettingsFilesModificationContext(Event.UPDATE, modificationType, reloadStatus)
       if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
         oldCRC[path] = newCRC[path]!!
       }
     }
     for (path in created) {
-      val context = SettingsFilesModificationContext(CREATE, modificationType, reloadStatus)
+      val context = SettingsFilesModificationContext(Event.CREATE, modificationType, reloadStatus)
       if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
         oldCRC[path] = newCRC[path]!!
       }
     }
     for (path in deleted) {
-      val context = SettingsFilesModificationContext(DELETE, modificationType, reloadStatus)
+      val context = SettingsFilesModificationContext(Event.DELETE, modificationType, reloadStatus)
       if (projectAware.isIgnoredSettingsFileEvent(path, context)) {
         oldCRC.remove(path)
       }
@@ -310,7 +316,7 @@ class ProjectSettingsTracker(
   ) : ExternalSystemSettingsFilesReloadContext
 
   private class SettingsFilesModificationContext(
-    override val event: ExternalSystemSettingsFilesModificationContext.Event,
+    override val event: Event,
     override val modificationType: ExternalSystemModificationType,
     override val reloadStatus: ReloadStatus,
   ) : ExternalSystemSettingsFilesModificationContext
@@ -319,10 +325,12 @@ class ProjectSettingsTracker(
 
     override fun onProjectReloadStart() {
       applyChangesOperation.traceStart()
-      settingsFilesStatus.updateAndGet {
-        SettingsFilesStatus(it.newCRC, it.newCRC)
+      submitSettingsFilesStatusUpdate("onProjectReloadStart") {
+        isRefreshVfs = true
+        reloadStatus = ReloadStatus.JUST_STARTED
+        syncEvent = ::Synchronize
+        changeEvent = ::externalInvalidate
       }
-      projectStatus.markSynchronized(currentTime())
     }
 
     override fun onProjectReloadFinish(status: ExternalSystemRefreshStatus) {

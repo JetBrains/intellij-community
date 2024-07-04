@@ -155,6 +155,7 @@ e:com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus
 - sf:IDLE:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
 - sf:IN_PROGRESS:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
 - sf:JUST_FINISHED:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
+- sf:JUST_STARTED:com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus
 - s:values():com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext$ReloadStatus[]

@@ -389,7 +389,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
       SimpleTestBench(projectAware).apply {
         assertStateAndReset(
           numReload = 1,
-          numSettingsAccess = 1,
+          numSettingsAccess = 2,
           notified = false,
           numSubscribing = 2,
           numUnsubscribing = 0,
@@ -401,7 +401,7 @@ abstract class AutoReloadTestCase : ExternalSystemTestCase() {
         assertStateAndReset(numReload = 0, numSettingsAccess = 1, notified = true, event = "settings file is created")
 
         scheduleProjectReload()
-        assertStateAndReset(numReload = 1, numSettingsAccess = 1, notified = false, event = "project is reloaded")
+        assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project is reloaded")
 
         test(settingsFile)
       }

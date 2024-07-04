@@ -2,8 +2,8 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event.CREATE
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus.JUST_FINISHED
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.Event
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFilesModificationContext.ReloadStatus
 import org.jetbrains.annotations.ApiStatus
 
 interface ExternalSystemProjectAware {
@@ -45,7 +45,8 @@ interface ExternalSystemProjectAware {
    */
   @ApiStatus.Experimental
   fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean =
-    context.reloadStatus == JUST_FINISHED && context.event == CREATE
+    context.reloadStatus == ReloadStatus.JUST_STARTED ||
+    context.reloadStatus == ReloadStatus.JUST_FINISHED && context.event == Event.CREATE
 
   /**
    * Experimental. Please see implementation limitations.

@@ -20,11 +20,11 @@ interface ExternalSystemSettingsFilesModificationContext {
   val modificationType: ExternalSystemModificationType
 
   /**
-   * Current reload status is same for all settings files in one time.
+   * Current reload status is same for all settings files at one time.
    */
   val reloadStatus: ReloadStatus
 
   enum class Event { CREATE, UPDATE, DELETE }
 
-  enum class ReloadStatus { IDLE, IN_PROGRESS, JUST_FINISHED }
+  enum class ReloadStatus { IDLE, IN_PROGRESS, JUST_STARTED, JUST_FINISHED }
 }

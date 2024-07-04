@@ -74,13 +74,11 @@ class MockProjectAware(
   }
 
   override fun isIgnoredSettingsFileEvent(path: String, context: ExternalSystemSettingsFilesModificationContext): Boolean {
-    val condition = ignoredSettingsFiles[path]
-    if (condition != null) {
-      return condition(context)
+    if (super.isIgnoredSettingsFileEvent(path, context)) {
+      return true
     }
-    else {
-      return super.isIgnoredSettingsFileEvent(path, context)
-    }
+    val condition = ignoredSettingsFiles[path] ?: return false
+    return condition(context)
   }
 
   override fun adjustModificationType(path: String, modificationType: ExternalSystemModificationType): ExternalSystemModificationType {

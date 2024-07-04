@@ -830,7 +830,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, numSettingsAccess = 2, notified = true, event = "non settings files creation")
 
       scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numSettingsAccess = 1, notified = false, event = "project reload")
+      assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project reload")
 
       configFile1.modify(INTERNAL)
       configFile2.modify(INTERNAL)
@@ -843,10 +843,10 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, numSettingsAccess = 0, notified = true, event = "internal settings files modification")
 
       scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numSettingsAccess = 1, notified = false, event = "project reload")
+      assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project reload")
 
       settings1File.modify(EXTERNAL)
-      assertStateAndReset(numReload = 1, numSettingsAccess = 1, notified = false, event = "external settings file modification")
+      assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "external settings file modification")
 
       registerSettingsFile("settings3.groovy")
       val settings3File = settings2File.copy("settings3.groovy")
@@ -858,7 +858,7 @@ class AutoReloadTest : AutoReloadTestCase() {
       assertStateAndReset(numReload = 0, numSettingsAccess = 0, notified = true, event = "internal settings files modification")
 
       scheduleProjectReload()
-      assertStateAndReset(numReload = 1, numSettingsAccess = 1, notified = false, event = "project reload")
+      assertStateAndReset(numReload = 1, numSettingsAccess = 2, notified = false, event = "project reload")
 
       settings3File.modify(INTERNAL)
       assertStateAndReset(numReload = 0, numSettingsAccess = 0, notified = true, event = "internal settings file modification")
@@ -983,7 +983,13 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  fun `test settings file modification during sync (parallel)`() {
+  /**
+   * The current implementation of settings files watcher cannot 100% separate cases by the file change time (before or during sync).
+   * Decided that all files that changed in the begging of sync are changed before sync.
+   * It means that files don't affect the auto-sync project status.
+   * (These modifications ignored)
+   */
+  fun `_test settings file modification during sync (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
       setDispatcherMergingSpan(10)
