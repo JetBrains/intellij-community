@@ -45,6 +45,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.*
+import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.nio.file.Path
@@ -65,6 +66,10 @@ class DirtyFilesQueueTest {
   @Rule
   @JvmField
   val tempDir: TemporaryDirectory = TemporaryDirectory()
+
+  @Rule
+  @JvmField
+  val testNameRule = TestName()
 
   private lateinit var testRootDisposable: CheckedDisposable
 
@@ -99,7 +104,7 @@ class DirtyFilesQueueTest {
   @Test
   fun `test queues removed from disk after invalidating caches`() {
     runBlocking {
-      openProject("test_queues_removed_from_disk_after_invalidating_caches") { project, module ->
+      openProject(testNameRule.methodName) { project, module ->
         val src = tempDir.createVirtualDir("src")
         writeAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -143,13 +148,12 @@ class DirtyFilesQueueTest {
 
   private fun doTestFileIsIndexedAfterItWasEditedWhenProjectWasClosed(fileCount: Int, expectFullScanning: Boolean, restartApp: Boolean) {
     runBlocking {
-      val name = "test_file_is_indexed_after_it_was_edited_when_project_was_closed_fileCount_${fileCount}_expecteFullScanning_${expectFullScanning}"
-      val projectFile = TemporaryDirectory.generateTemporaryPath("project_${name}")
+      val projectFile = TemporaryDirectory.generateTemporaryPath("project_${testNameRule.methodName.replace(' ', '_')}")
       val fileNames = (0 until fileCount).map { "A$it.txt" }
       val commonPrefix1 = "common_prefix_1_" + (0 until 10).map { Random.nextInt('A'.code, 'Z'.code).toChar() }.joinToString("")
       val commonPrefix2 = "common_prefix_2_" + (0 until 10).map { Random.nextInt('A'.code, 'Z'.code).toChar() }.joinToString("")
 
-      val files = openProject(name, projectFile, save = true) { project, module ->
+      val files = openProject(testNameRule.methodName, projectFile, save = true) { project, module ->
         val src = tempDir.createVirtualDir("src")
         writeAction {
           val rootModel = ModuleRootManager.getInstance(module).modifiableModel
@@ -178,7 +182,7 @@ class DirtyFilesQueueTest {
       if (restartApp) {
         restart(skipFullScanning = true) // persist orphan queue
       }
-      openProject(name, projectFile, withIndexingHistory = true) { project, _ ->
+      openProject(testNameRule.methodName, projectFile, withIndexingHistory = true) { project, _ ->
         smartReadAction(project) {
           val foundFiles = findFilesWithText(commonPrefix2, project)
           assertThat(foundFiles).containsAll(files)
@@ -222,9 +226,8 @@ class DirtyFilesQueueTest {
   }
 
   private fun testDirtyFileIsIndexedAfterFileBasedIndexIsRestarted(skipFullScanning: Boolean) {
-    val projectName = "test_dirty_file_is_indexed_after_FileBasedIndex_is_restarted_${if (skipFullScanning) "(skip_full_scanning)" else "(with_full_scanning)"}"
     runBlocking {
-      openProject(projectName, withIndexingHistory = true) { project, module ->
+      openProject(testNameRule.methodName, withIndexingHistory = true) { project, module ->
         val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
         val filetype = FakeFileType()
         registerFiletype(filetype)
@@ -253,9 +256,8 @@ class DirtyFilesQueueTest {
 
   @Test
   fun `test removed dirty file is removed from indexes after FileBasedIndex is restarted (skip full scanning)`() {
-    val projectName = "test_removed_dirty_file_is_removed_from_indexes_after_FileBasedIndex_is_restarted_(skip_full_scanning)"
     runBlocking {
-      openProject(projectName, withIndexingHistory = true) { project, module ->
+      openProject(testNameRule.methodName, withIndexingHistory = true) { project, module ->
         val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
         val filetype = FakeFileType()
         registerFiletype(filetype)
