@@ -45,7 +45,31 @@ public interface JBAccountInfoService {
     return CompletableFuture.completedFuture(null);
   }
 
-  void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure);
+  /**
+   * @deprecated Use {@link #startLoginSession} instead.
+   */
+  @Deprecated
+  default void invokeJBALogin(@Nullable Consumer<? super String> userIdConsumer, @Nullable Runnable onFailure) {
+    try {
+      //noinspection resource
+      LoginSession loginSession = startLoginSession(LoginMode.AUTO);
+      loginSession.onCompleted()
+        .thenAccept(result -> {
+          if (result instanceof LoginResult.LoginSuccessful successful && userIdConsumer != null) {
+            userIdConsumer.accept(successful.jbaUser().id);
+          }
+          if (result instanceof LoginResult.LoginFailed && onFailure != null) {
+            onFailure.run();
+          }
+        });
+    }
+    catch (Throwable e) {
+      Logger.getInstance(JBAccountInfoService.class).error(e);
+      if (onFailure != null) {
+        onFailure.run();
+      }
+    }
+  }
 
   /**
    * Starts the auth flow by opening the browser and waiting for the user to proceed with logging in.
