@@ -5468,12 +5468,6 @@ f:com.intellij.ide.actions.ToggleZenModeAction
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.ToggleZenModeAction$Companion
 - f:isZenModeEnabled(com.intellij.openapi.project.Project):Z
-f:com.intellij.ide.actions.ToolWindowDockPinnedAction
-- com.intellij.ide.actions.ToolWindowViewModeAction
-- <init>():V
-f:com.intellij.ide.actions.ToolWindowDockUnpinnedAction
-- com.intellij.ide.actions.ToolWindowViewModeAction
-- <init>():V
 a:com.intellij.ide.actions.ToolWindowEmptyStateAction
 - com.intellij.ide.actions.ActivateToolWindowAction
 - p:<init>(java.lang.String,javax.swing.Icon):V
@@ -5483,9 +5477,6 @@ a:com.intellij.ide.actions.ToolWindowEmptyStateAction
 - s:rebuildContentUi(com.intellij.openapi.wm.ToolWindow):V
 - s:setEmptyStateBackground(com.intellij.openapi.wm.ToolWindow):V
 - pa:setupEmptyText(com.intellij.openapi.project.Project,com.intellij.util.ui.StatusText):V
-f:com.intellij.ide.actions.ToolWindowFloatAction
-- com.intellij.ide.actions.ToolWindowViewModeAction
-- <init>():V
 f:com.intellij.ide.actions.ToolWindowKeymapExtension
 - com.intellij.openapi.keymap.KeymapExtension
 - <init>():V
