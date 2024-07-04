@@ -1868,6 +1868,11 @@ public abstract class K2IndyLambdaKotlinSteppingTestGenerated extends AbstractK2
             runTest("../testData/stepping/custom/smartStepIntoToLambdaParameterAfterSam.kt");
         }
 
+        @TestMetadata("smartStepIntoWithDefaultParameters.kt")
+        public void testSmartStepIntoWithDefaultParameters() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoWithDefaultParameters.kt");
+        }
+
         @TestMetadata("smartStepIntoWithDelegateWithSameName.kt")
         public void testSmartStepIntoWithDelegateWithSameName() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoWithDelegateWithSameName.kt");

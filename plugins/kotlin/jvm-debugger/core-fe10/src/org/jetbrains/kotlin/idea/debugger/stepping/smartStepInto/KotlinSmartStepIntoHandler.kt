@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.debugger.getContainingBlockOrMethod
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
 import kotlin.math.max
 
 class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
@@ -96,6 +97,12 @@ class KotlinSmartStepIntoHandler : JvmSmartStepIntoHandler() {
         }
         var targets = findSmartStepTargets(expression, lines)
         if (session != null) {
+            val currentMethodName = session.process.suspendManager.pausedContext?.frameProxy?.safeLocation()?.safeMethod()?.name()
+            // Cannot analyze method calls in the default method body, as they are located in a different method in bytecode
+            if (currentMethodName?.endsWith("\$default") == true) {
+                DebuggerStatistics.logSmartStepIntoTargetsDetection(session.project, Engine.KOTLIN, SmartStepIntoDetectionStatus.NO_TARGETS)
+                return emptyList()
+            }
             val context = SmartStepIntoContext(expression, session.process, position, lines.toClosedRange())
             targets = calculateSmartStepTargetsToShow(targets, context)
         } else {
@@ -165,9 +172,9 @@ private fun fixOrdinalsAfterTargetRemoval(removedTarget: KotlinMethodSmartStepTa
 private fun SourcePosition.getContainingExpression(): KtElement? {
     val element = elementAt ?: return null
     // Firstly, try to locate an element that starts at the current line
-    val result = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement
+    val topmostElement = getTopmostElementAtOffset(element, element.textRange.startOffset) as? KtElement
 
-    val containingBlock = element.getContainingBlockOrMethod() ?: return result
+    val containingBlock = element.getContainingBlockOrMethod() ?: return topmostElement
     // Secondly, try to expand to an expression. It is essential when source position
     // is in the middle of the expression, e.g.
     // A()<line break>
@@ -177,8 +184,25 @@ private fun SourcePosition.getContainingExpression(): KtElement? {
         // We must stay inside the current block (and inside the current method).
         .takeWhile { it.getContainingBlockOrMethod() === containingBlock }
         .filterIsInstance<KtExpression>()
-        .lastOrNull() ?: return result
-    return if (result == null || expression.textRange.contains(result.textRange)) expression else result
+        .lastOrNull()
+    val result = when {
+        expression == null -> topmostElement
+        topmostElement == null -> expression
+        expression.textRange.contains(topmostElement.textRange) -> expression
+        else -> topmostElement
+    } ?: return null
+
+    // Cannot analyze code out of the containing block,
+    // this may lead to suggestions out of the current execution scope.
+    if (result in containingBlock.parents(withSelf = true)) {
+        // If this is a function without body, analyze only the top call
+        if (result is KtNamedFunction && !result.hasBlockBody()) {
+            return result.bodyExpression
+        }
+        return null
+    } else {
+        return result
+    }
 }
 
 private fun KtElement.getLines(): Range<Int>? {
