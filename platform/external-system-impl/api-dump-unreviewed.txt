@@ -1371,12 +1371,6 @@ a:com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataS
 - removeData(com.intellij.openapi.util.Computable,java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 - p:setModuleOptions(com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.DataNode):V
 - s:unlinkModuleFromExternalSystem(com.intellij.openapi.module.Module):V
-f:com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-- sf:CREATE_EMPTY_DIRECTORIES:com.intellij.openapi.util.Key
-- <init>():V
-- getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
-- importData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 f:com.intellij.openapi.externalSystem.service.project.manage.DeduplicateVisitorsSupplier
 - <init>():V
 - f:getVisitor(com.intellij.openapi.externalSystem.model.Key):java.util.function.Function
@@ -1498,31 +1492,6 @@ c:com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskA
 - getProjectPath():java.lang.String
 - getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - getTaskName():java.lang.String
-f:com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
-- getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
-- importData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
-- postProcess(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
-f:com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractDependencyDataService
-- <init>():V
-- getOrderEntryType():java.lang.Class
-- getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
-f:com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractModuleDataService
-- <init>():V
-- computeOrphanData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):com.intellij.openapi.util.Computable
-- getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
-- postProcess(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
-com.intellij.openapi.externalSystem.service.project.manage.ModuleDataServiceExtension
-- a:importModule(com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,com.intellij.openapi.module.Module,com.intellij.openapi.externalSystem.model.project.ModuleData):V
-f:com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractDependencyDataService
-- <init>():V
-- getOrderEntryType():java.lang.Class
-- getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
 f:com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl
 - com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 - <init>():V
@@ -1538,11 +1507,6 @@ f:com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerI
 - removeData(com.intellij.openapi.externalSystem.model.Key,java.util.Collection,java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider,Z):V
 - removeData(com.intellij.openapi.externalSystem.model.Key,java.util.Collection,java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,Z):V
 - updateExternalProjectData(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ExternalProjectInfo):V
-f:com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl
-- com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
-- <init>():V
-- getTargetDataKey():com.intellij.openapi.externalSystem.model.Key
-- importData(java.util.Collection,com.intellij.openapi.externalSystem.model.project.ProjectData,com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider):V
 *:com.intellij.openapi.externalSystem.service.project.manage.ProjectStructureUIModifiableModelsProvider
 f:com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl
 - com.intellij.openapi.Disposable
