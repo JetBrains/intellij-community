@@ -27,6 +27,7 @@ import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.*
 import javax.swing.JComponent
 
@@ -140,13 +141,10 @@ class GitBranchesTreePopupStep(
   }
 
   companion object {
-    internal const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
-    internal const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
     internal val SINGLE_REPOSITORY_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.SingleRepo.Branch.Actions")
-    internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
 
     private fun createTopLevelActionItems(project: Project,
                                           actionGroup: ActionGroup,

@@ -11,7 +11,7 @@ import git4idea.GitUtil
 import git4idea.actions.branch.GitBranchActionsUtil.getRepositoriesForTopLevelActions
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.createOrCheckoutNewBranch
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 
 class GitNewBranchAction
   : DumbAwareAction(DvcsBundle.messagePointer("new.branch.action.text.with.ellipsis"),
@@ -20,7 +20,7 @@ class GitNewBranchAction
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == TOP_LEVEL_ACTION_PLACE }
+    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesTreePopupBase.TOP_LEVEL_ACTION_PLACE }
     val visible = project != null && !repositories.isEmpty()
     e.presentation.isVisible = visible
     e.presentation.isEnabled = visible && !repositories.all(GitRepository::isFresh)
@@ -31,7 +31,7 @@ class GitNewBranchAction
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val repositories = getRepositoriesForTopLevelActions(e) { it.place == TOP_LEVEL_ACTION_PLACE }
+    val repositories = getRepositoriesForTopLevelActions(e) { it.place == GitBranchesTreePopupBase.TOP_LEVEL_ACTION_PLACE }
     createOrCheckoutNewBranch(e.project!!, repositories, GitUtil.HEAD,
                               initialName = repositories.getCommonCurrentBranch())
   }

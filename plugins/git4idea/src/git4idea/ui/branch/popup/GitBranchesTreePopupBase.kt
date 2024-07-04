@@ -46,9 +46,6 @@ import git4idea.branch.GitBranchType
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.*
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
@@ -373,10 +370,12 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
       }
       val resultContext = GitBranchesTreePopupStep.createDataContext(
         project, contextComponent, treeStep.selectedRepository, treeStep.affectedRepositories)
-      val actionPlace = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
+      val actionPlace = getShortcutActionPlace()
       ActionUtil.invokeAction(action, resultContext, actionPlace, null, afterActionPerformed)
     }
   }
+
+  protected open fun getShortcutActionPlace(): String = TOP_LEVEL_ACTION_PLACE
 
   private fun configureTreePresentation(tree: JTree) = with(tree) {
     val topBorder = if (step.title.isNullOrEmpty()) JBUIScale.scale(5) else 0
@@ -702,6 +701,9 @@ abstract class GitBranchesTreePopupBase<T : GitBranchesTreePopupStepBase>(
 
   companion object {
     internal val POPUP_KEY = DataKey.create<GitBranchesTreePopupBase<*>>("GIT_BRANCHES_TREE_POPUP")
+    internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
+
+    private const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"
 
     private inline val isNewUI
       get() = ExperimentalUI.isNewUI()

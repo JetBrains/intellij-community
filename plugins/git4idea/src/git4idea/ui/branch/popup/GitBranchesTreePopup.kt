@@ -20,7 +20,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchPopupFetchAction
-import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.TOP_LEVEL_ACTION_PLACE
+import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeRenderer
 import java.awt.event.ActionEvent
@@ -93,7 +93,7 @@ class GitBranchesTreePopup(
   }
 
   override fun getHeaderToolbar(): ActionToolbar {
-    val settingsGroup = am.getAction(GitBranchesTreePopupStep.HEADER_SETTINGS_ACTION_GROUP)
+    val settingsGroup = am.getAction(HEADER_SETTINGS_ACTION_GROUP)
     val toolbarGroup = DefaultActionGroup(GitBranchPopupFetchAction(javaClass), settingsGroup)
     return am.createActionToolbar(TOP_LEVEL_ACTION_PLACE, toolbarGroup, true)
       .apply {
@@ -115,8 +115,11 @@ class GitBranchesTreePopup(
     return DvcsBranchesDivergedBanner.create("reference.VersionControl.Git.SynchronousBranchControl", text)
   }
 
+  override fun getShortcutActionPlace(): String = if (isChild()) SINGLE_REPOSITORY_ACTION_PLACE else TOP_LEVEL_ACTION_PLACE
+
   companion object {
     private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
+    private const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
 
     /**
      * @param selectedRepository - Selected repository:
