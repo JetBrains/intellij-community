@@ -152,7 +152,7 @@ public class ExecutorAction extends AnAction
       }
     }
 
-    if (actionStatus != ExecutorActionStatus.LOADING && (runConfigAsksToHideDisabledExecutorButtons || hideDisabledExecutorButtons())) {
+    if (actionStatus != ExecutorActionStatus.LOADING && runConfigAsksToHideDisabledExecutorButtons) {
       presentation.setEnabledAndVisible(enabled);
     }
     else {
@@ -196,10 +196,6 @@ public class ExecutorAction extends AnAction
       }
     }
     return status;
-  }
-
-  protected boolean hideDisabledExecutorButtons() {
-    return false;
   }
 
   private @NotNull RunCurrentFileActionStatus getRunCurrentFileActionStatus(@NotNull AnActionEvent e,
