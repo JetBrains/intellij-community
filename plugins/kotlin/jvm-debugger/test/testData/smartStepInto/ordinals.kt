@@ -1,5 +1,5 @@
 fun test() {
-    foo(foo(foo(foo(1))))
+    <caret>foo(foo(foo(foo(1))))
 }
 
 fun foo(x: Int) = x
