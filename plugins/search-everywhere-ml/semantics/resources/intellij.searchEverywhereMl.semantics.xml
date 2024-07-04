@@ -35,7 +35,7 @@
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInSymbolsTab"/>
 
-    <advancedSetting default="true" id="search.everywhere.ml.semantic.classes.enable"
+    <advancedSetting default="false" id="search.everywhere.ml.semantic.classes.enable"
                      groupKey="advanced.setting.search.everywhere.ml.name"
                      service="com.intellij.searchEverywhereMl.semantics.settings.SearchEverywhereSemanticSettings"
                      property="enabledInClassesTab"/>
