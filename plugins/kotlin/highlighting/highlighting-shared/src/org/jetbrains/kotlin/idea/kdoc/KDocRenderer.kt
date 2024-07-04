@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.kdoc
 
@@ -8,9 +8,9 @@ import com.intellij.lang.documentation.DocumentationMarkup.*
 import com.intellij.lang.documentation.DocumentationSettings
 import com.intellij.lang.documentation.QuickDocHighlightingHelper
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeBlock
+import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeFragment
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledFragment
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledInlineCode
-import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledCodeFragment
 import com.intellij.lang.documentation.QuickDocHighlightingHelper.appendStyledLinkFragment
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -112,7 +112,6 @@ object KDocRenderer {
                 linkText,
                 highlightQualifiedName(linkText, getTargetLinkElementAttributes(kDocLink.getTargetElement())),
                 false,
-                true
             )
         }
     }
@@ -226,7 +225,7 @@ object KDocRenderer {
                 val link = tag.getChildrenOfType<KDocLink>().lastOrNull()
                 when {
                     link != null -> this.appendHyperlink(link)
-                    subjectName != null -> DocumentationManagerUtil.createHyperlink(this, subjectName, subjectName, false, true)
+                    subjectName != null -> DocumentationManagerUtil.createHyperlink(this, subjectName, subjectName, false)
                     else -> append(tag.getContent())
                 }
                 if (iterator.hasNext()) {
@@ -262,7 +261,7 @@ object KDocRenderer {
                     append("<p><code>")
                     val highlightedLinkLabel =
                         highlightQualifiedName(subjectName, getTargetLinkElementAttributes(KotlinHighlightingColors.CLASS))
-                    DocumentationManagerUtil.createHyperlink(this@appendSection, subjectName, highlightedLinkLabel, false, true)
+                    DocumentationManagerUtil.createHyperlink(this@appendSection, subjectName, highlightedLinkLabel, false)
                     append("</code>")
                     val exceptionDescription = markdownToHtml(this)
                     if (exceptionDescription.isNotBlank()) {
@@ -439,7 +438,6 @@ object KDocRenderer {
                                         label,
                                         highlightQualifiedName(linkText, getTargetLinkElementAttributes(resolvedLinkElement)),
                                         false,
-                                        true
                                     )
                                 }
                                 ?: sb.appendStyledFragment(label, KotlinHighlightingColors.RESOLVED_TO_ERROR)

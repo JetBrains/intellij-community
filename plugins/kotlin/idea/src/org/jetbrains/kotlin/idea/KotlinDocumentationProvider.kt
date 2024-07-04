@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea
 
@@ -107,7 +107,7 @@ class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNameP
 
         return buildString {
             val ref = classifier.fqNameUnsafe.toString()
-            DocumentationManagerUtil.createHyperlink(this, ref, name, true, false)
+            DocumentationManagerUtil.createHyperlink(this, ref, name, true)
         }
     }
 }
@@ -574,7 +574,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                         val highlighted =
                             if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString(), element.project) { asClassName }
                             else it.asString()
-                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false, false)
+                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false)
                     }
                     HtmlChunk.fragment(
                         HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),

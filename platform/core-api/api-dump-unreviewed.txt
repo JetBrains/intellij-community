@@ -59,14 +59,11 @@ com.intellij.codeInsight.documentation.DocumentationManagerProtocol
 - sf:KEEP_SCROLLING_POSITION_REF:java.lang.String
 - sf:PSI_ELEMENT_PROTOCOL:java.lang.String
 - sf:PSI_ELEMENT_PROTOCOL_REF_SEPARATOR:java.lang.String
-c:com.intellij.codeInsight.documentation.DocumentationManagerUtil
-- <init>():V
+f:com.intellij.codeInsight.documentation.DocumentationManagerUtil
 - s:createHyperlink(java.lang.StringBuilder,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z):V
 - s:createHyperlink(java.lang.StringBuilder,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z,Z):V
 - s:createHyperlink(java.lang.StringBuilder,java.lang.String,java.lang.String,Z):V
 - s:createHyperlink(java.lang.StringBuilder,java.lang.String,java.lang.String,Z,Z):V
-- p:createHyperlinkImpl(java.lang.StringBuilder,com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z,Z):V
-- s:getInstance():com.intellij.codeInsight.documentation.DocumentationManagerUtil
 c:com.intellij.codeInsight.folding.CodeFoldingSettings
 - COLLAPSE_CUSTOM_FOLDING_REGIONS:Z
 - COLLAPSE_DOC_COMMENTS:Z

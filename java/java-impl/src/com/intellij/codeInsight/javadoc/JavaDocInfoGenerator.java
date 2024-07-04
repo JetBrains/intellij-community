@@ -746,7 +746,7 @@ public class JavaDocInfoGenerator {
             packageFqnBuilder.append(packageName);
           }
           ownerLink = aPackage != null
-                      ? generateLink(aPackage, packageFqnBuilder.toString(), false, false)
+                      ? generateLink(aPackage, packageFqnBuilder.toString())
                       : "<code>" + packageFqnBuilder + "</code>";
           ownerIcon = "AllIcons.Nodes.Package";
         }
@@ -765,7 +765,7 @@ public class JavaDocInfoGenerator {
             classFqnBuilder.append(qName);
           }
           classFqnBuilder.append(generateTypeParameters(parentClass, false));
-          ownerLink = generateLink(parentClass, classFqnBuilder.toString(), false, false);
+          ownerLink = generateLink(parentClass, classFqnBuilder.toString());
           ownerIcon = "AllIcons.Nodes.Class";
         }
       }
@@ -1148,7 +1148,7 @@ public class JavaDocInfoGenerator {
     hb.append(HtmlChunk.tag("h3").addText(JavaBundle.message("package.classes")));
     Comparator<PsiClass> comparator = Comparator.comparing(PsiClass::getName, Comparator.nullsLast(Comparator.naturalOrder()));
     Arrays.stream(aPackage.getClasses()).sorted(comparator).forEach(psiClass -> {
-      String link = generateLink(psiClass, psiClass.getName(), false, false);
+      String link = generateLink(psiClass, psiClass.getName());
       if (link != null) {
         hb.append(HtmlChunk.tag("div")
                     .children(
@@ -2089,7 +2089,7 @@ public class JavaDocInfoGenerator {
               else {
                 label = text;
               }
-              buffer.append(externalTarget ? generateLink(resolve, label, false, isRendered()) : label);
+              buffer.append(externalTarget ? generateLink(resolve, label) : label);
               return;
             }
           }
@@ -2712,13 +2712,11 @@ public class JavaDocInfoGenerator {
   }
 
   private static @Nullable @NlsSafe String generateLink(@NotNull PsiElement element,
-                                                        String label,
-                                                        boolean plainLink,
-                                                        boolean isRenderedDoc) {
+                                                        String label) {
     String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
     if (refText != null) {
       StringBuilder linkBuilder = new StringBuilder();
-      DocumentationManagerUtil.createHyperlink(linkBuilder, element, refText, label, plainLink, isRenderedDoc);
+      DocumentationManagerUtil.createHyperlink(linkBuilder, refText, label, false);
       return linkBuilder.toString();
     }
     return null;
@@ -2785,7 +2783,7 @@ public class JavaDocInfoGenerator {
   void generateLink(StringBuilder buffer, PsiElement element, String label, boolean plainLink) {
     String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
     if (refText != null) {
-      DocumentationManagerUtil.createHyperlink(buffer, element, refText, label, plainLink, isRendered());
+      DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
     }
   }
 
