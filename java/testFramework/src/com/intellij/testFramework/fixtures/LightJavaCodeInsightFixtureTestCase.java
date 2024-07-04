@@ -91,6 +91,7 @@ public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase
   public static final @NotNull LightProjectDescriptor JAVA_21 = new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW);
   public static final @NotNull LightProjectDescriptor JAVA_21_ANNOTATED = new ProjectDescriptor(LanguageLevel.JDK_21_PREVIEW, true);
   public static final @NotNull LightProjectDescriptor JAVA_22 = new ProjectDescriptor(LanguageLevel.JDK_22_PREVIEW);
+  public static final @NotNull LightProjectDescriptor JAVA_23 = new ProjectDescriptor(LanguageLevel.JDK_23_PREVIEW);
   public static final @NotNull LightProjectDescriptor JAVA_X = new ProjectDescriptor(LanguageLevel.JDK_X);
 
   public static final @NotNull LightProjectDescriptor JAVA_LATEST = new ProjectDescriptor(LanguageLevel.HIGHEST) {

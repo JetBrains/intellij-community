@@ -30,6 +30,6 @@ public class PatternVariableCanBeUsedWithPrimitivesInspectionTest extends LightQ
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_X;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_23;
   }
 }

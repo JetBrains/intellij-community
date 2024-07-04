@@ -2,7 +2,6 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,7 @@ public class NormalImplicitClassCompletionTest extends NormalCompletionTestCase 
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES.getMinimumLevel());
+    return JAVA_23;
   }
 
   @NeedsIndex.SmartMode(reason = "out of standard library")

@@ -2,7 +2,6 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +10,7 @@ public class DataFlowInspectionPrimitivesInPatternsTest extends DataFlowInspecti
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel());
+    return JAVA_23;
   }
 
   public void testInstanceofFromBoxedObjectToPrimitive() {

@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.completion;
 
-import com.intellij.pom.java.JavaFeature;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
@@ -10,7 +9,7 @@ public class NormalPatternsPrimitiveCompletionTest extends NormalCompletionTestC
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return new ProjectDescriptor(JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel());
+    return JAVA_23;
   }
 
   @NeedsIndex.Full
