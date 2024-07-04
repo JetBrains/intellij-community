@@ -52,6 +52,9 @@ class KotlinLineIndentProvider : KotlinLangLineIndentProvider() {
 
         override val continuationIndentForChainedCalls: Boolean
             get() = customSettings.CONTINUATION_INDENT_FOR_CHAINED_CALLS
+
+        override val indentBeforeArrowOnNewLine: Boolean
+            get() = customSettings.INDENT_BEFORE_ARROW_ON_NEW_LINE
     }
 
     companion object {

@@ -55,7 +55,7 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
             }
 
             after.isAt(Arrow) -> {
-                val arrowCalculator = factory.createIndentCalculatorForArrowInsideWhenEntry(after)
+                val arrowCalculator = factory.createIndentCalculatorForArrowInsideWhenEntry(after, settings)
                 if (arrowCalculator != null) {
                     return arrowCalculator
                 }
@@ -281,15 +281,16 @@ abstract class KotlinLangLineIndentProvider : JavaLikeLangLineIndentProvider() {
 
         private fun IndentCalculatorFactory.createIndentCalculatorForArrowInsideWhenEntry(
             arrowPosition: SemanticEditorPosition,
+            settings: KotlinIndentationAdjuster,
         ): IndentCalculator? {
             val leftBrace = arrowPosition.copyAnd {
                 it.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace)
             }
 
-            val normalIndent = Indent.getNormalIndent()
+            val indent = if (settings.indentBeforeArrowOnNewLine) Indent.getNormalIndent() else Indent.getNoneIndent()
             val controlFlowStatementBefore = leftBrace.controlFlowStatementBefore()
             return if (controlFlowStatementBefore != null && controlFlowStatementBefore.isAt(WhenKeyword)) {
-                createIndentCalculator(normalIndent, arrowPosition.startOffset)
+                createIndentCalculator(indent, arrowPosition.startOffset)
             } else {
                 null
             }

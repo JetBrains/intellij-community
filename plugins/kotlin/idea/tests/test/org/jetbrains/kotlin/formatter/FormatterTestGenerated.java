@@ -584,6 +584,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testWhenEntry() throws Exception {
                     runTest("testData/formatter/trailingComma/whenEntry/WhenEntry.after.kt");
                 }
+
+                @TestMetadata("WhenEntryNoIndentBeforeArrow.after.kt")
+                public void testWhenEntryNoIndentBeforeArrow() throws Exception {
+                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.kt");
+                }
             }
         }
 
@@ -1460,6 +1465,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/WhenEntryExpr.after.kt");
             }
 
+            @TestMetadata("WhenEntryExprNoIndentBeforeArrow.after.kt")
+            public void testWhenEntryExprNoIndentBeforeArrow() throws Exception {
+                runTest("testData/formatter/WhenEntryExprNoIndentBeforeArrow.after.kt");
+            }
+
             @TestMetadata("WhenLineBreak.after.kt")
             public void testWhenLineBreak() throws Exception {
                 runTest("testData/formatter/WhenLineBreak.after.kt");
@@ -1950,6 +1960,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("WhenEntry.after.inv.kt")
                 public void testWhenEntry() throws Exception {
                     runTest("testData/formatter/trailingComma/whenEntry/WhenEntry.after.inv.kt");
+                }
+
+                @TestMetadata("WhenEntryNoIndentBeforeArrow.after.inv.kt")
+                public void testWhenEntryNoIndentBeforeArrow() throws Exception {
+                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.inv.kt");
                 }
             }
         }

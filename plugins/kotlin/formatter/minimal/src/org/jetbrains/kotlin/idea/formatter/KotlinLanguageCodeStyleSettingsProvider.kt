@@ -205,6 +205,12 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                 )
 
                 showCustomOption(
+                    KotlinCodeStyleSettings::INDENT_BEFORE_ARROW_ON_NEW_LINE,
+                    KotlinBundle.message("formatter.title.indent.before.arrow.on.new.line"),
+                    codeStyleSettingsCustomizableOptions.WRAPPING_SWITCH_STATEMENT,
+                )
+
+                showCustomOption(
                     KotlinCodeStyleSettings::LBRACE_ON_NEXT_LINE,
                     KotlinBundle.message("formatter.title.put.left.brace.on.new.line"),
                     codeStyleSettingsCustomizableOptions.WRAPPING_BRACES
@@ -313,9 +319,15 @@ class KotlinLanguageCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvide
                    val test =
                        12
 
-                   @Deprecated("Foo") fun foo1(i1: Int, i2: Int, i3: Int) : Int {
+                   @Deprecated("Foo") fun foo1(i1: Int, i2: Int, i3: Int, a: Any) : Int {
                        when (i1) {
                            is Number -> 0
+                           else -> 1
+                       }
+                       when (a) {
+                           is Int,
+                           is String 
+                           -> 0
                            else -> 1
                        }
                        if (i2 > 0 &&
