@@ -433,12 +433,28 @@ public final class JBUI {
         return JBColor.namedColor("Button.endBackground", JBColor.namedColor("Button.darcula.endColor", 0x414648));
       }
 
+      public static @NotNull Color buttonForeground() {
+        return JBColor.namedColor("Button.foreground", 0x000000, 0xDFE1E5);
+      }
+
+      public static @NotNull Color buttonLoadingForeground() {
+        return JBColor.namedColor("Button.loadingForeground", 0x818594, 0x868A91);
+      }
+
       public static @NotNull Color defaultButtonColorStart() {
         return JBColor.namedColor("Button.default.startBackground", JBColor.namedColor("Button.darcula.defaultStartColor", 0x384f6b));
       }
 
       public static @NotNull Color defaultButtonColorEnd() {
         return JBColor.namedColor("Button.default.endBackground", JBColor.namedColor("Button.darcula.defaultEndColor", 0x233143));
+      }
+
+      public static @NotNull Color defaultButtonForeground() {
+        return JBColor.namedColor("Button.default.foreground", 0xFFFFFF, 0xFFFFFF);
+      }
+
+      public static @NotNull Color defaultButtonLoadingForeground() {
+        return JBColor.namedColor("Button.default.loadingForeground", 0xD3D5DB, 0xCED0D6);
       }
 
       public static @NotNull Color focusBorderColor(boolean isDefaultButton) {

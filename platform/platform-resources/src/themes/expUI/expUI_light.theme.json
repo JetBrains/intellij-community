@@ -169,9 +169,11 @@
       "endBorderColor": "Gray9",
       "focusedBorderColor": "Gray14",
       "minimumSize": "72,28",
+      "loadingForeground": "Gray7",
 
       "default": {
         "foreground": "Gray14",
+        "loadingForeground": "Gray10",
         "startBackground": "Blue4",
         "endBackground": "Blue4",
         "startBorderColor": "Blue4",

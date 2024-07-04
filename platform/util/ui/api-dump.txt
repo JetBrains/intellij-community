@@ -4154,10 +4154,14 @@ f:com.intellij.util.ui.JBUI$CurrentTheme$Button
 - <init>():V
 - s:buttonColorEnd():java.awt.Color
 - s:buttonColorStart():java.awt.Color
+- s:buttonForeground():java.awt.Color
+- s:buttonLoadingForeground():java.awt.Color
 - s:buttonOutlineColorEnd(Z):java.awt.Color
 - s:buttonOutlineColorStart(Z):java.awt.Color
 - s:defaultButtonColorEnd():java.awt.Color
 - s:defaultButtonColorStart():java.awt.Color
+- s:defaultButtonForeground():java.awt.Color
+- s:defaultButtonLoadingForeground():java.awt.Color
 - s:disabledOutlineColor():java.awt.Color
 - s:focusBorderColor(Z):java.awt.Color
 - s:minimumSize():java.awt.Dimension

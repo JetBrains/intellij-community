@@ -109,6 +109,16 @@
       "description": "Minimum size of buttons"
     },
     {
+      "key": "Button.loadingForeground",
+      "description": "The color of button text when in the 'loading' state",
+      "since": "2024.2"
+    },
+    {
+      "key": "Button.default.loadingForeground",
+      "description": "The color of default button text when in the 'loading' state",
+      "since": "2024.2"
+    },
+    {
       "key": "Button.Split.default.separatorColor",
       "description": "Separator color for default split button"
     },
