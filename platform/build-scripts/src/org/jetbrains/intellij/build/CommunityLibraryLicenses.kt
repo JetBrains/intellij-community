@@ -564,6 +564,12 @@ object CommunityLibraryLicenses {
     )
       .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
+    LibraryLicense(name = "Jetbrains Jewel Markdown LaF Standalone",
+                   url = "https://github.com/JetBrains/jewel",
+                   libraryName= "jetbrains-jewel-markdown-laf-bridge-styling",
+    )
+      .apache("https://github.com/JetBrains/jewel/blob/master/LICENSE")
+      .suppliedByOrganizations(Suppliers.JETBRAINS),
     LibraryLicense(name = "JetBrains Runtime", attachedTo = "intellij.platform.ide.impl", version = "11",
                    license = "GNU General Public License, version 2, with the Classpath Exception",
                    url = "https://github.com/JetBrains/JetBrainsRuntime",
