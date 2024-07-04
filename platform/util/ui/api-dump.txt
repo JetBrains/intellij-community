@@ -192,6 +192,7 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:StartMemoryProfile:javax.swing.Icon
 - sf:StepOut:javax.swing.Icon
 - sf:StepOutCodeBlock:javax.swing.Icon
+- sf:StopAndRestart:javax.swing.Icon
 - sf:StopRefresh:javax.swing.Icon
 - sf:Stub:javax.swing.Icon
 - sf:SuggestedRefactoringBulb:javax.swing.Icon

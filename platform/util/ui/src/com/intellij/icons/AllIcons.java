@@ -207,6 +207,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon StartMemoryProfile = load("actions/startMemoryProfile.svg", "expui/", -1333802318, 2);
     /** 16x16 */ public static final @NotNull Icon StepOut = load("actions/stepOut.svg", "expui/run/stepOut.svg", -525700232, 2);
     /** 16x16 */ public static final @NotNull Icon StepOutCodeBlock = load("actions/stepOutCodeBlock.svg", "expui/run/stepOutCodeBlock.svg", 1629750131, 2);
+    /** 16x16 */ public static final @NotNull Icon StopAndRestart = load("actions/stopAndRestart.svg", 1639589680, 2);
     /** 16x16 */ public static final @NotNull Icon StopRefresh = load("actions/stopRefresh.svg", -1056556267, 2);
     /** 16x16 */ public static final @NotNull Icon Stub = load("actions/stub.svg", -953319628, 2);
     /** 16x16 */ public static final @NotNull Icon SuggestedRefactoringBulb = load("actions/suggestedRefactoringBulb.svg", "expui/", 1703386418, 2);
