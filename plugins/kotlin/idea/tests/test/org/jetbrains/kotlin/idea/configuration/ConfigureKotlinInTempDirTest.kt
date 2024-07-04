@@ -69,6 +69,8 @@ class ConfigureKotlinInTempDirTest : AbstractConfigureKotlinInTempDirTest() {
     private fun moduleFileContent() = String(module.moduleFile!!.contentsToByteArray(), StandardCharsets.UTF_8)
 
     private fun waitForKotlinSettingsConfiguration() {
+        // Make sure that the Kotlin compiler settings are initialized
+        KotlinCommonCompilerArgumentsHolder.getInstance(project)
         // Updating the settings is done in a coroutine that might take several EDT dispatches to work.
         // We dispatch them up to 10 times here to ensure the settings are updated correctly.
         val propertiesComponent = PropertiesComponent.getInstance(project)
