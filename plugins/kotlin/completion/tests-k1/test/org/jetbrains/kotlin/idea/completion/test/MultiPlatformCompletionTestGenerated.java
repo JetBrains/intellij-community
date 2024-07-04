@@ -32,6 +32,11 @@ public abstract class MultiPlatformCompletionTestGenerated extends AbstractMulti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualFromSeveralFiles")
+        public void testActualFromSeveralFiles() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualFromSeveralFiles/");
+        }
+
         @TestMetadata("actualFun")
         public void testActualFun() throws Exception {
             runTest("../testData/multiPlatform/actualDeclaration/actualFun/");

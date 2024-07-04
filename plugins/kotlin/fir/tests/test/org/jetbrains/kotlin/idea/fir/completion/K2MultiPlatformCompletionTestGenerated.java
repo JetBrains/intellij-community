@@ -32,6 +32,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("actualFromSeveralFiles")
+        public void testActualFromSeveralFiles() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFromSeveralFiles/");
+        }
+
         @TestMetadata("actualFun")
         public void testActualFun() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualFun/");
