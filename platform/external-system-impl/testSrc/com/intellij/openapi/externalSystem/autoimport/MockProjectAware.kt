@@ -2,10 +2,10 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.HIDDEN
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.INTERNAL
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
 import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCollisionPassType.*
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
@@ -15,10 +15,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import java.nio.file.Path
-import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.LinkedHashMap
 import kotlin.concurrent.thread
 
 class MockProjectAware(
@@ -133,6 +131,10 @@ class MockProjectAware(
 
   private fun reloadProjectImpl(context: ExternalSystemProjectReloadContext) {
     background {
+      invokeAndWaitIfNeeded {
+        val fileDocumentManager = FileDocumentManager.getInstance()
+        fileDocumentManager.saveAllDocuments()
+      }
       val reloadStatus = reloadStatus.get()
       startReloadEventDispatcher.fireEvent()
       reloadProject.traceRun {

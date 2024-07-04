@@ -165,18 +165,14 @@ class ProjectSettingsTracker(
   private fun submitSettingsFilesRefresh(
     callback: (Set<String>) -> Unit,
   ) {
-    EdtAsyncSupplier.invokeOnEdt(::isAsyncChangesProcessing, parentDisposable) {
-      val fileDocumentManager = FileDocumentManager.getInstance()
-      fileDocumentManager.saveAllDocuments()
-      submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
-        val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
-        if (settingsFiles.isEmpty()) {
+    submitSettingsFilesCollection(isInvalidateCache = true) { settingsPaths ->
+      val settingsFiles = settingsPaths.mapNotNull { Path.of(it).refreshAndFindVirtualFileOrDirectory() }
+      if (settingsFiles.isEmpty()) {
+        callback(settingsPaths)
+      }
+      else {
+        LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
           callback(settingsPaths)
-        }
-        else {
-          LocalFileSystem.getInstance().refreshFiles(settingsFiles, isAsyncChangesProcessing, false) {
-            callback(settingsPaths)
-          }
         }
       }
     }
