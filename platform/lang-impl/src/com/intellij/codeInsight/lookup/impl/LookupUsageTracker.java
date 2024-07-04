@@ -19,6 +19,8 @@ import com.intellij.lang.Language;
 import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IncompleteDependenciesService;
+import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -37,7 +39,7 @@ import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATI
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 29);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 30);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -59,6 +61,8 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
   private static final IntEventField ORDER_ADDED_CORRECT_ELEMENT = EventFields.Int("order_added_correct_element");
   private static final BooleanEventField DUMB_FINISH = EventFields.Boolean("dumb_finish");
   private static final BooleanEventField DUMB_START = EventFields.Boolean("dumb_start");
+  private static final EnumEventField<DependenciesState> INCOMPLETE_DEPENDENCIES_MODE_START = EventFields.Enum("incomplete_dependencies_mode_start", DependenciesState.class);
+  private static final EnumEventField<DependenciesState> INCOMPLETE_DEPENDENCIES_MODE_FINISH = EventFields.Enum("incomplete_dependencies_mode_finish", DependenciesState.class);
   private static final BooleanEventField QUICK_DOC_SHOWN = EventFields.Boolean("quick_doc_shown");
   private static final BooleanEventField QUICK_DOC_AUTO_SHOW = EventFields.Boolean("quick_doc_auto_show");
   private static final BooleanEventField QUICK_DOC_SCROLLED = EventFields.Boolean("quick_doc_scrolled");
@@ -87,6 +91,8 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
                                                                          ORDER_ADDED_CORRECT_ELEMENT,
                                                                          DUMB_FINISH,
                                                                          DUMB_START,
+                                                                         INCOMPLETE_DEPENDENCIES_MODE_START,
+                                                                         INCOMPLETE_DEPENDENCIES_MODE_FINISH,
                                                                          QUICK_DOC_SHOWN,
                                                                          QUICK_DOC_AUTO_SHOW,
                                                                          QUICK_DOC_SCROLLED,
@@ -123,6 +129,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
     private @Nullable Long myTimestampCorrectElementComputed = null;
     private @Nullable Integer myOrderComputedCorrectElement = null;
     private final boolean myIsDumbStart;
+    private final DependenciesState myIncompleteDependenciesStateStart;
     private final @Nullable Language myLanguage;
     private final @NotNull MyTypingTracker myTypingTracker;
 
@@ -136,6 +143,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       myCreatedTimestamp = createdTimestamp;
       myTimeToShow = System.currentTimeMillis() - createdTimestamp;
       myIsDumbStart = DumbService.isDumb(lookup.getProject());
+      myIncompleteDependenciesStateStart = lookup.getProject().getService(IncompleteDependenciesService.class).getState();
       myLanguage = getLanguageAtCaret(lookup);
       myTypingTracker = new MyTypingTracker();
       myIsQuickDocAutoShow = CodeInsightSettings.getInstance().AUTO_POPUP_JAVADOC_INFO;
@@ -276,6 +284,8 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       // Indexing
       data.add(DUMB_START.with(myIsDumbStart));
       data.add(DUMB_FINISH.with(DumbService.isDumb(myLookup.getProject())));
+      data.add(INCOMPLETE_DEPENDENCIES_MODE_START.with(myIncompleteDependenciesStateStart));
+      data.add(INCOMPLETE_DEPENDENCIES_MODE_FINISH.with(myLookup.getProject().getService(IncompleteDependenciesService.class).getState()));
 
       // Quick doc
       data.add(QUICK_DOC_SHOWN.with(myIsQuickDocShown));
