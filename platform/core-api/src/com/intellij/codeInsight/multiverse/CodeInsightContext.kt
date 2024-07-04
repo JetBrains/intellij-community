@@ -1,0 +1,29 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.multiverse
+
+import com.intellij.openapi.project.Project
+
+/**
+ * Represents a context in which a code insight session runs for a given file or a set of files.
+ * Is guaranteed to exist during one read action (to keep consistent PSI)
+ *
+ * @see CodeInsightSession
+ * @see CodeInsightContextManager
+ */
+interface CodeInsightContext
+
+fun anyContext(): CodeInsightContext = AnyContext
+
+fun defaultContext(): CodeInsightContext = DefaultContext
+
+private object AnyContext : CodeInsightContext
+
+private object DefaultContext : CodeInsightContext
+
+fun isSharedSourceSupportEnabled(project: Project): Boolean {
+  return CodeInsightContextManager.getInstance(project).isSharedSourceSupportEnabled
+}
+
+interface MultiverseEnabler {
+  fun enableMultiverse(project: Project) : Boolean
+}

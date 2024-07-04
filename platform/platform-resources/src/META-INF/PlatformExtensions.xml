@@ -1711,6 +1711,15 @@
     <projectService serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
                     serviceImplementation="com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService"/>
 
+    <!-- multiverse -->
+    <registryKey key="intellij.platform.shared.source.support"
+                 defaultValue="false"
+                 description="Enables shared source support"
+                 restartRequired="true"
+    />
+    <multiverseEnabler implementation="com.intellij.codeInsight.multiverse.RegistryFlagMultiverseEnabler"/>
+    <multiverse.codeInsightContextProvider implementation="com.intellij.multiverse.ProjectModelEntityContextProvider"/>
+
     <!-- Presentation Assistant -->
     <applicationService serviceImplementation="com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistant"/>
     <applicationConfigurable groupId="appearance"

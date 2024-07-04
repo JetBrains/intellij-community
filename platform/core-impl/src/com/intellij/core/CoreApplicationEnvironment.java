@@ -3,6 +3,8 @@ package com.intellij.core;
 
 import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider;
+import com.intellij.codeInsight.multiverse.MultiverseEnabler;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginDescriptorLoader;
@@ -100,6 +102,9 @@ public class CoreApplicationEnvironment {
 
     // fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area)
     registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
+
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.multiverseEnabler"), MultiverseEnabler.class);
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.multiverse.codeInsightContextProvider"), CodeInsightContextProvider.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
