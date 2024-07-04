@@ -16,6 +16,9 @@
             <arrayArg name="pluginClasspaths">
               <args>$MAVEN_REPOSITORY$/org/jetbrains/compose/compiler/compiler-hosted/1.5.14/compiler-hosted-1.5.14.jar</args>
             </arrayArg>
+            <arrayArg name="pluginOptions">
+              <args>plugin:androidx.compose.compiler.plugins.kotlin:suppressKotlinVersionCompatibilityCheck=1.9.25</args>
+            </arrayArg>
           </arrayArguments>
         </compilerArguments>
       </configuration>
