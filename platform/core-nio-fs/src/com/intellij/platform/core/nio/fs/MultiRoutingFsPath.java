@@ -12,11 +12,11 @@ import java.util.Iterator;
 import java.util.Objects;
 
 
-public class MultiRoutingFsPath implements Path {
+final class MultiRoutingFsPath implements Path {
   private final Path myDelegate;
   private final MultiRoutingFileSystem myFileSystem;
 
-  public MultiRoutingFsPath(MultiRoutingFileSystem fileSystem, Path delegate) {
+  MultiRoutingFsPath(MultiRoutingFileSystem fileSystem, Path delegate) {
     myDelegate = delegate;
     myFileSystem = fileSystem;
   }
