@@ -1060,7 +1060,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestGroup = load("nodes/testGroup.svg", "expui/", -1600035187, 0);
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("nodes/testIgnored.svg", "expui/", 723241848, 0);
     /** 16x16 */ public static final @NotNull Icon TestSourceFolder = load("nodes/testSourceFolder.svg", "expui/", -12513982, 0);
-    /** 16x16 */ public static final @NotNull Icon TextArea = load("nodes/textArea.svg", -342431394, 0);
+    /** 16x16 */ public static final @NotNull Icon TextArea = load("nodes/textArea.svg", "expui/", -342431394, 0);
     /** 16x16 */ public static final @NotNull Icon Toolbox = load("nodes/toolbox.svg", -388073839, 0);
     /** 16x16 */ public static final @NotNull Icon Type = load("nodes/type.svg", "expui/", 1771437316, 0);
     /** 16x16 */ public static final @NotNull Icon Undeploy = load("nodes/undeploy.svg", "expui/actions/undeploy.svg", -1692132469, 0);

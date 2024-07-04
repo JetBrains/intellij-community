@@ -668,6 +668,7 @@
       "testResourcesRoot.svg": "modules/testResourcesRoot.svg",
       "testRoot.svg": "modules/testRoot.svg",
       "testSourceFolder.svg": "nodes/testSourceFolder.svg",
+      "textArea.svg": "nodes/textArea.svg",
       "type.svg": "nodes/type.svg",
       "unloadedModule.svg": "modules/unloadedModule.svg",
       "upFolder.svg": "nodes/upFolder.svg",
