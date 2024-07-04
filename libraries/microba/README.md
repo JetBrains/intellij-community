@@ -8,7 +8,7 @@ Features
 ---------
 CalendarPane
 DatePicker
-DatePickerCellEditor
+
 * Locale aware
 * TimeZone aware
 * Supports null date (nullable)
