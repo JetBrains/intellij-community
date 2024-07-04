@@ -26,4 +26,12 @@ class JavaFormatterBlankLinesAroundFieldTest : JavaFormatterTestCase() {
     getSettings(JavaLanguage.INSTANCE).BLANK_LINES_AROUND_FIELD = 1
     doTest()
   }
+
+  fun testRearrangement() {
+    getSettings(JavaLanguage.INSTANCE).BLANK_LINES_AROUND_FIELD = 1
+    val testName = getTestName(true)
+    val afterFileName = "${testName}_after"
+    doTest(testName, afterFileName)
+    doTest(afterFileName, afterFileName)
+  }
 }
