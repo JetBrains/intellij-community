@@ -23,7 +23,8 @@ class EditorCellInput(
 
   private val shouldShowRunButton =
     editor.editorKind != EditorKind.DIFF &&
-    editor.notebookAppearance.shouldShowRunButtonInGutter()
+    editor.notebookAppearance.shouldShowRunButtonInGutter() &&
+    cell.type == NotebookCellLines.CellType.CODE
 
   val runCellButton: EditorCellRunGutterButton? =
     if (shouldShowRunButton) EditorCellRunGutterButton(editor, cell)

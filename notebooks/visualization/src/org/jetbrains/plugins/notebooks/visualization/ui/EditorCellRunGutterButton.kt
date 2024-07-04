@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.ex.EditorEx
-import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.r.inlays.components.progress.ProgressStatus
 
 class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: EditorCell)  {
@@ -25,7 +24,6 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
     }
 
   fun updateGutterAction(currentStatus: ProgressStatus?) {
-    if (cell.type != NotebookCellLines.CellType.CODE) return
     val newAction = when(currentStatus) {
       ProgressStatus.RUNNING -> StopCellExecutionGutterAction()
       else -> RunCellGutterAction(cell)
