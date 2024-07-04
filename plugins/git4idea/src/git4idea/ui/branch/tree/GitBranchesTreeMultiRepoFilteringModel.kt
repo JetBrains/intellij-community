@@ -17,9 +17,8 @@ import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitTagType
 import git4idea.branch.TagsNode
 import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.popup.GitBranchesTreePopupFilterByRepository
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
@@ -33,8 +32,8 @@ class GitBranchesTreeMultiRepoFilteringModel(
 
   private val branchManager = project.service<GitBranchManager>()
 
-  private val actionsSeparator = GitBranchesTreePopup.createTreeSeparator()
-  private val repositoriesSeparator = GitBranchesTreePopup.createTreeSeparator()
+  private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
+  private val repositoriesSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   private lateinit var actionsTree: LazyActionsHolder
   private lateinit var repositoriesTree: LazyTopLevelRepositoryHolder

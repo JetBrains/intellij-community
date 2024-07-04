@@ -27,7 +27,6 @@ import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
-import git4idea.ui.branch.popup.GitBranchesTreePopupBase.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.*
 import javax.swing.JComponent
 
@@ -48,7 +47,7 @@ class GitBranchesTreePopupStep(
       if (experimentalUIActionsGroup != null) {
         addAll(createTopLevelActionItems(project, experimentalUIActionsGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
         if (this.isNotEmpty()) {
-          add(GitBranchesTreePopup.createTreeSeparator())
+          add(GitBranchesTreePopupBase.createTreeSeparator())
         }
       }
     }
@@ -57,7 +56,7 @@ class GitBranchesTreePopupStep(
       // get selected repo inside actions
       addAll(createTopLevelActionItems(project, actionGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
       if (this.isNotEmpty()) {
-        add(GitBranchesTreePopup.createTreeSeparator())
+        add(GitBranchesTreePopupBase.createTreeSeparator())
       }
     }
   }
@@ -180,7 +179,7 @@ class GitBranchesTreePopupStep(
       val actionsWithSeparators = mutableListOf<Any>()
       for (action in this) {
         if (action.isPrependWithSeparator) {
-          actionsWithSeparators.add(GitBranchesTreePopup.createTreeSeparator(action.separatorText))
+          actionsWithSeparators.add(GitBranchesTreePopupBase.createTreeSeparator(action.separatorText))
         }
         actionsWithSeparators.add(action)
       }

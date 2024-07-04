@@ -33,7 +33,7 @@ import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
 import git4idea.ui.branch.GitBranchesClippedNamesCache
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel.RefUnderRepository
 import git4idea.ui.branch.tree.GitBranchesTreeUtil.canHighlight
 import icons.DvcsImplIcons
@@ -160,7 +160,7 @@ abstract class GitBranchesTreeRenderer(
     }
 
     if (updateScaleHelper.saveScaleAndUpdateUIIfChanged(mainPanel)) {
-      tree.rowHeight = GitBranchesTreePopup.treeRowHeight
+      tree.rowHeight = GitBranchesTreePopupBase.treeRowHeight
     }
 
     return mainPanel

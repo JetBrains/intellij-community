@@ -7,11 +7,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.ui.tree.AbstractTreeModel
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
-import git4idea.*
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitTag
 import git4idea.branch.*
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import git4idea.ui.branch.tree.GitBranchesTreeModel.*
 import javax.swing.tree.TreePath
 
@@ -21,7 +24,7 @@ class GitBranchesTreeMultiRepoModel(
   private val topLevelActions: List<Any> = emptyList()
 ) : AbstractTreeModel(), GitBranchesTreeModel {
 
-  private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
+  private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   private val branchManager = project.service<GitBranchManager>()
 
