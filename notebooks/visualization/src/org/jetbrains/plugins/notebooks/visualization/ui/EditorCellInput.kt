@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.notebooks.visualization.ui
 
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.util.TextRange
@@ -20,8 +21,12 @@ class EditorCellInput(
 
   private var foldRegion: FoldRegion? = null
 
-  private val runCellButton: EditorCellRunButton? =
-    if (editor.notebookAppearance.shouldShowRunButtonInGutter()) EditorCellRunButton(editor)
+  private val shouldShowRunButton =
+    editor.editorKind != EditorKind.DIFF &&
+    editor.notebookAppearance.shouldShowRunButtonInGutter()
+
+  val runCellButton: EditorCellRunGutterButton? =
+    if (shouldShowRunButton) EditorCellRunGutterButton(editor, cell)
     else null
 
   var component: EditorCellViewComponent = componentFactory(this, null)
@@ -102,19 +107,6 @@ class EditorCellInput(
   fun setGutterAction(action: AnAction) {
     gutterAction = action
     updateGutterIcons()
-  }
-
-  fun showRunButton() {
-    try {
-      runCellButton?.showRunButton(interval)
-    }
-    catch (e: IllegalStateException) {
-      return
-    }
-  }
-
-  fun hideRunButton() {
-    runCellButton?.hideRunButton()
   }
 
   fun updatePresentation(view: EditorCellViewComponent) {
