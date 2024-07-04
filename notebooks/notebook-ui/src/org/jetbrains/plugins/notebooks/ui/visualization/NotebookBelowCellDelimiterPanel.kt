@@ -129,7 +129,7 @@ class NotebookBelowCellDelimiterPanel(
         this.toolTipText = tooltipText
       }
     } else {
-      remove(executionLabel)
+      executionLabel?.let { remove(it) }
       executionLabel = null
     }
   }
