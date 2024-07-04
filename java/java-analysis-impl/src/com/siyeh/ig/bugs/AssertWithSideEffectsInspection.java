@@ -99,6 +99,9 @@ public final class AssertWithSideEffectsInspection extends BaseInspection {
     if (JavaMethodContractUtil.isPure(method)) return null;
     MutationSignature signature = MutationSignature.fromMethod(method);
     if (signature.mutatesAnything()) {
+      if (signature.performsIO()) {
+        return InspectionGadgetsBundle.message("assert.with.side.effects.call.performs.io", method.getName());
+      }
       PsiExpression expression =
         signature.mutatedExpressions(call).filter(expr -> !ExpressionUtils.isNewObject(expr)).findFirst().orElse(null);
       if (expression != null) {

@@ -254,7 +254,7 @@ public final class ExtractMethodRecommenderInspection extends AbstractBaseJavaLo
       MutationSignature signature = MutationSignature.fromCall(expression);
       if (!assumeOkMethod(expression) &&
           (ExpressionUtils.isVoidContext(expression) ||
-           signature == MutationSignature.unknown() ||
+           signature == MutationSignature.unknown() || signature.performsIO() ||
            signature.mutatedExpressions(expression).map(ExpressionUtils::resolveLocalVariable)
              .anyMatch(var -> !isInside(var)))) {
         addSideEffect();

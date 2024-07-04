@@ -1,6 +1,7 @@
 package com.siyeh.igtest.bugs.assert_with_side_effects;
 import java.sql.*;
 import java.util.*;
+import java.io.*;
 
 public class AssertWithSideEffects {
     private int sideEffect = 0;
@@ -30,5 +31,9 @@ public class AssertWithSideEffects {
 
     void jdbc(ResultSet rs) throws SQLException {
       <warning descr="'assert' has side effects: call to 'last()' mutates 'rs'">assert</warning> rs.last();
+    }
+    
+    void io(InputStream is) throws IOException {
+      <warning descr="'assert' has side effects: call to 'read()' performs input/output operation">assert</warning> is.read() != -1;
     }
 }
