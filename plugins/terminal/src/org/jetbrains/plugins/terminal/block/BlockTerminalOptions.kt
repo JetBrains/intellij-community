@@ -19,8 +19,18 @@ internal class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOpti
 
   override fun getState(): State = state
 
+  @Suppress("DEPRECATION")
   override fun loadState(state: State) {
     this.state = state
+
+    // Migrate the value from the previously existing setting if it was non default.
+    // So, if 'useShellPrompt' was set to true, we need to follow it.
+    val options = TerminalOptionsProvider.instance
+    if (options.useShellPrompt) {
+      // Access state directly, no need to fire settings changed event now.
+      this.state.promptStyle = TerminalPromptStyle.SHELL
+      options.useShellPrompt = false
+    }
   }
 
   var promptStyle: TerminalPromptStyle
@@ -44,10 +54,7 @@ internal class BlockTerminalOptions : PersistentStateComponent<BlockTerminalOpti
   }
 
   class State {
-    // Default is double line, but we should take into account the migration from previously existing setting.
-    // So, if 'useShellPrompt' was set to true, we need to follow it.
-    @Suppress("DEPRECATION")
-    var promptStyle: TerminalPromptStyle = if (TerminalOptionsProvider.instance.useShellPrompt) TerminalPromptStyle.SHELL else TerminalPromptStyle.DOUBLE_LINE
+    var promptStyle: TerminalPromptStyle = TerminalPromptStyle.DOUBLE_LINE
   }
 
   companion object {
