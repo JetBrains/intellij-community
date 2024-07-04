@@ -12,15 +12,15 @@ import java.util.List;
 
 public interface StubElement<T extends PsiElement> extends Stub {
   @Override
-  IStubElementType getStubType();
+  IStubElementType<?, ?> getStubType();
   @Override
-  StubElement getParentStub();
+  StubElement<?> getParentStub();
 
   @Nullable PsiFileStub<?> getContainingFileStub();
 
   @Override
   @NotNull
-  List<StubElement> getChildrenStubs();
+  List<StubElement<?>> getChildrenStubs();
 
   @Nullable
   <P extends PsiElement, S extends StubElement<P>> S findChildStubByType(@NotNull IStubElementType<S, P> elementType);

@@ -69,7 +69,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
 
-      final StubElement stub = getStub();
+      final StubElement<?> stub = getStub();
       processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, stub), element -> {
         if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&

@@ -62,7 +62,7 @@ public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
     StubTreeLoader loader = StubTreeLoader.getInstance();
     VirtualFile file = psiFile.getVirtualFile();
     assertTrue(loader.canHaveStub(file));
-    ObjectStubTree stubTree = loader.readFromVFile(fixture.getProject(), file);
+    ObjectStubTree<?> stubTree = loader.readFromVFile(fixture.getProject(), file);
     assertNotNull(stubTree);
     ElementStub root = (ElementStub)stubTree.getRoot();
     assertNotNull(root);
@@ -102,7 +102,7 @@ public abstract class DomStubTest extends LightJavaCodeInsightFixtureTestCase {
     assertNotNull(virtualFile);
     XmlFile file = (XmlFile)((PsiManagerEx)getPsiManager()).getFileManager().findFile(virtualFile);
     assertFalse(file.getNode().isParsed());
-    ObjectStubTree tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
+    ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), virtualFile, file);
     assertNotNull("Can't build stubs for " + path, tree);
 
     ((PsiManagerImpl)getPsiManager()).cleanupForNextTest();

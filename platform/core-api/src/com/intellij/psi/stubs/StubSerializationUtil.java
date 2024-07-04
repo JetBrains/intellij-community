@@ -10,7 +10,7 @@ final class StubSerializationUtil {
   static ObjectStubSerializer<Stub, Stub> getSerializer(@NotNull Stub rootStub) {
     if (rootStub instanceof PsiFileStub) {
       //noinspection unchecked
-      return ((PsiFileStub<?>)rootStub).getType();
+      return ((PsiFileStub)rootStub).getType();
     }
     //noinspection unchecked
     return (ObjectStubSerializer<Stub, Stub>)rootStub.getStubType();

@@ -399,7 +399,7 @@ public final class PyPsiUtils {
       Pair<List<PsiComment>, PsiElement> blockAndAnchor = getPrecedingCommentsAndAnchor(anchor, true, false);
       anchor = blockAndAnchor.getSecond();
       List<PsiComment> block = blockAndAnchor.getFirst();
-      if (block.size() != 0 || anchor instanceof PsiComment) {
+      if (!block.isEmpty() || anchor instanceof PsiComment) {
         blocks.add(block);
       }
     }
@@ -414,7 +414,7 @@ public final class PyPsiUtils {
                                                            @NotNull Class<T> elementType) {
     if (stub != null) {
       final List<T> result = new ArrayList<>();
-      @SuppressWarnings("rawtypes") final List<StubElement> children = stub.getChildrenStubs();
+      final List<StubElement<?>> children = stub.getChildrenStubs();
       for (StubElement<?> child : children) {
         PsiElement childPsi = child.getPsi();
         if (elementType.isInstance(childPsi)) {
@@ -428,11 +428,11 @@ public final class PyPsiUtils {
     }
   }
 
-  static List<PsiElement> collectAllStubChildren(PsiElement e, StubElement stub) {
+  static List<PsiElement> collectAllStubChildren(PsiElement e, StubElement<?> stub) {
     if (stub != null) {
       final List<PsiElement> result = new ArrayList<>();
-      final List<StubElement> children = stub.getChildrenStubs();
-      for (StubElement child : children) {
+      final List<StubElement<?>> children = stub.getChildrenStubs();
+      for (StubElement<?> child : children) {
         result.add(child.getPsi());
       }
       return result;

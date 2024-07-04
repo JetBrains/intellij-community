@@ -791,7 +791,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
     assertNotNull(fileNode);
     assertFalse(fileNode.isParsed());
     StubElement<?> element = myBuilder.buildStubTree(file);
-    @SuppressWarnings("rawtypes") List<StubElement> stubs = element.getChildrenStubs();
+    List<StubElement<?>> stubs = element.getChildrenStubs();
     assertSize(2, stubs);
     PsiClassStub<?> classStub = (PsiClassStub<?>)stubs.get(1);
     assertFalse(classStub.isInterface());

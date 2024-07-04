@@ -32,7 +32,7 @@ public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> impleme
 
   @Override
   public @NotNull List<PsiAnnotationStub> getAnnotations() {
-    List<StubElement> children = getChildrenStubs();
+    List<StubElement<?>> children = getChildrenStubs();
 
     return ContainerUtil.mapNotNull(children,
                                     stubElement -> stubElement instanceof PsiAnnotationStub ? (PsiAnnotationStub)stubElement : null);

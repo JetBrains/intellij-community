@@ -102,7 +102,7 @@ public final class StubTextInconsistencyException extends RuntimeException imple
     List<PsiFileStub<?>> fromText = restoreStubsFromText(viewProvider);
 
     List<PsiFileStub<?>> fromPsi = ContainerUtil
-      .map(StubTreeBuilder.getStubbedRoots(viewProvider), p -> (PsiFileStub<?>)((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
+      .map(StubTreeBuilder.getStubbedRoots(viewProvider), p -> ((PsiFileImpl)p.getSecond()).calcStubTree().getRoot());
 
     if (fromPsi.size() != fromText.size()) {
       reportInconsistency(file, reason, InconsistencyType.DifferentNumberOfPsiTrees);
@@ -135,7 +135,6 @@ public final class StubTextInconsistencyException extends RuntimeException imple
                                                                        project);
     fc.setProject(project);
     PsiFileStubImpl<?> copyTree = (PsiFileStubImpl<?>)StubTreeBuilder.buildStubTree(fc);
-    //noinspection unchecked
     return copyTree == null ? Collections.emptyList() : Arrays.asList(copyTree.getStubRoots());
   }
 }

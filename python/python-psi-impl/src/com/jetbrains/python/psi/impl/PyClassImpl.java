@@ -310,7 +310,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       // filter blank sequences
       final List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<>(sequences.size());
       for (List<PyClassLikeType> item : sequences) {
-        if (item.size() > 0) nonBlankSequences.add(item);
+        if (!item.isEmpty()) nonBlankSequences.add(item);
       }
       if (nonBlankSequences.isEmpty()) return result;
       // find a clean head
@@ -713,7 +713,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private Property processStubProperties(@Nullable Processor<? super Property> filter) {
     final PyClassStub stub = getStub();
     if (stub != null) {
-      for (StubElement subStub : stub.getChildrenStubs()) {
+      for (StubElement<?> subStub : stub.getChildrenStubs()) {
         if (subStub.getStubType() == PyElementTypes.TARGET_EXPRESSION) {
           final PyTargetExpressionStub targetStub = (PyTargetExpressionStub)subStub;
           final PropertyStubStorage prop = targetStub.getCustomStub(PropertyStubStorage.class);
@@ -1205,8 +1205,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   public boolean processClassLevelDeclarations(@NotNull PsiScopeProcessor processor) {
     final PyClassStub stub = getStub();
     if (stub != null) {
-      final List<StubElement> children = stub.getChildrenStubs();
-      for (StubElement child : children) {
+      final List<StubElement<?>> children = stub.getChildrenStubs();
+      for (StubElement<?> child : children) {
         if (!processor.execute(child.getPsi(), ResolveState.initial())) {
           return false;
         }

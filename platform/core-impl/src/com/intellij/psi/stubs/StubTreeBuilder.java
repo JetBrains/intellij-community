@@ -140,11 +140,11 @@ public final class StubTreeBuilder {
                 LightStubBuilder.FORCED_AST.set(fileContent.getLighterAST());
               }
               built = handleStubBuilderException(inputData, stubBuilderType, () -> stubBuilder.buildStubTree(psi));
-              List<Pair<IStubFileElementType, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
+              List<Pair<IStubFileElementType<?>, PsiFile>> stubbedRoots = getStubbedRoots(viewProvider);
               List<PsiFileStub<?>> stubs = new ArrayList<>(stubbedRoots.size());
               stubs.add((PsiFileStub<?>)built);
 
-              for (Pair<IStubFileElementType, PsiFile> stubbedRoot : stubbedRoots) {
+              for (Pair<IStubFileElementType<?>, PsiFile> stubbedRoot : stubbedRoots) {
                 PsiFile secondaryPsi = stubbedRoot.second;
                 if (psi == secondaryPsi) continue;
                 StubBuilder stubbedRootBuilder = stubbedRoot.first.getBuilder();
@@ -185,7 +185,7 @@ public final class StubTreeBuilder {
   }
 
   /** Order is deterministic. First element matches {@link FileViewProvider#getStubBindingRoot()} */
-  public static @NotNull List<Pair<IStubFileElementType, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
+  public static @NotNull List<Pair<IStubFileElementType<?>, PsiFile>> getStubbedRoots(@NotNull FileViewProvider viewProvider) {
     List<Trinity<Language, IStubFileElementType<?>, PsiFile>> roots =
       new SmartList<>();
     PsiFile stubBindingRoot = viewProvider.getStubBindingRoot();

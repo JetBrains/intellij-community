@@ -594,7 +594,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   /**
    * @return a root stub of {@link #getStubTree()}, or null if the file is not stub-based or AST has been loaded.
    */
-  public @Nullable StubElement getStub() {
+  public @Nullable StubElement<?> getStub() {
     StubTree stubHolder = getStubTree();
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
@@ -707,14 +707,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return Pair.empty();
     FileViewProvider viewProvider = getViewProvider();
-    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
+    List<Pair<IStubFileElementType<?>, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     try {
       synchronized (myPsiLock) {
         FileElement treeElementOnLock = getTreeElement();
-        StubTree derefdOnLock = derefStub();
-        if (derefdOnLock != null || treeElementOnLock != null) {
-          return Pair.create(derefdOnLock, treeElementOnLock);
+        StubTree dereferencedOnLock = derefStub();
+        if (dereferencedOnLock != null || treeElementOnLock != null) {
+          return Pair.create(dereferencedOnLock, treeElementOnLock);
         }
 
         PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
@@ -773,7 +773,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
-    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
     return clone;
   }
@@ -813,7 +813,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, ARRAY_FACTORY);
   }
 
   @Override
