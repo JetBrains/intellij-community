@@ -91,13 +91,13 @@ class InstanceContainerImpl(
   }
 
   override fun getInstanceHolder(keyClass: Class<*>, registerDynamic: Boolean): InstanceHolder? {
+    if (!registerDynamic || dynamicInstanceSupport == null) {
+      return getInstanceHolder(keyClass)
+    }
     lateinit var holder: InstanceHolder
     updateState { state: InstanceContainerState ->
       state.getByClass(keyClass)?.let {
         return it
-      }
-      if (!registerDynamic || dynamicInstanceSupport == null) {
-        return null
       }
       val dynamicInstanceInitializer = dynamicInstanceSupport.dynamicInstanceInitializer(instanceClass = keyClass)
       if (dynamicInstanceInitializer == null) {
@@ -109,7 +109,7 @@ class InstanceContainerImpl(
       state.replaceByClass(keyClass, holder)
     }
     // the following can only execute in case `holder` was initialized and committed into `state`
-    dynamicInstanceSupport!!.dynamicInstanceRegistered(holder)
+    dynamicInstanceSupport.dynamicInstanceRegistered(holder)
     return holder
   }
 
