@@ -3,6 +3,7 @@ package com.intellij.util.indexing
 
 import com.intellij.find.TextSearchService
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -13,6 +14,7 @@ import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.openapi.roots.ModuleRootManager
@@ -27,6 +29,7 @@ import com.intellij.openapi.vfs.writeText
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.*
+import com.intellij.testFramework.LightProjectDescriptor.TEST_MODULE_NAME
 import com.intellij.testFramework.TestActionEvent.createTestEvent
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.utils.vfs.createFile
@@ -156,7 +159,7 @@ class DirtyFilesQueueTest {
       val files = openProject(testNameRule.methodName, projectFile, save = true) { project, module ->
         val src = tempDir.createVirtualDir("src")
         writeAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          val rootModel = ModuleRootManager.getInstance(module!!).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
         }
@@ -234,7 +237,7 @@ class DirtyFilesQueueTest {
         val src = tempDir.createVirtualDir("src")
 
         writeAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          val rootModel = ModuleRootManager.getInstance(module!!).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
         }
@@ -264,7 +267,7 @@ class DirtyFilesQueueTest {
         val src = tempDir.createVirtualDir("src")
 
         val file = writeAction {
-          val rootModel = ModuleRootManager.getInstance(module).modifiableModel
+          val rootModel = ModuleRootManager.getInstance(module!!).modifiableModel
           rootModel.addContentEntry(src)
           rootModel.commit()
           src.createFile("A.${filetype.defaultExtension}")
@@ -293,6 +296,7 @@ class DirtyFilesQueueTest {
                                       save: Boolean = false,
                                       withIndexingHistory: Boolean = false,
                                       action: suspend (Project, Module) -> T): T {
+    val reopenProject = ProjectUtilCore.isValidProjectPath(projectFile)
     projectFile.createDirectories()
     val options = createTestOpenProjectOptions().copy(projectName = name)
     if (withIndexingHistory) {
@@ -303,7 +307,7 @@ class DirtyFilesQueueTest {
       WorkspaceModelCacheImpl.forceEnableCaching(testRootDisposable)
     }
     val project = ProjectUtil.openOrImportAsync(projectFile, options)!!
-    val module = configureModule(project)
+    val module = if (reopenProject) ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME)!! else configureModule(project)
     return project.useProjectAsync(save = save) {
       val res = action(project, module)
       IndexingTestUtil.suspendUntilIndexesAreReady(project)
