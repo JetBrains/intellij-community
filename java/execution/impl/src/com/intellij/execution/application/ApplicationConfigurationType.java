@@ -85,14 +85,14 @@ public class ApplicationConfigurationType implements ConfigurationType {
   public static PsiClass getMainClass(PsiElement element) {
     while (element != null) {
       if (element instanceof PsiClass aClass) {
-        if (PsiMethodUtil.findMainInClass(aClass) != null) {
+        if (PsiMethodUtil.hasMainInClass(aClass)) {
           return aClass;
         }
       }
       else if (element instanceof PsiJavaFile javaFile) {
         final PsiClass[] classes = javaFile.getClasses();
         for (PsiClass aClass : classes) {
-          if (PsiMethodUtil.findMainInClass(aClass) != null) {
+          if (PsiMethodUtil.hasMainInClass(aClass)) {
             return aClass;
           }
         }

@@ -88,7 +88,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
       myFixture.configureByText("MainTest.java", """
         void foo() {
         }
-              
+        
         public class A {
           public void main<caret>() {}
         }
@@ -243,14 +243,58 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
               int hello() {
                   return 1;
               }
-          
+        
               public static void main(String[] args) {
-          
+        
               }
           }
         """);
       List<GutterMark> marks = myFixture.findAllGutters();
       assertEquals(2, marks.size()); // class and one method
+    });
+  }
+
+  public void testInheritMain() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+      myFixture.addClass("""
+        public class AAAAAA {
+            public void main(String[] args) {
+                System.out.println("2");
+            }
+        }
+      """);
+      myFixture.configureByText("BBBBBB.java", """
+          public class BBBBBB extends AAAAAA {
+              public static void <caret>main() {
+                  System.out.println("1");
+              }
+          }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(0, marks.size());
+    });
+  }
+
+  public void testImpossibleInheritStatic() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+      myFixture.addClass("""
+        public class AAAAAA {
+            public AAAAAA(int a){}
+      
+            public void main(String[] args) {
+                System.out.println("2");
+            }
+        }
+      """);
+      myFixture.configureByText("BBBBBB.java", """
+          public class BBBBBB extends AAAAAA {
+              public static void <caret>main() {
+                  System.out.println("1");
+              }
+          }
+        """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
     });
   }
 }

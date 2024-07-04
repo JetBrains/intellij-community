@@ -7,21 +7,50 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public final class PsiMethodUtil {
 
-  public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
+  public static final Condition<@NotNull PsiClass> MAIN_CLASS = psiClass -> {
     if (PsiUtil.isLocalOrAnonymousClass(psiClass)) return false;
     if (psiClass.isAnnotationType()) return false;
     if (psiClass.isInterface() && !PsiUtil.isAvailable(JavaFeature.EXTENSION_METHODS, psiClass)) return false;
     return psiClass.getContainingClass() == null || psiClass.hasModifierProperty(PsiModifier.STATIC);
+  };
+
+  private final static Comparator<PsiMethod> mainCandidateComparator = (o1, o2) -> {
+
+    boolean isO1Static = o1.hasModifierProperty(PsiModifier.STATIC);
+    boolean isO2Static = o2.hasModifierProperty(PsiModifier.STATIC);
+    int o1Parameters = o1.getParameterList().getParametersCount();
+    int o2Parameters = o2.getParameterList().getParametersCount();
+
+    boolean isInheritedStaticMethodEnabled = PsiUtil.isAvailable(JavaFeature.INHERITED_STATIC_MAIN_METHOD, o1);
+
+    if (isInheritedStaticMethodEnabled) {
+      //if there are methods with 1 parameter and 0 parameters, the method with 1 parameter will be called
+      //12.1.4 jep 463
+      return Integer.compare(o2Parameters, o1Parameters);
+    }
+
+    //only for java 21 preview, old implementation, it should be deleted after expiring 21 preview
+    if (isO1Static == isO2Static) {
+      return Integer.compare(o2Parameters, o1Parameters);
+    }
+    else if (isO1Static) {
+      return -1;
+    }
+    else {
+      return 1;
+    }
   };
 
   private PsiMethodUtil() { }
@@ -33,11 +62,23 @@ public final class PsiMethodUtil {
       return mainMethodProvider.findMainInClass(aClass);
     }
 
+    return findMainMethodInClassOrParent(aClass);
+  }
+
+  /**
+   * Finds the main method in the given class or its parents.
+   * ATTENTION: does not use implementations of {@link JavaMainMethodProvider}
+   * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
+   *
+   * @param aClass the class in which to find the main method.
+   * @return the main method if found, or null if not found or if an {@link IndexNotReadyException} occurs.
+   */
+  public static @Nullable PsiMethod findMainMethodInClassOrParent(PsiClass aClass) {
     DumbService dumbService = DumbService.getInstance(aClass.getProject());
     try {
       return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<PsiMethod, Throwable>)() -> {
         final PsiMethod[] mainMethods = aClass.findMethodsByName("main", true);
-        return findMainMethod(mainMethods, aClass);
+        return findMainMethod(mainMethods, aClass, false);
       });
     }
     catch (IndexNotReadyException e) {
@@ -45,8 +86,17 @@ public final class PsiMethodUtil {
     }
   }
 
+  /**
+   * Finds the main method in the given array of methods for a specified class, optionally returning the first match.
+   *
+   * @param mainMethods An array of methods to search through.
+   * @param aClass The class in which to find the main method.
+   * @param first If true, return the first encountered main method; otherwise, sorting them.
+   * @return The main method if found, or null if not found or if it does not meet the criteria.
+   */
   @Nullable
-  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass) {
+  private static PsiMethod findMainMethod(final PsiMethod[] mainMethods, PsiClass aClass, boolean first) {
+    List<@NotNull PsiMethod> candidates = new ArrayList<>();
     for (final PsiMethod mainMethod : mainMethods) {
       if (mainMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
         continue;
@@ -59,25 +109,33 @@ public final class PsiMethodUtil {
         if (containingClass.isInterface() && !instanceMainMethodsEnabled(containingClass)) {
           continue;
         }
-        if (containingClass.isInterface() && mainMethod.hasModifierProperty(PsiModifier.STATIC) && !inheritedStaticMainEnabled(containingClass)) {
+        if (containingClass.isInterface() &&
+            mainMethod.hasModifierProperty(PsiModifier.STATIC) &&
+            !inheritedStaticMainEnabled(containingClass)) {
           continue;
         }
       }
-      if (isMainMethod(mainMethod)) return mainMethod;
+      if (isMainMethod(mainMethod)) {
+        if (first) {
+          //fast exit
+          return mainMethod;
+        }
+        candidates.add(mainMethod);
+      }
     }
-    return null;
+    if(candidates.isEmpty()) {
+      return null;
+    }
+    candidates.sort(mainCandidateComparator);
+    return candidates.get(0);
   }
 
   private static boolean instanceMainMethodsEnabled(@NotNull PsiElement psiElement) {
-    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiElement);
-    boolean is21Preview = languageLevel.equals(LanguageLevel.JDK_21_PREVIEW);
-    boolean is22PreviewOrOlder = languageLevel.isAtLeast(LanguageLevel.JDK_22_PREVIEW);
-    return is21Preview || is22PreviewOrOlder;
+    return PsiUtil.isAvailable(JavaFeature.INSTANCE_MAIN_METHOD, psiElement);
   }
 
   private static boolean inheritedStaticMainEnabled(@NotNull PsiElement psiElement) {
-    LanguageLevel languageLevel = PsiUtil.getLanguageLevel(psiElement);
-    return languageLevel.isAtLeast(LanguageLevel.JDK_22_PREVIEW);
+    return PsiUtil.isAvailable(JavaFeature.INHERITED_STATIC_MAIN_METHOD, psiElement);
   }
 
   /**
@@ -88,15 +146,22 @@ public final class PsiMethodUtil {
    * @param method the method to check
    * @return true, if the method satisfies a main method signature. false, otherwise
    */
-  public static boolean isMainMethod(final PsiMethod method) {
+  @Contract("null -> false")
+  public static boolean isMainMethod(@Nullable final PsiMethod method) {
     if (method == null || method.getContainingClass() == null) return false;
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) return false;
     if (!PsiTypes.voidType().equals(method.getReturnType())) return false;
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     if (instanceMainMethodsEnabled(method)) {
       if (!method.hasModifierProperty(PsiModifier.PUBLIC) &&
           !method.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) &&
           !method.hasModifierProperty(PsiModifier.PROTECTED)) return false;
-      PsiMethod[] constructors = method.getContainingClass().getConstructors();
+      //can't instantiate this class
+      if (containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+        return false;
+      }
+      PsiMethod[] constructors = containingClass.getConstructors();
       if (!method.hasModifierProperty(PsiModifier.STATIC) && constructors.length != 0 && !ContainerUtil.exists(constructors, method1 -> method1.getParameterList().isEmpty())) {
         return false;
       }
@@ -139,7 +204,7 @@ public final class PsiMethodUtil {
     try {
       return dumbService.computeWithAlternativeResolveEnabled((ThrowableComputable<Boolean, Throwable>)() -> {
         final PsiMethod[] mainMethods = psiClass.findMethodsByName("main", true);
-        return findMainMethod(mainMethods, psiClass) != null;
+        return findMainMethod(mainMethods, psiClass, true) != null;
       });
     }
     catch (IndexNotReadyException e) {
@@ -178,9 +243,14 @@ public final class PsiMethodUtil {
   }
 
   @Nullable
-  public static PsiMethod findMainInClass(final PsiClass aClass) {
+  public static PsiMethod findMainInClass(@NotNull final PsiClass aClass) {
     if (!MAIN_CLASS.value(aClass)) return null;
     return findMainMethod(aClass);
+  }
+
+  public static boolean hasMainInClass(@NotNull final PsiClass aClass) {
+    if (!MAIN_CLASS.value(aClass)) return false;
+    return hasMainMethod(aClass);
   }
 
   @Nullable
