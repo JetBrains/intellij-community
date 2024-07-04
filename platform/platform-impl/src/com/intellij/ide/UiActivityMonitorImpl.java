@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.openapi.Disposable;
@@ -149,10 +149,12 @@ public final class UiActivityMonitorImpl extends UiActivityMonitor implements Mo
 
   @Override
   public void clear() {
-    final Set<Project> keys = myObjects.keySet();
-    for (Project each : keys) {
-      myObjects.get(each).clear();
-    }
+    UIUtil.invokeAndWaitIfNeeded(() -> {
+      final Set<Project> keys = myObjects.keySet();
+      for (Project each : keys) {
+        myObjects.get(each).clear();
+      }
+    });
   }
 
   @Override
