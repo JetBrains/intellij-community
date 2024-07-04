@@ -22,10 +22,18 @@ interface Component {
   fun getBackground(): ColorRef
   fun getAccessibleContext(): AccessibleContextRef?
   fun getParent(): Component
+  fun isDisplayable(): Boolean
+}
+
+@Remote("java.awt.Window")
+interface Window: Component {
+  fun isFocused(): Boolean
+  fun dispose()
+  fun requestFocus()
 }
 
 @Remote("java.awt.Color")
-interface ColorRef{
+interface ColorRef {
   fun getRGB(): Int
 }
 

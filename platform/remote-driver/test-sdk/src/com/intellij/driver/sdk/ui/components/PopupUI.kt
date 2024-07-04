@@ -3,7 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
-import com.intellij.driver.sdk.ui.remote.Component
+import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.waitForOne
 import org.intellij.lang.annotations.Language
 import kotlin.time.Duration.Companion.seconds
@@ -43,12 +43,6 @@ open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun close() = driver.withContext(OnDispatcher.EDT) {
     popupComponent.dispose()
-  }
-
-  @Remote("java.awt.Window")
-  interface Window: Component {
-    fun isFocused(): Boolean
-    fun dispose()
   }
 }
 
