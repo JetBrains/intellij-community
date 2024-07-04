@@ -88,7 +88,6 @@ internal object GHPRCreateComponentFactory {
   private fun CoroutineScope.create(vm: GHPRCreateViewModel): JComponent {
     val topPanel = JPanel(null).apply {
       isOpaque = false
-      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
       layout = MigLayout(LC().gridGap("0", "0").insets("0").flowY().fill())
 
       add(directionSelector(vm), CC().pushX().gap(SIDE_GAPS_L, SIDE_GAPS_L, SIDE_GAPS_M, SIDE_GAPS_M))
@@ -99,7 +98,6 @@ internal object GHPRCreateComponentFactory {
 
     val bottomPanel = JPanel(null).apply {
       isOpaque = false
-      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
       border = IdeBorderFactory.createBorder(SideBorder.TOP)
 
       layout = MigLayout(LC().gridGap("0", "0").insets("0").flowY().fill())
@@ -182,6 +180,7 @@ internal object GHPRCreateComponentFactory {
     val textPanel = JPanel(null).apply {
       isOpaque = true
       background = JBColor.lazy { EditorColorsManager.getInstance().globalScheme.defaultBackground }
+      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(this)
     }
 
     launchNow {
