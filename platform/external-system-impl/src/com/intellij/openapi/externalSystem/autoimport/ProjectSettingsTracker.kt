@@ -214,12 +214,19 @@ class ProjectSettingsTracker(
     operationName: String,
     configureContext: SettingsFilesStatusUpdateContext.() -> Unit
   ) {
-    val context = SettingsFilesStatusUpdateContext(
-      reloadStatus = when (applyChangesOperation.isOperationInProgress()) {
-        true -> ReloadStatus.IN_PROGRESS
-        else -> ReloadStatus.IDLE
-      }
-    ).apply(configureContext)
+    val reloadStatus = when (applyChangesOperation.isOperationInProgress()) {
+      true -> ReloadStatus.IN_PROGRESS
+      else -> ReloadStatus.IDLE
+    }
+    val context = SettingsFilesStatusUpdateContext(reloadStatus)
+    context.configureContext()
+    submitSettingsFilesStatusUpdate(operationName, context)
+  }
+
+  private fun submitSettingsFilesStatusUpdate(
+    operationName: String,
+    context: SettingsFilesStatusUpdateContext,
+  ) {
     submitSettingsFilesCollection(context.isRefreshVfs, context.isInvalidateCache) { settingsPaths ->
       val operationStamp = currentTime()
       submitSettingsFilesCRCCalculation(operationName, settingsPaths, context.isMergeSameCalls) { newSettingsFilesCRC ->
