@@ -35,8 +35,8 @@ internal sealed class WhatsNewContent {
       get() = CommonDataKeys.PROJECT.getData(this)
 
     suspend fun getWhatsNewContent(): WhatsNewContent? {
-      return if (WhatsNewInVisionContentProvider.isAvailable()) {
-        WhatsNewVisionContent(WhatsNewInVisionContentProvider.getContent().entities.first())
+      return if (WhatsNewInVisionContentProvider.getInstance().isAvailable()) {
+        WhatsNewVisionContent(WhatsNewInVisionContentProvider.getInstance().getContent().entities.first())
       } else {
         ExternalProductResourceUrls.getInstance().whatIsNewPageUrl?.toDecodedForm()?.let { WhatsNewUrlContent(it) }
       }
