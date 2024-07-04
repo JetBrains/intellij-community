@@ -23,6 +23,7 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import git4idea.push.GitSpecialRefRemoteBranch
 import git4idea.repo.GitRemote
+import git4idea.repo.GitRepoInfo
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
 import kotlinx.coroutines.Dispatchers
@@ -35,6 +36,11 @@ data class HostedGitRepositoryRemote(
   val path: String,
   val httpUrl: String?,
   val sshUrl: String?
+)
+
+data class HostedGitRepositoryRemoteBranch(
+  val remote: HostedGitRepositoryRemote,
+  val branchName: String
 )
 
 object GitRemoteBranchesUtil {
@@ -75,7 +81,7 @@ object GitRemoteBranchesUtil {
                                            newLocalBranchPrefix: String?) {
     withBackgroundProgress(repository.project,
                            CollaborationToolsBundle.message("review.details.action.branch.checkout.remote.action.description")) {
-      val branch = findRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
+      val branch = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
 
       val fetchOk = fetchBranch(repository, branch)
       if (!fetchOk) return@withBackgroundProgress
@@ -104,8 +110,8 @@ object GitRemoteBranchesUtil {
                                             targetBranch: String?) {
     withBackgroundProgress(repository.project,
                            CollaborationToolsBundle.message("review.details.action.branch.show.remote.branch.in.log.action.description")) {
-      val branchRef = findRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
-      val targetBranchRef = targetBranch?.let { findRemoteBranch(repository, remote, targetBranch) }
+      val branchRef = findOrCreateRemoteBranch(repository, remote, remoteBranch) ?: return@withBackgroundProgress
+      val targetBranchRef = targetBranch?.let { findOrCreateRemoteBranch(repository, remote, targetBranch) }
 
       val fetchOk = fetchBranch(repository, branchRef)
       if (!fetchOk) return@withBackgroundProgress
@@ -143,9 +149,28 @@ object GitRemoteBranchesUtil {
     }
   }
 
-  suspend fun findRemoteBranch(repository: GitRepository,
-                               remote: HostedGitRepositoryRemote,
-                               remoteBranch: String): GitRemoteBranch? {
+  fun findRemoteBranch(
+    repositoryInfo: GitRepoInfo,
+    branch: HostedGitRepositoryRemoteBranch,
+  ): GitRemoteBranch? {
+    val headRemote = findRemote(repositoryInfo, branch.remote) ?: return null
+    return GitStandardRemoteBranch(headRemote, branch.branchName)
+  }
+
+  fun findRemoteBranch(
+    repositoryInfo: GitRepoInfo,
+    remote: HostedGitRepositoryRemote,
+    remoteBranch: String,
+  ): GitRemoteBranch? {
+    val headRemote = findRemote(repositoryInfo, remote) ?: return null
+    return GitStandardRemoteBranch(headRemote, remoteBranch)
+  }
+
+  suspend fun findOrCreateRemoteBranch(
+    repository: GitRepository,
+    remote: HostedGitRepositoryRemote,
+    remoteBranch: String,
+  ): GitRemoteBranch? {
     val headRemote = findOrCreateRemote(repository, remote)
     if (headRemote == null) {
       notifyRemoteError(repository.project, remote)
@@ -246,7 +271,10 @@ object GitRemoteBranchesUtil {
   }
 
   fun findRemote(repository: GitRepository, remote: HostedGitRepositoryRemote): GitRemote? =
-    repository.remotes.find {
+    findRemote(repository.info, remote)
+
+  fun findRemote(repositoryInfo: GitRepoInfo, remote: HostedGitRepositoryRemote): GitRemote? =
+    repositoryInfo.remotes.find {
       val url = it.firstUrl
       url != null &&
       GitHostingUrlUtil.match(remote.serverUri, url) &&
