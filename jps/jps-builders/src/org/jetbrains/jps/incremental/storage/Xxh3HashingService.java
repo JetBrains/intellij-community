@@ -16,7 +16,7 @@ final class Xxh3HashingService {
   static long getFileHash(@NotNull File file) throws IOException {
     long fileHash;
     try (FileInputStream fis = new FileInputStream(file)) {
-      fileHash = Xxh3.hash(fis, (int)file.length());
+      fileHash = Xxh3.hash(fis, Math.toIntExact(file.length()));
     }
     return fileHash;
   }

@@ -20,6 +20,7 @@ import com.intellij.util.lang.Xxh3;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayInputStream;
@@ -27,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
@@ -90,11 +93,32 @@ public class XxHash3Test {
 
   @Test
   public void checkInputStreamAccessor() throws IOException {
+    var dummyText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Quisque rutrum lacinia nibh, ac ornare dolor bibendum at. " +
+    "Nam imperdiet quam at elit bibendum, in imperdiet nisi semper. Phasellus volutpat, libero sit amet dictum molestie, " +
+    "ligula nisi efficitur leo, ac vulputate leo ex vel turpis. Nulla facilisi. Curabitur in ligula ut ligula vehicula dapibus " +
+    "nec at mi. Proin vehicula egestas nulla, nec fermentum lacus aliquet nec. Sed fermentum turpis enim, eget cursus augue varius quis. " +
+    "Quisque fermentum nec felis at bibendum. Duis quis felis eu ante facilisis accumsan vitae eget ex. Suspendisse rhoncus leo a auctor " +
+    "interdum. Proin et sagittis est. Curabitur placerat ex vel velit egestas, a convallis purus bibendum. Integer pellentesque commodo nulla, " +
+    "a dapibus dolor semper ac. Praesent elementum tortor velit, ac mollis dui molestie nec. Sed tincidunt, arcu ac condimentum ullamcorper, " +
+    "arcu lectus bibendum nulla, volutpat rutrum odio nulla id leo. In dignissim sapien orci, in consectetur risus venenatis a. Aenean congue dui nec.";
     checkHashing("com/intellij/profiler/async/windows/WinAsyncProfilerLocator".getBytes(StandardCharsets.UTF_8));
+    checkHashing(dummyText.getBytes(StandardCharsets.UTF_8));
     checkHashing("test".getBytes(StandardCharsets.UTF_8));
     checkHashing("".getBytes(StandardCharsets.UTF_8));
-    // Check hashing of array consists of one chunk
-    checkHashing(new byte[1042]);
+  }
+
+  @ParameterizedTest
+  @MethodSource("byteArraySizeRangeProvider")
+  public void checkInputStreamAccessorOnDifferentSizes(int byteArraySize) throws IOException {
+    // We need to check the corner cases when we're getting data from both buffers
+      byte[] byteArray = new byte[byteArraySize];
+      Random random = new Random();
+      random.nextBytes(byteArray);
+      checkHashing(byteArray);
+  }
+
+  private static Stream<Integer> byteArraySizeRangeProvider() {
+    return IntStream.rangeClosed(0, 10_000).boxed();
   }
 
   private static void checkPackage(String s, long expected) {
