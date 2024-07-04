@@ -16,6 +16,19 @@ import java.util.List;
 
 public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase {
 
+  public void testBasic() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_11, () -> {
+      myFixture.configureByText("MainTest.java", """
+      class A{
+        public static void main<caret>(String[] args) {
+        }
+      }
+      """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+    });
+  }
+
   public void testImplicitAllowsNonStatic() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
       myFixture.configureByText("MainTest.java", """
@@ -26,6 +39,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
       assertEquals(1, marks.size());
     });
   }
+
 
   public void testClassWithConstructorWithoutParamsAndInstanceMainIsAllowed() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
@@ -271,7 +285,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
       PsiMethod mainMethod = implicitClass.getMethods()[0];
       ApplicationRunLineMarkerProvider provider = new ApplicationRunLineMarkerProvider();
       DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-        RunLineMarkerContributor.Info info = provider.getInfo(mainMethod.getNameIdentifier());
+        RunLineMarkerContributor.Info info = provider.getSlowInfo(mainMethod.getNameIdentifier());
         assertNotNull(info);
       });
     });
@@ -288,7 +302,7 @@ public class RunLineMarkerJava21Test extends LightJavaCodeInsightFixtureTestCase
       PsiClass psiClass = file.getClasses()[0];
       ApplicationRunLineMarkerProvider provider = new ApplicationRunLineMarkerProvider();
       DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
-        RunLineMarkerContributor.Info info = provider.getInfo(psiClass.getNameIdentifier());
+        RunLineMarkerContributor.Info info = provider.getSlowInfo(psiClass.getNameIdentifier());
         assertNotNull(info);
       });
     });
