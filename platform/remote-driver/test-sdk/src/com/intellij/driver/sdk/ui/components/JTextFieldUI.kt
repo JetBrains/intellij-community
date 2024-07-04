@@ -3,10 +3,13 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ui.Finder
+import com.intellij.driver.sdk.ui.QueryBuilder
 import org.intellij.lang.annotations.Language
 
 
 fun Finder.textField(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JTextField']", JTextFieldUI::class.java)
+
+fun Finder.textField(init: QueryBuilder.() -> String) = x(JTextFieldUI::class.java, init)
 
 class JTextFieldUI(data: ComponentData) : UiComponent(data) {
   private val textFieldComponent by lazy { driver.cast(component, JTextField::class) }
