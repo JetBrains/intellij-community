@@ -4,14 +4,19 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
 
 class MavenDomAnnotatorTest : MavenDomTestCase() {
   @Test
@@ -32,7 +37,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   </plugins>
 </build>
 """
-    val modulePom = createModulePom("m", modulePomContent)
+    val modulePom = createModulePomNonVfs("m", modulePomContent)
 
     importProjectAsync("""
 <groupId>test</groupId>
@@ -198,5 +203,19 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
         .toSet()
       assertEquals(expectedPropertiesClearing, actualProperties)
     }
+  }
+
+  private fun createModulePomNonVfs(
+    relativePath: String,
+    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  ): VirtualFile {
+    val folderPath = Path.of(projectPath, relativePath)
+    if (!Files.exists(folderPath)) {
+      Files.createDirectories(folderPath)
+    }
+    val file = folderPath.resolve("pom.xml")
+    val content = createPomXml(xml)
+    Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
+    return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file)!!
   }
 }
