@@ -22,7 +22,7 @@ class TextEditorCellViewComponent(
 
   override fun updateGutterIcons(gutterAction: AnAction?) {
     disposeExistingHighlighter()
-    if (gutterAction != null) {
+    if (gutterAction != null && cell.view?.isValid() == true) {
       val markupModel = editor.markupModel
       val interval = interval
       val startOffset = editor.document.getLineStartOffset(interval.lines.first)
