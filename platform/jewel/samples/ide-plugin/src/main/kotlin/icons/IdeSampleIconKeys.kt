@@ -1,7 +1,7 @@
-package org.jetbrains.jewel.samples.standalone
+package icons
 
 import org.jetbrains.jewel.ui.icon.IntelliJIconKey
 
-object StandaloneSampleIcons {
+object IdeSampleIconKeys {
     val gitHub = IntelliJIconKey("icons/github.svg", "icons/github.svg")
 }

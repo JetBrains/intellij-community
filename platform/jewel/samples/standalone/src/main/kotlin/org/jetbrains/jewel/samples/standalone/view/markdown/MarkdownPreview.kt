@@ -87,7 +87,7 @@ internal fun MarkdownPreview(
             val lazyListState = rememberLazyListState()
             LazyMarkdown(
                 markdownBlocks = markdownBlocks,
-                modifier = modifier.background(background),
+                modifier = Modifier.background(background),
                 contentPadding = PaddingValues(16.dp),
                 state = lazyListState,
                 selectable = true,

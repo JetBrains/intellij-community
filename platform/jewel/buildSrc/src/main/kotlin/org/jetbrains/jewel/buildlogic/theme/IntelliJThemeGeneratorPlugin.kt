@@ -25,7 +25,7 @@ class ThemeGeneration(val name: String, project: Project) {
         project.objects
             .directoryProperty()
             .convention(project.layout.buildDirectory.dir("generated/theme"))
-    val ideaVersion = project.objects.property<String>().convention("232.6734")
+    val ideaVersion = project.objects.property<String>()
     val themeClassName = project.objects.property<String>()
     val themeFile = project.objects.property<String>()
 }

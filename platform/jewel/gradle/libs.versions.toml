@@ -26,6 +26,9 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 
+intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "idea" }
+intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "idea" }
+
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 dokka-gradlePlugin = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dokka" }

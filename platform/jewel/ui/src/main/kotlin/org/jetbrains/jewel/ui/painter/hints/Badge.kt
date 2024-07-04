@@ -9,6 +9,7 @@ import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.PainterProviderScope
 import org.jetbrains.jewel.ui.painter.PainterWrapperHint
 import org.jetbrains.jewel.ui.painter.badge.BadgeShape
+import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 
 @GenerateDataFunctions
 private class BadgeImpl(
@@ -22,5 +23,5 @@ private class BadgeImpl(
 @Suppress("FunctionName")
 public fun Badge(
     color: Color,
-    shape: BadgeShape,
+    shape: BadgeShape = DotBadgeShape.Default,
 ): PainterHint = if (color.isSpecified) BadgeImpl(color, shape) else PainterHint.None

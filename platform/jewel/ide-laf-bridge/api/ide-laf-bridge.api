@@ -87,6 +87,10 @@ public final class org/jetbrains/jewel/bridge/actionSystem/ProvideDataKt {
 	public static final fun provideData (Landroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function1;)Landroidx/compose/ui/Modifier;
 }
 
+public final class org/jetbrains/jewel/bridge/icon/IntelliJIconKeyKt {
+	public static final fun fromPlatformIcon (Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey$Companion;Ljavax/swing/Icon;)Lorg/jetbrains/jewel/ui/icon/IconKey;
+}
+
 public final class org/jetbrains/jewel/bridge/theme/BridgeGlobalColorsKt {
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/BorderColors$Companion;)Lorg/jetbrains/jewel/foundation/BorderColors;
 	public static final fun readFromLaF (Lorg/jetbrains/jewel/foundation/GlobalColors$Companion;)Lorg/jetbrains/jewel/foundation/GlobalColors;

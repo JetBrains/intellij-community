@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -30,7 +31,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
-import icons.JewelIcons
+import icons.IdeSampleIconKeys
 import org.jetbrains.jewel.bridge.LocalComponent
 import org.jetbrains.jewel.bridge.toComposeColor
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
@@ -53,6 +54,7 @@ import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.LazyTree
 import org.jetbrains.jewel.ui.component.OutlinedButton
+import org.jetbrains.jewel.ui.component.PlatformIcon
 import org.jetbrains.jewel.ui.component.RadioButtonRow
 import org.jetbrains.jewel.ui.component.Slider
 import org.jetbrains.jewel.ui.component.Text
@@ -60,6 +62,12 @@ import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.separator
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
+import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
+import org.jetbrains.jewel.ui.painter.hints.Badge
+import org.jetbrains.jewel.ui.painter.hints.Size
+import org.jetbrains.jewel.ui.painter.hints.Stroke
+import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
 internal fun ComponentShowcaseTab() {
@@ -68,7 +76,8 @@ internal fun ComponentShowcaseTab() {
     val scrollState = rememberScrollState()
     Row(
         modifier =
-            Modifier.trackComponentActivation(LocalComponent.current)
+            Modifier
+                .trackComponentActivation(LocalComponent.current)
                 .fillMaxSize()
                 .background(bgColor)
                 .verticalScroll(scrollState)
@@ -177,27 +186,7 @@ private fun RowScope.ColumnOne() {
             }
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Icon(
-                "actions/close.svg",
-                iconClass = AllIcons::class.java,
-                modifier = Modifier.border(1.dp, Color.Magenta),
-                contentDescription = "An icon",
-            )
-            Icon(
-                "icons/github.svg",
-                iconClass = JewelIcons::class.java,
-                modifier = Modifier.border(1.dp, Color.Magenta),
-                contentDescription = "An icon",
-            )
-
-            IconButton(onClick = { }) {
-                Icon("actions/close.svg", contentDescription = "An icon", AllIcons::class.java)
-            }
-            IconButton(onClick = { }) {
-                Icon("actions/addList.svg", contentDescription = "An icon", AllIcons::class.java)
-            }
-        }
+        IconsShowcase()
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -232,6 +221,74 @@ private fun RowScope.ColumnOne() {
 
         var sliderValue by remember { mutableStateOf(.15f) }
         Slider(sliderValue, { sliderValue = it }, steps = 5)
+    }
+}
+
+@Composable
+private fun IconsShowcase() {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup")
+        }
+
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Badge(Color.Red, DotBadgeShape.Default))
+        }
+
+        Box(
+            Modifier.size(24.dp).background(JewelTheme.colorPalette.blue(4), shape = RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Stroke(Color.White))
+        }
+
+        Box(
+            Modifier.size(24.dp).background(JewelTheme.colorPalette.blue(4), shape = RoundedCornerShape(4.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            PlatformIcon(
+                AllIconsKeys.Nodes.ConfigFolder,
+                "taskGroup",
+                hints = arrayOf(Stroke(Color.White), Badge(Color.Red, DotBadgeShape.Default)),
+            )
+        }
+
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Size(20))
+        }
+
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            PlatformIcon(
+                AllIconsKeys.Actions.Close,
+                "An icon",
+                modifier = Modifier.border(1.dp, Color.Magenta),
+                hint = Size(20),
+            )
+        }
+
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            PlatformIcon(AllIconsKeys.Nodes.ConfigFolder, "taskGroup", hint = Size(20))
+        }
+
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+            Icon(
+                IdeSampleIconKeys.gitHub,
+                iconClass = IdeSampleIconKeys::class.java,
+                modifier = Modifier.border(1.dp, Color.Magenta),
+                contentDescription = "An owned icon",
+            )
+        }
+
+        IconButton(onClick = { }, Modifier.size(24.dp)) {
+            PlatformIcon(AllIconsKeys.Actions.Close, "Close")
+        }
+
+        IconButton(onClick = { }, Modifier.size(24.dp)) {
+            PlatformIcon(AllIconsKeys.Actions.AddList, "Close")
+        }
     }
 }
 
@@ -308,14 +365,18 @@ private fun MarkdownExample() {
                 |fun hello() = "World"
                 |```
                 """.trimMargin(),
-                Modifier.fillMaxWidth()
-                    .background(JBUI.CurrentTheme.Banner.INFO_BACKGROUND.toComposeColor(), RoundedCornerShape(8.dp))
-                    .border(
-                        1.dp,
-                        JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR.toComposeColor(),
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        JBUI.CurrentTheme.Banner.INFO_BACKGROUND
+                            .toComposeColor(),
                         RoundedCornerShape(8.dp),
-                    )
-                    .padding(8.dp),
+                    ).border(
+                        1.dp,
+                        JBUI.CurrentTheme.Banner.INFO_BORDER_COLOR
+                            .toComposeColor(),
+                        RoundedCornerShape(8.dp),
+                    ).padding(8.dp),
                 enabled = enabled,
                 onUrlClick = { url -> BrowserUtil.open(url) },
             )

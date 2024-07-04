@@ -18,6 +18,7 @@ dependencies {
     implementation(compose.desktop.currentOs) {
         exclude(group = "org.jetbrains.compose.material")
     }
+    implementation(libs.intellijPlatform.icons)
 }
 
 compose.desktop {
@@ -48,10 +49,11 @@ tasks {
         // afterEvaluate is needed because the Compose Gradle Plugin
         // register the task in the afterEvaluate block
         afterEvaluate {
-            javaLauncher = project.javaToolchains.launcherFor {
-                languageVersion = JavaLanguageVersion.of(21)
-                vendor = JvmVendorSpec.JETBRAINS
-            }
+            javaLauncher =
+                project.javaToolchains.launcherFor {
+                    languageVersion = JavaLanguageVersion.of(21)
+                    vendor = JvmVendorSpec.JETBRAINS
+                }
             setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
         }
     }

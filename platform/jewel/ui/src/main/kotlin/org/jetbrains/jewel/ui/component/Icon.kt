@@ -31,6 +31,10 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.newUiChecker
+import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.util.thenIf
 import org.xml.sax.InputSource
@@ -43,9 +47,30 @@ public fun Icon(
     iconClass: Class<*>,
     colorFilter: ColorFilter?,
     modifier: Modifier = Modifier,
+    vararg hints: PainterHint,
 ) {
     val painterProvider = rememberResourcePainterProvider(resource, iconClass)
-    val painter by painterProvider.getPainter()
+    val painter by painterProvider.getPainter(*hints)
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        colorFilter = colorFilter,
+    )
+}
+
+@Composable
+public fun Icon(
+    resource: String,
+    contentDescription: String?,
+    iconClass: Class<*>,
+    colorFilter: ColorFilter?,
+    modifier: Modifier = Modifier,
+    hint: PainterHint,
+) {
+    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
+    val painter by painterProvider.getPainter(hint)
 
     Icon(
         painter = painter,
@@ -62,9 +87,10 @@ public fun Icon(
     iconClass: Class<*>,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
+    vararg hints: PainterHint,
 ) {
     val painterProvider = rememberResourcePainterProvider(resource, iconClass)
-    val painter by painterProvider.getPainter()
+    val painter by painterProvider.getPainter(*hints)
 
     Icon(
         painter = painter,
@@ -72,6 +98,54 @@ public fun Icon(
         modifier = modifier,
         tint = tint,
     )
+}
+
+@Composable
+public fun Icon(
+    resource: String,
+    contentDescription: String?,
+    iconClass: Class<*>,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+    hint: PainterHint,
+) {
+    val painterProvider = rememberResourcePainterProvider(resource, iconClass)
+    val painter by painterProvider.getPainter(hint)
+
+    Icon(
+        painter = painter,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        tint = tint,
+    )
+}
+
+@Composable
+public fun Icon(
+    key: IconKey,
+    contentDescription: String?,
+    iconClass: Class<*>,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+    vararg hints: PainterHint,
+) {
+    val isNewUi = JewelTheme.newUiChecker.isNewUi()
+    val path = remember(key, isNewUi) { key.path(isNewUi) }
+    Icon(path, contentDescription, iconClass, modifier, tint, *hints)
+}
+
+@Composable
+public fun Icon(
+    key: IconKey,
+    contentDescription: String?,
+    iconClass: Class<*>,
+    modifier: Modifier = Modifier,
+    tint: Color = Color.Unspecified,
+    hint: PainterHint,
+) {
+    val isNewUi = JewelTheme.newUiChecker.isNewUi()
+    val path = remember(key, isNewUi) { key.path(isNewUi) }
+    Icon(path, contentDescription, iconClass, modifier, tint, hint)
 }
 
 /**
@@ -183,14 +257,14 @@ public fun Icon(
             Modifier
         }
     Box(
-        modifier.toolingGraphicsLayer()
+        modifier
+            .toolingGraphicsLayer()
             .defaultSizeFor(painter)
             .paint(
                 painter,
                 colorFilter = colorFilter,
                 contentScale = ContentScale.Fit,
-            )
-            .then(semantics),
+            ).then(semantics),
     )
 }
 
