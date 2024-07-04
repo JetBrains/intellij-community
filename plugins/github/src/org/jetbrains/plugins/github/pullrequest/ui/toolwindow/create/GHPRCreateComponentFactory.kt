@@ -269,6 +269,8 @@ internal object GHPRCreateComponentFactory {
     val scrollPane = ScrollPaneFactory.createScrollPane(null, true).apply {
       horizontalScrollBarPolicy = ScrollPaneFactory.HORIZONTAL_SCROLLBAR_NEVER
     }
+    ScrollableContentBorder.setup(scrollPane, Side.TOP)
+
     val panel = JPanel(BorderLayout()).apply {
       add(commitsPanel, BorderLayout.NORTH)
       add(scrollPane, BorderLayout.CENTER)
