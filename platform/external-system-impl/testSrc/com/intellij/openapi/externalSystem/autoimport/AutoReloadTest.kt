@@ -11,12 +11,17 @@ import com.intellij.openapi.externalSystem.autoimport.MockProjectAware.ReloadCol
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
 import com.intellij.openapi.util.Ref
-import com.intellij.testFramework.utils.vfs.getDocument
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.refreshVfs
+import com.intellij.testFramework.utils.editor.saveToDisk
+import com.intellij.testFramework.utils.vfs.getDocument
 import com.intellij.util.Alarm
 import org.jetbrains.concurrency.AsyncPromise
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.appendText
+import kotlin.io.path.createFile
+import kotlin.io.path.deleteExisting
 import kotlin.io.path.writeText
 
 class AutoReloadTest : AutoReloadTestCase() {
@@ -902,7 +907,63 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  fun `test force reload during reload`() {
+  fun `test settings file modification by java nio before sync`() {
+    test { settingsFile ->
+      val settingsPath = settingsFile.toNioPath()
+
+      settingsPath.appendText(SAMPLE_TEXT + "\n")
+      onceWhenReloading { settingsPath.refreshVfs() }
+      forceReloadProject()
+      assertStateAndReset(numReload = 1, notified = false, event = "settings file modified by java nio before sync")
+
+      settingsPath.deleteExisting()
+      onceWhenReloading { settingsPath.refreshVfs() }
+      forceReloadProject()
+      assertStateAndReset(numReload = 1, notified = false, event = "settings file deleted by java nio before sync")
+
+      settingsPath.createFile()
+      onceWhenReloading { settingsPath.refreshVfs() }
+      forceReloadProject()
+      assertStateAndReset(numReload = 1, notified = false, event = "settings file created by java nio before sync")
+    }
+  }
+
+  fun `test settings file modification by document before sync`() {
+    test { settingsFile ->
+      val settingsDocument = settingsFile.getDocument()
+
+      settingsDocument.appendString(SAMPLE_TEXT + "\n")
+      onceWhenReloading { settingsDocument.saveToDisk() }
+      forceReloadProject()
+      assertStateAndReset(numReload = 1, notified = false, event = "settings file modified by document before sync")
+    }
+  }
+
+  fun `test settings file modification during sync`() {
+    test { settingsFile ->
+      whenReloading(1) {
+        settingsFile.modify(EXTERNAL)
+      }
+      waitForProjectReloadFinish(2) {
+        settingsFile.modify(EXTERNAL)
+      }
+      assertStateAndReset(numReload = 2, notified = false, event = "settings file modified during sync")
+    }
+  }
+
+  fun `test force sync action during sync`() {
+    test {
+      whenReloadStarted(1) {
+        forceReloadProject()
+      }
+      waitForProjectReloadFinish(2) {
+        forceReloadProject()
+      }
+      assertStateAndReset(numReload = 2, notified = false, event = "test force sync action during sync")
+    }
+  }
+
+  fun `test force sync action during sync (parallel)`() {
     test {
       enableAsyncExecution()
 
@@ -922,7 +983,7 @@ class AutoReloadTest : AutoReloadTestCase() {
     }
   }
 
-  fun `test modification during reload`() {
+  fun `test settings file modification during sync (parallel)`() {
     test { settingsFile ->
       enableAsyncExecution()
       setDispatcherMergingSpan(10)

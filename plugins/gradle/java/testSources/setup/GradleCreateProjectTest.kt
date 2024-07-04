@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.quarantine.setup
+package org.jetbrains.plugins.gradle.setup
 
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.JAVA
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.javaBuildSystemData
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
-import com.intellij.idea.IJIgnore
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
@@ -15,7 +14,6 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaNewProjectWizardData.Companion.javaGradleData
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
-import org.jetbrains.plugins.gradle.setup.GradleCreateProjectTestCase
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -120,7 +118,6 @@ class GradleCreateProjectTest : GradleCreateProjectTestCase() {
     }
   }
 
-  @IJIgnore(issue = "IDEA-341326")
   @Test
   fun `test project kotlin dsl setting generation with groovy-kotlin scripts`() {
     runBlocking {
