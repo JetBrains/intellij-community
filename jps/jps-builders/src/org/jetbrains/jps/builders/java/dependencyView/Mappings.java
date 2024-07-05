@@ -1963,12 +1963,10 @@ public class Mappings {
             debug("Signature changed ", signatureChanged);
 
             final boolean extendsChanged = superClassChanged && !diff.extendsAdded();
-            final boolean interfacesRemoved = interfacesChanged && !diff.interfaces().removed().isEmpty();
 
             debug("Extends changed: ", extendsChanged);
-            debug("Interfaces removed: ", interfacesRemoved);
 
-            myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesRemoved || signatureChanged, myCompiledFiles, null);
+            myFuture.affectSubclasses(changedClass.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, extendsChanged || interfacesChanged || signatureChanged, myCompiledFiles, null);
 
             if (extendsChanged && directDeps != null) {
               final TypeRepr.ClassType excClass = TypeRepr.createClassType(myContext, changedClass.name);

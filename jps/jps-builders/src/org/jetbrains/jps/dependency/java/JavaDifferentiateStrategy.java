@@ -101,7 +101,7 @@ public final class JavaDifferentiateStrategy extends JvmDifferentiateStrategyImp
     
     if (classDiff.superClassChanged() || classDiff.signatureChanged() || !classDiff.interfaces().unchanged()) {
       boolean extendsChanged = classDiff.superClassChanged() && !classDiff.extendsAdded();
-      boolean affectUsages = classDiff.signatureChanged() || extendsChanged || !isEmpty(classDiff.interfaces().removed());
+      boolean affectUsages = classDiff.signatureChanged() || extendsChanged || !classDiff.interfaces().unchanged();
       affectSubclasses(context, future, change.getNow().getReferenceID(), affectUsages);
 
       if (extendsChanged) {
