@@ -2368,7 +2368,7 @@ f:com.intellij.vcsUtil.VcsUIUtil
 - f:showPopupAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component):V
 f:com.intellij.vcsUtil.VcsUIUtilKt
 - sf:showAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component):V
-f:com.intellij.vcsUtil.VcsUtil
+Ff:com.intellij.vcsUtil.VcsUtil
 - sf:MAX_VCS_LOADED_SIZE_KB:java.lang.String
 - <init>():V
 - s:addMapping(java.util.List,com.intellij.openapi.vcs.VcsDirectoryMapping):java.util.List

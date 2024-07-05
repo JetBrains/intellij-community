@@ -2603,7 +2603,7 @@ com.intellij.ui.RetrievableIcon
 - com.intellij.ui.icons.ReplaceableIcon
 - javax.swing.Icon
 - a:retrieveIcon():javax.swing.Icon
-c:com.intellij.ui.RoundedLineBorder
+Fc:com.intellij.ui.RoundedLineBorder
 - javax.swing.border.LineBorder
 - <init>(java.awt.Color):V
 - <init>(java.awt.Color,I):V
@@ -3961,7 +3961,7 @@ f:com.intellij.util.ui.JBHiDpiScalableIcon
 - hashCode():I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - scale(F):javax.swing.Icon
-c:com.intellij.util.ui.JBHtmlEditorKit
+Fc:com.intellij.util.ui.JBHtmlEditorKit
 - javax.swing.text.html.HTMLEditorKit
 - <init>():V
 - <init>(Z):V

@@ -71,7 +71,7 @@ com.intellij.facet.FacetConfiguration
 - a:createEditorTabs(com.intellij.facet.ui.FacetEditorContext,com.intellij.facet.ui.FacetValidatorsManager):com.intellij.facet.ui.FacetEditorTab[]
 - readExternal(org.jdom.Element):V
 - writeExternal(org.jdom.Element):V
-a:com.intellij.facet.FacetManager
+Fa:com.intellij.facet.FacetManager
 - com.intellij.facet.FacetModel
 - sf:FACETS_TOPIC:com.intellij.util.messages.Topic
 - <init>():V
@@ -116,7 +116,7 @@ a:com.intellij.facet.FacetType
 - f:getPluginDescriptor():com.intellij.openapi.extensions.PluginDescriptor
 - getPresentableName():java.lang.String
 - f:getStringId():java.lang.String
-- getUnderlyingFacetType():com.intellij.facet.FacetTypeId
+- F:getUnderlyingFacetType():com.intellij.facet.FacetTypeId
 - isOnlyOneFacetAllowed():Z
 - a:isSuitableModuleType(com.intellij.openapi.module.ModuleType):Z
 - setPluginDescriptor(com.intellij.openapi.extensions.PluginDescriptor):V

@@ -3057,12 +3057,10 @@ f:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions
 - sf:INSTANCE:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions
 - f:copyVcsContent(com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range):V
 - sf:showDiff(com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range):V
-c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$CopyLineStatusRangeAction
+Fc:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$CopyLineStatusRangeAction
 - com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$RangeMarkerAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range):V
-- p:actionPerformed(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-- p:isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):Z
 a:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$RangeMarkerAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusMarkerRangesSource,com.intellij.openapi.vcs.ex.Range,java.lang.String):V
@@ -3077,19 +3075,15 @@ c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowLineStatusRangeDi
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range):V
 - p:actionPerformed(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
 - p:isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):Z
-c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowNextChangeMarkerAction
+Fc:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowNextChangeMarkerAction
 - com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$RangeMarkerAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range,com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopupController):V
-- p:actionPerformed(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-- p:isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):Z
-c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowPrevChangeMarkerAction
+Fc:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ShowPrevChangeMarkerAction
 - com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$RangeMarkerAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - <init>(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.LineStatusTrackerI,com.intellij.openapi.vcs.ex.Range,com.intellij.openapi.vcs.ex.LineStatusMarkerRendererWithPopupController):V
-- p:actionPerformed(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):V
-- p:isEnabled(com.intellij.openapi.editor.Editor,com.intellij.openapi.vcs.ex.Range):Z
-c:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ToggleByWordDiffAction
+Fc:com.intellij.openapi.vcs.ex.LineStatusMarkerPopupActions$ToggleByWordDiffAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAware

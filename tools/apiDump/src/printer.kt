@@ -93,20 +93,29 @@ fun Appendable.printFlags(flags: ApiFlags, isClass: Boolean): Boolean {
       append('e') // we don't care if ACC_ENUM class has ACC_ABSTRACT modifier
       hasModifier = true
     }
-    else if (flags.access.isSet(Opcodes.ACC_FINAL)) {
-      append('f')
-      hasModifier = true
-    }
-    else if (flags.access.isSet(Opcodes.ACC_ABSTRACT)) {
-      append('a')
-      hasModifier = true
-    }
     else {
-      append('c')
-      hasModifier = true
+      if (flags.annotationNonExtendable) {
+        append('F') // like `final`
+      }
+      if (flags.access.isSet(Opcodes.ACC_FINAL)) {
+        append('f')
+        hasModifier = true
+      }
+      else if (flags.access.isSet(Opcodes.ACC_ABSTRACT)) {
+        append('a')
+        hasModifier = true
+      }
+      else {
+        append('c')
+        hasModifier = true
+      }
     }
   }
   else {
+    if (flags.annotationNonExtendable) {
+      append('F')
+      hasModifier = true
+    }
     if (flags.access.isSet(Opcodes.ACC_FINAL)) {
       append('f')
       hasModifier = true

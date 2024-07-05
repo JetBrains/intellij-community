@@ -2773,16 +2773,9 @@ f:com.intellij.openapi.observable.operation.OperationExecutionStatus$Failure
 f:com.intellij.openapi.observable.operation.OperationExecutionStatus$Success
 - com.intellij.openapi.observable.operation.OperationExecutionStatus
 - sf:INSTANCE:com.intellij.openapi.observable.operation.OperationExecutionStatus$Success
-*a:com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
+*Fa:com.intellij.openapi.observable.operation.core.AbstractObservableOperationTrace
 - com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
 - <init>():V
-- pf:fireOperationFinished():V
-- pf:fireOperationScheduled():V
-- pf:fireOperationStarted():V
-- pf:fireTaskDetached(com.intellij.openapi.observable.operation.OperationExecutionId):V
-- pf:fireTaskFinished(com.intellij.openapi.observable.operation.OperationExecutionId,com.intellij.openapi.observable.operation.OperationExecutionStatus):V
-- pf:fireTaskScheduled(com.intellij.openapi.observable.operation.OperationExecutionId):V
-- pf:fireTaskStarted(com.intellij.openapi.observable.operation.OperationExecutionId):V
 - getDetachTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 - getFinishObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher0
 - getFinishTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher2
@@ -2889,13 +2882,12 @@ f:com.intellij.openapi.observable.operation.core.PromiseUtilKt
 - sf:waitForOperationCompletion-HG0u8IE(com.intellij.openapi.observable.operation.core.ObservableOperationTrace,J):V
 f:com.intellij.openapi.observable.operation.core.ResultUtilKt
 - sf:onFailureCatching(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
-a:com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
+Fa:com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
 - com.intellij.openapi.observable.properties.ObservableBooleanProperty
 - <init>():V
 - afterReset(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
 - afterSet(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
-- pf:fireChangeEvents(Z,Z):V
 a:com.intellij.openapi.observable.properties.AbstractObservableClearableProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
 - com.intellij.openapi.observable.properties.ObservableClearableProperty
@@ -2903,11 +2895,10 @@ a:com.intellij.openapi.observable.properties.AbstractObservableClearableProperty
 - afterReset(kotlin.jvm.functions.Function0):V
 - afterReset(kotlin.jvm.functions.Function0,com.intellij.openapi.Disposable):V
 - pf:fireResetEvent():V
-a:com.intellij.openapi.observable.properties.AbstractObservableProperty
+Fa:com.intellij.openapi.observable.properties.AbstractObservableProperty
 - com.intellij.openapi.observable.properties.ObservableProperty
 - <init>():V
 - afterChange(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
-- pf:fireChangeEvent(java.lang.Object):V
 f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
 - com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
 - com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
@@ -2924,7 +2915,7 @@ f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
 - set():V
 - set(Z):V
 - updateAndGet(kotlin.jvm.functions.Function1):java.lang.Boolean
-c:com.intellij.openapi.observable.properties.AtomicLazyProperty
+Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
 - com.intellij.openapi.observable.properties.AbstractObservableClearableProperty
 - com.intellij.openapi.observable.properties.ObservableMutableProperty
 - sf:Companion:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
@@ -4434,7 +4425,7 @@ f:com.intellij.openapi.ui.MessageUtil
 - bs:showOkNoDialog$default(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,I,java.lang.Object):Z
 - sf:showYesNoDialog(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon):Z
 - bs:showYesNoDialog$default(java.lang.String,java.lang.String,com.intellij.openapi.project.Project,java.lang.String,java.lang.String,javax.swing.Icon,I,java.lang.Object):Z
-c:com.intellij.openapi.ui.Messages
+Fc:com.intellij.openapi.ui.Messages
 - sf:CANCEL:I
 - sf:CANCEL_BUTTON:java.lang.String
 - sf:NO:I

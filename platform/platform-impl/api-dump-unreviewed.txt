@@ -2010,12 +2010,9 @@ f:com.intellij.diagnostic.DiagnosticBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
-c:com.intellij.diagnostic.EditMemorySettingsDialog
+Fc:com.intellij.diagnostic.EditMemorySettingsDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>():V
-- p:createActions():javax.swing.Action[]
-- p:createCenterPanel():javax.swing.JComponent
-- p:doValidate():com.intellij.openapi.ui.ValidationInfo
 com.intellij.diagnostic.EditMemorySettingsService
 - s:getInstance():com.intellij.diagnostic.EditMemorySettingsService
 - a:getUserOptionsFile():java.nio.file.Path
@@ -5001,7 +4998,7 @@ f:com.intellij.ide.actions.RevealGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - postProcessVisibleChildren(java.util.List,com.intellij.openapi.actionSystem.UpdateSession):java.util.List
-c:com.intellij.ide.actions.SaveAllAction
+Fc:com.intellij.ide.actions.SaveAllAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.project.DumbAware
@@ -6511,7 +6508,7 @@ f:com.intellij.ide.highlighter.custom.impl.CustomFileTypeEditor
 f:com.intellij.ide.impl.ContentManagerWatcher
 - <init>(com.intellij.openapi.wm.ToolWindow,com.intellij.ui.content.ContentManager):V
 - s:watchContentManager(com.intellij.openapi.wm.ToolWindow,com.intellij.ui.content.ContentManager):V
-c:com.intellij.ide.impl.HeadlessDataManager
+Fc:com.intellij.ide.impl.HeadlessDataManager
 - com.intellij.ide.impl.DataManagerImpl
 - <init>():V
 - s:fallbackToProductionDataManager(com.intellij.openapi.Disposable):V
@@ -12343,7 +12340,7 @@ f:com.intellij.openapi.command.impl.StartMarkAction$AlreadyStartedException
 - <init>(java.lang.String,com.intellij.openapi.editor.Document,com.intellij.openapi.command.undo.DocumentReference[]):V
 - getAffectedDocuments():com.intellij.openapi.command.undo.DocumentReference[]
 - getDocument():com.intellij.openapi.editor.Document
-f:com.intellij.openapi.command.impl.UndoManagerImpl
+Ff:com.intellij.openapi.command.impl.UndoManagerImpl
 - com.intellij.openapi.command.undo.UndoManager
 - s:ourNeverAskUser:Z
 - addAffectedFiles(com.intellij.openapi.vfs.VirtualFile[]):V
@@ -14398,21 +14395,14 @@ c:com.intellij.openapi.editor.textarea.TextComponentEditorImpl
 - xyToLogicalPosition(java.awt.Point):com.intellij.openapi.editor.LogicalPosition
 - xyToVisualPosition(java.awt.Point):com.intellij.openapi.editor.VisualPosition
 - xyToVisualPosition(java.awt.geom.Point2D):com.intellij.openapi.editor.VisualPosition
-a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
+Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 - com.intellij.openapi.Disposable$Default
 - com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 - <init>(com.intellij.openapi.actionSystem.ActionGroup):V
 - <init>(com.intellij.openapi.actionSystem.ActionGroup,com.intellij.openapi.Disposable):V
-- p:actionsUpdated(Z,java.util.List):V
 - addNotify():V
-- pa:getAutoHideable():Z
 - hideImmediately():V
-- pf:init(javax.swing.JComponent):V
-- pa:installMouseMotionWatcher():V
-- pa:isComponentOnHold():Z
-- p:paintChildren(java.awt.Graphics):V
-- p:paintComponent(java.awt.Graphics):V
 - scheduleHide():V
 - scheduleShow():V
 a:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
@@ -21128,7 +21118,7 @@ c:com.intellij.openapi.wm.impl.status.EncodingPanel
 - p:createPopup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.ui.popup.ListPopup
 - p:getWidgetState(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup$WidgetState
 - p:registerCustomListeners(com.intellij.util.messages.MessageBusConnection):V
-c:com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
+Fc:com.intellij.openapi.wm.impl.status.EncodingPanelWidgetFactory
 - com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 - <init>():V
 - createWidget(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):com.intellij.openapi.wm.StatusBarWidget
@@ -21242,7 +21232,7 @@ c:com.intellij.openapi.wm.impl.status.LineSeparatorPanel
 - p:createInstance(com.intellij.openapi.project.Project):com.intellij.openapi.wm.StatusBarWidget
 - p:createPopup(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.ui.popup.ListPopup
 - p:getWidgetState(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup$WidgetState
-c:com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
+Fc:com.intellij.openapi.wm.impl.status.LineSeparatorWidgetFactory
 - com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 - <init>():V
 - createWidget(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):com.intellij.openapi.wm.StatusBarWidget
@@ -26574,7 +26564,7 @@ com.intellij.ui.dsl.builder.Cell
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Cell
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Cell
 - a:widthGroup(java.lang.String):com.intellij.ui.dsl.builder.Cell
-f:com.intellij.ui.dsl.builder.Cell$DefaultImpls
+Ff:com.intellij.ui.dsl.builder.Cell$DefaultImpls
 - bs:comment$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:label$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:label$default(com.intellij.ui.dsl.builder.Cell,javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
@@ -26665,7 +26655,7 @@ com.intellij.ui.dsl.builder.Panel
 - ba:verticalAlign(com.intellij.ui.dsl.gridLayout.VerticalAlign):com.intellij.ui.dsl.builder.Panel
 - a:visible(Z):com.intellij.ui.dsl.builder.Panel
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Panel
-f:com.intellij.ui.dsl.builder.Panel$DefaultImpls
+Ff:com.intellij.ui.dsl.builder.Panel$DefaultImpls
 - bs:buttonsGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.ButtonsGroup
 - bs:collapsibleGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.CollapsibleRow
 - bs:group$default(com.intellij.ui.dsl.builder.Panel,com.intellij.ui.components.JBLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
@@ -26757,7 +26747,7 @@ com.intellij.ui.dsl.builder.Row
 - a:visible(Z):com.intellij.ui.dsl.builder.Row
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Row
-f:com.intellij.ui.dsl.builder.Row$DefaultImpls
+Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:actionButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
 - bs:actionButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:actionsButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon):com.intellij.ui.dsl.builder.Cell

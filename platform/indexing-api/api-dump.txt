@@ -514,7 +514,7 @@ f:com.intellij.usageView.UsageViewTypeLocation
 - com.intellij.psi.ElementDescriptionLocation
 - sf:INSTANCE:com.intellij.usageView.UsageViewTypeLocation
 - getDefaultProvider():com.intellij.psi.ElementDescriptionProvider
-a:com.intellij.util.gist.GistManager
+Fa:com.intellij.util.gist.GistManager
 - <init>():V
 - s:getInstance():com.intellij.util.gist.GistManager
 - a:invalidateData():V
@@ -528,7 +528,7 @@ com.intellij.util.gist.VirtualFileGist
 - a:getUpToDateOrNull(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Supplier
 com.intellij.util.gist.VirtualFileGist$GistCalculator
 - a:calcData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.Object
-*a:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
+*Fa:com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - com.intellij.openapi.project.RootsChangeRescanningInfo
 - a:addInheritedSdk():com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
 - a:addLibrary(com.intellij.openapi.roots.libraries.Library):com.intellij.util.indexing.BuildableRootsChangeRescanningInfo
@@ -563,7 +563,7 @@ e:com.intellij.util.indexing.DumbModeAccessType
 - ignoreDumbMode(java.lang.Runnable):V
 - s:valueOf(java.lang.String):com.intellij.util.indexing.DumbModeAccessType
 - s:values():com.intellij.util.indexing.DumbModeAccessType[]
-a:com.intellij.util.indexing.FileBasedIndex
+Fa:com.intellij.util.indexing.FileBasedIndex
 - <init>():V
 - a:findFileById(com.intellij.openapi.project.Project,I):com.intellij.openapi.vfs.VirtualFile
 - a:getAllKeys(com.intellij.util.indexing.ID,com.intellij.openapi.project.Project):java.util.Collection

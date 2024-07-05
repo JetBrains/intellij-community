@@ -2451,7 +2451,7 @@ f:com.intellij.execution.util.PathMappingsComponent
 c:com.intellij.execution.util.StringWithNewLinesCellEditor
 - javax.swing.DefaultCellEditor
 - <init>():V
-a:com.intellij.facet.FacetFinder
+Fa:com.intellij.facet.FacetFinder
 - <init>():V
 - a:findFacet(com.intellij.openapi.vfs.VirtualFile,com.intellij.facet.FacetTypeId):com.intellij.facet.Facet
 - a:findFacets(com.intellij.openapi.vfs.VirtualFile,com.intellij.facet.FacetTypeId):java.util.Collection
@@ -2460,7 +2460,7 @@ a:com.intellij.facet.FacetFinder
 a:com.intellij.facet.FacetManagerAdapter
 - com.intellij.facet.FacetManagerListener
 - <init>():V
-a:com.intellij.facet.FacetModificationTrackingService
+Fa:com.intellij.facet.FacetModificationTrackingService
 - <init>():V
 - a:getFacetModificationTracker(com.intellij.facet.Facet):com.intellij.openapi.util.ModificationTracker
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.facet.FacetModificationTrackingService
@@ -2483,7 +2483,7 @@ com.intellij.facet.ProjectFacetListener
 - facetConfigurationChanged(com.intellij.facet.Facet):V
 - facetRemoved(com.intellij.facet.Facet,com.intellij.openapi.project.Project):V
 - firstFacetAdded(com.intellij.openapi.project.Project):V
-a:com.intellij.facet.ProjectFacetManager
+Fa:com.intellij.facet.ProjectFacetManager
 - <init>():V
 - a:createDefaultConfiguration(com.intellij.facet.FacetType):com.intellij.facet.FacetConfiguration
 - a:getFacets(com.intellij.facet.FacetTypeId):java.util.List
@@ -2509,7 +2509,7 @@ com.intellij.facet.ProjectWideFacetListener
 - a:facetConfigurationChanged(com.intellij.facet.Facet):V
 - a:facetRemoved(com.intellij.facet.Facet):V
 - a:firstFacetAdded():V
-a:com.intellij.facet.ProjectWideFacetListenersRegistry
+Fa:com.intellij.facet.ProjectWideFacetListenersRegistry
 - <init>():V
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.facet.ProjectWideFacetListenersRegistry
 - a:registerListener(com.intellij.facet.FacetTypeId,com.intellij.facet.ProjectWideFacetListener):V
@@ -2532,7 +2532,7 @@ com.intellij.facet.pointers.FacetPointer
 com.intellij.facet.pointers.FacetPointerListener
 - java.util.EventListener
 - a:pointerIdChanged(com.intellij.facet.pointers.FacetPointer,java.lang.String):V
-a:com.intellij.facet.pointers.FacetPointersManager
+Fa:com.intellij.facet.pointers.FacetPointersManager
 - <init>():V
 - a:addListener(com.intellij.facet.pointers.FacetPointerListener):V
 - a:addListener(com.intellij.facet.pointers.FacetPointerListener,com.intellij.openapi.Disposable):V
@@ -5050,9 +5050,8 @@ com.intellij.task.ProjectTaskListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - finished(com.intellij.task.ProjectTaskManager$Result):V
 - started(com.intellij.task.ProjectTaskContext):V
-a:com.intellij.task.ProjectTaskManager
+Fa:com.intellij.task.ProjectTaskManager
 - sf:EMPTY_TASKS_ARRAY:com.intellij.task.ProjectTask[]
-- pf:myProject:com.intellij.openapi.project.Project
 - <init>(com.intellij.openapi.project.Project):V
 - a:build(com.intellij.openapi.module.Module[]):org.jetbrains.concurrency.Promise
 - a:build(com.intellij.openapi.roots.ProjectModelBuildableElement[]):org.jetbrains.concurrency.Promise

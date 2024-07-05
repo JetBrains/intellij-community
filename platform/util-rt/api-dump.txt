@@ -123,7 +123,7 @@ f:com.intellij.execution.rmi.ssl.SslTrustStore
 - engineStore(java.io.OutputStream,C[]):V
 - s:getType():java.lang.String
 - s:setDefault():V
-a:com.intellij.openapi.diagnostic.LoggerRt
+Fa:com.intellij.openapi.diagnostic.LoggerRt
 - <init>():V
 - error(java.lang.String):V
 - a:error(java.lang.String,java.lang.Throwable):V
@@ -160,7 +160,7 @@ f:com.intellij.openapi.util.Comparing
 - s:strEqual(java.lang.String,java.lang.String):Z
 - s:strEqual(java.lang.String,java.lang.String,Z):Z
 - s:unorderedHashcode(java.util.Collection):I
-c:com.intellij.openapi.util.Couple
+Fc:com.intellij.openapi.util.Couple
 - com.intellij.openapi.util.Pair
 - <init>(java.lang.Object,java.lang.Object):V
 - s:getEmpty():com.intellij.openapi.util.Couple

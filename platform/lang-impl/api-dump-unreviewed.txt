@@ -5751,7 +5751,7 @@ a:com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 com.intellij.codeInsight.highlighting.HighlightedReference
 - com.intellij.psi.PsiReference
 - isHighlightedWhenSoft():Z
-c:com.intellij.codeInsight.highlighting.HyperlinkAnnotator
+Fc:com.intellij.codeInsight.highlighting.HyperlinkAnnotator
 - com.intellij.lang.annotation.Annotator
 - com.intellij.openapi.project.DumbAware
 - <init>():V

@@ -3002,7 +3002,7 @@ f:com.intellij.util.WaitForProgressToShow
 - s:runOrInvokeAndWaitAboveProgress(java.lang.Runnable):V
 - s:runOrInvokeAndWaitAboveProgress(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - s:runOrInvokeLaterAboveProgress(java.lang.Runnable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.project.Project):V
-a:com.intellij.util.download.DownloadableFileService
+Fa:com.intellij.util.download.DownloadableFileService
 - <init>():V
 - a:createDownloader(com.intellij.util.download.DownloadableFileSetDescription):com.intellij.util.download.FileDownloader
 - a:createDownloader(java.util.List,com.intellij.openapi.project.Project,javax.swing.JComponent,java.lang.String):com.intellij.util.download.FileDownloader
