@@ -136,19 +136,18 @@ public interface JBAccountInfoService {
   record JbaLicense(
     @NotNull String licenseId,
     @NotNull JBAData jbaUser,
-    @NotNull LicenseType type,
+    @NotNull LicenseeType licenseeType,
     @NotNull String licensedTo,
     @NotNull Instant expiresOn
   ) { }
 
-  enum LicenseType {
+  enum LicenseeType {
     UNKNOWN,
     COMPANY,
     INDIVIDUAL,
     STUDENT,
     OPENSOURCE,
     CLASSROOM,
-    HOBBY,
   }
 
   sealed interface LicenseListResult permits LicenseListResult.LicenseList,
