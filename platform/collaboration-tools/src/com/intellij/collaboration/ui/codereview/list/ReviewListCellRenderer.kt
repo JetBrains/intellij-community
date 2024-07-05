@@ -21,6 +21,7 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import icons.CollaborationToolsIcons
 import icons.DvcsImplIcons
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import javax.swing.*
@@ -358,5 +359,12 @@ internal class ReviewListCellRenderer<T>(private val presenter: (T) -> ReviewLis
         return true
       }
     }
+  }
+}
+
+@ApiStatus.Internal
+data object ReviewListCellRendererFactory {
+  fun <T> getCellRenderer(presenter: (T) -> ReviewListItemPresentation): ListCellRenderer<T> {
+    return ReviewListCellRenderer(presenter)
   }
 }
