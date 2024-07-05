@@ -4,7 +4,9 @@ package com.intellij.openapi.externalSystem.service.settings
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle.message
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 private class ExternalSystemGroupSearchableContributor: SearchableOptionContributor() {
   private val buildToolsId = "build.tools"
   private val buildToolsName = message("settings.build.tools.display.name")

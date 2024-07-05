@@ -36,6 +36,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRoot
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -43,6 +44,7 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import java.util.concurrent.Future
 
+@ApiStatus.Internal
 @State(name = "sourceFolderManager", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 class SourceFolderManagerImpl(private val project: Project,
                               val cs: CoroutineScope) : SourceFolderManager,

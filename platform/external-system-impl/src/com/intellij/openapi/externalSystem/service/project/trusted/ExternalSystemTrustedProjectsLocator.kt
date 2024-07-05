@@ -5,8 +5,10 @@ import com.intellij.ide.trustedProjects.TrustedProjectsLocator
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.NioPathPrefixTreeFactory
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 class ExternalSystemTrustedProjectsLocator : TrustedProjectsLocator {
 
   override fun getProjectRoots(project: Project): List<Path> {

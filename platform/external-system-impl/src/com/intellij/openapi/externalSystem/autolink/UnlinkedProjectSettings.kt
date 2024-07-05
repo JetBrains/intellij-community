@@ -4,8 +4,9 @@ package com.intellij.openapi.externalSystem.autolink
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.State
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 @State(name = "UnlinkedProjectSettings")
 class UnlinkedProjectSettings :
   SimplePersistentStateComponent<UnlinkedProjectSettings.State>(State()),

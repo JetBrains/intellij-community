@@ -32,10 +32,12 @@ import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isNewProject
 import com.intellij.platform.backend.observation.trackActivity
 import com.intellij.util.containers.DisposableWrapperList
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.CopyOnWriteArrayList
 
 @VisibleForTesting
+@ApiStatus.Internal
 class UnlinkedProjectStartupActivity : ProjectActivity {
 
   @Service(Service.Level.PROJECT)
