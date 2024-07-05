@@ -22,7 +22,7 @@ private const val EXPECTED_NAVIGATION_DIRECTIVE = "EXPECTED-NAVIGATION-SUBSTRING
 
 @TestRoot("idea/tests/testData/")
 @TestDataPath("\$CONTENT_ROOT")
-@TestMetadata("gradle/navigation")
+@TestMetadata("../../../idea/tests/testData/gradle/navigation/")
 abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTest() {
 
     private val actionName: String get() = IdeActions.ACTION_GOTO_DECLARATION

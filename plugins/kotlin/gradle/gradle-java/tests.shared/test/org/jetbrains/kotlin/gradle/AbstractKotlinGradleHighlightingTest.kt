@@ -20,7 +20,7 @@ import java.io.File
 
 @TestRoot("idea/tests/testData/")
 @TestDataPath("\$CONTENT_ROOT")
-@TestMetadata("gradle/highlighting")
+@TestMetadata("../../../idea/tests/testData/gradle/navigation/")
 abstract class AbstractKotlinGradleHighlightingTest : AbstractGradleCodeInsightTest() {
 
     @ParameterizedTest
