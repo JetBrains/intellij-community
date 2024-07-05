@@ -41,10 +41,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
@@ -109,7 +106,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       return executeComposite(context, cmp, editor);
     }
     if (command instanceof ModNavigate nav) {
-      return executeNavigate(project, nav);
+      return executeNavigate(project, nav, editor);
     }
     if (command instanceof ModHighlight highlight) {
       return executeHighlight(project, highlight);
@@ -449,14 +446,19 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     executeInteractively(context, next, editor);
   }
 
-  private static boolean executeNavigate(@NotNull Project project, ModNavigate nav) {
+  private static boolean executeNavigate(@NotNull Project project, ModNavigate nav, @Nullable Editor editor) {
     VirtualFile file = actualize(nav.file());
     if (file == null) return false;
     int selectionStart = nav.selectionStart();
     int selectionEnd = nav.selectionEnd();
     int caret = nav.caret();
 
-    Editor editor = getEditor(project, file);
+    if (editor == null || editor.getDocument() != FileDocumentManager.getInstance().getDocument(file)) {
+      // try to preserve editor of `Evaluate Expression` dialog
+      // otherwise, light virtual file would be opened in the editor tab
+      editor = getEditor(project, file);
+    }
+
     if (editor == null) return false;
     if (caret != -1) {
       editor.getCaretModel().moveToOffset(caret);
