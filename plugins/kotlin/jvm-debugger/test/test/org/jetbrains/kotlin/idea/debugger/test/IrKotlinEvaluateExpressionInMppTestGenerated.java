@@ -1812,6 +1812,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
                 runTest("testData/evaluation/singleBreakpoint/extractVariablesFromCall.kt");
             }
 
+            @TestMetadata("fakeOverrides.kt")
+            public void testFakeOverrides() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/fakeOverrides.kt");
+            }
+
             @TestMetadata("fieldGetters.kt")
             public void testFieldGetters() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/fieldGetters.kt");
@@ -2110,6 +2115,11 @@ public abstract class IrKotlinEvaluateExpressionInMppTestGenerated extends Abstr
             @TestMetadata("privateClass.kt")
             public void testPrivateClass() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/privateClass.kt");
+            }
+
+            @TestMetadata("privateFakeOverride.kt")
+            public void testPrivateFakeOverride() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateFakeOverride.kt");
             }
 
             @TestMetadata("privateFieldInCompanion.kt")

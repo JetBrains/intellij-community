@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.parameterInfo
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -13,7 +13,6 @@ import com.intellij.ui.JBColor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.components.KaSubtypingErrorTypePolicy
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
@@ -291,7 +290,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         arguments: List<KtExpression?>,
         currentArgumentIndex: Int,
         argumentToParameterIndex: Map<KtExpression, Int>,
-        argumentMapping: LinkedHashMap<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
+        argumentMapping: Map<KtExpression, KaVariableSignature<KaValueParameterSymbol>>,
         parameterToIndex: Map<KaVariableSignature<KaValueParameterSymbol>, Int>
     ): Int? {
         val afterTrailingComma = arguments.isNotEmpty() && currentArgumentIndex == arguments.size

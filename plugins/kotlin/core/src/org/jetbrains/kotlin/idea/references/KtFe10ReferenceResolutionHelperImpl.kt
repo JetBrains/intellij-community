@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.references
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.references.fe10.base.KtFe10ReferenceResolutionHelper
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
+@OptIn(KaPlatformInterface::class)
 class KtFe10ReferenceResolutionHelperImpl : KtFe10ReferenceResolutionHelper {
     override fun findDecompiledDeclaration(
         project: Project,

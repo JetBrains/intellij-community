@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysisApiPlatform
 
+import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinResolutionScopeProvider
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
@@ -8,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.allDirectDependencies
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.KtSourceModuleByModuleInfoForOutsider
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleDependencyCollector
 import org.jetbrains.kotlin.idea.base.projectStructure.collectDependencies
@@ -18,8 +20,13 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleTestSour
 import org.jetbrains.kotlin.idea.base.util.Frontend10ApiUsage
 import org.jetbrains.kotlin.idea.base.util.fileScope
 import org.jetbrains.kotlin.idea.base.util.minus
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.wasm.isWasm
 
-internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider() {
+internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScopeProvider {
     override fun getResolutionScope(module: KaModule): GlobalSearchScope {
         return when (module) {
             is KaSourceModule -> {
@@ -27,11 +34,8 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                 val moduleInfo = module.moduleInfo as ModuleSourceInfo
                 val includeTests = moduleInfo is ModuleTestSourceInfo
                 val scope = excludeIgnoredModulesByKotlinProjectModel(moduleInfo, module, includeTests)
-                return if (module is KtSourceModuleByModuleInfoForOutsider) {
-                    module.adjustContentScope(scope)
-                } else {
-                    scope
-                }
+
+                return adjustScope(scope, module)
             }
 
             is KaDanglingFileModule -> {
@@ -55,6 +59,40 @@ internal class IdeKotlinByModulesResolutionScopeProvider : KotlinResolutionScope
                 GlobalSearchScope.union(allModules.map { it.contentScope })
             }
         }
+    }
+
+    private fun adjustScope(baseScope: GlobalSearchScope, module: KaSourceModule): GlobalSearchScope {
+        var scope = baseScope
+
+        if (module is KtSourceModuleByModuleInfoForOutsider) {
+            scope = module.adjustContentScope(scope)
+        }
+
+        if (module.targetPlatform.hasCommonKotlinStdlib()) {
+            // we do not have builtins in common stdlib
+            scope = scope.withBuiltInsScope(module.project)
+        }
+
+        return scope
+    }
+
+    /**
+     * Checks if a source module with the [this] target will depend on a common stdlib artifact.
+     *
+     * This also means that the module is `common` in HMPP terms
+     */
+    private fun TargetPlatform.hasCommonKotlinStdlib(): Boolean {
+        if (componentPlatforms.size <= 1) return false
+        if (isJvm()) return false
+        if (isJs()) return false
+        if (isWasm()) return false
+        if (isNative()) return false
+        return true
+    }
+
+    private fun GlobalSearchScope.withBuiltInsScope(project: Project): GlobalSearchScope {
+        val builtinsScope = BuiltinsVirtualFileProvider.getInstance().createBuiltinsScope(project)
+        return GlobalSearchScope.union(listOf(this, builtinsScope))
     }
 
     /**

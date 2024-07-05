@@ -343,7 +343,7 @@ object ChangeSignatureFixFactory {
         element: PsiElement,
     ): List<ParameterQuickFix> {
         if (symbol !is KaParameterSymbol) return emptyList()
-        val containingSymbol = symbol.containingSymbol as? KaFunctionSymbol ?: return emptyList()
+        val containingSymbol = symbol.containingDeclaration as? KaFunctionSymbol ?: return emptyList()
         if (containingSymbol is KaNamedFunctionSymbol && containingSymbol.valueParameters.any { it.isVararg } ||
             containingSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED ||
             containingSymbol.origin == KaSymbolOrigin.LIBRARY
@@ -413,7 +413,7 @@ internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
-            if ((constructorSymbol.containingSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true) {
+            if ((constructorSymbol.containingDeclaration as? KaNamedClassOrObjectSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassId?.shortClassName
         }

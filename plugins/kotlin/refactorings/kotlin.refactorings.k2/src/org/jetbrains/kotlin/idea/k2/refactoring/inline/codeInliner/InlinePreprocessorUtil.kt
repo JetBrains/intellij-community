@@ -208,7 +208,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         fun isImportable(t: KtNamedDeclaration): Boolean {
             analyze(t) {
                 val resolvedSymbol = t.symbol
-                val containingSymbol = resolvedSymbol.containingSymbol ?: return true
+                val containingSymbol = resolvedSymbol.containingDeclaration ?: return true
                 if (containingSymbol is KaDeclarationContainerSymbol) {
                     val staticScope = containingSymbol.staticMemberScope
                     return resolvedSymbol in staticScope.declarations
@@ -305,5 +305,16 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
         codeToInline.addPreCommitAction(mainExpression) {
             codeToInline.replaceExpression(it, KtPsiFactory.contextual(it).createExpression(nullCast))
         }
+    }
+}
+
+context(KaSession)
+internal fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
+    val symbol = receiverValue.symbol
+    return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
+        (symbol.containingDeclaration as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
+    }
+    else {
+        "this" + ((((symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: symbol) as? KaNamedSymbol)?.name?.let { "@$it" } ?: "")
     }
 }

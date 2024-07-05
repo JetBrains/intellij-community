@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
@@ -44,7 +45,7 @@ internal object OptInFixFactories {
     }
 
     context(KaSession)
-    @OptIn(KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, KaImplementationDetail::class)
     private fun createQuickFix(diagnostic: KaFirDiagnostic<PsiElement>): List<AddAnnotationFix> {
         val element = diagnostic.psi.findParentOfType<KtElement>(strict = false) ?: return emptyList()
         val annotationClassId = OptInFixUtils.optInMarkerClassId(diagnostic) ?: return emptyList()

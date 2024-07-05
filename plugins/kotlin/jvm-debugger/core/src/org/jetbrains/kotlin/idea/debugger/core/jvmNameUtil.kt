@@ -71,7 +71,7 @@ fun KaCallableSymbol.getContainingClassOrObjectSymbol(): KaClassSymbol? {
     var symbol = containingSymbol
     while (symbol != null) {
         if (symbol is KaClassSymbol) return symbol
-        symbol = symbol.containingSymbol
+        symbol = symbol.containingDeclaration
     }
     return null
 }

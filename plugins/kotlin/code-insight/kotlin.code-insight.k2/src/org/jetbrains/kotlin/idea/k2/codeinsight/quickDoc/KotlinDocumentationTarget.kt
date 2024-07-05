@@ -148,7 +148,7 @@ private fun computeLocalDocumentation(element: PsiElement, originalElement: PsiE
 
 context(KaSession)
 private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
-    val containingSymbol = ktDeclaration.symbol.containingSymbol
+    val containingSymbol = ktDeclaration.symbol.containingDeclaration
     val fqName = (containingSymbol as? KaClassLikeSymbol)?.classId?.asFqNameString()
         ?: (ktDeclaration.containingFile as? KtFile)?.packageFqName?.takeIf { !it.isRoot }?.asString()
 
@@ -199,7 +199,7 @@ private fun @receiver:Nls StringBuilder.renderEnumSpecialFunction(
             val symbol = referenceExpression.resolveToCall()?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol as? KaNamedSymbol
             val name = symbol?.name?.asString()
             if (name != null && symbol is KaDeclarationSymbol) {
-                val containingClass = symbol.containingSymbol as? KaClassSymbol
+                val containingClass = symbol.containingDeclaration as? KaClassSymbol
                 val superClasses = containingClass?.superTypes?.mapNotNull { t -> t.expandedSymbol }
                 val kdoc = superClasses?.firstNotNullOfOrNull { superClass ->
                     val navigationElement = superClass.psi?.navigationElement
@@ -308,7 +308,7 @@ private fun findKDoc(symbol: KaSymbol): KDocContent? {
     }
 
     if (symbol is KaValueParameterSymbol) {
-        val containingSymbol = symbol.containingSymbol as? KaNamedFunctionSymbol
+        val containingSymbol = symbol.containingDeclaration as? KaNamedFunctionSymbol
         if (containingSymbol != null) {
             val idx = containingSymbol.valueParameters.indexOf(symbol)
             containingSymbol.getExpectsForActual().filterIsInstance<KaNamedFunctionSymbol>().mapNotNull { expectFunction ->

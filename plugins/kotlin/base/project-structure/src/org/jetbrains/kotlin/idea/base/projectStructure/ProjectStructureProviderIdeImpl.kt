@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:OptIn(KaPlatformInterface::class)
+@file:OptIn(KaAnalysisApiInternals::class, KaPlatformInterface::class)
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
@@ -12,13 +12,18 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
+import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsModuleImpl
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -27,11 +32,14 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModu
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.*
 import org.jetbrains.kotlin.idea.base.util.getOutsiderFileOrigin
 import org.jetbrains.kotlin.idea.base.util.isOutsiderFile
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_EXT
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -127,19 +135,34 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
 
         val moduleInfo = computeModuleInfoForOrdinaryModule(psiElement, contextualModule, virtualFile)
 
+        if (moduleInfo == null && virtualFile != null) {
+            computeBuiltinKtModule(virtualFile, psiElement)?.let { return it }
+        }
+
         if (virtualFile != null && isOutsiderFile(virtualFile) && moduleInfo is ModuleSourceInfo) {
             val originalFile = getOutsiderFileOrigin(project, virtualFile)
             return KtSourceModuleByModuleInfoForOutsider(virtualFile, originalFile, moduleInfo)
         }
 
-        return getKtModuleByModuleInfo(moduleInfo)
+        return getKtModuleByModuleInfo(moduleInfo ?: NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile))
+    }
+
+    @OptIn(KaImplementationDetail::class)
+    private fun computeBuiltinKtModule(virtualFile: VirtualFile, psiElement: PsiElement): KaBuiltinsModule? {
+        if (virtualFile in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
+            val ktElement = psiElement.parentOfType<KtElement>(withSelf = true)
+            if (ktElement != null) {
+                return KaBuiltinsModuleImpl(ktElement.platform, project)
+            }
+        }
+        return null
     }
 
     private fun <T> computeModuleInfoForOrdinaryModule(
         psiElement: PsiElement,
         contextualModule: T?,
         virtualFile: VirtualFile?
-    ): ModuleInfo where T : KaModule, T : KtModuleByModuleInfoBase {
+    ): IdeaModuleInfo? where T : KaModule, T : KtModuleByModuleInfoBase {
         val infoProvider = ModuleInfoProvider.getInstance(project)
 
         val config = ModuleInfoProvider.Configuration(
@@ -162,7 +185,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
             }
         }
 
-        return NotUnderContentRootModuleInfo(project, psiElement.containingFile as? KtFile)
+        return null
     }
 
     companion object {

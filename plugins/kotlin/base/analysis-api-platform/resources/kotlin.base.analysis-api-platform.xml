@@ -4,8 +4,11 @@
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinAnalysisPermissionOptions"
             serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.permissions.KotlinDefaultAnalysisPermissionOptions"/>
     <projectService
-            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenProvider"
-            serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenProvider"/>
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings"
+            serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinPlatformSettings"/>
+    <projectService
+            serviceInterface="org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinLifetimeTokenFactory"
+            serviceImplementation="org.jetbrains.kotlin.analysis.api.platform.lifetime.KotlinReadActionConfinementLifetimeTokenFactory"/>
     <projectService
             serviceInterface="org.jetbrains.kotlin.analysis.api.platform.declarations.KotlinDeclarationProviderFactory"
             serviceImplementation="org.jetbrains.kotlin.idea.base.analysisApiPlatform.IdeKotlinDeclarationProviderFactory"/>

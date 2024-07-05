@@ -7,7 +7,6 @@ import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
@@ -46,7 +45,7 @@ import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
@@ -78,7 +77,7 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 // To ensure that no cached psi with stale stubs/virtual files,
                 // it's required to clear caches manually,
                 // otherwise opening file which referred the old builtins would let to PIEAE exceptions
-                if (file in BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()) {
+                if (file in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
                     runWriteAction {
                         PsiManager.getInstance(project).dropPsiCaches()
                         //todo clear builtins on global module state modification KT-69247
