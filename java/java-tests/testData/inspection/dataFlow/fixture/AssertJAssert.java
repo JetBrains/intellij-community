@@ -1,6 +1,6 @@
 package org.assertj.core.api;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import java.util.Optional;
 import java.util.stream.*;
 
@@ -37,6 +37,10 @@ class Sample {
     Assertions.assertThat(stream).isEmpty();
   }
 
+  // All methods inside the org.assertj.core.api package are hardcoded to be pure by default
+  // See com.intellij.codeInsight.DefaultInferredAnnotationProvider.getHardcodedContractAnnotation
+  // We override this, otherwise it spoils the tests, as it's assumed that the same value is always returned
+  @Contract(pure = false)
   private native Optional<String> getOptional();
 
   public void testAs() {

@@ -762,5 +762,6 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testAssignAndReturnVolatile() { doTest(); }
   public void testQualifiedValueFromConstant() { doTest();}
   public void testFieldAliasing() { doTest();}
+  public void testFieldLocalNoAliasing() { doTest();}
   public void testIoContracts() { doTest(); }
 }
