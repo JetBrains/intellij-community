@@ -3,7 +3,6 @@ package org.jetbrains.intellij.build.pycharm
 
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.collections.immutable.persistentSetOf
-import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
 import org.jetbrains.intellij.build.io.copyFileToDir
@@ -38,10 +37,6 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
     )
 
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
-      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community")
-    )
-    )
     productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 

@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
 import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.jetbrains.intellij.build.impl.qodana.QodanaProductProperties
@@ -62,7 +61,6 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.androidPlugin(allPlatforms = true),
       CommunityRepositoryModules.groovyPlugin(),
-      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community"),
     ))
 
     productLayout.addPlatformSpec { layout, _ ->
