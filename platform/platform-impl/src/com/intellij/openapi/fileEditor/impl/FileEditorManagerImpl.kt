@@ -1265,7 +1265,7 @@ open class FileEditorManagerImpl(
 
   internal fun createEditorCompositeModelOnStartup(
     compositeCoroutineScope: CoroutineScope,
-    fileProvider: () -> VirtualFile,
+    fileProvider: suspend () -> VirtualFile,
     fileEntry: FileEntry?,
     isLazy: Boolean,
   ): Flow<EditorCompositeModel> {
