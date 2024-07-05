@@ -44,7 +44,7 @@ public class ClassNameRuleValidator extends CustomValidationRule {
   }
 
   private static @NotNull String getClassName(@NotNull String data) {
-    int i = data.indexOf("$$Lambda$");
+    int i = data.indexOf("$$Lambda");
     if (i == -1) {
       return data;
     }
