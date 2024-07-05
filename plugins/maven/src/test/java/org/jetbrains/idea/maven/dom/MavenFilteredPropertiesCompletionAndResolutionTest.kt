@@ -358,8 +358,11 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
     val filter = createProjectSubFile("filters/filter.properties", "xx<caret>x=1")
 
     withContext(Dispatchers.EDT) {
-      assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(project, f, "foo"),
-                                 MavenDomUtil.findPropertyValue(project, f, "foo2"))
+      val foo = MavenDomUtil.findPropertyValue(project, f, "foo")
+      assertNotNull(foo)
+      val foo2 = MavenDomUtil.findPropertyValue(project, f, "foo2")
+      assertNotNull(foo2)
+      assertSearchResultsInclude(filter, foo, foo2)
     }
   }
 
