@@ -144,7 +144,7 @@ class InspectionRunner {
                                     "\n"+" inside:"+restrictedInside.size()+ ": "+restrictedInside+
                                     "\n"+"; outside:"+restrictedOutside.size()+": "+restrictedOutside);
     }
-    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, session -> {
+    InspectionEngine.withSession(myPsiFile, myRestrictRange, finalPriorityRange, minimumSeverity, myIsOnTheFly, null, session -> {
       for (LocalInspectionToolWrapper toolWrapper : applicableByLanguage) {
         if (enabledToolsPredicate == null || enabledToolsPredicate.value(toolWrapper)) {
         LocalInspectionTool tool = toolWrapper.getTool();

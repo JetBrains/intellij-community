@@ -543,7 +543,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       InspectionProfileWrapper.runWithCustomInspectionWrapper(file, __ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
         try {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-            InspectionEngine.inspectEx(localTools, file, restrictRange, restrictRange, false, inspectInjectedPsi, true,
+            runInspectionEngine(localTools, file, restrictRange, restrictRange, inspectInjectedPsi,
                                        progressIndicator, PairProcessor.alwaysTrue());
           for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
             List<ProblemDescriptor> descriptors = entry.getValue();
@@ -1195,10 +1195,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         range == null ? file.getTextRange() : range;
       ApplicationManager.getApplication().runReadAction(() -> {
         Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
-          InspectionEngine.inspectEx(localTools, file, restrictRange,
-                                     restrictRange, false, true, true,
-                                     myProgressIndicator,
-                                     (__, ___) -> true);
+          runInspectionEngine(localTools, file, restrictRange, restrictRange, false,
+                              myProgressIndicator,
+                              (__, ___) -> true);
         for (Map.Entry<LocalInspectionToolWrapper, List<ProblemDescriptor>> entry : map.entrySet()) {
           LocalInspectionToolWrapper toolWrapper = entry.getKey();
           List<ProblemDescriptor> descriptors = entry.getValue();
@@ -1251,6 +1250,20 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     finally {
       myPresentationMap.clear();
     }
+  }
+
+  private Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> runInspectionEngine(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                                       @NotNull PsiFile psiFile,
+                                                                                       @NotNull TextRange restrictRange,
+                                                                                       @NotNull TextRange priorityRange,
+                                                                                       boolean inspectInjectedPsi,
+                                                                                       @NotNull ProgressIndicator indicator,
+                                                                                       // when returned true -> add to the holder, false -> do not add to the holder
+                                                                                       @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    var userData = new UserDataHolderBase();
+    userData.putUserData(LocalInspectionToolSessionKtKt.getGlobalInspectionContextKey(), this);
+    return InspectionEngine.inspectEx(toolWrappers, psiFile, restrictRange, priorityRange, false, inspectInjectedPsi,
+                                      true, indicator, userData, foundDescriptorCallback);
   }
 
   private boolean reportNoProblemsFound(@NotNull AnalysisScope scope,
