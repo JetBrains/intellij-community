@@ -597,7 +597,6 @@ f:com.intellij.dvcs.shelf.ShelfViewUpdater
 a:com.intellij.dvcs.ui.BranchActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.dvcs.ui.CustomIconProvider
-- com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - s:getIncomingOutgoingIcon():javax.swing.Icon
@@ -743,7 +742,6 @@ f:com.intellij.dvcs.ui.FilePathDocumentChildPathHandle$Companion
 c:com.intellij.dvcs.ui.LightActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.openapi.actionSystem.ActionUpdateThreadAware$Recursive
-- com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup
 - <init>():V
 - <init>(Z):V
 - f:add(com.intellij.openapi.actionSystem.AnAction):V
@@ -793,7 +791,6 @@ c:com.intellij.dvcs.ui.RootAction
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.dvcs.ui.PopupElementWithAdditionalInfo
 - com.intellij.openapi.actionSystem.ActionUpdateThreadAware$Recursive
-- com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup
 - com.intellij.openapi.project.DumbAware
 - pf:myRepository:com.intellij.dvcs.repo.Repository
 - <init>(com.intellij.dvcs.repo.Repository,com.intellij.openapi.actionSystem.ActionGroup,java.lang.String):V

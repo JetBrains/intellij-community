@@ -520,7 +520,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static class SelectConfigAction extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+  public static class SelectConfigAction extends ActionGroup implements DumbAware {
     private final Project myProject;
     private final RunnerAndConfigurationSettings myConfiguration;
 
@@ -600,6 +600,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setPopupGroup(true);
       e.getPresentation().setPerformGroup(true);
+      e.getPresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
 
       String fullName = myConfiguration.getName();
       String name = StringUtil.notNullize(StringUtil.nullize(Executor.shortenNameIfNeeded(fullName), " "));

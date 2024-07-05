@@ -3,7 +3,7 @@ package com.intellij.dvcs.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AlwaysVisibleActionGroup;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.IconManager;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public abstract class BranchActionGroup extends ActionGroup implements DumbAware, CustomIconProvider, AlwaysVisibleActionGroup {
+public abstract class BranchActionGroup extends ActionGroup implements DumbAware, CustomIconProvider {
 
   private boolean myIsFavorite;
   private LayeredIcon myIcon;
@@ -24,6 +24,7 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   public BranchActionGroup() {
     super("", true);
     setIcons(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16, AllIcons.Nodes.Favorite, AllIcons.Nodes.NotFavoriteOnHover);
+    getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
   }
 
   protected void setIcons(@NotNull Icon favorite,

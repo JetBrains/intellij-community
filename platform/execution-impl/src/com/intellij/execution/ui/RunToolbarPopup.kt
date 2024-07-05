@@ -156,7 +156,10 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       val result = ArrayList<AnAction>()
       for (folderMap in folderMaps) {
-        result.add(object : ActionGroup(), AlwaysVisibleActionGroup {
+        result.add(object : ActionGroup() {
+          init {
+            templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
+          }
           override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
             val result = ArrayList<AnAction>()
             for (folderEntry in folderMap.entries) {
@@ -170,12 +173,13 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
                 }
               }
               else {
-                result.add(object : ActionGroup(), AlwaysVisibleActionGroup {
+                result.add(object : ActionGroup() {
                   init {
-                    templatePresentation.setPopupGroup(true)
+                    templatePresentation.isPopupGroup =true
                     templatePresentation.setText(folderName)
                     templatePresentation.setIcon(AllIcons.Nodes.Folder)
                     templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
+                    templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
                   }
 
                   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {

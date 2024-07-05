@@ -20,6 +20,9 @@ package com.intellij.openapi.actionSystem;
  *
  * @author Konstantin Bulenkov
  * @see CompactActionGroup
+ *
+ * @deprecated Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#ALWAYS_VISIBLE_GROUP}
  */
+@Deprecated(forRemoval = true)
 public interface AlwaysVisibleActionGroup {
 }
