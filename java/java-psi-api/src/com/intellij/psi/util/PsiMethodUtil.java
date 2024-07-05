@@ -67,8 +67,8 @@ public final class PsiMethodUtil {
 
   /**
    * Finds the main method in the given class or its parents.
-   * ATTENTION: does not use implementations of {@link JavaMainMethodProvider}
-   * (unlike {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)})
+   * ATTENTION: this method does not use implementations of {@link JavaMainMethodProvider}
+   * if you need to take into account custom entry points, use {@link #hasMainMethod(PsiClass)} or {@link #findMainMethod(PsiClass)}
    *
    * @param aClass the class in which to find the main method.
    * @return the main method if found, or null if not found or if an {@link IndexNotReadyException} occurs.
