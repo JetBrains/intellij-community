@@ -911,6 +911,7 @@ public final class JvmClassNodeBuilder extends ClassVisitor implements NodeBuild
   public void visitPermittedSubclass(String permittedSubclass) {
     mySealedClassFlag.set(true);
     addUsage(new ClassUsage(permittedSubclass));
+    addUsage(new ClassPermitsUsage(permittedSubclass));
   }
 
   private class BaseSignatureVisitor extends SignatureVisitor {

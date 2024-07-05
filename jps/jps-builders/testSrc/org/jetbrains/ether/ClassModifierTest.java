@@ -49,7 +49,7 @@ public class ClassModifierTest extends IncrementalTestCase {
   }
 
   public void testBecameSealed() {
-    doTest();
+    doTest().assertFailed();
   }
 
   public void testChangeInnerClassModifiers() {

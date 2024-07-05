@@ -1,0 +1,3 @@
+public sealed class B permits A1, A2 {
+   void foo(A3 param) {}
+}

@@ -212,10 +212,6 @@ public final class JvmClass extends JVMClassNode<JvmClass, JvmClass.Diff> {
       return (currentSuper.isEmpty() || OBJECT_CLASS_NAME.equals(currentSuper)) && superClassChanged();
     }
 
-    public boolean becameSealed() {
-      return getAddedFlags().isSealed();
-    }
-
     public boolean outerClassChanged() {
       return !Objects.equals(myPast.getOuterFqName(), getOuterFqName());
     }
