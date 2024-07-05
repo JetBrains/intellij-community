@@ -21,6 +21,8 @@ class QueryBuilder {
 
   fun byAttribute(name: String, value: String) = "@$name=${value.escapeQuoteWithConcat()}"
 
+  fun byText(text: String) = byAttribute("text", text)
+
   fun contains(condition: String): String {
     val arguments = condition.split("=")
     require(arguments.size == 2) { "contains condition must have format 'attribute=value'" }
