@@ -77,6 +77,8 @@ class TelemetryManagerImpl(coroutineScope: CoroutineScope, isUnitTestMode: Boole
     batchSpanProcessor = if (hasSpanExporters) {
       // must be first, before JaegerJsonSpanExporter
       spanExporters.add(0, object : AsyncSpanExporter {
+        override val exporterVersion: Int = 0
+
         override suspend fun export(spans: Collection<SpanData>) {
         }
 
@@ -250,9 +252,11 @@ private fun createSpanExporters(resource: Resource, isUnitTestMode: Boolean = fa
   return spanExporters
 }
 
-private fun createOpenTelemetryConfigurator(serviceName: String,
-                                            serviceVersion: String,
-                                            serviceNamespace: String): OpenTelemetryConfigurator {
+private fun createOpenTelemetryConfigurator(
+  serviceName: String,
+  serviceVersion: String,
+  serviceNamespace: String,
+): OpenTelemetryConfigurator {
   return OpenTelemetryConfigurator(
     sdkBuilder = OpenTelemetrySdk.builder(),
     serviceName = serviceName,

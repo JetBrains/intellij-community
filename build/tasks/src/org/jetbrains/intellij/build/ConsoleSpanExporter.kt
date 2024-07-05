@@ -28,6 +28,7 @@ private fun createPathList(dir: Path): List<String> {
 }
 
 class ConsoleSpanExporter : AsyncSpanExporter {
+  override val exporterVersion: Int = 0
 
   private val isEnabled = System.getProperty("intellij.build.console.exporter.enabled")?.toBoolean() ?: true
 

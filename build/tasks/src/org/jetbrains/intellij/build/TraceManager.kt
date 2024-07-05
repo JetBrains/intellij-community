@@ -73,6 +73,8 @@ object JaegerJsonSpanExporterManager {
 
   internal val spanExporterProvider: () -> List<AsyncSpanExporter> = {
     val list = mutableListOf(ConsoleSpanExporter(), object : AsyncSpanExporter {
+      override val exporterVersion: Int = jaegerJsonSpanExporter.get()?.exporterVersion ?: 0
+
       override suspend fun export(spans: Collection<SpanData>) {
         jaegerJsonSpanExporter.get()?.export(spans)
       }

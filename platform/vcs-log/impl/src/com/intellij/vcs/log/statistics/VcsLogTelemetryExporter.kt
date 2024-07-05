@@ -41,6 +41,8 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   }
 
   private object LogHistorySpanExporter : AsyncSpanExporter {
+    override val exporterVersion: Int = 0
+
     override suspend fun export(spans: Collection<SpanData>) {
       for (span in spans.vcsSpans()) {
         if (span.hasErrors()) continue
@@ -62,6 +64,8 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   }
 
   private object LogFilterSpanExporter : AsyncSpanExporter {
+    override val exporterVersion: Int = 0
+
     override suspend fun export(spans: Collection<SpanData>) {
       for (span in spans.vcsSpans()) {
         if (span.hasErrors() || span.name != LogFilter.getName()) continue

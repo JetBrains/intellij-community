@@ -31,6 +31,8 @@ class JaegerJsonSpanExporter(
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
+  override val exporterVersion: Int = 1
+
   private val fileChannel: FileChannel
   private val writer: JsonGenerator
 
@@ -49,7 +51,11 @@ class JaegerJsonSpanExporter(
       // Channels.newOutputStream doesn't implement flush, but just to be sure
       .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
 
-    beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
+    beginWriter(w = writer,
+                serviceName = serviceName,
+                serviceVersion = serviceVersion,
+                serviceNamespace = serviceNamespace,
+                exporterVersion = exporterVersion)
   }
 
   @Suppress("DuplicatedCode")
@@ -199,8 +205,10 @@ private fun beginWriter(
   serviceName: String,
   serviceVersion: String?,
   serviceNamespace: String?,
+  exporterVersion: Int,
 ) {
   w.writeStartObject()
+  w.writeNumberField("exporterVersion", exporterVersion)
   w.writeArrayFieldStart("data")
   w.writeStartObject()
   w.writeStringField("traceID", IdGenerator.random().generateTraceId())
