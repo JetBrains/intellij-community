@@ -128,9 +128,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     createProjectSubFile("settings.gradle", including("projectA", "projectB"))
 
     importProject {
-      withRepository {
-        mavenRepository("https://repo.labs.intellij.net/repo1")
-      }
+      withMavenCentral()
       allprojects {
         withJavaPlugin()
         addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
