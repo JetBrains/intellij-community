@@ -128,8 +128,8 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     createProjectSubFile("settings.gradle", including("projectA", "projectB"))
 
     importProject {
-      withMavenCentral()
       allprojects {
+        withMavenCentral()
         withJavaPlugin()
         addDependency("compileOnly", "org.projectlombok:lombok:1.18.8")
         addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
@@ -203,8 +203,8 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     createProjectSubFile("settings.gradle", including("project1", "project2"))
 
     importProject {
-      withMavenCentral()
       allprojects {
+        withMavenCentral()
         withJavaPlugin()
       }
       project("project1") {
@@ -240,8 +240,8 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
    fun `test change modules included in processor profile`() {
     createProjectSubFile("settings.gradle", including("project1", "project2"))
     importProject {
-      withMavenCentral()
       allprojects {
+        withMavenCentral()
         withJavaPlugin()
       }
       project("project1") {
@@ -257,8 +257,8 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       .containsExactly(setOf("project.project1.main"))
 
     importProject {
-      withMavenCentral()
       allprojects {
+        withMavenCentral()
         withJavaPlugin()
       }
       project("project2") {
