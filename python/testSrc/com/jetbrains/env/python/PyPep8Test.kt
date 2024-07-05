@@ -2,7 +2,6 @@
 package com.jetbrains.env.python
 
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
@@ -52,6 +51,44 @@ class PyPep8Test : PyEnvTestCase() {
         
         def<weak_warning descr="PEP 8: E271 multiple spaces after keyword">   </weak_warning>func2():  # noqa: E303 # blanks lines error
             pass  # noqa # error on the comment itself  
+      """.trimIndent())
+    )
+  }
+
+  // PY-33425
+  @Test
+  fun suppressingWarningsWithSuppressQuickFix() {
+    runPythonTest(
+      Pep8Task("""
+        def <weak_warning descr="PEP 8: E501 line too long (136 > 120 characters)">test_test_test_test_test_test_test_test_test_test_method_with_a_test_name_that_is_way_too_long_to_fit_in_120_char_wide_editor</weak_warning>(self):
+            pass
+        
+        
+        class TestClass:
+            def <weak_warning descr="PEP 8: E501 line too long (140 > 120 characters)">test_test_test_test_test_test_test_test_test_test_method_with_a_test_name_that_is_way_too_long_to_fit_in_120_char_wide_editor</weak_warning>(self):
+                pass
+        
+        
+        # noinspection PyPep8
+        def test_test_test_test_test_test_test_test_test_test_method2_with_a_test_name_that_is_way_too_long_to_fit_in_120_char_wide_editor():
+            pass
+        
+        
+        # noinspection PyPep8
+        class SuppressedClass:
+            def test_test_test_test_test_test_test_test_test_test_method_with_a_test_name_that_is_way_too_long_to_fit_in_120_char_wide_editor(
+                    self):
+                pass
+        
+        
+        # noinspection PyPep8        
+        class NestedSuppression:
+            def foo(self):
+                def bar():
+                    def test_test_test_test_test_test_test_test_test_test_inner_method_with_a_test_name_that_is_way_too_long_to_fit_in_120_char_wide_editor():
+                        pass
+                    pass
+                pass
       """.trimIndent())
     )
   }
