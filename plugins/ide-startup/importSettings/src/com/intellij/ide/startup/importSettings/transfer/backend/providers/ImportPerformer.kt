@@ -8,6 +8,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
@@ -105,7 +106,9 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
   override fun performEdt(project: Project?, settings: Settings) {
     onlyRequiredPartials(settings).forEach {
       logger.info("performEdt: ${it.javaClass.simpleName}")
-      it.performEdt(project, settings)
+      logger.runAndLogException {
+        it.performEdt(project, settings)
+      }
     }
   }
 }
