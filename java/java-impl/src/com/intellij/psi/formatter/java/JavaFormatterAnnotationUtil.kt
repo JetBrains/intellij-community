@@ -2,11 +2,11 @@
 package com.intellij.psi.formatter.java
 
 import com.intellij.lang.ASTNode
-import com.intellij.lang.tree.util.children
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
+import com.intellij.psi.formatter.FormatterUtil
 import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -59,8 +59,8 @@ internal object JavaFormatterAnnotationUtil {
 
     val modifierList = node.firstChildNode ?: return false
     if (modifierList.elementType != JavaElementType.MODIFIER_LIST) return false
-    val annotations = modifierList.children().takeWhile { it.elementType == JavaElementType.ANNOTATION }
-    return annotations.any { !isTypeAnnotation(it) }
+    val annotationList = getAllAnnotationsOnPrefix(modifierList)
+    return annotationList.any { !isTypeAnnotation(it) }
   }
 
   /**
@@ -69,6 +69,22 @@ internal object JavaFormatterAnnotationUtil {
   @JvmStatic
   fun isFieldWithAnnotations(field: PsiModifierListOwner): Boolean {
     return isFieldWithAnnotations(field.node)
+  }
+
+  /**
+   * Retrieves all annotation nodes within the given modifier list prefix, e.g. before all keywords.
+   *
+   * @param modifierList the ASTNode representing the modifier list.
+   * @return a list of ASTNode objects representing the annotations found in the modifier list.
+   */
+  private fun getAllAnnotationsOnPrefix(modifierList: ASTNode): List<ASTNode> {
+    val result = mutableListOf<ASTNode>()
+    var currentNode = modifierList.firstChildNode
+    while (currentNode?.elementType == JavaElementType.ANNOTATION) {
+      result.add(currentNode)
+      currentNode = FormatterUtil.getNextNonWhitespaceSibling(currentNode)
+    }
+    return result
   }
 
   private fun getImportedTypeAnnotations(file: PsiJavaFile): Set<String> = CachedValuesManager.getCachedValue(file) {

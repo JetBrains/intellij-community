@@ -18,7 +18,7 @@ class JavaFormatterBlankLinesAroundFieldTest : JavaFormatterTestCase() {
 
   fun testMultipleAnnotatedFields() = doTest()
 
-  fun testDifferentAnnotationLocation() = doTest()
+  fun testTypeAnnotation() = doTest()
 
   fun testMixed() = doTest()
 
