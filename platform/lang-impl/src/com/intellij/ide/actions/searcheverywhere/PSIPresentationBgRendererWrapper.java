@@ -8,7 +8,6 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
-import com.intellij.navigation.SearchEverywherePresentationProvider;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
