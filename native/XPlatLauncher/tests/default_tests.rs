@@ -22,6 +22,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(not(all(target_os = "windows", target_arch = "x86_64")))]
     fn classpath_test_on_unicode_path() {
         let suffix = "δοκιμή-परीक्षा-시험";
         let test = prepare_custom_test_env(LauncherLocation::Standard, Some(suffix), true);
@@ -37,7 +38,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(all(target_os = "windows", not(target_arch = "x86_64")))]
+    #[cfg(target_os = "windows")]
     fn classpath_test_on_ns_prefixed_path() {
         let test_orig = prepare_test_env(LauncherLocation::Standard); // to prevent directories from disappearing
         let test = test_orig.to_ns_prefix();
