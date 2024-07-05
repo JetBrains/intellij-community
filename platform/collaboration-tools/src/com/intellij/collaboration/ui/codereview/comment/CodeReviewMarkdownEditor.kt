@@ -60,7 +60,7 @@ internal object CodeReviewMarkdownEditor {
       if (!inline) {
         component.border = EditorFocusBorder()
       }
-      else {
+      else if (!oneLine) {
         setVerticalScrollbarVisible(true)
       }
       contentComponent.setFocusCycleRoot(false)
