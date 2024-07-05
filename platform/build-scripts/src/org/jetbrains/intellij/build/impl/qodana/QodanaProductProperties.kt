@@ -14,8 +14,9 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dvcs.log.index.enable=false",
   "-Didea.job.launcher.without.timeout=true",
   "-Dscanning.in.smart.mode=false",
-  "-Deap.login.enabled=false"
-)
+  "-Deap.login.enabled=false",
+  "-Djdk.download.consent=true"
+  )
 
 /**
  * Represents a set of properties specific to the Qodana product.
