@@ -3,10 +3,23 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.ExtensionDescriptor
 import org.jetbrains.annotations.ApiStatus
+import java.io.IOException
 
-private val pluginIdsToIgnoreK2KotlinCompatibility: List<String> =
-  System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.map { it.trim() }.orEmpty() +
-  listOf("fleet.backend.kotlin", "fleet.backend.mercury", "fleet.backend.mercury.kotlin.macos")
+private val pluginIdsToIgnoreK2KotlinCompatibility: Set<String> = buildSet {
+  System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.mapTo(this) { it.trim() }
+  addAll(listOf("fleet.backend.kotlin", "fleet.backend.mercury", "fleet.backend.mercury.kotlin.macos"))
+
+  try {
+    // KTIJ-30545
+    javaClass.getResource("/pluginsCompatibleWithK2Mode.txt")
+      ?.openStream()?.use { it.reader().readLines() }
+      ?.map { it.trim() }
+      ?.filterTo(this) { it.isNotEmpty() }
+  }
+  catch (e: IOException) {
+    PluginManagerCore.logger.error("Cannot load pluginsCompatibleWithK2Mode.txt", e)
+  }
+}
 
 
 /**
