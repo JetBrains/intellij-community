@@ -374,12 +374,12 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   @Throws(IOException::class)
-  protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String?): VirtualFile {
+  protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
     val ioFile = File(myDir, "settings.xml")
     ioFile.createNewFile()
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)
-    setFileContent(f, content, true)
-    mavenGeneralSettings.setUserSettingsFile(f!!.path)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
+    setFileContent(f, content)
+    mavenGeneralSettings.setUserSettingsFile(f.path)
     return f
   }
 
@@ -406,7 +406,7 @@ abstract class MavenTestCase : UsefulTestCase() {
 
 
   protected fun createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
-    return createPomFile(myProjectRoot, xml).also { myProjectPom = it }
+    return createPomFile(projectRoot, xml).also { myProjectPom = it }
   }
 
   protected fun createModulePom(relativePath: String,
@@ -414,18 +414,18 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createPomFile(createProjectSubDir(relativePath), xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile?,
+  protected fun createPomFile(dir: VirtualFile,
                               @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
     return createPomFile(dir, "pom.xml", xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile?, fileName: String? = "pom.xml",
+  protected fun createPomFile(dir: VirtualFile, fileName: String? = "pom.xml",
                               @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
     val pomName = fileName ?: "pom.xml"
-    var f = dir!!.findChild(pomName)
+    var f = dir.findChild(pomName)
     if (f == null) {
       try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }
+        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }!!
       }
       catch (e: IOException) {
         throw RuntimeException(e)
@@ -437,7 +437,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createProfilesXmlOldStyle(xml: String): VirtualFile {
-    return createProfilesFile(myProjectRoot, xml, true)
+    return createProfilesFile(projectRoot, xml, true)
   }
 
   protected fun createProfilesXmlOldStyle(relativePath: String, xml: String): VirtualFile {
@@ -445,7 +445,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createProfilesXml(xml: String): VirtualFile {
-    return createProfilesFile(myProjectRoot, xml, false)
+    return createProfilesFile(projectRoot, xml, false)
   }
 
   protected fun createProfilesXml(relativePath: String, xml: String): VirtualFile {
@@ -453,7 +453,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createFullProfilesXml(content: String): VirtualFile {
-    return createProfilesFile(myProjectRoot, content)
+    return createProfilesFile(projectRoot, content)
   }
 
   protected fun createFullProfilesXml(relativePath: String, content: String): VirtualFile {
@@ -491,7 +491,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   @Throws(IOException::class)
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
-    setFileContent(file, content, false)
+    setFileContent(file, content)
     return file
   }
 
@@ -605,22 +605,22 @@ abstract class MavenTestCase : UsefulTestCase() {
            "</settings>\r\n"
   }
 
-  private fun createProfilesFile(dir: VirtualFile?, xml: String, oldStyle: Boolean): VirtualFile {
+  private fun createProfilesFile(dir: VirtualFile, xml: String, oldStyle: Boolean): VirtualFile {
     return createProfilesFile(dir, createValidProfiles(xml, oldStyle))
   }
 
-  private fun createProfilesFile(dir: VirtualFile?, content: String): VirtualFile {
-    var f = dir!!.findChild("profiles.xml")
+  private fun createProfilesFile(dir: VirtualFile, content: String): VirtualFile {
+    var f = dir.findChild("profiles.xml")
     if (f == null) {
       try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, "profiles.xml") }
+        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, "profiles.xml") }!!
       }
       catch (e: IOException) {
         throw RuntimeException(e)
       }
     }
-    setFileContent(f, content, true)
-    return f!!
+    setFileContent(f, content)
+    return f
   }
 
   @Language("XML")
@@ -639,14 +639,14 @@ abstract class MavenTestCase : UsefulTestCase() {
            "</profilesXml>"
   }
 
-  protected fun setPomContent(file: VirtualFile?, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
-    setFileContent(file, createPomXml(xml), true)
+  protected fun setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
+    setFileContent(file, createPomXml(xml))
   }
 
-  protected fun setFileContent(file: VirtualFile?, content: String?, advanceStamps: Boolean) {
+  private fun setFileContent(file: VirtualFile, content: String) {
     try {
       WriteAction.runAndWait<IOException> {
-        doSetFileContent(file!!, content!!, advanceStamps)
+        doSetFileContent(file, content)
       }
     }
     catch (e: IOException) {
@@ -655,19 +655,19 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected suspend fun setPomContentAsync(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
-    setFileContentAsync(file, createPomXml(xml), true)
+    setFileContentAsync(file, createPomXml(xml))
   }
 
-  protected suspend fun setFileContentAsync(file: VirtualFile, content: String, advanceStamps: Boolean) {
+  private suspend fun setFileContentAsync(file: VirtualFile, content: String) {
     writeAction {
-      doSetFileContent(file, content, advanceStamps)
+      doSetFileContent(file, content)
     }
   }
 
-  private fun doSetFileContent(file: VirtualFile, content: String, advanceStamps: Boolean) {
+  private fun doSetFileContent(file: VirtualFile, content: String) {
     val bytes = content.toByteArray(StandardCharsets.UTF_8)
-    val newModificationStamp = if (advanceStamps) -1 else file.modificationStamp
-    val newTimeStamp = if (advanceStamps) file.timeStamp + 4000 else file.timeStamp
+    val newModificationStamp = file.modificationStamp
+    val newTimeStamp = file.timeStamp
     MavenLog.LOG.debug("Set file content, modification stamp $newModificationStamp, time stamp $newTimeStamp, file $file")
     file.setBinaryContent(bytes, newModificationStamp, newTimeStamp)
   }

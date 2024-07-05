@@ -29,6 +29,8 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 class ResourceCopyingTest : MavenCompilingTestCase() {
 
@@ -730,7 +732,8 @@ class ResourceCopyingTest : MavenCompilingTestCase() {
 
     assertCopied("target/classes/text.css", cssContent)
     assertCopied("target/classes/text.txt", "hello 1")
-    setFileContent(txt, "hello 2", true)
+    val content = "hello 2"
+    Files.write(txt.toNioPath(), content.toByteArray(StandardCharsets.UTF_8))
 
     compileFile("project", txt)
 
