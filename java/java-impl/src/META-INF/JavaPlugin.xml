@@ -399,7 +399,6 @@
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider"/>
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity"/>
-    <postStartupActivity implementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsMigrationActivity"/>
     <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.CompilerCacheStartupActivity"/>
 
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactManager"
