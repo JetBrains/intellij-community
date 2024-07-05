@@ -187,10 +187,15 @@ object DebuggerDiagnosticsUtil {
     else {
       try {
         recursionTracker.set(true)
-        return listOf(getDebuggerStateOverview(process),
-                      createThreadsAttachment(process),
-                      Attachment("IDE thread dump", noErr { ThreadDumper.dumpThreadsToString() })) +
-               process.suspendManager.eventContexts.map { it.toAttachment() }
+
+        return buildList {
+          add(getDebuggerStateOverview(process))
+          if (process.isAttached) {
+            add(createThreadsAttachment(process))
+          }
+          add(Attachment("IDE thread dump", noErr { ThreadDumper.dumpThreadsToString() }))
+          addAll(process.suspendManager.eventContexts.map { it.toAttachment() })
+        }
       }
       finally {
         recursionTracker.remove()
