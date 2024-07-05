@@ -2,7 +2,13 @@
 package com.intellij.java.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
+import com.intellij.codeInsight.daemon.LineMarkerInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
@@ -295,6 +301,15 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
         """);
       List<GutterMark> marks = myFixture.findGuttersAtCaret();
       assertEquals(1, marks.size());
+      GutterMark mark = marks.get(0);
+      assertTrue(mark instanceof LineMarkerInfo.LineMarkerGutterIconRenderer);
+      LineMarkerInfo.LineMarkerGutterIconRenderer gutterIconRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)mark;
+      PsiElement element = gutterIconRenderer.getLineMarkerInfo().getElement();
+      assertEquals(AllIcons.RunConfigurations.TestState.Run, gutterIconRenderer.getIcon());
+      assertTrue(element instanceof PsiIdentifier);
+      assertEquals("main", element.getText());
+      PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      assertEquals("BBBBBB", psiClass.getName());
     });
   }
 }
