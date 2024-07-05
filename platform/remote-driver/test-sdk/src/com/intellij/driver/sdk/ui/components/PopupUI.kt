@@ -46,7 +46,7 @@ open class PopupUiComponent(data: ComponentData) : UiComponent(data) {
   }
 }
 
-@Remote("javax.swing.JMenu")
+@Remote("com.intellij.openapi.actionSystem.impl.ActionMenuItem")
 interface PopupItemRef {
 
   fun isSelected(): Boolean
