@@ -64,16 +64,6 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
     add(lastRange to document.getText(lastRange).indent)
   }
 
-  private fun <T> List<T>.indexOfFirst(start: Int, predicate: (T) -> Boolean): Int {
-    var index = start
-    for (item in subList(index, this.size)) {
-      if (predicate(item))
-        return index
-      index++
-    }
-    return -1
-  }
-
   private fun containsValuableSymbols(line: String) = line.any(::isValuableCharacter)
   private fun isValuableCharacter(c: Char) = c.isLetterOrDigit() || valuableCharacters.contains(c)
   private val valuableCharacters = arrayOf('+', '-', '*', '%', '=', '&', '|', '@', '$', '?', '_')
@@ -85,9 +75,11 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
     for (i in lineRanges.indices) {
       val (range, indent) = lineRanges[i]
       val line = document.getText(range)
-      if (line.isBlank() || !containsValuableSymbols(line) || line.dropWhile { it.isWhitespace() }.startsWith("#")){
-        continue
-      }
+      if (
+        line.isBlank() ||
+        !containsValuableSymbols(line) ||
+        line.dropWhile { it.isWhitespace() }.startsWith("#")
+      ) continue
 
       val lastInScope = lineRanges
         .asSequence()
