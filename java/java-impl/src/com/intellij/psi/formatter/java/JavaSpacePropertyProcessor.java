@@ -644,7 +644,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private int getLinesAroundField() {
     boolean isParentAClass = isClass(myParent);
-    if (isParentAClass && isFieldWithAnnotations(myChild2)) {
+    if (isParentAClass && AnnotationUtil.isFieldWithAnnotations(myChild2)) {
       return myJavaSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
     } else if (isParentAClass) {
       return mySettings.BLANK_LINES_AROUND_FIELD;
@@ -663,15 +663,6 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private static boolean isAbstractMethod(ASTNode node) {
     return node.getPsi() instanceof PsiMethod method && JavaFormatterUtil.isExplicitlyAbstract(method);
-  }
-
-  private static boolean isFieldWithAnnotations(@NotNull ASTNode node) {
-    if (node.getElementType() != JavaElementType.FIELD) return false;
-
-    ASTNode child = node.getFirstChildNode();
-    if (child == null || child.getElementType() != JavaElementType.MODIFIER_LIST) return false;
-
-    return child.findChildByType(JavaElementType.ANNOTATION) != null;
   }
 
   @Override
