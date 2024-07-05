@@ -9,6 +9,7 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.progress.util.PotemkinProgress
@@ -501,7 +502,16 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
     val t = System.currentTimeMillis()
     val permit = acquisitor()
     val elapsed = System.currentTimeMillis() - t
-    WriteDelayDiagnostics.registerWrite(elapsed)
+    try {
+      WriteDelayDiagnostics.registerWrite(elapsed)
+    }
+    catch (thr: Throwable) {
+      // we can be canceled here, it is an expected behavior
+      if (thr !is ControlFlowException) {
+        // Warn instead of error to avoid breaking acquiring the lock
+        logger.warn("Failed to register write lock in diagnostics service", thr)
+      }
+    }
     if (logger.isDebugEnabled) {
       if (elapsed != 0L) {
         logger.debug("Write action wait time: $elapsed")
