@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -182,7 +183,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
 
     boolean isEDT = EDT.isCurrentThreadEdt();
     boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
-    boolean rulesSuppressed = isEDT && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
+    boolean rulesSuppressed = isEDT && LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     boolean rulesAllowed = !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
     Object answer = getDataInner(dataId, rulesAllowed, !noRulesSection);
 

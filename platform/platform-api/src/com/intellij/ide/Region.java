@@ -37,6 +37,10 @@ public enum Region {
     return IdeBundle.message(displayKey);
   }
 
+  public String getDisplayKey() {
+    return displayKey;
+  }
+
   public int getDisplayOrdinal() {
     return displayOrdinal;
   }

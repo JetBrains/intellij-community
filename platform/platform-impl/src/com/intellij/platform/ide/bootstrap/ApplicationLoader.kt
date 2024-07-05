@@ -16,16 +16,14 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.ide.plugins.saveBundledPluginsState
-import com.intellij.ide.ui.IconMapLoader
-import com.intellij.ide.ui.LafManager
-import com.intellij.ide.ui.NotRoamableUiSettings
-import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.*
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.html.initGlobalStyleSheet
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppMode
 import com.intellij.idea.IdeStarter
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.application.*
@@ -117,6 +115,15 @@ internal suspend fun loadApp(
       }
     }
 
+    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless() || euaDocumentDeferred.await() == null) {
+      null
+    }
+    else {
+      async(CoroutineName("language and region")) {
+        getLanguageAndRegionDialogIfNeeded()
+      }
+    }
+
     initServiceContainerJob.join()
 
     val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
@@ -187,9 +194,20 @@ internal suspend fun loadApp(
       )
 
       if (!app.isHeadlessEnvironment) {
-        euaTaskDeferred?.await()?.let {
+        languageAndRegionTaskDeferred?.await()?.let {
           cssInit?.join()
-          it()
+          val languageOkPressed = it()
+          euaTaskDeferred?.await()?.let { 
+            it()
+          if (languageOkPressed) {
+            val localizationStateService = LocalizationStateService.getInstance() ?: return@let
+            if (localizationStateService.getLastSelectedLocale() != localizationStateService.getSelectedLocale()) {
+              preloadJob.cancel()
+              applicationStarter.cancel()
+              ApplicationManager.getApplication().restart()
+            }
+          }
+          }
         }
       }
 

@@ -22,4 +22,5 @@ public interface LocalizationStateService {
 
   @NotNull String getSelectedLocale();
   void setSelectedLocale(@NotNull String locale);
+  String getLastSelectedLocale();
 }
