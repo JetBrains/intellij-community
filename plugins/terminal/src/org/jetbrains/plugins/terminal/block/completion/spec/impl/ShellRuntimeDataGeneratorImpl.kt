@@ -17,6 +17,7 @@ internal class ShellRuntimeDataGeneratorImpl<T>(
   }
 
   override fun toString(): String {
-    return "IJShellRuntimeDataGenerator${debugName?.let { ": $debugName" } ?: ""}"
+    return "ShellRuntimeDataGeneratorImpl(debugName=$debugName)"
   }
+
 }
