@@ -643,28 +643,15 @@ abstract class MavenTestCase : UsefulTestCase() {
     setFileContent(file, createPomXml(xml))
   }
 
-  private fun setFileContent(file: VirtualFile, content: String) {
-    try {
-      WriteAction.runAndWait<IOException> {
-        doSetFileContent(file, content)
-      }
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
-  }
-
   protected suspend fun setPomContentAsync(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
     setFileContentAsync(file, createPomXml(xml))
   }
 
   private suspend fun setFileContentAsync(file: VirtualFile, content: String) {
-    writeAction {
-      doSetFileContent(file, content)
-    }
+    setFileContent(file, content)
   }
 
-  private fun doSetFileContent(file: VirtualFile, content: String) {
+  private fun setFileContent(file: VirtualFile, content: String) {
     Files.write(file.toNioPath(), content.toByteArray(StandardCharsets.UTF_8))
     LocalFileSystem.getInstance().refreshFiles(listOf(file))
   }
