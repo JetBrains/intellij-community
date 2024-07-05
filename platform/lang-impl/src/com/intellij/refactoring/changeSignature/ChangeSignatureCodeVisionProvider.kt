@@ -84,9 +84,12 @@ class ChangeSignatureCodeVisionProvider : CodeVisionProvider<Unit> {
         refactoring.oldSignature.name,
         ""
       )
-      return CodeVisionState.Ready(listOf(
-        refactoring.declaration.textRange to ChangeSignatureCodeVisionEntry(project, text, tooltip, id)
-      ))
+      val element = refactoring.declarationPointer.element
+      if (element != null) {
+        return CodeVisionState.Ready(listOf(
+          element.textRange to ChangeSignatureCodeVisionEntry(project, text, tooltip, id)
+        ))
+      }
     }
 
     return CodeVisionState.READY_EMPTY
