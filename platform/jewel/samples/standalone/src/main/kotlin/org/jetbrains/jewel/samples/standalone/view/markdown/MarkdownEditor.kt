@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.darkrockstudios.libraries.mpfilepicker.FilePicker
 import com.darkrockstudios.libraries.mpfilepicker.JvmFile
@@ -127,14 +126,13 @@ private fun Editor(
     onMarkdownChange: (String) -> Unit,
     modifier: Modifier,
 ) {
-    val monospacedTextStyle = JewelTheme.defaultTextStyle.copy(fontFamily = FontFamily.Monospace)
     Box(modifier.padding(16.dp)) {
         TextArea(
             value = currentMarkdown,
             onValueChange = onMarkdownChange,
             modifier = Modifier.align(Alignment.TopStart).fillMaxWidth(),
             undecorated = true,
-            textStyle = monospacedTextStyle,
+            textStyle = JewelTheme.editorTextStyle,
         )
     }
 }
