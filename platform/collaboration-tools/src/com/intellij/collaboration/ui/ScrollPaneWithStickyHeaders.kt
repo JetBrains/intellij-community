@@ -14,8 +14,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Point
-import java.awt.event.ContainerEvent
-import java.awt.event.ContainerListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -29,11 +27,11 @@ object ScrollPaneWithStickyHeaders {
   fun create(components: List<Pair<JComponent, Boolean>>): JComponent {
     val stickyLayer = NonOpaquePanel(BorderLayout())
 
-    val topStickedPane = OpaquePanel(VerticalFlowLayout(0, 0)).apply {
+    val topStuckPane = OpaquePanel(VerticalFlowLayout(0, 0)).apply {
       border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.BOTTOM)
     }
 
-    val bottomStickedPane = OpaquePanel(VerticalFlowLayout(0, 0)).apply {
+    val bottomStuckPane = OpaquePanel(VerticalFlowLayout(0, 0)).apply {
       border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.BOTTOM)
     }
 
@@ -44,9 +42,8 @@ object ScrollPaneWithStickyHeaders {
     val stickyElements = mutableMapOf<Component, StickyElement>()
 
     components.forEach { (component, isSticky) ->
-
       if (isSticky) {
-        val (wrapper, element) = addStickySection(scrollPane, scrolledBody, topStickedPane, bottomStickedPane, component, stickyElements.values)
+        val (wrapper, element) = addStickySection(scrollPane, scrolledBody, topStuckPane, bottomStuckPane, component, stickyElements.values)
         stickyElements[wrapper] = element
       }
       else scrolledBody.add(component)
@@ -58,30 +55,41 @@ object ScrollPaneWithStickyHeaders {
       scrollPane.border = JBUI.Borders.empty()
 
       scrollPane.viewport.addChangeListener {
-        val position = scrollPane.viewport.viewPosition
-        val topMargin = topStickedPane.height
-        val bottomMargin = bottomStickedPane.height
+        val scrollPosition = scrollPane.viewport.viewPosition.y
+        var topLimit = 0
+        var bottomLimit = scrollPane.height
 
-        scrolledBody.components.mapNotNull { stickyElements[it] }
-          .forEach { elem ->
-            var topLimit = position.y + topMargin
-            if (elem.isInTop) topLimit -= elem.wrapperBody.height
-
-            var bottomLimit = position.y + scrollPane.height - bottomMargin
-            if (elem.isInBottom) bottomLimit += elem.wrapperBody.height
-
-            elem.underTopLimit = elem.wrapperBody.y > topLimit
-            elem.aboveBottomLimit = elem.wrapperBody.y + elem.wrapperBody.height < bottomLimit
-
-            elem.move()
-
-            revalidate()
-            repaint()
+        val elements = scrolledBody.components.mapNotNull { stickyElements[it] }
+        elements.forEach { element ->
+          val elemPosition = element.wrapperBody.y - scrollPosition
+          if (elemPosition < topLimit) {
+            element.underTopLimit = false
+            topLimit += element.wrapperBody.height
           }
+          else {
+            element.underTopLimit = true
+          }
+        }
+
+        elements.reversed().forEach { element ->
+          val elemPosition = element.wrapperBody.y + element.wrapperBody.height - scrollPosition
+          if (elemPosition > bottomLimit) {
+            element.aboveBottomLimit = false
+            bottomLimit -= element.wrapperBody.height
+          }
+          else {
+            element.aboveBottomLimit = true
+          }
+
+          element.move()
+        }
+
+        revalidate()
+        repaint()
       }
 
-      stickyLayer.add(topStickedPane, BorderLayout.NORTH)
-      stickyLayer.add(bottomStickedPane, BorderLayout.SOUTH)
+      stickyLayer.add(topStuckPane, BorderLayout.NORTH)
+      stickyLayer.add(bottomStuckPane, BorderLayout.SOUTH)
 
       add(stickyLayer, 1 as Any)
       add(scrollPane, 0 as Any)
@@ -89,19 +97,19 @@ object ScrollPaneWithStickyHeaders {
   }
 
   private fun addStickySection(
-    scrollPane: JBScrollPane, scrolledBody: JPanel, topStickedPane: JPanel, bottomStickedPane: JPanel,
+    scrollPane: JBScrollPane, scrolledBody: JPanel, topStuckPane: JPanel, bottomStuckPane: JPanel,
     comp: JComponent, stickyElems: Iterable<StickyElement>,
   ): Pair<JComponent, StickyElement> {
 
-    val wrapperInBody = createWrapper(false)
+    val wrapperInBody = createWrapper()
     wrapperInBody.add(comp)
     scrolledBody.add(wrapperInBody)
 
-    val wrapperInTop = createWrapper()
-    topStickedPane.add(wrapperInTop)
+    val wrapperInTop = createWrapper().apply { isVisible = false }
+    topStuckPane.add(wrapperInTop)
 
-    val wrapperInBottom = createWrapper()
-    bottomStickedPane.add(wrapperInBottom)
+    val wrapperInBottom = createWrapper().apply { isVisible = false }
+    bottomStuckPane.add(wrapperInBottom)
 
     return wrapperInBody to StickyElement(
       comp,
@@ -114,22 +122,11 @@ object ScrollPaneWithStickyHeaders {
     )
   }
 
-  private fun createWrapper(hiding: Boolean = true): JPanel {
+  private fun createWrapper(): JPanel {
     val panel = NonOpaquePanel()
 
     panel.name = "wrapper"
     panel.border = IdeBorderFactory.createBorder(OnePixelDivider.BACKGROUND, SideBorder.TOP)
-    if (hiding) {
-      panel.addContainerListener(object : ContainerListener {
-        override fun componentAdded(e: ContainerEvent?) {
-          panel.isVisible = e?.child?.isVisible ?: false
-        }
-
-        override fun componentRemoved(e: ContainerEvent?) {
-          panel.isVisible = false
-        }
-      })
-    }
     return panel
   }
 
@@ -175,6 +172,7 @@ object ScrollPaneWithStickyHeaders {
         !underTopLimit && !isInTop -> {
           wrapperTop.add(component)
           wrapperTop.isVisible = true
+          wrapperBottom.isVisible = false
           dummy.preferredSize = component.preferredSize
           wrapperBody.add(dummy)
         }
@@ -186,6 +184,7 @@ object ScrollPaneWithStickyHeaders {
         }
         !aboveBottomLimit && !isInBottom -> {
           wrapperBottom.isVisible = true
+          wrapperTop.isVisible = false
           wrapperBottom.add(component)
           dummy.preferredSize = component.preferredSize
           wrapperBody.add(dummy)
