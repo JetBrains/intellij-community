@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -263,8 +263,9 @@ public final class LoadTextUtil {
   }
 
   private static @NotNull Charset getDefaultCharsetFromEncodingManager(@NotNull VirtualFile virtualFile) {
-    Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
-    return ObjectUtils.notNull(specifiedExplicitly, EncodingRegistry.getInstance().getDefaultCharset());
+    EncodingRegistry encodingRegistry = EncodingRegistry.getInstance();
+    Charset specifiedExplicitly = encodingRegistry.getEncoding(virtualFile, true);
+    return specifiedExplicitly == null ? encodingRegistry.getDefaultCharset() : specifiedExplicitly;
   }
 
   private static @NotNull DetectResult detectInternalCharsetAndSetBOM(@NotNull VirtualFile file,
