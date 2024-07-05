@@ -722,7 +722,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION.registerFactory(RestrictedRetentionForExpressionAnnotationFactory)
 
-        NO_VALUE_FOR_PARAMETER.registerFactory(AddConstructorParameterFromSuperTypeCallFix)
+        NO_VALUE_FOR_PARAMETER.registerFactory(AddConstructorParameterFromSuperTypeCallFixFactory)
         NO_VALUE_FOR_PARAMETER.registerFactory(SpecifyRemainingArgumentsByNameFixFactory)
 
         UNEXPECTED_TRAILING_LAMBDA_ON_A_NEW_LINE.registerFactory(AddSemicolonBeforeLambdaExpressionFix.Factory)

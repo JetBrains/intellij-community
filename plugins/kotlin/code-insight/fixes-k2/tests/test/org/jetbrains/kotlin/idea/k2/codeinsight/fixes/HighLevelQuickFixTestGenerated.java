@@ -5573,7 +5573,69 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall")
+    public static class AddConstructorParameterFromSuperTypeCall extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("backticks.kt")
+        public void testBackticks() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/backticks.kt");
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/basic.kt");
+        }
+
+        @TestMetadata("basic2.kt")
+        public void testBasic2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/basic2.kt");
+        }
+
+        @TestMetadata("basic3.kt")
+        public void testBasic3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/basic3.kt");
+        }
+
+        @TestMetadata("basic4.kt")
+        public void testBasic4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/basic4.kt");
+        }
+
+        @TestMetadata("fewerArguments.kt")
+        public void testFewerArguments() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/fewerArguments.kt");
+        }
+
+        @TestMetadata("generics.kt")
+        public void testGenerics() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/generics.kt");
+        }
+
+        @TestMetadata("hasDifferentNameParameter.kt")
+        public void testHasDifferentNameParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/hasDifferentNameParameter.kt");
+        }
+
+        @TestMetadata("hasSameNameParameter.kt")
+        public void testHasSameNameParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/hasSameNameParameter.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addConstructorParameterFromSuperTypeCall/typeParameter.kt");
+        }
+    }
 
 
 
