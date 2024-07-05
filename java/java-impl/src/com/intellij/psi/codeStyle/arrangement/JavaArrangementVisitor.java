@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
-import com.intellij.psi.formatter.java.AnnotationUtil;
+import com.intellij.psi.formatter.java.JavaFormatterAnnotationUtil;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -544,7 +544,7 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   }
 
   private static void parseModifierListOwner(@NotNull PsiModifierListOwner modifierListOwner, @NotNull JavaElementArrangementEntry entry) {
-    if (AnnotationUtil.isFieldWithAnnotations(modifierListOwner)) {
+    if (JavaFormatterAnnotationUtil.isFieldWithAnnotations(modifierListOwner)) {
       entry.setHasAnnotation();
     }
 

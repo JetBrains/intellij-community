@@ -2,24 +2,18 @@
 package com.intellij.psi.formatter.java
 
 import com.intellij.lang.ASTNode
+import com.intellij.lang.tree.util.children
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
-import com.intellij.psi.formatter.java.TypeAnnotationUtil.KNOWN_TYPE_ANNOTATIONS
-import com.intellij.psi.formatter.java.TypeAnnotationUtil.isTypeAnnotation
+import com.intellij.psi.impl.source.tree.JavaElementType
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.PsiTreeUtil
 
-/**
- * This class was designed to handle detection of type annotation during building blocks phase of Java formatter.
- * As there is no resolving available, it relies on local import table and known type annotations.
- * @see KNOWN_TYPE_ANNOTATIONS
- * @see isTypeAnnotation
- */
-internal object TypeAnnotationUtil {
+internal object JavaFormatterAnnotationUtil {
   private val KNOWN_TYPE_ANNOTATIONS: Set<String> = setOf(
     "org.jetbrains.annotations.NotNull",
     "org.jetbrains.annotations.Nullable"
@@ -27,7 +21,8 @@ internal object TypeAnnotationUtil {
 
   /**
    * Checks if the given ASTNode represents a type annotation.
-   *
+   * This method was designed to handle detection of type annotation during building blocks phase of Java formatter.
+   * As there is no resolving available, it relies on local import table and known type annotations.
    * @param annotation the ASTNode to check if it is a type annotation or not.
    * @return true if the ASTNode represents a type annotation, false otherwise
    */
@@ -40,7 +35,7 @@ internal object TypeAnnotationUtil {
 
     val next = PsiTreeUtil.skipSiblingsForward(node, PsiWhiteSpace::class.java, PsiAnnotation::class.java)
     if (next is PsiKeyword) return false
-    
+
     val psiReference: PsiJavaCodeReferenceElement = node.nameReferenceElement ?: return false
     if (psiReference.isQualified) {
       return KNOWN_TYPE_ANNOTATIONS.contains(getCanonicalTextOfTheReference(psiReference))
@@ -53,13 +48,37 @@ internal object TypeAnnotationUtil {
     }
   }
 
-  private fun getImportedTypeAnnotations(file : PsiJavaFile): Set<String> = CachedValuesManager.getCachedValue(file) {
-      val importList = file.importList ?: return@getCachedValue CachedValueProvider.Result(emptySet(), PsiModificationTracker.MODIFICATION_COUNT)
-      val filteredAnnotations = KNOWN_TYPE_ANNOTATIONS.filter { isAnnotationInImportList(it, importList) }
-        .mapNotNull { fqn -> fqn.split(".").lastOrNull() }
-        .toSet()
-      CachedValueProvider.Result.create(filteredAnnotations, PsiModificationTracker.MODIFICATION_COUNT)
-    }
+  /**
+   * Determines if the given ASTNode represents a Java field with at least one field annotation.
+   * @param node the ASTNode to be checked.
+   * @return true if the ASTNode represents a field and it has at least one field annotation, false otherwise.
+   */
+  @JvmStatic
+  fun isFieldWithAnnotations(node: ASTNode): Boolean {
+    if (node.elementType !== JavaElementType.FIELD) return false
+
+    val modifierList = node.firstChildNode ?: return false
+    if (modifierList.elementType != JavaElementType.MODIFIER_LIST) return false
+    val annotations = modifierList.children().takeWhile { it.elementType == JavaElementType.ANNOTATION }
+    return annotations.any { !isTypeAnnotation(it) }
+  }
+
+  /**
+   *  See [isFieldWithAnnotations]
+   */
+  @JvmStatic
+  fun isFieldWithAnnotations(field: PsiModifierListOwner): Boolean {
+    return isFieldWithAnnotations(field.node)
+  }
+
+  private fun getImportedTypeAnnotations(file: PsiJavaFile): Set<String> = CachedValuesManager.getCachedValue(file) {
+    val importList = file.importList
+                     ?: return@getCachedValue CachedValueProvider.Result(emptySet(), PsiModificationTracker.MODIFICATION_COUNT)
+    val filteredAnnotations = KNOWN_TYPE_ANNOTATIONS.filter { isAnnotationInImportList(it, importList) }
+      .mapNotNull { fqn -> fqn.split(".").lastOrNull() }
+      .toSet()
+    CachedValueProvider.Result.create(filteredAnnotations, PsiModificationTracker.MODIFICATION_COUNT)
+  }
 
   private fun isAnnotationInImportList(annotationFqn: String, importList: PsiImportList): Boolean {
     val packageName = StringUtil.getPackageName(annotationFqn)

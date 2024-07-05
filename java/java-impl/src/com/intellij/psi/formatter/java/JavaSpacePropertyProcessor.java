@@ -644,7 +644,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   private int getLinesAroundField() {
     boolean isParentAClass = isClass(myParent);
-    if (isParentAClass && AnnotationUtil.isFieldWithAnnotations(myChild2)) {
+    if (isParentAClass && JavaFormatterAnnotationUtil.isFieldWithAnnotations(myChild2)) {
       return myJavaSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
     } else if (isParentAClass) {
       return mySettings.BLANK_LINES_AROUND_FIELD;

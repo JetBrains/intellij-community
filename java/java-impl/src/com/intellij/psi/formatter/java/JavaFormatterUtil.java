@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.psi.formatter.java.TypeAnnotationUtil.isTypeAnnotation;
+import static com.intellij.psi.formatter.java.JavaFormatterAnnotationUtil.isTypeAnnotation;
 
 public final class JavaFormatterUtil {
   /**
