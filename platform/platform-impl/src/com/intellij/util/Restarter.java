@@ -239,6 +239,8 @@ public final class Restarter {
 
     if (SystemInfo.isUnix && !SystemInfo.isMac) setDesktopStartupId(processBuilder);
 
+    if (SystemInfo.isWindows) processBuilder.environment().remove("IJ_LAUNCHER_DEBUG");
+
     processBuilder.start();
   }
 
