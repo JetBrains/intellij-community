@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -259,7 +258,7 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
     val pinned = Toggleable.isSelected(e.presentation)
     e.presentation.icon = if (!pinned) AllIcons.General.Pin else AllIcons.General.PinSelected
     e.presentation.selectedIcon = if (!pinned) AllIcons.General.PinHovered else AllIcons.General.PinSelectedHovered
-    e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
+    e.presentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION, pinned)
   }
 }
 

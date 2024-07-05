@@ -90,6 +90,9 @@ object ActionUtil {
   val ALWAYS_VISIBLE_GROUP: Key<Boolean> = Key.create("ALWAYS_VISIBLE_GROUP")
 
   @JvmField
+  val ALWAYS_VISIBLE_INLINE_ACTION: Key<Boolean> = Key.create("ALWAYS_VISIBLE_INLINE_ACTION")
+
+  @JvmField
   val ALLOW_PlAIN_LETTER_SHORTCUTS: Key<Boolean> = Key.create("ALLOW_PlAIN_LETTER_SHORTCUTS")
 
   @ApiStatus.Internal

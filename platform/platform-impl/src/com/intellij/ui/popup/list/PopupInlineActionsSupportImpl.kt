@@ -4,7 +4,7 @@ package com.intellij.ui.popup.list
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
-import com.intellij.openapi.actionSystem.impl.ActionMenu
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl.ActionItem
@@ -64,11 +64,11 @@ internal class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupI
     val buttons = ArrayList<JComponent>()
 
     inlineItems.forEachIndexed { index, item ->
-      if (isSelected || item.getClientProperty(ActionMenu.ALWAYS_VISIBLE) == true) {
+      if (isSelected || item.getClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION) == true) {
         buttons.add(createActionButton(item, index == activeIndex, isSelected))
       }
     }
-    if (isSelected && hasMoreButton(value)) {
+    if ((isSelected || buttons.isNotEmpty()) && hasMoreButton(value)) {
       val icon = when {
         myStep.isFinal(value) -> AllIcons.Actions.More
         else -> AllIcons.Icons.Ide.MenuArrow
