@@ -7,6 +7,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.loadDescriptorsFromCustomPluginDir
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -29,7 +30,10 @@ internal fun enableL10nIfPluginInstalled(previousVersion: String?, oldPluginsDir
     return
   }
   localizationPlugins.firstNotNullOfOrNull { getLanguageTagFromDescriptor(it) }?.let {
-    if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+    if (LocalizationStateService.getInstance() != null) {
+      LocalizationStateService.getInstance()?.setSelectedLocale(it)
+    }
+    else if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
       EarlyAccessRegistryManager.setString("i18n.locale", it)
       EarlyAccessRegistryManager.syncAndFlush()
     }
