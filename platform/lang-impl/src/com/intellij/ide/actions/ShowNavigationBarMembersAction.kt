@@ -2,9 +2,14 @@
 package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.ui.ExperimentalUI
 
-class ShowNavigationBarMembersAction: ViewNavigationBarMembersAction() {
+internal class ShowNavigationBarMembersAction : ViewNavigationBarMembersAction() {
+  init {
+    templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
+
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = ExperimentalUI.isNewUI()
