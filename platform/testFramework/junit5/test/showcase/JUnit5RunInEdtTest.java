@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework.junit5.showcase;
 
 import com.intellij.ide.IdeEventQueue;
@@ -16,13 +16,15 @@ import java.util.stream.Stream;
 
 final class JUnit5RunInEdtTest {
 
-  static final class UnannotatedTest {
+  @Nested
+  final class UnannotatedTest {
 
     @BeforeAll
     static void beforeAll() {
       Assertions.assertFalse(EDT.isCurrentThreadEdt());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     UnannotatedTest() {
       Assertions.assertFalse(EDT.isCurrentThreadEdt());
     }
@@ -63,13 +65,15 @@ final class JUnit5RunInEdtTest {
   }
 
   @RunInEdt(allMethods = false) // extension is registered, but methods are not annotated
-  static final class ExtensionRegisteredTest {
+  @Nested
+  final class ExtensionRegisteredTest {
 
     @BeforeAll
     static void beforeAll() {
       Assertions.assertFalse(EDT.isCurrentThreadEdt());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     ExtensionRegisteredTest() {
       Assertions.assertFalse(EDT.isCurrentThreadEdt());
     }
@@ -110,7 +114,8 @@ final class JUnit5RunInEdtTest {
   }
 
   @RunInEdt(allMethods = false) // required to make the extension able to handle lifecycle methods
-  static final class MethodLevelAnnotationTest {
+  @Nested
+  final class MethodLevelAnnotationTest {
 
     @RunMethodInEdt
     @BeforeAll
@@ -119,6 +124,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     @RunMethodInEdt
     MethodLevelAnnotationTest() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
@@ -178,7 +184,8 @@ final class JUnit5RunInEdtTest {
   }
 
   @RunInEdt(allMethods = false, writeIntent = true) // required to make the extension able to handle lifecycle methods
-  static final class MethodLevelAnnotationTestWithDefaultWriteIntent {
+  @Nested
+  final class MethodLevelAnnotationTestWithDefaultWriteIntent {
 
     @RunMethodInEdt
     @BeforeAll
@@ -187,6 +194,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertTrue(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     @RunMethodInEdt
     MethodLevelAnnotationTestWithDefaultWriteIntent() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
@@ -246,7 +254,8 @@ final class JUnit5RunInEdtTest {
   }
 
   @RunInEdt(allMethods = false) // required to make the extension able to handle lifecycle methods
-  static final class MethodLevelAnnotationTestWithPerMethodWriteIntent {
+  @Nested
+  final class MethodLevelAnnotationTestWithPerMethodWriteIntent {
 
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.True)
     @BeforeAll
@@ -255,6 +264,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertTrue(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.True)
     MethodLevelAnnotationTestWithPerMethodWriteIntent() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
@@ -315,7 +325,8 @@ final class JUnit5RunInEdtTest {
 
 
   @RunInEdt(allMethods = false, writeIntent = true) // required to make the extension able to handle lifecycle methods
-  static final class MethodLevelAnnotationTestWithoutPerMethodWriteIntent {
+  @Nested
+  final class MethodLevelAnnotationTestWithoutPerMethodWriteIntent {
 
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
     @BeforeAll
@@ -324,6 +335,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
     MethodLevelAnnotationTestWithoutPerMethodWriteIntent() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
@@ -383,7 +395,8 @@ final class JUnit5RunInEdtTest {
   }
 
   @RunInEdt
-  static final class ClassLevelAnnotationTest {
+  @Nested
+  final class ClassLevelAnnotationTest {
 
     @BeforeAll
     static void beforeAll() {
@@ -391,6 +404,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     ClassLevelAnnotationTest() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
       Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
@@ -438,7 +452,8 @@ final class JUnit5RunInEdtTest {
   }
 
   @RunInEdt(writeIntent = true)
-  static final class ClassLevelAnnotationTestWithGlobalWriteIntent {
+  @Nested
+  final class ClassLevelAnnotationTestWithGlobalWriteIntent {
 
     @BeforeAll
     static void beforeAll() {
@@ -446,6 +461,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertTrue(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
 
+    @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     ClassLevelAnnotationTestWithGlobalWriteIntent() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
       Assertions.assertTrue(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
@@ -496,7 +512,8 @@ final class JUnit5RunInEdtTest {
   static abstract class AnnotatedClass {
   }
 
-  static final class InheritorOfAnnotatedClassTest extends AnnotatedClass {
+  @Nested
+  final class InheritorOfAnnotatedClassTest extends AnnotatedClass {
 
     @Test
     void testMethod() {
