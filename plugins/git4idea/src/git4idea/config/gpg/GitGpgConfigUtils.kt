@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config.gpg
 
 import com.intellij.openapi.diagnostic.logger
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vfs.VirtualFile
 import git4idea.commands.GitImpl
 import git4idea.config.GitConfigUtil
 import git4idea.repo.GitRepository
@@ -18,8 +19,8 @@ import kotlinx.coroutines.withContext
 @Throws(VcsException::class)
 private fun readGitGpgConfig(repository: GitRepository): RepoConfig {
   // TODO: "tag.gpgSign" ?
-  val isEnabled = GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN))
-  if (isEnabled != true) return RepoConfig(null)
+  val isEnabled = isGpgSignEnabled(repository.project, repository.root)
+  if (!isEnabled) return RepoConfig(null)
   val keyValue = GitConfigUtil.getValue(repository.project, repository.root, GitConfigUtil.GPG_COMMIT_SIGN_KEY)
   if (keyValue == null) return RepoConfig(null)
   return RepoConfig(GpgKey(keyValue.trim()))
@@ -77,6 +78,16 @@ private fun parseSecretKeys(output: String): SecretKeys {
 private fun checkKeyCapabilities(capabilities: String): Boolean {
   if (capabilities.contains("D")) return false // key Disabled
   return capabilities.contains("s") || capabilities.contains("S")  // can Sign
+}
+
+fun isGpgSignEnabled(project: Project, root: VirtualFile): Boolean {
+  try {
+    return GitConfigUtil.getBooleanValue(GitConfigUtil.getValue(project, root, GitConfigUtil.GPG_COMMIT_SIGN)) == true
+  }
+  catch (e: VcsException) {
+    logger<GitConfigUtil>().warn("Cannot get gpg.commitSign config value", e)
+    return false
+  }
 }
 
 @Throws(VcsException::class)
