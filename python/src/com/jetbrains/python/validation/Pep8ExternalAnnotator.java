@@ -261,6 +261,9 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
     Project project = file.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
 
+    final InspectionProfile profile = InspectionProjectProfileManager.getInstance(file.getProject()).getCurrentProfile();
+    final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.INSPECTION_SHORT_NAME, file);
+
     for (Problem problem : annotationResult.problems) {
       final int line = problem.myLine - 1;
       final int column = problem.myColumn - 1;
@@ -291,6 +294,10 @@ public final class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalA
       }
 
       if (problemElement != null) {
+        if (inspection != null && inspection.isSuppressedFor(problemElement)) {
+          continue;
+        }
+
         TextRange problemRange = problemElement.getTextRange();
         // Multi-line warnings are shown only in the gutter and it's not the desired behavior from the usability point of view.
         // So we register it only on that line where pycodestyle.py found the problem originally.
