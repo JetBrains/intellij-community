@@ -169,9 +169,9 @@ private fun getContainerInfo(ktDeclaration: KtDeclaration): HtmlChunk {
         )
     } ?: HtmlChunk.empty()
 
-    val fileNameSection = ktDeclaration.containingFile
+    val fileNameSection = ktDeclaration.navigationElement.containingFile
         ?.name
-        ?.takeIf { containingSymbol == null }
+        ?.takeIf { ktDeclaration.isTopLevelKtOrJavaMember() }
         ?.let {
             HtmlChunk.fragment(
                 HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
@@ -270,7 +270,7 @@ private fun renderKDoc(
     symbol: KaSymbol,
     stringBuilder: StringBuilder,
 ) {
-    val declaration = symbol.psi as? KtElement
+    val declaration = symbol.psi?.navigationElement as? KtElement
     val kDoc = findKDoc(symbol)
     if (kDoc != null) {
         stringBuilder.renderKDoc(kDoc.contentTag, kDoc.sections)
