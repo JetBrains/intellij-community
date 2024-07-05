@@ -4,6 +4,7 @@ package com.intellij.platform.ide.impl.presentationAssistant
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.LafManager
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionRuntimeRegistrar
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
 import com.intellij.openapi.components.*
@@ -178,9 +179,9 @@ class PresentationAssistant(private val coroutineScope: CoroutineScope) : Persis
       val presenter = ShortcutPresenter(coroutineScope.childScope())
       this.presenter = presenter
       if (showInitialAction) {
-        presenter.showActionInfo(ShortcutPresenter.ActionData(TogglePresentationAssistantAction.ID,
+        presenter.showActionInfo(ShortcutPresenter.ActionData("TogglePresentationAssistantAction",
                                                               project,
-                                                              TogglePresentationAssistantAction.name.get()))
+                                                              ActionsBundle.message("action.TogglePresentationAssistantAction.text")))
       }
     }
     else if (presenter != null) {

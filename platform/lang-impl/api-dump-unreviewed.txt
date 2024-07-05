@@ -13330,10 +13330,6 @@ f:com.intellij.ide.actions.SetShortcutAction
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.ShowNavigationBarMembersAction
-- com.intellij.ide.actions.ViewNavigationBarMembersAction
-- <init>():V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.SynchronizeCurrentFileAction
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
@@ -13422,33 +13418,12 @@ a:com.intellij.ide.actions.bigPopup.ShowFilterAction
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.navbar.HideNavBarAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-f:com.intellij.ide.actions.navbar.NavBarBottomLocationAction
-- com.intellij.ide.actions.navbar.NavBarLocationAction
-- <init>():V
-a:com.intellij.ide.actions.navbar.NavBarLocationAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>(com.intellij.ide.ui.NavBarLocation):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.navbar.NavBarLocationGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.navbar.NavBarTopLocationAction
-- com.intellij.ide.actions.navbar.NavBarLocationAction
-- <init>():V
 f:com.intellij.ide.actions.navbar.ViewNavigationBarAction
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.project.DumbAware

@@ -4676,14 +4676,6 @@ a:com.intellij.ide.actions.MacWindowActionBase
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.MainMenuAsSeparateToolbarAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.MaximizeActiveDialogAction
 - com.intellij.ide.actions.WindowAction
 - <init>():V
@@ -5596,27 +5588,6 @@ f:com.intellij.ide.actions.ViewSourceAction
 - com.intellij.ide.actions.BaseNavigateToSourceAction
 - <init>():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.ViewStatusBarAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-f:com.intellij.ide.actions.ViewToolWindowButtonsAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-f:com.intellij.ide.actions.ViewToolbarAction
-- com.intellij.openapi.actionSystem.ToggleAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 f:com.intellij.ide.actions.WhatsNewAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -5727,12 +5698,6 @@ f:com.intellij.ide.actions.speedSearch.SpeedSearchActionPromoter
 - com.intellij.openapi.actionSystem.ActionPromoter
 - <init>():V
 - promote(java.util.List,com.intellij.openapi.actionSystem.DataContext):java.util.List
-f:com.intellij.ide.actions.toolbar.experimental.ViewToolbarActionsGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 - com.intellij.ui.components.JBList
 - <init>(javax.swing.ListModel,com.intellij.openapi.util.Condition):V
