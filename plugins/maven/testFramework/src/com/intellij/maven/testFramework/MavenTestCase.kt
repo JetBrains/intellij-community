@@ -665,11 +665,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun doSetFileContent(file: VirtualFile, content: String) {
-    val bytes = content.toByteArray(StandardCharsets.UTF_8)
-    val newModificationStamp = file.modificationStamp
-    val newTimeStamp = file.timeStamp
-    MavenLog.LOG.debug("Set file content, modification stamp $newModificationStamp, time stamp $newTimeStamp, file $file")
-    file.setBinaryContent(bytes, newModificationStamp, newTimeStamp)
+    Files.write(file.toNioPath(), content.toByteArray(StandardCharsets.UTF_8))
+    LocalFileSystem.getInstance().refreshFiles(listOf(file))
   }
 
   protected fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {
