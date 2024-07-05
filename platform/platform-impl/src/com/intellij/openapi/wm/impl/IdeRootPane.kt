@@ -269,8 +269,7 @@ open class IdeRootPane internal constructor(
     if (helper.toolbarHolder == null) {
       coroutineScope.launch(rootTask() + ModalityState.any().asContextElement()) {
         withContext(Dispatchers.EDT) {
-          toolbar = createToolbar(coroutineScope.childScope(), frame)
-          northPanel.add(toolbar, 0)
+          setupToolbar()
           toolbar!!.isVisible = isToolbarVisible(mainToolbarActionSupplier = { computeMainActionGroups() })
         }
 
@@ -679,12 +678,20 @@ open class IdeRootPane internal constructor(
           if (!isToolbarVisible) {
             return@withContext
           }
-
-          toolbar = createToolbar(coroutineScope.childScope(), frame)
-          northPanel.add(toolbar, 0)
+          setupToolbar()
         }
         toolbar!!.isVisible = isToolbarVisible
       }
+    }
+  }
+
+  private suspend fun IdeRootPane.setupToolbar() {
+    val newToolbar = createToolbar(coroutineScope.childScope(), frame)
+    // createToolbar method can suspend current computation and toolbar can be initialized in another coroutine
+    // So we have to check if toolbar is null AFTER the createToolbar call. (see IJPL-43557)
+    if (toolbar == null) {
+      toolbar = newToolbar
+      northPanel.add(toolbar, 0)
     }
   }
 
