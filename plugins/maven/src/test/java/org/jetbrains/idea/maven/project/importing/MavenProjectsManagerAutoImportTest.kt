@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -268,7 +269,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
       <artifactId>module</artifactId>
       <version>1</version>
       """.trimIndent())
-    createProjectPom("""
+    replaceContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -276,7 +277,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        <modules>
                          <module>dir/module</module>
                        </modules>
-                       """.trimIndent())
+                       """.trimIndent()))
     scheduleProjectImportAndWaitAsync()
     assertEquals(2, MavenProjectsManager.getInstance(project).getProjects().size)
     val dir = projectRoot.findChild("dir")
@@ -306,7 +307,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     </build>
                     """.trimIndent())
     assertNoPendingProjectForReload()
-    createProjectPom("""
+    replaceContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -322,7 +323,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                            </plugin>
                          </plugins>
                        </build>
-                       """.trimIndent())
+                       """.trimIndent()))
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWaitAsync()
   }
@@ -374,7 +375,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     </build>
                     """.trimIndent())
     assertNoPendingProjectForReload()
-    createProjectPom("""
+    replaceContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -390,7 +391,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                            </plugin>
                          </plugins>
                        </build>
-                       """.trimIndent())
+                       """.trimIndent()))
     assertHasPendingProjectForReload()
     scheduleProjectImportAndWaitAsync()
   }
@@ -419,7 +420,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
         </dependency>
       </dependencies>
       """.trimIndent())
-    createModulePom("m2", """
+    val m2 = createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -427,7 +428,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     importProjectAsync()
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1")
-    createModulePom("m2", """
+    replaceContent(m2, createPomXml("""
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -438,7 +439,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
           <version>4.0</version>
         </dependency>
       </dependencies>
-      """.trimIndent())
+      """.trimIndent()))
     scheduleProjectImportAndWaitAsync()
     assertModuleModuleDeps("m1", "m2")
 
@@ -679,5 +680,12 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   @RequiresEdt
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
+  }
+
+  private fun replaceContent(file: VirtualFile, content: String) {
+    WriteCommandAction.runWriteCommandAction(project, ThrowableComputable<Any?, IOException?> {
+      VfsUtil.saveText(file, content)
+      null
+    } as ThrowableComputable<*, IOException?>)
   }
 }
