@@ -41,7 +41,7 @@ internal class BlockTerminalSession(
   private val textBuffer: TerminalTextBuffer
   internal val controller: JediTerminal
   internal val commandManager: ShellCommandManager
-  internal val commandExecutionManager: ShellCommandExecutionManager
+  internal val commandExecutionManager: IShellCommandExecutionManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
   val commandBlockIntegration: CommandBlockIntegration = shellIntegration.commandBlockIntegration!!
@@ -54,7 +54,7 @@ internal class BlockTerminalSession(
     controller = JediTerminal(ModelUpdatingTerminalDisplay(alarmManager, model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(this)
-    commandExecutionManager = ShellCommandExecutionManager(this, commandManager)
+    commandExecutionManager = ShellCommandExecutionManagerImpl(this, commandManager)
     // Add AlarmManager listener now, because we can't add it in its constructor.
     // Because AlarmManager need to be created before ShellCommandManager
     commandManager.addListener(alarmManager, this)

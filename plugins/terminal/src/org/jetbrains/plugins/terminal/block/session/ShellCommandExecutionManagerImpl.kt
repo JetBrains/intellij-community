@@ -27,7 +27,10 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * Prevents sending shell generator concurrently with other generator or other shell command.
  */
-internal class ShellCommandExecutionManager(private val session: BlockTerminalSession, commandManager: ShellCommandManager) {
+internal class ShellCommandExecutionManagerImpl(
+  private val session: BlockTerminalSession,
+  commandManager: ShellCommandManager,
+) : IShellCommandExecutionManager {
 
   private val listeners: CopyOnWriteArrayList<ShellCommandSentListener> = CopyOnWriteArrayList()
 
@@ -145,7 +148,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   /**
    * If the command could not be executed right now, then we add it to the queue.
    */
-  fun sendCommandToExecute(shellCommand: String) {
+  override fun sendCommandToExecute(shellCommand: String) {
     lock.withLock {
       if (isCommandSent || isCommandRunning) {
         LOG.info("Command '$shellCommand' is postponed until currently running command is finished")
@@ -164,7 +167,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
    * If the terminal is executing user command, then queued Key Bindings could be lost.
    * If a new command starts after the Key Binding execution is queued, then queued Key Binding could be lost and not applied.
    */
-  internal fun sendKeyBinding(keyBinding: KeyBinding) {
+  override fun sendKeyBinding(keyBinding: KeyBinding) {
     lock.withLock {
       scheduledKeyBindings.offer(keyBinding)
     }
@@ -178,7 +181,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
    * This does not execute command immediately, rather adds it to queue to be
    * executed when other commands\generators are finished and the shell is free.
    */
-  fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
+  override fun runGeneratorAsync(shellCommand: String): Deferred<ShellCommandResult> {
     val generator = Generator(shellCommand)
     lock.withLock {
       scheduledGenerators.offer(generator)
@@ -282,7 +285,11 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     }
   }
 
-  fun addListener(listener: ShellCommandSentListener, parentDisposable: Disposable = session) {
+  override fun addListener(listener: ShellCommandSentListener) {
+    TerminalUtil.addItem(listeners, listener, session)
+  }
+
+  override fun addListener(listener: ShellCommandSentListener, parentDisposable: Disposable) {
     TerminalUtil.addItem(listeners, listener, parentDisposable)
   }
 
@@ -343,8 +350,6 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
     override fun toString(): String = "Generator(command=$shellCommand, requestId=$requestId)"
   }
 
-  internal class KeyBinding(val bytes: ByteArray)
-
   /**
    * A wrapper around `synchronized` section with the ability to run actions after the section.
    */
@@ -373,7 +378,7 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 
   companion object {
-    internal val LOG = logger<ShellCommandExecutionManager>()
+    internal val LOG = logger<ShellCommandExecutionManagerImpl>()
     private val NEXT_REQUEST_ID = AtomicInteger(0)
     private const val GENERATOR_COMMAND = "__jetbrains_intellij_run_generator"
     private const val SHORTCUT_CTRL_U = "\u0015"
@@ -407,20 +412,3 @@ internal class ShellCommandExecutionManager(private val session: BlockTerminalSe
   }
 }
 
-internal interface ShellCommandSentListener {
-  /**
-   * Called when a user command has been sent for execution in shell.
-   * Might be called in the background or in the UI thread.
-   *
-   * Please note this call may happen prior to actual writing bytes to TTY.
-   */
-  fun userCommandSent(userCommand: String) {}
-
-  /**
-   * Called when a generator command has been sent for execution in shell.
-   * Might be called in the background or in the UI thread.
-   *
-   * Please note this call may happen prior to actual writing bytes to TTY.
-   */
-  fun generatorCommandSent(generatorCommand: String) {}
-}

@@ -5,7 +5,7 @@ import com.google.common.base.Ascii
 import com.intellij.openapi.editor.ex.EditorEx
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
-import org.jetbrains.plugins.terminal.block.session.ShellCommandExecutionManager.KeyBinding
+import org.jetbrains.plugins.terminal.block.session.KeyBinding
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.ui.invokeLater
 import org.jetbrains.plugins.terminal.util.ShellType
