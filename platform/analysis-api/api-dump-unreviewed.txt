@@ -2535,6 +2535,7 @@ f:com.intellij.modcommand.ActionContext
 - s:from(com.intellij.codeInspection.ProblemDescriptor):com.intellij.modcommand.ActionContext
 - s:from(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext
 - f:hashCode():I
+- mapToInjected(com.intellij.psi.PsiFile):com.intellij.modcommand.ActionContext
 - offset():I
 - project():com.intellij.openapi.project.Project
 - selection():com.intellij.openapi.util.TextRange
@@ -2659,6 +2660,7 @@ e:com.intellij.modcommand.ModCommandExecutor$Result
 - a:perform(com.intellij.openapi.project.Project,com.intellij.codeInspection.ProblemDescriptor):com.intellij.modcommand.ModCommand
 - f:startInWriteAction():Z
 com.intellij.modcommand.ModCommandService
+- a:chooseFileAndPerform(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.modcommand.ModCommandAction,I):com.intellij.modcommand.ModCommandWithContext
 - s:getInstance():com.intellij.modcommand.ModCommandService
 - a:psiUpdate(com.intellij.modcommand.ActionContext,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - a:unwrap(com.intellij.codeInspection.LocalQuickFix):com.intellij.modcommand.ModCommandAction
@@ -2666,6 +2668,15 @@ com.intellij.modcommand.ModCommandService
 - a:wrap(com.intellij.modcommand.ModCommandAction):com.intellij.codeInsight.intention.IntentionAction
 - a:wrapToLocalQuickFixAndIntentionActionOnPsiElement(com.intellij.modcommand.ModCommandAction,com.intellij.psi.PsiElement):com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
 - a:wrapToQuickFix(com.intellij.modcommand.ModCommandAction):com.intellij.codeInspection.LocalQuickFix
+f:com.intellij.modcommand.ModCommandWithContext
+- java.lang.Record
+- <init>(com.intellij.modcommand.ActionContext,com.intellij.modcommand.ModCommand):V
+- command():com.intellij.modcommand.ModCommand
+- context():com.intellij.modcommand.ActionContext
+- f:equals(java.lang.Object):Z
+- executeInBatch():com.intellij.modcommand.ModCommandExecutor$BatchExecutionResult
+- executeInteractively(com.intellij.openapi.editor.Editor):V
+- f:hashCode():I
 f:com.intellij.modcommand.ModCompositeCommand
 - java.lang.Record
 - com.intellij.modcommand.ModCommand

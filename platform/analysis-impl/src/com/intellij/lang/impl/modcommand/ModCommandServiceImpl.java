@@ -7,8 +7,16 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.OptControl;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.modcommand.*;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,5 +101,51 @@ public class ModCommandServiceImpl implements ModCommandService {
       }
     }
     return copiedTool;
+  }
+
+  @Override
+  public @Nullable ModCommandWithContext chooseFileAndPerform(@NotNull PsiFile hostFile,
+                                                              @Nullable Editor hostEditor,
+                                                              @NotNull ModCommandAction commandAction,
+                                                              int fixOffset) {
+    Project project = hostFile.getProject();
+    ThrowableComputable<ModCommandWithContext, RuntimeException> computable =
+      () -> ReadAction.nonBlocking(() -> {
+          ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction, fixOffset);
+          if (context == null) {
+            return new ModCommandWithContext(ActionContext.from(null, hostFile), ModCommand.nop());
+          }
+          return new ModCommandWithContext(context, commandAction.perform(context));
+        })
+        .expireWhen(() -> project.isDisposed())
+        .executeSynchronously();
+    //noinspection DialogTitleCapitalization
+    return ProgressManager.getInstance().
+      runProcessWithProgressSynchronously(computable, commandAction.getFamilyName(), true, project);
+  }
+
+  @Nullable
+  @RequiresBackgroundThread
+  private static ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
+                                                      @Nullable Editor hostEditor,
+                                                      @NotNull ModCommandAction commandAction,
+                                                      int fixOffset) {
+    if (hostEditor == null) {
+      return ActionContext.from(null, hostFile);
+    }
+    int offset = fixOffset >= 0 ? fixOffset : hostEditor.getCaretModel().getOffset();
+    ActionContext hostContext = ActionContext.from(hostEditor, hostFile).withOffset(offset);
+    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
+    if (injectedFile != null) {
+      ActionContext injectedContext = hostContext.mapToInjected(injectedFile);
+      if (commandAction.getPresentation(injectedContext) != null) {
+        return injectedContext;
+      }
+    }
+
+    if (commandAction.getPresentation(hostContext) != null) {
+      return hostContext.withOffset(offset);
+    }
+    return null;
   }
 }

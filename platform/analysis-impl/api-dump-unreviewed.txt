@@ -3515,6 +3515,7 @@ c:com.intellij.lang.impl.modcommand.ModCommandBatchExecutorImpl
 c:com.intellij.lang.impl.modcommand.ModCommandServiceImpl
 - com.intellij.modcommand.ModCommandService
 - <init>():V
+- chooseFileAndPerform(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor,com.intellij.modcommand.ModCommandAction,I):com.intellij.modcommand.ModCommandWithContext
 - psiUpdate(com.intellij.modcommand.ActionContext,java.util.function.Consumer):com.intellij.modcommand.ModCommand
 - unwrap(com.intellij.codeInspection.LocalQuickFix):com.intellij.modcommand.ModCommandAction
 - updateOption(com.intellij.psi.PsiElement,com.intellij.codeInspection.InspectionProfileEntry,java.util.function.Consumer):com.intellij.modcommand.ModCommand
