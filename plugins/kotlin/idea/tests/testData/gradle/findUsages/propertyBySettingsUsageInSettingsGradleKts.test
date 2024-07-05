@@ -1,0 +1,21 @@
+// FILE: settings.gradle.kts
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "settings.gradle.kts kotlinVersion"
+pluginManagement {
+    val kotlin<caret>Version: String by settings
+    plugins {
+        id("my.plugin$kotlinVersion")
+    }
+}
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+
+//FILE: gradle.properties
+kotlinVersion=2.0.0
+
+

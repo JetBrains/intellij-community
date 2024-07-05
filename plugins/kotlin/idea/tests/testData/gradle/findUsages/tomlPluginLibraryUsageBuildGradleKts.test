@@ -1,4 +1,5 @@
 // FILE: gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts libs.plugins.kotlin"
 [plugins]
 kotl<caret>in = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
 
@@ -15,4 +16,5 @@ repositories {
 }
 dependencies {
 }
+
 // FILE: settings.gradle.kts

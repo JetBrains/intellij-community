@@ -1,4 +1,5 @@
 // FILE: gradle/libs.versions.toml
+##"EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts libs.versions.test.library.version"
 [versions]
 test_lib<caret>rary-version = "1.0.5"
 

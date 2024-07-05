@@ -173,6 +173,18 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 kotlin = "1.9.24"
                 """.trimIndent()
             )
+            withFile(
+                "gradle.properties",
+                """
+                kotlin.code.style=official
+                """.trimIndent()
+            )
+            withFile(
+                "buildSrc/src/main/kotlin/MyTask.kt",
+                """
+                    
+                """.trimIndent()
+            )
             withDirectory("src/main/kotlin")
         }
     }
