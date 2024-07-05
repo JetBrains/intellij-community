@@ -2,11 +2,13 @@
 package com.intellij.platform.ml.impl.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents a family of completion kinds.
  * One [KindCollector] collects kinds from the same family (from Java, Kotlin K1, Kotlin K2, etc.)
  */
+@ApiStatus.Internal
 interface KindVariety {
   /**
    * Checks, if the kind variety can be collected withing the given parameters

@@ -13,7 +13,9 @@ import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.SequentialTaskExecutor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class FileHistoryManagerWrapper(private val project: Project) : Disposable {
   companion object {

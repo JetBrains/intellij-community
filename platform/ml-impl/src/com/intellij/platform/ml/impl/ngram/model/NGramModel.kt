@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.impl.ngram.model
 
 import com.intellij.platform.ml.impl.ngram.model.counter.NGramCounter
+import org.jetbrains.annotations.ApiStatus
 
 
 internal typealias NGram<T> = List<NGramToken<T>>
@@ -12,6 +13,7 @@ internal typealias NGram<T> = List<NGramToken<T>>
  * - [NGramToken.Word] class that stores any type [T]
  * - [NGramToken.EndOfSentence] object that represents end of an n-gram
  */
+@ApiStatus.Internal
 sealed interface NGramToken<T> {
   object StartOfSentence : NGramToken<Nothing> {
     override fun toString(): String = "<S>"
@@ -32,6 +34,7 @@ sealed interface NGramToken<T> {
  * @param ngramSize N-gram size
  * @param T The type of tokens in the model.
  */
+@ApiStatus.Internal
 abstract class NGramModel<T>(protected val nGramCounter: NGramCounter<T>,
                              protected val ngramSize: Int) {
   abstract fun scoreToken(input: List<T>, tokenIndex: Int): Double
@@ -51,6 +54,7 @@ abstract class NGramModel<T>(protected val nGramCounter: NGramCounter<T>,
  * @param withEndOfSentenceToken Determines whether to include an end-of-sentence token in the N-gram.
  * @return The N-gram generated from the list of values.
  */
+@ApiStatus.Internal
 internal fun <T> Collection<T>.toNGram(withEndOfSentenceToken: Boolean): NGram<out T> {
   val additionalTokensCount = if (withEndOfSentenceToken) 2 else 1 // 1 for start of sentence, +1 if end of sentence is to be included
 

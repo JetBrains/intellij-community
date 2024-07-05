@@ -10,6 +10,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
 @State(name = "FileTypeUsageLocalSummary", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
 private class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsageLocalSummaryState>,
@@ -43,6 +44,7 @@ private class FileTypeUsageLocalSummary : PersistentStateComponent<FileTypeUsage
   }
 }
 
+@ApiStatus.Internal
 @Serializable
 data class FileTypeUsageLocalSummaryState(
   @JvmField

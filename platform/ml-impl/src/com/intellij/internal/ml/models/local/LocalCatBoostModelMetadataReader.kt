@@ -3,8 +3,10 @@ package com.intellij.internal.ml.models.local
 
 import com.intellij.internal.ml.ModelMetadataReader
 import com.intellij.internal.ml.catboost.NaiveCatBoostModel
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
+@ApiStatus.Internal
 class LocalCatBoostModelMetadataReader(private val modelDirectory: String,
                                        private val featuresDirectory: String) : ModelMetadataReader {
   override fun binaryFeatures() = readFeaturesFile("binary.json")

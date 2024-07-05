@@ -3,12 +3,14 @@ package com.intellij.internal.ml.ngram
 
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.sequencing.NGramSequencer
+import org.jetbrains.annotations.ApiStatus
 import java.io.Externalizable
 import java.io.IOException
 import java.io.ObjectInput
 import java.io.ObjectOutput
 import kotlin.math.min
 
+@ApiStatus.Internal
 class NGramRecentTokensSequence(val maxSequenceLength: Int,
                                 private val nGramOrder: Int,
                                 private val initialSize: Int) : Externalizable {

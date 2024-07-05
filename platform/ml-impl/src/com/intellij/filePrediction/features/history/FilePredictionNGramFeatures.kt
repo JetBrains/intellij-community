@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features.history
 
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 import kotlin.math.min
 
+@ApiStatus.Internal
 class FilePredictionNGramFeatures(private val byFile: Map<String, Double>) {
   private val minProbability: Double
   private val maxProbability: Double
