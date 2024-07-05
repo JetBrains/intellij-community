@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.ideaPlugin)
     `android-studio-releases-generator`
 }
+
 // Because we need to define IJP dependencies, the dependencyResolutionManagement
 // from settings.gradle.kts is overridden and we have to redeclare everything here.
 repositories {

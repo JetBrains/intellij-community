@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("jewel-linting")
     kotlin("jvm")
@@ -16,18 +18,20 @@ version = when {
     else -> "1.0.0-SNAPSHOT"
 }
 
+val jdkLevel = project.property("jdk.level") as String
 java {
     toolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(jdkLevel)
     }
+
 }
 
 kotlin {
     jvmToolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(jdkLevel)
     }
+
+    compilerOptions.jvmTarget.set(JvmTarget.fromTarget(jdkLevel))
 
     target {
         compilations.all { kotlinOptions { freeCompilerArgs += "-Xcontext-receivers" } }

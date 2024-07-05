@@ -14,5 +14,6 @@ internal data class ApiIdeaReleasesItem(
         @SerialName("build") val build: String,
         @SerialName("type") val type: String,
         @SerialName("version") val version: String,
+        @SerialName("majorVersion") val majorVersion: String,
     )
 }

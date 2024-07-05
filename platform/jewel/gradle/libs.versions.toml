@@ -3,7 +3,8 @@ commonmark = "0.22.0"
 composeDesktop = "1.7.0-dev1703"
 detekt = "1.23.6"
 dokka = "1.9.20"
-idea = "242.19533.56-EAP-SNAPSHOT"
+idea = "242.19890.14"
+intelliJPlatformBuild = "242.19890.14-EAP-SNAPSHOT"
 ideaPlugin = "2.0.0-beta8"
 jna = "5.14.0"
 kotlin = "1.9.24"
@@ -26,8 +27,8 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 
 jna-core = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 
-intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "idea" }
-intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "idea" }
+intellijPlatform-util-ui = { module = "com.jetbrains.intellij.platform:util-ui", version.ref = "intelliJPlatformBuild" }
+intellijPlatform-icons = { module = "com.jetbrains.intellij.platform:icons", version.ref = "intelliJPlatformBuild" }
 
 # Plugin libraries for build-logic's convention plugins to use to resolve the types/tasks coming from these plugins
 detekt-gradlePlugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }

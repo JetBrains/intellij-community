@@ -44,6 +44,7 @@ compose.desktop {
     }
 }
 
+val jdkLevel = project.property("jdk.level") as String
 tasks {
     withType<JavaExec> {
         // afterEvaluate is needed because the Compose Gradle Plugin
@@ -51,8 +52,7 @@ tasks {
         afterEvaluate {
             javaLauncher =
                 project.javaToolchains.launcherFor {
-                    languageVersion = JavaLanguageVersion.of(21)
-                    vendor = JvmVendorSpec.JETBRAINS
+                    languageVersion = JavaLanguageVersion.of(jdkLevel)
                 }
             setExecutable(javaLauncher.map { it.executablePath.asFile.absolutePath }.get())
         }
