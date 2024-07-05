@@ -1,36 +1,94 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
+import com.intellij.openapi.extensions.ExtensionDescriptor
 import org.jetbrains.annotations.ApiStatus
 
 private val pluginIdsToIgnoreK2KotlinCompatibility: List<String> =
   System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.map { it.trim() }.orEmpty() +
   listOf("fleet.backend.kotlin", "fleet.backend.mercury", "fleet.backend.mercury.kotlin.macos")
 
+
+/**
+ * See KTIJ-30474 for semantic
+ */
 internal fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
-  return plugin.epNameToExtensions["org.jetbrains.kotlin.supportsKotlinK2Mode"]?.isNotEmpty() == true
-         || plugin.pluginId.idString in pluginIdsToIgnoreK2KotlinCompatibility
+  val supportKotlinPluginModeEPs = getSupportKotlinPluginModeEPs(plugin)
+
+  return when {
+    // explicitly disabled
+    supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K2_ATTRIBUTE_NAME] == "false" } -> false
+    plugin.pluginId.idString in pluginIdsToIgnoreK2KotlinCompatibility -> true
+    // by default, the K2 mode is not supported
+    else -> supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K2_ATTRIBUTE_NAME] == "true" }
+  }
 }
+
+
+/**
+ * See KTIJ-30474 for semantic
+ */
+internal fun pluginCanWorkInK1Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
+  val supportKotlinPluginModeEPs = getSupportKotlinPluginModeEPs(plugin)
+
+  return when {
+    // explicitly disabled
+    supportKotlinPluginModeEPs.any { it.element?.attributes.orEmpty()[SUPPORTS_K1_ATTRIBUTE_NAME] == "false" } -> false
+    // by default, the K1 mode is supported
+    else -> true
+  }
+}
+
+
+
+private fun getSupportKotlinPluginModeEPs(plugin: IdeaPluginDescriptorImpl): List<ExtensionDescriptor> {
+  return plugin.epNameToExtensions[SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME] ?: emptyList()
+}
+
 
 internal fun isKotlinPluginK2Mode(): Boolean {
   return System.getProperty("idea.kotlin.plugin.use.k2", "false").toBoolean()
 }
 
-
 @ApiStatus.Internal
-fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: IdeaPluginDescriptorImpl, shouldCheckIfK2modeIsOn: Boolean = true): Boolean {
-  fun nonOptionallyDependsOnKotlinPlugin(): Boolean {
-    return plugin.pluginDependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
-           plugin.dependencies.plugins.any { isKotlinPlugin(it.id) }
+fun isKotlinPluginK1Mode(): Boolean {
+  return !isKotlinPluginK2Mode()
+}
+
+internal fun isIncompatibleWithKotlinPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
+  if (isKotlinPluginK1Mode() && !pluginCanWorkInK1Mode(plugin)) {
+    return true
   }
 
-  if (!shouldCheckIfK2modeIsOn || isKotlinPluginK2Mode()) {
-    if (!isKotlinPlugin(plugin.pluginId) && nonOptionallyDependsOnKotlinPlugin()) {
-      if (!pluginCanWorkInK2Mode(plugin)) {
-        return true
-      }
-    }
+  if (isKotlinPluginK2Mode() && !pluginCanWorkInK2Mode(plugin)) {
+    return true
   }
 
   return false
 }
+
+
+@ApiStatus.Internal
+fun isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(plugin: IdeaPluginDescriptorImpl): Boolean {
+  if (isKotlinPlugin(plugin.pluginId)) return false
+  if (!nonOptionallyDependsOnKotlinPlugin(plugin)) return false
+
+  return isIncompatibleWithKotlinPlugin(plugin)
+}
+
+@ApiStatus.Internal
+fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
+  if (isKotlinPlugin(plugin.pluginId)) return false
+  if (!nonOptionallyDependsOnKotlinPlugin(plugin)) return false
+  return !pluginCanWorkInK2Mode(plugin)
+}
+
+private fun nonOptionallyDependsOnKotlinPlugin(plugin: IdeaPluginDescriptorImpl): Boolean {
+  return plugin.pluginDependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
+         plugin.dependencies.plugins.any { isKotlinPlugin(it.id) }
+}
+
+private const val SUPPORTS_KOTLIN_PLUGIN_MODE_EP_NAME = "org.jetbrains.kotlin.supportsKotlinPluginMode"
+private const val SUPPORTS_K1_ATTRIBUTE_NAME = "supportsK1"
+private const val SUPPORTS_K2_ATTRIBUTE_NAME = "supportsK2"
+

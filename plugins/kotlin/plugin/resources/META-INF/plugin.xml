@@ -21,6 +21,13 @@
     <module name="intellij.platform.collaborationTools"/>
   </dependencies>
 
+  <extensionPoints>
+    <extensionPoint name="org.jetbrains.kotlin.supportsKotlinPluginMode" dynamic="true"
+                    beanClass="org.jetbrains.kotlin.idea.base.plugin.SupportsKotlinPluginMode">
+    </extensionPoint>
+  </extensionPoints>
+
+
   <!-- IJ/AS-INCOMPATIBLE-PLACEHOLDER -->
 
   <xi:include href="kotlin.plugin.k1.xml" includeUnless="idea.kotlin.plugin.use.k2"/>

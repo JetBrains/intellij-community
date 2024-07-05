@@ -289,9 +289,10 @@ object DynamicPlugins {
       return null
     }
 
-    if (isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(module)) {
-      // force restarting the IDE in the case the dynamic plugin is incompatible with Kotlin Plugin K2 mode KTIJ-24797
-      return "Plugin ${module.pluginId} depends on the Kotlin plugin in K2 Mode, but the plugin does not support K2 Mode"
+    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(module)) {
+      // force restarting the IDE in the case the dynamic plugin is incompatible with Kotlin Plugin K1/K2 modes KTIJ-24797
+      val mode = if (isKotlinPluginK1Mode()) "K1" else "K2"
+      return "Plugin ${module.pluginId} depends on the Kotlin plugin in $mode Mode, but the plugin does not support $mode Mode"
     }
 
     var dependencyMessage: String? = null

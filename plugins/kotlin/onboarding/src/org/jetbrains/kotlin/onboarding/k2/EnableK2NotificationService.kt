@@ -72,10 +72,7 @@ class EnableK2NotificationService {
     private fun hasIncompatibleWithK2ModeThirdPartyPluginsEnabled(): Boolean {
         val allEnabledThirdPartyPlugins = PluginManagerCore.getPluginSet().allPlugins.filter { !it.isBundled && it.isEnabled }
         return allEnabledThirdPartyPlugins.any {
-            isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(
-                it,
-                shouldCheckIfK2modeIsOn = false
-            )
+            isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(it)
         }
         // Code for future: get all incompatible plugins:
 
