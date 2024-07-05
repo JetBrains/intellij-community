@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.idea.searching.inheritors.findAllInheritors
+import org.jetbrains.kotlin.idea.searching.inheritors.findAllOverridings
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -652,8 +653,15 @@ object KotlinUnusedSymbolUtil {
       }
   }
 
-  private fun hasOverrides(declaration: KtNamedDeclaration, useScope: SearchScope): Boolean =
-      DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null
+  private fun hasOverrides(declaration: KtNamedDeclaration, useScope: SearchScope): Boolean {
+      // don't search for functional expressions to check if function is used
+      val overrides = when (declaration) {
+          is KtCallableDeclaration -> declaration.findAllOverridings(useScope)
+          is KtClass -> declaration.findAllInheritors(useScope)
+          else -> null
+      }
+      return overrides?.firstOrNull() != null
+  }
 
   context(KaSession)
   private fun hasFakeOverrides(declaration: KtNamedDeclaration, useScope: SearchScope, symbol: KaDeclarationSymbol?): Boolean {
