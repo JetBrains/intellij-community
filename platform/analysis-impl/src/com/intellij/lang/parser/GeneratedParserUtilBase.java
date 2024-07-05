@@ -205,11 +205,7 @@ public class GeneratedParserUtilBase {
   @Contract(mutates = "param1")
   public static boolean consumeToken(PsiBuilder builder, IElementType token) {
     addVariantSmart(builder, token, true);
-    if (nextTokenIsFast(builder, token)) {
-      builder.advanceLexer();
-      return true;
-    }
-    return false;
+    return consumeTokenFast(builder, token);
   }
 
   public static boolean consumeTokenFast(PsiBuilder builder, IElementType token) {
@@ -972,7 +968,7 @@ public class GeneratedParserUtilBase {
       Arrays.sort(strings);
       count = 0;
       for (String s : strings) {
-        if (s.length() == 0) continue;
+        if (s.isEmpty()) continue;
         if (count++ > 0) {
           if (count > MAX_VARIANTS_TO_DISPLAY) {
             sb.append(" ").append(AnalysisBundle.message("parsing.error.and.ellipsis"));

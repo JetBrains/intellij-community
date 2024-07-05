@@ -4,10 +4,9 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.CommonBundle;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.plugins.newui.EventHandler;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
@@ -227,8 +226,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   static @Nullable ShortcutSet getFindActionShortcutSet() {
-    AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
-    return action == null ? null : action.getShortcutSet();
+    return EventHandler.getShortcuts(ACTION_FIND);
   }
 
   private class ApplyActionWrapper extends AbstractAction {

@@ -10,17 +10,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -91,9 +92,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
-    RefactoringEventData eventData = new RefactoringEventData();
-    eventData.addElement(myTargetClass);
-    return eventData;
+    return ExtractSuperClassUtil.createAfterData(myTargetClass);
   }
 
   private void setOptions(MoveMembersOptions dialog) {
@@ -136,7 +135,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
           usagesList.add(usage);
         }
         else {
-          if (!isInMovedElement(ref)) {
+          if (!RefactoringUtil.isInMovedElement(ref, myMembersToMove)) {
             usagesList.add(new MoveMembersUsageInfo(member, ref, null, ref, psiReference));
           }
         }
@@ -154,13 +153,6 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
     for (PsiElement resolved : elements) {
       myMembersToMove.add((PsiMember)resolved);
     }
-  }
-
-  private boolean isInMovedElement(PsiElement element) {
-    for (PsiMember member : myMembersToMove) {
-      if (PsiTreeUtil.isAncestor(member, element, false)) return true;
-    }
-    return false;
   }
 
   @Override

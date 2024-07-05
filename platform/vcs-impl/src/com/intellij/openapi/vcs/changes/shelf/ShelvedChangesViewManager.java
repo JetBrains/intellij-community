@@ -13,7 +13,6 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -893,8 +892,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       private @NotNull DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
         String imageText = VcsBundle.message("unshelve.changes.action");
-        Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
-        return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+        return ChangesTreeDnDSupport.createDragImage(myTree, imageText);
       }
     }
 

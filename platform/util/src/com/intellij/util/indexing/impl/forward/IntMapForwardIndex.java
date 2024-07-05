@@ -53,10 +53,7 @@ public final class IntMapForwardIndex implements IntForwardIndex, MeasurableInde
 
   @Override
   public int keysCountApproximately() {
-    if (myPersistentMap instanceof MeasurableIndexStore) {
-      return ((MeasurableIndexStore)myPersistentMap).keysCountApproximately();
-    }
-    return KEYS_COUNT_UNKNOWN;
+    return MeasurableIndexStore.keysCountApproximatelyIfPossible(myPersistentMap);
   }
 
   @Override

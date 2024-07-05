@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
+import org.jetbrains.java.decompiler.modules.decompiler.DecHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -377,10 +378,7 @@ public class FunctionExprent extends Exprent {
 
   @Override
   public Exprent copy() {
-    List<Exprent> lst = new ArrayList<>();
-    for (Exprent expr : lstOperands) {
-      lst.add(expr.copy());
-    }
+    List<Exprent> lst = DecHelper.copyExprentList(lstOperands);
     FunctionExprent func = new FunctionExprent(funcType, lst, bytecode);
     func.setImplicitType(implicitType);
 

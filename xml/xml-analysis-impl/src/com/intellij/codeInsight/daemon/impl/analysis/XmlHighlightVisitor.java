@@ -9,6 +9,7 @@ import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
+import com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInspection.*;
@@ -607,14 +608,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   @Override
   public boolean suitableForFile(@NotNull final PsiFile file) {
-    if (file instanceof XmlFile) return true;
-
-    for (PsiFile psiFile : file.getViewProvider().getAllFiles()) {
-      if (psiFile instanceof XmlFile) {
-        return true;
-      }
-    }
-    return false;
+    return file instanceof XmlFile || XmlTagTreeHighlightingUtil.hasXmlViewProvider(file);
   }
 
   @Override

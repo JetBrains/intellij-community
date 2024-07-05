@@ -14,6 +14,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureUtil;
+import com.intellij.refactoring.extractSuperclass.ExtractSuperClassUtil;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.usageView.UsageInfo;
@@ -125,17 +126,13 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
   @Nullable
   @Override
   protected RefactoringEventData getBeforeData() {
-    RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myClass);
-    return data;
+    return ExtractSuperClassUtil.createAfterData(myClass);
   }
 
   @Nullable
   @Override
   protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
-    RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myClass);
-    return data;
+    return ExtractSuperClassUtil.createAfterData(myClass);
   }
 
   private void doRefactoring(UsageInfo[] usages) throws IncorrectOperationException {

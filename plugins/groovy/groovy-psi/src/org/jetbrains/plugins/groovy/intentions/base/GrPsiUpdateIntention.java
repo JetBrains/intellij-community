@@ -12,10 +12,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
-import org.jetbrains.plugins.groovy.lang.psi.impl.utils.BoolUtils;
 
 import java.util.function.Supplier;
 
@@ -88,20 +86,7 @@ public abstract class GrPsiUpdateIntention implements ModCommandAction {
 
   protected static void replaceExpressionWithNegatedExpressionString(@NotNull String newExpression, @NotNull GrExpression expression) throws
                                                                                                                                       IncorrectOperationException {
-    final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(expression.getProject());
-
-    GrExpression expressionToReplace = expression;
-    final String expString;
-    if (BoolUtils.isNegated(expression)) {
-      expressionToReplace = BoolUtils.findNegation(expression);
-      expString = newExpression;
-    }
-    else {
-      expString = "!(" + newExpression + ')';
-    }
-    final GrExpression newCall = factory.createExpressionFromText(expString, expression.getContext());
-    assert expressionToReplace != null;
-    expressionToReplace.replaceWithExpression(newCall, true);
+    Intention.replaceExpressionWithNegatedExpressionString(newExpression, expression);
   }
   private String getPrefix() {
     final Class<? extends GrPsiUpdateIntention> aClass = getClass();
