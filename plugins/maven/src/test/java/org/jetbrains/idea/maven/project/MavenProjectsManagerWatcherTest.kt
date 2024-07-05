@@ -116,7 +116,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProfilesAutoReload() = runBlocking {
-    createProjectPom("""
+    val xml = """
                          <groupId>test</groupId>
                          <artifactId>project</artifactId>
                          <version>1</version>
@@ -124,6 +124,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
                          <profiles>
                              <profile>
                                  <id>junit4</id>
+                                 
                                  <dependencies>
                                      <dependency>
                                          <groupId>junit</groupId>
@@ -145,7 +146,8 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
                                  </dependencies>
                              </profile>
                          </profiles>
-                       """.trimIndent())
+                       """.trimIndent()
+    replaceContent(projectPom, createPomXml(xml))
     scheduleProjectImportAndWait()
     assertRootProjects("project")
     assertModules("project")
