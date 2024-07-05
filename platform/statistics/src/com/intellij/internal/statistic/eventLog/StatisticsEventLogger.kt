@@ -120,7 +120,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
     val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
-    val productMode = if (currentProductModeId != ProductMode.LOCAL_IDE.id) {
+    val productMode = if (currentProductModeId != ProductMode.MONOLITH.id) {
       currentProductModeId
     } else if (detectClionNova()) {
       "nova"

@@ -213,7 +213,7 @@ abstract class ProductProperties {
    * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
    */
   @ApiStatus.Experimental
-  var productMode: ProductMode = ProductMode.LOCAL_IDE
+  var productMode: ProductMode = ProductMode.MONOLITH
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.

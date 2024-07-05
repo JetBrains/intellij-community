@@ -32,7 +32,7 @@ class ProductModulesLoaderTest {
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = generateProductModulesWithPlugin()
-    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
     val (root, util) = mainGroupModules
@@ -64,7 +64,7 @@ class ProductModulesLoaderTest {
         </product-modules>
       """.trimIndent())
     }.generateInTempDir().resolve(FILE_NAME)
-    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
     val (optional, root) = mainGroupModules
@@ -86,7 +86,7 @@ class ProductModulesLoaderTest {
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "optional", "unknown")
 
     val xml = generateProductModulesWithPlugin()
-    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
     val pluginModules = pluginModuleGroup.includedModules
     assertEquals(2, pluginModules.size)
@@ -123,7 +123,7 @@ class ProductModulesLoaderTest {
       assertEquals("plugin.common", common.moduleDescriptor.moduleId.stringId)
       assertEquals(additionalModuleName, additional.moduleDescriptor.moduleId.stringId)
     }
-    checkGroup(ProductMode.LOCAL_IDE, "plugin.localIde")
+    checkGroup(ProductMode.MONOLITH, "plugin.localIde")
     checkGroup(ProductMode.FRONTEND, "plugin.frontend")
   }
 
