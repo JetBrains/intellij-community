@@ -36,7 +36,7 @@ private val LOG: Logger
 
 internal fun createEditorCompositeModel(
   editorPropertyChangeListener: PropertyChangeListener,
-  fileProvider: () -> VirtualFile,
+  fileProvider: suspend () -> VirtualFile,
   project: Project,
   fileEntry: FileEntry? = null,
   coroutineScope: CoroutineScope,

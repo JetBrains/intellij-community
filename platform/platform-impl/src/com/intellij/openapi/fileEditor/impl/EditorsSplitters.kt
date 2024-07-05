@@ -31,12 +31,15 @@ import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -923,7 +926,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
     val virtualFileManager = VirtualFileManager.getInstance()
     if (session != null && !session.isLocal) {
       for ((index, fileEntry) in fileEntries.withIndex()) {
-        val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return
+        val file = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return
         session.serviceOrNull<ClientFileEditorManager>()?.openFileAsync(
           file = file,
           options = FileEditorOpenOptions(
@@ -1011,20 +1014,40 @@ private fun computeFileEntry(
   splitters: EditorsSplitters,
   isLazyComposite: Boolean,
 ): FileToOpen? {
-  val file = resolveFileOrLogError(virtualFileManager, fileEntry) ?: return null
   val compositeCoroutineScope = splitters.coroutineScope.childScope("EditorComposite(file=${fileEntry.url})")
+
+  val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return null
+
+  // do not expose `file` variable to avoid using it instead of `fileProvider`
+  val fileProvider = compositeCoroutineScope.async {
+    // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
+    if (!notFullyPreparedFile.isCharsetSet) {
+      blockingContext {
+        ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
+          try {
+            notFullyPreparedFile.contentsToByteArray(true)
+          }
+          catch (ignore: FileTooBigException) {
+          }
+        }
+      }
+    }
+    notFullyPreparedFile
+  }
+
   val model = fileEditorManager.createEditorCompositeModelOnStartup(
     compositeCoroutineScope = compositeCoroutineScope,
-    fileProvider = { file },
+    fileProvider = { fileProvider.await() },
     fileEntry = fileEntry,
     isLazy = !fileEntry.currentInTab && isLazyComposite,
   )
 
   val tabTitleTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
-    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, file)
+    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider.await())
   }
   val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
     compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
+      val file = fileProvider.await()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
       }
@@ -1036,6 +1059,7 @@ private fun computeFileEntry(
 
   val tabFileColorTask = compositeCoroutineScope.async {
     val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
+    val file = fileProvider.await()
     readAction {
       (fileStatusManager.getStatus(file).color ?: UIUtil.getLabelForeground()) to
         getForegroundColorForFile(fileEditorManager.project, file)
@@ -1049,7 +1073,7 @@ private fun computeFileEntry(
   }
   else {
     tabTitleTask.start()
-    file.presentableName
+    notFullyPreparedFile.presentableName
   }
 
   val initialTabIcon = if (tabIconTask == null) {
@@ -1071,7 +1095,7 @@ private fun computeFileEntry(
 
   val tabColorTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
     val colorScheme = serviceAsync<EditorColorsManager>().schemeForCurrentUITheme
-    val attributes = if (fileEditorManager.isProblem(file)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
+    val attributes = if (fileEditorManager.isProblem(notFullyPreparedFile)) colorScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES) else null
     val colors = tabFileColorTask.await()
 
     var effectiveAttributes = if (fileEntry.isPreview) {
@@ -1106,7 +1130,7 @@ private fun computeFileEntry(
   return FileToOpen(
     fileEntry = fileEntry,
     scope = compositeCoroutineScope,
-    file = file,
+    file = notFullyPreparedFile,
     model = model,
     customizer = { tab ->
       tab.setText(initialTabTitle)
@@ -1118,7 +1142,7 @@ private fun computeFileEntry(
 
       compositeCoroutineScope.launch {
         val tooltipText = if (UISettings.getInstance().showTabsTooltips) {
-          readAction { fileEditorManager.getFileTooltipText(file, tab.composite) }
+          readAction { fileEditorManager.getFileTooltipText(notFullyPreparedFile, tab.composite) }
         }
         else {
           null
@@ -1160,7 +1184,7 @@ internal data class FileToOpen(
   @JvmField val customizer: (TabInfo) -> Unit,
 )
 
-private fun resolveFileOrLogError(virtualFileManager: VirtualFileManager, fileEntry: FileEntry): VirtualFile? {
+private fun resolveFileOrLogError(fileEntry: FileEntry, virtualFileManager: VirtualFileManager): VirtualFile? {
   val file = virtualFileManager.findFileByUrl(fileEntry.url) ?: virtualFileManager.refreshAndFindFileByUrl(fileEntry.url)
   if (file != null && file.isValid) {
     return file
