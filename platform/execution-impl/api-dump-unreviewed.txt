@@ -213,7 +213,7 @@ c:com.intellij.execution.ExecutorRegistryImpl$ExecutorAction
 f:com.intellij.execution.ExecutorRegistryImpl$RunnerHelper
 - <init>():V
 - s:canRun(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration):Z
-- s:canRun(com.intellij.openapi.project.Project,java.util.List,com.intellij.execution.Executor):Z
+- s:canRun(com.intellij.openapi.project.Project,com.intellij.execution.Executor,com.intellij.execution.configurations.RunConfiguration,com.intellij.openapi.util.Ref):Z
 - s:run(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.actionSystem.DataContext,com.intellij.execution.Executor):V
 - s:runSubProcess(com.intellij.openapi.project.Project,com.intellij.execution.configurations.RunConfiguration,com.intellij.execution.RunnerAndConfigurationSettings,com.intellij.openapi.actionSystem.DataContext,com.intellij.execution.Executor,java.util.function.Consumer):V
 f:com.intellij.execution.ExternalizablePath

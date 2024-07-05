@@ -32,7 +32,8 @@ public class RunCurrentFileExecutorAction extends ExecutorAction {
 
     // no need in a list of disabled actions in the secondary menu
     // of the 'Current File' item in the combo box drop-down menu
-    if (!presentation.isEnabled()) {
+    if (!presentation.isEnabled() &&
+        presentation.getClientProperty(WOULD_BE_ENABLED_BUT_STARTING) != Boolean.TRUE) {
       presentation.setVisible(false);
     }
   }
