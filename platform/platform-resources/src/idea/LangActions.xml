@@ -1697,8 +1697,6 @@
     <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
     <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
 
-    <action class="com.intellij.internal.ClearFileTemplateNameInternalAction" internal="true"/>
-
     <group id="Internal.Dump" internal="true" popup="true">
       <action id="DumpExtensions" internal="true" class="com.intellij.internal.DumpExtensionsAction"/>
       <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>

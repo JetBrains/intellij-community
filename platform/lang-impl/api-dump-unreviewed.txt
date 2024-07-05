@@ -19109,12 +19109,6 @@ f:com.intellij.internal.CaretVisualAttributesDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.CaretVisualAttributes):V
 - f:getAttributes():com.intellij.openapi.editor.CaretVisualAttributes
-f:com.intellij.internal.ClearFileTemplateNameInternalAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.internal.CompletionQualityDialog
 - com.intellij.openapi.ui.DialogWrapper
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):V
