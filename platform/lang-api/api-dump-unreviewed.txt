@@ -2839,6 +2839,8 @@ com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory
 - isAvailable(com.intellij.openapi.project.Project):Z
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereExtendedInfoProvider
 - createExtendedInfo():com.intellij.ide.actions.searcheverywhere.ExtendedInfo
+com.intellij.ide.actions.searcheverywhere.SearchEverywherePresentationProvider
+- a:getTargetPresentation(java.lang.Object):com.intellij.platform.backend.presentation.TargetPresentation
 com.intellij.ide.actions.searcheverywhere.SearchEverywhereToggleAction
 - a:canToggleEverywhere():Z
 - a:isEverywhere():Z
