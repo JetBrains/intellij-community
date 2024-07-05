@@ -1336,15 +1336,13 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                                                       InvalidTypeException {
       Ref<Exception> exception = Ref.create();
       Ref<E> result = Ref.create();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Invoke in " + thread.name());
+        assertThreadSuspended(thread, context);
+      }
       getManagerThread().startLongProcessAndFork(() -> {
         try {
           try {
-            if (LOG.isDebugEnabled()) {
-              thread.getVirtualMachineProxy().logThreads();
-              LOG.debug("Invoke in " + thread.name());
-              assertThreadSuspended(thread, context);
-            }
-
             if (myMethod.isVarArgs()) {
               // See IDEA-63581
               // if vararg parameter array is of interface type and Object[] is expected, JDI wrap it into another array,

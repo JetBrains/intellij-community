@@ -505,16 +505,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     return ContainerUtil.exists(allThreads(), thread -> thread.getSuspendCount() != 0);
   }
 
-  public void logThreads() {
-    if (LOG.isDebugEnabled()) {
-      for (ThreadReferenceProxyImpl thread : allThreads()) {
-        if (!thread.isCollected()) {
-          LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
-        }
-      }
-    }
-  }
-
   public int getModelSuspendCount() {
     return myModelSuspendCount;
   }
