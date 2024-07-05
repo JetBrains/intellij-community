@@ -85,7 +85,16 @@ private fun showNotification(project: Project, name: String, action: Notificatio
 private fun getLanguageName(bundleEP: DynamicBundle.LanguageBundleEP?): String =
   bundleEP?.displayName ?: Locale.getDefault().getDisplayLanguage(Locale.ENGLISH)
 
-private fun findLanguageEP() = LocalizationUtil.findLanguageBundle(Locale.getDefault())
+private fun findLanguageEP(): DynamicBundle.LanguageBundleEP? {
+  val default = Locale.getDefault()
+  val locale = when (default.toLanguageTag()) {
+    "zh-CN", "CN" -> Locale.CHINA
+    "ja", "JP" -> Locale.JAPANESE
+    "ko", "KR", "KP" -> Locale.KOREAN
+    else -> default
+  }
+  return LocalizationUtil.findLanguageBundle(locale)
+}
 
 private fun finishSetLocale(notification: Notification, locale: String, switchBackLanguage: Boolean) {
   LocalizationStateService.getInstance()!!.setSelectedLocale(locale)
