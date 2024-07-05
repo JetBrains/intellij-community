@@ -6398,8 +6398,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/changeToLabeledReturn")
     public static class ChangeToLabeledReturn extends AbstractHighLevelQuickFixTest {
@@ -7987,8 +7985,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
-
-
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/primitiveCastToConversion")
     public static class PrimitiveCastToConversion extends AbstractHighLevelQuickFixTest {
@@ -8022,8 +8018,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/primitiveCastToConversion/longToFloat.kt");
         }
     }
-
-
 
 
 
@@ -8441,8 +8435,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/specifyOverrideExplicitly/property.kt");
         }
     }
-
-
 
 
 
