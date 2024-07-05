@@ -14,12 +14,12 @@ import org.jetbrains.annotations.TestOnly
 @Target(AnnotationTarget.CONSTRUCTOR, AnnotationTarget.FUNCTION)
 annotation class RunMethodInEdt(val writeIntent: WriteIntentMode = WriteIntentMode.Default) {
   /**
-   * Enumeration class that represents the mode for write intent.
+   * Enumeration class that represents the mode for the write-intent lock.
    *
    * The WriteIntentMode enum class provides three possible modes:
-   * - True: Indicates that test must be run under Write Intent Lock.
-   * - False: Indicates that test must be run without Write Intent Lock.
-   * - Default: Indicates that the write intent lock is controlled by the parent annotation (see [RunInEdt]).
+   * - True: Indicates that the test must be run under Write Intent Lock.
+   * - False: Indicates that the test must be run without Write Intent Lock.
+   * - Default: Indicates that the write-intent lock is controlled by the parent annotation (see [RunInEdt]).
    *
    * This class is annotated with the @TestOnly annotation, indicating that it is intended
    * for testing purposes only.

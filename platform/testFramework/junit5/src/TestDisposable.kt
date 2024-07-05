@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 
 /**
  * Injects a test [disposable][com.intellij.openapi.Disposable] to a field or a parameter in a test.
- * The new disposable instance is created before each test and disposed after each test.
+ * The new disposable instance is created before each test and disposed of after each test.
  *
  * Example:
  * ```kotlin

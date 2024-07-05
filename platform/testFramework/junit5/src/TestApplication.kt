@@ -11,7 +11,7 @@ import org.junit.jupiter.api.extension.ExtendWith
  * Initializes [shared application instance][com.intellij.openapi.application.ApplicationManager.getApplication]
  * once before all tests are run.
  * The application is disposed together with the [root][org.junit.jupiter.api.extension.ExtensionContext.getRoot] context,
- * i.e. after all tests were run.
+ * i.e., after all tests were run.
  *
  * @see com.intellij.testFramework.junit5.showcase.JUnit5ApplicationTest
  */
