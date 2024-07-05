@@ -247,6 +247,7 @@ class MavenCompilerConfigurator : MavenImporter("org.apache.maven.plugins", "mav
       targetLevel = level.toJavaVersion().toString()
     }
 
+    MavenLog.LOG.debug("Setting bytecode target level $targetLevel in module ${module.name}")
     ideCompilerConfiguration.setBytecodeTargetLevel(module, targetLevel)
   }
 
