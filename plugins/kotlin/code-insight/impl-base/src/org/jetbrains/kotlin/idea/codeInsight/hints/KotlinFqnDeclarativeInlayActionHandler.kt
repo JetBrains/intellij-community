@@ -6,6 +6,9 @@ import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.openapi.editor.Editor
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.idea.base.util.module
 
 class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
     companion object {
@@ -15,8 +18,9 @@ class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
     override fun handleClick(editor: Editor, payload: InlayActionPayload) {
         val project = editor.project ?: return
         val fqName = (payload as? StringInlayActionPayload)?.text ?: return
-        (project.resolveClass(fqName)?.navigationElement as? Navigatable)?.let {
-            it.navigate(true)
-        }
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
+        val scope = psiFile?.module?.moduleContentWithDependenciesScope ?: GlobalSearchScope.allScope(project)
+        val navigatable = project.resolveClass(fqName, scope)?.navigationElement as? Navigatable
+        navigatable?.navigate(true)
     }
 }
