@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,9 +171,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
                                                        HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
 
-        Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
-        highlighters.add(highlighter);
-        setHideFlags(highlighter, flags);
+        addEditorHighlighterWithHideFlags(editor, highlighter, flags);
 
         highlighter.setVisibleIfFolded(true);
         if (outHighlighters != null) {
@@ -187,6 +186,15 @@ public final class HighlightManagerImpl extends HighlightManager {
           highlighter.setErrorStripeMarkColor(scrollMarkColor);
         }
       });
+  }
+
+  @ApiStatus.Internal
+  public static void addEditorHighlighterWithHideFlags(@NotNull Editor editor,
+                                                       @NotNull RangeHighlighter highlighter,
+                                                       @HideFlags @Nullable Integer flags) {
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
+    highlighters.add(highlighter);
+    setHideFlags(highlighter, flags);
   }
 
   @Override
