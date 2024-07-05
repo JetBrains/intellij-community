@@ -68,7 +68,10 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBas
    * implicitly imported packages (for example, java.lang).
    *
    * @return the array of implicitly imported package reference elements.
+   * @deprecated Use {@link PsiJavaFile#getImplicitlyImportedPackages()} instead
    */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   PsiJavaCodeReferenceElement @NotNull [] getImplicitlyImportedPackageReferences();
 
   /**
@@ -94,43 +97,7 @@ public interface PsiJavaFile extends PsiImportHolder, PsiClassOwner, AbstractBas
    * @return the array of implicitly imported static members.
    */
   @ApiStatus.Experimental
-  default @NotNull StaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
-    return StaticMember.EMPTY_ARRAY;
-  }
-
-  /**
-   * Class representing a static member represented implicitly imported static members.
-   * if memberName is `*`, it is on demand import
-   */
-  @ApiStatus.Experimental
-  class StaticMember {
-    public static final @NotNull StaticMember @NotNull [] EMPTY_ARRAY = new StaticMember[0];
-
-    private final @NotNull String myContainingClass;
-    private final @NotNull String myMemberName;
-
-    private StaticMember(@NotNull String containingClass, @NotNull String memberName) {
-      myContainingClass = containingClass;
-      myMemberName = memberName;
-    }
-
-    @NotNull
-    public String getContainingClass() {
-      return myContainingClass;
-    }
-
-    @NotNull
-    public String getMemberName() {
-      return myMemberName;
-    }
-
-    public boolean isOnDemand() {
-      return "*".equals(myMemberName);
-    }
-
-    @NotNull
-    public static StaticMember create(@NotNull String containingClass, @NotNull String memberName) {
-      return new StaticMember(containingClass, memberName);
-    }
+  default @NotNull ImplicitlyImportedStaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
+    return ImplicitlyImportedStaticMember.EMPTY_ARRAY;
   }
 }

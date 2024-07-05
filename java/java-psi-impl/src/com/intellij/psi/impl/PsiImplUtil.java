@@ -854,21 +854,21 @@ public final class PsiImplUtil {
    * @return an array of static members representing the implicit static imports
    */
   @ApiStatus.Experimental
-  public static @NotNull PsiJavaFile.StaticMember @NotNull[] getImplicitStaticImports(@NotNull PsiFile file) {
-    List<PsiJavaFile.StaticMember> staticImports = new ArrayList<>();
+  public static @NotNull ImplicitlyImportedStaticMember @NotNull[] getImplicitStaticImports(@NotNull PsiFile file) {
+    List<ImplicitlyImportedStaticMember> staticImports = new ArrayList<>();
     // java.lang.StringTemplate.STR
     if (PsiUtil.isAvailable(JavaFeature.STRING_TEMPLATES, file)) {
-      staticImports.add(PsiJavaFile.StaticMember.create(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, "STR"));
+      staticImports.add(ImplicitlyImportedStaticMember.create(CommonClassNames.JAVA_LANG_STRING_TEMPLATE, "STR"));
     }
 
     // java.io.IO.* for implicit classes
     if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) && file instanceof PsiJavaFile) {
       PsiClass[] classes = ((PsiJavaFile)file).getClasses();
       if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
-        staticImports.add(PsiJavaFile.StaticMember.create(JAVA_IO_IO, "*"));
+        staticImports.add(ImplicitlyImportedStaticMember.create(JAVA_IO_IO, "*"));
       }
     }
 
-    return staticImports.toArray(PsiJavaFile.StaticMember.EMPTY_ARRAY);
+    return staticImports.toArray(ImplicitlyImportedStaticMember.EMPTY_ARRAY);
   }
 }
