@@ -3635,7 +3635,8 @@ checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 [[package]]
 name = "va_list"
 version = "0.2.0"
-source = "git+https://github.com/trespasserw/va_list-rs.git#75c5bf43efa4eee2fab4c312b9bcace13a72fcac"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "153b41c3fc24dcbdf1281fc2b93d5d67ef2ef73ccd0e3b1d6bef2ce4861cce15"
 
 [[package]]
 name = "vcpkg"
