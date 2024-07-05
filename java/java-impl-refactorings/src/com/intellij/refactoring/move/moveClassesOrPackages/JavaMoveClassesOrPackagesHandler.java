@@ -156,7 +156,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       if (CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
         if (!packageHasMultipleDirectoriesInModule(project, (PsiDirectory)targetContainer)) {
           var dialogue = createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback);
-          if (Boolean.getBoolean("ide.performance.skip.move.files.dialog"))
+          if (Boolean.getBoolean("ide.performance.skip.refactoring.dialogs"))
             dialogue.performOKAction();
           else
             dialogue.show();
