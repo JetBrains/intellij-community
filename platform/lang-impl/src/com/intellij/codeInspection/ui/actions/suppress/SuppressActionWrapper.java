@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.SuppressableInspectionTreeNode;
 import com.intellij.codeInspection.ui.actions.KeyAwareInspectionViewAction;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,11 +31,12 @@ import java.util.*;
 
 import static com.intellij.codeInspection.ui.actions.InspectionViewActionBase.getView;
 
-public final class SuppressActionWrapper extends ActionGroup implements CompactActionGroup {
+public final class SuppressActionWrapper extends ActionGroup {
   private final static Logger LOG = Logger.getInstance(SuppressActionWrapper.class);
 
   public SuppressActionWrapper() {
     super(InspectionsBundle.messagePointer("suppress.inspection.problem"), false);
+    getTemplatePresentation().putClientProperty(ActionUtil.HIDE_INVISIBLE_CHILDREN, true);
   }
 
   @Override

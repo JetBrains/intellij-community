@@ -1756,7 +1756,6 @@ c:com.intellij.openapi.actionSystem.DefaultActionGroup
 - replaceAction(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnAction):Z
 c:com.intellij.openapi.actionSystem.DefaultCompactActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.actionSystem.CompactActionGroup
 - <init>():V
 - <init>(java.lang.String,Z):V
 - <init>(com.intellij.openapi.actionSystem.AnAction[]):V
@@ -1947,6 +1946,7 @@ f:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:ALWAYS_VISIBLE_GROUP:com.intellij.openapi.util.Key
 - sf:ALWAYS_VISIBLE_INLINE_ACTION:com.intellij.openapi.util.Key
 - sf:HIDE_DROPDOWN_ICON:com.intellij.openapi.util.Key
+- sf:HIDE_INVISIBLE_CHILDREN:com.intellij.openapi.util.Key
 - sf:INLINE_ACTIONS:com.intellij.openapi.util.Key
 - sf:INSTANCE:com.intellij.openapi.actionSystem.ex.ActionUtil
 - sf:KEYBOARD_SHORTCUT_SUFFIX:com.intellij.openapi.util.Key

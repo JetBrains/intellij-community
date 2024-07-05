@@ -13,10 +13,11 @@ import com.intellij.ide.ProhibitAWTEvents
 import com.intellij.internal.DebugAttachDetector
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.ex.ActionUtil.ALWAYS_VISIBLE_GROUP
+import com.intellij.openapi.actionSystem.ex.ActionUtil.HIDE_INVISIBLE_CHILDREN
+import com.intellij.openapi.actionSystem.ex.ActionUtil.SUPPRESS_SUBMENU
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.ex.InlineActionsHolder
-import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.ALWAYS_VISIBLE
-import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.SUPPRESS_SUBMENU
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
@@ -238,7 +239,7 @@ internal class ActionUpdater @JvmOverloads constructor(
    * Returns actions from the given and nested non-popup groups that are visible after updating
    */
   @RequiresBackgroundThread
-  suspend fun expandActionGroup(group: ActionGroup, hideDisabled: Boolean): List<AnAction> {
+  suspend fun expandActionGroup(group: ActionGroup): List<AnAction> {
     edtCallsCount = 0
     edtWaitNanos = 0
     val job = currentCoroutineContext().job
@@ -250,7 +251,7 @@ internal class ActionUpdater @JvmOverloads constructor(
       }
       val result = ActionUpdaterInterceptor.expandActionGroup(
         presentationFactory, dataContext, place, group, toolbarAction, asUpdateSession()) {
-        removeUnnecessarySeparators(doExpandActionGroup(group, hideDisabled))
+        removeUnnecessarySeparators(doExpandActionGroup(group, false))
       }
       computeOnEdt {
         applyPresentationChanges()
@@ -325,6 +326,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         // don't process invisible groups
         return@withContext emptyList()
       }
+      val hideDisabled = hideDisabled || group is CompactActionGroup || presentation.getClientProperty(HIDE_INVISIBLE_CHILDREN) == true
       val children = getGroupChildren(group)
       // parallel update execution can break some existing caching
       // the preferred way to do caching now is `updateSession.sharedData`
@@ -417,7 +419,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     val isPopup = presentation.isPopupGroup
     val canBePerformed = presentation.isPerformGroup
     var performOnly = isPopup && canBePerformed && presentation.getClientProperty(SUPPRESS_SUBMENU) == true
-    val alwaysVisible = child is AlwaysVisibleActionGroup || presentation.getClientProperty(ALWAYS_VISIBLE) == true
+    val alwaysVisible = child is AlwaysVisibleActionGroup || presentation.getClientProperty(ALWAYS_VISIBLE_GROUP) == true
     val skipChecks = performOnly || alwaysVisible
     val hideDisabled = isPopup && !skipChecks && hideDisabledBase
     val hideEmpty = isPopup && !skipChecks && presentation.isHideGroupIfEmpty
@@ -446,14 +448,15 @@ internal class ActionUpdater @JvmOverloads constructor(
         presentation.setEnabled(false)
       }
     }
-    val hideDisabledChildren = (hideDisabledBase || child is CompactActionGroup) && !alwaysVisible
+    val isCompactGroup = child is CompactActionGroup || presentation.getClientProperty(HIDE_INVISIBLE_CHILDREN) == true
+    val hideDisabledChildren = (hideDisabledBase || isCompactGroup) && !alwaysVisible
     return when {
       !hasEnabled && hideDisabled || !hasVisible && hideEmpty -> when {
         canBePerformed -> listOf(child)
         else -> emptyList()
       }
       isPopup -> when {
-        hideDisabledChildren && child !is CompactActionGroup -> listOf(ActionGroupUtil.forceHideDisabledChildren(child))
+        hideDisabledChildren && !isCompactGroup -> listOf(ActionGroupUtil.forceHideDisabledChildren(child))
         else -> listOf(child)
       }
       else -> doExpandActionGroup(child, hideDisabledChildren)
@@ -702,7 +705,7 @@ internal class ActionUpdater @JvmOverloads constructor(
     }
 
     override suspend fun expandSuspend(group: ActionGroup): List<AnAction> {
-      return updater.expandActionGroup(group, group is CompactActionGroup)
+      return updater.expandActionGroup(group)
     }
 
     override fun <T: Any?> sharedDataSuspend(key: Key<T>, supplier: suspend () -> T): T {

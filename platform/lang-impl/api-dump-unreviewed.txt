@@ -10388,7 +10388,6 @@ f:com.intellij.codeInspection.ui.actions.suppress.SuppressActionSequentialTask
 - prepare():V
 f:com.intellij.codeInspection.ui.actions.suppress.SuppressActionWrapper
 - com.intellij.openapi.actionSystem.ActionGroup
-- com.intellij.openapi.actionSystem.CompactActionGroup
 - <init>():V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]

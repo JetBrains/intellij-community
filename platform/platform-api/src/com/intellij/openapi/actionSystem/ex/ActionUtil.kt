@@ -85,6 +85,10 @@ object ActionUtil {
   @JvmField
   val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
 
+  /** Same as [CompactActionGroup] */
+  @JvmField
+  val HIDE_INVISIBLE_CHILDREN: Key<Boolean> = Key.create("HIDE_INVISIBLE_CHILDREN")
+
   /** Same as [AlwaysVisibleActionGroup] */
   @JvmField
   val ALWAYS_VISIBLE_GROUP: Key<Boolean> = Key.create("ALWAYS_VISIBLE_GROUP")
