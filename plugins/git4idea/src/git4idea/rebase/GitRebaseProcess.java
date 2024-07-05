@@ -305,12 +305,26 @@ public class GitRebaseProcess {
         }
       }
       else {
-        LOG.info("Error rebasing root " + repoName + ": " + result.getErrorOutputAsJoinedString());
-        showFatalError(result.getErrorOutputAsHtmlString(), repository, somethingRebased, alreadyRebased.keySet());
+        String error = getErrorMessage(rebaseCommandResult, result, repoName);
+        showFatalError(error, repository, somethingRebased, alreadyRebased.keySet());
         GitRebaseStatus.Type type = somethingRebased ? GitRebaseStatus.Type.SUSPENDED : GitRebaseStatus.Type.ERROR;
         return new GitRebaseStatus(type);
       }
     }
+  }
+
+  private static @NotNull @Nls String getErrorMessage(GitRebaseCommandResult rebaseCommandResult,
+                                                      GitCommandResult result,
+                                                      String repoName) {
+    String error;
+    if (rebaseCommandResult.getFailureCause() instanceof VcsException editingFailureCause) {
+      error = editingFailureCause.getMessage();
+    }
+    else {
+      error = result.getErrorOutputAsHtmlString();
+      LOG.info("Error rebasing root " + repoName + ": " + result.getErrorOutputAsJoinedString());
+    }
+    return error;
   }
 
   private @NotNull GitRebaseCommandResult callRebase(@NotNull GitRepository repository,

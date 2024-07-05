@@ -685,7 +685,7 @@ public class GitImpl extends GitImplBase {
       }
       return runWithEditor(handler, editorHandler);
     }
-    return GitRebaseCommandResult.normal(runCommand(handler));
+    return new GitRebaseCommandResult(runCommand(handler));
   }
 
   @Override
@@ -693,7 +693,7 @@ public class GitImpl extends GitImplBase {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
     handler.addParameters("--abort");
     addListeners(handler, listeners);
-    return GitRebaseCommandResult.normal(runCommand(handler));
+    return new GitRebaseCommandResult(runCommand(handler));
   }
 
   @Override
@@ -720,9 +720,7 @@ public class GitImpl extends GitImplBase {
   private @NotNull GitRebaseCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(handler, editorHandler)) {
       GitCommandResult result = runCommand(handler);
-      if (editorHandler.wasCommitListEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitList(result);
-      if (editorHandler.wasUnstructuredEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitMessage(result);
-      return GitRebaseCommandResult.normal(result);
+      return new GitRebaseCommandResult(result, editorHandler.getEditingResult());
     }
   }
 

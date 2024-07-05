@@ -160,7 +160,7 @@ class TestGitImpl : GitImpl() {
 
   private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {
     return if (rebaseShouldFail(repository)) {
-      GitRebaseCommandResult.normal(fatalResult())
+      GitRebaseCommandResult(fatalResult())
     }
     else {
       delegate()
