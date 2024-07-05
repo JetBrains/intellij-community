@@ -45,6 +45,11 @@ public class ReferenceResolveInLibrarySourcesTestGenerated extends AbstractRefer
         runTest("testData/resolve/referenceInLib/toFunParameter.kt");
     }
 
+    @TestMetadata("toLazyCall.kt")
+    public void testToLazyCall() throws Exception {
+        runTest("testData/resolve/referenceInLib/toLazyCall.kt");
+    }
+
     @TestMetadata("toLocalFun.kt")
     public void testToLocalFun() throws Exception {
         runTest("testData/resolve/referenceInLib/toLocalFun.kt");
