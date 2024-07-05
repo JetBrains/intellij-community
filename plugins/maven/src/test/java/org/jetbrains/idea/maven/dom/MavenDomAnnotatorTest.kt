@@ -39,7 +39,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 """
     val modulePom = createModulePomNonVfs("m", modulePomContent)
 
-    importProjectAsync("""
+    createProjectPomNonVfs("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -60,6 +60,8 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   </pluginManagement>
 </build>
 """)
+
+    importProjectAsync()
 
     withContext(Dispatchers.EDT) {
       val modules = project.modules
@@ -203,6 +205,10 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
         .toSet()
       assertEquals(expectedPropertiesClearing, actualProperties)
     }
+  }
+
+  private fun createProjectPomNonVfs(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    return createModulePomNonVfs("", xml).also { projectPom = it }
   }
 
   private fun createModulePomNonVfs(
