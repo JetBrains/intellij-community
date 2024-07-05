@@ -782,7 +782,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
       return requestedFileType.equals(detected);
     }
-    return requestedFileType.equals(ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE));
+    return requestedFileType.equals(fileType);
   }
 
   private record CachedFileTypes(@NotNull ConcurrentIntObjectMap<FileType> fileTypes, @NotNull AtomicInteger useCount) {}
@@ -828,7 +828,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     else if (fileType == null || fileType == DetectedByContentFileType.INSTANCE) {
       fileType = internalContinueToDetectFileTypeByFile(file, content, fileType);
     }
-    FileType result = ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
+    FileType result = fileType == null ? UnknownFileType.INSTANCE : fileType;
     CachedFileTypes cached = CACHED;
     if (cached != null && file instanceof VirtualFileWithId vfid) {
       cached.fileTypes().put(vfid.getId(), result);
