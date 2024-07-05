@@ -6,7 +6,6 @@ package com.intellij.ui
 import com.intellij.openapi.util.DummyIcon
 import com.intellij.openapi.util.Iconable
 import com.intellij.openapi.util.ScalableIcon
-import com.intellij.ui.icons.IconPathProvider
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.RowIcon
 import org.jetbrains.annotations.ApiStatus
@@ -199,7 +198,7 @@ private class DummyRowIcon : DummyIconImpl, RowIcon {
   override fun replaceBy(replacer: IconReplacer): Icon = this
 }
 
-private open class DummyIconImpl(override val originalPath: String, override val expUIPath: String? = null) : ScalableIcon, DummyIcon, IconPathProvider {
+private open class DummyIconImpl(override val originalPath: String, override val expUIPath: String? = null) : ScalableIcon, DummyIcon {
   override fun paintIcon(c: Component?, g: Graphics, x: Int, y: Int) {
   }
 
