@@ -63,16 +63,20 @@ private fun <T : CommandChain> T.appendRawLine(line: String): T = apply {
   addCommand(line)
 }
 
-fun <T : CommandChain> T.verifyFileEncoding(relativePath: String,
-                                            expectedCharsetName: String): T = apply {
+fun <T : CommandChain> T.verifyFileEncoding(
+  relativePath: String,
+  expectedCharsetName: String,
+): T = apply {
   addCommand("${CMD_PREFIX}assertEncodingFileCommand", relativePath, expectedCharsetName)
 }
 
-fun <T : CommandChain> T.openFile(relativePath: String,
-                                  timeoutInSeconds: Long = 0,
-                                  suppressErrors: Boolean = false,
-                                  warmup: Boolean = false,
-                                  disableCodeAnalysis: Boolean = false): T = apply {
+fun <T : CommandChain> T.openFile(
+  relativePath: String,
+  timeoutInSeconds: Long = 0,
+  suppressErrors: Boolean = false,
+  warmup: Boolean = false,
+  disableCodeAnalysis: Boolean = false,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file ${relativePath.replace(" ", "SPACE_SYMBOL")}")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
@@ -152,10 +156,12 @@ fun <T : CommandChain> T.findUsages(expectedElementName: String = "", scope: Str
   navigateAndFindUsages(expectedElementName, "", scope, warmup = warmup)
 }
 
-fun <T : CommandChain> T.navigateAndFindUsages(expectedElementName: String,
-                                               position: String = "INTO",
-                                               scope: String = "Project Files",
-                                               warmup: Boolean = false): T = apply {
+fun <T : CommandChain> T.navigateAndFindUsages(
+  expectedElementName: String,
+  position: String = "INTO",
+  scope: String = "Project Files",
+  warmup: Boolean = false,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}findUsages")
   if (expectedElementName.isNotEmpty()) {
     command.add("-expectedName $expectedElementName")
@@ -365,15 +371,17 @@ fun <T : CommandChain> T.pressKey(key: Keys): T = apply {
   addCommand("${CMD_PREFIX}pressKey", key.name)
 }
 
-fun <T : CommandChain> T.delayType(delayMs: Int,
-                                   text: String,
-                                   calculateAnalyzesTime: Boolean = false,
-                                   disableWriteProtection: Boolean = false): T = apply {
+fun <T : CommandChain> T.delayType(
+  delayMs: Int,
+  text: String,
+  calculateAnalyzesTime: Boolean = false,
+  disableWriteProtection: Boolean = false,
+): T = apply {
   addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
 fun <T : CommandChain> T.doLocalInspection(spanTag: String? = null): T = apply {
-  val spanTagLine = spanTag?.let {  " spanTag $spanTag" } ?: ""
+  val spanTagLine = spanTag?.let { " spanTag $spanTag" } ?: ""
   addCommand("${CMD_PREFIX}doLocalInspection" + spanTagLine)
 }
 
@@ -399,10 +407,12 @@ fun <T : CommandChain> T.createAllServicesAndExtensions(): T = apply {
   addCommand("${CMD_PREFIX}CreateAllServicesAndExtensions")
 }
 
-fun <T : CommandChain> T.runConfiguration(configurationName: String,
-                                          mode: String = "TILL_TERMINATED",
-                                          failureExpected: Boolean = false,
-                                          debug: Boolean = false): T = apply {
+fun <T : CommandChain> T.runConfiguration(
+  configurationName: String,
+  mode: String = "TILL_TERMINATED",
+  failureExpected: Boolean = false,
+  debug: Boolean = false,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}runConfiguration")
   command.add("-configurationName=$configurationName")
   command.add("-mode=$mode")
@@ -427,12 +437,14 @@ fun <T : CommandChain> T.stopPowerSave(): T = apply {
   addCommand("${CMD_PREFIX}stopPowerSave")
 }
 
-fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
-                                          textToInsert: String = "",
-                                          textToType: String = "",
-                                          close: Boolean = false,
-                                          selectFirst: Boolean = false,
-                                          warmup: Boolean = false): T = apply {
+fun <T : CommandChain> T.searchEverywhere(
+  tab: String = "all",
+  textToInsert: String = "",
+  textToType: String = "",
+  close: Boolean = false,
+  selectFirst: Boolean = false,
+  warmup: Boolean = false,
+): T = apply {
   val closeOnOpenArgument = when {
     close -> "-close"
     else -> ""
@@ -445,7 +457,7 @@ fun <T : CommandChain> T.searchEverywhere(tab: String = "all",
     textToType.isNotEmpty() -> "-type $textToType"
     else -> ""
   }
-  val warmupText = if(warmup) "|WARMUP" else ""
+  val warmupText = if (warmup) "|WARMUP" else ""
   if (selectFirstArgument.isNotEmpty() && closeOnOpenArgument.isNotEmpty()) {
     throw Exception("selectFirst=true argument will be ignored since close=true and SE will be closed first")
   }
@@ -565,9 +577,11 @@ enum class AssertModuleJdkVersionMode {
   EQUALS
 }
 
-fun <T : CommandChain> T.assertModuleJdkVersion(moduleName: String,
-                                                jdkVersion: String,
-                                                mode: AssertModuleJdkVersionMode = AssertModuleJdkVersionMode.CONTAINS): T {
+fun <T : CommandChain> T.assertModuleJdkVersion(
+  moduleName: String,
+  jdkVersion: String,
+  mode: AssertModuleJdkVersionMode = AssertModuleJdkVersionMode.CONTAINS,
+): T {
   val command = mutableListOf("${CMD_PREFIX}assertModuleJdkVersionCommand")
   command.add("-moduleName=$moduleName")
   command.add("-jdkVersion=$jdkVersion")
@@ -614,8 +628,10 @@ fun <T : CommandChain> T.refreshGradleProject(): T = apply {
   addCommand("${CMD_PREFIX}refreshGradleProject")
 }
 
-fun <T : CommandChain> T.setGradleDelegatedBuildCommand(delegatedBuild: Boolean = true,
-                                                        gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE): T = apply {
+fun <T : CommandChain> T.setGradleDelegatedBuildCommand(
+  delegatedBuild: Boolean = true,
+  gradleTestRunner: GradleTestRunner = GradleTestRunner.GRADLE,
+): T = apply {
   addCommand("${CMD_PREFIX}setGradleDelegatedBuildCommand $delegatedBuild $gradleTestRunner")
 }
 
@@ -739,9 +755,11 @@ fun <T : CommandChain> T.setGradleJdk(jdk: SdkObject): T = apply {
   addCommand("${CMD_PREFIX}setGradleJdk ${jdk.sdkName}|${jdk.sdkType}|${jdk.sdkPath}")
 }
 
-fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
-                                                performEvaluateCount: Int = 0,
-                                                warmup: Boolean = false): T = apply {
+fun <T : CommandChain> T.showEvaluateExpression(
+  expression: String = "",
+  performEvaluateCount: Int = 0,
+  warmup: Boolean = false,
+): T = apply {
   val command = mutableListOf("${CMD_PREFIX}showEvaluateExpression")
   if (expression.isNotEmpty()) {
     command.add("-expression $expression")
@@ -756,6 +774,12 @@ fun <T : CommandChain> T.showEvaluateExpression(expression: String = "",
 fun <T : CommandChain> T.executeEditorAction(action: String): T = apply {
   addCommand("${CMD_PREFIX}executeEditorAction $action")
 }
+
+fun <T : CommandChain> T.moveFiles(moveFileData: MoveFilesData): T = apply {
+  val jsonData = objectMapper.writeValueAsString(moveFileData)
+  addCommand("${CMD_PREFIX}moveFiles $jsonData")
+}
+
 
 fun <T : CommandChain> T.copy(): T = apply {
   executeEditorAction("\$Copy")
@@ -941,8 +965,10 @@ enum class EnableSettingSyncOptions {
   GET, PUSH, NONE
 }
 
-fun <T : CommandChain> T.enableSettingsSync(enableCrossIdeSync: Boolean = false,
-                                            action: EnableSettingSyncOptions = EnableSettingSyncOptions.NONE): T = apply {
+fun <T : CommandChain> T.enableSettingsSync(
+  enableCrossIdeSync: Boolean = false,
+  action: EnableSettingSyncOptions = EnableSettingSyncOptions.NONE,
+): T = apply {
   addCommand("${CMD_PREFIX}enableSettingsSync ${enableCrossIdeSync} ${action.name}")
 }
 

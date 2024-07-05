@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import java.lang.Boolean.getBoolean
 
 class K2MoveHandler : MoveHandlerDelegate() {
     override fun supportsLanguage(language: Language): Boolean = language == KotlinLanguage.INSTANCE
@@ -71,6 +72,11 @@ class K2MoveHandler : MoveHandlerDelegate() {
         editor: Editor?
     ) {
         val type = K2MoveModel.create(elements, targetContainer, editor) ?: return
-        K2MoveDialog(project, type).show()
+        K2MoveDialog(project, type).apply {
+            if (getBoolean("ide.performance.skip.move.files.dialog"))
+                performOKAction()
+            else
+                show()
+        }
     }
 }

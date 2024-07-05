@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
+import java.lang.Boolean.getBoolean
 
 private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerActions {
 
@@ -82,7 +83,12 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         initialDirectory: PsiDirectory?,
         elements: List<PsiFileSystemItem>,
         moveCallback: MoveCallback?
-    ) = KotlinAwareMoveFilesOrDirectoriesDialog(project, initialDirectory, elements, moveCallback).show()
+    ) = KotlinAwareMoveFilesOrDirectoriesDialog(project, initialDirectory, elements, moveCallback).let {
+        if (getBoolean("ide.performance.skip.move.files.dialog"))
+            it.performOKAction()
+        else
+            it.show()
+    }
 }
 
 class MoveKotlinDeclarationsHandler internal constructor(private val handlerActions: MoveKotlinDeclarationsHandlerActions) :
@@ -173,7 +179,7 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
             }
             val initialTargetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(project, initialTargetElement)
 
-            if (!isUnitTestMode() &&
+            if (!getBoolean("ide.performance.skip.move.files.dialog") && !isUnitTestMode() &&
                 elementsToSearch.any { it.isExpectDeclaration() || it.isEffectivelyActual() }
             ) {
                 val message =

@@ -263,8 +263,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected void previewRefactoring(UsageInfo @NotNull [] usages) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
+    if (ApplicationManager.getApplication().isUnitTestMode() || Boolean.getBoolean("ide.performance.skip.refactoring.conflicts.dialog")) {
+      if (!PREVIEW_IN_TESTS) {
+        throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
+      }
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
@@ -666,7 +668,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected boolean showConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
-    if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!conflicts.isEmpty() && (ApplicationManager.getApplication().isUnitTestMode()
+                                 || Boolean.getBoolean("ide.performance.skip.refactoring.conflicts.dialog"))) {
       if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
       return true;
     }
