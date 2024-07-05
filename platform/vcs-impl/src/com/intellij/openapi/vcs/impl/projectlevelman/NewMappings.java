@@ -129,25 +129,32 @@ public final class NewMappings implements Disposable {
     }
   }
 
-  /**
-   * @return {@link #myActivated} value
-   */
-  private boolean updateActiveVcses(boolean forceFireEvent) {
-    MyVcsActivator activator =
-      ReadAction.compute(() -> {
-        synchronized (myUpdateLock) {
-          return myActivated ? createVcsActivator() : null;
-        }
-      });
+  private void updateActiveVcses(boolean forceFireEvent) {
+    if (!myActivated) return;
+    if (myProject.isDisposed()) return;
+    if (!TrustedProjects.isTrusted(myProject)) return;
 
-    if (activator != null) {
-      boolean wasChanged = activator.activate();
-      if (forceFireEvent || wasChanged) {
-        BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
-      }
+    List<VcsDirectoryMapping> mappings = myMappings;
+    Set<AbstractVcs> newVcses = ContainerUtil.map2SetNotNull(myMappings, this::getMappingsVcs);
+
+    List<AbstractVcs> oldVcses;
+    synchronized (myUpdateLock) {
+      if (myMappings != mappings) return;
+
+      oldVcses = myActiveVcses;
+      myActiveVcses = List.copyOf(newVcses);
     }
 
-    return activator != null;
+    Collection<AbstractVcs> toAdd = ContainerUtil.subtract(myActiveVcses, oldVcses);
+    Collection<AbstractVcs> toRemove = ContainerUtil.subtract(oldVcses, myActiveVcses);
+    VcsActivator activator = new VcsActivator(toAdd, toRemove);
+
+    boolean wasChanged = activator.activate();
+    if (forceFireEvent || wasChanged) {
+      BackgroundTaskUtil.syncPublisher(myProject, ProjectLevelVcsManagerEx.VCS_ACTIVATED).vcsesActivated(myActiveVcses);
+
+      refreshMainMenu();
+    }
   }
 
   public void setMapping(@NotNull String path, @Nullable String activeVcsName) {
@@ -181,9 +188,11 @@ public final class NewMappings implements Disposable {
   public void updateMappedVcsesImmediately() {
     LOG.debug("updateMappingsImmediately");
 
-    if (!updateActiveVcses(false)) return;
+    updateActiveVcses(false);
 
     synchronized (myUpdateLock) {
+      if (!myActivated) return;
+
       Disposer.dispose(myFilePointerDisposable);
       myFilePointerDisposable = Disposer.newDisposable();
 
@@ -229,7 +238,7 @@ public final class NewMappings implements Disposable {
       dumpMappingsToLog();
     }
 
-    boolean isActivated = updateActiveVcses(false);
+    updateActiveVcses(false);
 
     if (updateRootsImmediately) {
       boolean fireMappingsChangedEvent = false;
@@ -247,7 +256,7 @@ public final class NewMappings implements Disposable {
     }
 
     // do not fire event from ProjectLevelVcsManager service initialization
-    if (updateRootsImmediately || isActivated) {
+    if (updateRootsImmediately || isActivated()) {
       notifyMappingsChanged();
     }
   }
@@ -639,7 +648,7 @@ public final class NewMappings implements Disposable {
   public void dispose() {
     LOG.debug("disposed");
 
-    MyVcsActivator activator;
+    VcsActivator activator;
     synchronized (myUpdateLock) {
       Disposer.dispose(myFilePointerDisposable);
       myMappings = Collections.emptyList();
@@ -647,7 +656,11 @@ public final class NewMappings implements Disposable {
       myMappedRootsMapping = new RootMapping(Collections.emptyList());
       myMappedRootShortNames = Collections.emptyMap();
       myFilePointerDisposable = Disposer.newDisposable();
-      activator = createVcsActivator();
+
+      List<AbstractVcs> oldVcses = myActiveVcses;
+      myActiveVcses = Collections.emptyList();
+
+      activator = new VcsActivator(Collections.emptyList(), oldVcses);
     }
     activator.activate();
   }
@@ -733,34 +746,20 @@ public final class NewMappings implements Disposable {
     updateVcsMappings(filteredMappings);
   }
 
-  private @NotNull MyVcsActivator createVcsActivator() {
-    Set<AbstractVcs> newVcses = !myProject.isDisposed() && TrustedProjects.isTrusted(myProject)
-                                ? ContainerUtil.map2SetNotNull(myMappings, this::getMappingsVcs)
-                                : Collections.emptySet();
-
-    List<AbstractVcs> oldVcses = myActiveVcses;
-    myActiveVcses = List.copyOf(newVcses);
-
-    refreshMainMenu();
-
-    Collection<AbstractVcs> toAdd = ContainerUtil.subtract(myActiveVcses, oldVcses);
-    Collection<AbstractVcs> toRemove = ContainerUtil.subtract(oldVcses, myActiveVcses);
-
-    return new MyVcsActivator(toAdd, toRemove);
-  }
-
-  private static final class MyVcsActivator {
+  private static final class VcsActivator {
     private final @NotNull Collection<? extends AbstractVcs> myAddVcses;
     private final @NotNull Collection<? extends AbstractVcs> myRemoveVcses;
 
-    private MyVcsActivator(@NotNull Collection<? extends AbstractVcs> addVcses,
-                           @NotNull Collection<? extends AbstractVcs> removeVcses) {
+    private VcsActivator(@NotNull Collection<? extends AbstractVcs> addVcses,
+                         @NotNull Collection<? extends AbstractVcs> removeVcses) {
       myAddVcses = addVcses;
       myRemoveVcses = removeVcses;
     }
 
     public boolean activate() {
-      return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
+      if (myAddVcses.isEmpty() && myRemoveVcses.isEmpty()) return false;
+
+      ProgressManager.getInstance().executeNonCancelableSection(() -> {
         for (AbstractVcs vcs : myAddVcses) {
           try {
             vcs.doActivate();
@@ -777,8 +776,8 @@ public final class NewMappings implements Disposable {
             LOG.error(e);
           }
         }
-        return !myAddVcses.isEmpty() || !myRemoveVcses.isEmpty();
       });
+      return true;
     }
   }
 
