@@ -19,7 +19,7 @@ serde_json = "1.0.120"
 jni = "0.21.1"
 libloading = "0.8.4"
 anyhow = { version = "1.0.86", features = ["std", "backtrace"] }
-va_list = { version = "0.2.0", git = "https://github.com/trespasserw/va_list-rs.git" }
+va_list = { version = "0.2.0"}
 
 [target.'cfg(target_os = "windows")'.dependencies]
 windows = { version = "0.58.0", features = [
