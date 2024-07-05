@@ -7447,6 +7447,90 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/introduceVariable")
+    public static class IntroduceVariable extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterExpression.kt")
+        public void testAfterExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/afterExpression.kt");
+        }
+
+        @TestMetadata("afterExpression2.kt")
+        public void testAfterExpression2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/afterExpression2.kt");
+        }
+
+        @TestMetadata("afterExpression3.kt")
+        public void testAfterExpression3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/afterExpression3.kt");
+        }
+
+        @TestMetadata("afterExpression4.kt")
+        public void testAfterExpression4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/afterExpression4.kt");
+        }
+
+        @TestMetadata("afterExpression5.kt")
+        public void testAfterExpression5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/afterExpression5.kt");
+        }
+
+        @TestMetadata("afterExpression6.kt")
+        public void testAfterExpression6() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/afterExpression6.kt");
+        }
+
+        @TestMetadata("atExpressionEnd.kt")
+        public void testAtExpressionEnd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/atExpressionEnd.kt");
+        }
+
+        @TestMetadata("atExpressionStart.kt")
+        public void testAtExpressionStart() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/atExpressionStart.kt");
+        }
+
+        @TestMetadata("atNestedExpression.kt")
+        public void testAtNestedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/atNestedExpression.kt");
+        }
+
+        @TestMetadata("beforeExpression.kt")
+        public void testBeforeExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/beforeExpression.kt");
+        }
+
+        @TestMetadata("insideLambda.kt")
+        public void testInsideLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/insideLambda.kt");
+        }
+
+        @TestMetadata("noType.kt")
+        public void testNoType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/noType.kt");
+        }
+
+        @TestMetadata("nothingType.kt")
+        public void testNothingType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/nothingType.kt");
+        }
+
+        @TestMetadata("unitType.kt")
+        public void testUnitType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/introduceVariable/unitType.kt");
+        }
+    }
+
 
 
 
@@ -8338,8 +8422,6 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/convertReceiverToParameter/varargs.kt");
         }
     }
-
-
 
 
 

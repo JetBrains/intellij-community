@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.test.runAll
 import java.io.File
 
 abstract class AbstractK2IntentionTest : AbstractIntentionTestBase() {
-    override fun intentionFileName() = ".k2Intention"
+    override fun intentionFileName(): String = ".k2Intention"
 
     override fun afterFileNameSuffix(ktFilePath: File): String {
         return if (ktFilePath.resolveSibling(ktFilePath.name + AFTER_K2_EXTENSION).exists()) AFTER_K2_EXTENSION

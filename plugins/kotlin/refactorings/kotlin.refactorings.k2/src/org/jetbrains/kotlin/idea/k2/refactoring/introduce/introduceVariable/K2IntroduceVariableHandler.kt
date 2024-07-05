@@ -11,19 +11,22 @@ import com.intellij.openapi.util.Pass
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.endOffset
+import com.intellij.psi.util.isAncestor
+import com.intellij.psi.util.startOffset
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser
 import com.intellij.util.application
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
@@ -51,7 +54,9 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getPossiblyQualifiedCallExpression
+import org.jetbrains.kotlin.psi.psiUtil.isInsideOf
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
@@ -204,8 +209,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             val physicalExpression = expression.substringContextOrThis
 
             val expressionType = substringInfo?.guessLiteralType() ?: physicalExpression.expressionType
-            if (expressionType != null && expressionType.isUnit) return@analyzeInModalWindow null
-            (expressionType ?: builtinTypes.ANY).render(position = Variance.INVARIANT)
+            if (expressionType != null && expressionType.isUnitType) return@analyzeInModalWindow null
+            (expressionType ?: builtinTypes.any).render(position = Variance.INVARIANT)
         } ?: return showErrorHint(project, editor, KotlinBundle.message("cannot.refactor.expression.has.unit.type"))
 
         val renderedTypeArguments = expression.getPossiblyQualifiedCallExpression()?.let { callExpression ->
@@ -307,7 +312,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                         }
 
                         if (editor != null && !replaceFirstOccurrence) {
-                            editor.caretModel.moveToOffset(declaration.endOffset)
+                            val endOffset = declaration.children.last { it !is PsiComment && it !is PsiWhiteSpace }.endOffset
+                            editor.caretModel.moveToOffset(endOffset)
                         }
                     }
 
@@ -320,7 +326,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
 
                     when (property) {
                         is KtProperty -> {
-                            KotlinVariableInplaceIntroducer(
+                            val variableInplaceIntroducer = KotlinVariableInplaceIntroducer(
                                 property,
                                 introduceVariableContext.reference?.element,
                                 introduceVariableContext.references.mapNotNull { it.element }.toTypedArray(),
@@ -331,7 +337,8 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                                 project,
                                 editor,
                                 ::postProcess,
-                            ).startInplaceIntroduceTemplate()
+                            )
+                            variableInplaceIntroducer.startInplaceIntroduceTemplate()
                         }
 
                         is KtDestructuringDeclaration -> {

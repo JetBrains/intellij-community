@@ -130,6 +130,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/mergeElseIf", pattern = pattern, isIgnored = true)
             model("${idea}intentions/branched/ifWhen/ifToWhen", pattern = pattern)
             model("${idea}intentions/branched/when/flatten", pattern = pattern)
+            model("${idea}intentions/introduceVariable", pattern = pattern)
 
             //model("${idea}intentions/loopToCallChain", pattern = pattern, isIgnored = true)
             //model("${idea}intentions/loopToCallChain/forEach", pattern = pattern, isIgnored = true)
@@ -177,7 +178,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertBlockCommentToLineComment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeSingleExpressionStringTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLambdaToMultiLine", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/introduceVariable", pattern = pattern, isIgnored = true)
         }
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {

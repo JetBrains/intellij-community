@@ -249,7 +249,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         if (filePath == mainFilePath) {
                             try {
                                 myFixture.checkResultByFile(canonicalPathToExpectedFile)
-                            } catch (e: FileComparisonFailedError) {
+                            } catch (_: FileComparisonFailedError) {
                                 KotlinTestUtils.assertEqualsToFile(afterFile, editor.document.text)
                             }
                         } else {
