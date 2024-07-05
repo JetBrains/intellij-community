@@ -82,7 +82,7 @@ public class ToolWindowViewModeAction extends DumbAwareToggleAction implements F
     Presentation presentation = getTemplatePresentation();
     presentation.setText(ActionsBundle.actionText(myMode.myActionID));
     presentation.setDescription(ActionsBundle.actionDescription(myMode.myActionID));
-    presentation.setKeepPopupOnPerform(KeepPopupOnPerform.IfRequested);
+    presentation.setKeepPopupOnPerform(KeepPopupOnPerform.Never);
   }
 
   protected @Nullable ToolWindowManager getToolWindowManager(AnActionEvent e) {
