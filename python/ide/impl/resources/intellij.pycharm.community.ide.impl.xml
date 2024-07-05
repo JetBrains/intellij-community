@@ -2,6 +2,7 @@
   <!--Customization code for both Community and Pro PyCharms-->
   <dependencies>
     <plugin id="PythonCore"/>
+    <module name="intellij.platform.whatsNew" />
   </dependencies>
 
   <projectListeners>
@@ -61,6 +62,10 @@
 
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonFragmentsBuilder"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyIdeCommonFragmentsBuilder"/>
+
+    <applicationService serviceInterface="com.intellij.platform.whatsNew.WhatsNewInVisionContentProvider"
+                        serviceImplementation="com.intellij.pycharm.community.ide.impl.whatsnew.PyCharmWhatsNewInVisionContentProvider"
+                        overrides="true"/>
 
 
     <directoryIndexExcludePolicy implementation="com.intellij.pycharm.community.ide.impl.PyDirectoryIndexExcludePolicy"/>
