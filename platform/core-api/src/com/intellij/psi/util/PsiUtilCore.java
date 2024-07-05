@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
@@ -444,8 +445,7 @@ public class PsiUtilCore {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
 
-    FileViewProvider viewProvider = containingFile.getViewProvider();
-    return viewProvider.getPsi(viewProvider.getBaseLanguage());
+    return TemplateLanguageUtil.getBaseFile(containingFile);
   }
 
   public static PsiFile @NotNull [] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
