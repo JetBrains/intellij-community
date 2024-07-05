@@ -11,13 +11,14 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase {
 
   public void testImplicitAllowsNonStatic() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         void main<caret>() {
         }
@@ -27,8 +28,12 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  protected @NotNull LanguageLevel getEnabledLevel() {
+    return LanguageLevel.JDK_22_PREVIEW;
+  }
+
   public void testImplicitNotAllowsNonStatic() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, () -> {
+    IdeaTestUtil.withLevel(getModule(), getDisabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         void main<caret>() {
         }
@@ -38,8 +43,12 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
     });
   }
 
+  protected @NotNull LanguageLevel getDisabledLevel() {
+    return LanguageLevel.JDK_22;
+  }
+
   public void testClassWithConstructorWithoutParamsAndInstanceMainIsAllowed() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         public class A {
           A() {}
@@ -52,7 +61,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testClassWithConstructorWithoutParamsAndInstanceMainIsNotAllowed() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, () -> {
+    IdeaTestUtil.withLevel(getModule(), getDisabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         public class A {
           A() {}
@@ -65,7 +74,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testClassWithDefaultConstructorParamsAndInstanceMainIsAllowed() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         public class A {
           public void main<caret>() {}
@@ -77,7 +86,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testClassWithConstructorWithParametersAndInstanceMethodIsNotEntryPoint() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         public class A {
           A(String s) {}
@@ -90,7 +99,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testMainInsideInnerClassInImplicitClassHasNoGutter() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         void foo() {
         }
@@ -105,7 +114,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testStaticWithParameterHasHigherPriority() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         static void main<caret>() {}
         static void main(String[] args) {}
@@ -117,7 +126,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testStaticWithNoParametersHasHigherPriorityThanInstance() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         static void main() {}
         void main<caret>(String[] args) {}
@@ -129,7 +138,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testInstanceWithParameterHasHigherPriority() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         void main<caret>() {}
         void main(String[] args) {}
@@ -142,7 +151,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testInstanceMainMethodInSuperClass() {
     myFixture.addClass("public class B { void main() {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         class A extends B {}
         """);
@@ -153,7 +162,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testInstanceMainMethodInSuperInterface() {
     myFixture.addClass("public interface B { default void main() {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         class A implements B {}
         """);
@@ -164,7 +173,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testStaticMainMethodInSuperInterface() {
     myFixture.addClass("public interface B { static void main() {} }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         class A implements B {}
         """);
@@ -175,7 +184,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
 
   public void testAbstractInstanceMainMethodInSuperInterface() {
     myFixture.addClass("public interface B {  void main(); }");
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         abstract class A implements B {}
         """);
@@ -185,7 +194,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testAbstractClass() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         abstract class A {
           void main(){};
@@ -197,7 +206,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testInterface() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("MainTest.java", """
         interface A {
           default void main(){};
@@ -209,7 +218,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testInstanceMainMethodInInterface() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("Run.java", """
         interface Run {
             public default void main(String[] args) {
@@ -223,7 +232,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testTwoStaticMainMethods() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("Run.java", """
         class Main {
             public static void main(String[] args) {
@@ -241,8 +250,8 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
 
-  public void testStaticMethodsIn22PreviewWithConstructor() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+  public void testStaticMethodsInPreviewWithConstructor() {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.configureByText("Run.java", """
           class Outer {
               Outer(int i) {}
@@ -261,7 +270,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testInheritMain() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.addClass("""
         public class AAAAAA {
             public void main(String[] args) {
@@ -282,7 +291,7 @@ public class RunLineMarkerJava22Test extends LightJavaCodeInsightFixtureTestCase
   }
 
   public void testImpossibleInheritStatic() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22_PREVIEW, () -> {
+    IdeaTestUtil.withLevel(getModule(), getEnabledLevel(), () -> {
       myFixture.addClass("""
         public class AAAAAA {
             public AAAAAA(int a){}
