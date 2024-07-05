@@ -138,7 +138,7 @@ public class ReferencesPanel extends JPanel {
   protected @NotNull JBLabel createLabel(@Nls @NotNull String text, @Nullable Icon icon) {
     JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
     label.setFont(getLabelsFont());
-    label.setIconTextGap(0);
+    label.setIconTextGap(2);
     label.setHorizontalAlignment(SwingConstants.LEFT);
     label.setVerticalTextPosition(SwingConstants.CENTER);
     label.setCopyable(true);
