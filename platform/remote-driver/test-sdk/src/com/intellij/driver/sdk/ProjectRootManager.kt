@@ -15,10 +15,21 @@ interface ProjectRootManager {
   fun setProjectSdk(sdk: Sdk?)
 }
 
+@Remote("com.intellij.openapi.roots.ProjectRootManager", rdTarget = RdTarget.FRONTEND)
+interface FrontendProjectRootManager {
+  fun getContentRoots(): Array<VirtualFile>
+}
+
 fun Driver.findFile(relativePath: String, project: Project? = null): VirtualFile? {
   return withReadAction {
-    service<ProjectRootManager>(project ?: singleProject()).getContentRoots()
-      .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
+    if (isRemoteIdeMode) {
+      service<FrontendProjectRootManager>(project ?: singleProject()).getContentRoots()
+        .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
+    } else {
+      // On Frontend the file will not be found unless it was opened previously
+      service<ProjectRootManager>(project ?: singleProject()).getContentRoots()
+        .firstNotNullOfOrNull { it.findFileByRelativePath(relativePath) }
+    }
   }
 }
 
