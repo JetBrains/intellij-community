@@ -655,6 +655,7 @@ f:com.intellij.ide.Prefs
 - sf:NOT_SET:com.intellij.ide.Region
 - externalName():java.lang.String
 - s:fromExternalName(java.lang.String):com.intellij.ide.Region
+- getDisplayKey():java.lang.String
 - getDisplayName():java.lang.String
 - getDisplayOrdinal():I
 - s:valueOf(java.lang.String):com.intellij.ide.Region

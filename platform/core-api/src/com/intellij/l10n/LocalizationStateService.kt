@@ -18,4 +18,5 @@ interface LocalizationStateService {
 
   fun getSelectedLocale(): String
   fun setSelectedLocale(locale: String)
+  fun getLastSelectedLocale(): String
 }

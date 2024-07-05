@@ -383,7 +383,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myCancelOnWindow = cancelOnWindow;
     myMinSize = minSize;
 
-    if (Registry.is("ide.popup.horizontal.scroll.bar.opaque")) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("ide.popup.horizontal.scroll.bar.opaque")) {
       forHorizontalScrollBar(bar -> bar.setOpaque(true));
     }
 
@@ -1650,7 +1650,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   private PopupComponentFactory.PopupType getMostSuitablePopupType() {
     boolean forceDialog = myMayBeParent || SystemInfo.isMac && !(myOwner instanceof IdeFrame) && myOwner.isShowing();
-    if (Registry.is("allow.dialog.based.popups")) {
+    if (LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("allow.dialog.based.popups")) {
       boolean noFocus = !myFocusable || !myRequestFocus;
       boolean cannotBeDialog = noFocus; // && SystemInfo.isXWindow
 
