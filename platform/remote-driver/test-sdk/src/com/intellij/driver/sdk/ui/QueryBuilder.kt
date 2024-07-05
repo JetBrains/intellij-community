@@ -31,6 +31,10 @@ class QueryBuilder {
     return "contains($name, $value)"
   }
 
+  fun not(condition: String): String {
+    return "not($condition)"
+  }
+
   fun and(condition: String, condition2: String,  vararg conditions: String): String {
     val allConditions = listOf(condition, condition2, *conditions)
     return allConditions.joinToString(" and ", "(",")")

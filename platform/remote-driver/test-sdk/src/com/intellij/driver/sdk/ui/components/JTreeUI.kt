@@ -1,5 +1,6 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
@@ -9,6 +10,7 @@ import com.intellij.driver.sdk.remoteDev.JTreeFixtureAdapter
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
+import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.driver.sdk.waitFor
 import org.intellij.lang.annotations.Language
@@ -130,6 +132,16 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
     }
     else {
       it.first.contains(it.second, true)
+    }
+  }
+
+  fun pathExists(vararg path: String): Boolean{
+    return try {
+      clickPath(*path, fullMatch = false)
+      true
+    }
+    catch (notFound: PathNotFoundException) {
+      false
     }
   }
 
