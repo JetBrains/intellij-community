@@ -341,7 +341,8 @@ private fun mergeRdTargets(
     if (acc == RdTarget.DEFAULT) b
     else if (b == RdTarget.DEFAULT) acc
     else if (acc == b) acc
-    else throw IllegalStateException("Inconsistent rdTargets. " +
+    else throw IllegalStateException("Inconsistent rdTargets. Use can not request service with non default RtTarget as service of another non default RtTarget." +
+                                     "Consider introducing a separate service or changing type of the service to RdDefault." +
                                      "ForceRdTarget=$forceRdTarget " +
                                      "Remote(value=${remote.value}, rdTarget=${remote.rdTarget}), " +
                                      "Args: [${args.filterIsInstance<RefWrapper>().map { "${it.getRef().rdTarget()} -> $it" }.joinToString()}]"
