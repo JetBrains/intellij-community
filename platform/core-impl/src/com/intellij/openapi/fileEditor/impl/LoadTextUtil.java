@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -57,11 +58,15 @@ public final class LoadTextUtil {
     char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
 
     for (int src = 0; src < length; src++) {
-      char c = bufferArray != null ? bufferArray[src]:buffer.charAt(src);
+      char c = bufferArray != null ? bufferArray[src] : buffer.charAt(src);
       switch (c) {
         case '\r':
-          if(bufferArray != null) bufferArray[dst++] = '\n';
-          else buffer.put(dst++, '\n');
+          if (bufferArray != null) {
+            bufferArray[dst++] = '\n';
+          }
+          else {
+            buffer.put(dst++, '\n');
+          }
           crCount++;
           break;
         case '\n':
@@ -70,14 +75,22 @@ public final class LoadTextUtil {
             crlfCount++;
           }
           else {
-            if(bufferArray != null) bufferArray[dst++] = '\n';
-            else buffer.put(dst++, '\n');
+            if (bufferArray != null) {
+              bufferArray[dst++] = '\n';
+            }
+            else {
+              buffer.put(dst++, '\n');
+            }
             lfCount++;
           }
           break;
         default:
-          if(bufferArray != null) bufferArray[dst++] = c;
-          else buffer.put(dst++, c);
+          if (bufferArray != null) {
+            bufferArray[dst++] = c;
+          }
+          else {
+            buffer.put(dst++, c);
+          }
           break;
       }
       prev = c;
@@ -92,7 +105,8 @@ public final class LoadTextUtil {
   private static @NotNull ConvertResult convertLineSeparatorsToSlashN(byte @NotNull [] charsAsBytes, int startOffset, int endOffset) {
     int lineBreak = findLineBreakOrWideChar(charsAsBytes, startOffset, endOffset);
     if (!BitUtil.isSet(lineBreak, CR) && !BitUtil.isSet(lineBreak, WIDE)) {
-      // optimisation: if there is no CR in the file, no line separator conversion is necessary. we can re-use the passed byte buffer inplace
+      // optimization: if there is no CR in the file, no line separator conversion is necessary.
+      // we can re-use the passed byte buffer inplace
       ByteArrayCharSequence sequence = new ByteArrayCharSequence(charsAsBytes, startOffset, endOffset);
       return new ConvertResult(sequence, 0, BitUtil.isSet(lineBreak, LF) ? 1 : 0, 0);
     }
@@ -197,7 +211,7 @@ public final class LoadTextUtil {
   private static final Charset INTERNAL_SEVEN_BIT_ISO_8859_1 = new SevenBitCharset(StandardCharsets.ISO_8859_1);
   private static final Charset INTERNAL_SEVEN_BIT_WIN_1251 = new SevenBitCharset(CharsetToolkit.WIN_1251_CHARSET);
 
-  private static class SevenBitCharset extends Charset {
+  private static final class SevenBitCharset extends Charset {
     private final Charset myBaseCharset;
 
     /**
@@ -372,7 +386,7 @@ public final class LoadTextUtil {
                                           @NotNull String newSeparator,
                                           @NotNull Object requestor) throws IOException {
     CharSequence currentText = getTextByBinaryPresentation(file.contentsToByteArray(), file, true, false);
-    String newText = StringUtil.convertLineSeparators(currentText.toString(), newSeparator);
+    String newText = StringUtilRt.convertLineSeparators(currentText.toString(), newSeparator);
     file.setDetectedLineSeparator(newSeparator);
     write(project, file, requestor, newText, -1);
   }
@@ -434,11 +448,13 @@ public final class LoadTextUtil {
 
       byte[] out = isSupported(specified, text);
       if (out != null) {
-        return Pair.createNonNull(specified, out); //if explicitly specified encoding is safe, return it
+        // if explicitly specified encoding is safe, return it
+        return Pair.createNonNull(specified, out);
       }
       out = isSupported(existing, text);
       if (out != null) {
-        return Pair.createNonNull(existing, out);   //otherwise stick to the old encoding if it's ok
+        // otherwise, stick to the old encoding if it's ok
+        return Pair.createNonNull(existing, out);
       }
       return Pair.createNonNull(specified, text.getBytes(specified)); //if both are bad, there is no difference
     }
@@ -464,7 +480,8 @@ public final class LoadTextUtil {
   }
 
   public static @NotNull Charset extractCharsetFromFileContent(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
-    return ObjectUtils.notNull(charsetFromContentOrNull(project, virtualFile, text), virtualFile.getCharset());
+    Charset value = charsetFromContentOrNull(project, virtualFile, text);
+    return value == null ? virtualFile.getCharset() : value;
   }
 
   public static @Nullable("returns null if cannot determine from content") Charset charsetFromContentOrNull(@Nullable Project project, @NotNull VirtualFile virtualFile, @NotNull CharSequence text) {
@@ -623,7 +640,7 @@ public final class LoadTextUtil {
                                                      @NotNull Charset internalCharset) {
     assert startOffset >= 0 && startOffset <= endOffset && endOffset <= bytes.length: startOffset + "," + endOffset+": "+bytes.length;
     if (internalCharset instanceof SevenBitCharset || internalCharset == StandardCharsets.US_ASCII) {
-      // optimisation: skip byte-to-char conversion for ascii chars
+      // optimization: skip byte-to-char conversion for ascii chars
       return convertLineSeparatorsToSlashN(bytes, startOffset, endOffset);
     }
 
