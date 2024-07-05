@@ -147,11 +147,8 @@ class FileBasedEmbeddingStoragesManager(private val project: Project, private va
         indexFiles(scanFiles().toList().sortedByDescending { it.name.length })
         EmbeddingSearchLogger.indexingFinished(project, forActions = false, TimeoutUtil.getDurationMillis(projectIndexingStartTime))
       }
-      catch (e: CancellationException) {
-        logger.debug { "Full project embedding indexing was cancelled" }
-        throw e
-      }
       finally {
+        ensureActive()
         if (isFirstIndexing) {
           onFirstIndexingFinish()
           isFirstIndexing = false

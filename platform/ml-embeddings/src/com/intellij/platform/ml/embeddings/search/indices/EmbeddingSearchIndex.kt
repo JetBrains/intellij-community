@@ -3,7 +3,10 @@ package com.intellij.platform.ml.embeddings.search.indices
 
 import ai.grazie.emb.FloatTextEmbedding
 import com.intellij.platform.ml.embeddings.search.utils.ScoredText
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import java.util.PriorityQueue
 
 interface EmbeddingSearchIndex {
   var limit: Int?
@@ -33,20 +36,27 @@ interface EmbeddingSearchIndex {
   suspend fun checkCanAddEntry(): Boolean
 }
 
-internal fun Map<EntityId, FloatTextEmbedding>.findClosest(searchEmbedding: FloatTextEmbedding,
-                                                         topK: Int, similarityThreshold: Double?): List<ScoredText> {
-  return asSequence()
-    .map { it.key to searchEmbedding.times(it.value) }
-    .filter { (_, similarity) -> if (similarityThreshold != null) similarity > similarityThreshold else true }
-    .sortedByDescending { (_, similarity) -> similarity }
-    .take(topK)
-    .map { (id, similarity) -> ScoredText(id.id, similarity.toDouble()) }
-    .toList()
+internal suspend fun Sequence<Pair<EntityId, FloatTextEmbedding>>.findClosest(
+  searchEmbedding: FloatTextEmbedding,
+  topK: Int, similarityThreshold: Double?,
+): List<ScoredText> = coroutineScope {
+  val closest = PriorityQueue<ScoredText>(topK + 1, compareBy { it.similarity })
+
+  map { (id, embedding) -> ScoredText(id.id, searchEmbedding.times(embedding).toDouble()) }
+    .filter { similarityThreshold == null || it.similarity > similarityThreshold }
+    .forEach {
+      ensureActive()
+      closest.add(it)
+      if (closest.size > topK) closest.poll()
+    }
+
+  closest.sortedByDescending { it.similarity }
 }
 
-internal fun Sequence<Pair<EntityId, FloatTextEmbedding>>.streamFindClose(queryEmbedding: FloatTextEmbedding,
-                                                                        similarityThreshold: Double?): Sequence<ScoredText> {
-  return map { (id, embedding) -> id to queryEmbedding.times(embedding) }
-    .filter { similarityThreshold == null || it.second > similarityThreshold }
-    .map { (id, similarity) -> ScoredText(id.id, similarity.toDouble()) }
+internal fun Sequence<Pair<EntityId, FloatTextEmbedding>>.streamFindClose(
+  queryEmbedding: FloatTextEmbedding,
+  similarityThreshold: Double?,
+): Sequence<ScoredText> {
+  return map { (id, embedding) -> ScoredText(id.id, queryEmbedding.times(embedding).toDouble()) }
+    .filter { similarityThreshold == null || it.similarity > similarityThreshold }
 }

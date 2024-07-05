@@ -2,54 +2,42 @@
 package com.intellij.platform.ml.embeddings.search.utils
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 
 class SuspendingReadWriteLock {
-  private val readLightswitch = Lightswitch()
-  private val roomEmpty = Semaphore(1)
-
-  suspend fun <T> read(action: suspend CoroutineScope.() -> T): T = coroutineScope {
-    readLightswitch.lock(roomEmpty)
-    return@coroutineScope try {
-      action()
-    }
-    finally {
-      readLightswitch.unlock(roomEmpty)
-    }
-  }
-
-  suspend fun <T> write(action: suspend CoroutineScope.() -> T): T = coroutineScope {
-    roomEmpty.acquire()
-    return@coroutineScope try {
-      action()
-    }
-    finally {
-      roomEmpty.release()
-    }
-  }
-}
-
-private class Lightswitch {
+  private val roomEmpty = Mutex()
   private var counter = 0
-  private val mutex = Semaphore(1)
+  private val counterMutex = Mutex()
 
-  suspend fun lock(semaphore: Semaphore) {
-    mutex.withPermit {
-      counter += 1
-      if (counter == 1) {
-        semaphore.acquire()
+  suspend fun <T> read(
+    action: suspend CoroutineScope.() -> T,
+  ): T = coroutineScope {
+    counterMutex.withLock {
+      if (++counter == 1) {
+        roomEmpty.lock()
+      }
+    }
+    try {
+      action()
+    }
+    finally {
+      withContext(NonCancellable) {
+        counterMutex.withLock {
+          if (--counter == 0) {
+            roomEmpty.unlock()
+          }
+        }
       }
     }
   }
 
-  suspend fun unlock(semaphore: Semaphore) {
-    mutex.withPermit {
-      counter -= 1
-      if (counter == 0) {
-        semaphore.release()
-      }
-    }
+  suspend fun <T> write(
+    action: suspend CoroutineScope.() -> T,
+  ): T = coroutineScope {
+    roomEmpty.withLock { action() }
   }
 }
