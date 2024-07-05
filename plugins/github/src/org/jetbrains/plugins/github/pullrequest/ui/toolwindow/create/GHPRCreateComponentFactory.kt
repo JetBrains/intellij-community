@@ -160,7 +160,9 @@ internal object GHPRCreateComponentFactory {
           awaitCancellation()
         }
         finally {
-          EditorFactory.getInstance().releaseEditor(this@apply)
+          withContext(NonCancellable) {
+            EditorFactory.getInstance().releaseEditor(this@apply)
+          }
         }
       }
     }
@@ -173,7 +175,9 @@ internal object GHPRCreateComponentFactory {
           awaitCancellation()
         }
         finally {
-          EditorFactory.getInstance().releaseEditor(this@apply)
+          withContext(NonCancellable) {
+            EditorFactory.getInstance().releaseEditor(this@apply)
+          }
         }
       }
     }
