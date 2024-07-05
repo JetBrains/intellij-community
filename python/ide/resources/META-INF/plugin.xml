@@ -15,6 +15,7 @@
     <module name="intellij.pycharm.community.ide.impl"/>
     <module name="intellij.pycharm.community.ide.implTraining"/>
     <module name="intellij.jupyter.viewOnly"/> <!-- notebooks preview itself-->
+    <module name="intellij.platform.whatsNew"/>
 
     <module name="intellij.pycharm.community.ide.impl.promotion"/> <!-- mostly promo of Pro -->
   </content>
