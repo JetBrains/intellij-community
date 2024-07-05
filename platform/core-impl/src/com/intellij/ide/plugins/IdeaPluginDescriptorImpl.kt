@@ -386,12 +386,17 @@ class IdeaPluginDescriptorImpl(
     }
 
 
-    if (isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(this)) {
-      // disable plugins which are incompatible with the Kotlin Plugin K2 Mode KTIJ-24797
+    if (isPluginWhichDependsOnKotlinPluginAndItsIncompatibleWithIt(this)) {
+      // disable plugins which are incompatible with the Kotlin Plugin K1/K2 Modes KTIJ-24797, KTIJ-30474
+      val mode = if (isKotlinPluginK1Mode()) {
+        CoreBundle.message("plugin.loading.error.k1.mode")
+      } else {
+        CoreBundle.message("plugin.loading.error.k2.mode")
+      }
       markAsIncompatible(PluginLoadingError(
         plugin = this,
-        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.k2.incompatible", getName()) },
-        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.k2.incompatible") },
+        detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
+        shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
         isNotifyUser = true,
       ))
       return
