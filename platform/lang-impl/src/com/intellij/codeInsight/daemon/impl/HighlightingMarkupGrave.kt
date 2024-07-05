@@ -163,10 +163,12 @@ open class HighlightingMarkupGrave(project: Project, private val coroutineScope:
 
     val markupInfo = markupStore.getMarkup(file)
     if (markupInfo == null) {
+      LOG.debug("No markup in storage for ${file.id}")
       resurrectedZombies.put(file.id, true)
       logFusStatistic(file, MarkupGraveEvent.NOT_RESTORED_CACHE_MISS)
       return
     }
+    LOG.debug("Got markup fom storage for ${file.id}")
 
     if (TextEditorCache.contentHash(document) != markupInfo.contentHash) {
       // text changed since the cached markup was saved on-disk

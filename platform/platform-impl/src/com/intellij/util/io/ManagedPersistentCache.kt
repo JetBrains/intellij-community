@@ -121,7 +121,13 @@ open class ManagedPersistentCache<K, V>(
   }
 
   private fun close(persistentMap: PersistentMapBase<K, V>) {
-    LOG.info("closing persistent map $name")
+    if (LOG.isDebugEnabled) {
+      LOG.info("closing persistent map $name with ${persistentMap.keysCount()} elements")
+    }
+    else {
+      LOG.info("closing persistent map $name")
+    }
+
     try {
       persistentMap.force() // IJPL-157442 prevent data loss
       persistentMap.close()
