@@ -54,16 +54,19 @@ object ChangeMemberFunctionSignatureFixFactory {
         if (signature != null) {
             return@ModCommandBased listOf(ChangeMemberFunctionSignatureFix(function, signature, KotlinBundle.message("fix.change.signature.function.text", signature.preview)))
         }
-        return@ModCommandBased listOf(object : ModCommandAction {
-            override fun getPresentation(context: ActionContext): Presentation =
-                Presentation.of(KotlinBundle.message("fix.change.signature.function.text.generic"))
+        return@ModCommandBased listOf(ChooseSuperSignatureFix(function, signatures))
+    }
 
-            override fun perform(context: ActionContext): ModCommand =
-                ModChooseAction(KotlinBundle.message("fix.change.signature.function.text.generic"),
-                                signatures.map { ChangeMemberFunctionSignatureFix(function, it, it.preview) })
+    private class ChooseSuperSignatureFix(function: KtNamedFunction, signatures: List<Signature>): ModCommandAction {
+        val fixes = signatures.map { ChangeMemberFunctionSignatureFix(function, it, it.preview) }
 
-            override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.change.signature.function.family")
-        })
+        override fun getPresentation(context: ActionContext): Presentation =
+            Presentation.of(KotlinBundle.message("fix.change.signature.function.text.generic"))
+
+        override fun perform(context: ActionContext): ModCommand =
+            ModChooseAction(KotlinBundle.message("fix.change.signature.function.text.generic"), fixes)
+
+        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.change.signature.function.family")
     }
 
     /**
