@@ -21,12 +21,11 @@ libloading = "0.8.4"
 anyhow = { version = "1.0.86", features = ["std", "backtrace"] }
 va_list = { version = "0.2.0", git = "https://github.com/trespasserw/va_list-rs.git" }
 
-[target.'cfg(target_os = "windows")'.dependencies.windows]
-version = "0.56.0"
-features = [
-    "Win32_Foundation", "Win32_Globalization", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging", "Win32_Security",
-    "Win32_System_Console", "Win32_System_Environment", "Win32_System_LibraryLoader", "Win32_System_Services"
-]
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.58.0", features = [
+    "Win32_Foundation", "Win32_Globalization", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Console", "Win32_System_LibraryLoader", "Win32_System_Services"
+] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 libc = "0.2.142"
