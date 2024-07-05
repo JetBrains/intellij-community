@@ -50,6 +50,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
   private final CachedValue<Map<String, Iterable<ResultWithContext>>> myCachedDeclarations;
+  private final CachedValue<List<PsiImportStaticStatement>> myCachedImplicitImportStaticStatements;
   private volatile String myPackageName;
 
   protected PsiJavaFileBaseImpl(@NotNull IElementType elementType, @NotNull IElementType contentElementType, @NotNull FileViewProvider viewProvider) {
@@ -63,6 +64,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         return Result.create(declarations, this.getContainingFile(), PsiModificationTracker.MODIFICATION_COUNT);
       }
       return Result.create(declarations, PsiModificationTracker.MODIFICATION_COUNT);
+    }, false);
+    myCachedImplicitImportStaticStatements = cachedValuesManager.createCachedValue(() -> {
+      List<PsiImportStaticStatement> statements = createImplicitImportStaticStatements();
+      if (!this.isPhysical()) {
+        return Result.create(statements, this.getContainingFile(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
+      return Result.create(statements, PsiModificationTracker.MODIFICATION_COUNT);
     }, false);
   }
 
@@ -332,7 +340,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         }
       }
     }
-    for (PsiImportStaticStatement staticImport : ContainerUtil.append(getImplicitlyImportedStaticStatements(), getImportStaticStatements())) {
+    for (PsiImportStaticStatement staticImport : ContainerUtil.append(getImplicitImportStaticStatements(), getImportStaticStatements())) {
       String name = staticImport.getReferenceName();
       if (name != null) {
         staticImports.putValue(name, staticImport);
@@ -424,7 +432,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processOnDemandStaticImports(@NotNull ResolveState state, @NotNull StaticImportFilteringProcessor processor) {
-    for (PsiImportStaticStatement importStaticStatement : ContainerUtil.append(getImplicitlyImportedStaticStatements(), getImportStaticStatements())) {
+    for (PsiImportStaticStatement importStaticStatement : ContainerUtil.append(getImplicitImportStaticStatements(), getImportStaticStatements())) {
       if (!importStaticStatement.isOnDemand()) continue;
       PsiClass targetElement = importStaticStatement.resolveTargetClass();
       if (targetElement != null) {
@@ -523,7 +531,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
-  public @NotNull StaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
+  public @NotNull ImplicitlyImportedStaticMember @NotNull [] getImplicitlyImportedStaticMembers() {
     return PsiImplUtil.getImplicitStaticImports(this);
   }
 
@@ -539,7 +547,13 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
-  private List<PsiImportStaticStatement> getImplicitlyImportedStaticStatements() {
+  @NotNull
+  private List<PsiImportStaticStatement> getImplicitImportStaticStatements() {
+    return myCachedImplicitImportStaticStatements.getValue();
+  }
+
+  @NotNull
+  private List<PsiImportStaticStatement> createImplicitImportStaticStatements() {
     PsiElementFactory factory = PsiElementFactory.getInstance(getProject());
     return ContainerUtil.map(getImplicitlyImportedStaticMembers(),
                              member -> factory.createImportStaticStatementFromText(member.getContainingClass(), member.getMemberName()));

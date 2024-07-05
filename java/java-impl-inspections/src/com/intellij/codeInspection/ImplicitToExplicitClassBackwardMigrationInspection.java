@@ -100,7 +100,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
       if (!(containingFile instanceof PsiJavaFile psiJavaFile)) {
         return;
       }
-      PsiJavaFile.@NotNull StaticMember[] imports = PsiImplUtil.getImplicitStaticImports(psiJavaFile);
+      @NotNull ImplicitlyImportedStaticMember[] imports = PsiImplUtil.getImplicitStaticImports(psiJavaFile);
       PsiElement replaced = implicitClass.replace(newClass);
       PsiJavaFile newPsiJavaFile = PsiTreeUtil.getParentOfType(replaced, PsiJavaFile.class);
       if (newPsiJavaFile == null) {
@@ -111,7 +111,7 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
         return;
       }
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      for (PsiJavaFile.@NotNull StaticMember importMember : imports) {
+      for (@NotNull ImplicitlyImportedStaticMember importMember : imports) {
         PsiClass psiClass = psiFacade.findClass(importMember.getContainingClass(), implicitClass.getResolveScope());
         if (psiClass == null) {
           continue;

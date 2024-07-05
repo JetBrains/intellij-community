@@ -465,13 +465,13 @@ public final class ImportUtils {
   public static class ImplicitImportChecker {
 
     @NotNull
-    private final Map<String, PsiJavaFile.StaticMember> myStaticImportStatements = new HashMap<>();
+    private final Map<String, ImplicitlyImportedStaticMember> myStaticImportStatements = new HashMap<>();
 
     @NotNull
     private final Set<String> packages = new HashSet<>();
 
     private ImplicitImportChecker(@NotNull PsiJavaFile file) {
-      for (PsiJavaFile.StaticMember imp : file.getImplicitlyImportedStaticMembers()) {
+      for (ImplicitlyImportedStaticMember imp : file.getImplicitlyImportedStaticMembers()) {
         myStaticImportStatements.put(imp.getContainingClass(), imp);
       }
       packages.addAll(Arrays.asList(file.getImplicitlyImportedPackages()));
@@ -480,7 +480,7 @@ public final class ImportUtils {
     public boolean isImplicitlyImported(@NotNull Import name) {
       String packageOrClassName = getPackageOrClassName(name.name);
       if (!name.isStatic && packages.contains(packageOrClassName)) return true;
-      PsiJavaFile.StaticMember base = myStaticImportStatements.get(packageOrClassName);
+      ImplicitlyImportedStaticMember base = myStaticImportStatements.get(packageOrClassName);
       if (base != null) {
         if (!name.isStatic) return false;
         if (base.isOnDemand()) {
@@ -500,7 +500,7 @@ public final class ImportUtils {
   }
 
   @ApiStatus.Internal
-  public record Import(String name, boolean isStatic) {}
+  public record Import(@NotNull String name, boolean isStatic) {}
 
   private static boolean memberReferenced(PsiMember member, PsiElement context) {
     final MemberReferenceVisitor visitor = new MemberReferenceVisitor(member);
