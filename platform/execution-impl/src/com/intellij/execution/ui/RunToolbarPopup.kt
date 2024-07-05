@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
@@ -424,6 +425,12 @@ private fun createRunConfigurationWithInlines(project: Project,
       val filtered = filterOutRunIfDebugResumeIsPresent(
         ActionGroupUtil.getVisibleActions(inlineActionGroup, e).toList())
       e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, filtered)
+      if (Registry.`is`("run.popup.show.inlines.for.active.configurations", false)) {
+        val isRunning = getActiveExecutor(project, conf) != null
+        filtered.forEach {
+          e.updateSession.presentation(it).putClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION, isRunning)
+        }
+      }
     }
 
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
