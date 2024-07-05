@@ -462,8 +462,8 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
 
   fun getForegroundColor() = Color(component.getForeground().getRGB())
 
-  fun waitIsFocusOwner() {
-    waitFor {
+  fun waitIsFocusOwner(timeout: Duration = DEFAULT_FIND_TIMEOUT) {
+    waitFor("Component '$this' is focus owner", timeout = timeout) {
       component.isFocusOwner()
     }
   }
