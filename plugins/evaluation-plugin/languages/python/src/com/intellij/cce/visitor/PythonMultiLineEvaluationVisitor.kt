@@ -1,15 +1,9 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.CodeFragment
-import com.intellij.cce.core.CodeToken
 import com.intellij.cce.core.Language
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.endOffset
-import com.intellij.psi.util.startOffset
 import com.jetbrains.python.psi.*
 
 class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVisitor() {
@@ -44,55 +38,41 @@ class PythonMultiLineEvaluationVisitor : EvaluationVisitor, PyRecursiveElementVi
     if (node.parent is PyClass) return
 
     codeFragment?.let { file ->
-      val blocks = node.splitByIndents()
+      val blocks = MultiLineVisitorUtils.splitElementByIndents(node, PythonSupporter)
       blocks.forEach { file.addChild(it) }
     }
   }
 
-  private fun PsiElement.lineRanges(document: Document): List<Pair<TextRange, Int>> = buildList {
-    val offset = startOffset
-    var pos = 0
-    val text = text
-    while (pos < text.length) {
-      val nextLineBreakPos = text.indexOf('\n', pos)
-      if (nextLineBreakPos == -1) break
-      val range = TextRange(pos + offset, nextLineBreakPos + offset)
-      add(range to document.getText(range).indent)
-      pos = nextLineBreakPos + 1
+  private object PythonSupporter : MultiLineVisitorUtils.LanguageSupporter {
+    override fun getCommentRanges(lines: List<MultiLineVisitorUtils.LineInfo>): List<Pair<Int, Int>> {
+      val singleLines = lines
+        .withIndex()
+        .filter { (_, line) -> line.text.trimStart().startsWith("#") }
+        .map { (i, _) -> i to i }
+      val docstrings = buildList {
+        var pos = 0
+        outer@ while (pos < lines.size) {
+          val line = lines[pos].text.trimStart()
+          for (token in DOCSTRING_MARKERS) {
+            if (line.startsWith(token)) {
+              val match = findEndOfDocstring(pos, lines, token)
+              add(pos to match)
+              pos = match + 1
+              continue@outer
+            }
+          }
+          pos++
+        }
+      }
+
+      return singleLines + docstrings
     }
-    val lastRange = TextRange(pos + offset, textLength + offset)
-    add(lastRange to document.getText(lastRange).indent)
-  }
 
-  private fun containsValuableSymbols(line: String) = line.any(::isValuableCharacter)
-  private fun isValuableCharacter(c: Char) = c.isLetterOrDigit() || valuableCharacters.contains(c)
-  private val valuableCharacters = arrayOf('+', '-', '*', '%', '=', '&', '|', '@', '$', '?', '_')
-
-  private fun PsiElement.splitByIndents(): List<CodeToken> = buildList {
-    val document = PsiDocumentManager.getInstance(project).getDocument(containingFile) ?: return emptyList()
-    val lineRanges = lineRanges(document)
-    val end: Pair<TextRange, Int> = TextRange(endOffset, endOffset) to 0
-    for (i in lineRanges.indices) {
-      val (range, indent) = lineRanges[i]
-      val line = document.getText(range)
-      if (
-        line.isBlank() ||
-        !containsValuableSymbols(line) ||
-        line.dropWhile { it.isWhitespace() }.startsWith("#")
-      ) continue
-
-      val lastInScope = lineRanges
-        .asSequence()
-        .drop(i)
-        .takeWhile { it.second >= indent }
-        .lastOrNull() ?: end
-
-      val scopeRange = TextRange(range.startOffset, lastInScope.first.endOffset)
-      val scopeText = document.getText(scopeRange)
-      add(CodeToken(scopeText, range.startOffset))
+    private fun findEndOfDocstring(start: Int, lines: List<MultiLineVisitorUtils.LineInfo>, token: String): Int {
+      val end = lines.asSequence().drop(start).indexOfFirst { it.text.startsWith(token) }
+      return end.takeIf { it > 0 } ?: lines.size
     }
-  }
 
-  private val String.indent: Int
-    get() = takeWhile { it.isWhitespace() }.count()
+    private val DOCSTRING_MARKERS = listOf("\"\"\"", "\'\'\'")
+  }
 }
