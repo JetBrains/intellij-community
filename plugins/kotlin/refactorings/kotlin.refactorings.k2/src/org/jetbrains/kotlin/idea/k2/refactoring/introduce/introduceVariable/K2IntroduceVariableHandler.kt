@@ -219,7 +219,7 @@ object K2IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
             }
         }
 
-        val isInplaceAvailable = editor != null
+        val isInplaceAvailable = isInplaceAvailable(editor, project)
 
         val allOccurrences = occurrencesToReplace ?: expression.findOccurrences(containers.occurrenceContainer)
 
