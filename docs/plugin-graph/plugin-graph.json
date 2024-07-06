@@ -338,18 +338,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "e7",
-    "name": "intellij.downburst",
-    "n": "i.downburst",
-    "package": "com.intellij.downburst",
-    "sourceModule": "intellij.downburst",
-    "descriptor": "plugins/downburst/resources/META-INF/plugin.xml",
-    "pluginId": "Downburst",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "cHS",
     "n": "com.intellij.sisyphus"
   }
@@ -3590,18 +3578,6 @@
     "sourceModule": "intellij.wsl.remoteSdk",
     "descriptor": "plugins/wsl-remote-sdk/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.wsl",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "Pc",
-    "name": "intellij.wsl.fs.helper",
-    "n": "i.wsl.fs.helper",
-    "package": "com.intellij.wsl.fs",
-    "sourceModule": "intellij.wsl.fs.helper",
-    "descriptor": "plugins/wsl-file-system-helper/resources/META-INF/plugin.xml",
-    "pluginId": "org.jetbrains.plugins.wsl.fs",
     "type": 1
   }
 }, {
