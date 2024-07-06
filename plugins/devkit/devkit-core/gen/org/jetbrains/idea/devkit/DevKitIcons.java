@@ -26,6 +26,7 @@ public final class DevKitIcons {
     /** 12x12 */ public static final @NotNull Icon Properties = load("icons/gutter/properties.svg", "icons/expui/gutter/properties@14x14.svg", -818710709, 2);
   }
 
+  /** 16x16 */ public static final @NotNull Icon LocalizationFile = load("icons/localizationFile.svg", "icons/expui/localizationFile.svg", -1571747209, 2);
   /** 16x16 */ public static final @NotNull Icon PluginV2 = load("icons/expui/pluginV2.svg", 1719825147, 2);
   /** 16x16 */ public static final @NotNull Icon RemoteMapping = load("icons/remoteMapping.svg", "icons/expui/remoteMapping.svg", 1371307852, 2);
   /** 16x16 */ public static final @NotNull Icon Sdk_closed = load("icons/sdk_closed.svg", "icons/expui/sdkClosed.svg", -1355048140, 2);
