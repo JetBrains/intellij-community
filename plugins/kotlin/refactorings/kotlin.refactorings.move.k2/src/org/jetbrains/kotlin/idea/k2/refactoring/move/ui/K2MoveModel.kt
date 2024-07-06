@@ -15,6 +15,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -43,6 +44,9 @@ sealed class K2MoveModel {
 
     val searchReferences: Setting = Setting.SEARCH_REFERENCES
 
+    val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
+
+    @RequiresReadLock
     abstract fun toDescriptor(): K2MoveDescriptor
 
     fun isValidRefactoring(): Boolean {
@@ -60,9 +64,7 @@ sealed class K2MoveModel {
     }
 
     enum class Setting(private val text: @NlsContexts.Checkbox String) {
-        SEARCH_FOR_TEXT(
-            KotlinBundle.message("search.for.text.occurrences")
-        ) {
+        SEARCH_FOR_TEXT(KotlinBundle.message("search.for.text.occurrences")) {
             override var state: Boolean
                 get() {
                     return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_FOR_TEXT
@@ -72,9 +74,7 @@ sealed class K2MoveModel {
                 }
         },
 
-        SEARCH_IN_COMMENTS(
-            KotlinBundle.message("search.in.comments.and.strings"),
-        ) {
+        SEARCH_IN_COMMENTS(KotlinBundle.message("search.in.comments.and.strings"),) {
             override var state: Boolean
                 get() {
                     return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_IN_COMMENTS
@@ -85,15 +85,23 @@ sealed class K2MoveModel {
         },
 
 
-        SEARCH_REFERENCES(
-            KotlinBundle.message("checkbox.text.search.references")
-        ) {
+        SEARCH_REFERENCES(KotlinBundle.message("checkbox.text.search.references")) {
             override var state: Boolean
                 get() {
                     return KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
                 }
                 set(value) {
                     KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES = value
+                }
+        },
+
+        MPP_DECLARATIONS(KotlinBundle.message("label.text.move.expect.actual.counterparts")) {
+            override var state: Boolean
+                get() {
+                    return KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS
+                }
+                set(value) {
+                    KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS = value
                 }
         };
 
@@ -125,7 +133,8 @@ sealed class K2MoveModel {
                 targetDescr,
                 searchForText.state,
                 searchReferences,
-                searchInComments.state
+                searchInComments.state,
+                mppDeclarations.state
             )
         }
     }
@@ -149,7 +158,8 @@ sealed class K2MoveModel {
                 targetDescr,
                 searchForText.state,
                 searchReferences,
-                searchInComments.state
+                searchInComments.state,
+                mppDeclarations.state
             )
         }
     }

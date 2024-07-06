@@ -2,15 +2,12 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move
 
 import com.google.gson.JsonObject
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
-import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
@@ -62,16 +59,9 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
             val targetDir = config.getNullableString("targetDirectory")
             val targetDescriptor = when {
                 targetDir != null -> {
-                    val targetDirectory = runWriteAction {
-                        VfsUtil.createDirectoryIfMissing(rootDir, targetDir)
-                    }.toPsiDirectory(project)!!
-                    if (targetPackage != null) {
-                        K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), targetDirectory)
-                    } else {
-                        K2MoveTargetDescriptor.SourceDirectory(targetDirectory.getFqNameWithImplicitPrefixOrRoot(), targetDirectory)
-                    }
+                    val targetDirectory = rootDir.findFileByRelativePath(targetDir)?.toPsiDirectory(project)!!
+                    K2MoveTargetDescriptor.SourceDirectory(targetDirectory)
                 }
-
                 targetPackage != null -> {
                     K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), rootDir.toPsiDirectory(project)!!)
                 }
@@ -79,12 +69,13 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                 else -> fail("No target specified")
             }
             val descriptor = K2MoveDescriptor.Files(
-                project,
-                sourceDescriptor,
-                targetDescriptor,
-                shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
-                config.searchInComments(),
-                config.searchReferences()
+              project,
+              sourceDescriptor,
+              targetDescriptor,
+              shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
+              config.searchInComments(),
+              config.searchReferences(),
+              config.moveExpectedActuals()
             )
             K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor).run()
         }

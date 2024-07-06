@@ -67,7 +67,8 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                 targetDescriptor,
                 config.searchForText(),
                 config.searchInComments(),
-                config.searchReferences()
+                config.searchReferences(),
+                config.moveExpectedActuals()
             )
             K2MoveDeclarationsRefactoringProcessor(descriptor).run()
         }
