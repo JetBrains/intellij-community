@@ -28,7 +28,7 @@ import java.util.*;
  * Should not be used directly, please consider {@link com.intellij.find.TextSearchService}
  */
 public final class TrigramIndex extends ScalarIndexExtension<Integer> implements CustomInputsIndexFileBasedIndexExtension<Integer> {
-  public static final ID<Integer,Void> INDEX_ID = ID.create("Trigram.Index");
+  public static final ID<Integer, Void> INDEX_ID = ID.create("Trigram.Index");
 
   @Internal
   public TrigramIndex() {
@@ -37,6 +37,11 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
   @Internal
   public static boolean isEnabled() {
     return TrigramTextSearchService.useIndexingSearchExtensions();
+  }
+
+  @Override
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
   @Internal
@@ -100,7 +105,8 @@ public final class TrigramIndex extends ScalarIndexExtension<Integer> implements
         int ptr = 0;
         if (value instanceof IntCollection intCollection) {
           buffer = intCollection.toArray(buffer);
-        } else {
+        }
+        else {
           for (Integer i : value) {
             buffer[ptr++] = i;
           }

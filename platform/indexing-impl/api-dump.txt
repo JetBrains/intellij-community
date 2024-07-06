@@ -2,6 +2,7 @@ f:com.intellij.find.ngrams.TrigramIndex
 - com.intellij.util.indexing.ScalarIndexExtension
 - sf:INDEX_ID:com.intellij.util.indexing.ID
 - dependsOnFileContent():Z
+- getCacheSize():I
 - getIndexer():com.intellij.util.indexing.DataIndexer
 - getInputFilter():com.intellij.util.indexing.FileBasedIndex$InputFilter
 - getKeyDescriptor():com.intellij.util.io.KeyDescriptor
