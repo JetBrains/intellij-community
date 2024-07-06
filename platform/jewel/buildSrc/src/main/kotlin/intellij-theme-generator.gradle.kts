@@ -3,6 +3,7 @@
 import com.squareup.kotlinpoet.ClassName
 import io.gitlab.arturbosch.detekt.Detekt
 import org.gradle.util.internal.GUtil
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.jewel.buildlogic.theme.IntelliJThemeGeneratorTask
 import org.jetbrains.jewel.buildlogic.theme.ThemeGeneration
 import org.jetbrains.jewel.buildlogic.theme.ThemeGeneratorContainer
@@ -30,6 +31,8 @@ extension.all {
     tasks {
         withType<BaseKotlinCompile> { dependsOn(task) }
         withType<Detekt> { dependsOn(task) }
+        withType<DokkaTask> { dependsOn(task) }
+        withType<Jar> { dependsOn(task) }
     }
 
     pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {

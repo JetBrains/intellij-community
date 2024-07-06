@@ -11,6 +11,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.BaseKotlinCompile
 import java.lang.reflect.Field
@@ -57,6 +58,8 @@ extension.all item@{
     tasks {
         withType<BaseKotlinCompile> { dependsOn(task) }
         withType<Detekt> { dependsOn(task) }
+        withType<DokkaTask> { dependsOn(task) }
+        withType<Jar> { dependsOn(task) }
     }
 }
 
@@ -215,12 +218,6 @@ open class IconKeysGeneratorTask : DefaultTask() {
             .filter { it.type == javax.swing.Icon::class.java }
             .forEach { field ->
                 val fieldName = "${parentHolder.name}.${field.name}"
-
-                if (field.annotations.isNotEmpty()) {
-                    logger.lifecycle(
-                        "$fieldName -> ${field.annotations.joinToString { it!!.annotationClass.qualifiedName!! }}",
-                    )
-                }
 
                 if (field.annotations.any { it.annotationClass == java.lang.Deprecated::class }) {
                     logger.lifecycle("Ignoring deprecated field: $fieldName")
