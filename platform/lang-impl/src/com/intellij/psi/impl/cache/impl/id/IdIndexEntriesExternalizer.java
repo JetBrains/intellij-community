@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
@@ -42,6 +42,7 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
   @Override
   public Collection<IdIndexEntry> read(@NotNull DataInput in) throws IOException {
     int length = DataInputOutputUtil.readINT(in);
+    //TODO RC: create implementation of List<IdIndexEntry> that stores int[] inside
     ArrayList<IdIndexEntry> entries = new ArrayList<>(length);
     int prev = 0;
     while(length-- > 0) {
