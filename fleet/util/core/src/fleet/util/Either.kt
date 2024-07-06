@@ -79,12 +79,12 @@ value class Either<out T, E> internal constructor(
     /**
      * Returns an instance that encapsulates the given [value] as successful value.
      */
-    fun <T, E> success(value: T): Either<T, E> = Either(value)
+    fun <T, E> value(value: T): Either<T, E> = Either(value)
 
     /**
      * Returns an instance that encapsulates the given [error] as error.
      */
-    fun <T, E> failure(error: E): Either<T, E> = Either(Error(error))
+    fun <T, E> error(error: E): Either<T, E> = Either(Error(error))
   }
 
   @JvmInline
@@ -104,7 +104,12 @@ fun <T, E, R> Either<T, E>.flatMap(f: (T) -> Either<R, E>): Either<R, E> = when 
 
 fun <T, E, R> Either<T, E>.map(f: (T) -> R): Either<R, E> = when (this.isValue) {
   false -> this as Either<R, E>
-  true -> Either.success(f(valueOrNull!!))
+  true -> Either.value(f(valueOrNull!!))
+}
+
+fun <T, E, R> Either<T, E>.mapError(f: (E) -> R): Either<T, R> = when (this.isError) {
+  false -> this as Either<T, R>
+  true -> Either.error(f(error))
 }
 
 /**
@@ -138,8 +143,8 @@ private class EitherSerializer<T, E>(
 ) : DataSerializer<Either<T, E>, SerializableEither<T, E>>(SerializableEither.serializer(valueSerializer, errorSerializer)) {
   override fun fromData(data: SerializableEither<T, E>): Either<T, E> {
     return when (data) {
-      is SerializableEither.Error -> Either.failure(data.error)
-      is SerializableEither.Value -> Either.success(data.value)
+      is SerializableEither.Error -> Either.error(data.error)
+      is SerializableEither.Value -> Either.value(data.value)
     }
   }
 
