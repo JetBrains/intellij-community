@@ -83,7 +83,7 @@ public fun MarkdownStyling.Companion.dark(
     paragraph: Paragraph = Paragraph.dark(inlinesStyling),
     heading: Heading = Heading.dark(baseTextStyle),
     blockQuote: BlockQuote = BlockQuote.dark(textColor = baseTextStyle.color),
-    code: Code = Code.dark(baseTextStyle),
+    code: Code = Code.dark(editorTextStyle),
     list: List = List.dark(baseTextStyle),
     image: Image = Image.default(),
     thematicBreak: ThematicBreak = ThematicBreak.dark(),
