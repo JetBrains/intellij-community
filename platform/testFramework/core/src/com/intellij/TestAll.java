@@ -579,7 +579,7 @@ public class TestAll implements Test {
     return ReflectionUtil.getMethod(klass, name);
   }
 
-  private static void log(String message) {
+  private static void log(@NotNull String message) {
     TeamCityLogger.info(message);
   }
 
