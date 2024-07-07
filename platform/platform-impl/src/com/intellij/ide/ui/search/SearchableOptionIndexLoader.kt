@@ -96,12 +96,12 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   internal fun putOptionWithHelpId(words: Iterable<String>, id: String, groupName: String?, hit: String?, path: String?) {
     for (word in words) {
       if (stopWords.contains(word)) {
-        return
+        continue
       }
 
       val stopWord = PorterStemmerUtil.stem(word)
       if (stopWord == null || stopWords.contains(stopWord)) {
-        return
+        continue
       }
 
       val configs = storage.get(word)
