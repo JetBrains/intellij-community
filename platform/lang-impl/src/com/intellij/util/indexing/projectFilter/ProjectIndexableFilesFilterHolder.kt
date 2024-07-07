@@ -35,9 +35,9 @@ internal sealed interface ProjectIndexableFilesFilterHolder {
 
   fun findProjectsForFile(fileId: Int): List<Project>
 
-  fun onProjectClosing(project: Project)
+  fun onProjectClosing(project: Project, vfsCreationTimestamp: Long)
 
-  fun onProjectOpened(project: Project)
+  fun onProjectOpened(project: Project, vfsCreationTimestamp: Long)
 
   /**
    * This is a temp method
@@ -50,14 +50,14 @@ private val log = logger<IncrementalProjectIndexableFilesFilterHolder>()
 internal class IncrementalProjectIndexableFilesFilterHolder : ProjectIndexableFilesFilterHolder {
   private val myProjectFilters: ConcurrentMap<Project, ProjectIndexableFilesFilter> = ConcurrentHashMap()
 
-  override fun onProjectClosing(project: Project) {
+  override fun onProjectClosing(project: Project, vfsCreationTimestamp: Long) {
     val pair = myProjectFilters.remove(project)
-    pair?.onProjectClosing(project)
+    pair?.onProjectClosing(project, vfsCreationTimestamp)
   }
 
-  override fun onProjectOpened(project: Project) {
+  override fun onProjectOpened(project: Project, vfsCreationTimestamp: Long) {
     val factory = chooseFactory(project.name)
-    myProjectFilters[project] = factory.create(project)
+    myProjectFilters[project] = factory.create(project, vfsCreationTimestamp)
   }
 
   private fun chooseFactory(projectName: String): ProjectIndexableFilesFilterFactory {

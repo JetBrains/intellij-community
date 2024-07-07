@@ -297,7 +297,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     getChangedFilesCollector().getDirtyFiles().removeProject(project);
     myFilesToUpdateCollector.getDirtyFiles().removeProject(project);
     myDirtyFiles.removeProject(project);
-    myIndexableFilesFilterHolder.onProjectClosing(project);
+    myIndexableFilesFilterHolder.onProjectClosing(project, vfsCreationStamp);
   }
 
   boolean processChangedFiles(@NotNull Project project, @NotNull Processor<? super VirtualFile> processor) {

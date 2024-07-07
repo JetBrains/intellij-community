@@ -4,7 +4,7 @@ package com.intellij.util.indexing.projectFilter
 import com.intellij.openapi.project.Project
 
 internal class IncrementalProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {
-  override fun create(project: Project): ProjectIndexableFilesFilter {
+  override fun create(project: Project, currentVfsCreationTimestamp: Long): ProjectIndexableFilesFilter {
     return IncrementalProjectIndexableFilesFilter()
   }
 }

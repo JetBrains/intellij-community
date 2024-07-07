@@ -3,8 +3,10 @@ package com.intellij.util.indexing
 
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.indexing.projectFilter.ConcurrentFileIds
+import com.intellij.util.indexing.projectFilter.readIndexableFilesFilter
 import com.intellij.util.io.DataOutputStream
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import java.io.DataInputStream
@@ -25,12 +27,20 @@ class PersistentProjectIndexableFilesFilterTest {
     doTest(1000 * Integer.SIZE + 1)
   }
 
+  @Test
+  fun `test reading filter of version 1`() {
+    val file = tempDir.newDirectoryPath().resolve("test-PersistentProjectIndexableFilesFilter")
+    DataOutputStream(file.outputStream().buffered()).use {
+      it.writeInt(1) // version
+      createFileIds(10).writeTo(it)
+    }
+    val filter = readIndexableFilesFilter(file, currentVfsCreationTimestamp = 1)
+    assertFalse(filter.wasDataLoadedFromDisk) // filter should be discarded because vfsCreationTimestamp might have changed
+  }
+
   private fun doTest(size: Int) {
     val file = tempDir.newDirectoryPath().resolve("test-PersistentProjectIndexableFilesFilter")
-    val ids = ConcurrentFileIds()
-    for (i in 0 until size) {
-      ids[i] = true
-    }
+    val ids = createFileIds(size)
     assertEquals(size, ids.cardinality)
     DataOutputStream(file.outputStream().buffered()).use {
       ids.writeTo(it)
@@ -39,5 +49,13 @@ class PersistentProjectIndexableFilesFilterTest {
       ConcurrentFileIds.readFrom(it)
     }
     assertEquals(size, newIds.cardinality)
+  }
+
+  private fun createFileIds(size: Int): ConcurrentFileIds {
+    val ids = ConcurrentFileIds()
+    for (i in 0 until size) {
+      ids[i] = true
+    }
+    return ids
   }
 }
