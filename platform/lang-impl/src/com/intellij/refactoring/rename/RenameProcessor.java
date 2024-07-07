@@ -59,8 +59,6 @@ import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWith
 
 public class RenameProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(RenameProcessor.class);
-  private static final Scope RenameProcessorScope = new Scope("RenameProcessorScope");
-  public static final String SPAN_NAME = "RenameProcessor";
 
   protected final LinkedHashMap<PsiElement, String> myAllRenames = new LinkedHashMap<>();
 
@@ -247,7 +245,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     }
 
     final Runnable runnable = () -> ApplicationManager.getApplication().runReadAction(() -> {
-      runWithSpan(TelemetryManager.Companion.getTracer(RenameProcessorScope), SPAN_NAME,
+      runWithSpan(TelemetryManager.Companion.getTracer(new Scope("RenameProcessorScope")), "RenameProcessor",
                   span -> {
                     for (final AutomaticRenamer renamer : myRenamers) {
                       renamer.findUsages(variableUsages, mySearchInComments, mySearchTextOccurrences, mySkippedUsages, myAllRenames);
