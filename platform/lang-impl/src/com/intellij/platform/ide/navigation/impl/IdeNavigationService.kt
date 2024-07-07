@@ -33,7 +33,6 @@ import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.platform.util.progress.mapWithProgress
 import com.intellij.pom.Navigatable
 import com.intellij.util.containers.sequenceOfNotNull
-import com.intellij.util.ui.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.withContext
@@ -127,9 +126,8 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
     return false
   }
 
-  withContext(Dispatchers.EDT) {
-    navigateNonSource(project = project, request = nonSourceRequest, options = options)
-  }
+
+  navigateNonSource(project = project, request = nonSourceRequest, options = options)
   return true
 }
 
@@ -168,12 +166,12 @@ private suspend fun navigateToSource(
 }
 
 private suspend fun navigateNonSource(project: Project, request: NavigationRequest, options: NavigationOptions.Impl) {
-  EDT.assertIsEdt()
-
   return when (request) {
     is DirectoryNavigationRequest -> {
-      blockingContext {
-        PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
+      withContext(Dispatchers.EDT) {
+        blockingContext {
+          PsiNavigationSupport.getInstance().navigateToDirectory(request.directory, options.requestFocus)
+        }
       }
     }
     is RawNavigationRequest -> {
