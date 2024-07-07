@@ -8,7 +8,7 @@ import com.intellij.util.containers.ConcurrentThreeStateBitSet
 import com.intellij.util.indexing.IndexableFilesIndex
 
 internal class CachingProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {
-  override fun create(project: Project): ProjectIndexableFilesFilter {
+  override fun create(project: Project, currentVfsCreationTimestamp: Long): ProjectIndexableFilesFilter {
     return CachingProjectIndexableFilesFilter(project)
   }
 }

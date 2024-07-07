@@ -4,21 +4,23 @@ package com.intellij.util.indexing.projectFilter
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.IdFilter
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
 
 internal abstract class ProjectIndexableFilesFilterFactory {
-  abstract fun create(project: Project): ProjectIndexableFilesFilter
+  abstract fun create(project: Project, currentVfsCreationTimestamp: Long): ProjectIndexableFilesFilter
 }
 
-internal abstract class ProjectIndexableFilesFilter(val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {
+@Internal
+abstract class ProjectIndexableFilesFilter(val checkAllExpectedIndexableFilesDuringHealthcheck: Boolean) : IdFilter() {
   private val parallelUpdatesCounter = AtomicVersionedCounter()
 
   override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
 
-  abstract fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean
-  abstract fun removeFileId(fileId: Int)
-  abstract fun resetFileIds()
-  open fun onProjectClosing(project: Project) = Unit
+  internal abstract fun ensureFileIdPresent(fileId: Int, add: () -> Boolean): Boolean
+  internal abstract fun removeFileId(fileId: Int)
+  internal abstract fun resetFileIds()
+  internal open fun onProjectClosing(project: Project, vfsCreationStamp: Long) = Unit
 
   /**
    * This is a temp method
@@ -35,7 +37,7 @@ internal abstract class ProjectIndexableFilesFilter(val checkAllExpectedIndexabl
     }
   }
 
-  fun <T> takeIfNoChangesHappened(outerCompute: Computation<T>): Computation<T> {
+  internal fun <T> takeIfNoChangesHappened(outerCompute: Computation<T>): Computation<T> {
     return object : Computation<T> {
       override fun compute(checkCancelled: () -> Unit): T {
         val (_, version) = parallelUpdatesCounter.getCounterAndVersion()
@@ -50,7 +52,7 @@ internal abstract class ProjectIndexableFilesFilter(val checkAllExpectedIndexabl
     }
   }
 
-  abstract fun getFileStatuses(): Sequence<Pair<Int, Boolean>>
+  internal abstract fun getFileStatuses(): Sequence<Pair<Int, Boolean>>
 }
 
 internal enum class FilterActionCancellationReason {
