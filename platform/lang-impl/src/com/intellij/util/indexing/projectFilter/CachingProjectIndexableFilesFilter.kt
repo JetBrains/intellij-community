@@ -13,7 +13,7 @@ internal class CachingProjectIndexableFilesFilterFactory : ProjectIndexableFiles
   }
 }
 
-internal class CachingProjectIndexableFilesFilter(project: Project) : ProjectIndexableFilesFilter(project, false) {
+internal class CachingProjectIndexableFilesFilter(private val project: Project) : ProjectIndexableFilesFilter(false) {
   private val fileIds: ConcurrentThreeStateBitSet = ConcurrentThreeStateBitSet.create()
 
   override fun containsFileId(fileId: Int): Boolean {

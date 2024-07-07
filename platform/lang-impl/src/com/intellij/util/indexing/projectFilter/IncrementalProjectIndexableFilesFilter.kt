@@ -5,12 +5,12 @@ import com.intellij.openapi.project.Project
 
 internal class IncrementalProjectIndexableFilesFilterFactory : ProjectIndexableFilesFilterFactory() {
   override fun create(project: Project): ProjectIndexableFilesFilter {
-    return IncrementalProjectIndexableFilesFilter(project)
+    return IncrementalProjectIndexableFilesFilter()
   }
 }
 
-internal open class IncrementalProjectIndexableFilesFilter(project: Project, protected val fileIds: ConcurrentFileIds = ConcurrentFileIds())
-  : ProjectIndexableFilesFilter(project, true) {
+internal open class IncrementalProjectIndexableFilesFilter(protected val fileIds: ConcurrentFileIds = ConcurrentFileIds())
+  : ProjectIndexableFilesFilter(true) {
 
   override fun containsFileId(fileId: Int): Boolean = fileIds[fileId]
 
