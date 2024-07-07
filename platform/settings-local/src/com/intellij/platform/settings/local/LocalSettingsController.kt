@@ -90,7 +90,7 @@ private class LocalSettingsController : DelegatedSettingsController {
 @Service(Service.Level.APP)
 private class InternalAndCacheStorageManager : SettingsSavingComponent {
   @JvmField
-  val storeManager: MvStoreManager = MvStoreManager(readOnly = !ApplicationManager.getApplication().isSaveAllowed)
+  val storeManager: MvStoreManager = MvStoreManager(readOnly = true)
 
   // Telemetry is not ready at this point yet
   val cacheMap by lazy {
