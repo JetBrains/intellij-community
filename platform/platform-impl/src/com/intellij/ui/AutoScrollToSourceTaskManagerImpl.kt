@@ -11,9 +11,9 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.util.await
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.NavigationService
@@ -39,7 +39,8 @@ internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager
         ?.await()
 
       val navigatable = readAction {
-        if (handler.canAutoScrollTo(CommonDataKeys.VIRTUAL_FILE.getData(asyncDataContext))) {
+        val file = CommonDataKeys.VIRTUAL_FILE.getData(asyncDataContext)
+        if (file == null || handler.isAutoScrollEnabledFor(file)) {
           CommonDataKeys.NAVIGATABLE_ARRAY.getData(asyncDataContext)?.singleOrNull()
         }
         else {
@@ -49,8 +50,8 @@ internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager
 
       if (navigatable != null) {
         if (Registry.`is`("ide.navigation.requests") && project != null) {
-          val options = NavigationOptions.defaultOptions().requestFocus(false).preserveCaret(true)
-          NavigationService.getInstance(project).navigate(navigatable, options)
+          val options = NavigationOptions.defaultOptions().requestFocus(false).preserveCaret(true).sourceNavigationOnly(true)
+          project.serviceAsync<NavigationService>().navigate(navigatable, options)
         }
         else {
           SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
@@ -61,5 +62,3 @@ internal class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager
     }
   }
 }
-
-private fun AutoScrollToSourceHandler.canAutoScrollTo(file: VirtualFile?) = file == null || isAutoScrollEnabledFor(file)
