@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
+import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
@@ -15,15 +16,20 @@ import com.intellij.util.NotNullFunction
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.DomManager
 import icons.MavenIcons
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils
 import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotatorLogger.log
 import org.jetbrains.idea.maven.dom.model.*
+import org.jetbrains.idea.maven.utils.MavenLog
 import javax.swing.Icon
 
 class MavenDomGutterAnnotator : Annotator {
   override fun annotate(psiElement: PsiElement, holder: AnnotationHolder) {
     if (psiElement is XmlTag) {
+      log { "MavenDomGutterAnnotator.annotate ${psiElement.name}" }
       val element = DomManager.getDomManager(psiElement.getProject()).getDomElement(psiElement)
       if (element is MavenDomDependency) {
         if (element.getParentOfType(MavenDomPlugin::class.java, true) != null) return
@@ -241,5 +247,34 @@ class MavenDomGutterAnnotator : Annotator {
     res.append("</dependency>")
 
     return StringUtil.escapeXmlEntities(res.toString()).replace(" ", "&nbsp;") //NON-NLS
+  }
+}
+
+@Internal
+object MavenDomGutterAnnotatorLogger {
+  private var logLevel: LogLevel = LogLevel.OFF
+
+  @TestOnly
+  fun resetLogLevel() {
+    logLevel = LogLevel.OFF
+  }
+
+  @TestOnly
+  fun setLogLevel(newLogLevel: LogLevel) {
+    logLevel = newLogLevel
+  }
+
+  fun log(getText: () -> String) {
+    if (logLevel == LogLevel.OFF) return
+    val text = getText()
+    when (logLevel) {
+      LogLevel.OFF -> return
+      LogLevel.ALL -> return
+      LogLevel.ERROR -> MavenLog.LOG.error(text)
+      LogLevel.WARNING -> MavenLog.LOG.warn(text)
+      LogLevel.INFO -> MavenLog.LOG.info(text)
+      LogLevel.DEBUG -> MavenLog.LOG.debug(text)
+      LogLevel.TRACE -> MavenLog.LOG.trace(text)
+    }
   }
 }

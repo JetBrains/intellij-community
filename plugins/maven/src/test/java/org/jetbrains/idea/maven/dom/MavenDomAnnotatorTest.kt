@@ -3,18 +3,33 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.common.runAll
 import junit.framework.TestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotatorLogger
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenDomAnnotatorTest : MavenDomTestCase() {
+  override fun setUp() {
+    super.setUp()
+    MavenDomGutterAnnotatorLogger.setLogLevel(LogLevel.WARNING)
+  }
+
+  override fun tearDown() {
+    runAll(
+      { super.tearDown() },
+      { MavenDomGutterAnnotatorLogger.resetLogLevel() },
+    )
+  }
+
   @Test
   fun testAnnotatePlugin2() = testAnnotatePlugin()
 
