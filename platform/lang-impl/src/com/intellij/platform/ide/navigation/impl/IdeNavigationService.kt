@@ -119,13 +119,13 @@ private suspend fun navigate(project: Project, requests: List<NavigationRequest>
       nonSourceRequest = requestFromNavigatable
     }
   }
+
   if (navigatedSourcesCounter > 0) {
     return true
   }
-  if (nonSourceRequest == null) {
+  if (nonSourceRequest == null || options.sourceNavigationOnly) {
     return false
   }
-
 
   navigateNonSource(project = project, request = nonSourceRequest, options = options)
   return true

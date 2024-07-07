@@ -43,6 +43,9 @@ interface NavigationOptions {
   @Internal
   fun openInRightSplit(value: Boolean): NavigationOptions
 
+  @Internal
+  fun sourceNavigationOnly(value: Boolean): NavigationOptions
+
   companion object {
 
     @JvmStatic
@@ -52,6 +55,7 @@ interface NavigationOptions {
       requestFocus = true,
       preserveCaret = false,
       openInRightSplit = false,
+      sourceNavigationOnly = false,
     )
   }
 
@@ -59,6 +63,10 @@ interface NavigationOptions {
   data class Impl internal constructor(
     val requestFocus: Boolean,
     val preserveCaret: Boolean,
+    // some UI uses single-click navigation instead of double-click,
+    // in this case we want only source navigation,
+    // but not opening library settings (https://youtrack.jetbrains.com/issue/IJPL-157790)
+    @Experimental @JvmField val sourceNavigationOnly: Boolean,
     @Experimental @JvmField val openInRightSplit: Boolean,
   ) : NavigationOptions {
     override fun requestFocus(value: Boolean): NavigationOptions = copy(requestFocus = value)
@@ -66,5 +74,7 @@ interface NavigationOptions {
     override fun preserveCaret(value: Boolean): NavigationOptions = copy(preserveCaret = value)
 
     override fun openInRightSplit(value: Boolean): NavigationOptions = copy(openInRightSplit = value)
+
+    override fun sourceNavigationOnly(value: Boolean): NavigationOptions = copy(sourceNavigationOnly = value)
   }
 }
