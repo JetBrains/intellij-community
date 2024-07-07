@@ -40,7 +40,7 @@ internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFi
       val file = filtersDir.resolve(project.getProjectCacheFileName())
       val filter = DataInputStream(file.inputStream().buffered()).use {
         it.readInt() // version
-        PersistentProjectIndexableFilesFilter(project, true, ConcurrentFileIds.readFrom(it))
+        PersistentProjectIndexableFilesFilter(true, ConcurrentFileIds.readFrom(it))
       }
       file.deleteIfExists()
       return filter
@@ -52,7 +52,7 @@ internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFi
     catch (e: IOException) {
       thisLogger().error(e)
     }
-    return PersistentProjectIndexableFilesFilter(project, false, ConcurrentFileIds())
+    return PersistentProjectIndexableFilesFilter(false, ConcurrentFileIds())
   }
 }
 
@@ -62,8 +62,8 @@ internal class PersistentProjectIndexableFilesFilterFactory : ProjectIndexableFi
  * advances token which then causes filter to be rebuilt during next scanning
  * (see [com.intellij.util.indexing.UnindexedFilesScanner.isIndexableFilesFilterUpToDate])
  */
-internal class PersistentProjectIndexableFilesFilter(project: Project, override val wasDataLoadedFromDisk: Boolean, fileIds: ConcurrentFileIds)
-  : IncrementalProjectIndexableFilesFilter(project, fileIds) {
+internal class PersistentProjectIndexableFilesFilter(override val wasDataLoadedFromDisk: Boolean, fileIds: ConcurrentFileIds)
+  : IncrementalProjectIndexableFilesFilter(fileIds) {
 
   override fun onProjectClosing(project: Project) {
     try {
