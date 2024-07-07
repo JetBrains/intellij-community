@@ -28,17 +28,21 @@ class SingleAlarm @JvmOverloads constructor(
   private val impl = Alarm(threadToUse, parentDisposable)
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
-    : this(task = task,
-           delay = delay,
-           parentDisposable = parentDisposable,
-           threadToUse = threadToUse,
-           modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null)
+    : this(
+    task = task,
+    delay = delay,
+    parentDisposable = parentDisposable,
+    threadToUse = threadToUse,
+    modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
+  )
 
-  constructor(task: Runnable, delay: Int) : this(task = task,
-                                                 delay = delay,
-                                                 parentDisposable = null,
-                                                 threadToUse = ThreadToUse.SWING_THREAD,
-                                                 modalityState = ModalityState.nonModal())
+  constructor(task: Runnable, delay: Int) : this(
+    task = task,
+    delay = delay,
+    parentDisposable = null,
+    threadToUse = ThreadToUse.SWING_THREAD,
+    modalityState = ModalityState.nonModal(),
+  )
 
   init {
     if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
@@ -48,10 +52,12 @@ class SingleAlarm @JvmOverloads constructor(
 
   companion object {
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
-      return SingleAlarm(task = Runnable(task),
-                         delay = delay,
-                         threadToUse = ThreadToUse.POOLED_THREAD,
-                         parentDisposable = parentDisposable)
+      return SingleAlarm(
+        task = Runnable(task),
+        delay = delay,
+        threadToUse = ThreadToUse.POOLED_THREAD,
+        parentDisposable = parentDisposable,
+      )
     }
   }
 
@@ -72,13 +78,13 @@ class SingleAlarm @JvmOverloads constructor(
   @JvmOverloads
   fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
     if (impl.isEmpty) {
-      impl._addRequest(task, if (forceRun) 0 else delay.toLong(), modalityState)
+      impl.doAddRequest(request = task, delayMillis = if (forceRun) 0 else delay.toLong(), modalityState = modalityState)
     }
   }
 
   fun request(modalityState: ModalityState) {
     if (impl.isEmpty) {
-      impl._addRequest(task, delay.toLong(), modalityState)
+      impl.doAddRequest(request = task, delayMillis = delay.toLong(), modalityState = modalityState)
     }
   }
 
