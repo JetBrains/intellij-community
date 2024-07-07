@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
+import com.intellij.util.indexing.impl.MapIndexStorageSlruCache
 import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
@@ -287,6 +288,7 @@ object StorageDiagnosticData {
       it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
     }
 
+    //Indexes writers:
     val defaultParallelWriter = IndexWriter.defaultParallelWriter()
     (0..<defaultParallelWriter.workersCount).forEach { workerNo ->
       otelMeter.counterBuilder("IndexWriter_$workerNo.totalTimeSpentWritingMs").buildWithCallback {
@@ -296,6 +298,14 @@ object StorageDiagnosticData {
 
     otelMeter.counterBuilder("IndexWriter.totalTimeIndexersSleptMs").buildWithCallback {
       it.record(defaultParallelWriter.totalTimeIndexersSlept(MILLISECONDS))
+    }
+
+    //Indexes caches:
+    otelMeter.counterBuilder("Indexes.cache.totalCacheAccesses").buildWithCallback {
+      it.record(MapIndexStorageSlruCache.totalReads())
+    }
+    otelMeter.counterBuilder("Indexes.cache.totalCacheMisses").buildWithCallback {
+      it.record(MapIndexStorageSlruCache.totalReadsUncached())
     }
 
     mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)

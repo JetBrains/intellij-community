@@ -13,10 +13,10 @@ import com.intellij.util.io.IOCancellationCallbackHolder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.util.*
 import java.util.concurrent.Executor
-import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.BiConsumer
 import java.util.function.Function
@@ -44,13 +44,13 @@ interface MapIndexStorageCacheProvider {
   companion object {
     val actualProvider: MapIndexStorageCacheProvider by lazy {
       ServiceLoader.load(MapIndexStorageCacheProvider::class.java).firstOrNull()
-      ?: MapIndexStorageCacheSlruProvider
+      ?: DefaultMapIndexStorageCacheProvider
     }
   }
 }
 
 @Internal
-object MapIndexStorageCacheSlruProvider : MapIndexStorageCacheProvider {
+object DefaultMapIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   private val USE_SLRU = System.getProperty("idea.indexes.cache.type", "slru").equals("slru")
   private val USE_CAFFEINE = System.getProperty("idea.indexes.cache.type", "slru").equals("caffeine")
 
@@ -86,30 +86,56 @@ object MapIndexStorageCacheSlruProvider : MapIndexStorageCacheProvider {
   }
 }
 
-@Obsolete
-private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+@Internal
+class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
                                                    val evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
                                                    hashingStrategy: EqualityPolicy<Key>,
                                                    cacheSize: Int) : MapIndexStorageCache<Key, Value> {
   private val cache = object : SLRUCache<Key, ChangeTrackingValueContainer<Value>>(
-    cacheSize, ceil(cacheSize * 0.25).toInt(), hashingStrategy) {
-    override fun createValue(key: Key): ChangeTrackingValueContainer<Value> = valueReader.apply(key)
+    cacheSize,
+    ceil(cacheSize * 0.25).toInt(),
+    hashingStrategy
+  ) {
+    override fun createValue(key: Key): ChangeTrackingValueContainer<Value> {
+      totalUncachedReads.incrementAndGet()
+      return valueReader.apply(key)
+    }
 
     override fun onDropFromCache(key: Key, valueContainer: ChangeTrackingValueContainer<Value>) {
       assert(cacheAccessLock.isHeldByCurrentThread)
       evictionListener.accept(key, valueContainer)
     }
   }
+
   private val cacheAccessLock = ReentrantLock()
 
-  override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock { cache.get(key) }
 
-  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock { cache.getIfCached(key) }
+  companion object {
+    //cache efficacy statistics:
+    //TODO RC: implement statistics with wrapper around MapIndexStorageCache impl?
+    private val totalReads: AtomicLong = AtomicLong()
+    private val totalUncachedReads: AtomicLong = AtomicLong()
+
+    fun totalReads(): Long = totalReads.get()
+
+    fun totalReadsUncached(): Long = totalUncachedReads.get()
+  }
+
+
+  override fun read(key: Key): ChangeTrackingValueContainer<Value> = cacheAccessLock.withLock {
+    totalReads.incrementAndGet()
+    cache.get(key)
+  }
+
+  override fun readIfCached(key: Key): ChangeTrackingValueContainer<Value>? = cacheAccessLock.withLock {
+    totalReads.incrementAndGet()
+    cache.getIfCached(key)
+  }
 
   override fun getCachedValues(): Collection<ChangeTrackingValueContainer<Value>> = cacheAccessLock.withLock { cache.values() }
 
   override fun invalidateAll() {
-    while (!cacheAccessLock.tryLock(10, TimeUnit.MILLISECONDS)) {
+    while (!cacheAccessLock.tryLock(10, MILLISECONDS)) {
       IOCancellationCallbackHolder.checkCancelled()
     }
     try {
@@ -121,11 +147,13 @@ private class MapIndexStorageSlruCache<Key, Value>(val valueReader: Function<Key
   }
 }
 
-private class MapIndexStorageCaffeineCache<Key, Value>(valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
-                                                       evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
-                                                       offloadIO: Boolean,
-                                                       private val equalityPolicy: EqualityPolicy<Key>,
-                                                       cacheSize: Int) : MapIndexStorageCache<Key, Value> {
+private class MapIndexStorageCaffeineCache<Key, Value>(
+  valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
+  evictionListener: BiConsumer<Key, ChangeTrackingValueContainer<Value>>,
+  offloadIO: Boolean,
+  private val equalityPolicy: EqualityPolicy<Key>,
+  cacheSize: Int,
+) : MapIndexStorageCache<Key, Value> {
 
   private val cache: LoadingCache<KeyWithCustomEquality<Key>, ChangeTrackingValueContainer<Value>>
 
@@ -167,19 +195,20 @@ private class MapIndexStorageCaffeineCache<Key, Value>(valueReader: Function<Key
   override fun invalidateAll() = cache.invalidateAll()
 
   /**
-   * Caffeine doesn't allow to customize equals/hashCode evaluation strategy, hence we need to create a wrapper around
+   * Caffeine doesn't allow customizing equals/hashCode evaluation strategy, hence we need to create a wrapper around
    * the actual Key, and customize equals/hashCode via equalityPolicy in the wrapper.
    */
-  private class KeyWithCustomEquality<K>(val key: K,
-                                         private val equality: EqualityPolicy<K>) {
+  private class KeyWithCustomEquality<K>(val key: K, private val equality: EqualityPolicy<K>) {
     override fun equals(other: Any?): Boolean {
       if (this === other) return true
       if (javaClass != other?.javaClass) return false
 
+      @Suppress("UNCHECKED_CAST")
       other as KeyWithCustomEquality<K>
-      //TODO RC: check (this.equality == other.equality) -- this is more reliable type-check,
-      //         because of type-erasure
 
+      if(equality !== other.equality){
+        return false
+      }
       return equality.isEqual(key, other.key)
     }
 
