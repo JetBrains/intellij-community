@@ -37,7 +37,8 @@ class KtFileClassProviderImpl(val project: Project) : KtFileClassProvider {
         // common files might be in fact compiled to jvm and thus correspond to a PsiClass
         // this API does not provide context (like GSS) to be able to determine if this file is in fact seen through a jvm module
         // this also fixes a problem where a Java JUnit run configuration producer would produce run configurations for a common file
-        if (!moduleInfo.platform.isJvm()) return emptyArray()
+        //TODO: figure out a proper way of doing this!!!
+        //if (!moduleInfo.platform.isJvm()) return emptyArray()
 
         val result = arrayListOf<PsiClass>()
         file.declarations.filterIsInstance<KtClassOrObject>().mapNotNullTo(result) { it.toLightClass() }
