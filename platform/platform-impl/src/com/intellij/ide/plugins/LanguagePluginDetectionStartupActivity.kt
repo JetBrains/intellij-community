@@ -87,10 +87,15 @@ private fun getLanguageName(bundleEP: DynamicBundle.LanguageBundleEP?): String =
 
 private fun findLanguageEP(): DynamicBundle.LanguageBundleEP? {
   val default = Locale.getDefault()
-  val locale = when (default.toLanguageTag()) {
-    "zh-CN", "CN" -> Locale.CHINA
-    "ja", "JP" -> Locale.JAPANESE
-    "ko", "KR", "KP" -> Locale.KOREAN
+  val locale = when (default.language) {
+    "zh" -> {
+      if (!Locale.SIMPLIFIED_CHINESE.country.equals(default.country)) {
+        return null
+      }
+      Locale.SIMPLIFIED_CHINESE
+    }
+    "ja" -> Locale.JAPANESE
+    "ko" -> Locale.KOREAN
     else -> default
   }
   return LocalizationUtil.findLanguageBundle(locale)
