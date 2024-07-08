@@ -49,14 +49,23 @@ class NotebookCellInlayManager private constructor(
 
   private var valid = false
 
+  fun update(block: () -> Unit) {
+    keepScrollingPositionWhile(editor) {
+      block()
+    }
+    inlaysChanged()
+  }
+
   override fun dispose() {}
 
   fun getCellForInterval(interval: NotebookCellLines.Interval): EditorCell =
     _cells[interval.ordinal]
 
   fun updateAllOutputs() {
-    _cells.forEach {
-      it.view?.updateOutputs()
+    update {
+      _cells.forEach {
+        it.updateOutputs()
+      }
     }
   }
 
@@ -91,12 +100,11 @@ class NotebookCellInlayManager private constructor(
   }
 
   private fun updateCells(cells: List<EditorCell>, force: Boolean = false) {
-    keepScrollingPositionWhile(editor) {
+    update {
       cells.forEach {
         it.update(force)
       }
       updateCellsFolding(cells)
-      inlaysChanged()
     }
   }
 
