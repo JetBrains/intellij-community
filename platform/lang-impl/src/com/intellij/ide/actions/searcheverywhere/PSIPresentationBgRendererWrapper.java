@@ -116,45 +116,50 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
                                                            Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator,
                                                            @Nullable SearchEverywherePresentationProvider<Object> rendererPresentationProvider) {
     if (elementDescriptor.getItem() instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
-      var newDescriptor = new FoundItemDescriptor<Object>(itemWithSimilarity.getValue(), elementDescriptor.getWeight());
-      var descriptorWithPresentation = element2presentation(newDescriptor, psiPresentationCalculator, rendererPresentationProvider);
-      return new FoundItemDescriptor<>(new PsiItemWithSimilarity<>(descriptorWithPresentation.getItem(),
-                                                                   itemWithSimilarity.getSimilarityScore()), elementDescriptor.getWeight());
+      TargetPresentation presentation = calcPresentation(itemWithSimilarity.getValue(), psiPresentationCalculator, rendererPresentationProvider);
+      PsiItemWithSimilarity<?> newItemWithSimilarity = new PsiItemWithSimilarity<>(itemWithSimilarity.getValue(), itemWithSimilarity.getSimilarityScore());
+      return new FoundItemDescriptor<>(new ItemWithPresentation<>(newItemWithSimilarity, presentation), elementDescriptor.getWeight());
     }
 
+    TargetPresentation presentation = calcPresentation(elementDescriptor.getItem(), psiPresentationCalculator, rendererPresentationProvider);
+
     if (elementDescriptor.getItem() instanceof PsiElement psi) {
-      TargetPresentation presentation = psiPresentationCalculator.apply(psi);
       return new FoundItemDescriptor<>(new PsiItemWithPresentation(psi, presentation), elementDescriptor.getWeight());
     }
 
     if (elementDescriptor.getItem() instanceof PsiElementNavigationItem psiElementNavigationItem) {
       var realElement = psiElementNavigationItem.getTargetElement();
-      TargetPresentation presentation = psiPresentationCalculator.apply(realElement);
       return new FoundItemDescriptor<>(new PsiItemWithPresentation(realElement, presentation), elementDescriptor.getWeight());
     }
 
-    if (elementDescriptor.getItem() instanceof NavigationItem navigationItem) {
-      ItemPresentation itemPresentation = Objects.requireNonNull(navigationItem.getPresentation());
-      TargetPresentation presentation = convertPresentation(itemPresentation);
-      return new FoundItemDescriptor<>(new ItemWithPresentation<>(navigationItem, presentation), elementDescriptor.getWeight());
-    }
-
-    if (elementDescriptor.getItem() instanceof ItemPresentation itemPresentation) {
-      TargetPresentation presentation = convertPresentation(itemPresentation);
-      return new FoundItemDescriptor<>(new ItemWithPresentation<>(itemPresentation, presentation), elementDescriptor.getWeight());
-    }
-
-    if (rendererPresentationProvider != null) {
-      TargetPresentation presentation = rendererPresentationProvider.getTargetPresentation(elementDescriptor.getItem());
-      return new FoundItemDescriptor<>(new ItemWithPresentation<>(elementDescriptor.getItem(), presentation), elementDescriptor.getWeight());
-    }
-
-    LOG.error("Found items expected to be PsiItems or to have [com.intellij.navigation.ItemPresentation] field. But item [" + elementDescriptor.getItem().getClass() + "] is not");
-    TargetPresentation presentation = calcFallbackPresentation(elementDescriptor.getItem());
     return new FoundItemDescriptor<>(new ItemWithPresentation<>(elementDescriptor.getItem(), presentation), elementDescriptor.getWeight());
   }
 
-  private static TargetPresentation calcFallbackPresentation(Object item) {
+  private static TargetPresentation calcPresentation(Object item, Function<? super PsiElement, ? extends TargetPresentation> psiPresentationCalculator,
+                                                     @Nullable SearchEverywherePresentationProvider<Object> rendererPresentationProvider) {
+    if (item instanceof PsiElement psi) {
+      return psiPresentationCalculator.apply(psi);
+    }
+
+    if (item instanceof PsiElementNavigationItem psiElementNavigationItem) {
+      var realElement = psiElementNavigationItem.getTargetElement();
+      return psiPresentationCalculator.apply(realElement);
+    }
+
+    if (item instanceof NavigationItem navigationItem) {
+      ItemPresentation itemPresentation = Objects.requireNonNull(navigationItem.getPresentation());
+      return convertPresentation(itemPresentation);
+    }
+
+    if (item instanceof ItemPresentation itemPresentation) {
+      return convertPresentation(itemPresentation);
+    }
+
+    if (rendererPresentationProvider != null) {
+      return rendererPresentationProvider.getTargetPresentation(item);
+    }
+
+    LOG.error("Found items expected to be PsiItems or to have [com.intellij.navigation.ItemPresentation] field. But item [" + item.getClass() + "] is not");
     return TargetPresentation.builder(item != null ? item.toString() : "").icon(IconUtil.getEmptyIcon(false)).presentation();
   }
 
