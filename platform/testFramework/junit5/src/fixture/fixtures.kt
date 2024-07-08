@@ -2,13 +2,11 @@
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -82,5 +80,35 @@ fun disposableFixture(): TestFixture<Disposable> = testFixture { debugString ->
   val disposable = Disposer.newCheckedDisposable(debugString)
   initialized(disposable) {
     Disposer.dispose(disposable)
+  }
+}
+
+
+@TestOnly
+fun TestFixture<Project>.psiFile(
+  name: String,
+  path: String,
+  content: String,
+): TestFixture<PsiFile> = testFixture { _ ->
+  val project = this@psiFile.init()
+  val basePath = project.basePath ?: error("Base path is null")
+  val parent = VirtualFileManager.getInstance().findFileByUrl("file://" + project.basePath) ?: error("Cannot find virtual file $basePath")
+  val dir = writeAction {
+    VfsUtil.createDirectoryIfMissing(parent, path)
+  }
+  val file = writeAction {
+    dir.createChildData(this, name)
+  }
+  writeAction {
+    file.setBinaryContent(content.toByteArray())
+  }
+  val psiFile: PsiFile = writeAction {
+    PsiManager.getInstance(project).findFile(file) ?: error("Fail to find psi file")
+  }
+  initialized(psiFile) {
+    writeAction {
+      psiFile.delete()
+      dir.delete(this)
+    }
   }
 }
