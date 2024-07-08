@@ -34,10 +34,7 @@ class KotlinMultiLineEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() 
   }
 
   private object KotlinSupporter : MultiLineVisitorUtils.LanguageSupporter {
-    override fun getCommentRanges(lines: List<MultiLineVisitorUtils.LineInfo>): List<Pair<Int, Int>> {
-      return lines.withIndex()
-        .filter { (_, line) -> line.text.trimStart().startsWith("//") }
-        .map { (i, _) -> i to i }
-    }
+    override val singleLineCommentPrefix: List<String> = listOf("//")
+    override val multiLineCommentPrefix: List<Pair<String, String>> = listOf(Pair("/*", "*/"))
   }
 }

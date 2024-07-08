@@ -10,7 +10,47 @@ import com.intellij.psi.util.startOffset
 
 object MultiLineVisitorUtils {
   interface LanguageSupporter {
-    fun getCommentRanges(lines: List<LineInfo>): List<Pair<Int, Int>> = emptyList()
+    val singleLineCommentPrefix: List<String>
+    val multiLineCommentPrefix: List<Pair<String, String>>
+
+    companion object {
+      val EMPTY = object : LanguageSupporter {
+        override val singleLineCommentPrefix: List<String> = emptyList()
+        override val multiLineCommentPrefix: List<Pair<String, String>> = emptyList()
+      }
+    }
+  }
+
+  private fun findEndOfDocstring(start: Int, lines: List<LineInfo>, token: String): Int {
+    val end = lines.asSequence().drop(start).indexOfFirst { it.text.startsWith(token) }
+    return end.takeIf { it > 0 } ?: lines.size
+  }
+
+  private fun LanguageSupporter.getCommentRanges(lines: List<LineInfo>): List<Pair<Int, Int>> {
+    val singleLineComments = singleLineCommentPrefix.map { prefix ->
+      lines
+        .withIndex()
+        .filter { (_, line) -> line.text.trimStart().startsWith(prefix) }
+        .map { (i, _) -> i to i }
+    }
+
+    val multiLineComments = multiLineCommentPrefix.map { (start, end) ->
+      buildList {
+        var pos = 0
+        outer@ while (pos < lines.size) {
+          val line = lines[pos].text.trimStart()
+          if (line.startsWith(start)) {
+            val match = findEndOfDocstring(pos, lines, end)
+            add(pos to match)
+            pos = match + 1
+            continue@outer
+          }
+          pos++
+        }
+      }
+    }
+
+    return (singleLineComments + multiLineComments).flatten().sortedBy { it.first }
   }
 
   data class LineInfo(val text: String, val range: TextRange) {
@@ -46,7 +86,10 @@ object MultiLineVisitorUtils {
     add(document.getLineInfo(lastRange))
   }
 
-  fun splitElementByIndents(element: PsiElement, supporter: LanguageSupporter): List<CodeToken> = buildList {
+  fun splitElementByIndents(
+    element: PsiElement,
+    supporter: LanguageSupporter = LanguageSupporter.EMPTY,
+  ): List<CodeToken> = buildList {
     val document = PsiDocumentManager
       .getInstance(element.project)
       .getDocument(element.containingFile) ?: return emptyList()
