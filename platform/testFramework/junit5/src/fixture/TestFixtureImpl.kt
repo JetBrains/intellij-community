@@ -4,7 +4,6 @@ package com.intellij.testFramework.junit5.fixture
 import com.intellij.platform.util.coroutines.attachAsChildTo
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.*
-import org.opentest4j.TestAbortedException
 
 internal class TestFixtureImpl<T>(
   private val debugString: String,
@@ -65,13 +64,9 @@ internal class TestFixtureImpl<T>(
           scope.initFixture(uniqueId) as InitializedTestFixtureData<T>
         }
       }
-      catch (t: TestAbortedException) {
-        deferred.completeExceptionally(t)
-        return@launch
-      }
       catch (t: Throwable) {
         deferred.completeExceptionally(t)
-        throw t
+        return@launch
       }
       for (dependency in scope.dependencies()) {
         // attach the current fixture scope (dependent) as a child of dependency scope
