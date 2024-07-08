@@ -10,8 +10,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.parser.ParserException;
 
-import java.io.File;
-
 public abstract class InspectionProfileLoaderBase<T extends InspectionProfileImpl> implements InspectionProfileLoader<T> {
   protected Project project;
 
@@ -25,9 +23,6 @@ public abstract class InspectionProfileLoaderBase<T extends InspectionProfileImp
                                                          @NotNull BaseInspectionProfileManager profileManager) {
     if (!YamlInspectionProfileImpl.isYamlFile(profilePath)) {
       return null;
-    }
-    if (!new File(profilePath).isFile()) {
-      throw new InspectionApplicationException("Inspection profile '" + profilePath + "' does not exist");
     }
     try {
       return YamlInspectionProfileImpl.loadFrom(project, profilePath, inspectionToolsSupplier, profileManager).buildEffectiveProfile();
