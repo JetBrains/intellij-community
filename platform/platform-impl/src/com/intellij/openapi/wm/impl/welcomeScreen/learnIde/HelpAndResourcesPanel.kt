@@ -59,26 +59,28 @@ class HelpAndResourcesPanel : JPanel() {
       add(linkLabelByAction(WhatsNewAction()))
       add(rigid(1, 16))
     }
+    val presentationFactory = PresentationFactory()
     val helpActionsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
-    val helpActions = Utils.expandActionGroup(helpActionsGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT, ActionPlaces.WELCOME_SCREEN)
+    val helpActions = Utils.expandActionGroup(helpActionsGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.WELCOME_SCREEN)
     helpActions.forEach {
+      val presentation = presentationFactory.getPresentation(it)
       if (it is HelpActionBase && !it.isAvailable) {
         return@forEach
       }
       if (setOf<String>(HelpTopicsAction::class.java.simpleName, OnlineDocAction::class.java.simpleName,
                         JetBrainsTvAction::class.java.simpleName).any { simpleName -> simpleName == it.javaClass.simpleName }) {
-        add(linkLabelByAction(it).wrapWithUrlPanel())
+        add(linkLabelByAction(it, presentation).wrapWithUrlPanel())
       }
       else {
-        add(linkLabelByAction(it))
-
+        add(linkLabelByAction(it, presentation))
       }
       add(rigid(1, 6))
     }
   }
 
-  private fun linkLabelByAction(it: AnAction): LinkLabel<Any> {
-    return LinkLabel<Any>(it.templateText, null).apply {
+  private fun linkLabelByAction(it: AnAction, presentation: Presentation): LinkLabel<Any> {
+    @Suppress("DialogTitleCapitalization")
+    return LinkLabel<Any>(presentation.text, null).apply {
       alignmentX = LEFT_ALIGNMENT
       setListener({ _, _ -> performActionOnWelcomeScreen(it) }, null)
     }
