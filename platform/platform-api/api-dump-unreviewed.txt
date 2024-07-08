@@ -11287,6 +11287,7 @@ c:com.intellij.ui.treeStructure.Tree
 - p:getComponentGraphics(java.awt.Graphics):java.awt.Graphics
 - getDeepestRendererComponentAt(I,I):java.awt.Component
 - p:getDescendantToggledPaths(javax.swing.tree.TreePath):java.util.Enumeration
+- getDragEnabled():Z
 - getEffectiveAdditionalRowsCount():I
 - getEmptyText():com.intellij.util.ui.StatusText
 - getExpandableItemsHandler():com.intellij.ui.ExpandableItemsHandler

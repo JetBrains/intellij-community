@@ -88,6 +88,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private transient boolean settingUI;
   private transient TreeExpansionListener uiTreeExpansionListener;
 
+  private final @NotNull AtomicInteger processingDoubleClick = new AtomicInteger();
+
   private final @NotNull MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
 
   @ApiStatus.Internal
@@ -449,6 +451,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     super.processKeyEvent(e);
   }
 
+  @Override
+  public boolean getDragEnabled() {
+    // Temporarily disable dragging to avoid bogus double click mouse events from
+    // javax.swing.plaf.basic.DragRecognitionSupport, created in
+    // javax.swing.plaf.basic.BasicTreeUI.Handler.mouseReleasedDND.
+    return super.getDragEnabled() && processingDoubleClick.get() == 0;
+  }
+
   /**
    * Hack to prevent loosing multiple selection on Mac when clicking Ctrl+Left Mouse Button.
    * See faulty code at BasicTreeUI.selectPathForEvent():2245
@@ -463,7 +473,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
-    super.processMouseEvent(e2);
+    var isDoubleClick = e.getClickCount() >= 2;
+    if (isDoubleClick) processingDoubleClick.incrementAndGet();
+    try {
+      super.processMouseEvent(e2);
+    }
+    finally {
+      if (isDoubleClick) processingDoubleClick.decrementAndGet();
+    }
 
     if (e != e2 && e2.isConsumed()) e.consume();
   }
