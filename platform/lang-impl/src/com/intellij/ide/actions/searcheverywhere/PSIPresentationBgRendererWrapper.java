@@ -165,10 +165,9 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
 
   @ApiStatus.Internal
   public static Object getItem(Object value) {
-    if (value instanceof PsiItemWithSimilarity<?> itemWithSimilarity) {
-      return getItem(itemWithSimilarity.getValue());
-    }
-    return value instanceof ItemWithPresentation<?> it ? it.getItem() : value;
+    if (value instanceof ItemWithPresentation<?> iwp) value = iwp.getItem();
+    if (value instanceof PsiItemWithSimilarity<?> iws) value = iws.getValue();
+    return value;
   }
 
   @ApiStatus.Internal
