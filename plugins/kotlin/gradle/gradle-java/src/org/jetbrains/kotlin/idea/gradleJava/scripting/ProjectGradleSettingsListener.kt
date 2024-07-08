@@ -6,9 +6,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptModel
@@ -28,7 +28,7 @@ class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListen
 
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
-            CoroutineScopeService.getCoroutineScope(project).launch(Dispatchers.IO) {
+            CoroutineScopeService.getCoroutineScope(project).launchTracked(Dispatchers.IO) {
                 writeAction {
                     val newRoot = buildRootsManager.loadLinkedRoot(it)
                     buildRootsManager.add(newRoot)
@@ -40,13 +40,12 @@ class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListen
     override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
         if (KotlinPluginModeProvider.isK2Mode()) {
             settings.forEach {
-                CoroutineScopeService.getCoroutineScope(project).launch(Dispatchers.IO) {
-                    writeAction {
-                        val newRoot = buildRootsManager.loadLinkedRoot(it)
-
-                        if (newRoot is Imported) {
-                            launch { loadScriptConfigurations(newRoot, it) }
-                        }
+                CoroutineScopeService.getCoroutineScope(project).launchTracked(Dispatchers.IO) {
+                    val newRoot = writeAction {
+                        buildRootsManager.loadLinkedRoot(it)
+                    }
+                    if (newRoot is Imported) {
+                        loadScriptConfigurations(newRoot, it)
                     }
                 }
             }
