@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5Jimfs.showcases.fixtures
+package com.intellij.platform.testFramework.junit5.jimfs.showcase
 
-import com.intellij.platform.testFramework.junit5Jimfs.jimFsFixture
+import com.intellij.platform.testFramework.junit5.jimfs.jimFsFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
 import org.junit.jupiter.api.AfterAll
@@ -15,6 +15,7 @@ import java.nio.file.FileSystem
  */
 @TestApplication
 class JUnit5MethodLevelTempFsTest {
+
   companion object {
 
     @AfterAll
@@ -27,7 +28,6 @@ class JUnit5MethodLevelTempFsTest {
   }
 
   private val fsFixture = jimFsFixture()
-
 
   @Test
   fun test() {

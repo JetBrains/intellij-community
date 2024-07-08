@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5Jimfs
+package com.intellij.platform.testFramework.junit5.jimfs
 
 import com.google.common.jimfs.Jimfs
 import com.intellij.testFramework.junit5.fixture.TestFixture

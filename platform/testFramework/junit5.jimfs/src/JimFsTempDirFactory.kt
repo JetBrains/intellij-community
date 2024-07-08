@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5Jimfs
+package com.intellij.platform.testFramework.junit5.jimfs
 
 import com.google.common.jimfs.Jimfs
 import org.jetbrains.annotations.TestOnly
@@ -11,10 +11,11 @@ import java.nio.file.Path
 
 /**
  * to be used as factory for [org.junit.jupiter.api.io.TempDir]
- * See [JimfsTempDir]
+ * See [JimFsTempDir]
  */
 @TestOnly
-class JimfsTempDirFactory : TempDirFactory {
+class JimFsTempDirFactory : TempDirFactory {
+
   private val fs = Jimfs.newFileSystem()
 
   override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path {

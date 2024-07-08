@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.testFramework.junit5Jimfs.showcases.fixtures
+package com.intellij.platform.testFramework.junit5.jimfs.showcase
 
-import com.intellij.platform.testFramework.junit5Jimfs.jimFsFixture
+import com.intellij.platform.testFramework.junit5.jimfs.jimFsFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.write
 import org.junit.jupiter.api.Test
@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
  */
 @TestApplication
 class JUnit5ClassLevelTempFsTest {
+
   private companion object {
     val fsFixture = jimFsFixture()
   }
@@ -20,5 +21,4 @@ class JUnit5ClassLevelTempFsTest {
     val fs = fsFixture.get()
     fs.rootDirectories.first().resolve("file").write("D")
   }
-
 }
