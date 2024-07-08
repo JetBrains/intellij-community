@@ -4781,3 +4781,14 @@ slugify python-slugify
 huggingface_hub huggingface-hub
 tensorflow_text tensorflow-text
 tensorflow_graphics tensorflow-graphics
+airbyte_api airbyte-api
+airflow apache-airflow
+atlassian atlassian-python-api
+discord discord.py
+ninja django-ninja
+ffmpeg ffmpeg-python
+grpc grpcio
+google protobuf
+gnupg python-gnupg
+jose python-jose
+telegram python-telegram-bot
