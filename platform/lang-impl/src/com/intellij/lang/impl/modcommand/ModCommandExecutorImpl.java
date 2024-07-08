@@ -360,9 +360,17 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
   @Nullable
   private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, VirtualFile file) {
-    Editor finalEditor = editor == null || !file.equals(editor.getVirtualFile()) ? getEditor(project, file) : editor;
-    if (finalEditor == null) return null;
-    return finalEditor;
+    if (editor == null ||
+        !file.equals(editor.getVirtualFile()) ||
+        // EditorComboBox and similar components might provide no virtual file
+        !editor.getDocument().equals(FileDocumentManager.getInstance().getDocument(file))) {
+      Editor finalEditor = getEditor(project, file);
+      if (finalEditor == null) return null;
+      return finalEditor;
+    }
+    else {
+      return editor;
+    }
   }
 
   private static final class ErrorInTestException extends RuntimeException {
@@ -453,19 +461,15 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     int selectionEnd = nav.selectionEnd();
     int caret = nav.caret();
 
-    if (editor == null || editor.getDocument() != FileDocumentManager.getInstance().getDocument(file)) {
-      // try to preserve editor of `Evaluate Expression` dialog
-      // otherwise, light virtual file would be opened in the editor tab
-      editor = getEditor(project, file);
-    }
+    Editor fileEditor = getEditor(project, editor, file);
 
-    if (editor == null) return false;
+    if (fileEditor == null) return false;
     if (caret != -1) {
-      editor.getCaretModel().moveToOffset(caret);
-      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      fileEditor.getCaretModel().moveToOffset(caret);
+      fileEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     if (selectionStart != -1 && selectionEnd != -1) {
-      editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
+      fileEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
     return true;
   }
