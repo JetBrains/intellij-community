@@ -1088,6 +1088,7 @@
     </group>
 
     <group id="WelcomeScreen.LearnIdeHelp">
+      <reference ref="WhatsNewAction"/>
       <reference ref="HelpTopics"/>
       <reference ref="OnlineDocAction"/>
       <reference ref="Help.JetBrainsTV"/>
