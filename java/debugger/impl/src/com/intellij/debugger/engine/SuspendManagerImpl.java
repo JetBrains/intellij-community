@@ -314,7 +314,7 @@ public class SuspendManagerImpl implements SuspendManager {
     suspendContext.myVotesToVote--;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("myVotesToVote = " + suspendContext.myVotesToVote);
+      LOG.debug("myVotesToVote = " + suspendContext.myVotesToVote + " in " + suspendContext);
     }
     if (suspendContext.myVotesToVote == 0) {
       if (suspendContext.myIsVotedForResume) {
@@ -344,7 +344,9 @@ public class SuspendManagerImpl implements SuspendManager {
 
   @Override
   public void voteResume(@NotNull SuspendContextImpl suspendContext) {
-    LOG.debug("Resume voted");
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Resume voted for " + suspendContext);
+    }
     processVote(suspendContext);
   }
 

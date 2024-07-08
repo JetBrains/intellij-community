@@ -653,6 +653,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
             !DebuggerSession.enableBreakpointsDuringEvaluation()) {
           notifySkippedBreakpointInEvaluation(event, suspendContext);
           // is inside evaluation, so ignore any breakpoints
+          logSuspendContext(suspendContext,
+                            "Resume because of evaluation: isEvaluationOnCurrentThread = " + isEvaluationOnCurrentThread +
+                            ", myThreadBlockedMonitor.isInResumeAllMode() = " + myThreadBlockedMonitor.isInResumeAllMode());
           suspendManager.voteResume(suspendContext);
           return;
         }
@@ -671,6 +674,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
               if (!checkContextIsFromImplicitThread(suspendContext)) {
                 notifySkippedBreakpoints(event, SkippedBreakpointReason.STEPPING);
               }
+              logSuspendContext(suspendContext, "Skip breakpoint because of filter " + filter);
               suspendManager.voteResume(suspendContext);
               return;
             }
@@ -752,6 +756,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
 
         if (!requestHit || resumePreferred) {
+          logSuspendContext(suspendContext,"Resume: requestHit = " + requestHit + ", resumePreferred = " + resumePreferred);
           suspendManager.voteResume(suspendContext);
         }
         else {

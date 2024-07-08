@@ -706,6 +706,14 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     public String sourcePath(String stratum) throws AbsentInformationException {
       throw new AbsentInformationException();
     }
+
+    @Override
+    public String toString() {
+      return "LocationCodeIndexOnly{" +
+             "method=" + method +
+             ", codeIndex=" + codeIndex +
+             '}';
+    }
     // endregion
   }
 }

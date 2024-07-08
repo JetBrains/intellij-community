@@ -1284,6 +1284,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         throw EvaluateExceptionUtil.createEvaluateException(e);
       }
       finally {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Evaluation finished in " + suspendContext);
+        }
         myEvaluationContext.setThreadForEvaluation(null);
         if (DebuggerUtils.isNewThreadSuspendStateTracking() && !mySuspendManager.myExplicitlyResumedThreads.contains(invokeThread)) {
           for (SuspendContextImpl anotherContext : mySuspendManager.getEventContexts()) {
@@ -1336,7 +1339,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       Ref<Exception> exception = Ref.create();
       Ref<E> result = Ref.create();
       if (LOG.isDebugEnabled()) {
-        LOG.debug("Invoke in " + thread.name());
+        LOG.debug("Invoke in " + context);
         assertThreadSuspended(thread, context);
       }
       getManagerThread().startLongProcessAndFork(() -> {
