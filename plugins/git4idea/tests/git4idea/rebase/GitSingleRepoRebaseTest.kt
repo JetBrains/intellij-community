@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.Executor
 import com.intellij.openapi.vcs.Executor.overwrite
 import com.intellij.openapi.vcs.Executor.touch
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -707,6 +708,29 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     checkCheckoutAndRebase {
       "Checked out feature and rebased it on master"
     }
+  }
+
+  // IJPL-156329
+  // We are not expecting "error: there was a problem with the editor ..." in "Rebase failed" pop-up
+  fun `test VcsException is handled without showing native git editor error`() {
+    build {
+      0()
+      1()
+      2()
+    }
+    refresh()
+    updateChangeListManager()
+
+    dialogManager.onDialog(GitInteractiveRebaseDialog::class.java) {
+      DialogWrapper.OK_EXIT_CODE
+    }
+
+    val errorMessage = "test exception message!!!"
+    git.setInteractiveRebaseEditor(TestGitImpl.InteractiveRebaseEditor({ throw VcsException(errorMessage) }, null))
+
+    rebaseInteractively()
+
+    assertErrorNotification("Rebase failed", errorMessage)
   }
 
   private fun checkCheckoutAndRebase(expectedNotification: () -> String) {
