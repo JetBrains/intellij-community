@@ -54,11 +54,6 @@ class HelpAndResourcesPanel : JPanel() {
   }
 
   private fun addHelpActions() {
-    val whatsNewAction = WhatsNewAction()
-    if (emptyWelcomeScreenEventFromAction(whatsNewAction).presentation.isEnabled) {
-      add(linkLabelByAction(WhatsNewAction()))
-      add(rigid(1, 16))
-    }
     val presentationFactory = PresentationFactory()
     val helpActionsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
     val helpActions = Utils.expandActionGroup(helpActionsGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.WELCOME_SCREEN)
@@ -74,7 +69,12 @@ class HelpAndResourcesPanel : JPanel() {
       else {
         add(linkLabelByAction(it, presentation))
       }
-      add(rigid(1, 6))
+
+      if (it is WhatsNewAction) {
+        add(rigid(1, 16))
+      } else {
+        add(rigid(1, 6))
+      }
     }
   }
 
@@ -101,7 +101,4 @@ class HelpAndResourcesPanel : JPanel() {
       alignmentX = LEFT_ALIGNMENT
     }
   }
-
-  private fun emptyWelcomeScreenEventFromAction(action: AnAction) =
-    AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
 }
