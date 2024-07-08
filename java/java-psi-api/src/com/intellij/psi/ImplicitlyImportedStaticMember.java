@@ -5,8 +5,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Class representing a static member represented implicitly imported static members.
- * if memberName is `*`, it is on demand import
+ * Class representing an implicitly imported static member.
+ * If memberName is `*`, it is on demand import
  */
 @ApiStatus.Experimental
 public final class ImplicitlyImportedStaticMember {
