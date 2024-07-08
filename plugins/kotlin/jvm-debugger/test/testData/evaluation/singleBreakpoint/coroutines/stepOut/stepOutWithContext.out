@@ -1,10 +1,10 @@
-LineBreakpoint created at stepOutWithContext.kt:13
+LineBreakpoint created at stepOutWithContext.kt:16
 Run Java
 Connected to the target VM
-stepOutWithContext.kt:13
-stepOutWithContext.kt:21
-stepOutWithContext.kt:22
-stepOutWithContext.kt:23
+stepOutWithContext.kt:16
+stepOutWithContext.kt:24
+stepOutWithContext.kt:25
+stepOutWithContext.kt:26
 Compile bytecode for i
 Compile bytecode for counter
 Disconnected from the target VM

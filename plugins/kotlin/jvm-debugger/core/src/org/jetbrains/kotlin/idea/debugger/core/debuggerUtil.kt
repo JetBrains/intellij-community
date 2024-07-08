@@ -455,26 +455,24 @@ private class CoroutineStateMachineVisitor(method: Method, private val resumeLoc
     }
 }
 
-fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Int {
-    val resumedMethod = resumedLocation?.safeMethod() ?: return -1
+fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Location? {
+    val resumedMethod = resumedLocation?.safeMethod() ?: return null;
     if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
-        return -1
+        return null
     }
-
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumedLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
-    return visitor.firstReturnAfterSuspensionOffset
+    return resumedMethod.locationOfCodeIndex(visitor.firstReturnAfterSuspensionOffset.toLong())
 }
 
-fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Int {
-    val resumedMethod = resumeLocation?.safeMethod() ?: return -1
+fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Location? {
+    val resumedMethod = resumeLocation?.safeMethod() ?: return null
     if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
-        return -1
+        return null
     }
-
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumeLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
-    return visitor.nextCallOffset
+    return resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
 }
 
 fun isOneLineMethod(location: Location): Boolean {

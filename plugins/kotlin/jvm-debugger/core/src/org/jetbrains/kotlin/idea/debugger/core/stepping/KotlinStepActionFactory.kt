@@ -133,11 +133,12 @@ object KotlinStepActionFactory {
                     stepThread: ThreadReferenceProxyImpl,
                     parentHint: RequestHint?
                 ): RequestHint {
-                    val suspendReturnIndex = if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        getLocationOfCoroutineSuspendReturn(StackFrameInterceptor.instance?.callerLocation(suspendContext))
-                    } else -1
+                    val resumeLocation = StackFrameInterceptor.instance?.callerLocation(suspendContext)
+                    val suspendReturnLocation = if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
+                        getLocationOfCoroutineSuspendReturn(resumeLocation)
+                    } else null
                     val hint: RequestHint =
-                        KotlinStepOutRequestHint(suspendReturnIndex, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, null, parentHint)
+                        KotlinStepOutRequestHint(suspendReturnLocation, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, null, parentHint)
                     hint.isIgnoreFilters = debugProcess.session.shouldIgnoreSteppingFilters()
                     return hint
                 }
