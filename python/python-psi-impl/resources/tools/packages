@@ -4781,3 +4781,4 @@ slugify python-slugify
 huggingface_hub huggingface-hub
 tensorflow_text tensorflow-text
 tensorflow_graphics tensorflow-graphics
+pygame pygame-ce
