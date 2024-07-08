@@ -21,7 +21,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.indexing.contentQueue.dev.IndexWriter
-import com.intellij.util.indexing.impl.MapIndexStorageSlruCache
+import com.intellij.util.indexing.impl.MapIndexStorageCacheProvider
 import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
@@ -301,11 +301,12 @@ object StorageDiagnosticData {
     }
 
     //Indexes caches:
+    val indexCacheProvider = MapIndexStorageCacheProvider.actualProvider
     otelMeter.counterBuilder("Indexes.cache.totalCacheAccesses").buildWithCallback {
-      it.record(MapIndexStorageSlruCache.totalReads())
+      it.record(indexCacheProvider.totalReads())
     }
     otelMeter.counterBuilder("Indexes.cache.totalCacheMisses").buildWithCallback {
-      it.record(MapIndexStorageSlruCache.totalReadsUncached())
+      it.record(indexCacheProvider.totalReadsUncached())
     }
 
     mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)
