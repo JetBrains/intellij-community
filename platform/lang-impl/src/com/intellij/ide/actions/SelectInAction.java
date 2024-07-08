@@ -138,7 +138,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
 
     @DirtyUI
     @Override
-    public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
+    public PopupStep<?> onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
         PsiDocumentManager.getInstance(mySelectInContext.getProject()).commitAllDocuments();
         target.selectIn(mySelectInContext, true);
@@ -146,7 +146,7 @@ public final class SelectInAction extends DumbAwareAction implements PerformWith
       }
       if (target instanceof CompositeSelectInTarget) {
         final ArrayList<SelectInTarget> subTargets = new ArrayList<>(((CompositeSelectInTarget)target).getSubTargets(mySelectInContext));
-        if (subTargets.size() > 0) {
+        if (!subTargets.isEmpty()) {
           subTargets.sort(new SelectInManager.SelectInTargetComparator());
           return new SelectInActionsStep(subTargets, mySelectInContext);
         }

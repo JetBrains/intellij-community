@@ -145,7 +145,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
       boolean myRunYes;
       @Override
-      public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
+      public PopupStep<?> onChosen(String selectedValue, final boolean finalChoice) {
         myRunYes = selectedValue.equals(yesText);
         return FINAL_CHOICE;
       }

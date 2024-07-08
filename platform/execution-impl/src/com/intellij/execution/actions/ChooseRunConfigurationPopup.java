@@ -504,7 +504,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep onChosen(final ItemWrapper wrapper, boolean finalChoice) {
+    public PopupStep<?> onChosen(final ItemWrapper wrapper, boolean finalChoice) {
       if (myAction.myEditConfiguration) {
         final Object o = wrapper.getValue();
         if (o instanceof RunnerAndConfigurationSettingsImpl) {
@@ -667,7 +667,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final ActionWrapper selectedValue, boolean finalChoice) {
       return doFinalStep(() -> selectedValue.perform());
     }
 
@@ -896,7 +896,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     @Override
-    public PopupStep onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(final ConfigurationActionsStep selectedValue, boolean finalChoice) {
       if (finalChoice) {
         if (myPopup.myEditConfiguration) {
           final RunnerAndConfigurationSettings settings = selectedValue.getSettings();

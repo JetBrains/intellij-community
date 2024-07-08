@@ -45,7 +45,6 @@ import javax.swing.event.ListSelectionListener;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 public abstract class AttachToProcessActionBase extends AnAction implements DumbAware {
   private static final Key<Map<XAttachHost, LinkedHashSet<RecentItem>>> RECENT_ITEMS_KEY =
@@ -106,7 +105,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
           AttachListStep step = new AttachListStep(allItems, XDebuggerBundle.message("xdebugger.attach.popup.title.default"), project);
 
           final ListPopup popup = JBPopupFactory.getInstance().createListPopup(step);
-          final JList mainList = ((ListPopupImpl) ListPopupWrapper.getRootPopup(popup)).getList();
+          final JList<?> mainList = ((ListPopupImpl) ListPopupWrapper.getRootPopup(popup)).getList();
 
           ListSelectionListener listener = event -> {
             if (event.getValueIsAdjusting()) return;
@@ -141,8 +140,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
   }
 
   protected List<XAttachHostProvider<XAttachHost>> getAvailableHosts() {
-    return XAttachHostProvider.EP.getExtensionList().stream().map(provider -> (XAttachHostProvider<XAttachHost>) provider).collect(
-      Collectors.toList());
+    return ContainerUtil.map(XAttachHostProvider.EP.getExtensionList(), provider -> (XAttachHostProvider<XAttachHost>)provider);
   }
 
   @NotNull
@@ -634,7 +632,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
 
     @Override
-    public PopupStep onChosen(T selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
       return null;
     }
   }
@@ -679,7 +677,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
     }
 
     @Override
-    public PopupStep onChosen(AttachItem selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(AttachItem selectedValue, boolean finalChoice) {
       if (selectedValue instanceof AttachToProcessItem attachToProcessItem) {
         if (finalChoice) {
           addToRecent(myProject, attachToProcessItem);
@@ -691,12 +689,12 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       }
 
       if (selectedValue instanceof AttachHostItem attachHostItem) {
-        AsyncPromise<PopupStep> promise = new AsyncPromise<>();
+        AsyncPromise<PopupStep<AttachItem>> promise = new AsyncPromise<>();
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           List<AttachItem> attachItems = new ArrayList<>(attachHostItem.getSubItems());
           ApplicationManager.getApplication().invokeLater(() -> promise.setResult(new AttachListStep(attachItems, null, myProject)));
         });
-        return new AsyncPopupStep(promise);
+        return new AsyncPopupStep<>(promise);
       }
       return null;
     }
@@ -719,7 +717,7 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       }
 
       @Override
-      public PopupStep onChosen(AttachToProcessItem selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(AttachToProcessItem selectedValue, boolean finalChoice) {
         addToRecent(myProject, selectedValue);
         return doFinalStep(() -> selectedValue.startDebugSession(myProject));
       }

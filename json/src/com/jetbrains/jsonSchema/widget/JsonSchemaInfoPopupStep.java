@@ -95,7 +95,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   }
 
   @Override
-  public PopupStep onChosen(JsonSchemaInfo selectedValue, boolean finalChoice) {
+  public PopupStep<?> onChosen(JsonSchemaInfo selectedValue, boolean finalChoice) {
     if (finalChoice) {
       if (selectedValue == EDIT_MAPPINGS || selectedValue == ADD_MAPPING) {
         return doFinalStep(() -> runSchemaEditorForCurrentFile());

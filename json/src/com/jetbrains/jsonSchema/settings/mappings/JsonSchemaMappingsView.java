@@ -301,11 +301,11 @@ public final class JsonSchemaMappingsView implements Disposable {
         }
 
         @Override
-        public PopupStep onChosen(JsonMappingKind selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(JsonMappingKind selectedValue, boolean finalChoice) {
           if (finalChoice) {
             return doFinalStep(() -> doRun(selectedValue));
           }
-          return PopupStep.FINAL_CHOICE;
+          return FINAL_CHOICE;
         }
       }).show(point);
     }

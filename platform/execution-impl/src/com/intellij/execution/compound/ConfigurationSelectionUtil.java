@@ -81,7 +81,7 @@ public final class ConfigurationSelectionUtil {
             }
 
             @Override
-            public PopupStep onChosen(ExecutionTarget selectedTarget, boolean finalChoice) {
+            public PopupStep<?> onChosen(ExecutionTarget selectedTarget, boolean finalChoice) {
               onSelected.accept(selectedConfigs, selectedTarget);
               return FINAL_CHOICE;
             }

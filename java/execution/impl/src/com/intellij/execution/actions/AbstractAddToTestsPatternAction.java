@@ -59,7 +59,7 @@ public abstract class AbstractAddToTestsPatternAction<T extends JavaTestConfigur
       JBPopupFactory.getInstance().createListPopup(
         new BaseListPopupStep<>(JavaCompilerBundle.message("popup.title.choose.suite.to.add"), patternConfigurations) {
           @Override
-          public PopupStep onChosen(T configuration, boolean finalChoice) {
+          public PopupStep<?> onChosen(T configuration, boolean finalChoice) {
             for (PsiElement aClass : classes) {
               String qName = getPatternBasedProducer().getQName(aClass);
               if (qName != null) {

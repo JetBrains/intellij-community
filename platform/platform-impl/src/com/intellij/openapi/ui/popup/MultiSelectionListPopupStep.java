@@ -23,7 +23,7 @@ public abstract class MultiSelectionListPopupStep<T> extends BaseListPopupStep<T
   }
 
   @Override
-  public final PopupStep onChosen(T selectedValue, boolean finalChoice) {
+  public final PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
     return onChosen(Collections.singletonList(selectedValue), finalChoice);
   }
 

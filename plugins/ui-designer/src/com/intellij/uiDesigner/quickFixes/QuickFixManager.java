@@ -255,9 +255,9 @@ public abstract class QuickFixManager <T extends JComponent>{
     }
 
     @Override
-    public PopupStep onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
-      if (selectedValue.second instanceof PopupQuickFix) {
-        return ((PopupQuickFix) selectedValue.second).getPopupStep();
+    public PopupStep<?> onChosen(final ErrorWithFix selectedValue, final boolean finalChoice) {
+      if (selectedValue.second instanceof PopupQuickFix<?> fix) {
+        return fix.getPopupStep();
       }
       if (finalChoice || !myShowSuppresses) {
         return doFinalStep(
@@ -301,9 +301,9 @@ public abstract class QuickFixManager <T extends JComponent>{
   }
 
   private static final class MyShowHintRequest implements Runnable{
-    private final QuickFixManager myManager;
+    private final QuickFixManager<?> myManager;
 
-    MyShowHintRequest(final @NotNull QuickFixManager manager) {
+    MyShowHintRequest(final @NotNull QuickFixManager<?> manager) {
       myManager = manager;
     }
 

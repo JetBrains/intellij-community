@@ -431,7 +431,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
               }
 
               @Override
-              public PopupStep onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
+              public PopupStep<?> onChosen(final XLineBreakpointType.XLineBreakpointVariant selectedValue, boolean finalChoice) {
                 selectionListener.clearHighlighter();
                 addLineBreakpoint(res, breakpointManager, selectedValue, file, line, temporary);
                 return FINAL_CHOICE;

@@ -59,7 +59,7 @@ public final class ArtifactErrorPanel {
               }
 
               @Override
-              public PopupStep onChosen(ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
+              public PopupStep<?> onChosen(ConfigurationErrorQuickFix selectedValue, boolean finalChoice) {
                 performFix(selectedValue, artifactEditor);
                 return FINAL_CHOICE;
               }

@@ -78,7 +78,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
     BaseListPopupStep<ProjectStructureElementUsage> step =
       new BaseListPopupStep<>(JavaUiBundle.message("dependencies.used.in.popup.title"), usagesArray) {
         @Override
-        public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
+        public PopupStep<?> onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
           PlaceInProjectStructure place = selected.getPlace();
           if (place.canNavigate()) {
             place.navigate();
