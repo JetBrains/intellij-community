@@ -61,7 +61,7 @@ public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActio
     final var reactionSetting = AdvancedSettings.getEnum("sdk.configuration.install.request", DownloadFixReaction.class);
 
     if (hasConsent() || reactionSetting == DownloadFixReaction.ALWAYS_ACCEPT
-        || Registry.is("jdk.download.consent", false)
+        || Registry.is("sdk.download.consent", false)
         || ApplicationManager.getApplication().isUnitTestMode()) {
       return createTask().withListener(getMulticaster());
     }
@@ -120,7 +120,7 @@ public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActio
       });
     }
     catch (InterruptedException | InvocationTargetException e) {
-      LOG.warn("Failed to get JDK download consent", e);
+      LOG.warn("Failed to get SDK download consent", e);
     }
   }
 

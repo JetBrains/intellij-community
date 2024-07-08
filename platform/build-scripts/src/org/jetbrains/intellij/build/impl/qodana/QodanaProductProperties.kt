@@ -15,7 +15,7 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Didea.job.launcher.without.timeout=true",
   "-Dscanning.in.smart.mode=false",
   "-Deap.login.enabled=false",
-  "-Djdk.download.consent=true"
+  "-Dsdk.download.consent=true"
   )
 
 /**
