@@ -24,6 +24,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.DescindingFilesFilter;
 import com.intellij.openapi.vcs.changes.RemoteRevisionsCache;
@@ -36,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.OptionsDialog;
 import com.intellij.vcs.VcsActivity;
@@ -455,31 +458,35 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
                                              boolean someSessionWasCancelled,
                                              @NotNull List<? extends UpdateSession> updateSessions) {
       int allFilesCount = getUpdatedFilesCount();
-      String additionalContent = nullize(updateSessions.stream().
-        map(UpdateSession::getAdditionalNotificationContent).
-        filter(nonNull()).
-        collect(Collectors.joining(", ")));
 
       String title = someSessionWasCancelled
                      ? VcsBundle.message("update.notification.title.project.partially.updated")
                      : VcsBundle.message("update.notification.title.count.files.updated", allFilesCount);
 
-      String content = someSessionWasCancelled
-                       ? VcsBundle.message("update.notification.content.files.updated", allFilesCount)
-                       : notNullize(prepareScopeUpdatedText(tree));
+      HtmlBuilder content = new HtmlBuilder();
+      content.append(someSessionWasCancelled
+                     ? HtmlChunk.text(VcsBundle.message("update.notification.content.files.updated", allFilesCount))
+                     : prepareScopeUpdatedText(tree));
+
+      List<HtmlChunk> additionalContent = JBIterable.from(updateSessions)
+        .map(UpdateSession::getAdditionalNotificationContent)
+        .filterNotNull()
+        .map(HtmlChunk::raw)
+        .toList();
+      if (!additionalContent.isEmpty()) {
+        if (!content.isEmpty()) {
+          content.append(HtmlChunk.br());
+        }
+        content.appendWithSeparators(HtmlChunk.text(", "), additionalContent);
+      }
+
 
       NotificationType type = someSessionWasCancelled
                               ? NotificationType.WARNING
                               : NotificationType.INFORMATION;
 
-      if (additionalContent != null) {
-        if (!content.isEmpty()) {
-          content += BR;
-        }
-        content += additionalContent;
-      }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
+      return STANDARD_NOTIFICATION.createNotification(title, content.toString(), type).setDisplayId(VcsNotificationIdsHolder.PROJECT_PARTIALLY_UPDATED);
     }
 
     private int getUpdatedFilesCount() {
@@ -490,22 +497,19 @@ public abstract class AbstractCommonUpdateAction extends DumbAwareAction {
       return group.getFiles().size() + group.getChildren().stream().mapToInt(g -> getFilesCount(g)).sum();
     }
 
-    @Nullable
-    @Nls
-    private static String prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
-      String scopeText = null;
+    private static @NotNull @Nls HtmlChunk prepareScopeUpdatedText(@NotNull UpdateInfoTree tree) {
       NamedScope scopeFilter = tree.getFilterScope();
       if (scopeFilter != null) {
         int filteredFiles = tree.getFilteredFilesCount();
         String filterName = scopeFilter.getPresentableName();
         if (filteredFiles == 0) {
-          scopeText = VcsBundle.message("update.file.name.wasn.t.modified", filterName);
+          return HtmlChunk.text(VcsBundle.message("update.file.name.wasn.t.modified", filterName));
         }
         else {
-          scopeText = VcsBundle.message("update.filtered.files.count.in.filter.name", filteredFiles, filterName);
+          return HtmlChunk.text(VcsBundle.message("update.filtered.files.count.in.filter.name", filteredFiles, filterName));
         }
       }
-      return scopeText;
+      return HtmlChunk.empty();
     }
 
     @Override
