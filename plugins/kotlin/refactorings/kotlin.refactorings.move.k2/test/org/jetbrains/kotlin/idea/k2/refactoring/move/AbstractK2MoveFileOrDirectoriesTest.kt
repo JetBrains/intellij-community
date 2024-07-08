@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
@@ -68,16 +69,19 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
 
                 else -> fail("No target specified")
             }
-            val descriptor = K2MoveDescriptor.Files(
+            val moveDescriptor = K2MoveDescriptor.Files(
               project,
               sourceDescriptor,
-              targetDescriptor,
-              shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
-              config.searchInComments(),
-              config.searchReferences(),
-              config.moveExpectedActuals()
+              targetDescriptor
             )
-            K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor).run()
+            val moveOperationDescriptor = K2MoveOperationDescriptor.Files(
+                project,
+                listOf(moveDescriptor),
+                shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
+                config.searchInComments(),
+                config.searchReferences()
+            )
+            K2MoveFilesOrDirectoriesRefactoringProcessor(moveOperationDescriptor).run()
         }
     }
 }

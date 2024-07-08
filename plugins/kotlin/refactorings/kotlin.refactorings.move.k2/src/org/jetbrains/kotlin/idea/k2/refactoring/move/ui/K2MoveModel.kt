@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -47,7 +48,7 @@ sealed class K2MoveModel {
     val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
 
     @RequiresReadLock
-    abstract fun toDescriptor(): K2MoveDescriptor
+    abstract fun toDescriptor(): K2MoveOperationDescriptor<*>
 
     fun isValidRefactoring(): Boolean {
         fun KtFile.isTargetFile(): Boolean {
@@ -123,19 +124,23 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.SourceDirectory,
         override val inSourceRoot: Boolean,
     ) : K2MoveModel() {
-        override fun toDescriptor(): K2MoveDescriptor {
+        override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
-            return K2MoveDescriptor.Files(
+            val moveDescriptor = K2MoveDescriptor.Files(
                 project,
                 srcDescr,
-                targetDescr,
+                targetDescr
+            )
+            val operationDescriptor = K2MoveOperationDescriptor.Files(
+                project,
+                listOf(moveDescriptor),
                 searchForText.state,
                 searchReferences,
-                searchInComments.state,
-                mppDeclarations.state
+                searchInComments.state
             )
+            return operationDescriptor
         }
     }
 
@@ -148,18 +153,21 @@ sealed class K2MoveModel {
         override val target: K2MoveTargetModel.File,
         override val inSourceRoot: Boolean,
     ) : K2MoveModel() {
-        override fun toDescriptor(): K2MoveDescriptor {
+        override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
             val srcDescr = source.toDescriptor()
             val targetDescr = target.toDescriptor()
             val searchReferences = if (inSourceRoot) searchReferences.state else false
-            return K2MoveDescriptor.Declarations(
+            val moveDescriptor = K2MoveDescriptor.Declarations(
                 project,
                 srcDescr,
-                targetDescr,
+                targetDescr
+            )
+            return K2MoveOperationDescriptor.Declarations(
+                project,
+                listOf(moveDescriptor),
                 searchForText.state,
                 searchReferences,
-                searchInComments.state,
-                mppDeclarations.state
+                searchInComments.state
             )
         }
     }

@@ -18,22 +18,16 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkNonUpdatableUsages
 import org.jetbrains.kotlin.psi.CopyablePsiUserDataProperty
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
-/**
- * K2 move refactoring processor that moves whole files or sets of files. The main difference between this processor and
- * [K2MoveDeclarationsRefactoringProcessor] is that this processor moves the file as a whole and adjusts imports later while
- * [K2MoveDeclarationsRefactoringProcessor] moves the individual declarations and generates the imports from them. Most of the Kotlin
- * specific logic for this refactoring processor is implemented in [K2MoveFilesHandler].
- */
-class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
+class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
     descriptor.project,
-    descriptor.source.elements.toTypedArray(),
-    runWriteAction { descriptor.target.getOrCreateTarget() as PsiDirectory },
+    descriptor.sourceElements.toTypedArray(),
+    runWriteAction { descriptor.moveDescriptors.first().target.getOrCreateTarget() as PsiDirectory }, // TODO how to do multi target move?
     descriptor.searchReferences,
     descriptor.searchInComments,
     descriptor.searchForText,

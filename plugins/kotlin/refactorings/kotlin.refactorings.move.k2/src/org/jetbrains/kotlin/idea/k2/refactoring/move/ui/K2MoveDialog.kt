@@ -56,7 +56,7 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
     override fun doAction() {
         saveSettings()
         val descriptor = model.toDescriptor()
-        val allDeclarations = descriptor.source.elements.flatMap { it.descendantsOfType<KtNamedDeclaration>() }
+        val allDeclarations = descriptor.sourceElements.flatMap { it.descendantsOfType<KtNamedDeclaration>() }
         if (allDeclarations.any { it.isExpectDeclaration() || it.isEffectivelyActual() }) {
             val response = Messages.showDialog(
                 KotlinBundle.message("kmp.move.not.supported.message"),

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.util.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
@@ -61,16 +62,19 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                 val targetFile = PsiManager.getInstance(project).findFile(rootDir.findFileByRelativePath(config.getString("targetFile"))!!)
                 K2MoveTargetDescriptor.File(targetFile as KtFile)
             }
-            val descriptor = K2MoveDescriptor.Declarations(
+            val moveDescriptor = K2MoveDescriptor.Declarations(
                 project,
                 sourceDescriptor,
-                targetDescriptor,
+                targetDescriptor
+            )
+            val moveOperationDescriptor = K2MoveOperationDescriptor.Declarations(
+                project,
+                listOf(moveDescriptor),
                 config.searchForText(),
                 config.searchInComments(),
                 config.searchReferences(),
-                config.moveExpectedActuals()
             )
-            K2MoveDeclarationsRefactoringProcessor(descriptor).run()
+            K2MoveDeclarationsRefactoringProcessor(moveOperationDescriptor).run()
         }
     }
 }

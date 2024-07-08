@@ -2,53 +2,21 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor
 
 import com.intellij.openapi.project.Project
-import com.intellij.refactoring.BaseRefactoringProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
 
 sealed class K2MoveDescriptor(
     open val project: Project,
     open val source: K2MoveSourceDescriptor<*>,
     open val target: K2MoveTargetDescriptor,
-    val searchForText: Boolean,
-    val searchInComments: Boolean,
-    val searchReferences: Boolean,
-    val moveExpectedActuals: Boolean
 ) {
-    abstract fun refactoringProcessor(): BaseRefactoringProcessor
-
-    /**
-     * A file preserved move is when a user moves 1 or more files into a directory. All the files will be preserved here, they will just
-     * be moved into a different location.
-     */
     class Files(
         override val project: Project,
         override val source: K2MoveSourceDescriptor.FileSource,
-        override val target: K2MoveTargetDescriptor.SourceDirectory,
-        searchForText: Boolean,
-        searchInComments: Boolean,
-        searchReferences: Boolean,
-        moveExpectedActuals: Boolean
-    ) : K2MoveDescriptor(project, source, target, searchForText, searchInComments, searchReferences, moveExpectedActuals) {
-        override fun refactoringProcessor(): BaseRefactoringProcessor {
-            return K2MoveFilesOrDirectoriesRefactoringProcessor(this)
-        }
-    }
+        override val target: K2MoveTargetDescriptor.SourceDirectory
+    ) : K2MoveDescriptor(project, source, target)
 
-    /**
-     * A file member moves is when the user moves the members inside the files, not considering the files themselves.
-     */
     class Declarations(
       override val project: Project,
       override val source: K2MoveSourceDescriptor.ElementSource,
-      override val target: K2MoveTargetDescriptor.File,
-      searchForText: Boolean,
-      searchInComments: Boolean,
-      searchReferences: Boolean,
-      moveExpectedActuals: Boolean
-    ) : K2MoveDescriptor(project, source, target, searchForText, searchInComments, searchReferences, moveExpectedActuals) {
-        override fun refactoringProcessor(): BaseRefactoringProcessor {
-            return K2MoveDeclarationsRefactoringProcessor(this)
-        }
-    }
+      override val target: K2MoveTargetDescriptor.File
+    ) : K2MoveDescriptor(project, source, target)
 }
