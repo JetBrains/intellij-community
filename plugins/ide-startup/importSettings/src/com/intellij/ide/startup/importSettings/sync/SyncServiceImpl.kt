@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.sync
 
+import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -22,7 +23,7 @@ private data class ProductInfo(
   override val id: String,
   override val name: String
 ) : Product {
-
+  override val origin = SettingsImportOrigin.Sync
   //constructor(metaInfo: SettingsSnapshot.MetaInfo) : this(
   //  version = metaInfo.appInfo?.buildNumber?.asStringWithoutProductCodeAndSnapshot() ?: "",
   //  lastUsage = Date.from(metaInfo.dateCreated),
