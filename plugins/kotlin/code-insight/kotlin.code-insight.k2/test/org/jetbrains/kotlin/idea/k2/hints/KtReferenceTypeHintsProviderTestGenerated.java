@@ -150,6 +150,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/LocalVariable.kt");
     }
 
+    @TestMetadata("LongLongClassNames.kt")
+    public void testLongLongClassNames() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/LongLongClassNames.kt");
+    }
+
     @TestMetadata("LoopParameter.kt")
     public void testLoopParameter() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/LoopParameter.kt");
