@@ -255,7 +255,11 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           blockingContext {
             try {
               val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-              progressReporter?.fraction(status.fraction())
+              val fraction = status.fraction()
+              if (fraction > 1.0) {
+                MavenLog.LOG.warn("fraction is more than one: $status")
+              }
+              progressReporter?.fraction(fraction.coerceAtMost(1.0))
               eventHandler.handleConsoleEvents(status.consoleEvents())
               eventHandler.handleDownloadEvents(status.downloadEvents())
             }
