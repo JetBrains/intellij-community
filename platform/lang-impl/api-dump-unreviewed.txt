@@ -21098,13 +21098,6 @@ a:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase
 - pa:createTask():com.intellij.openapi.projectRoots.impl.UnknownSdkDownloadTask
 - pa:getDownloadDescription():java.lang.String
 - p:getSdkLookupReason():java.lang.String
-e:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
-- java.lang.Enum
-- sf:ALWAYS_ACCEPT:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
-- sf:ALWAYS_REJECT:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
-- sf:SHOW_POPUP:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
-- s:valueOf(java.lang.String):com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction
-- s:values():com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction[]
 a:com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionLocalBase
 - com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionBase
 - <init>():V

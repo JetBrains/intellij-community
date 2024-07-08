@@ -77,8 +77,6 @@
     <registryKey key="unknown.sdk.modal.jps" defaultValue="true" description="Run unknown JDK test before JPS build is started"/>
     <registryKey key="unknown.sdk.show.editor.actions" defaultValue="true" description="Show editor suggestions to fix missing SKDs"/>
 
-    <advancedSetting id="sdk.configuration.install.request" enumClass="com.intellij.openapi.projectRoots.impl.UnknownSdkFixActionDownloadBase$DownloadFixReaction" default="SHOW_POPUP" bundle="messages.ProjectBundle" groupKey="advanced.setting.sdk.configuration"/>
-
     <editorNotificationProvider implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkEditorNotificationsProvider"/>
 
     <applicationService serviceImplementation="com.intellij.codeInsight.TargetElementUtil"/>
