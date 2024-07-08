@@ -136,6 +136,24 @@ public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
     accessor.set(value);
   }
 
+  public void testFirstMigration() throws SchemeImportException {
+    CodeStyleSettings initialSettings = createTestScheme().getCodeStyleSettings();
+
+    CommonCodeStyleSettings initialCommonCodeStyleSettings = initialSettings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings initialCustomCodeStyleSettings = initialSettings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    assertEquals(0, initialCommonCodeStyleSettings.BLANK_LINES_AROUND_FIELD);
+    assertEquals(0, initialCustomCodeStyleSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
+
+    CodeStyleSettings settings = importSettings();
+
+    CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
+    JavaCodeStyleSettings customSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+
+    assertEquals(7, commonSettings.BLANK_LINES_AROUND_FIELD);
+    assertEquals(7, customSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS);
+  }
+
   private static boolean isPrimitiveOrString(Class type) {
     return type.isPrimitive() || type.equals(String.class);
   }
