@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
+import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ArgumentNameCommentInfo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExpectedArgumentNameComment
@@ -104,6 +106,10 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
         arguments: MutableList<KtValueArgument>,
         sink: InlayTreeSink
     ) {
+        // TODO: KTIJ-30439 it should respect parameter names when KT-65846 is fixed
+        if ((this as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke == true) {
+            return
+        }
         for ((index, symbol) in valueParameters.withIndex()) {
             if (index >= arguments.size) break
             val argument = arguments[index]
@@ -120,7 +126,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             if (argument.isArgumentNamed(symbol)) continue
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
-                sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hasBackground = true) {
+                sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hintColorKind = HintColorKind.Default) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
                     text(stringName,
                          symbol.psi?.createSmartPointer()?.let {
