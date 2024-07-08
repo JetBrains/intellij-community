@@ -98,19 +98,15 @@ class JavaToKotlinAction : AnAction() {
                     (!askExternalCodeProcessing ||
                             Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES)
 
-            if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
-
-            val result = converterResult ?: return emptyList()
-            val externalCodeProcessing = result.externalCodeProcessing
-            val externalCodeUpdate = prepareExternalCodeUpdate(project, externalCodeProcessing, shouldProcessExternalCode)
-
-            lateinit var newFiles: List<KtFile>
+            var newFiles: List<KtFile> = emptyList()
 
             // We execute a single command with the following steps:
             //
-            // 1. Create new Kotlin files in a transparent global write action.
-            // 2. Prepare external code processing in a read action.
-            // 3. Update external usages in a transparent global write action.
+            // * Run Java to Kotlin converter, including the post-processings
+            // * Find external usages that may need to be updated (part 1)
+            // * Create new Kotlin files in a transparent global write action
+            // * Prepare external code processing in a read action (part 2)
+            // * Update external usages in a transparent global write action
             //
             // "Transparent" means that it will not be considered as a separate step for undo/redo purposes,
             // so when you undo a J2K conversion, it undoes the whole outermost command at once.
@@ -118,6 +114,12 @@ class JavaToKotlinAction : AnAction() {
             // "Global" means that you can undo it from any changed file: the converted files,
             // or the external files that were updated.
             project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
+                if (!runSynchronousProcess(project, ::convertWithStatistics)) return@executeCommand
+
+                val result = converterResult ?: return@executeCommand
+                val externalCodeProcessing = result.externalCodeProcessing
+                val externalCodeUpdate = prepareExternalCodeUpdate(project, externalCodeProcessing, shouldProcessExternalCode)
+
                 newFiles = project.runUndoTransparentGlobalWriteAction {
                     saveResults(javaFiles, result.results)
                         .map { it.toPsiFile(project) as KtFile }
