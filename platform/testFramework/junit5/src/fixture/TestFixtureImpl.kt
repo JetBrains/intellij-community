@@ -59,20 +59,11 @@ internal class TestFixtureImpl<T>(
     testScope.launch(CoroutineName(debugString)) {
       @Suppress("UNCHECKED_CAST")
       val initializer = state as TestFixtureInitializer<T>
-      val fixtureScope = childScope("Fixture '$debugString'")
-      val tearDown = try {
-        val scope = TestFixtureInitializerReceiverImpl<T>(testScope, uniqueId)
-        val (fixture, tearDown) = with(initializer) {
+      val scope = TestFixtureInitializerReceiverImpl<T>(testScope, uniqueId)
+      val (fixture, tearDown) = try {
+        with(initializer) {
           scope.initFixture(uniqueId) as InitializedTestFixtureData<T>
         }
-        for (dependency in scope.dependencies()) {
-          // attach the current fixture scope (dependent) as a child of dependency scope
-          // => dependency fixture scope will wait for the current scope to complete
-          // => this ensures the correct tear-down order: dependents are torn down before dependencies.
-          fixtureScope.attachAsChildTo(dependency)
-        }
-        deferred.complete(ScopedValue(fixture, fixtureScope))
-        tearDown
       }
       catch (t: TestAbortedException) {
         deferred.completeExceptionally(t)
@@ -82,6 +73,14 @@ internal class TestFixtureImpl<T>(
         deferred.completeExceptionally(t)
         throw t
       }
+      for (dependency in scope.dependencies()) {
+        // attach the current fixture scope (dependent) as a child of dependency scope
+        // => dependency fixture scope will wait for the current scope to complete
+        // => this ensures the correct tear-down order: dependents are torn down before dependencies.
+        attachAsChildTo(dependency)
+      }
+      val fixtureScope = childScope("Fixture '$debugString'")
+      deferred.complete(ScopedValue(fixture, fixtureScope))
       try {
         awaitCancellation()
       }
