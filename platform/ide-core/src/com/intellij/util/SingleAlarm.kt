@@ -6,18 +6,16 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm.ThreadToUse
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 /**
+ * Use a [kotlinx.coroutines.flow.Flow] with [kotlinx.coroutines.flow.debounce] and [kotlinx.coroutines.flow.sample] instead.
+ * Alarm is deprecated.
  * Allows scheduling a single `Runnable` instance ([task]) to be executed after a specific time interval on a specific thread.
  * [request] adds a request if it's not scheduled yet, i.e., it does not delay execution of the request
  * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request
  *
- * Consider using a [kotlinx.coroutines.flow.Flow] with [kotlinx.coroutines.flow.debounce] and [kotlinx.coroutines.flow.sample] instead
  */
-
 class SingleAlarm @JvmOverloads constructor(
   private val task: Runnable,
   private val delay: Int,
@@ -25,7 +23,7 @@ class SingleAlarm @JvmOverloads constructor(
   threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
   private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null
 ) : Disposable {
-  private val impl = Alarm(threadToUse, parentDisposable)
+  private val impl = Alarm(threadToUse = threadToUse, parentDisposable = parentDisposable)
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(
@@ -65,14 +63,15 @@ class SingleAlarm @JvmOverloads constructor(
     Disposer.dispose(impl)
   }
 
-  val isDisposed: Boolean get() = impl.isDisposed
+  val isDisposed: Boolean
+    get() = impl.isDisposed
 
-  val isEmpty: Boolean get() = impl.isEmpty
+  val isEmpty: Boolean
+    get() = impl.isEmpty
 
   @TestOnly
-  @Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
   fun waitForAllExecuted(timeout: Long, unit: TimeUnit) {
-    return impl.waitForAllExecuted(timeout, unit)
+    impl.waitForAllExecuted(timeout, unit)
   }
 
   @JvmOverloads
@@ -101,11 +100,9 @@ class SingleAlarm @JvmOverloads constructor(
   @JvmOverloads
   fun cancelAndRequest(forceRun: Boolean = false) {
     if (!impl.isDisposed) {
-      impl.cancelAllAndAddRequest(task, if (forceRun) 0 else delay, modalityState)
+      impl.cancelAllAndAddRequest(request = task, delayMillis = if (forceRun) 0 else delay, modalityState = modalityState)
     }
   }
 
-  fun cancelAllRequests(): Int {
-    return impl.cancelAllRequests()
-  }
+  fun cancelAllRequests(): Int = impl.cancelAllRequests()
 }

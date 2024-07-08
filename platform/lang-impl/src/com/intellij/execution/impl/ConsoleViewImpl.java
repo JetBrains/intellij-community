@@ -567,7 +567,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         catch (CancellationException e) {
           //try again
         }
-        catch (InterruptedException | ExecutionException | TimeoutException e) {
+        catch (TimeoutException e) {
           throw new RuntimeException(e);
         }
       }

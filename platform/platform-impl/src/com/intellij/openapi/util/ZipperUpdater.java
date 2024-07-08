@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -9,7 +9,6 @@ import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -89,7 +88,7 @@ public final class ZipperUpdater {
     try {
       myAlarm.waitForAllExecuted(timeout, unit);
     }
-    catch (InterruptedException | ExecutionException | TimeoutException e) {
+    catch (TimeoutException e) {
       throw new RuntimeException(e);
     }
   }

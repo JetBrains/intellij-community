@@ -2940,7 +2940,6 @@ c:com.intellij.util.Alarm
 - <init>(com.intellij.openapi.Disposable):V
 - <init>(com.intellij.util.Alarm$ThreadToUse):V
 - <init>(com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
-- b:<init>(com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - f:addComponentRequest(java.lang.Runnable,I):V
 - f:addComponentRequest(java.lang.Runnable,J):V
@@ -2956,7 +2955,6 @@ c:com.intellij.util.Alarm
 - f:getActiveRequestCount():I
 - f:isDisposed():Z
 - f:isEmpty():Z
-- f:setActivationComponent(javax.swing.JComponent):com.intellij.util.Alarm
 - f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
 e:com.intellij.util.Alarm$ThreadToUse
 - java.lang.Enum
@@ -2966,7 +2964,7 @@ e:com.intellij.util.Alarm$ThreadToUse
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.util.Alarm$ThreadToUse
 - s:values():com.intellij.util.Alarm$ThreadToUse[]
-c:com.intellij.util.AlarmFactory
+f:com.intellij.util.AlarmFactory
 - <init>():V
 - create():com.intellij.util.Alarm
 - create(com.intellij.util.Alarm$ThreadToUse):com.intellij.util.Alarm

@@ -2,20 +2,28 @@
 package com.intellij.util
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.diagnostic.PerformanceWatcher.Companion.printStacktrace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.ui.UIUtil
-import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.Assertions.assertTrue
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
@@ -23,60 +31,73 @@ import java.util.concurrent.atomic.AtomicInteger
 @TestApplication
 class AlarmTest {
   @Test
-  fun twoAddsWithZeroDelayMustExecuteSequentially(@TestDisposable disposable: Disposable) {
-    val alarm = Alarm(disposable)
-    assertRequestsExecuteSequentially(alarm)
+  fun alarmRequestsShouldExecuteSequentiallyInEdt(@TestDisposable disposable: Disposable) {
+    assertRequestsExecuteSequentially(Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable))
   }
 
   @Test
-  fun alarmRequestsShouldExecuteSequentiallyEvenInPooledThread(@TestDisposable disposable: Disposable) {
+  fun alarmRequestsShouldExecuteSequentiallyInPooledThread(@TestDisposable disposable: Disposable) {
+    assertRequestsExecuteSequentially(Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable))
+  }
+
+  @Test
+  fun `alarm with short delay executed first`(@TestDisposable disposable: Disposable) {
     val alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable)
-    assertRequestsExecuteSequentially(alarm)
+    val list = ConcurrentLinkedQueue<String>()
+    alarm.addRequest(ContextAwareRunnable { list.add("B") }, 10)
+    alarm.addRequest(ContextAwareRunnable { list.add("A") }, 1)
+    alarm.waitForAllExecuted(20, TimeUnit.MILLISECONDS)
+    assertThat(list).containsExactly("A", "B")
   }
 
   @Test
   fun oneAlarmDoesNotStartTooManyThreads(@TestDisposable disposable: Disposable) {
-    val alarm = Alarm(disposable)
+    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.POOLED_THREAD, parentDisposable = disposable)
     val executed = AtomicInteger()
-    val count = 100000
-    val used = ConcurrentCollectionFactory.createConcurrentSet<Thread>()
+    val count = 100_000
+    val used = ConcurrentHashMap.newKeySet<Thread>()
+    val delay = 10
     for (i in 0 until count) {
-      alarm.addRequest({
-                         executed.incrementAndGet()
-                         used.add(Thread.currentThread())
-                       }, 10)
+      alarm.addRequest(ContextAwareRunnable {
+        executed.incrementAndGet()
+        used.add(Thread.currentThread())
+      }, delay)
     }
-    while (executed.get() != count) {
-      UIUtil.dispatchAllInvocationEvents()
-    }
-    if (used.size > 10) {
-      throw AssertionError(used.size.toString() + " threads created: " + used.joinToString { printStacktrace("", it, it.stackTrace) })
-    }
+
+    alarm.waitForAllExecuted(30, TimeUnit.SECONDS)
+
+    assertThat(used.size)
+      .describedAs {
+        "${used.size} threads created: ${used.joinToString { printStacktrace("", it, it.stackTrace) }}"
+      }
+      .isLessThanOrEqualTo(Runtime.getRuntime().availableProcessors() + 64 /* IO dispatcher is also reused */)
   }
 
   @Test
   fun manyAlarmsDoNotStartTooManyThreads(@TestDisposable disposable: Disposable) {
     val used = ConcurrentCollectionFactory.createConcurrentSet<Thread>()
     val executed = AtomicInteger()
-    val count = 100000
-    val alarms = Array(count) { Alarm(disposable) }.toList()
+    val count = 100_000
+    val alarms = Array(count) { Alarm(threadToUse = Alarm.ThreadToUse.POOLED_THREAD, disposable) }
     for (alarm in alarms) {
-      alarm.addRequest({
-                         executed.incrementAndGet()
-                         used.add(Thread.currentThread())
-                       }, 10)
+      alarm.addRequest(ContextAwareRunnable {
+        executed.incrementAndGet()
+        used.add(Thread.currentThread())
+      }, 10)
     }
 
-    while (executed.get() != count) {
-      UIUtil.dispatchAllInvocationEvents()
+    for (alarm in alarms) {
+      alarm.waitForAllExecuted(1, TimeUnit.SECONDS)
     }
-    if (used.size > 10) {
-      throw AssertionError(used.size.toString() + " threads created: " + used.joinToString { printStacktrace("", it, it.stackTrace) })
-    }
+    assertThat(used.size)
+      .describedAs {
+        "${used.size} threads created: ${used.joinToString { printStacktrace("", it, it.stackTrace) }}"
+      }
+      .isLessThanOrEqualTo(Runtime.getRuntime().availableProcessors() + 1 + 64 /* IO-pool thread is reused */)
   }
 
   @Test
-  fun testOrderIsPreservedAfterModalitySwitching() {
+  fun orderIsPreservedAfterModalitySwitching(): Unit = runBlocking(Dispatchers.EDT) {
     val alarm = Alarm()
     val sb = StringBuilder()
     val modal = Any()
@@ -87,7 +108,7 @@ class AlarmTest {
       alarm.addRequest({ sb.append("1") }, 0, ModalityState.nonModal())
       alarm.addRequest({ sb.append("2") }, 5, ModalityState.nonModal())
       UIUtil.dispatchAllInvocationEvents()
-      org.junit.jupiter.api.Assertions.assertEquals("", sb.toString())
+      assertThat(sb).isEmpty()
     }
     finally {
       LaterInvocator.leaveModal(modal)
@@ -97,19 +118,19 @@ class AlarmTest {
       UIUtil.dispatchAllInvocationEvents()
     }
 
-    org.junit.jupiter.api.Assertions.assertEquals("12", sb.toString())
+    assertThat(sb.toString()).isEqualTo("12")
   }
 
   @Test
-  fun flushImmediately() {
-    val alarm = Alarm()
-    val sb = StringBuilder()
+  fun flushImmediately(@TestDisposable disposable: Disposable): Unit = runBlocking(Dispatchers.EDT) {
+    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, disposable)
+    val list = ConcurrentLinkedQueue<String>()
 
-    alarm.addRequest({ sb.append("1") }, 0, ModalityState.nonModal())
-    alarm.addRequest({ sb.append("2") }, 5, ModalityState.nonModal())
-    org.junit.jupiter.api.Assertions.assertEquals("", sb.toString())
+    alarm.addRequest(ContextAwareRunnable { list.add("1") }, 0, ModalityState.nonModal())
+    alarm.addRequest(ContextAwareRunnable { list.add("2") }, 5, ModalityState.nonModal())
+    assertThat(list).isEmpty()
     alarm.drainRequestsInTest()
-    org.junit.jupiter.api.Assertions.assertEquals("12", sb.toString())
+    assertThat(list).containsExactly("1", "2")
   }
 
   @Test
@@ -118,14 +139,14 @@ class AlarmTest {
     val sb = StringBuffer()
     val start = System.currentTimeMillis()
     val delay = 100
-    alarm.addRequest({
-                       TimeoutUtil.sleep(1000)
-                       sb.append("1")
-                     }, delay)
-    alarm.addRequest({
-                       TimeoutUtil.sleep(1000)
-                       sb.append("2")
-                     }, delay * 2)
+    alarm.addRequest(ContextAwareRunnable {
+      TimeoutUtil.sleep(1000)
+      sb.append('1')
+    }, delay)
+    alarm.addRequest(ContextAwareRunnable {
+      TimeoutUtil.sleep(1000)
+      sb.append('2')
+    }, delay * 2)
 
     val s = sb.toString()
     val elapsed = System.currentTimeMillis() - start
@@ -133,8 +154,9 @@ class AlarmTest {
       System.err.println("No no no no this agent is so overloaded I quit")
       return
     }
-    org.junit.jupiter.api.Assertions.assertEquals(2, alarm.activeRequestCount)
-    org.junit.jupiter.api.Assertions.assertEquals("", s)
+
+    assertThat(alarm.activeRequestCount).isEqualTo(2)
+    assertThat(s).isEmpty()
     try {
       // started to execute but not finished yet
       alarm.waitForAllExecuted(1000, TimeUnit.MILLISECONDS)
@@ -145,61 +167,51 @@ class AlarmTest {
 
     alarm.waitForAllExecuted(3000, TimeUnit.MILLISECONDS)
 
-    org.junit.jupiter.api.Assertions.assertEquals(2, sb.length)
+    assertThat(sb).hasSize(2)
   }
 
   @Test
   fun exceptionDuringAlarmExecutionMustManifestItselfInTests(@TestDisposable disposable: Disposable) {
-    val alarm = Alarm(disposable)
+    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.POOLED_THREAD, disposable)
+    val errorMessage = "_catch_me_"
     val error = LoggedErrorProcessor.executeAndReturnLoggedError {
-      alarm.addRequest({
-                         throw RuntimeException("wtf")
-                       }, 1)
-      var caught = false
-      while (!alarm.isEmpty) {
-        try {
-          UIUtil.dispatchAllInvocationEvents()
-        }
-        catch (e: RuntimeException) {
-          caught = caught or ("wtf" == e.message)
-        }
-      }
-      assertTrue(caught)
+      alarm.addRequest(ContextAwareRunnable { throw RuntimeException(errorMessage) }, 1)
+      alarm.waitForAllExecuted(1000, TimeUnit.MILLISECONDS)
     }
-    org.junit.jupiter.api.Assertions.assertEquals("wtf", error.message)
+    assertThat(error).hasMessage(errorMessage)
   }
 
   @Test
   fun singleAlarmMustRefuseToInstantiateWithWrongModality() {
-    UsefulTestCase.assertThrows(IllegalArgumentException::class.java) {
+    assertThatExceptionOfType(IllegalArgumentException::class.java).isThrownBy {
       SingleAlarm(task = {}, delay = 1, parentDisposable = null, threadToUse = Alarm.ThreadToUse.SWING_THREAD, modalityState = null)
     }
   }
 }
 
 private fun assertRequestsExecuteSequentially(alarm: Alarm) {
-  val count = 10000
+  val count = 10_000
   val log = StringBuffer(count * 4)
   val expected = StringBuilder(count * 4)
 
   for (i in 0 until count) {
-    alarm.addRequest({ log.append(i).append(" ") }, 0)
+    alarm.addRequest(ContextAwareRunnable { log.append(i).append(' ') }, 0)
   }
   for (i in 0 until count) {
     expected.append(i).append(" ")
   }
-  val future = ApplicationManager.getApplication().executeOnPooledThread {
-    try {
-      alarm.waitForAllExecuted(100, TimeUnit.SECONDS)
-    }
-    catch (e: Exception) {
-      throw RuntimeException(e)
+  @Suppress("OPT_IN_USAGE")
+  val future = GlobalScope.async {
+    alarm.waitForAllExecuted(100, TimeUnit.SECONDS)
+  }
+
+  runBlocking(Dispatchers.EDT) {
+    while (!future.isCompleted) {
+      UIUtil.dispatchAllInvocationEvents()
     }
   }
-  while (!future.isDone) {
-    UIUtil.dispatchAllInvocationEvents()
-  }
-  future.get()
-  Assertions.assertThat(alarm.isEmpty).isTrue()
-  org.junit.jupiter.api.Assertions.assertEquals(expected.toString(), log.toString())
+
+  future.asCompletableFuture().join()
+  assertThat(alarm.isEmpty).isTrue()
+  assertThat(log.toString()).isEqualTo(expected.toString())
 }

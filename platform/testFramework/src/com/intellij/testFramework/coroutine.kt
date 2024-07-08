@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
 import com.intellij.testFramework.common.timeoutRunBlocking
@@ -19,6 +20,17 @@ fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents(project: Project) {
   repeat(3) {
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     runWithModalProgressBlocking(project, "") {
+      yield()
+    }
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+  }
+}
+
+@RequiresEdt
+fun executeSomeCoroutineTasksAndDispatchAllInvocationEvents() {
+  repeat(3) {
+    PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
       yield()
     }
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()

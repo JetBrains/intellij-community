@@ -23,7 +23,6 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -529,7 +528,7 @@ public class MergingUpdateQueue implements Runnable, Disposable, Activatable {
   }
 
   @TestOnly
-  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
+  public void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws TimeoutException {
     long deadline = System.nanoTime() + unit.toNanos(timeout);
     if (!myWaiterForMerge.isEmpty()) {
       restart(0); // to not wait for myMergingTimeSpan ms in tests

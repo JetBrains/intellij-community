@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -7,7 +7,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link Alarm} directly.
  */
-public class AlarmFactory {
+@Deprecated(forRemoval = true)
+public final class AlarmFactory {
   private static final @NotNull AlarmFactory ourInstance = new AlarmFactory();
 
   public static @NotNull AlarmFactory getInstance() {

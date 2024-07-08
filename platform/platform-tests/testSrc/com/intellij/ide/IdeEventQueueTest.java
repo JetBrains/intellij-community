@@ -11,7 +11,6 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
@@ -147,12 +146,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
       }
       assertFalse(t.timedOut());
     }
-  }
-
-  public void testExceptionInAlarmMustThrowImmediatelyInTests() {
-    Alarm alarm = new Alarm();
-    alarm.addRequest(()-> throwMyException(), 1);
-    checkMyExceptionThrownImmediately();
   }
 
   public void testExceptionInInvokeLateredRunnableMustThrowImmediatelyInTests() {
