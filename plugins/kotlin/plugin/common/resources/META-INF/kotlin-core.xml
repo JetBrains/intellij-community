@@ -502,6 +502,12 @@
             key="configure.kotlin"
             bundle="messages.KotlinProjectConfigurationBundle"
     />
+    <notificationGroup
+            id="Configure K2"
+            displayType="STICKY_BALLOON"
+            key="enable.k2"
+            bundle="messages.FeedbackBundle"
+    />
   </extensions>
 
   <!-- Declaration search and Find Usages -->
