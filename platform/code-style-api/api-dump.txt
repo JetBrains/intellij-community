@@ -944,6 +944,10 @@ a:com.intellij.psi.codeStyle.CustomCodeStyleSettings
 - p:importLegacySettings(com.intellij.psi.codeStyle.CodeStyleSettings):V
 - readExternal(org.jdom.Element):V
 - writeExternal(org.jdom.Element,com.intellij.psi.codeStyle.CustomCodeStyleSettings):V
+f:com.intellij.psi.codeStyle.CustomCodeStyleSettingsUtils
+- sf:INSTANCE:com.intellij.psi.codeStyle.CustomCodeStyleSettingsUtils
+- sf:readVersion(org.jdom.Element):I
+- sf:writeVersion(org.jdom.Element,I):org.jdom.Element
 c:com.intellij.psi.codeStyle.ExcludedFiles
 - <init>():V
 - addDescriptor(com.intellij.formatting.fileSet.FileSetDescriptor):V
