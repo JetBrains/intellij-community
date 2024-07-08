@@ -1029,6 +1029,9 @@ private fun computeFileEntry(
           }
           catch (ignore: FileTooBigException) {
           }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
         }
       }
     }
