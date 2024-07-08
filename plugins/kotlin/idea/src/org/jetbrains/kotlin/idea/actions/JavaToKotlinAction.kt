@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces.PROJECT_VIEW_POPUP
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -25,7 +24,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
@@ -48,8 +46,11 @@ import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
-import org.jetbrains.kotlin.j2k.*
+import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
+import org.jetbrains.kotlin.j2k.ExternalCodeProcessing
+import org.jetbrains.kotlin.j2k.FilesResult
+import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
@@ -74,10 +75,6 @@ class JavaToKotlinAction : AnAction() {
             val javaFiles = files.filter { it.virtualFile.isWritable }.ifEmpty { return emptyList() }
             var converterResult: FilesResult? = null
 
-            val question = KotlinBundle.message("action.j2k.correction.required")
-            val shouldProcessExternalFiles =
-                !askExternalCodeProcessing || Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES
-
             fun convertWithStatistics() {
                 val j2kKind = getJ2kKind(forceUsingOldJ2k)
                 val converter = J2kConverterExtension.extension(j2kKind).createJavaToKotlinConverter(project, module, settings)
@@ -95,12 +92,17 @@ class JavaToKotlinAction : AnAction() {
                 J2KFusCollector.log(ConversionType.FILES, j2kKind == K1_NEW, conversionTime, linesCount, javaFiles.size)
             }
 
+            // Perform user interaction first to avoid interrupting J2K in the middle of conversion and breaking "undo"
+            val question = KotlinBundle.message("action.j2k.correction.required")
+            val shouldProcessExternalCode = enableExternalCodeProcessing &&
+                    (!askExternalCodeProcessing ||
+                            Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES)
+
             if (!runSynchronousProcess(project, ::convertWithStatistics)) return emptyList()
 
             val result = converterResult ?: return emptyList()
             val externalCodeProcessing = result.externalCodeProcessing
-            val externalCodeUpdate =
-                prepareExternalCodeUpdate(project, externalCodeProcessing, enableExternalCodeProcessing, shouldProcessExternalFiles)
+            val externalCodeUpdate = prepareExternalCodeUpdate(project, externalCodeProcessing, shouldProcessExternalCode)
 
             lateinit var newFiles: List<KtFile>
 
@@ -141,21 +143,13 @@ class JavaToKotlinAction : AnAction() {
             return newFiles
         }
 
-        private fun prepareExternalCodeUpdate(
-            project: Project,
-            processing: ExternalCodeProcessing?,
-            isEnabled: Boolean,
-            shouldProcessExternalFiles: Boolean
-        ): (() -> Unit)? {
+        private fun prepareExternalCodeUpdate(project: Project, processing: ExternalCodeProcessing?, isEnabled: Boolean): (() -> Unit)? {
             if (!isEnabled || processing == null) return null
 
             var result: (() -> Unit)? = null
-
-            if (shouldProcessExternalFiles) {
-                runSynchronousProcess(project) {
-                    runReadAction {
-                        result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
-                    }
+            runSynchronousProcess(project) {
+                runReadAction {
+                    result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
                 }
             }
 
