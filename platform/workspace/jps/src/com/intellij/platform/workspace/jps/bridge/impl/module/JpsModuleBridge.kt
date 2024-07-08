@@ -52,7 +52,7 @@ internal class JpsModuleBridge(private val project: JpsProjectBridge,
     JpsSdkReferencesTableBridge(sdkId, this) 
   }
   private val moduleProperties by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    //todo store content of custom components from *.iml file in workspace model and use them here (it's also needed for IJPL-16008)
+    //todo store content of custom components from *.iml file in workspace model and use them here (IJPL-157852)
     getSerializer(entity.type?.name).loadProperties(null)
   }
   val javaModuleExtension: JpsJavaModuleExtensionBridge? by lazy(LazyThreadSafetyMode.PUBLICATION) {
