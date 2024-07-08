@@ -2,12 +2,11 @@
 package com.intellij.platform.testFramework.junit5Jimfs
 
 import com.google.common.jimfs.Jimfs
-import com.intellij.testFramework.junit5.impl.createTempDirectory
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.extension.AnnotatedElementContext
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.api.io.TempDirFactory
+import java.nio.file.Files
 import java.nio.file.Path
 
 /**
@@ -18,12 +17,11 @@ import java.nio.file.Path
 class JimfsTempDirFactory : TempDirFactory {
   private val fs = Jimfs.newFileSystem()
 
-  override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path = runBlocking {
-    createTempDirectory(fs.rootDirectories.first())
+  override fun createTempDirectory(elementContext: AnnotatedElementContext, extensionContext: ExtensionContext): Path {
+    return Files.createTempDirectory(fs.rootDirectories.first(), "IJTests")
   }
 
   override fun close() {
     fs.close()
   }
 }
-
