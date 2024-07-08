@@ -3,6 +3,7 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -19,6 +20,12 @@ import java.util.Collection;
 import java.util.List;
 
 public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements ImportsLayoutSettings {
+  private static final int CURRENT_VERSION = 1;
+
+  private int myVersion = CURRENT_VERSION;
+
+  private boolean myIsInitialized = false;
+
   private static final String REPEAT_ANNOTATIONS = "REPEAT_ANNOTATIONS";
   private static final String REPEAT_ANNOTATIONS_ITEM = "ANNO";
   private static final String DO_NOT_IMPORT_INNER = "DO_NOT_IMPORT_INNER";
@@ -413,6 +420,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     cloned.PACKAGES_TO_USE_IMPORT_ON_DEMAND.copyFrom(PACKAGES_TO_USE_IMPORT_ON_DEMAND);
     cloned.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
     cloned.IMPORT_LAYOUT_TABLE.copyFrom(IMPORT_LAYOUT_TABLE);
+    cloned.myVersion = myVersion;
+    cloned.myIsInitialized = myIsInitialized;
     return cloned;
   }
 
@@ -421,6 +430,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.readExternal(parentElement);
     readExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
+    myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
+    myIsInitialized = true;
   }
 
   @Override
@@ -428,6 +439,16 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.writeExternal(parentElement, parentSettings);
     writeExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     writeExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
+    writeVersion(parentElement);
+  }
+
+  private void writeVersion(@NotNull Element parentElement) {
+    Element settingsTag = parentElement.getChild(getTagName());
+    if (settingsTag == null) {
+      parentElement.addContent(new Element(getTagName()));
+      settingsTag = parentElement.getChild(getTagName());
+    }
+    CustomCodeStyleSettingsUtils.writeVersion(settingsTag, myVersion);
   }
 
   public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
@@ -455,6 +476,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  private CommonCodeStyleSettings getCommonSettings() {
+    return getContainer().getCommonSettings(JavaLanguage.INSTANCE);
+  }
+
   private void writeExternalCollection(Element parentElement,
                                        Collection<String> collection,
                                        String collectionName,
@@ -475,6 +500,19 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
 
   @Override
   protected void afterLoaded() {
+    migrateNonVersionedSettings();
+    if (myIsInitialized) {
+      if (myVersion < 1) migrateSettingsToVersion1();
+      myVersion = CURRENT_VERSION;
+    }
+  }
+
+  private void migrateSettingsToVersion1() {
+    CommonCodeStyleSettings commonCodeStyleSettings = getCommonSettings();
+    BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS = commonCodeStyleSettings.BLANK_LINES_AROUND_FIELD;
+  }
+
+  private void migrateNonVersionedSettings() {
     REPLACE_INSTANCEOF_AND_CAST |= REPLACE_CAST || REPLACE_INSTANCEOF;
     REPLACE_CAST = REPLACE_INSTANCEOF = false;
   }
