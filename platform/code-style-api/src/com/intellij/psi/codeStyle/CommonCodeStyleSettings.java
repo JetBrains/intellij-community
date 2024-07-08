@@ -258,6 +258,7 @@ public class CommonCodeStyleSettings implements CommentStyleSettings {
   public boolean BLOCK_COMMENT_ADD_SPACE = false;
 
   public boolean LINE_COMMENT_ADD_SPACE_ON_REFORMAT = false;
+  public boolean LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION = false;
 
   public boolean KEEP_LINE_BREAKS = true;
 
