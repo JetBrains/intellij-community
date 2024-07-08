@@ -42,7 +42,7 @@ object MultiLineVisitorUtils {
           if (line.startsWith(start)) {
             val match = findEndOfDocstring(pos, lines, end)
             add(pos to match)
-            pos = match + 1
+            pos = match + end.length + 1
             continue@outer
           }
           pos++
