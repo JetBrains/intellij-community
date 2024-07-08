@@ -1,14 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
+import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -38,11 +39,11 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
         }
         if (!applicable) return
 
-        sink.addPresentation(InlineInlayPosition(leftExp.endOffset, true), hasBackground = true) {
+        sink.addPresentation(InlineInlayPosition(leftExp.endOffset, true), hintColorKind = HintColorKind.Default) {
             text(leftText)
         }
         rightText?.let {
-            sink.addPresentation(InlineInlayPosition(rightExp.startOffset, true), hasBackground = true) {
+            sink.addPresentation(InlineInlayPosition(rightExp.startOffset, true), hintColorKind = HintColorKind.Default) {
                 text(it)
             }
         }
@@ -69,7 +70,7 @@ class KtValuesHintsProvider : AbstractKtInlayHintsProvider() {
                     ?: ((this as? KtNameReferenceExpression)?.mainReference?.resolveToSymbol() as? KaCallableSymbol)?.returnType
                 (type is KaClassType) && (
                         type.classId in DefaultTypeClassIds.PRIMITIVES ||
-                                type.getAllSuperTypes(true).any {
+                                type.allSupertypes(true).any {
                                     val classTypeWithClassId = it.isClassType(StandardClassIds.Comparable)
                                     classTypeWithClassId
                                 })

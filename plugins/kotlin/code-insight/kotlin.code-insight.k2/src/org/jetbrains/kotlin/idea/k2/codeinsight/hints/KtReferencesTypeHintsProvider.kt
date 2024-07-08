@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
+import com.intellij.codeInsight.hints.declarative.HintColorKind
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.openapi.util.registry.Registry
@@ -257,7 +258,7 @@ internal fun collectProvideTypeHint(element: KtCallableDeclaration, offset: Int,
                 }
             }
 
-            sink.addPresentation(InlineInlayPosition(offset, true), hasBackground = true) {
+            sink.addPresentation(InlineInlayPosition(offset, true), hintColorKind = HintColorKind.Default) {
                 text(prefix)
                 printKtType(ktType)
             }
@@ -286,7 +287,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
     calculateAllTypes<KaType>(element) { declarationType, allTypes, cannotBeNull ->
         if (declarationType is KaErrorType) return@calculateAllTypes null
 
-        if (declarationType.isUnit && multilineLocalProperty) {
+        if (declarationType.isUnitType && multilineLocalProperty) {
             return@calculateAllTypes null
         }
 
@@ -308,7 +309,7 @@ private fun renderKtTypeHint(element: KtCallableDeclaration, multilineLocalPrope
             else -> declarationType
         }
 
-        if (ktType?.isAny == false && isUnclearType(ktType, element)) {
+        if (ktType?.isAnyType == false && isUnclearType(ktType, element)) {
             ktType
         } else {
             null
@@ -350,7 +351,7 @@ internal fun collectLambdaTypeHint(lambdaExpression: KtExpression, sink: InlayTr
 
     analyze(lambdaExpression) {
         val functionCall = functionLiteral.resolveToCall()?.singleFunctionCallOrNull() ?: return
-        sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hasBackground = true) {
+        sink.addPresentation(InlineInlayPosition(lambdaExpression.endOffset, true), hintColorKind = HintColorKind.Default) {
             text(": ")
             printKtType(functionCall.symbol.returnType)
         }
