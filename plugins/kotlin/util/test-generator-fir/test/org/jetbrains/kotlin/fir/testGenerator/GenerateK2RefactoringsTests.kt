@@ -74,6 +74,7 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/inline/namedFunction/returnAtEnd", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/anonymousFunction", pattern = Patterns.KT_WITHOUT_DOTS)
             model("refactoring/inline/lambdaExpression", pattern = Patterns.KT_WITHOUT_DOTS)
+            model("refactoring/inline/inlineTypeAlias", pattern = Patterns.KT_WITHOUT_DOTS)
         }
     }
     testGroup("refactorings/kotlin.refactorings.tests.k2", category = EXTRACT_REFACTORING, testDataPath = "../../idea/tests/testData") {

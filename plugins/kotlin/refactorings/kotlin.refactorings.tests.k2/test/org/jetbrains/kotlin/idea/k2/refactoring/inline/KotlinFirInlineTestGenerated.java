@@ -2019,4 +2019,53 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
             runTest("../../idea/tests/testData/refactoring/inline/lambdaExpression/withoutInvocation2.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/inline/inlineTypeAlias")
+    public static class InlineTypeAlias extends AbstractKotlinFirInlineTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("extensionFunctionTypeToFunctionType.kt")
+        public void testExtensionFunctionTypeToFunctionType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/extensionFunctionTypeToFunctionType.kt");
+        }
+
+        @TestMetadata("functionTypeToFunctionType.kt")
+        public void testFunctionTypeToFunctionType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/functionTypeToFunctionType.kt");
+        }
+
+        @TestMetadata("functionTypeToNullableType.kt")
+        public void testFunctionTypeToNullableType() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/functionTypeToNullableType.kt");
+        }
+
+        @TestMetadata("keepImports.kt")
+        public void testKeepImports() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/keepImports.kt");
+        }
+
+        @TestMetadata("lambdaExpression.kt")
+        public void testLambdaExpression() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/lambdaExpression.kt");
+        }
+
+        @TestMetadata("replaceImports.kt")
+        public void testReplaceImports() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/replaceImports.kt");
+        }
+
+        @TestMetadata("simpleAlias.kt")
+        public void testSimpleAlias() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/inline/inlineTypeAlias/simpleAlias.kt");
+        }
+    }
 }
