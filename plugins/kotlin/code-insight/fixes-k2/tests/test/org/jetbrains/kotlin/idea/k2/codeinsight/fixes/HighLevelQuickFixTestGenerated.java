@@ -7101,6 +7101,90 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases")
+        public static class TypeAliases extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("companionObjectAliased.kt")
+            public void testCompanionObjectAliased() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/companionObjectAliased.kt");
+            }
+
+            @TestMetadata("compoundWithDeprecatedArgumentsAndConstructor.kt")
+            public void testCompoundWithDeprecatedArgumentsAndConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/compoundWithDeprecatedArgumentsAndConstructor.kt");
+            }
+
+            @TestMetadata("conflictOnTypeAndAlias.kt")
+            public void testConflictOnTypeAndAlias() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/conflictOnTypeAndAlias.kt");
+            }
+
+            @TestMetadata("constructorUsage.kt")
+            public void testConstructorUsage() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/constructorUsage.kt");
+            }
+
+            @TestMetadata("constructorUsageWithConflict.kt")
+            public void testConstructorUsageWithConflict() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/constructorUsageWithConflict.kt");
+            }
+
+            @TestMetadata("constructorUsageWithConflict1.kt")
+            public void testConstructorUsageWithConflict1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/constructorUsageWithConflict1.kt");
+            }
+
+            @TestMetadata("objectAliased.kt")
+            public void testObjectAliased() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/objectAliased.kt");
+            }
+
+            @TestMetadata("objectAliasedWithPropertyReference.kt")
+            public void testObjectAliasedWithPropertyReference() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/objectAliasedWithPropertyReference.kt");
+            }
+
+            @TestMetadata("onlyAliasDeprecated.kt")
+            public void testOnlyAliasDeprecated() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/onlyAliasDeprecated.kt");
+            }
+
+            @TestMetadata("stdlibAliased.kt")
+            public void testStdlibAliased() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/stdlibAliased.kt");
+            }
+
+            @TestMetadata("transitiveFromClass.kt")
+            public void testTransitiveFromClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/transitiveFromClass.kt");
+            }
+
+            @TestMetadata("transitiveLong.kt")
+            public void testTransitiveLong() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/transitiveLong.kt");
+            }
+
+            @TestMetadata("typeAliasWithAllGenericParams.kt")
+            public void testTypeAliasWithAllGenericParams() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/typeAliasWithAllGenericParams.kt");
+            }
+
+            @TestMetadata("withTypeArgument.kt")
+            public void testWithTypeArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeAliases/withTypeArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/typeArguments")
         public static class TypeArguments extends AbstractHighLevelQuickFixTest {
             @java.lang.Override

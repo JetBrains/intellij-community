@@ -8,7 +8,8 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -63,41 +64,40 @@ class TypeAliasUsageReplacementStrategy(val typeAlias: KtTypeAlias) : UsageRepla
                 return null
             }
 
-            val callElement = usage.parent as? KtCallElement ?: return null
             val typeAliasSymbol = typeAlias.symbol
             val typeToInline = typeAliasSymbol.expandedType
-            val typeParameters = typeAliasSymbol.typeParameters
 
-            val resolvedCall = usage.resolveToCall() ?: return null
-            val functionCall = resolvedCall.singleFunctionCallOrNull() ?: return null
-            val substitution = functionCall.typeArgumentsMapping
-            if (substitution.size != typeParameters.size) return null
-            val substitutor = createSubstitutor(substitution)
+            val callElement = usage.parent as? KtCallElement
+            val expandedTypeFqName = if (callElement != null) {
+                val callableCall = usage.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
+                val substitution = callableCall.typeArgumentsMapping
+                if (substitution.size != typeAliasSymbol.typeParameters.size) return null
+                val substitutor = createSubstitutor(substitution)
 
-            val expandedType = substitutor.substitute(typeToInline)
-            val expandedTypeFqName =
-                expandedType.expandedSymbol?.importableFqName ?: return null
+                val expandedType = substitutor.substitute(typeToInline)
 
-            val typeArguments = (expandedType as? KaClassType)?.typeArguments
-            if (typeArguments != null && typeArguments.isNotEmpty()) {
-                val expandedTypeArgumentList = KtPsiFactory(typeAlias.project).createTypeArguments(
-                    typeArguments.joinToString(
-                        prefix = "<",
-                        postfix = ">"
-                    ) { it.type?.render(position = Variance.INVARIANT) ?: "*" }
-                )
+                expandedType.expandedSymbol?.importableFqName?.also {
+                    val typeArguments = (expandedType as? KaClassType)?.typeArguments
+                    if (typeArguments != null && typeArguments.isNotEmpty()) {
+                        val expandedTypeArgumentList = KtPsiFactory(typeAlias.project).createTypeArguments(typeArguments.joinToString(
+                            prefix = "<", postfix = ">"
+                        ) { it.type?.render(position = Variance.INVARIANT) ?: "*" })
 
-                val originalTypeArgumentList = callElement.typeArgumentList
-                if (originalTypeArgumentList != null) {
-                    shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
-                } else {
-                    shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+                        val originalTypeArgumentList = callElement.typeArgumentList
+                        if (originalTypeArgumentList != null) {
+                            shortenReferences(originalTypeArgumentList.replaced(expandedTypeArgumentList))
+                        } else {
+                            shortenReferences(callElement.addAfter(expandedTypeArgumentList, callElement.calleeExpression) as KtElement)
+                        }
+                    }
                 }
-            }
+            } else {
+                typeToInline.expandedSymbol?.importableFqName
+            } ?: return null
+
 
             val newCallElement = ((usage.mainReference as KtSimpleNameReference).bindToFqName(
-                expandedTypeFqName,
-                KtSimpleNameReference.ShorteningMode.NO_SHORTENING
+                expandedTypeFqName
             ) as KtExpression).getNonStrictParentOfType<KtCallElement>()
             return newCallElement?.getQualifiedExpressionForSelector() ?: newCallElement
         }
