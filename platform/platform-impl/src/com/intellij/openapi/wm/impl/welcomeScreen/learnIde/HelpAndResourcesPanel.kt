@@ -64,7 +64,7 @@ class HelpAndResourcesPanel : JPanel() {
     val helpActions = Utils.expandActionGroup(helpActionsGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.WELCOME_SCREEN)
     helpActions.forEach {
       val presentation = presentationFactory.getPresentation(it)
-      if (it is HelpActionBase && !it.isAvailable) {
+      if (!presentation.isEnabledAndVisible) {
         return@forEach
       }
       if (setOf<String>(HelpTopicsAction::class.java.simpleName, OnlineDocAction::class.java.simpleName,
