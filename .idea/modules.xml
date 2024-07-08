@@ -209,6 +209,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/profilers-ui/intellij.android.profilers.ui.iml" filepath="$PROJECT_DIR$/android/profilers-ui/intellij.android.profilers.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/profilers-android/intellij.android.profilersAndroid.iml" filepath="$PROJECT_DIR$/android/profilers-android/intellij.android.profilersAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/profilers-android/gradle/intellij.android.profilersAndroid.gradle.iml" filepath="$PROJECT_DIR$/android/profilers-android/gradle/intellij.android.profilersAndroid.gradle.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/intellij.android.projectStructureTests/intellij.android.projectStructureTests.iml" filepath="$PROJECT_DIR$/android/intellij.android.projectStructureTests/intellij.android.projectStructureTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/project-system/intellij.android.projectSystem.iml" filepath="$PROJECT_DIR$/android/project-system/intellij.android.projectSystem.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/project-system-apk/intellij.android.projectSystem.apk.iml" filepath="$PROJECT_DIR$/android/project-system-apk/intellij.android.projectSystem.apk.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/project-system-gradle/intellij.android.projectSystem.gradle.iml" filepath="$PROJECT_DIR$/android/project-system-gradle/intellij.android.projectSystem.gradle.iml" />
