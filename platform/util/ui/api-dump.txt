@@ -414,7 +414,6 @@ f:com.intellij.icons.AllIcons$FileTypes
 - sf:AS:javax.swing.Icon
 - sf:ActionScript:javax.swing.Icon
 - sf:AddAny:javax.swing.Icon
-- sf:AngularJS:javax.swing.Icon
 - sf:Any_type:javax.swing.Icon
 - sf:Archive:javax.swing.Icon
 - sf:Aspectj:javax.swing.Icon
