@@ -275,21 +275,6 @@
   <item name="java.io.File File(java.net.URI) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.io.File boolean canExecute()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File boolean canRead()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File boolean canWrite()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
   <item name='java.io.File boolean createNewFile()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="mutates" val="&quot;io&quot;"/>
@@ -300,29 +285,9 @@
       <val name="mutates" val="&quot;io&quot;"/>
     </annotation>
   </item>
-  <item name='java.io.File boolean exists()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
   <item name='java.io.File boolean isAbsolute()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
-    </annotation>
-  </item>
-  <item name='java.io.File boolean isDirectory()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File boolean isFile()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File boolean isHidden()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
     </annotation>
   </item>
   <item name='java.io.File boolean mkdir()'>
@@ -424,9 +389,6 @@
   </item>
   <item name="java.io.File java.io.File[] listFiles()">
     <annotation name="org.jetbrains.annotations.Nullable" />
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
   </item>
   <item name='java.io.File java.io.File[] listFiles(java.io.FileFilter)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -439,11 +401,6 @@
   </item>
   <item name='java.io.File java.io.File[] listFiles(java.io.FilenameFilter) 0'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
-  </item>
-  <item name='java.io.File java.io.File[] listRoots()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
   </item>
   <item name="java.io.File java.lang.String getAbsolutePath()">
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -473,9 +430,6 @@
   </item>
   <item name='java.io.File java.lang.String[] list()'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
   </item>
   <item name='java.io.File java.lang.String[] list(java.io.FilenameFilter)'>
     <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -492,33 +446,10 @@
     </annotation>
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.io.File long getFreeSpace()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File long getTotalSpace()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File long getUsableSpace()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
-  <item name='java.io.File long lastModified()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
-  </item>
   <item name='java.io.File long length()'>
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Long.MAX_VALUE"/>
-    </annotation>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
     </annotation>
   </item>
   <item name='java.io.File void deleteOnExit()'>
@@ -644,11 +575,6 @@
       <val name="mutates" val="&quot;this,io&quot;"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
-  <item name='java.io.InputStream int available()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;io&quot;"/>
-    </annotation>
   </item>
   <item name="java.io.InputStream int read()">
     <annotation name='org.jetbrains.annotations.Range'>
@@ -1113,11 +1039,6 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-  <item name='java.io.Reader boolean ready()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;this,io&quot;"/>
-    </annotation>
-  </item>
   <item name="java.io.Reader int read()">
     <annotation name='org.jetbrains.annotations.Range'>
       <val name="from" val="-1"/>
@@ -1186,11 +1107,6 @@
   </item>
   <item name="java.io.StringReader StringReader(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
-  <item name='java.io.StringReader boolean ready()'>
-    <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;this&quot;"/>
-    </annotation>
   </item>
   <item name='java.io.StringReader int read()'>
     <annotation name='org.jetbrains.annotations.Contract'>
