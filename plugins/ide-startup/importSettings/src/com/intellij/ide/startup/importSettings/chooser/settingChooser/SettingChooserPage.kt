@@ -1,14 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
-import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
-import com.intellij.ide.startup.importSettings.chooser.ui.ScrollSnapToFocused
-import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
+import com.intellij.ide.startup.importSettings.chooser.ui.*
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
+import com.intellij.ide.startup.importSettings.transfer.SettingTransferProductService
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
@@ -31,7 +29,7 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
                                   controller: ImportSettingsController) : OnboardingPage {
   companion object {
     fun createPage(provider: ActionsDataProvider<*>,
-                   product: SettingsContributor,
+                   product: Product,
                    controller: ImportSettingsController): OnboardingPage {
       if (provider is SyncActionsDataProvider && provider.productService.baseProduct(product.id)) {
         return SyncSettingChooserPage(provider, product, controller)
@@ -133,19 +131,34 @@ abstract class SettingChooserPage(private val provider: ActionsDataProvider<*>,
     }
 }
 
-class ConfigurableSettingChooserPage<T : BaseService>(val provider: ActionsDataProvider<T>,
-                                                      product: SettingsContributor,
-                                                      controller: ImportSettingsController) : SettingChooserPage(provider, product,
-                                                                                                                 controller) {
+class ConfigurableSettingChooserPage<T : BaseService>(
+  val provider: ActionsDataProvider<T>,
+  product: Product,
+  controller: ImportSettingsController
+) : SettingChooserPage(provider, product,
+                       controller) {
 
   override val stage = StartupWizardStage.SettingsToImportPage
 
-  private val importButton = controller.createDefaultButton(ImportSettingsBundle.message("import.settings.ok")) {
+  private val importButton = controller.createDefaultButton(
+    if (controller.canShowFeaturedPluginsPage(product.origin)) {
+      ImportSettingsBundle.message("import.next")
+    }
+    else {
+      ImportSettingsBundle.message("import.settings.ok")
+    }
+  ) {
     val productService = provider.productService
     val dataForSaves = prepareDataForSave()
-    val importSettings = productService.importSettings(product.id, dataForSaves)
     ImportSettingsEventsCollector.configurePageImportSettingsClicked()
-    controller.goToImportPage(importSettings)
+    if (controller.canShowFeaturedPluginsPage(product.origin)
+        && productService is SettingTransferProductService
+        && controller.shouldShowFeaturedPluginsPage(product.id, dataForSaves, productService)) {
+      controller.goToFeaturedPluginsPage(provider, productService, product, dataForSaves)
+    } else {
+      val importSettings = productService.importSettings(product.id, dataForSaves)
+      controller.goToProgressPage(importSettings)
+    }
   }
 
   override val buttons: List<JButton>
@@ -191,10 +204,10 @@ class SyncSettingChooserPage(val provider: SyncActionsDataProvider,
 
   private val importOnceButton = controller.createButton(ImportSettingsBundle.message("import.settings.sync.import.once")) {
     val syncSettings = provider.productService.importSyncSettings()
-    controller.goToImportPage(syncSettings)
+    controller.goToProgressPage(syncSettings)
   }
   private val syncButton = controller.createDefaultButton(ImportSettingsBundle.message("import.settings.sync.ok")) {
-    controller.goToImportPage(provider.productService.syncSettings())
+    controller.goToProgressPage(provider.productService.syncSettings())
   }
 
   override val buttons: List<JButton>

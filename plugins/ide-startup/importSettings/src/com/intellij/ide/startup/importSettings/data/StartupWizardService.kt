@@ -91,6 +91,7 @@ interface PluginService {
   fun onStepEnter()
   fun install(lifetime: Lifetime, ids: List<String>): PluginImportProgress
   fun skipPlugins()
+  fun shouldShowPage(pluginIdsMarkedForInstallation: List<String>): Boolean
 }
 
 interface PluginImportProgress : ImportProgress {

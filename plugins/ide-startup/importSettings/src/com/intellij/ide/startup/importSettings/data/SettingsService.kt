@@ -5,6 +5,7 @@ import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.TransferableIdeId
+import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.ide.startup.importSettings.jb.IDEData
 import com.intellij.ide.startup.importSettings.jb.JbImportServiceImpl
 import com.intellij.ide.startup.importSettings.sync.SyncServiceImpl
@@ -228,6 +229,7 @@ enum class IconProductSize(val int: Int) {
 interface Product : SettingsContributor {
   val version: String?
   val lastUsage: LocalDate
+  val origin: SettingsImportOrigin
 }
 
 interface Config : SettingsContributor {

@@ -11,7 +11,11 @@ import com.jetbrains.rd.util.lifetime.SequentialLifetimes
 
 interface WizardController : BaseController {
   companion object {
-    fun createController(dialog: OnboardingDialog, service: StartupWizardService, goBackAction: (() -> Unit)?): WizardController {
+    fun createController(
+      dialog: OnboardingDialog,
+      service: StartupWizardService,
+      goBackAction: (() -> Unit)?
+    ): WizardController {
       return WizardControllerImpl(dialog, service, goBackAction)
     }
   }
@@ -25,6 +29,7 @@ interface WizardController : BaseController {
   fun goToPluginPage()
   fun goToInstallPluginPage(ids: List<String>)
   fun skipPlugins()
+  fun goToPostImportPage()
 
   fun cancelPluginInstallation()
 }
@@ -59,7 +64,11 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   }
 
   override fun goToPluginPage() {
-    val page = WizardPluginsPage(this)
+    val page = WizardPluginsPage(this, service.getPluginService(), goBackAction = {
+      goToKeymapPage(isForwardDirection = false)
+    }, goForwardAction = { ids ->
+      goToInstallPluginPage(ids)
+    })
     dialog.changePage(page)
     page.onEnter()
   }
@@ -79,6 +88,10 @@ class WizardControllerImpl(dialog: OnboardingDialog,
   override fun skipPlugins() {
     service.getPluginService().skipPlugins()
     dialog.dialogClose()
+  }
+
+  override fun goToPostImportPage() {
+    goToPluginPage()
   }
 
   override fun cancelPluginInstallation() {

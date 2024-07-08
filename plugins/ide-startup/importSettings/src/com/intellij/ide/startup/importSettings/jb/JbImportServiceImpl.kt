@@ -6,6 +6,7 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.*
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
+import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.startup.importSettings.transfer.TransferSettingsProgress
@@ -52,6 +53,7 @@ internal data class JbProductInfo(
   val configDir: Path,
   val pluginDir: Path,
 ) : Product {
+  override val origin = SettingsImportOrigin.JetBrainsProduct
   private val descriptorsMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
   private val descriptors2ProcessCnt = AtomicInteger()
   private var keymapRef: AtomicReference<String> = AtomicReference()
