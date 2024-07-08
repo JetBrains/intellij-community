@@ -44,6 +44,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.VirtualFileWithoutContent
 import com.intellij.openapi.wm.FocusWatcher
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
@@ -1019,13 +1020,16 @@ private fun computeFileEntry(
   val notFullyPreparedFile = resolveFileOrLogError(fileEntry, virtualFileManager) ?: return null
 
   // do not expose `file` variable to avoid using it instead of `fileProvider`
-  val fileProvider = compositeCoroutineScope.async {
+  val fileProviderDeferred = compositeCoroutineScope.async(start = if (fileEntry.currentInTab) CoroutineStart.DEFAULT else CoroutineStart.LAZY) {
     // https://youtrack.jetbrains.com/issue/IJPL-157845/Incorrect-encoding-of-file-during-project-opening
-    if (!notFullyPreparedFile.isCharsetSet) {
+    if (notFullyPreparedFile !is VirtualFileWithoutContent && !notFullyPreparedFile.isCharsetSet) {
       blockingContext {
         ProjectLocator.withPreferredProject(notFullyPreparedFile, fileEditorManager.project).use {
           try {
             notFullyPreparedFile.contentsToByteArray(true)
+          }
+          catch (e: CancellationException) {
+            throw e
           }
           catch (ignore: FileTooBigException) {
           }
@@ -1035,19 +1039,21 @@ private fun computeFileEntry(
     notFullyPreparedFile
   }
 
+  val fileProvider = suspend { fileProviderDeferred.await() }
+
   val model = fileEditorManager.createEditorCompositeModelOnStartup(
     compositeCoroutineScope = compositeCoroutineScope,
-    fileProvider = { fileProvider.await() },
+    fileProvider = fileProvider,
     fileEntry = fileEntry,
     isLazy = !fileEntry.currentInTab && isLazyComposite,
   )
 
   val tabTitleTask = compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
-    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider.await())
+    EditorTabPresentationUtil.getEditorTabTitleAsync(fileEditorManager.project, fileProvider())
   }
   val tabIconTask = if (UISettings.getInstance().showFileIconInTabs) {
     compositeCoroutineScope.async(start = CoroutineStart.LAZY) {
-      val file = fileProvider.await()
+      val file = fileProvider()
       readAction {
         computeFileIconImpl(file = file, flags = Iconable.ICON_FLAG_READ_STATUS, project = fileEditorManager.project)
       }
@@ -1059,7 +1065,7 @@ private fun computeFileEntry(
 
   val tabFileColorTask = compositeCoroutineScope.async {
     val fileStatusManager = fileEditorManager.project.serviceAsync<FileStatusManager>()
-    val file = fileProvider.await()
+    val file = fileProvider()
     readAction {
       (fileStatusManager.getStatus(file).color ?: UIUtil.getLabelForeground()) to
         getForegroundColorForFile(fileEditorManager.project, file)
