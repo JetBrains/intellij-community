@@ -16,7 +16,8 @@ fun m1(callable: KCallable<*>) {
 }
 
 fun m() {
-    m1(ExampleClass::class.members
-        .first()
-        .apply { isAccessible = true })
+    m1(
+        ExampleClass::class.members
+            .first()
+            .apply { isAccessible = true })
 }

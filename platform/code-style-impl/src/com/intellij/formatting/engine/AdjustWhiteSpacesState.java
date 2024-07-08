@@ -70,12 +70,24 @@ public final class AdjustWhiteSpacesState extends State {
     }
 
     if (myAlignAgain.isEmpty()) {
+      postProcessDependantWhitespaces();
       setDone(true);
     }
     else {
       myAlignAgain.clear();
       myDependentSpacingEngine.clear();
       myCurrentBlock = myFirstBlock;
+      myDependentSpacingEngine.incrementIteration();
+    }
+  }
+
+  private void postProcessDependantWhitespaces() {
+    for (LeafBlockWrapper block : myDependentSpacingEngine.getLeafBlocksToReformat()) {
+      WhiteSpace whiteSpace = block.getWhiteSpace();
+      SpacingImpl spaceProperty = block.getSpaceProperty();
+      updateSpacing(spaceProperty, whiteSpace);
+
+      myIndentAdjuster.adjustIndent(block);
     }
   }
 
@@ -140,11 +152,7 @@ public final class AdjustWhiteSpacesState extends State {
       }
     }
 
-    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockRangesMap);
-
-    if (!whiteSpace.containsLineFeeds()) {
-      whiteSpace.arrangeSpaces(spaceProperty);
-    }
+    updateSpacing(spaceProperty, whiteSpace);
 
     try {
       LeafBlockWrapper newBlock = myWrapProcessor.processWrap(myCurrentBlock);
@@ -175,7 +183,7 @@ public final class AdjustWhiteSpacesState extends State {
 
     final List<TextRange> ranges = getDependentRegionRangesAfterCurrentWhiteSpace(spaceProperty, whiteSpace);
     if (!ranges.isEmpty()) {
-      myDependentSpacingEngine.registerUnresolvedDependentSpacingRanges(spaceProperty, ranges);
+      myDependentSpacingEngine.registerUnresolvedDependentSpacingRanges(myCurrentBlock, ranges);
     }
 
     if (!whiteSpace.isIsReadOnly() && myDependentSpacingEngine.shouldReformatPreviouslyLocatedDependentSpacing(whiteSpace)) {
@@ -186,5 +194,13 @@ public final class AdjustWhiteSpacesState extends State {
     }
 
     myCurrentBlock = myCurrentBlock.getNextBlock();
+  }
+
+  private void updateSpacing(SpacingImpl spaceProperty, WhiteSpace whiteSpace) {
+    whiteSpace.arrangeLineFeeds(spaceProperty, myBlockRangesMap);
+
+    if (!whiteSpace.containsLineFeeds()) {
+      whiteSpace.arrangeSpaces(spaceProperty);
+    }
   }
 }

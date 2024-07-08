@@ -2,6 +2,7 @@
 
 package com.intellij.formatting;
 
+import com.intellij.formatting.engine.AdjustWhiteSpacesState;
 import com.intellij.formatting.engine.BlockRangesMap;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,8 +19,16 @@ import java.util.List;
  */
 @ApiStatus.Internal
 public class DependantSpacingImpl extends SpacingImpl {
-  private static final int DEPENDENCE_CONTAINS_LF_MASK      = 0x10;
-  private static final int DEPENDENT_REGION_LF_CHANGED_MASK = 0x20;
+  private static final int DEPENDENCE_CONTAINS_LF_MASK = 0x10;
+  /**
+   * {@link AdjustWhiteSpacesState} can traverse tree of {@link LeafBlockWrapper} multiple times, because of dependent spacings.
+   * This field represents the index of last iteration
+   * when there were changes in {@link #myFlags 'DEPENDENCE_CONTAINS_LF_MASK'}.
+   * During the first iteration, it is allowed both to remove and add line feeds.
+   * During the next iterations, it is allowed only to add line feeds.
+   * @see com.intellij.formatting.engine.DependentSpacingEngine#shouldReformatPreviouslyLocatedDependentSpacing
+   */
+  private int myLastLFChangedIteration = 0;
 
   private final @NotNull List<TextRange> myDependentRegionRanges;
   private final @NotNull DependentSpacingRule myRule;
@@ -76,11 +85,25 @@ public class DependantSpacingImpl extends SpacingImpl {
     return 0;
   }
 
+  /**
+   * Checks if the dependent spacing has been changed at least once.
+   * @return true if the dependent spacing has been changed at least once, false otherwise
+   */
+  public boolean isDependantSpacingChangedAtLeastOnce() {
+    return myLastLFChangedIteration > 0;
+  }
+
+  /**
+   *
+   * Refreshes line feed status of {@link DependantSpacingImpl}.
+   * Refreshment happens only during the first iteration through all blocks
+   * @param helper - map of ranges dependent regions
+   * @see DependantSpacingImpl#setDependentRegionLinefeedStatusChanged(int)
+   * @see DependantSpacingImpl#isDependantSpacingChangedAtLeastOnce()
+   */
   @Override
   public void refresh(BlockRangesMap helper) {
-    if (isDependentRegionLinefeedStatusChanged()) {
-      return;
-    }
+    if (isDependantSpacingChangedAtLeastOnce()) return;
 
     boolean atLeastOneDependencyRangeContainsLf = false;
     for (TextRange dependency : myDependentRegionRanges) {
@@ -96,20 +119,35 @@ public class DependantSpacingImpl extends SpacingImpl {
   }
 
   /**
+   * @deprecated use {@link DependantSpacingImpl#isDependentRegionLinefeedStatusChanged(int)} instead
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
+  public final boolean isDependentRegionLinefeedStatusChanged() {
+    return isDependantSpacingChangedAtLeastOnce();
+  }
+
+  /**
    * Allows to answer whether 'contains line feed' status has been changed for the target dependent region during formatting.
    *
    * @return    {@code true} if target 'contains line feed' status has been changed for the target dependent region during formatting;
    *            {@code false} otherwise
    */
-  public final boolean isDependentRegionLinefeedStatusChanged() {
-    return (myFlags & DEPENDENT_REGION_LF_CHANGED_MASK) != 0;
+  public final boolean isDependentRegionLinefeedStatusChanged(int currentIteration) {
+    return currentIteration == myLastLFChangedIteration;
   }
 
   /**
-   * Allows to set {@link #isDependentRegionLinefeedStatusChanged() 'dependent region changed'} property.
+   * Updates (flips) the line feed status based on a dependent region.
+   * This method is used
+   * in {@link com.intellij.formatting.engine.DependentSpacingEngine#shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace) DependentSpacingEngine#shouldReformatPreviouslyLocatedDependentSpacing(WhiteSpace)}
+   * Update might happen only once per iteration over all {@link LeafBlockWrapper}
+   * @param currentIteration number of block iteration
+   * @see AdjustWhiteSpacesState
+   * @see com.intellij.formatting.engine.DependentSpacingEngine DependentSpacingEngine
    */
-  public final void setDependentRegionLinefeedStatusChanged() {
-    myFlags |= DEPENDENT_REGION_LF_CHANGED_MASK;
+  public final void setDependentRegionLinefeedStatusChanged(int currentIteration) {
+    myLastLFChangedIteration = currentIteration;
     if (getMinLineFeeds() <= 0) myFlags |= DEPENDENCE_CONTAINS_LF_MASK;
     else myFlags &=~DEPENDENCE_CONTAINS_LF_MASK;
   }
