@@ -11,6 +11,7 @@ import com.intellij.codeInsight.intention.IntentionActionWithOptions
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -61,9 +62,12 @@ class KotlinDiagnosticHighlightVisitor : HighlightVisitor {
 
     private fun analyzeFile(file: KtFile): MutableMap<TextRange, MutableList<HighlightInfo.Builder>> {
         analyze(file) {
+            //remove filtering when KTIJ-29195 is fixed
+            val isIJProject = IntelliJProjectUtil.isIntelliJPlatformProject(file.project)
             val analysis = file.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
             val diagnostics = analysis
                 .filterOutCodeFragmentVisibilityErrors(file)
+                .filterNot { isIJProject && it.diagnosticClass == KaFirDiagnostic.ContextReceiversDeprecated::class }
                 .flatMap { diagnostic -> diagnostic.textRanges.map { range -> Pair(range, diagnostic) } }
                 .groupByTo(HashMap(), { it.first }, { convertToBuilder(file, it.first, it.second) })
 
