@@ -29,9 +29,6 @@ object JvmSmartStepIntoErrorReporter {
     if (ApplicationManager.getApplication().isInternal && session != null) {
       reportInternal(expression, session, position, message)
     }
-    else {
-      thisLogger().error("Failed to locate targets in bytecode, switch to regular step into: $message")
-    }
   }
 
   private fun reportInternal(
