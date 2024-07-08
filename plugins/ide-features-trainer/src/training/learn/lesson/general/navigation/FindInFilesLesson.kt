@@ -10,7 +10,10 @@ import com.intellij.find.impl.FindPopupItem
 import com.intellij.find.impl.FindPopupPanel
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.UIUtil
 import org.assertj.swing.core.MouseClickInfo
 import org.assertj.swing.data.TableCell
@@ -110,7 +113,15 @@ open class FindInFilesLesson(override val sampleFilePath: String,
 
     task {
       text(LessonsBundle.message("find.in.files.go.to.file", LessonUtil.rawEnter()))
-      stateCheck { virtualFile.name != sampleFilePath.substringAfterLast('/') }
+      addFutureStep {
+        project.messageBus.connect(taskDisposable).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+          override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
+            if (file.name != sampleFilePath.substringAfterLast('/')) {
+              completeStep()
+            }
+          }
+        })
+      }
       restoreState(delayMillis = defaultRestoreDelay) {
         !isSelectedNeededItem(neededText)
       }
