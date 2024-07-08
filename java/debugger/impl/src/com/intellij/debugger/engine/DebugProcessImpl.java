@@ -58,7 +58,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
-import com.intellij.platform.util.coroutines.CoroutineScopeKt;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -94,7 +93,6 @@ import com.sun.jdi.connect.*;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
-import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
@@ -168,13 +166,9 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private SingleAlarm myOtherThreadsAlarm = null;
   private int myOtherThreadsReachBreakpointNumber = 0;
 
-  private final CoroutineScope myCoroutineScope;
-
   protected DebugProcessImpl(Project project) {
     myProject = project;
-    CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(project)).getCoroutineScope();
-    myCoroutineScope = CoroutineScopeKt.childScope(projectScope, "DebugProcessImpl", EmptyCoroutineContext.INSTANCE, true);
-    myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myCoroutineScope);
+    myDebuggerManagerThread = createManagerThread();
     myRequestManager = new RequestManagerImpl(this);
     NodeRendererSettings.getInstance().addListener(this::reloadRenderers, myDisposable);
     NodeRenderer.EP_NAME.addChangeListener(this::reloadRenderers, myDisposable);
@@ -203,6 +197,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         DebuggerStatistics.logProcessStatistics(process);
       }
     });
+  }
+
+  private DebuggerManagerThreadImpl createManagerThread() {
+    CoroutineScope projectScope = ((XDebuggerManagerImpl)XDebuggerManager.getInstance(myProject)).getCoroutineScope();
+    return new DebuggerManagerThreadImpl(myDisposable, projectScope);
   }
 
   private void reloadRenderers() {
@@ -1012,7 +1011,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   private void onRootProcessClosed() {
-    kotlinx.coroutines.CoroutineScopeKt.cancel(myCoroutineScope, null);
+    getManagerThread().cancelScope();
     myWaitFor.up();
   }
 
@@ -2328,7 +2327,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       if (keepCurrentVM) {
         detachProcess(false, true, vmData -> {
           myStashedVirtualMachines.addFirst(vmData);
-          myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myCoroutineScope);
+          myDebuggerManagerThread = createManagerThread();
         });
       }
       else {
