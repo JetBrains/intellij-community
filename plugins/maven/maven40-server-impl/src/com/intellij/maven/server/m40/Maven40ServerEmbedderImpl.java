@@ -51,18 +51,14 @@ import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.util.ExceptionUtils;
 import org.codehaus.plexus.util.StringUtils;
-import org.eclipse.aether.DefaultSessionData;
 import org.eclipse.aether.RepositorySystem;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.impl.RemoteRepositoryManager;
-import org.eclipse.aether.repository.LocalRepository;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.resolution.ArtifactRequest;
 import org.eclipse.aether.resolution.ArtifactResult;
 import org.eclipse.aether.transfer.ArtifactTransferException;
-import org.eclipse.aether.util.graph.manager.DependencyManagerUtils;
-import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.PreorderNodeListGenerator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -589,13 +585,9 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
     DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
 
-    try (RepositorySystemSession.CloseableSession repositorySystemSession = repositorySystem.createSessionBuilder()
-      .setWorkspaceReader(new Maven40WorkspaceMapReader(workspaceMap))
-      .setTransferListener(new Maven40TransferListenerAdapter(indicator))
-      .setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true)
-      .setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true)
-      .withLocalRepositories(new LocalRepository(request.getLocalRepositoryPath().toPath()))
-      .build()) {
+    IdeaMavenSessionBuilderSupplier sessionBuilderSupplier =
+      new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request.getLocalRepositoryPath().toPath());
+    try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionBuilderSupplier.get().build()) {
       MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
       InternalSession session = factory.newSession(mavenSession);
       mavenSession.setSession(session);

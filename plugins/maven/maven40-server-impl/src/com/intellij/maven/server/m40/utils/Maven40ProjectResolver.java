@@ -2,6 +2,7 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
+import com.intellij.maven.server.m40.hacks.DependencyNodeWithoutRecursion;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -21,6 +22,8 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
+import org.eclipse.aether.util.filter.AndDependencyFilter;
+import org.eclipse.aether.util.filter.ScopeDependencyFilter;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.LongRunningTask;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
+import org.jetbrains.idea.maven.server.MavenServerGlobals;
 import org.jetbrains.idea.maven.server.PomHashMap;
 
 import java.io.File;
@@ -230,16 +234,24 @@ public class Maven40ProjectResolver {
       resolutionResult = dependencyResolver.resolve(resolution);
     }
     catch (DependencyResolutionException e) {
+      MavenServerGlobals.getLogger().warn(e);
       resolutionResult = e.getResult();
     }
 
     Set<Artifact> artifacts = new LinkedHashSet<>();
     if (resolutionResult.getDependencyGraph() != null) {
-      RepositoryUtils.toArtifacts(
-        artifacts,
-        resolutionResult.getDependencyGraph().getChildren(),
-        null == project.getArtifact() ? Collections.emptyList() : Collections.singletonList(project.getArtifact().getId()),
-        null);
+      MavenServerGlobals.getLogger().warn(new RuntimeException("!!!!!RESOLVE in project " + project.getArtifactId()));
+      try {
+        RepositoryUtils.toArtifacts(
+          artifacts,
+          resolutionResult.getDependencyGraph().getChildren(),
+          null == project.getArtifact() ? Collections.emptyList() : Collections.singletonList(project.getArtifact().getId()),
+          null);
+      }
+      catch (Exception e) {
+
+      }
+
 
       // Maven 2.x quirk: an artifact always points at the local repo, regardless whether resolved or not
       LocalRepositoryManager lrm = session.getLocalRepositoryManager();
@@ -339,10 +351,6 @@ public class Maven40ProjectResolver {
     Set<Artifact> artifacts = new LinkedHashSet<>();
     Set<Dependency> addedDependencies = Collections.newSetFromMap(new IdentityHashMap<>());
     resolveConflicts(dependencyResolutionResult, winnerDependencyMap);
-
-    if (dependencyResolutionResult.getDependencyGraph() != null) {
-      dependencyResolutionResult.getDependencyGraph().getChildren();
-    }
 
     for (Dependency dependency : dependencyResolutionResult.getDependencies()) {
       Artifact artifact = dependency == null ? null : winnerDependencyMap.get(dependency);
