@@ -47,11 +47,10 @@ interface SearchEverywhereConcurrentPsiElementsFetcher : SearchEverywhereConcurr
                                          knownItems: MutableList<FoundItemDescriptor<PsiItemWithSimilarity<*>>>,
                                          durationMs: Long): () -> FoundItemDescriptor<Any>? {
     val element = descriptor.item.value
-    val foundElement = if (element is PsiElement) attachPsiPresentation(element, psiElementsRenderer) else element
-    val newItem = PsiItemWithSimilarity(foundElement, descriptor.item.similarityScore)
+    val newItem = PsiItemWithSimilarity(element, descriptor.item.similarityScore)
 
     return {
-      val equal = knownItems.firstOrNull { checkItemsEqual(it.item.value, foundElement) }
+      val equal = knownItems.firstOrNull { checkItemsEqual(it.item.value, element) }
       if (equal != null) {
         mergeOrSkipItem(newItem, equal, durationMs)
       }
