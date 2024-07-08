@@ -45,7 +45,7 @@ import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
  * Find all conflicts when moving elements for a multi file move.
  */
 internal fun findAllMoveConflicts(
-    filesToMove: Set<KtFile>,
+    filesToMove: Iterable<KtFile>,
     targetPkg: FqName,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
@@ -62,7 +62,7 @@ internal fun findAllMoveConflicts(
  * Find all conflicts when moving elements for a multi file move.
  */
 internal fun findAllMoveConflicts(
-    filesToMove: Set<KtFile>,
+    filesToMove: Iterable<KtFile>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
     usages: List<MoveRenameUsageInfo>
@@ -84,8 +84,8 @@ internal fun findAllMoveConflicts(
  * @param allDeclarationsToMove all declarations that will be moved.
  */
 internal fun findAllMoveConflicts(
-    declarationsToCheck: Set<KtNamedDeclaration>,
-    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    declarationsToCheck: Iterable<KtNamedDeclaration>,
+    allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
     targetFileName: String,
@@ -105,7 +105,7 @@ internal fun findAllMoveConflicts(
  * This non-physical file can be used to analyze for conflicts without modifying the file on the disk.
  */
 fun createCopyTarget(
-    declarationsToMove: Set<KtNamedDeclaration>,
+    declarationsToMove: Iterable<KtNamedDeclaration>,
     targetDir: PsiDirectory,
     targetPkg: FqName,
     targetFileName: String
@@ -142,11 +142,11 @@ fun createCopyTarget(
 }
 
 
-private fun PsiElement?.willBeMoved(declarationsToMove: Set<KtNamedDeclaration>): Boolean {
+private fun PsiElement?.willBeMoved(declarationsToMove: Iterable<KtNamedDeclaration>): Boolean {
     return this != null && declarationsToMove.any { it.isAncestor(this, false) }
 }
 
-private fun MoveRenameUsageInfo.willNotBeMoved(declarationsToMove: Set<KtNamedDeclaration>): Boolean {
+private fun MoveRenameUsageInfo.willNotBeMoved(declarationsToMove: Iterable<KtNamedDeclaration>): Boolean {
     return this !is K2MoveRenameUsageInfo || !element.willBeMoved(declarationsToMove)
 }
 
@@ -232,7 +232,7 @@ private fun tryFindConflict(findConflict: () -> Pair<PsiElement, String>?): Pair
  * Check whether the moved external usages are still visible towards their non-physical declaration.
  */
 private fun checkVisibilityConflictForNonMovedUsages(
-    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
@@ -278,7 +278,7 @@ fun KtNamedDeclaration.isMemberThatCanBeSkipped(): Boolean {
  * Check whether the moved internal usages are still visible towards their physical declaration.
  */
 fun checkVisibilityConflictsForInternalUsages(
-    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {
     return fakeTarget
@@ -328,7 +328,7 @@ private fun containingCopyDecl(
 }
 
 private fun checkModuleDependencyConflictsForNonMovedUsages(
-    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     oldToNewMap: Map<KtNamedDeclaration, KtNamedDeclaration>,
     usages: List<MoveRenameUsageInfo>
 ): MultiMap<PsiElement, String> {
@@ -349,7 +349,7 @@ private fun checkModuleDependencyConflictsForNonMovedUsages(
 }
 
 fun checkModuleDependencyConflictsForInternalUsages(
-    allDeclarationsToMove: Set<KtNamedDeclaration>,
+    allDeclarationsToMove: Iterable<KtNamedDeclaration>,
     fakeTarget: KtFile
 ): MultiMap<PsiElement, String> {
     return fakeTarget
