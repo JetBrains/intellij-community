@@ -107,7 +107,7 @@ class LanguageAndRegionUi {
       }
 
       panel.row(IdeBundle.message("combobox.region")) {
-        val helpUrl = HelpManagerImpl.getHelpUrl(HELP_ID)
+        val helpUrl = HelpManagerImpl.getHelpUrl("region-settings")
 
         val model = CollectionComboBoxModel(Region.entries.sortedBy { it.displayOrdinal }, RegionSettings.getRegion())
         val regionBox = comboBox(model).accessibleName(IdeBundle.message("combobox.region")).widthGroup(comboGroup)
@@ -149,10 +149,8 @@ class LanguageAndRegionUi {
 
 }
 
-private const val HELP_ID = "language-region-settings"
-
 internal class LanguageAndRegionConfigurable :
-  BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), HELP_ID, "preferences.language.and.region") {
+  BoundSearchableConfigurable(IdeBundle.message("title.language.and.region"), "language-region-settings", "preferences.language.and.region") {
   private lateinit var initSelectionLanguage: Locale
   private lateinit var initSelectionRegion: Region
 
