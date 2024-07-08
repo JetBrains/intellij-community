@@ -73,62 +73,72 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
 
   private void queueSession(RefreshSessionImpl session, ModalityState modality) {
     if (LOG.isDebugEnabled()) LOG.debug("Queue session with id=" + session.hashCode());
-    var queuedAt = System.nanoTime();
-    myQueue.schedule(() -> {
-      var timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
-      startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
-      var events = new AtomicReference<Collection<VFileEvent>>();
-      try {
-        var title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
-        HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> events.set(runRefreshSession(session, timeInQueue)));
-      }
-      finally {
-        stopIndicator();
-        if (Registry.is("vfs.async.event.processing", true) && !events.get().isEmpty()) {
-          var evQueuedAt = System.nanoTime();
-          var evTimeInQueue = new AtomicLong(-1);
-          var evListenerTime = new AtomicLong(-1);
-          var evRetries = new AtomicLong(0);
-          startIndicator(IdeCoreBundle.message("async.events.progress"));
-          ReadAction
-            .nonBlocking(() -> {
-              if (LOG.isDebugEnabled()) LOG.debug("Start non-blocking action for session with id=" + session.hashCode());
-              evTimeInQueue.compareAndSet(-1, NANOSECONDS.toMillis(System.nanoTime() - evQueuedAt));
-              evRetries.incrementAndGet();
-              var t = System.nanoTime();
-              try {
-                var result = runAsyncListeners(events.get());
-                if (LOG.isDebugEnabled()) LOG.debug("Successful finish of non-blocking read action for session with id=" + session.hashCode());
-                return result;
-              }
-              finally {
-                if (LOG.isDebugEnabled()) LOG.debug("Final block of non-blocking read action for  session with id=" + session.hashCode());
-                evListenerTime.addAndGet(System.nanoTime() - t);
-              }
-            })
-            .expireWith(this)
-            .wrapProgress(myRefreshIndicator)
-            .finishOnUiThread(modality, data -> {
-              var t = System.nanoTime();
-              session.fireEvents(data.first, data.second, true);
-              t = NANOSECONDS.toMillis(System.nanoTime() - t);
-              VfsUsageCollector.logEventProcessing(
-                evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
-            })
-            .submit(myEventProcessingQueue::schedule)
-            .onProcessed(__ -> stopIndicator())
-            .onError(t -> {
-              if (!myRefreshIndicator.isCanceled()) {
-                LOG.error(t);
-              }
-            });
+    if (session.isEventSession()) {
+      processEvents(session, session.getModality(), runRefreshSession(session, -1L));
+    }
+    else {
+      var queuedAt = System.nanoTime();
+      myQueue.schedule(() -> {
+        var timeInQueue = NANOSECONDS.toMillis(System.nanoTime() - queuedAt);
+        startIndicator(IdeCoreBundle.message("file.synchronize.progress"));
+        var events = new AtomicReference<Collection<VFileEvent>>();
+        try {
+          var title = IdeCoreBundle.message("progress.title.doing.file.refresh.0", session);
+          HeavyProcessLatch.INSTANCE.performOperation(HeavyProcessLatch.Type.Syncing, title, () -> events.set(runRefreshSession(session, timeInQueue)));
         }
-        else {
-          AppUIExecutor.onWriteThread(modality).later().submit(() -> fireEvents(events.get(), session));
+        finally {
+          stopIndicator();
+          processEvents(session, modality, events.get());
         }
-      }
-    });
+      });
+    }
     myEventCounter.eventHappened(session);
+  }
+
+  private void processEvents(RefreshSessionImpl session, ModalityState modality, Collection<VFileEvent> events) {
+    if (Registry.is("vfs.async.event.processing", true) && !events.isEmpty()) {
+      var evQueuedAt = System.nanoTime();
+      var evTimeInQueue = new AtomicLong(-1);
+      var evListenerTime = new AtomicLong(-1);
+      var evRetries = new AtomicLong(0);
+      startIndicator(IdeCoreBundle.message("async.events.progress"));
+      ReadAction
+        .nonBlocking(() -> {
+          if (LOG.isDebugEnabled()) LOG.debug("Start non-blocking action for session with id=" + session.hashCode());
+          evTimeInQueue.compareAndSet(-1, NANOSECONDS.toMillis(System.nanoTime() - evQueuedAt));
+          evRetries.incrementAndGet();
+          var t = System.nanoTime();
+          try {
+            var result = runAsyncListeners(events);
+            if (LOG.isDebugEnabled()) LOG.debug("Successful finish of non-blocking read action for session with id=" + session.hashCode());
+            return result;
+          }
+          finally {
+            if (LOG.isDebugEnabled()) LOG.debug("Final block of non-blocking read action for  session with id=" + session.hashCode());
+            evListenerTime.addAndGet(System.nanoTime() - t);
+          }
+        })
+        .expireWith(this)
+        .wrapProgress(myRefreshIndicator)
+        .finishOnUiThread(modality, data -> {
+          var t = System.nanoTime();
+          session.fireEvents(data.first, data.second, true);
+          t = NANOSECONDS.toMillis(System.nanoTime() - t);
+          VfsUsageCollector.logEventProcessing(
+            evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
+        })
+        .submit(myEventProcessingQueue::schedule)
+        .onProcessed(__ -> stopIndicator())
+        .onError(t -> {
+          if (!myRefreshIndicator.isCanceled()) {
+            LOG.error(t);
+          }
+        });
+    }
+    else {
+      //noinspection deprecation
+      AppUIExecutor.onWriteThread(modality).later().submit(() -> fireEvents(events, session));
+    }
   }
 
   private synchronized void startIndicator(@NlsContexts.ProgressText String text) {
