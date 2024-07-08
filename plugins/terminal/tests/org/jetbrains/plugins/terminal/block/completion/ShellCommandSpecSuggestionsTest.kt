@@ -13,6 +13,7 @@ import org.jetbrains.plugins.terminal.block.util.TestCommandSpecsManager
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorCommandsRunner
 import org.jetbrains.plugins.terminal.block.util.TestGeneratorsExecutor
 import org.jetbrains.plugins.terminal.block.util.TestRuntimeContextProvider
+import org.junit.Before
 import org.junit.Test
 import org.junit.jupiter.api.fail
 import org.junit.runner.RunWith
@@ -22,7 +23,18 @@ import java.io.File
 @RunWith(JUnit4::class)
 internal class ShellCommandSpecSuggestionsTest {
   private val commandName = "command"
+
+  /**
+   * The list of names to be returned by files list generator.
+   *
+   * Long story short: Use to mock `ls`.
+   */
   private var filePathSuggestions: List<String> = emptyList()
+
+  @Before
+  fun setUp() {
+    filePathSuggestions = emptyList()
+  }
 
   private val spec = ShellCommandSpec(commandName) {
     option("-a", "--asd")
