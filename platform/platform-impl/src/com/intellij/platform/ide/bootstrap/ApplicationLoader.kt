@@ -194,19 +194,19 @@ internal suspend fun loadApp(
       )
 
       if (!app.isHeadlessEnvironment) {
-        languageAndRegionTaskDeferred?.await()?.let {
+        val languageOkPressed = languageAndRegionTaskDeferred?.await()?.let {
           cssInit?.join()
-          val languageOkPressed = it()
-          euaTaskDeferred?.await()?.let { 
-            it()
-          if (languageOkPressed) {
-            val localizationStateService = LocalizationStateService.getInstance() ?: return@let
+          it()
+        }
+        euaTaskDeferred?.await()?.let {
+          it()
+          if (languageOkPressed == true) {
+            val localizationStateService = LocalizationStateService.getInstance() ?: return@launch
             if (localizationStateService.getLastSelectedLocale() != localizationStateService.getSelectedLocale()) {
               preloadJob.cancel()
               applicationStarter.cancel()
               ApplicationManager.getApplication().restart()
             }
-          }
           }
         }
       }
