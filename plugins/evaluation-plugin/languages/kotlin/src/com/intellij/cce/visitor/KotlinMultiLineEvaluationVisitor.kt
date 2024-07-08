@@ -28,13 +28,8 @@ class KotlinMultiLineEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() 
   override fun visitNamedFunction(function: KtNamedFunction) {
     val body = function.bodyExpression ?: return
     codeFragment?.let { file ->
-      val splits = MultiLineVisitorUtils.splitElementByIndents(body, KotlinSupporter)
+      val splits = MultiLineVisitorUtils.splitElementByIndents(body)
       splits.forEach { file.addChild(it) }
     }
-  }
-
-  private object KotlinSupporter : MultiLineVisitorUtils.LanguageSupporter {
-    override val singleLineCommentPrefix: List<String> = listOf("//")
-    override val multiLineCommentPrefix: List<Pair<String, String>> = listOf(Pair("/*", "*/"))
   }
 }

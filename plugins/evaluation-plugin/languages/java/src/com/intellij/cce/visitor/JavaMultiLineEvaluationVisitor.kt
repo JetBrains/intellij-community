@@ -20,13 +20,8 @@ class JavaMultiLineEvaluationVisitor : EvaluationVisitor, JavaRecursiveElementVi
 
   override fun visitCodeBlock(block: PsiCodeBlock) {
     codeFragment?.let { file ->
-      val splits = MultiLineVisitorUtils.splitElementByIndents(block, JavaSupporter)
+      val splits = MultiLineVisitorUtils.splitElementByIndents(block)
       splits.forEach { file.addChild(it) }
     }
-  }
-
-  private object JavaSupporter : MultiLineVisitorUtils.LanguageSupporter {
-    override val singleLineCommentPrefix: List<String> = listOf("//")
-    override val multiLineCommentPrefix: List<Pair<String, String>> = listOf("/*" to "*/")
   }
 }

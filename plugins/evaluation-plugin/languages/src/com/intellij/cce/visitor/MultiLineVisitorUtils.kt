@@ -14,9 +14,9 @@ object MultiLineVisitorUtils {
     val multiLineCommentPrefix: List<Pair<String, String>>
 
     companion object {
-      val EMPTY = object : LanguageSupporter {
-        override val singleLineCommentPrefix: List<String> = emptyList()
-        override val multiLineCommentPrefix: List<Pair<String, String>> = emptyList()
+      val DEFAULT = object : LanguageSupporter {
+        override val singleLineCommentPrefix: List<String> = listOf("//")
+        override val multiLineCommentPrefix: List<Pair<String, String>> = listOf(Pair("/*", "*/"))
       }
     }
   }
@@ -88,7 +88,7 @@ object MultiLineVisitorUtils {
 
   fun splitElementByIndents(
     element: PsiElement,
-    supporter: LanguageSupporter = LanguageSupporter.EMPTY,
+    supporter: LanguageSupporter = LanguageSupporter.DEFAULT,
   ): List<CodeToken> = buildList {
     val document = PsiDocumentManager
       .getInstance(element.project)
