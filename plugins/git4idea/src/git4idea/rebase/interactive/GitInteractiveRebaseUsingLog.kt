@@ -2,7 +2,6 @@
 package git4idea.rebase.interactive
 
 import com.google.common.annotations.VisibleForTesting
-import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -11,6 +10,7 @@ import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
+import git4idea.DialogManager
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
@@ -79,7 +79,7 @@ internal fun interactivelyRebaseUsingLog(repository: GitRepository, commit: VcsS
     override fun onSuccess() {
       generatedEntries?.let { entries ->
         val dialog = GitInteractiveRebaseDialog(project, root, entries)
-        dialog.show()
+        DialogManager.show(dialog)
         if (dialog.isOK) {
           startInteractiveRebase(repository, commit, GitInteractiveRebaseUsingLogEditorHandler(repository, entries, dialog.getModel()))
         }
@@ -118,11 +118,9 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     } else {
       myRebaseEditorShown = false
       rebaseFailed = true
-      LOG.error(
-        "Incorrect git-rebase-todo file was generated",
-        Attachment("generated.txt", entriesGeneratedUsingLog.joinToString("\n")),
-        Attachment("expected.txt", entries.joinToString("\n"))
-      )
+      LOG.warn("Incorrect git-rebase-todo file was generated.\n" +
+               "Actual - ${entriesGeneratedUsingLog.toLog()}\n" +
+               "Expected - ${entries.toLog()}")
       throw VcsException(GitBundle.message("rebase.using.log.couldnt.start.error"))
     }
   }
@@ -138,6 +136,9 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     }
     return true
   }
+
+  private fun List<GitRebaseEntry>.toLog(): String =
+    joinToString(", ", prefix = "[", postfix = "]") { "${it.commit} (${it.action.command})" }
 }
 
 @VisibleForTesting

@@ -87,7 +87,7 @@ public class GitInteractiveRebaseEditorHandler implements GitRebaseEditorHandler
       }
     }
     catch (VcsException e) {
-      LOG.error("Failed to load commit details for commits from git rebase file: " + file, e);
+      LOG.warn("Failed to load commit details for commits from git rebase file: " + file, e);
       result = new GitRebaseEditingResult.Failed(e);
     }
     catch (Exception e) {
