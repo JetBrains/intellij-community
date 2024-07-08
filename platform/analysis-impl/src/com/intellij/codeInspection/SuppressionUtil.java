@@ -2,6 +2,7 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
@@ -12,7 +13,9 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiParserFacade;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
@@ -165,7 +168,12 @@ public final class SuppressionUtil extends SuppressionUtilCore {
                                        @NotNull PsiElement container,
                                        @NotNull String id,
                                        @NotNull Language commentLanguage) {
-    final String text = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+    PsiFile file = container.getContainingFile();
+    Language language = container.getLanguage();
+    CommonCodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file).getCommonSettings(language);
+    String indent = codeStyleSettings.LINE_COMMENT_ADD_SPACE_IN_SUPPRESSION ? " " : "";
+    final String text = indent + SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+
     PsiComment comment = createComment(project, text, commentLanguage);
     container.getParent().addBefore(comment, container);
   }
