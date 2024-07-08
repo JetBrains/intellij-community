@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
+import com.intellij.maven.server.m40.hacks.DependencyNodeWithoutRecursion;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Model;
@@ -43,7 +44,8 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
 
     Map<Artifact, MavenArtifact> convertedArtifacts = new HashMap<>();
     result.setExtensions(convertArtifacts(extensions, convertedArtifacts, localRepository));
-    result.setDependencyTree(convertAetherDependencyNodes(null, dependencyTree, convertedArtifacts, localRepository));
+    result.setDependencyTree(
+      convertAetherDependencyNodes(null, DependencyNodeWithoutRecursion.wrap(dependencyTree), convertedArtifacts, localRepository));
     result.setDependencies(convertArtifacts(dependencies, convertedArtifacts, localRepository));
 
     result.setRemoteRepositories(convertRepositories(model.getRepositories()));
@@ -103,12 +105,11 @@ public final class Maven40AetherModelConverter extends Maven40ModelConverter {
     }
 
     Artifact result = RepositoryUtils.toArtifact(dependency.getArtifact());
-    if(result == null) {
+    if (result == null) {
       return null;
     }
     result.setScope(dependency.getScope());
     result.setOptional(dependency.isOptional());
     return result;
   }
-
 }
