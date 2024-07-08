@@ -5,8 +5,9 @@ package org.jetbrains.intellij.build
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.call.body
-import io.ktor.client.engine.cio.CIO
+import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BasicAuthCredentials
@@ -55,11 +56,11 @@ const val SPACE_REPO_HOST: String = "packages.jetbrains.team"
 
 private val httpClient = SynchronizedClearableLazy {
   // HttpTimeout is not used - CIO engine handles that
-  HttpClient(CIO) {
+  HttpClient(Java) {
     expectSuccess = true
 
-    engine {
-      requestTimeout = 2.hours.inWholeMilliseconds
+    install(HttpTimeout) {
+      requestTimeoutMillis = 2.hours.inWholeMilliseconds
     }
 
     install(ContentEncoding) {

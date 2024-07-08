@@ -2,9 +2,9 @@
 package com.intellij.platform.util.http
 
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.engine.cio.endpoint
+import io.ktor.client.engine.java.Java
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.request.head
 import io.ktor.client.request.post
@@ -19,17 +19,15 @@ import java.io.OutputStream
 
 private val httpClient: HttpClient by lazy {
   // HttpTimeout is not used - CIO engine handles that
-  HttpClient(CIO) {
+  HttpClient(Java) {
     expectSuccess = true
     install(HttpRequestRetry) {
       retryOnExceptionOrServerErrors(maxRetries = 3)
       exponentialDelay()
     }
 
-    engine {
-      endpoint {
-        connectTimeout = System.getProperty("idea.connection.timeout")?.toLongOrNull() ?: 10_000
-      }
+    install(HttpTimeout) {
+      connectTimeoutMillis = System.getProperty("idea.connection.timeout")?.toLongOrNull() ?: 10_000
     }
   }
 }

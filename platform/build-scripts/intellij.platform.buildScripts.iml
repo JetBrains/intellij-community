@@ -237,7 +237,7 @@
     <orderEntry type="library" scope="RUNTIME" name="jackson-dataformat-yaml" level="project" />
     <orderEntry type="library" name="ion" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
-    <orderEntry type="library" name="ktor-client-cio" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ijent.community.buildConstants" />
+    <orderEntry type="library" name="ktor-client-java" level="project" />
   </component>
 </module>

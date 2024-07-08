@@ -86,6 +86,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
+      spec.withModule("intellij.idea.community.build.dependencies")
       spec.withModule("intellij.maven.jps")
       spec.withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")

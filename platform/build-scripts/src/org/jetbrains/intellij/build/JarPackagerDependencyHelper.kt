@@ -5,7 +5,6 @@ package org.jetbrains.intellij.build
 
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
-import io.ktor.util.decodeString
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
@@ -17,7 +16,6 @@ import java.io.StringReader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.extension
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
 internal class JarPackagerDependencyHelper(private val context: BuildContext) {
@@ -37,9 +35,10 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
 
   fun getPluginXmlContent(pluginModule: JpsModule): String {
     val moduleOutput = context.getModuleOutputDir(pluginModule)
-    if (moduleOutput.extension == "jar") {
+    if (moduleOutput.toString().endsWith(".jar")) {
       return getPluginXmlContentFromJar(moduleOutput)
     }
+
     val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
     try {
       return Files.readString(pluginXmlFile)
@@ -53,7 +52,7 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     var pluginXmlContent: String? = null
     readZipFile(moduleJar) { name, data ->
       if (name == "META-INF/plugin.xml")
-        pluginXmlContent = data().decodeString()
+        pluginXmlContent = Charsets.UTF_8.decode(data()).toString()
     }
 
     return pluginXmlContent ?: throw IllegalStateException("META-INF/plugin.xml not found in ${moduleJar} module")
