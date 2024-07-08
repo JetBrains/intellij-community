@@ -67,10 +67,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }, false);
     myCachedImplicitImportStaticStatements = cachedValuesManager.createCachedValue(() -> {
       List<PsiImportStaticStatement> statements = createImplicitImportStaticStatements();
-      if (!this.isPhysical()) {
-        return Result.create(statements, this.getContainingFile(), PsiModificationTracker.MODIFICATION_COUNT);
-      }
-      return Result.create(statements, PsiModificationTracker.MODIFICATION_COUNT);
+      return Result.create(statements, this.getContainingFile());
     }, false);
   }
 
