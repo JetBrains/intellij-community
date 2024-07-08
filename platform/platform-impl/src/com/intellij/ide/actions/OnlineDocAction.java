@@ -10,7 +10,7 @@ import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.util.Url;
 import org.jetbrains.annotations.NotNull;
 
-public final class OnlineDocAction extends HelpActionBase implements DumbAware {
+public final class OnlineDocAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Url url = ExternalProductResourceUrls.getInstance().getGettingStartedPageUrl();
@@ -20,8 +20,9 @@ public final class OnlineDocAction extends HelpActionBase implements DumbAware {
   }
 
   @Override
-  public boolean isAvailable() {
-    return ExternalProductResourceUrls.getInstance().getGettingStartedPageUrl() != null;
+  public void update(@NotNull AnActionEvent e) {
+    Url url = ExternalProductResourceUrls.getInstance().getGettingStartedPageUrl();
+    e.getPresentation().setEnabledAndVisible(url != null);
   }
 
   @Override

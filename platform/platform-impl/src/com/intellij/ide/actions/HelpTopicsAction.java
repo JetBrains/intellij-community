@@ -11,15 +11,15 @@ import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.NotNull;
 
-public final class HelpTopicsAction extends HelpActionBase implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
+public final class HelpTopicsAction extends AnAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     HelpManager.getInstance().invokeHelp("top");
   }
 
   @Override
-  public boolean isAvailable() {
-    return ApplicationInfo.helpAvailable();
+  public void update(@NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(ApplicationInfo.helpAvailable());
   }
 
   @Override
