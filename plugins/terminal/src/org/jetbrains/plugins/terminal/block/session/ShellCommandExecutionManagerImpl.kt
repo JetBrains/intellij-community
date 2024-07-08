@@ -30,7 +30,7 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class ShellCommandExecutionManagerImpl(
   private val session: BlockTerminalSession,
   commandManager: ShellCommandManager,
-) : IShellCommandExecutionManager {
+) : ShellCommandExecutionManager {
 
   private val listeners: CopyOnWriteArrayList<ShellCommandSentListener> = CopyOnWriteArrayList()
 

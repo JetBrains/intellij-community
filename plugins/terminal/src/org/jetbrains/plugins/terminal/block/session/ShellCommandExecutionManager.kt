@@ -6,7 +6,7 @@ import com.intellij.terminal.completion.spec.ShellCommandResult
 import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
-internal interface IShellCommandExecutionManager  {
+internal interface ShellCommandExecutionManager  {
 
   /**
    * Runs user command in Shell.
@@ -30,7 +30,7 @@ internal interface IShellCommandExecutionManager  {
    * If a new command starts after the Key Binding execution is queued, then queued Key Binding could be lost and not applied.
    */
   @ApiStatus.Internal
-  fun sendKeyBinding(keyBinding: ShellCommandExecutionManager.KeyBinding)
+  fun sendKeyBinding(keyBinding: KeyBinding)
 
   fun addListener(listener: ShellCommandSentListener)
   fun addListener(listener: ShellCommandSentListener, parentDisposable: Disposable)

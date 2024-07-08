@@ -41,7 +41,7 @@ internal class BlockTerminalSession(
   private val textBuffer: TerminalTextBuffer
   internal val controller: JediTerminal
   internal val commandManager: ShellCommandManager
-  internal val commandExecutionManager: IShellCommandExecutionManager
+  internal val commandExecutionManager: ShellCommandExecutionManager
   private val typeAheadManager: TerminalTypeAheadManager
   private val terminationListeners: MutableList<Runnable> = CopyOnWriteArrayList()
   val commandBlockIntegration: CommandBlockIntegration = shellIntegration.commandBlockIntegration!!
