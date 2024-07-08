@@ -18,7 +18,17 @@ import java.util.concurrent.atomic.AtomicInteger
 sealed class JpsFileEntitySource : EntitySource
 
 /**
- * Entity source with the information about project location
+ * Entity source with the information about project location. Our serialization mechanism relies on it.
+ * [virtualFileUrl] to detect the location for the entities' serialization. We support the serialization into
+ * the iml/xml only concrete type of entities: [ModuleEntity][com.intellij.platform.workspace.jps.entities.ModuleEntity],
+ * [LibraryEntity][com.intellij.platform.workspace.jps.entities.LibraryEntity], [FacetEntity][com.intellij.platform.workspace.jps.entities.FacetEntity],
+ * [SdkEntity][com.intellij.platform.workspace.jps.entities.SdkEntity], [ContentRootEntity][com.intellij.platform.workspace.jps.entities.ContentRootEntity],
+ * [SourceRootEntity][com.intellij.platform.workspace.jps.entities.SourceRootEntity] and some other entities
+ * (see the implementations of [JpsFileEntitiesSerializer][com.intellij.platform.workspace.jps.serialization.impl.JpsFileEntitiesSerializer] to
+ * check all supported entities). But unfortunately, we don't support the serialization of custom entities yet.
+ *
+ * If your entity has to be presented in the files in the .idea folder, please consider using this entity source
+ * and its derivatives.
  */
 sealed class JpsProjectFileEntitySource : JpsFileEntitySource() {
   abstract val projectLocation: JpsProjectConfigLocation
