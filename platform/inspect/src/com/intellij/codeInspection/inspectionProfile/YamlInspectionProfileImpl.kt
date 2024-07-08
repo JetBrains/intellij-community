@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ex.*
 import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.createProfileCopy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -119,8 +120,13 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
                  toolsSupplier: InspectionToolsSupplier = ProjectInspectionToolRegistrar.getInstance(project),
                  profileManager: BaseInspectionProfileManager = ProjectInspectionProfileManager.getInstance(project)
     ): YamlInspectionProfileImpl {
-      val configFile = File(filePath).absoluteFile
-      require(configFile.exists()) { "File does not exist: ${configFile.canonicalPath}" }
+      val configFile = if (File(filePath).isAbsolute) {
+        File(filePath).absoluteFile
+      } else {
+        project.guessProjectDir()?.toNioPath()?.toFile()?.resolve(filePath)?.absoluteFile
+      }
+      require(configFile?.exists() == true) { "File does not exist: ${configFile!!.canonicalPath}" }
+      requireNotNull(configFile)
 
       val includeProvider: (Path) -> Reader = {
         val includePath = Path.of(configFile.parent).resolve(it)
