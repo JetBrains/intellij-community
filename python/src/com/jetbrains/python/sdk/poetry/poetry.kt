@@ -562,7 +562,7 @@ fun sdkHomes(sdks: List<Sdk>): Set<String> = sdks.mapNotNull { it.homePath }.toS
 fun detectPoetryEnvs(module: Module?, existingSdkPaths: Set<String>, projectPath: String?): List<PyDetectedSdk> {
   val path = module?.basePath ?: projectPath ?: return emptyList()
   return try {
-    getPoetryEnvs(path).filterNot { existingSdkPaths.contains(getPythonExecutable(it)) }.map { PyDetectedSdk(it) }
+    getPoetryEnvs(path).filter { existingSdkPaths.contains(getPythonExecutable(it)) }.map { PyDetectedSdk(getPythonExecutable(it)) }
   }
   catch (e: Throwable) {
     emptyList()
