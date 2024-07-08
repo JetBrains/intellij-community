@@ -111,7 +111,7 @@ public final class InspectionEngine {
     List<PsiElement> elements = ContainerUtil.concat(
       ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside(), d.outside(), d.parents())));
 
-    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, foundDescriptorCallback);
+    Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map = inspectElements(toolWrappers, psiFile, restrictRange, ignoreSuppressedElements, isOnTheFly, indicator, elements, userData, foundDescriptorCallback);
     if (inspectInjectedPsi) {
       InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(psiFile.getProject());
       Set<Pair<PsiFile, PsiElement>> injectedFiles = new HashSet<>();
@@ -206,6 +206,21 @@ public final class InspectionEngine {
                                                                                                   @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
     return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, indicator, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
                            null, foundDescriptorCallback);
+  }
+
+  // returns map tool -> list of descriptors found
+  public static @NotNull Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> inspectElements(@NotNull List<? extends LocalInspectionToolWrapper> toolWrappers,
+                                                                                                  @NotNull PsiFile psiFile,
+                                                                                                  @NotNull TextRange restrictRange,
+                                                                                                  boolean ignoreSuppressedElements,
+                                                                                                  boolean isOnTheFly,
+                                                                                                  @NotNull ProgressIndicator indicator,
+                                                                                                  @NotNull List<? extends PsiElement> elements,
+                                                                                                  @Nullable UserDataHolderBase userData,
+                                                                                                  // when returned true -> add to the holder, false -> do not add to the holder
+                                                                                                  @NotNull PairProcessor<? super LocalInspectionToolWrapper, ? super ProblemDescriptor> foundDescriptorCallback) {
+    return inspectElements(toolWrappers, psiFile, restrictRange, isOnTheFly, indicator, ignoreSuppressedElements, elements, calcElementDialectIds(elements),
+                           userData, foundDescriptorCallback);
   }
 
   @ApiStatus.Internal
