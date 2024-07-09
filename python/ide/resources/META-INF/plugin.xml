@@ -14,7 +14,6 @@
   <content>
     <module name="intellij.pycharm.community.ide.impl"/>
     <module name="intellij.pycharm.community.ide.implTraining"/>
-    <module name="intellij.jupyter.core"/> <!-- Lang for notebooks preview -->
     <module name="intellij.jupyter.viewOnly"/> <!-- notebooks preview itself-->
     <module name="intellij.platform.whatsNew"/>
 
