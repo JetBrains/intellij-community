@@ -16672,7 +16672,6 @@ f:com.intellij.openapi.progress.util.PotemkinProgress
 f:com.intellij.openapi.progress.util.ProgressDialog
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.openapi.progress.util.ProgressDialog$Companion
-- sf:UPDATE_INTERVAL:I
 - <init>(com.intellij.openapi.progress.util.ProgressWindow,Z,java.lang.String,java.awt.Window):V
 - f:background():V
 - f:cancel():V
