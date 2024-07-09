@@ -4,6 +4,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModCommandAction;
@@ -46,6 +47,8 @@ public final class ExpressionComparedToItselfInspection extends AbstractBaseJava
         boolean equivalent = EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(leftOperand, rightOperand);
         if (!equivalent) return;
         if (PsiUtil.isConstantExpression(leftOperand)) return;
+        // Do not repeat the warnings already reported by "Constant values" inspection
+        if (Boolean.TRUE.equals(CommonDataflow.computeValue(expression))) return;
         ThreeState wantedStatus = ignoreSideEffectConditions ? ThreeState.UNSURE : ThreeState.YES;
         ThreeState actualStatus = SideEffectChecker.getSideEffectStatus(leftOperand);
         if (actualStatus.isAtLeast(wantedStatus)) return;
