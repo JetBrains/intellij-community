@@ -1099,7 +1099,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         if (myProject == null) return null;
 
         PsiElement psiElement = toPsi(selectedValue);
-        if (psiElement == null) return null;
+        if (psiElement == null || !psiElement.isValid()) return null;
 
         PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : null;
         if (psiFile == null) {
