@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.jvm.Throws
 
 /**
  * Allows tracking subsystem activities and getting a "dumb mode" with respect to tracked computations.
@@ -33,7 +34,10 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   private class AssociatedCounter(
     val counter: Int,
     // the job here is an imitation of java.util.concurrent.Phaser
-    val job: CompletableJob) {
+    val job: CompletableJob,
+    // the throwable here are for debugging
+    val creationTrace: Map<Any, Throwable>,
+    ) {
     override fun equals(other: Any?): Boolean {
       return other is AssociatedCounter && this.counter == other.counter && this.job === other.job
     }
@@ -82,12 +86,13 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     }
   }
 
+
   private inline fun <T> withBlockingJob(kind: ActivityKey, consumer: (BlockingJob) -> T): T {
-    enterConfiguration(kind)
+    val key = enterConfiguration(kind)
     // new job here to track those and only those computations which are invoked under explicit `trackConfigurationActivity`
     val tracker = Job()
     tracker.invokeOnCompletion {
-      leaveConfiguration(kind)
+      leaveConfiguration(kind, key)
     }
     val blockingJob = BlockingJob(tracker)
     try {
@@ -102,16 +107,17 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     }
   }
 
-  private fun enterConfiguration(kind: ActivityKey) {
+  private fun enterConfiguration(kind: ActivityKey) : Any {
+    val sentinel = Any()
     while (true) {
       // compare-and-swap, basically
-      val insertionResult = concurrentConfigurationCounter.putIfAbsent(kind, AssociatedCounter(1, Job()))
+      val insertionResult = concurrentConfigurationCounter.putIfAbsent(kind, AssociatedCounter(1, Job(), mapOf(sentinel to Throwable())))
       if (insertionResult == null) {
         // successfully inserted
         break
       }
       else {
-        val incrementedCounter = AssociatedCounter(insertionResult.counter + 1, insertionResult.job)
+        val incrementedCounter = AssociatedCounter(insertionResult.counter + 1, insertionResult.job, insertionResult.creationTrace + (sentinel to Throwable()))
         if (concurrentConfigurationCounter.replace(kind, insertionResult, incrementedCounter)) {
           break
         }
@@ -127,9 +133,10 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
         // This can cause a blink, but it is technically correct.
       }
     }
+    return sentinel
   }
 
-  private fun leaveConfiguration(kind: ActivityKey) {
+  private fun leaveConfiguration(kind: ActivityKey, key: Any) {
     while (true) {
       // compare-and-swap, basically
       val currentCounter = concurrentConfigurationCounter[kind]
@@ -149,7 +156,7 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       }
       else {
         // attempt to decrease key
-        val newCounter = AssociatedCounter(currentCounter.counter - 1, currentCounter.job)
+        val newCounter = AssociatedCounter(currentCounter.counter - 1, currentCounter.job, currentCounter.creationTrace - key)
         concurrentConfigurationCounter.replace(kind, currentCounter, newCounter)
       }
       if (operationSucceeded) {
@@ -180,7 +187,13 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       // currentCounter != null => isInProgress == true => either currentCounter.job corresponds to the current configuration process,
       // or its configuration was completed earlier, and in this case join() will immediately return
       // currentCounter == null => isInProgress == false => immediately return, since no configuration process is here currently
-      currentCounter.job.join()
+      while (true) {
+        if (currentCounter.job.isCompleted) {
+          break
+        }
+        delay(1000)
+      }
+      //currentCounter.job.join()
     }
   }
 }
