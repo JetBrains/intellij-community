@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 
 object PyDataViewerCollector : CounterUsagesCollector() {
 
-  private val GROUP = EventLogGroup("python.dataview", 2)
+  private val GROUP = EventLogGroup("python.dataview", 3)
 
   enum class DataType(val typeName: String?) {
     ARRAY("ndarray"),
@@ -17,6 +17,11 @@ object PyDataViewerCollector : CounterUsagesCollector() {
     GEO_DATAFRAME("GeoDataFrame"),
     SERIES("Series"),
     GEO_SERIES("GeoSeries"),
+    EAGER_TENSOR("EagerTensor"),
+    RESOURCE_VARIABLE("ResourceVariable"),
+    SPARSE_TENSOR("SparseTensor"),
+    TORCH_TENSOR("Tensor"),
+    HF_DATASET("Dataset"),
     UNKNOWN(null);
 
     companion object {
