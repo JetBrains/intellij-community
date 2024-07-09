@@ -135,19 +135,25 @@ internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
   }
 
   private fun loadCommandSpecsIfNeeded() {
-    if (lightSpecsCache.estimatedSize() == 0L || jsonBasedSpecProviders.estimatedSize() == 0L) {
-      val specsDataMap: MultiMap<String, ShellCommandSpecData> = loadCommandSpecs()
-      for ((name, specs) in specsDataMap.entrySet()) {
-        val specData = if (specs.size > 1) {
-          resolveSpecsConflict(specs)
-        }
-        else specs.first()
-        lightSpecsCache.put(name, specData.spec)
+    if (lightSpecsCache.estimatedSize() != 0L && jsonBasedSpecProviders.estimatedSize() != 0L) {
+      return
+    }
 
-        val jsonSpecData = specs.find { it.spec is ShellJsonBasedCommandSpec }
-        if (jsonSpecData != null) {
-          jsonBasedSpecProviders.put(name, jsonSpecData.provider as ShellJsonCommandSpecsProvider)
-        }
+    val specsDataMap: MultiMap<String, ShellCommandSpecData> = loadCommandSpecs()
+
+    for ((name, specs) in specsDataMap.entrySet()) {
+      val specData = if (specs.size > 1) {
+        resolveSpecsConflict(specs)
+      }
+      else {
+        specs.first()
+      }
+
+      lightSpecsCache.put(name, specData.spec)
+
+      val jsonSpecData = specs.find { it.spec is ShellJsonBasedCommandSpec }
+      if (jsonSpecData != null) {
+        jsonBasedSpecProviders.put(name, jsonSpecData.provider as ShellJsonCommandSpecsProvider)
       }
     }
   }
