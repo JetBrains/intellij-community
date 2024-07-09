@@ -16,7 +16,7 @@ import java.io.DataOutput
 data class InlayData(
   val position: InlayPosition,
   @NlsContexts.HintText val tooltip: String?,
-  val hintColorKind: HintColorKind,
+  val hintFormat: HintFormat,
   val tree: TinyTree<Any?>,
   val providerId: String,
   val disabled: Boolean,
@@ -30,7 +30,7 @@ data class InlayData(
 
     companion object {
       // increment on format changed
-      private const val SERDE_VERSION = 4
+      private const val SERDE_VERSION = 5
     }
 
     override fun serdeVersion(): Int = SERDE_VERSION + treeExternalizer.serdeVersion()
@@ -38,7 +38,8 @@ data class InlayData(
     override fun save(output: DataOutput, inlayData: InlayData) {
       writePosition(output, inlayData.position)
       writeTooltip(output, inlayData.tooltip)
-      output.writeUTF(inlayData.hintColorKind.name)
+      output.writeUTF(inlayData.hintFormat.colorKind.name)
+      output.writeUTF(inlayData.hintFormat.fontSize.name)
       treeExternalizer.save(output, inlayData.tree)
       writeUTF(output, inlayData.providerId)
       output.writeBoolean(inlayData.disabled)
@@ -50,13 +51,14 @@ data class InlayData(
       val position: InlayPosition       = readPosition(input)
       val tooltip: String?              = readTooltip(input)
       val hintColorKind: HintColorKind  = HintColorKind.valueOf(input.readUTF())
+      val hintFontSize: HintFontSize    = HintFontSize.valueOf(input.readUTF())
       val tree: TinyTree<Any?>          = treeExternalizer.read(input)
       val providerId: String            = readUTF(input)
       val disabled: Boolean             = input.readBoolean()
       val payloads: List<InlayPayload>? = readPayloads(input)
       val providerClass: Class<*>       = ZombieInlayHintsProvider::class.java
       val sourceId: String              = readSourceId(input)
-      return InlayData(position, tooltip, hintColorKind, tree, providerId, disabled, payloads, providerClass, sourceId)
+      return InlayData(position, tooltip, HintFormat(hintColorKind, hintFontSize), tree, providerId, disabled, payloads, providerClass, sourceId)
     }
 
     private fun writePosition(output: DataOutput, position: InlayPosition) {

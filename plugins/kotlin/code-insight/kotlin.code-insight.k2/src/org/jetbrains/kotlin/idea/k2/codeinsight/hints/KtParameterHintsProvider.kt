@@ -1,12 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.declarative.HintColorKind
-import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.filtering.Matcher
 import com.intellij.codeInsight.hints.filtering.MatcherConstructor
 import com.intellij.psi.PsiComment
@@ -126,7 +121,7 @@ class KtParameterHintsProvider : AbstractKtInlayHintsProvider() {
             if (argument.isArgumentNamed(symbol)) continue
 
             name.takeUnless(Name::isSpecial)?.asString()?.let { stringName ->
-                sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hintColorKind = HintColorKind.Default) {
+                sink.addPresentation(InlineInlayPosition(argument.startOffset, true), hintFormat = HintFormat.default) {
                     if (symbol.isVararg) text(Typography.ellipsis.toString())
                     text(stringName,
                          symbol.psi?.createSmartPointer()?.let {

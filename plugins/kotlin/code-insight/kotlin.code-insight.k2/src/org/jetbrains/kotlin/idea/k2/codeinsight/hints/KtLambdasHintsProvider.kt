@@ -1,12 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.declarative.HintColorKind
-import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.InlayTreeSink
-import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -51,7 +46,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
             }
             if (!isUsedAsExpression) return@whenOptionEnabled
 
-            sink.addPresentation(InlineInlayPosition(expression.endOffset, true), hintColorKind = HintColorKind.Default) {
+            sink.addPresentation(InlineInlayPosition(expression.endOffset, true), hintFormat = HintFormat.default) {
                 text("^")
                 text(lambdaName,
                      lambdaExpression.createSmartPointer().let {
@@ -96,7 +91,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
             analyze(functionLiteral) {
                 val anonymousFunctionSymbol = functionLiteral.symbol
                 anonymousFunctionSymbol.receiverParameter?.let { receiverSymbol ->
-                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintColorKind = HintColorKind.Default) {
+                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
                         text("this: ")
                         printKtType(receiverSymbol.type)
                     }
@@ -105,7 +100,7 @@ class KtLambdasHintsProvider : AbstractKtInlayHintsProvider() {
                 anonymousFunctionSymbol.valueParameters.singleOrNull()?.let { singleParameterSymbol ->
                     val type = singleParameterSymbol.takeIf { it.isImplicitLambdaParameter }
                         ?.returnType?.takeUnless { it.isUnitType } ?: return@let
-                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintColorKind = HintColorKind.Default) {
+                    sink.addPresentation(InlineInlayPosition(lbrace.textRange.endOffset, true), hintFormat = HintFormat.default) {
                         text("it: ")
                         printKtType(type)
                     }

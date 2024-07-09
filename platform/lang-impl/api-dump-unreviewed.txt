@@ -6458,6 +6458,7 @@ a:com.intellij.codeInsight.hints.chain.AbstractDeclarativeCallChainProvider
 - pa:buildTree(java.lang.Object,com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,java.lang.Object,com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder):V
 - createCollector(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 - pa:getDotQualifiedClass():java.lang.Class
+- p:getHintFormat():com.intellij.codeInsight.hints.declarative.HintFormat
 - pa:getParentDotQualifiedExpression(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - pa:getReceiver(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - pa:getType(com.intellij.psi.PsiElement,java.lang.Object):java.lang.Object
@@ -6663,23 +6664,23 @@ f:com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer
 - f:handleRightClick(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 - f:setInlay(com.intellij.openapi.editor.Inlay):V
-- f:updateState(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,com.intellij.codeInsight.hints.declarative.HintColorKind):V
+- f:updateState(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,com.intellij.codeInsight.hints.declarative.HintFormat):V
 f:com.intellij.codeInsight.hints.declarative.impl.InlayData
-- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintColorKind,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String):V
+- <init>(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String):V
 - f:component1():com.intellij.codeInsight.hints.declarative.InlayPosition
 - f:component2():java.lang.String
-- f:component3():com.intellij.codeInsight.hints.declarative.HintColorKind
+- f:component3():com.intellij.codeInsight.hints.declarative.HintFormat
 - f:component4():com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 - f:component5():java.lang.String
 - f:component6():Z
 - f:component7():java.util.List
 - f:component8():java.lang.Class
 - f:component9():java.lang.String
-- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintColorKind,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String):com.intellij.codeInsight.hints.declarative.impl.InlayData
-- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintColorKind,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
+- f:copy(com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String):com.intellij.codeInsight.hints.declarative.impl.InlayData
+- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayData,com.intellij.codeInsight.hints.declarative.InlayPosition,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,java.lang.String,Z,java.util.List,java.lang.Class,java.lang.String,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayData
 - equals(java.lang.Object):Z
 - f:getDisabled():Z
-- f:getHintColorKind():com.intellij.codeInsight.hints.declarative.HintColorKind
+- f:getHintFormat():com.intellij.codeInsight.hints.declarative.HintFormat
 - f:getPayloads():java.util.List
 - f:getPosition():com.intellij.codeInsight.hints.declarative.InlayPosition
 - f:getProviderClass():java.lang.Class
@@ -6702,23 +6703,32 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 - f:getEntries():java.util.List
 f:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList
 - sf:Companion:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$Companion
-- <init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,com.intellij.codeInsight.hints.declarative.HintColorKind,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.String):V
-- b:<init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,com.intellij.codeInsight.hints.declarative.HintColorKind,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,com.intellij.codeInsight.hints.declarative.HintFormat,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.String):V
+- b:<init>(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,com.intellij.codeInsight.hints.declarative.HintFormat,Z,java.util.Map,java.lang.Class,java.lang.String,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:getEntries():com.intellij.codeInsight.hints.declarative.impl.InlayPresentationEntry[]
-- f:getHintColorKind():com.intellij.codeInsight.hints.declarative.HintColorKind
+- f:getHintFormat():com.intellij.codeInsight.hints.declarative.HintFormat
 - f:getMouseArea(java.awt.Point,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea
 - f:getPayloads():java.util.Map
-- f:getWidthInPixels(com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):I
+- f:getWidthInPixels(com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$DeclarativeHintWidth
 - f:handleClick(com.intellij.openapi.editor.event.EditorMouseEvent,java.awt.Point,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage,Z):V
 - f:handleHover(com.intellij.openapi.editor.event.EditorMouseEvent):com.intellij.ui.LightweightHint
 - f:isDisabled():Z
 - f:paint(com.intellij.openapi.editor.Inlay,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
 - f:setDisabled(Z):V
-- f:setHintColorKind(com.intellij.codeInsight.hints.declarative.HintColorKind):V
+- f:setHintFormat(com.intellij.codeInsight.hints.declarative.HintFormat):V
 - f:setPayloads(java.util.Map):V
 - f:toggleTreeState(B):V
-- f:updateState(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,com.intellij.codeInsight.hints.declarative.HintColorKind):V
+- f:updateState(com.intellij.codeInsight.hints.declarative.impl.util.TinyTree,Z,com.intellij.codeInsight.hints.declarative.HintFormat):V
 f:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$Companion
+f:com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$DeclarativeHintWidth
+- <init>(I,I,I):V
+- f:copy(I,I,I):com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$DeclarativeHintWidth
+- bs:copy$default(com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$DeclarativeHintWidth,I,I,I,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList$DeclarativeHintWidth
+- equals(java.lang.Object):Z
+- f:getBoxWidth():I
+- f:getFullWidth():I
+- f:getMarginAndPadding():I
+- hashCode():I
 f:com.intellij.codeInsight.hints.declarative.impl.InlayTags
 - sf:CLICK_HANDLER_SCOPE_TAG:B
 - sf:COLLAPSE_BUTTON_TAG:B
@@ -6735,7 +6745,7 @@ f:com.intellij.codeInsight.hints.declarative.impl.InlayTags
 f:com.intellij.codeInsight.hints.declarative.impl.InlayTreeSinkImpl
 - com.intellij.codeInsight.hints.declarative.InlayTreeSink
 - <init>(java.lang.String,java.util.Map,Z,Z,java.lang.Class,java.lang.String):V
-- addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintColorKind,kotlin.jvm.functions.Function1):V
+- addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,kotlin.jvm.functions.Function1):V
 - f:finish():java.util.List
 - whenOptionEnabled(java.lang.String,kotlin.jvm.functions.Function0):V
 f:com.intellij.codeInsight.hints.declarative.impl.PresentationEntryBuilder
@@ -6759,13 +6769,13 @@ f:com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl$Co
 f:com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry
 - <init>(java.lang.String,B,com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea):V
 - b:<init>(java.lang.String,B,com.intellij.codeInsight.hints.declarative.impl.InlayMouseArea,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- computeHeight(com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):I
-- computeWidth(com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage):I
+- computeHeight(com.intellij.codeInsight.hints.presentation.InlayTextMetrics):I
+- computeWidth(com.intellij.codeInsight.hints.presentation.InlayTextMetrics):I
 - equals(java.lang.Object):Z
 - f:getText():java.lang.String
 - handleClick(com.intellij.openapi.editor.Editor,com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList,Z):V
 - hashCode():I
-- render(java.awt.Graphics2D,com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage,com.intellij.openapi.editor.markup.TextAttributes,Z,I,I,com.intellij.openapi.editor.Editor):V
+- render(java.awt.Graphics2D,com.intellij.codeInsight.hints.presentation.InlayTextMetrics,com.intellij.openapi.editor.markup.TextAttributes,Z,I,I,com.intellij.openapi.editor.Editor):V
 f:com.intellij.codeInsight.hints.declarative.impl.toggle.DeclarativeHintsTogglingIntention
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.codeInsight.intention.LowPriorityAction

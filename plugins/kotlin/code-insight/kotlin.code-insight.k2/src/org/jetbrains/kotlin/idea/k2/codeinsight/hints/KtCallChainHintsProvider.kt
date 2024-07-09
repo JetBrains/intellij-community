@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
 import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
@@ -62,7 +63,7 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
             for ((expression, type) in reversedChain) {
                 sink.addPresentation(
                     InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true),
-                    hintColorKind = HintColorKind.Default,
+                    hintFormat = HintFormat.default,
                 ) {
                     printKtType(type)
                 }
