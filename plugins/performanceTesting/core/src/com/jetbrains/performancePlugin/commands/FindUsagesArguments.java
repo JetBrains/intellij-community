@@ -4,13 +4,13 @@ import com.sampullara.cli.Argument;
 
 public class FindUsagesArguments {
   @Argument
-  String position;
+  public String position;
 
   @Argument
-  String scope = "All Places";
+  public String scope = "All Places";
 
   @Argument
-  String expectedName;
+  public String expectedName;
 
   @Argument
   Boolean runInBackground = false;

@@ -40,8 +40,9 @@ import java.util.concurrent.TimeUnit
  */
 class FindUsagesCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
   companion object {
-    const val PREFIX: @NonNls String = CMD_PREFIX + "findUsages"
-    const val SPAN_NAME: @NonNls String = "findUsages"
+    const val NAME: @NonNls String = "findUsages"
+    const val PREFIX: @NonNls String = CMD_PREFIX + NAME
+    const val SPAN_NAME: @NonNls String = NAME
     const val PARENT_SPAN_NAME: @NonNls String = SPAN_NAME + "Parent"
     const val FIRST_USAGE_SPAN_BACKGROUND = "${SPAN_NAME}_firstUsage_background"
     private val LOG = logger<FindUsagesCommand>()
