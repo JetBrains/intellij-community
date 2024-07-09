@@ -7,4 +7,6 @@ PsiJavaFile:ImportWithModulePackage.java
         PsiIdentifier:module('module')
         PsiReferenceParameterList
           <empty list>
+      PsiJavaToken:DOT('.')
+      PsiJavaToken:ASTERISK('*')
       PsiJavaToken:SEMICOLON(';')

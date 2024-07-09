@@ -40,7 +40,7 @@ public final class ElementClassFilter implements ElementFilter {
       case VARIABLE:
         return element instanceof PsiVariable;
 
-        case MODULE:
+      case MODULE:
         return element instanceof PsiJavaModule;
     }
 
