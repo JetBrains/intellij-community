@@ -74,7 +74,7 @@ class SettingsSyncMain(coroutineScope: CoroutineScope) : Disposable {
                                          ideMediator.getInitialSnapshot(appConfigPath, currentSnapshot)
                                        })
       val updateChecker = SettingsSyncUpdateChecker(remoteCommunicator)
-      val bridge = SettingsSyncBridge(coroutineScope, parentDisposable, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
+      val bridge = SettingsSyncBridge(coroutineScope, appConfigPath, settingsLog, ideMediator, remoteCommunicator, updateChecker)
       return SettingsSyncControls(ideMediator, updateChecker, bridge, remoteCommunicator, settingsSyncStorage)
     }
   }

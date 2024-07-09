@@ -1,9 +1,9 @@
 package com.intellij.settingsSync
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.registerExtension
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.io.path.div
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
 
@@ -24,14 +25,14 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `settings from provider should be collected`() {
+  fun `settings from provider should be collected`() = timeoutRunBlockingAndStopBridge {
     val ideState = TestState("IDE value")
     settingsProvider.settings = ideState
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
 
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+    initSettingsSync()
 
     val expectedContent = TestSettingsProvider().serialize(ideState)
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
@@ -49,7 +50,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `settings from provider changed on another client should be applied`() = runTest {
+  fun `settings from provider changed on another client should be applied`() = timeoutRunBlockingAndStopBridge {
     val state = TestState("Server value")
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       provided(settingsProvider.id, state)
@@ -57,10 +58,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
 
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
-
-    fireSettingsChangeAndRunCurrent()
-
-    waitForAllExecutedAndRunCurrent()
+    syncSettingsAndWait()
 
     val expectedContent = TestSettingsProvider().serialize(state)
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
@@ -68,20 +66,19 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `test merge settings provider settings`() {
+  fun `test merge settings provider settings`() = timeoutRunBlockingAndStopBridge {
     val serverState = TestState(property = "Server value")
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       provided(settingsProvider.id, serverState)
     })
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+    initSettingsSync()
 
     val localState = TestState(foo = "Local value")
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(settingsSnapshot {
       provided(settingsProvider.id, localState)
     }))
 
-    fireSettingsChangeAndRunCurrent()
-    waitForAllExecutedAndRunCurrent()
+    syncSettingsAndWait()
 
     val expectedState = TestState(property = "Server value", foo = "Local value")
     assertFileWithContent(TestSettingsProvider().serialize(expectedState),
@@ -89,15 +86,16 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
     assertEquals(expectedState, settingsProvider.settings, "Settings were not applied")
   }
 
-  private fun waitForAllExecutedAndRunCurrent() {
+  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+    SettingsSyncEvents.getInstance().fireSettingsChanged(event)
     bridge.waitForAllExecuted()
-    testScope.runCurrent()
+    timeoutRunBlocking {
+      waitUntil("Waiting for queue to finish processing") {
+        bridge.queueSize == 0
+      }
+    }
   }
 
-  private fun fireSettingsChangeAndRunCurrent() {
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
-    testScope.runCurrent()
-  }
 
   @Serializable
   internal data class TestState(

@@ -4,6 +4,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
@@ -22,6 +24,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.time.Duration
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -37,10 +40,6 @@ internal abstract class SettingsSyncTestBase {
   protected lateinit var remoteCommunicator: TestRemoteCommunicator
   protected lateinit var updateChecker: SettingsSyncUpdateChecker
   protected lateinit var bridge: SettingsSyncBridge
-
-  protected lateinit var testScheduler: TestCoroutineScheduler
-  protected lateinit var testScope: TestScope
-
 
   @TestDisposable
   protected lateinit var disposable: Disposable
@@ -61,9 +60,6 @@ internal abstract class SettingsSyncTestBase {
       MockRemoteCommunicator()
     }
 
-    testScheduler = TestCoroutineScheduler()
-    testScope = TestScope(testScheduler)
-
     val serverState = remoteCommunicator.checkServerState()
     if (serverState != ServerState.FileNotExists) {
       LOG.warn("Server state: $serverState")
@@ -73,12 +69,25 @@ internal abstract class SettingsSyncTestBase {
 
   @AfterEach
   fun cleanup() {
+    remoteCommunicator.deleteAllFiles()
     if (::bridge.isInitialized) {
       bridge.waitForAllExecuted()
+      bridge.stop()
     }
-
-    remoteCommunicator.deleteAllFiles()
   }
+
+  protected fun <T> timeoutRunBlockingAndStopBridge(
+    timeout: Duration = DEFAULT_TEST_TIMEOUT,
+    coroutineName: String? = null,
+    action: suspend CoroutineScope.() -> T,
+  ): T {
+    return timeoutRunBlocking(timeout, coroutineName) {
+      val retval = action()
+      cleanup()
+      retval
+    }
+  }
+
 
   protected fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
     val builder = SettingsSnapshotBuilder()
@@ -95,7 +104,6 @@ internal abstract class SettingsSyncTestBase {
   }
 
   protected fun assertServerSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
-    testScope.runCurrent()
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull(pushedSnapshot, "Nothing has been pushed")
     pushedSnapshot!!.assertSettingsSnapshot {
@@ -106,9 +114,7 @@ internal abstract class SettingsSyncTestBase {
   protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
     val snapshot = remoteCommunicator.awaitForPush {
       testExecution()
-      testScope.runCurrent()
       bridge.waitForAllExecuted()
-      testScope.runCurrent()
     }
     return snapshot
   }
