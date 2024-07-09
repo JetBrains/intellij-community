@@ -61,7 +61,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
   private volatile DomElement myProxy;
   private DomGenericInfoEx myGenericInfo;
   private final InvocationCache myInvocationCache;
-  private volatile Converter myScalarConverter = null;
+  private volatile Converter<?> myScalarConverter = null;
   private volatile SmartFMap<Method, Invocation> myAccessorInvocations = SmartFMap.emptyMap();
   protected @Nullable DomStub myStub;
 
@@ -413,22 +413,22 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     }
   }
 
-  protected final @NotNull Converter getScalarConverter() {
-    Converter converter = myScalarConverter;
+  protected final @NotNull Converter<?> getScalarConverter() {
+    Converter<?> converter = myScalarConverter;
     if (converter == null) {
       myScalarConverter = converter = createConverter(ourGetValue);
     }
     return converter;
   }
 
-  private @NotNull Converter createConverter(final JavaMethod method) {
+  private @NotNull Converter<?> createConverter(final JavaMethod method) {
     final Type returnType = method.getGenericReturnType();
     final Type type = returnType == void.class ? method.getGenericParameterTypes()[0] : returnType;
     final Class parameter = DomUtil.substituteGenericType(type, myType);
     if (parameter == null) {
       LOG.error(type + " " + myType);
     }
-    Converter converter = getConverter(new AnnotatedElement() {
+    Converter<?> converter = getConverter(new AnnotatedElement() {
       @Override
       public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
         return myInvocationCache.getMethodAnnotation(method, annotationClass);
@@ -466,8 +466,7 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     return myInvocationCache.getClassAnnotation(annotationClass);
   }
 
-  private @Nullable Converter getConverter(final AnnotatedElement annotationProvider,
-                                           Class parameter) {
+  private @Nullable Converter getConverter(final AnnotatedElement annotationProvider, Class parameter) {
     final Resolve resolveAnnotation = annotationProvider.getAnnotation(Resolve.class);
     if (resolveAnnotation != null) {
       final Class<? extends DomElement> aClass = resolveAnnotation.value();
@@ -482,8 +481,8 @@ public abstract class DomInvocationHandler extends UserDataHolderBase implements
     final ConverterManager converterManager = myManager.getConverterManager();
     Convert convertAnnotation = annotationProvider.getAnnotation(Convert.class);
     if (convertAnnotation != null) {
-      if (convertAnnotation instanceof ConvertAnnotationImpl) {
-        return ((ConvertAnnotationImpl)convertAnnotation).getConverter();
+      if (convertAnnotation instanceof ConvertAnnotationImpl annotation) {
+        return annotation.getConverter();
       }
       return converterManager.getConverterInstance(convertAnnotation.value());
     }

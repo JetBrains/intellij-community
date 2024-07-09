@@ -13,6 +13,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Presentation(typeName = "Attribute")
 public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl implements DomAttributeChildDescription<Void> {
@@ -81,9 +82,7 @@ public class AttributeChildDescriptionImpl extends DomChildDescriptionImpl imple
 
     final AttributeChildDescriptionImpl that = (AttributeChildDescriptionImpl)o;
 
-    if (myGetterMethod != null ? !myGetterMethod.equals(that.myGetterMethod) : that.myGetterMethod != null) return false;
-
-    return true;
+    return Objects.equals(myGetterMethod, that.myGetterMethod);
   }
 
   public int hashCode() {
