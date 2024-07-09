@@ -4,18 +4,26 @@ package com.intellij.diff.merge
 import com.intellij.codeInsight.editorActions.CopyPastePostProcessor
 import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor
 import com.intellij.codeInsight.editorActions.TextBlockTransferableData
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.tools.util.text.MergeInnerDifferences
+import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
+import java.util.concurrent.ConcurrentHashMap
 
-class ChangeReferenceProcessor(val project: Project, private val editor: Editor, val files: List<PsiFile>) {
+class ChangeReferenceProcessor(private val project: Project, private val editor: Editor, private val files: List<PsiFile>, private val documents: List<Document>) {
+
+  private val innerDifferencesCache: MutableMap<TextMergeChange, MergeInnerDifferences?> = ConcurrentHashMap()
 
   fun process(
     side: ThreeSide,
@@ -51,39 +59,59 @@ class ChangeReferenceProcessor(val project: Project, private val editor: Editor,
     processInnerFragments: Boolean,
   ) {
     val sourceThreeSide = sourceSide.select(ThreeSide.LEFT, ThreeSide.RIGHT) ?: return
+    val sourceDocument = sourceThreeSide.select(documents) ?: return
     val psiFile = sourceSide.select(files[0], files[2]) ?: return
-    val sourceDocument = psiFile.fileDocument
-    val startOffset = sourceDocument.getLineStartOffset(change.getStartLine(sourceThreeSide))
-    val endOffset = sourceDocument.getLineEndOffset(change.getEndLine(sourceThreeSide) - 1)
+    val sourceRange = DiffUtil.getLinesRange(sourceDocument, change.getStartLine(sourceThreeSide), change.getEndLine(sourceThreeSide))
 
-    if (!processInnerFragments) {
-      val data = createReferenceData(psiFile, startOffset, endOffset)
+    if (change.getStartLine(sourceThreeSide) == change.getEndLine(sourceThreeSide)) return
+
+    if (processInnerFragments) {
+      val innerDifferences = change.innerFragments ?: compareInner(change) ?: return
+
+      innerDifferences.get(sourceThreeSide)?.forEach {
+        if (it.isEmpty) return@forEach
+
+        val text = editor.document.getText(rangeMarker.textRange)
+        val fragmentStartOffset = sourceRange.startOffset + it.startOffset
+        val rangeInDocument = TextRange(fragmentStartOffset, fragmentStartOffset + it.length)
+        val fragmentText = sourceDocument.getText(rangeInDocument)
+
+        if (fragmentText.isBlank()) return@forEach
+
+        val offset = text.indexOf(fragmentText)
+        if (offset == -1) return@forEach
+
+        val data = createReferenceData(psiFile, rangeInDocument.startOffset, rangeInDocument.endOffset)
+        val marker = sourceDocument.createRangeMarker(
+          rangeMarker.startOffset + offset,
+          rangeMarker.startOffset + offset + fragmentText.length
+        )
+        data.forEach { processorData ->
+          processorData.process(project, editor, marker, 0, Ref(false))
+        }
+      }
+    }
+    else {
+      val data = createReferenceData(psiFile, sourceRange.startOffset, sourceRange.endOffset)
       data.forEach { processorData ->
         processorData.process(project, editor, rangeMarker, 0, Ref(false))
       }
-      return
     }
+  }
 
-    val innerFragments = change.innerFragments
-    innerFragments?.get(sourceThreeSide)?.forEach {
-      if (it.isEmpty) return@forEach
+  private fun getSequences(change: TextMergeChange): List<CharSequence?> {
+    return ThreeSide.map {
+      if (!change.isChange(it)) return@map null
+      val startLine = change.getStartLine(it)
+      val endLine = change.getEndLine(it)
+      if (startLine == endLine) return@map null
+      return@map DiffUtil.getLinesContent(it.select(documents), startLine, endLine)
+    }
+  }
 
-      val text = editor.document.getText(rangeMarker.textRange)
-      val fragmentStartOffset = startOffset + it.startOffset
-      val rangeInDocument = TextRange(fragmentStartOffset, fragmentStartOffset + it.length)
-      val fragmentText = sourceDocument.getText(rangeInDocument)
-      val offset = text.indexOf(fragmentText)
-
-      if (offset == -1) return@forEach
-
-      val data = createReferenceData(psiFile, rangeInDocument.startOffset, rangeInDocument.endOffset)
-      val marker = sourceDocument.createRangeMarker(
-        rangeMarker.startOffset + offset,
-        rangeInDocument.startOffset + offset + it.length
-      )
-      data.forEach { processorData ->
-        processorData.process(project, editor, marker, 0, Ref(false))
-      }
+  private fun compareInner(change: TextMergeChange): MergeInnerDifferences? {
+    return innerDifferencesCache.computeIfAbsent(change) {
+      return@computeIfAbsent DiffUtil.compareThreesideInner(getSequences(change), ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE)
     }
   }
 

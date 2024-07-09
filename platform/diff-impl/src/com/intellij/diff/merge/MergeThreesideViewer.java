@@ -1,9 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.merge;
 
-import com.intellij.codeInsight.editorActions.CopyPastePostProcessor;
-import com.intellij.codeInsight.editorActions.ReferenceCopyPasteProcessor;
-import com.intellij.codeInsight.editorActions.TextBlockTransferableData;
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
@@ -59,7 +56,10 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.Range;
@@ -409,7 +409,6 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
         if (getTextSettings().isAutoResolveImportConflicts()) {
           initPsiFiles();
-          myChangeReferenceProcessor = new ChangeReferenceProcessor(myProject, getEditor(), myPsiFiles);
           return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
         }
         return null;
@@ -535,6 +534,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     );
 
     if (myResolveImportConflicts) {
+      myChangeReferenceProcessor =
+        new ChangeReferenceProcessor(myProject, getEditor(), myPsiFiles,
+                                     ContainerUtil.map(myMergeRequest.getContents(), content -> content.getDocument()));
       List<TextMergeChange> importChanges = ContainerUtil.filter(getChanges(), change -> change.isImportChange());
       if (importChanges.size() != fragmentsWithMetadata.getFragments().size()) {
         for (TextMergeChange importChange : importChanges) {
@@ -1104,8 +1106,9 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
     if (myResolveImportConflicts && myPsiFiles.size() == 3) {
       Document document = getContent(ThreeSide.BASE).getDocument();
       List<RangeMarker> markers = ContainerUtil.map(newRanges, range ->
-        document.createRangeMarker(document.getLineStartOffset(range.start), document.getLineEndOffset(range.end)));
+        document.createRangeMarker(DiffUtil.getLinesRange(document, range.start, range.end)));
       myChangeReferenceProcessor.process(side, changes, markers);
+      markers.forEach(RangeMarker::dispose);
     }
   }
 
