@@ -207,9 +207,10 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
       val text = file.text
       TestCase.assertTrue("Unexpected pom content:\n$text", text.contains(expectedFileContent))
 
-      fixture.configureFromExistingVirtualFile(virtualFile)
+      //fixture.configureFromExistingVirtualFile(virtualFile)
+      fixture.configureByText("pom.xml", text)
       val highlighting = fixture.doHighlighting()
-      MavenLog.LOG.warn("Highlighting:\n\n" + highlighting.map { it.toString() }.joinToString("\n\n"))
+      MavenLog.LOG.warn("Highlighting:\n\n" + highlighting.joinToString("\n\n") { it.toString() })
       val actualProperties = highlighting
         .filter { it.gutterIconRenderer != null }
         .map { text.substring(it.getStartOffset(), it.getEndOffset()) }
