@@ -7,23 +7,26 @@ BATCH_SIZE = 10000
 
 
 def get_type(table):
+    # type: (str) -> str
     return str(type(table))
 
 
 # noinspection PyUnresolvedReferences
 def get_shape(table):
+     # type: (datasets.arrow_dataset.Dataset) -> str
     return str(table.shape[0])
 
 
 # noinspection PyUnresolvedReferences
 def get_head(table):
-    table = pd.concat(list(__convert_to_df(table)), ignore_index=True)
-    return repr(table.head().to_html(notebook=True, max_cols=None))
+     # type: (datasets.arrow_dataset.Dataset) -> str
+    return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=None))
 
 
 # noinspection PyUnresolvedReferences
 def get_column_types(table):
-    table = pd.concat(list(__convert_to_df(table)), ignore_index=True)
+     # type: (datasets.arrow_dataset.Dataset) -> str
+    table = __convert_to_df(table)
     return str(table.index.dtype) + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
             TABLE_TYPE_NEXT_VALUE_SEPARATOR.join([str(t) for t in table.dtypes])
 
@@ -31,6 +34,7 @@ def get_column_types(table):
 # used by pydevd
 # noinspection PyUnresolvedReferences
 def get_data(table, start_index=None, end_index=None):
+     # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
     def convert_data_to_html(data, max_cols):
         return repr(data.to_html(notebook=True, max_cols=max_cols))
@@ -41,6 +45,7 @@ def get_data(table, start_index=None, end_index=None):
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
 def display_data(table, start_index, end_index):
+     # type: (datasets.arrow_dataset.Dataset, int, int) -> None
     def ipython_display(data, max_cols):
         from IPython.display import display
         display(data)
@@ -49,11 +54,12 @@ def display_data(table, start_index, end_index):
 
 
 def __get_data_slice(table, start, end):
-    table = pd.concat(list(__convert_to_df(table)), ignore_index=True)
-    return table.iloc[start:end]
+    # type: (datasets.arrow_dataset.Dataset, int, int) -> pd.DataFrame
+    return __convert_to_df(table).iloc[start:end]
 
 
 def _compute_sliced_data(table, fun, start_index=None, end_index=None):
+    # type: (datasets.arrow_dataset.Dataset, function, int, int) -> str
     max_cols, max_colwidth, max_rows = __get_tables_display_options()
 
     _jb_max_cols = pd.get_option('display.max_columns')
@@ -67,7 +73,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
     else:
-        table = pd.concat(list(__convert_to_df(table)), ignore_index=True)
+        table = __convert_to_df(table)
 
     data = fun(table, max_cols)
 
@@ -80,6 +86,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
 
 # In old versions of pandas max_colwidth accepted only Int-s
 def __get_tables_display_options():
+    # type: () -> Tuple[None, Union[int, None], None]
     import sys
     if sys.version_info < (3, 0):
         return None, MAX_COLWIDTH_PYTHON_2, None
@@ -88,6 +95,7 @@ def __get_tables_display_options():
 
 # noinspection PyUnresolvedReferences
 def __convert_to_df(table):
+    # type: (datasets.arrow_dataset.Dataset) -> pd.DataFrame
     try:
         import datasets
         if type(table) is datasets.arrow_dataset.Dataset:
@@ -98,7 +106,12 @@ def __convert_to_df(table):
 
 
 def __dataset_to_df(dataset):
+    # type: (datasets.arrow_dataset.Dataset) -> pd.DataFrame
     try:
-        return dataset.to_pandas(batched=True, batch_size=min(len(dataset), BATCH_SIZE))
+        dataset_as_df = list(dataset.to_pandas(batched=True, batch_size=min(len(dataset), BATCH_SIZE)))
+        if len(dataset_as_df) > 1:
+            return pd.concat(dataset_as_df, ignore_index=True)
+        else:
+            return dataset_as_df[0]
     except ImportError as e:
         pass
