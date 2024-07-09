@@ -9,4 +9,5 @@
 8(9) element: PyParenthesizedExpression
 9(10) READ ACCESS: name
 10(5,11) READ ACCESS: val
-11() element: null
+11(12) element: PyCallExpression: dict
+12() element: null
