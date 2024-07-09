@@ -21,12 +21,16 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.SizedIcon;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.ActionPopupStep;
+import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -47,6 +51,8 @@ import java.util.List;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+
+import static com.intellij.execution.ui.RunToolbarPopupKt.RUN_CONFIGURATION_KEY;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
@@ -361,7 +367,28 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
-
+  @Override
+  protected JBPopup createActionPopup(DefaultActionGroup group,
+                                      @NotNull DataContext context,
+                                      @Nullable Runnable disposeCallback) {
+    JBPopup popup = super.createActionPopup(group, context, disposeCallback);
+    if (popup instanceof PopupFactoryImpl.ActionGroupPopup actionGroupPopup) {
+      PopupStep<?> step = actionGroupPopup.getStep();
+      if (step instanceof ActionPopupStep actionPopupStep) {
+        actionPopupStep.setSubStepContextAdjuster((stepContext, action) -> {
+          if (action instanceof SelectConfigAction selectConfigAction) {
+            return CustomizedDataContext.withSnapshot(stepContext, sink -> {
+              sink.set(RUN_CONFIGURATION_KEY, selectConfigAction.getConfiguration());
+            });
+          }
+          else {
+            return stepContext;
+          }
+        });
+      }
+    }
+    return popup;
+  }
 
   private static final class SaveTemporaryAction extends DumbAwareAction {
     SaveTemporaryAction() {
@@ -559,6 +586,14 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       if (!ExperimentalUI.isNewUI()) {
         Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
         result.add(new RunSpecifiedConfigExecutorAction(runExecutor, myConfiguration, true));
+      }
+      else {
+        // TODO - when the Old UI is removed from the platform at all, do the following:
+        //   1) remove this line
+        //   2) include the action with id `IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS`
+        //      into the action group with id `RunConfigurationsComboBoxAction.RUN_CONFIGURATION_GROUP_ID`
+        //      in xml-file where the action group is declared
+        result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
       }
 
       result.add(ActionManager.getInstance().getAction(RUN_CONFIGURATION_GROUP_ID));
