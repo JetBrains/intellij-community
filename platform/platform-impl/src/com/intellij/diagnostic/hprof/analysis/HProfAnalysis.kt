@@ -115,8 +115,9 @@ class HProfAnalysis(private val hprofFileChannel: FileChannel,
         histogram.instanceCount)
 
       parser.accept(remapIDsVisitor, "id mapping")
-      parser.setIdRemappingFunction(remapIDsVisitor.getRemappingFunction())
-      hprofMetadata.remapIds(remapIDsVisitor.getRemappingFunction())
+      val idMapper = remapIDsVisitor.getIDMapper()
+      parser.setIDMapper(idMapper)
+      hprofMetadata.remapIds(idMapper)
 
       progress.text2 = DiagnosticBundle.message("hprof.analysis.progress.details.create.object.graph.files")
       progress.fraction = 0.3

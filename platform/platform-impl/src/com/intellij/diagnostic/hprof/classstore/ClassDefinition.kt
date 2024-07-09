@@ -16,8 +16,8 @@
 package com.intellij.diagnostic.hprof.classstore
 
 import com.intellij.diagnostic.hprof.parser.Type
+import com.intellij.diagnostic.hprof.util.IDMapper
 import org.jetbrains.annotations.NonNls
-import java.util.function.LongUnaryOperator
 
 class ClassDefinition(val name: String,
                       val id: Long,
@@ -99,8 +99,8 @@ class ClassDefinition(val name: String,
 
   fun isPrimitiveArray(): Boolean = isArray() && name.length == 2
 
-  fun copyWithRemappedIDs(remappingFunction: LongUnaryOperator): ClassDefinition {
-    fun map(id: Long): Long = remappingFunction.applyAsLong(id)
+  fun copyWithRemappedIDs(idMapper: IDMapper): ClassDefinition {
+    fun map(id: Long): Long = idMapper.getID(id)
     val newConstantFields = LongArray(constantFields.size) {
       map(constantFields[it])
     }

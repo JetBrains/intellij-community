@@ -18,12 +18,12 @@ package com.intellij.diagnostic.hprof.parser
 import com.google.common.base.Stopwatch
 import com.intellij.diagnostic.hprof.util.HProfReadBuffer
 import com.intellij.diagnostic.hprof.util.HProfReadBufferSlidingWindow
+import com.intellij.diagnostic.hprof.util.IDMapper
 import com.intellij.openapi.diagnostic.logger
 import java.io.EOFException
 import java.io.IOException
 import java.nio.channels.FileChannel
 import java.nio.charset.Charset
-import java.util.function.LongUnaryOperator
 
 class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
   companion object {
@@ -34,7 +34,7 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
     private set
 
   private var reparsePosition: Long = 0
-  private var remapFunction: LongUnaryOperator? = null
+  private var idMapper: IDMapper? = null
   val buffer: HProfReadBuffer = HProfReadBufferSlidingWindow(fileChannel, this)
 
   private var heapRecordPosition: Long = 0
@@ -47,8 +47,8 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
     buffer.close()
   }
 
-  fun setIdRemappingFunction(remapFunction: LongUnaryOperator) {
-    this.remapFunction = remapFunction
+  fun setIDMapper(idMapper: IDMapper) {
+    this.idMapper = idMapper
   }
 
   private fun initialParse() {
@@ -318,7 +318,10 @@ class HProfEventBasedParser(fileChannel: FileChannel) : AutoCloseable {
     )
   }
 
-  fun remap(id: Long): Long = remapFunction?.applyAsLong(id) ?: id
+  fun remap(id: Long): Long {
+    if (id == 0L) return 0L
+    return idMapper?.getID(id) ?: id
+  }
 
   private fun readTypeSizeValue(elementType: Type): Long {
     if (elementType === Type.OBJECT) {

@@ -2532,7 +2532,7 @@ f:com.intellij.diagnostic.hprof.classstore.ClassDefinition
 - f:allRefFieldNames(com.intellij.diagnostic.hprof.classstore.ClassStore):java.util.List
 - f:computeOffsetOfField(java.lang.String,com.intellij.diagnostic.hprof.classstore.ClassStore):I
 - f:copyWithName(java.lang.String):com.intellij.diagnostic.hprof.classstore.ClassDefinition
-- f:copyWithRemappedIDs(java.util.function.LongUnaryOperator):com.intellij.diagnostic.hprof.classstore.ClassDefinition
+- f:copyWithRemappedIDs(com.intellij.diagnostic.hprof.util.IDMapper):com.intellij.diagnostic.hprof.classstore.ClassDefinition
 - equals(java.lang.Object):Z
 - f:getClassFieldName(I):java.lang.String
 - f:getClassLoaderId():J
@@ -2559,7 +2559,7 @@ f:com.intellij.diagnostic.hprof.classstore.ClassDefinition$Companion
 f:com.intellij.diagnostic.hprof.classstore.ClassStore
 - <init>(it.unimi.dsi.fastutil.longs.Long2ObjectMap):V
 - f:containsClass(java.lang.String):Z
-- f:createStoreWithRemappedIDs(java.util.function.LongUnaryOperator):com.intellij.diagnostic.hprof.classstore.ClassStore
+- f:createStoreWithRemappedIDs(com.intellij.diagnostic.hprof.util.IDMapper):com.intellij.diagnostic.hprof.classstore.ClassStore
 - f:forEachClass(kotlin.jvm.functions.Function1):V
 - f:get(I):com.intellij.diagnostic.hprof.classstore.ClassDefinition
 - f:get(J):com.intellij.diagnostic.hprof.classstore.ClassDefinition
@@ -2578,7 +2578,7 @@ f:com.intellij.diagnostic.hprof.classstore.HProfMetadata
 - f:getClassStore():com.intellij.diagnostic.hprof.classstore.ClassStore
 - f:getRoots():it.unimi.dsi.fastutil.longs.Long2ObjectMap
 - f:getThreads():it.unimi.dsi.fastutil.longs.Long2ObjectMap
-- f:remapIds(java.util.function.LongUnaryOperator):V
+- f:remapIds(com.intellij.diagnostic.hprof.util.IDMapper):V
 - f:setClassStore(com.intellij.diagnostic.hprof.classstore.ClassStore):V
 - f:setRoots(it.unimi.dsi.fastutil.longs.Long2ObjectMap):V
 f:com.intellij.diagnostic.hprof.classstore.HProfMetadata$Companion
@@ -2724,7 +2724,7 @@ f:com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 - f:getBuffer():com.intellij.diagnostic.hprof.util.HProfReadBuffer
 - f:getIdSize():I
 - f:remap(J):J
-- f:setIdRemappingFunction(java.util.function.LongUnaryOperator):V
+- f:setIDMapper(com.intellij.diagnostic.hprof.util.IDMapper):V
 f:com.intellij.diagnostic.hprof.parser.HProfEventBasedParser$Companion
 c:com.intellij.diagnostic.hprof.parser.HProfVisitor
 - visitorContext:com.intellij.diagnostic.hprof.parser.VisitorContext
@@ -2967,6 +2967,9 @@ f:com.intellij.diagnostic.hprof.util.HprofWriter
 - f:writeStackFrame(J,J,J,J,I,I):V
 - f:writeStackTrace(I,J,J[]):V
 - f:writeStringInUTF8(J,java.lang.String):V
+com.intellij.diagnostic.hprof.util.IDMapper
+- a:getID(J):J
+- a:isValidID(J):Z
 com.intellij.diagnostic.hprof.util.IntList
 - a:get(I):I
 - a:set(I,I):V
@@ -3066,7 +3069,7 @@ a:com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor
 - sf:Companion:com.intellij.diagnostic.hprof.visitors.RemapIDsVisitor$Companion
 - <init>():V
 - a:addMapping(J,I):V
-- a:getRemappingFunction():java.util.function.LongUnaryOperator
+- a:getIDMapper():com.intellij.diagnostic.hprof.util.IDMapper
 - preVisit():V
 - visitClassDump(J,J,J,J,J,com.intellij.diagnostic.hprof.parser.ConstantPoolEntry[],com.intellij.diagnostic.hprof.parser.StaticFieldEntry[],com.intellij.diagnostic.hprof.parser.InstanceFieldEntry[]):V
 - visitInstanceDump(J,J,J,java.nio.ByteBuffer):V
