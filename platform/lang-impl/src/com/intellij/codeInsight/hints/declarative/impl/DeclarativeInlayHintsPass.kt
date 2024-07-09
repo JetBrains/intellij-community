@@ -94,7 +94,7 @@ class DeclarativeInlayHintsPass(
             val lineEndOffset = editor.document.getLineEndOffset(position.line)
             val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingEolElements, inlayData, lineEndOffset)
             if (!updated) {
-              val presentationList = InlayPresentationList(inlayData.tree, inlayData.hintColorKind, inlayData.disabled,
+              val presentationList = InlayPresentationList(inlayData.tree, inlayData.hintFormat, inlayData.disabled,
                                                            createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip, inlayData.sourceId)
               val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position)
               val inlay = inlayModel.addAfterLineEndElement(lineEndOffset, true, renderer)
@@ -106,7 +106,7 @@ class DeclarativeInlayHintsPass(
           is InlineInlayPosition -> {
             val updated = tryUpdateAndDeleteFromListInlay(offsetToExistingInlineElements, inlayData, position.offset)
             if (!updated) {
-              val presentationList = InlayPresentationList(inlayData.tree, inlayData.hintColorKind, inlayData.disabled,
+              val presentationList = InlayPresentationList(inlayData.tree, inlayData.hintFormat, inlayData.disabled,
                                                            createPayloads(inlayData), inlayData.providerClass, inlayData.tooltip, inlayData.sourceId)
               val renderer = DeclarativeInlayRenderer(presentationList, storage, inlayData.providerId, position)
               val inlay = inlayModel.addInlineElement(position.offset, position.relatedToPrevious, position.priority, renderer)
@@ -145,7 +145,7 @@ class DeclarativeInlayHintsPass(
         val existingInlay = iterator.next()
         val renderer = existingInlay.renderer
         if (renderer.providerId == inlayData.providerId) {
-          renderer.updateState(inlayData.tree, inlayData.disabled, inlayData.hintColorKind)
+          renderer.updateState(inlayData.tree, inlayData.disabled, inlayData.hintFormat)
           existingInlay.update()
           iterator.remove()
           return true

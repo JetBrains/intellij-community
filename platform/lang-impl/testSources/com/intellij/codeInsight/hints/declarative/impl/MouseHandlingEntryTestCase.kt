@@ -1,10 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl
 
-import com.intellij.codeInsight.hints.declarative.CollapseState
-import com.intellij.codeInsight.hints.declarative.CollapsiblePresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.HintColorKind
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import junit.framework.TestCase
@@ -176,7 +173,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val state = buildState {
       initialStateBuilder()
     }
-    val presentationList = InlayPresentationList(state, HintColorKind.Default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    val presentationList = InlayPresentationList(state, HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
     var occurence = 0
@@ -194,7 +191,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val newState = buildState {
       updatedStateBuilder()
     }
-    presentationList.updateState(newState, false, HintColorKind.TextWithoutBackground)
+    presentationList.updateState(newState, false, HintFormat.default.withColorKind(HintColorKind.TextWithoutBackground))
     val updatedStateEntries = presentationList.getEntries().toList()
     assertEquals(afterUpdateText, toText(updatedStateEntries))
   }
@@ -252,7 +249,7 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     myFixture.configureByText("test.txt", "my text")
     val root = PresentationTreeBuilderImpl.createRoot()
     b(root)
-    val presentationList = InlayPresentationList(root.complete(), HintColorKind.Default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
+    val presentationList = InlayPresentationList(root.complete(), HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
     beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList,
