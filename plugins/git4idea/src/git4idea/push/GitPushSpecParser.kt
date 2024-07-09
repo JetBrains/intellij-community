@@ -1,70 +1,69 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package git4idea.push;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-import git4idea.GitBranch;
-import git4idea.GitUtil;
-import git4idea.branch.GitBranchUtil;
-import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package git4idea.push
 
-import java.util.List;
+import com.intellij.openapi.diagnostic.thisLogger
+import git4idea.GitUtil
+import git4idea.branch.GitBranchUtil
+import git4idea.repo.GitRepository
 
-final class GitPushSpecParser {
-  private static final Logger LOG = Logger.getInstance(GitPushSpecParser.class);
+internal object GitPushSpecParser {
+  private val LOG = thisLogger()
 
-  static @Nullable String getTargetRef(@NotNull GitRepository repository, @NotNull String sourceBranchName, @NotNull List<String> specs) {
+  @JvmStatic
+  fun getTargetRef(
+    repository: GitRepository,
+    sourceBranchName: String,
+    specs: List<String>,
+  ): String? {
     // pushing to several pushSpecs is not supported => looking for the first one which is valid & matches the current branch
-    for (String spec : specs) {
-      String target = getTarget(spec, sourceBranchName);
+    for (spec in specs) {
+      val target = getTarget(spec, sourceBranchName)
       if (target == null) {
-        LOG.info("Push spec [" + spec + "] in " + repository.getRoot() + " is invalid or doesn't match source branch " + sourceBranchName);
+        LOG.info(
+          "Push spec [$spec] in ${repository.root} is invalid or doesn't match source branch $sourceBranchName"
+        )
       }
       else {
-        return target;
+        return target
       }
     }
-    return null;
+    return null
   }
 
-  private static @Nullable String getTarget(@NotNull String spec, @NotNull String sourceBranch) {
-    String[] parts = spec.split(":");
-    if (parts.length != 2) {
-      return null;
-    }
-    String specSource = parts[0].trim();
-    String specTarget = parts[1].trim();
-    specSource = StringUtil.trimStart(specSource, "+");
+  private fun getTarget(spec: String, sourceBranch: String): String? {
+    val parts = spec.split(':').takeIf { it.size == 2 } ?: return null
+
+    val specSource = parts[0].trim().removePrefix("+")
+    val specTarget = parts[1].trim()
 
     if (!isStarPositionValid(specSource, specTarget)) {
-      return null;
+      return null
     }
 
-    String strippedSpecSource = GitBranchUtil.stripRefsPrefix(specSource);
-    String strippedSourceBranch = GitBranchUtil.stripRefsPrefix(sourceBranch);
-    sourceBranch = GitBranch.REFS_HEADS_PREFIX + strippedSourceBranch;
+    val strippedSpecSource = GitBranchUtil.stripRefsPrefix(specSource)
+    val strippedSourceBranch = GitBranchUtil.stripRefsPrefix(sourceBranch)
 
-    if (strippedSpecSource.equals(GitUtil.HEAD) ||
-        specSource.equals(sourceBranch) ||
-        specSource.equals(strippedSourceBranch)) {
-      return specTarget;
+    if (strippedSpecSource == GitUtil.HEAD ||
+        specSource == sourceBranch ||
+        specSource == strippedSourceBranch
+    ) {
+      return specTarget
     }
 
     if (specSource.endsWith("*")) {
-      String sourceWoStar = specSource.substring(0, specSource.length() - 1);
+      val sourceWoStar = specSource.substring(0, specSource.length - 1)
       if (sourceBranch.startsWith(sourceWoStar)) {
-        String starMeaning = sourceBranch.substring(sourceWoStar.length());
-        return specTarget.replace("*", starMeaning);
+        val starMeaning = sourceBranch.substring(sourceWoStar.length)
+        return specTarget.replace("*", starMeaning)
       }
     }
-    return null;
+    return null
   }
 
-  private static boolean isStarPositionValid(@NotNull String source, @NotNull String target) {
-    int sourceStar = source.indexOf('*');
-    int targetStar = target.indexOf('*');
-    return (sourceStar < 0 && targetStar < 0) || (sourceStar == source.length() - 1 && targetStar == target.length() - 1);
+  private fun isStarPositionValid(source: String, target: String): Boolean {
+    val sourceStar = source.indexOf('*')
+    val targetStar = target.indexOf('*')
+    return (sourceStar < 0 && targetStar < 0) || (sourceStar == source.length - 1 && targetStar == target.length - 1)
   }
 }
