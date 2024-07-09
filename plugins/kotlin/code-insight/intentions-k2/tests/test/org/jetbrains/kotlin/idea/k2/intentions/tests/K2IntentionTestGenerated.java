@@ -7533,7 +7533,149 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/anonymousFunctionToLambda")
+    public static class AnonymousFunctionToLambda extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("callMultiline.kt")
+        public void testCallMultiline() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/callMultiline.kt");
+        }
+
+        @TestMetadata("constructor.kt")
+        public void testConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/constructor.kt");
+        }
+
+        @TestMetadata("emptyBody.kt")
+        public void testEmptyBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/emptyBody.kt");
+        }
+
+        @TestMetadata("expressionBody.kt")
+        public void testExpressionBody() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/expressionBody.kt");
+        }
+
+        @TestMetadata("fullParam.kt")
+        public void testFullParam() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/fullParam.kt");
+        }
+
+        @TestMetadata("hasComment.kt")
+        public void testHasComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/hasComment.kt");
+        }
+
+        @TestMetadata("hasComment2.kt")
+        public void testHasComment2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/hasComment2.kt");
+        }
+
+        @TestMetadata("hasLabel.kt")
+        public void testHasLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/hasLabel.kt");
+        }
+
+        @TestMetadata("hasLabel2.kt")
+        public void testHasLabel2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/hasLabel2.kt");
+        }
+
+        @TestMetadata("hasLabel3.kt")
+        public void testHasLabel3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/hasLabel3.kt");
+        }
+
+        @TestMetadata("moveOut.kt")
+        public void testMoveOut() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/moveOut.kt");
+        }
+
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("noSpaceAfterFunctionLeftBrace.kt")
+        public void testNoSpaceAfterFunctionLeftBrace() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/noSpaceAfterFunctionLeftBrace.kt");
+        }
+
+        @TestMetadata("paramName.kt")
+        public void testParamName() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/paramName.kt");
+        }
+
+        @TestMetadata("replaceReturnWithExpression.kt")
+        public void testReplaceReturnWithExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/replaceReturnWithExpression.kt");
+        }
+
+        @TestMetadata("replaceReturnWithLabel.kt")
+        public void testReplaceReturnWithLabel() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/replaceReturnWithLabel.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/simple.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/typeParameter.kt");
+        }
+
+        @TestMetadata("typeParameter2.kt")
+        public void testTypeParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/typeParameter2.kt");
+        }
+
+        @TestMetadata("typeParameter3.kt")
+        public void testTypeParameter3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/typeParameter3.kt");
+        }
+
+        @TestMetadata("typeParameterWithUnusedParameter.kt")
+        public void testTypeParameterWithUnusedParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/typeParameterWithUnusedParameter.kt");
+        }
+
+        @TestMetadata("typeParameterWithUnusedParameter2.kt")
+        public void testTypeParameterWithUnusedParameter2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/typeParameterWithUnusedParameter2.kt");
+        }
+
+        @TestMetadata("typeParameterWithVararg.kt")
+        public void testTypeParameterWithVararg() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/typeParameterWithVararg.kt");
+        }
+
+        @TestMetadata("variable.kt")
+        public void testVariable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/variable.kt");
+        }
+
+        @TestMetadata("variable2.kt")
+        public void testVariable2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/anonymousFunctionToLambda/variable2.kt");
+        }
+    }
 
 
 
