@@ -99,6 +99,7 @@ fun <T : CommandChain> T.openRandomFile(extension: String): T = apply {
 }
 
 fun <T : CommandChain> T.openProject(projectPath: Path, openInNewWindow: Boolean = true, detectProjectLeak: Boolean = false): T = apply {
+  if(detectProjectLeak && openInNewWindow) throw IllegalArgumentException("To analyze the project leak, we need to close the project")
   addCommand("${CMD_PREFIX}openProject", projectPath.toString(), (!openInNewWindow).toString(), detectProjectLeak.toString())
 }
 

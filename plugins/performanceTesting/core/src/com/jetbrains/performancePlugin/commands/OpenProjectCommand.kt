@@ -54,8 +54,8 @@ import java.util.*
  *
  * In the end, the same project a will be active and there will be 2 window frames.
  *
- * To perform Project Leak detection, pass the fourth argument as true.
- * %openProject /tmp/a true true
+ * To perform Project Leak detection, pass the fourth argument as true but make sure that previous project is closed.
+ * %openProject /tmp/a false true
  */
 class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -75,6 +75,7 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     val projectToOpen = if (arguments.size > 1) arguments[1] else ""
     val closeProjectBeforeOpening = arguments.size < 3 || arguments[2].toBoolean()
     val detectProjectLeak = arguments.size > 3 && arguments[3].toBoolean()
+    if(!closeProjectBeforeOpening && detectProjectLeak) throw IllegalArgumentException("Previous project has to be closed to perform project leak detection")
     val project = context.project
     if (projectToOpen.isEmpty() && project.isDefault) {
       throw IllegalArgumentException("Path to project to open required")
@@ -137,6 +138,9 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     context.setProject(newProject)
   }
 
+  /**
+   * @param projectName project to exclude from analysis
+   */
   private class AnalyzeProjectGraph(analysisContext: AnalysisContext, listProvider: ListProvider, val projectName: String)
     : AnalyzeGraph(analysisContext, listProvider) {
     override fun analyze(progress: ProgressIndicator): AnalysisReport = AnalysisReport().apply {
@@ -160,6 +164,9 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     }
   }
 
+  /**
+   * @param newProject current opened project, it will be excluded from analysis
+   */
   private fun analyzeSnapshot(newProject: Project) {
     val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
     val snapshotFileName = "reopen-project-$snapshotDate.hprof"
