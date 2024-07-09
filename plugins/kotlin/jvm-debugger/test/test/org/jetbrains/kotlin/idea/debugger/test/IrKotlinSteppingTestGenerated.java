@@ -1458,6 +1458,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/idea300605.kt");
         }
 
+        @TestMetadata("idea326580.kt")
+        public void testIdea326580() throws Exception {
+            runTest("testData/stepping/custom/idea326580.kt");
+        }
+
         @TestMetadata("idea334404.kt")
         public void testIdea334404() throws Exception {
             runTest("testData/stepping/custom/idea334404.kt");
