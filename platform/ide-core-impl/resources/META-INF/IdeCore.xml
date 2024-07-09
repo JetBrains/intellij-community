@@ -15,6 +15,8 @@
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" client="all"/>
 
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization"/>
+    
     <applicationService serviceInterface="com.intellij.psi.impl.DocumentCommitProcessor"
                         serviceImplementation="com.intellij.psi.impl.DocumentCommitThread"/>
   </extensions>

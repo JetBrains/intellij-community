@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UINumericRange
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
+import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.channels.BufferOverflow
@@ -90,7 +91,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     }
 
   var isConfirmExit: Boolean
-    get() = state.confirmExit
+    get() = IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation && state.confirmExit
     set(value) {
       state.confirmExit = value
     }
