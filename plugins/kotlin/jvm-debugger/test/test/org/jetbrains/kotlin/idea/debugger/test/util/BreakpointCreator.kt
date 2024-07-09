@@ -2,16 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.util
 
-import com.intellij.debugger.DebuggerInvocationUtil
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.debugger.ui.breakpoints.BreakpointManager
 import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,6 +25,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties
 import org.jetbrains.java.debugger.breakpoints.properties.JavaLineBreakpointProperties
+import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinFieldBreakpointType
 import org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isKotlinSourceFile
@@ -35,9 +34,7 @@ import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpo
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferenceKeys
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
-import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils.findLinesWithPrefixesRemoved
 import java.util.*
-import javax.swing.SwingUtilities
 
 internal class BreakpointCreator(
     private val project: Project,
@@ -93,6 +90,9 @@ internal class BreakpointCreator(
                     }
                     comment.startsWith("//FunctionBreakpoint!") -> {
                         createFunctionBreakpoint(breakpointManager, file, lineIndex, false)
+                    }
+                    comment.startsWith("//LogFirstArgumentBreakpoint!") -> {
+                        createLogFirstArgumentBreakpoint(breakpointManager, file, lineIndex)
                     }
                     else -> throw AssertionError("Cannot create breakpoint at line ${lineIndex + 1}")
                 }
@@ -168,6 +168,22 @@ internal class BreakpointCreator(
         if (breakpoint is KotlinFunctionBreakpoint) {
             val lineNumberSuffix = if (fromLibrary) "" else ":${lineIndex + 1}"
             logger("FunctionBreakpoint created at ${file.virtualFile.name}$lineNumberSuffix")
+        }
+    }
+
+    private fun createLogFirstArgumentBreakpoint(breakpointManager: XBreakpointManager, file: PsiFile, lineIndex: Int) {
+        val kotlinLineBreakpointType = findBreakpointType(KotlinLineBreakpointType::class.java)
+        val javaBreakpoint = createBreakpointOfType(
+            breakpointManager,
+            kotlinLineBreakpointType,
+            lineIndex,
+            file.virtualFile,
+            null,
+            false,
+        )
+        javaBreakpoint?.setIsDebugLogBreakpoint(true)
+        if (javaBreakpoint is LineBreakpoint<*>) {
+            thisLogger().debug("LogFirstArgumentBreakpoint created at ${file.virtualFile.name}:${lineIndex + 1}")
         }
     }
 

@@ -106,8 +106,7 @@ object CoroutineBreakpointFacility {
         breakpoint.createRequest(debugProcess)
         debugProcess.setSteppingBreakpoint(breakpoint)
 
-        val filterThread = debugProcess.requestsManager.filterThread
-        thisLogger().debug("Resume breakpoint for $method in thread $filterThread")
+        thisLogger().debug("Resume breakpoint for $method in context $context")
 
         return true
     }
