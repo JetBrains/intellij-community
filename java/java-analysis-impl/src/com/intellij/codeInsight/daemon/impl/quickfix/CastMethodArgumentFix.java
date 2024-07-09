@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,8 +33,9 @@ public final class CastMethodArgumentFix extends MethodArgumentFix implements Hi
     protected PsiExpression getModifiedArgument(final PsiExpression expression, PsiType toType) throws IncorrectOperationException {
       final PsiType exprType = expression.getType();
       if (exprType instanceof PsiClassType && toType instanceof PsiPrimitiveType) {
-        toType = ((PsiPrimitiveType)toType).getBoxedType(expression);
-        assert toType != null;
+        PsiClassType boxed = ((PsiPrimitiveType)toType).getBoxedType(expression);
+        assert boxed != null : toType + ":" + PsiUtil.getLanguageLevel(expression);
+        toType = boxed;
       }
       return AddTypeCastFix.createCastExpression(expression, expression.getProject(), toType);
     }
