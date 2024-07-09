@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.onboarding.k2
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.pluginCanWorkInK2Mode
+import com.intellij.ide.plugins.isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -70,18 +70,24 @@ class EnableK2NotificationService {
 
     private fun hasIncompatibleWithK2ModeThirdPartyPluginsEnabled(): Boolean {
         val allEnabledThirdPartyPlugins = PluginManagerCore.getPluginSet().allPlugins.filter { !it.isBundled && it.isEnabled }
-        return allEnabledThirdPartyPlugins.any { !pluginCanWorkInK2Mode(it) }
+        return allEnabledThirdPartyPlugins.any {
+            isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(
+                it,
+                shouldCheckIfK2modeIsOn = false
+            )
+        }
         // Code for future: get all incompatible plugins:
 
         /*        val pluginsToSwitchOff = mutableSetOf<IdeaPluginDescriptorImpl>()
                 for (plugin in allEnabledThirdPartyPlugins) {
-                    if (!pluginCanWorkInK2Mode(plugin)) {
+                    if (isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin, shouldCheckIfK2modeIsOn = false)) {
                         pluginsToSwitchOff.add(plugin)
                     }
                 }
 
                 if (pluginsToSwitchOff.isNotEmpty()) {
                     // For future: add to the notification that they will be switched off and switch them off:)
+                    return true
                 }
                 return false*/
     }

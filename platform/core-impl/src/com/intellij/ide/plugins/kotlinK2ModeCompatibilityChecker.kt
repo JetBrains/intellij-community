@@ -7,8 +7,7 @@ private val pluginIdsToIgnoreK2KotlinCompatibility: List<String> =
   System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.map { it.trim() }.orEmpty() +
   listOf("fleet.backend.kotlin", "fleet.backend.mercury", "fleet.backend.mercury.kotlin.macos")
 
-@ApiStatus.Internal
-fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
+internal fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
   return plugin.epNameToExtensions["org.jetbrains.kotlin.supportsKotlinK2Mode"]?.isNotEmpty() == true
          || plugin.pluginId.idString in pluginIdsToIgnoreK2KotlinCompatibility
 }
@@ -19,16 +18,16 @@ internal fun isKotlinPluginK2Mode(): Boolean {
 
 
 @ApiStatus.Internal
-fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
+fun isPluginWhichDependsOnKotlinPluginInK2ModeAndItDoesNotSupportK2Mode(plugin: IdeaPluginDescriptorImpl, shouldCheckIfK2modeIsOn: Boolean = true): Boolean {
   fun nonOptionallyDependsOnKotlinPlugin(): Boolean {
     return plugin.pluginDependencies.any { (isKotlinPlugin(it.pluginId)) && !it.isOptional } ||
            plugin.dependencies.plugins.any { isKotlinPlugin(it.id) }
   }
 
-  if (isKotlinPluginK2Mode()) {
+  if (!shouldCheckIfK2modeIsOn || isKotlinPluginK2Mode()) {
     if (!isKotlinPlugin(plugin.pluginId) && nonOptionallyDependsOnKotlinPlugin()) {
       if (!pluginCanWorkInK2Mode(plugin)) {
-       return true
+        return true
       }
     }
   }
