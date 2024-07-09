@@ -116,7 +116,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertLazyPropertyToOrdinary", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertVarargParameterToArray", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeExplicitLambdaParameterTypes", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertPrimaryConstructorToSecondary", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertPrimaryConstructorToSecondary", pattern = pattern)
             model("${idea}intentions/convertArgumentToSet", pattern = pattern, isIgnored = true)
             model("${idea}intentions/addAnnotationUseSiteTarget", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertEnumToSealedClass", pattern = pattern, isIgnored = true)
