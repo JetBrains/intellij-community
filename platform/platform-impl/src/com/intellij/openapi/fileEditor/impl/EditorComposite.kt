@@ -139,10 +139,10 @@ open class EditorComposite internal constructor(
 
     if (model is PrecomputedFlow) {
       if (model.fireFileOpened) {
-        blockingHandleModel(model.model)
+        blockingHandleModel2(model.model)
       }
       else {
-        blockingHandleModel2(model.model)
+        blockingHandleModel(model.model)
       }
     }
     else {
