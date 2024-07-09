@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -76,6 +77,9 @@ public final class PyDefUseUtil {
     final Collection<Instruction> result = new LinkedHashSet<>();
     ControlFlowUtil.iteratePrev(instr, instructions,
                                 instruction -> {
+                                  if (instruction.num() < instructions[instr].num() && instruction instanceof CallInstruction callInstruction) {
+                                    if (callInstruction.isNoReturnCall(context)) return ControlFlowUtil.Operation.CONTINUE;
+                                  }
                                   final PsiElement element = instruction.getElement();
                                   final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
                                   if (instruction instanceof ReadWriteInstruction rwInstruction) {
