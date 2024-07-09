@@ -6,3 +6,6 @@ class Inheritor extends AbstractClassWithOnlyOneDirectInheritor {}
 abstract class AbstractClassWithTwoInheritors {}
 class Inheritor1 extends AbstractClassWithTwoInheritors {}
 class Inheritor2 extends AbstractClassWithTwoInheritors {}
+
+@Deprecated
+abstract class DeprecatedAbstractClass {}

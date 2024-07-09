@@ -51,6 +51,9 @@ public final class AbstractClassNeverImplementedInspection extends BaseInspectio
       if (InheritanceUtil.hasImplementation(aClass)) {
         return;
       }
+      if (aClass.isDeprecated()) {
+        return;
+      }
       registerClassError(aClass);
     }
   }
