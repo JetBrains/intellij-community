@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,8 +23,8 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipFile;
 
 /**
- * ZIP handler that keeps limited LRU number of ZipFile references open for a while after they were used.
- * Once the inactivity time is passed, the ZipFile is closed.
+ * ZIP handler that keeps a limited number of {@link ZipFile} references open for a while after they were used.
+ * Once the inactivity time is passed, the file is closed.
 */
 public final class TimedZipHandler extends ZipHandlerBase {
   private static final Logger LOG = Logger.getInstance(TimedZipHandler.class);
@@ -34,17 +34,19 @@ public final class TimedZipHandler extends ZipHandlerBase {
   private static final AtomicInteger ourCloseCount = new AtomicInteger();
   private static final AtomicLong ourCloseTime = new AtomicLong();
 
-  private static final int MAX_SIZE = 30;
+  private static final long RETENTION_MS = 2000L;
+  private static final int LRU_CACHE_SIZE = 30;
   @SuppressWarnings("SSBasedInspection")
-  private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> openFileLimitGuard =
-    new Object2ObjectLinkedOpenHashMap<>(MAX_SIZE + 1);
+  private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> ourLRUCache =
+    new Object2ObjectLinkedOpenHashMap<>(LRU_CACHE_SIZE + 1);
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
-    synchronized (openFileLimitGuard) {
-      for (TimedZipHandler handler : openFileLimitGuard.keySet()) {
+    synchronized (ourLRUCache) {
+      for (var handler : ourLRUCache.keySet()) {
         handler.clearCaches();
       }
+      ourLRUCache.clear();
     }
   }
 
@@ -55,13 +57,13 @@ public final class TimedZipHandler extends ZipHandlerBase {
 
   public TimedZipHandler(@NotNull String path) {
     super(path);
-    myHandle = new ZipResourceHandle(((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(getFile()) ? 2000L : 5L * 60 * 1000);
+    myHandle = new ZipResourceHandle(((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(getFile()) ? RETENTION_MS : 5L * 60 * 1000);
   }
 
   @Override
   public void clearCaches() {
     super.clearCaches();
-    myHandle.invalidateZipReference();
+    myHandle.invalidateZipReference(null);
   }
 
   @Override
@@ -76,27 +78,26 @@ public final class TimedZipHandler extends ZipHandlerBase {
   }
 
   private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
-    private final long myInvalidationTime;
+    private final long myRetentionTime;
     private ZipFile myFile;
     private long myFileStamp;
     private final ReentrantLock myLock = new ReentrantLock();
     private ScheduledFuture<?> myInvalidationRequest;
 
-    private ZipResourceHandle(long invalidationTime) {
-      myInvalidationTime = invalidationTime;
+    private ZipResourceHandle(long retentionTime) {
+      myRetentionTime = retentionTime;
     }
 
     private void attach() throws IOException {
-      synchronized (openFileLimitGuard) {
-        openFileLimitGuard.remove(TimedZipHandler.this);
+      synchronized (ourLRUCache) {
+        ourLRUCache.remove(TimedZipHandler.this);
       }
 
       myLock.lock();
 
       try {
-        ScheduledFuture<?> invalidationRequest = myInvalidationRequest;
-        if (invalidationRequest != null) {
-          invalidationRequest.cancel(false);
+        if (myInvalidationRequest != null) {
+          myInvalidationRequest.cancel(false);
           myInvalidationRequest = null;
         }
 
@@ -111,36 +112,39 @@ public final class TimedZipHandler extends ZipHandlerBase {
             LOG.trace("Opened in " + TimeUnit.NANOSECONDS.toMillis(t) + "ms" +
                       ", times opened: " + ourOpenCount.incrementAndGet() +
                       ", open time: " + TimeUnit.NANOSECONDS.toMillis(ourOpenTime.addAndGet(t)) + "ms" +
-                      ", reference will be cached for " + myInvalidationTime + "ms");
+                      ", reference will be cached for " + myRetentionTime + "ms");
           }
           myFile = file;
         }
       }
-      catch (Throwable e) {
+      catch (Throwable t) {
         myLock.unlock();
-        throw e;
+        throw t;
       }
     }
 
     @Override
     public void close() {
       assert myLock.isLocked();
+
       ScheduledFuture<?> invalidationRequest;
       try {
-        myInvalidationRequest = invalidationRequest = ourScheduledExecutorService.schedule(() -> {
-          invalidateZipReference();
-        }, myInvalidationTime, TimeUnit.MILLISECONDS);
+        myInvalidationRequest = invalidationRequest =
+          ourScheduledExecutorService.schedule(() -> { invalidateZipReference(null); }, myRetentionTime, TimeUnit.MILLISECONDS);
       }
       finally {
         myLock.unlock();
       }
-      synchronized (openFileLimitGuard) {
-        if (openFileLimitGuard.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest) == null &&
-            openFileLimitGuard.size() > MAX_SIZE) {
-          TimedZipHandler lastKey = openFileLimitGuard.lastKey();
-          ScheduledFuture<?> future = openFileLimitGuard.removeLast();
-          lastKey.myHandle.invalidateZipReference(future);
+
+      TimedZipHandler leastUsedHandler = null;
+      synchronized (ourLRUCache) {
+        if (ourLRUCache.putAndMoveToFirst(TimedZipHandler.this, invalidationRequest) == null && ourLRUCache.size() > LRU_CACHE_SIZE) {
+          leastUsedHandler = ourLRUCache.lastKey();
+          invalidationRequest = ourLRUCache.removeLast();
         }
+      }
+      if (leastUsedHandler != null) {
+        leastUsedHandler.myHandle.invalidateZipReference(invalidationRequest);
       }
     }
 
@@ -150,10 +154,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
       return myFile;
     }
 
-    private void invalidateZipReference() {
-      invalidateZipReference(null);
-    }
-    
+    // `expectedInvalidationRequest` is not null when dropping out of `ourLRUCache`
     private void invalidateZipReference(@Nullable ScheduledFuture<?> expectedInvalidationRequest) {
       myLock.lock();
       try {
@@ -161,10 +162,13 @@ public final class TimedZipHandler extends ZipHandlerBase {
         if (expectedInvalidationRequest != null) {
           if (doTracing) LOG.trace("Invalidation cache size exceeded");
           if (myInvalidationRequest != expectedInvalidationRequest) {
-            return;
+            return; // the handler is re-acquired
           }
         }
-        myInvalidationRequest = null;
+        if (myInvalidationRequest != null) {
+          myInvalidationRequest.cancel(false);
+          myInvalidationRequest = null;
+        }
         long t = doTracing ? System.nanoTime() : 0;
         try {
           myFile.close();
