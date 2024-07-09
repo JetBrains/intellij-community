@@ -12,6 +12,7 @@ import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
@@ -36,9 +37,9 @@ private val myChkUseSafeWrite
 
 internal val allOptionDescriptors: List<BooleanOptionDescription>
   get() =
-    listOf(
+    listOfNotNull(
       myChkReopenLastProject,
-      myConfirmExit,
+      myConfirmExit.takeIf { IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation },
       myChkSyncOnFrameActivation,
       myChkSyncInBackground,
       myChkSaveOnFrameDeactivation,
@@ -65,8 +66,10 @@ private class GeneralSettingsConfigurable :
 
   override fun createPanel(): DialogPanel =
     panel {
-      row {
-        checkBox(myConfirmExit)
+      if (IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation) {
+        row {
+          checkBox(myConfirmExit)
+        }
       }
 
       buttonsGroup {
