@@ -1950,12 +1950,6 @@ c:com.intellij.xdebugger.impl.frame.actions.XRemoveWatchAction
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - p:perform(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree,com.intellij.xdebugger.impl.frame.XWatchesView):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-c:com.intellij.xdebugger.impl.frame.actions.XSwitchWatchesInVariables
-- com.intellij.openapi.actionSystem.ToggleAction
-- <init>():V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
-- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
 c:com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction
 - com.intellij.openapi.project.DumbAwareToggleAction
 - <init>():V

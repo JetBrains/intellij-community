@@ -1225,7 +1225,7 @@
               use-shortcut-of="$Delete"/>
       <action id="XDebugger.MoveWatchUp" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchUp" use-shortcut-of="MoveLineUp"/>
       <action id="XDebugger.MoveWatchDown" class="com.intellij.xdebugger.impl.frame.actions.XMoveWatchDown" use-shortcut-of="MoveLineDown"/>
-      <action id="XDebugger.SwitchWatchesInVariables" class="com.intellij.xdebugger.impl.frame.actions.XSwitchWatchesInVariables"
+      <action id="XDebugger.SeparateWatches" class="com.intellij.xdebugger.impl.frame.actions.XSeparateWatchesAndVariables"
               icon="AllIcons.Debugger.Watch"/>
       <action id="XDebugger.ToggleEvaluateExpressionField" class="com.intellij.xdebugger.impl.frame.actions.XToggleEvaluateExpressionFieldAction"/>
       <action id="XDebugger.RemoveAllWatches" class="com.intellij.xdebugger.impl.frame.actions.XRemoveAllWatchesAction"/>

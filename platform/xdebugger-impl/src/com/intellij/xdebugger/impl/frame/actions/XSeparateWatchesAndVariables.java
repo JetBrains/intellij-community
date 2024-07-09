@@ -8,12 +8,12 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import org.jetbrains.annotations.NotNull;
 
-public class XSwitchWatchesInVariables extends ToggleAction {
+final class XSeparateWatchesAndVariables extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
     e.getPresentation().setEnabled(e.getData(XDebugSession.DATA_KEY) != null);
     XDebugSessionTab tab = e.getData(XDebugSessionTab.TAB_KEY);
-    return tab == null || tab.isWatchesInVariables();
+    return tab != null && !tab.isWatchesInVariables();
   }
 
   @Override
