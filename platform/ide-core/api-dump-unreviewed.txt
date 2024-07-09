@@ -2295,7 +2295,6 @@ c:com.intellij.openapi.vcs.UrlFilePath
 - p:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 a:com.intellij.openapi.vfs.JarFileSystem
 - com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
-- com.intellij.openapi.vfs.JarCopyingFileSystem
 - com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem
 - sf:JAR_SEPARATOR:java.lang.String
 - sf:PROTOCOL:java.lang.String
@@ -2306,6 +2305,7 @@ a:com.intellij.openapi.vfs.JarFileSystem
 - getJarRootForLocalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getLocalVirtualFileFor(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getVirtualFileForJar(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- setNoCopyJarForPath(java.lang.String):V
 com.intellij.openapi.vfs.LargeFileWriteRequestor
 com.intellij.openapi.vfs.SafeWriteRequestor
 - s:shouldUseSafeWrite(java.lang.Object):Z

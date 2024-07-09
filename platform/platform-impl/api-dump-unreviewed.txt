@@ -18160,7 +18160,7 @@ c:com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 - findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - findFileByPathIfCached(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - getArchiveCrcHashes(com.intellij.openapi.vfs.VirtualFile):java.util.Map
-- p:getHandler(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.impl.ArchiveHandler
+- p:getHandler(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.impl.ZipHandlerBase
 - getMirroredFile(com.intellij.openapi.vfs.VirtualFile):java.io.File
 - getProtocol():java.lang.String
 - isMakeCopyOfJar(java.io.File):Z
@@ -18168,7 +18168,6 @@ c:com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl
 - p:normalize(java.lang.String):java.lang.String
 - refresh(Z):V
 - refreshAndFindFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
-- setNoCopyJarForPath(java.lang.String):V
 f:com.intellij.openapi.vfs.impl.jar.TimedZipHandler
 - com.intellij.openapi.vfs.impl.ZipHandlerBase
 - <init>(java.lang.String):V

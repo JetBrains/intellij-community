@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.ResourceHandle;
@@ -48,7 +47,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
 
   public TimedZipHandler(@NotNull String path) {
     super(path);
-    myHandle = new ZipResourceHandle(((JarFileSystemImpl)JarFileSystem.getInstance()).isMakeCopyOfJar(getFile()) ? RETENTION_MS : 5L * 60 * 1000);
+    myHandle = new ZipResourceHandle();
   }
 
   @Override
@@ -69,15 +68,10 @@ public final class TimedZipHandler extends ZipHandlerBase {
   }
 
   private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
-    private final long myRetentionTime;
     private ZipFile myFile;
     private long myFileStamp;
     private final ReentrantLock myLock = new ReentrantLock();
     private ScheduledFuture<?> myInvalidationRequest;
-
-    private ZipResourceHandle(long retentionTime) {
-      myRetentionTime = retentionTime;
-    }
 
     private void attach() throws IOException {
       synchronized (ourLRUCache) {
@@ -110,7 +104,7 @@ public final class TimedZipHandler extends ZipHandlerBase {
       ScheduledFuture<?> invalidationRequest;
       try {
         myInvalidationRequest = invalidationRequest =
-          ourScheduledExecutorService.schedule(() -> { invalidateZipReference(null); }, myRetentionTime, TimeUnit.MILLISECONDS);
+          ourScheduledExecutorService.schedule(() -> { invalidateZipReference(null); }, RETENTION_MS, TimeUnit.MILLISECONDS);
       }
       finally {
         myLock.unlock();

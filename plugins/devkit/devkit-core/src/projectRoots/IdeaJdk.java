@@ -429,7 +429,6 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
       for (File child : files) {
         String path = child.getAbsolutePath();
         if (!path.contains("generics") && (path.endsWith(".jar") || path.endsWith(".zip"))) {
-          fs.setNoCopyJarForPath(path);
           VirtualFile vFile = fs.refreshAndFindFileByPath(path + JarFileSystem.JAR_SEPARATOR);
           if (vFile != null) {
             sdkModificator.addRoot(vFile, OrderRootType.SOURCES);
@@ -474,7 +473,6 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
           if (jarFile.exists()) {
             JarFileSystem jarFileSystem = JarFileSystem.getInstance();
             String path = jarFile.getAbsolutePath();
-            jarFileSystem.setNoCopyJarForPath(path);
             VirtualFile vFile = jarFileSystem.refreshAndFindFileByPath(path + JarFileSystem.JAR_SEPARATOR);
             if (vFile != null) {
               sdkModificator.addRoot(vFile, OrderRootType.SOURCES);

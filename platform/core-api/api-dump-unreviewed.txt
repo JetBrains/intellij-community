@@ -2973,8 +2973,6 @@ c:com.intellij.openapi.vfs.InvalidVirtualFileAccessException
 - java.lang.RuntimeException
 - <init>(com.intellij.openapi.vfs.VirtualFile):V
 - <init>(java.lang.String):V
-com.intellij.openapi.vfs.JarCopyingFileSystem
-- a:setNoCopyJarForPath(java.lang.String):V
 com.intellij.openapi.vfs.LocalFileProvider
 com.intellij.openapi.vfs.NonPhysicalFileSystem
 f:com.intellij.openapi.vfs.PersistentFSConstants
