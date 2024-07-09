@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.EditorCellViewEvent
 import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.GraphicsEnvironment
@@ -41,6 +43,15 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     manager.onInvalidate {
       component.revalidate()
     }
+    manager.addCellViewEventsListener(object : EditorCellViewEventListener {
+      override fun onEditorCellViewEvents(events: List<EditorCellViewEvent>) {
+        events.asSequence().filterIsInstance<CellViewRemoved>().forEach {
+          if (it.view == mouseOverCell) {
+            mouseOverCell = null
+          }
+        }
+      }
+    }, this)
   }
 
   private fun setupScrollPaneListener() {
