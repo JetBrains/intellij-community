@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.actions.more;
+package com.intellij.execution.actions;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ui.RunToolbarPopupKt;
@@ -13,9 +13,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
-public abstract class BaseRunConfigurationMoreAction extends AnAction {
+public abstract class RunConfigurationSpecificActionBase extends AnAction {
 
-  private static final Logger LOG = Logger.getInstance(BaseRunConfigurationMoreAction.class);
+  private static final Logger LOG = Logger.getInstance(RunConfigurationSpecificActionBase.class);
 
   protected abstract void doUpdate(@NotNull AnActionEvent e,
                                    @NotNull Project project,
