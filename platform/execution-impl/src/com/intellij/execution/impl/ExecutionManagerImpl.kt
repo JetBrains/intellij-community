@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
@@ -62,10 +62,7 @@ import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.AsyncPromise
@@ -73,6 +70,7 @@ import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import java.awt.BorderLayout
 import java.io.OutputStream
+import java.lang.Runnable
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicBoolean
@@ -81,7 +79,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
-open class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
+open class ExecutionManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : ExecutionManager(), Disposable {
   companion object {
     val LOG = logger<ExecutionManagerImpl>()
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
@@ -185,7 +183,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
   }
 
   init {
-    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    val connection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
         if (project === this@ExecutionManagerImpl.project) {
@@ -199,7 +197,7 @@ open class ExecutionManagerImpl(private val project: Project) : ExecutionManager
   @Volatile
   var forceCompilationInTests = false
 
-  private val awaitingTerminationAlarm = Alarm()
+  private val awaitingTerminationAlarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
   private val awaitingRunProfiles = HashMap<RunProfile, ExecutionEnvironment>()
   private val runningConfigurations: MutableList<RunningConfigurationEntry> = ContainerUtil.createLockFreeCopyOnWriteList()
 

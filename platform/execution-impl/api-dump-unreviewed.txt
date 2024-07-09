@@ -888,7 +888,7 @@ c:com.intellij.execution.impl.ExecutionManagerImpl
 - sf:Companion:com.intellij.execution.impl.ExecutionManagerImpl$Companion
 - sf:EXECUTION_SESSION_ID_KEY:com.intellij.openapi.util.Key
 - sf:EXECUTION_SKIP_RUN:com.intellij.openapi.util.Key
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - compileAndRun(java.lang.Runnable,com.intellij.execution.runners.ExecutionEnvironment,java.lang.Runnable):V
 - dispose():V
 - p:executeConfiguration(com.intellij.execution.runners.ExecutionEnvironment,com.intellij.execution.runners.ProgramRunner,Z,com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings):V

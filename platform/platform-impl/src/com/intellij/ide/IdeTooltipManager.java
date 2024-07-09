@@ -73,7 +73,8 @@ public class IdeTooltipManager implements Disposable {
 
   private boolean myShowDelay = true;
 
-  private final Alarm myAlarm = new Alarm();
+  private final Alarm alarm;
+  @NotNull private final CoroutineScope coroutineScope;
 
   private int myX;
   private int myY;
@@ -83,7 +84,10 @@ public class IdeTooltipManager implements Disposable {
   private IdeTooltip queuedTooltip;
 
   public IdeTooltipManager(@NotNull CoroutineScope coroutineScope) {
-    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
+    alarm = new Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD);
+    this.coroutineScope = coroutineScope;
+
+    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope);
     connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
       public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
@@ -136,7 +140,7 @@ public class IdeTooltipManager implements Disposable {
             // a lot more likely to appear right under the mouse pointer.
             // Don't cancel the popup just because the mouse has left its
             // parent component as it may have entered the popup itself.
-            myAlarm.cancelAllRequests();
+            alarm.cancelAllRequests();
             return;
           }
         }
@@ -161,7 +165,7 @@ public class IdeTooltipManager implements Disposable {
           if (StartupUiUtil.isWaylandToolkit()) {
             // The mouse pointer has left the tooltip's "parent" component. Don't immediately
             // cancel the popup, wait a moment to see if the mouse entered the popup itself.
-            myAlarm.addRequest(() -> {
+            alarm.addRequest(() -> {
               hideCurrent(me, null, null);
             }, 200);
           } else {
@@ -398,7 +402,7 @@ public class IdeTooltipManager implements Disposable {
   }
 
   public IdeTooltip show(final IdeTooltip tooltip, boolean now, final boolean animationEnabled) {
-    myAlarm.cancelAllRequests();
+    alarm.cancelAllRequests();
 
     hideCurrent(null, tooltip);
 
@@ -427,7 +431,7 @@ public class IdeTooltipManager implements Disposable {
       showRequest.run();
     }
     else {
-      myAlarm.addRequest(showRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
+      alarm.addRequest(showRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
     }
 
     return tooltip;
@@ -520,7 +524,7 @@ public class IdeTooltipManager implements Disposable {
     });
 
     balloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
-    myAlarm.addRequest(() -> {
+    alarm.addRequest(() -> {
       if (currentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
         hideCurrent(null, null, null);
       }
@@ -640,7 +644,7 @@ public class IdeTooltipManager implements Disposable {
     };
 
     if (me != null && me.getButton() == MouseEvent.NOBUTTON) {
-      myAlarm.addRequest(hideRunnable, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"));
+      alarm.addRequest(hideRunnable, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"));
     }
     else {
       hideRunnable.run();
@@ -660,7 +664,7 @@ public class IdeTooltipManager implements Disposable {
       balloon.hide();
       currentTooltip.onHidden();
       myShowDelay = false;
-      myAlarm.addRequest(() -> myShowDelay = true, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"));
+      alarm.addRequest(() -> myShowDelay = true, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"));
     }
 
     myHideHelpTooltip = false;

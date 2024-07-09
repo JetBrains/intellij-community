@@ -53,6 +53,7 @@ open class Alarm @Internal constructor(
   parentDisposable: Disposable?,
   // accessed in EDT only
   private val activationComponent: JComponent?,
+  coroutineScope: CoroutineScope? = null,
 ) : Disposable {
   // it is a supervisor coroutine scope
   private val taskCoroutineScope: CoroutineScope
@@ -91,6 +92,10 @@ open class Alarm @Internal constructor(
 
   constructor() : this(threadToUse = ThreadToUse.SWING_THREAD, parentDisposable = null, activationComponent = null)
 
+  @Internal
+  constructor(coroutineScope: CoroutineScope, threadToUse: ThreadToUse = ThreadToUse.POOLED_THREAD)
+    : this(threadToUse = threadToUse, coroutineScope = coroutineScope, parentDisposable = null, activationComponent = null)
+
   constructor(threadToUse: ThreadToUse, parentDisposable: Disposable?)
     : this(threadToUse = threadToUse, parentDisposable = parentDisposable, activationComponent = null)
 
@@ -115,10 +120,10 @@ open class Alarm @Internal constructor(
       PluginException.reportDeprecatedUsage("Alarm.ThreadToUse#SHARED_THREAD", "Please use `POOLED_THREAD` instead")
     }
 
-    taskCoroutineScope = createCoroutineScope(inEdt = threadToUse == ThreadToUse.SWING_THREAD)
+    taskCoroutineScope = createCoroutineScope(inEdt = threadToUse == ThreadToUse.SWING_THREAD, coroutineScope)
 
     if (parentDisposable == null) {
-      if (threadToUse != ThreadToUse.SWING_THREAD) {
+      if (threadToUse != ThreadToUse.SWING_THREAD && coroutineScope == null) {
         LOG.error(IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"))
       }
     }
@@ -396,13 +401,14 @@ open class Alarm @Internal constructor(
 }
 
 // todo next step - support passing coroutine scope
-private fun createCoroutineScope(inEdt: Boolean): CoroutineScope {
+private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?): CoroutineScope {
   val app = ApplicationManager.getApplication()
   @Suppress("SSBasedInspection")
   if (inEdt) {
     // maybe not defined in tests
     val edtDispatcher = app?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
     if (edtDispatcher == null) {
+      assert(coroutineScope == null)
       // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
       logger<Alarm>().warn("Do not use an alarm in an early executing code")
       return CoroutineScope(object : CoroutineDispatcher() {
@@ -415,7 +421,7 @@ private fun createCoroutineScope(inEdt: Boolean): CoroutineScope {
     }
     else {
       @Suppress("UsagesOfObsoleteApi")
-      return (app as ComponentManagerEx).getCoroutineScope().childScope("Alarm", edtDispatcher)
+      return (coroutineScope ?: (app as ComponentManagerEx).getCoroutineScope()).childScope("Alarm", edtDispatcher)
     }
   }
   else {
@@ -426,7 +432,7 @@ private fun createCoroutineScope(inEdt: Boolean): CoroutineScope {
     }
     else {
       @Suppress("UsagesOfObsoleteApi")
-      return (app as ComponentManagerEx).getCoroutineScope().childScope("Alarm", dispatcher)
+      return (coroutineScope ?: (app as ComponentManagerEx).getCoroutineScope()).childScope("Alarm", dispatcher)
     }
   }
 }

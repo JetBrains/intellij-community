@@ -93,6 +93,7 @@ import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -186,51 +187,9 @@ public final class BuildManager implements Disposable {
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
 
-  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
-    @Override
-    protected int getDelay() {
-      return Registry.intValue("compiler.automake.trigger.delay");
-    }
+  private final BuildManagerPeriodicTask myAutoMakeTask;
 
-    @Override
-    protected void runTask() {
-      runAutoMake();
-    }
-
-    @Override
-    protected boolean shouldPostpone() {
-      // Heuristics for automake postpone decision:
-      // 1. There are unsaved documents OR
-      // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
-      if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
-        return true;
-      }
-      final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
-      final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
-      return idleSinceLastActivity < threshold;
-    }
-  };
-
-  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
-    @Override
-    protected int getDelay() {
-      return Registry.intValue("compiler.document.save.trigger.delay");
-    }
-
-    @Override
-    public void runTask() {
-      if (shouldSaveDocuments()) {
-        ApplicationManager.getApplication().invokeAndWait(
-          () -> ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false)
-        );
-      }
-    }
-
-    private static boolean shouldSaveDocuments() {
-      final Project contextProject = getCurrentContextProject();
-      return contextProject != null && canStartAutoMake(contextProject);
-    }
-  };
+  private final BuildManagerPeriodicTask myDocumentSaveTask;
 
   private final Runnable myGCTask = () -> {
     // todo: make customizable in UI?
@@ -299,6 +258,51 @@ public final class BuildManager implements Disposable {
     myRequestsProcessor = AppJavaExecutorUtil.createBoundedTaskExecutor("BuildManager RequestProcessor Pool", coroutineScope);
     myAutomakeTrigger = AppJavaExecutorUtil.createBoundedTaskExecutor("BuildManager Auto-Make Trigger", coroutineScope);
 
+    myAutoMakeTask = new BuildManagerPeriodicTask(coroutineScope) {
+      @Override
+      protected int getDelay() {
+        return Registry.intValue("compiler.automake.trigger.delay");
+      }
+
+      @Override
+      protected void runTask() {
+        runAutoMake();
+      }
+
+      @Override
+      protected boolean shouldPostpone() {
+        // Heuristics for automake postpone decision:
+        // 1. There are unsaved documents OR
+        // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
+        if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
+          return true;
+        }
+        final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+        final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
+        return idleSinceLastActivity < threshold;
+      }
+    };
+    myDocumentSaveTask = new BuildManagerPeriodicTask(coroutineScope) {
+      @Override
+      protected int getDelay() {
+        return Registry.intValue("compiler.document.save.trigger.delay");
+      }
+
+      @Override
+      public void runTask() {
+        if (shouldSaveDocuments()) {
+          ApplicationManager.getApplication().invokeAndWait(
+            () -> ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false)
+          );
+        }
+      }
+
+      private static boolean shouldSaveDocuments() {
+        final Project contextProject = getCurrentContextProject();
+        return contextProject != null && canStartAutoMake(contextProject);
+      }
+    };
+
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
@@ -314,7 +318,7 @@ public final class BuildManager implements Disposable {
       myFallbackSdkVersion = fallbackSdkVersion;
     }
 
-    MessageBusConnection connection = application.getMessageBus().connect(this);
+    SimpleMessageBusConnection connection = application.getMessageBus().connect(coroutineScope);
     connection.subscribe(ProjectCloseListener.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -1891,8 +1895,8 @@ public final class BuildManager implements Disposable {
       }
     };
 
-    BuildManagerPeriodicTask() {
-      myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, BuildManager.this);
+    BuildManagerPeriodicTask(@NotNull CoroutineScope coroutineScope) {
+      myAlarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
     }
 
     final void schedule() {

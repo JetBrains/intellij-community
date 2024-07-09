@@ -583,12 +583,6 @@ e:com.intellij.ide.HelpTooltip$Alignment
 - a:getPointFor(java.awt.Component,java.awt.Dimension,java.awt.Point):java.awt.Point
 - s:valueOf(java.lang.String):com.intellij.ide.HelpTooltip$Alignment
 - s:values():com.intellij.ide.HelpTooltip$Alignment[]
-f:com.intellij.ide.HelpTooltipManager
-- com.intellij.ide.HelpTooltip
-- sf:SHORTCUT_PROPERTY:com.intellij.openapi.util.Key
-- <init>():V
-- hideTooltip():V
-- showTooltip(javax.swing.JComponent,java.awt.event.MouseEvent):V
 f:com.intellij.ide.IdeBundle
 - sf:BUNDLE:java.lang.String
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
