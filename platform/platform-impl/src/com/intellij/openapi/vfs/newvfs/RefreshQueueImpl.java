@@ -124,9 +124,12 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
           var t = System.nanoTime();
           session.fireEvents(data.first, data.second, true);
           t = NANOSECONDS.toMillis(System.nanoTime() - t);
-          VfsUsageCollector.logEventProcessing(evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()),
-                                               evRetries.intValue(), t, data.second.size());
-        }).submit(myEventProcessingQueue).onProcessed(__ -> stopIndicator()).onError(t -> {
+          VfsUsageCollector.logEventProcessing(
+            evTimeInQueue.longValue(), NANOSECONDS.toMillis(evListenerTime.longValue()), evRetries.intValue(), t, data.second.size());
+        })
+        .submit(myEventProcessingQueue)
+        .onProcessed(__ -> stopIndicator())
+        .onError(t -> {
           if (!myRefreshIndicator.isCanceled()) {
             LOG.error(t);
           }
