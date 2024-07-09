@@ -2,52 +2,60 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
-import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.startOffset
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import com.intellij.psi.JavaTokenType
+import com.intellij.psi.util.startOffset as psiTreeUtilStartOffset
 
-class KotlinCodeGenerationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
-  private var codeFragment: CodeFragment? = null
 
-  override val language: Language = Language.KOTLIN
-  override val feature: String = "code-generation"
-  override fun getFile(): CodeFragment = codeFragment
-                                         ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
-
-  override fun visitKtFile(file: KtFile) {
-    codeFragment = CodeFragment(file.textOffset, file.textLength)
-    super.visitKtFile(file)
-  }
-
-  override fun visitNamedFunction(function: KtNamedFunction) {
-    codeFragment?.addChild(
-      CodeToken(function.text, function.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
-    )
-    val body = function.bodyBlockExpression
-    if (body != null) {
-      val meaningfulBodyChildren = body.trim()
-      if (meaningfulBodyChildren.any()) {
-        val firstMeaningfulChild = meaningfulBodyChildren.first()
-        val meaningfulBodyText = meaningfulBodyChildren.map { it.text }.joinToString("")
-
-        codeFragment?.addChild(
-          CodeToken(meaningfulBodyText, firstMeaningfulChild.startOffset, SimpleTokenProperties.create(TypeProperty.METHOD_BODY, SymbolLocation.PROJECT) {})
-        )
-      }
-    }
-  }
-
-  private fun KtBlockExpression.trim(): List<KtElement> {
-    val firstIndex = children.indexOfFirst { it is KtExpression }
-    val lastIndex = children.indexOfLast { it is KtExpression }
-    val indexRange = firstIndex..lastIndex
-    return children.filterIndexed { index, element ->
-      element is KtExpression
-      index in indexRange
-    }.filterIsInstance<KtElement>()
+class KotlinCodeGenerationVisitor : CodeGenerationVisitorBase(Language.KOTLIN) {
+  override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {
+    return KotlinCodeGenerationPsiVisitor(codeFragment)
   }
 }
 
+class KotlinCodeGenerationPsiVisitor(private val codeFragment: CodeFragment): KtTreeVisitorVoid() {
+  override fun visitNamedFunction(function: KtNamedFunction) {
+    codeFragment?.addChild(
+      CodeToken(function.text, function.psiTreeUtilStartOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
+    )
+    val body = function.bodyExpression?.children?.toList()
+    if (body != null) {
+      val meaningfulBodyChildren = body.trim()
+      if (meaningfulBodyChildren.any()) {
+        val firstMeaningfulChildren = meaningfulBodyChildren.first()
+        val meaningfulBodyChildrenText = meaningfulBodyChildren.map { it.text }.joinToString("")
 
-private val BODY = SimpleTokenProperties.create(TypeProperty.UNKNOWN, SymbolLocation.UNKNOWN) {}
+        codeFragment?.addChild(
+          CodeToken(meaningfulBodyChildrenText, firstMeaningfulChildren.psiTreeUtilStartOffset, SimpleTokenProperties.create(TypeProperty.METHOD_BODY, SymbolLocation.PROJECT) {})
+        )
+      }
+    }
+  }}
+
+
+private fun List<PsiElement>.trim(): List<PsiElement> {
+  val firstIndex = this.indexOfFirst { it.isMeaningful()}
+  val lastIndex = this.indexOfLast { it.isMeaningful() }
+  val indexRange = (firstIndex.. lastIndex)
+  return this.filterIndexed { index, it ->
+    index in indexRange
+  }
+}
+
+private fun PsiElement.isMeaningful(): Boolean {
+  if (this is PsiWhiteSpace) {
+    return false
+  }
+  val elType = elementType
+  if (elType == JavaTokenType.LBRACE || elType == JavaTokenType.RBRACE) {
+    return false
+  }
+  return true
+}
