@@ -36,14 +36,6 @@ object IjentWslNioFsVmOptionsSetter {
   ): Collection<Pair<String, String?>> {
     val changedOptions = mutableListOf<Pair<String, String?>>()
 
-    run {
-      val prefix = "-D$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY="
-      val actualValue = getOptionByPrefix(prefix)?.toBooleanStrictOrNull() ?: false
-      if (actualValue != isEnabled || isEnabledByDefault && !isEnabled) {
-        changedOptions += prefix to isEnabled.toString()
-      }
-    }
-
     var forceDefaultFs = false
     run {
       val prefix = "-Djava.nio.file.spi.DefaultFileSystemProvider="
@@ -101,6 +93,21 @@ object IjentWslNioFsVmOptionsSetter {
       }
       else if (forceDefaultFs && actualValue != "true") {
         changedOptions += prefix to "true"
+      }
+    }
+
+    run {
+      val prefix = "-D$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY="
+      val valueToSet = when (val actualValue = getOptionByPrefix(prefix)?.toBooleanStrictOrNull()) {
+        null ->
+          if (isEnabled != isEnabledByDefault && changedOptions.isNotEmpty()) isEnabled
+          else null
+        true, false ->
+          if (isEnabled != actualValue) isEnabled
+          else null
+      }
+      if (valueToSet != null) {
+        changedOptions += prefix to valueToSet.toString()
       }
     }
 

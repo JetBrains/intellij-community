@@ -40,7 +40,7 @@ class IjentWslNioFsVmOptionsSetterTest {
   }
 
   @Test
-  fun `disable when no options set`() {
+  fun `disable when no options set and disabled by default`() {
     val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = false, vmOptionsReader(""))
     changedOptions shouldMatch listOf()
   }
@@ -82,6 +82,27 @@ class IjentWslNioFsVmOptionsSetterTest {
         -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
         -Dwsl.use.remote.agent.for.nio.filesystem=true
       """.trimIndent()))
+
+    changedOptions shouldMatch listOf(
+      "-Didea.force.default.filesystem=true",
+      "-Dwsl.use.remote.agent.for.nio.filesystem=false",
+    )
+  }
+
+  /** This test checks that IJPL-158020 won't happen again when IJent WSL FS is enabled by default. */
+  @Test
+  fun `disable when no options set and enabled by default`() {
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = true, vmOptionsReader(""))
+
+    changedOptions shouldMatch listOf()
+  }
+
+  @Test
+  fun `enabled by default but disabled locally with enabling options in distribution vm options file`() {
+    val changedOptions = IjentWslNioFsVmOptionsSetter.ensureInVmOptionsImpl(isEnabled = false, forceProductionOptions = true, isEnabledByDefault = true, vmOptionsReader("""
+      -Djava.nio.file.spi.DefaultFileSystemProvider=com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
+      -Djava.security.manager=com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
+    """.trimIndent()))
 
     changedOptions shouldMatch listOf(
       "-Didea.force.default.filesystem=true",
