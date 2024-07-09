@@ -115,12 +115,12 @@ internal suspend fun loadApp(
       }
     }
 
-    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless() || euaDocumentDeferred.await() == null) {
+    val languageAndRegionTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
       null
     }
     else {
       async(CoroutineName("language and region")) {
-        getLanguageAndRegionDialogIfNeeded()
+        getLanguageAndRegionDialogIfNeeded(euaDocumentDeferred.await())
       }
     }
 
@@ -194,10 +194,8 @@ internal suspend fun loadApp(
       )
 
       if (!app.isHeadlessEnvironment) {
-        val languageOkPressed = languageAndRegionTaskDeferred?.await()?.let {
-          cssInit?.join()
-          it()
-        }
+        cssInit?.join()
+        val languageOkPressed = languageAndRegionTaskDeferred?.await()?.invoke()
         euaTaskDeferred?.await()?.let {
           it()
           if (languageOkPressed == true) {

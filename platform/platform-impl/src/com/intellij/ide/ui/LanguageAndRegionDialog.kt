@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.LanguageAndRegionBundle
 import com.intellij.ide.Region
 import com.intellij.ide.RegionSettings
+import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.ui.DialogWrapper
@@ -166,7 +167,8 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
 }
 
 
-internal fun getLanguageAndRegionDialogIfNeeded(): (suspend () -> Boolean)? {
+internal fun getLanguageAndRegionDialogIfNeeded(document: EndUserAgreement.Document?): (suspend () -> Boolean)? {
+  if (document == null) return null
   val locale = Locale.getDefault()
   val matchingLanguage = localeMappings.values.flatten().find { locale.toLanguageTag().contains(it) }
   if (matchingLanguage == null) return null
