@@ -25,6 +25,7 @@ import com.intellij.util.lang.UrlClassLoader
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinCompilerPluginsProvider.CompilerPluginType
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -58,7 +59,7 @@ import java.util.concurrent.ConcurrentMap
 internal class KtCompilerPluginsProviderIdeImpl(
     private val project: Project,
     cs: CoroutineScope,
-) : KotlinCompilerPluginsProvider(), Disposable {
+) : KotlinCompilerPluginsProvider, Disposable {
     private val pluginsCacheCachedValue: SynchronizedClearableLazy<PluginsCache?> = SynchronizedClearableLazy { createNewCache() }
     private val pluginsCache: PluginsCache?
         get() = pluginsCacheCachedValue.value

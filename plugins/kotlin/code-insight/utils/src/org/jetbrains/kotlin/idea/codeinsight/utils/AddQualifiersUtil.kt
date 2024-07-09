@@ -63,12 +63,12 @@ object AddQualifiersUtil {
 
             fun isTopLevelCallable(callableSymbol: KaSymbol): Boolean {
                 if (callableSymbol is KaConstructorSymbol) {
-                    val containingClassSymbol = callableSymbol.containingSymbol
-                    if (containingClassSymbol?.containingSymbol == null) {
+                    val containingClassSymbol = callableSymbol.containingDeclaration
+                    if (containingClassSymbol?.containingDeclaration == null) {
                         return true
                     }
                 }
-                return callableSymbol is KaCallableSymbol && callableSymbol.containingSymbol == null
+                return callableSymbol is KaCallableSymbol && callableSymbol.containingDeclaration == null
             }
 
             if (isTopLevelCallable(contextSymbol)) return false

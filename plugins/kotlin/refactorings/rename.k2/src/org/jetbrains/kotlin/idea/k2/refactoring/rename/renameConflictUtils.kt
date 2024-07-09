@@ -261,8 +261,8 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
         val receiver = appliedSymbol?.extensionReceiver ?: appliedSymbol?.dispatchReceiver
 
         fun getExplicitQualifier(receiverValue: KaExplicitReceiverValue): String? {
-            val containingSymbol = appliedSymbol?.symbol?.containingSymbol
-            val enumClassSymbol = containingSymbol?.containingSymbol
+            val containingSymbol = appliedSymbol?.symbol?.containingDeclaration
+            val enumClassSymbol = containingSymbol?.containingDeclaration
             //add companion qualifier to avoid clashes with enum entries
             return if (containingSymbol is KaNamedClassOrObjectSymbol && containingSymbol.classKind == KaClassKind.COMPANION_OBJECT &&
                 enumClassSymbol is KaNamedClassOrObjectSymbol && enumClassSymbol.classKind == KaClassKind.ENUM_CLASS &&
@@ -291,7 +291,7 @@ private fun createQualifiedExpression(callExpression: KtExpression, newName: Str
 
             null -> {
                 val symbol = appliedSymbol?.symbol
-                val containingSymbol = symbol?.containingSymbol
+                val containingSymbol = symbol?.containingDeclaration
                 val containerFQN =
                     if (containingSymbol is KaClassSymbol) {
                         containingSymbol.classId?.asSingleFqName()?.parent()

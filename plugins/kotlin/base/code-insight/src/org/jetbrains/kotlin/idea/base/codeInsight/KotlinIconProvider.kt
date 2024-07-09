@@ -57,7 +57,7 @@ object KotlinIconProvider {
             is KaTypeParameterSymbol -> IconManager.getInstance().getPlatformIcon(PlatformIcons.Class)
             is KaTypeAliasSymbol -> KotlinIcons.TYPE_ALIAS
             is KaEnumEntrySymbol -> KotlinIcons.ENUM
-            is KaConstructorSymbol -> symbol.containingSymbol?.let { getIconFor(it) }
+            is KaConstructorSymbol -> symbol.containingDeclaration?.let { getIconFor(it) }
             else -> null
         }
 

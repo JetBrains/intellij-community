@@ -52,6 +52,10 @@
             qualifiedName="org.jetbrains.kotlin.extractFunctionDescriptorModifier"
             interface="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier"
             dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.changeSignatureConflictFilter"
+            interface="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureConflictFilter"
+            dynamic="true"/>
   </extensionPoints>
 
   <actions>

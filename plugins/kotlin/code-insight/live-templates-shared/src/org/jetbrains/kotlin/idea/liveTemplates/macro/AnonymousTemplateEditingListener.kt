@@ -59,7 +59,7 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
                 if (symbol is KaNamedClassOrObjectSymbol) {
                     yield(symbol)
                 } else if (symbol is KaConstructorSymbol) {
-                    val containingClassSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol
+                    val containingClassSymbol = symbol.containingDeclaration as? KaNamedClassOrObjectSymbol
                     if (containingClassSymbol != null) {
                         yield(containingClassSymbol)
                     }

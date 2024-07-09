@@ -203,12 +203,12 @@ class KotlinParameterInfo(
                 val target = ref.resolveToSymbol()
                 val declarationSymbol = callableDeclaration.symbol as? KaCallableSymbol ?: return null
                 if (target is KaValueParameterSymbol) {
-                    if (declarationSymbol is KaFunctionSymbol && target.containingSymbol == declarationSymbol) {
+                    if (declarationSymbol is KaFunctionSymbol && target.containingDeclaration == declarationSymbol) {
                         return declarationSymbol.valueParameters.indexOf(target) + (if ((callableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0)
                     }
 
                     if (declarationSymbol.receiverParameter != null &&
-                        (target.containingSymbol as? KaConstructorSymbol)?.containingSymbol == declarationSymbol.receiverParameter?.type?.expandedSymbol
+                        (target.containingDeclaration as? KaConstructorSymbol)?.containingDeclaration == declarationSymbol.receiverParameter?.type?.expandedSymbol
                     ) {
                         return Int.MAX_VALUE
                     }
@@ -229,10 +229,10 @@ class KotlinParameterInfo(
 
                 val symbol = expression.resolveToCall()?.successfulCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
                 (symbol?.dispatchReceiver as? KaImplicitReceiverValue)?.symbol
-                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingSymbol }
+                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingDeclaration }
                     ?.let { return Int.MAX_VALUE }
                 (symbol?.extensionReceiver as? KaImplicitReceiverValue)?.symbol
-                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingSymbol }
+                    ?.takeIf { it == declarationSymbol.receiverParameter || it == declarationSymbol.containingDeclaration }
                     ?.let { return Int.MAX_VALUE }
 
                 if (expression.parent is KtThisExpression && declarationSymbol.receiverParameter == null) {

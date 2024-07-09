@@ -134,7 +134,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
                 fun isMultipleInheritance(function: KaSymbol): Boolean {
                     val superMethods = (function as? KaCallableSymbol)?.directlyOverriddenSymbols ?: return false
                     return superMethods.any {
-                        val superClassSymbol = it.containingSymbol as? KaClassSymbol ?: return@any false
+                        val superClassSymbol = it.containingDeclaration as? KaClassSymbol ?: return@any false
                         val superMethod = it.psi ?: return@any false
                         return@any !isInside(superMethod) && !superClassSymbol.isSubClassOf(elementClassSymbol)
                     }

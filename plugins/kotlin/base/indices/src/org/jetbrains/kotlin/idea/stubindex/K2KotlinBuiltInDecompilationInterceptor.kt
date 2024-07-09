@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompilationInterceptor
 import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
 
@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuil
  */
 internal class K2KotlinBuiltInDecompilationInterceptor : KotlinBuiltInDecompilationInterceptor {
     override fun readFile(bytes: ByteArray, file: VirtualFile): KotlinMetadataStubBuilder.FileWithMetadata? {
-        if (file in BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles())
+        if (file in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles())
             return BuiltInDefinitionFile.read(bytes, file, filterOutClassesExistingAsClassFiles = false)
         else return null
     }

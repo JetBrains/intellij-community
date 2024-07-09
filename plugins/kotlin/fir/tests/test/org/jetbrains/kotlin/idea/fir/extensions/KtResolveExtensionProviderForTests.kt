@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
+@OptIn(KaExperimentalApi::class)
 class KtResolveExtensionProviderForTests : KaResolveExtensionProvider() {
     override fun provideExtensionsFor(module: KaModule): List<KaResolveExtension> {
         return when (module) {
@@ -38,6 +40,7 @@ class KtResolveExtensionProviderForTests : KaResolveExtensionProvider() {
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private class ExtensionForTests(private val xmlFile: XmlFile) : KaResolveExtension() {
     private val packageName by lazy {
         xmlFile.rootTag?.findFirstSubTag("package")?.value?.text?.let(::FqName)
@@ -57,6 +60,7 @@ private class ExtensionForTests(private val xmlFile: XmlFile) : KaResolveExtensi
     }
 }
 
+@OptIn(KaExperimentalApi::class)
 private class ExtensionFileForTest(private val rootTag: XmlTag, private val packageName: FqName) : KaResolveExtensionFile() {
     private val functionNames by lazy {
         rootTag.findSubTags("function").mapTo(mutableSetOf()) { Name.identifier(it.getAttributeValue("name")!!) }
