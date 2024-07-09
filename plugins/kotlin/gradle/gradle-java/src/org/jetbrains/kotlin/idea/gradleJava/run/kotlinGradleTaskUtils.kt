@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.gradleJava.run
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.types.symbol
@@ -23,7 +24,8 @@ private const val GRADLE_KOTLIN_PROJECT_DELEGATE = "org.gradle.kotlin.dsl.suppor
 internal fun isGradleConfiguration(configuration: GradleRunConfiguration) =
     GradleConstants.SYSTEM_ID == configuration.settings.externalSystemId
 
-internal fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
+@ApiStatus.Internal
+fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
     val file = psiElement.containingFile?.virtualFile ?: return false
     return file.name.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
 }
@@ -34,7 +36,8 @@ internal fun isTaskNameLineMarkerCandidate(element: PsiElement): Boolean {
             || isIdentifierInPropertyWithDelegate(element)
 }
 
-internal fun findTaskNameAround(element: PsiElement): String? {
+@ApiStatus.Internal
+fun findTaskNameAround(element: PsiElement): String? {
     return findTaskNameInSurroundingCallExpression(element)
         ?: findTaskNameInSurroundingProperty(element)
 }

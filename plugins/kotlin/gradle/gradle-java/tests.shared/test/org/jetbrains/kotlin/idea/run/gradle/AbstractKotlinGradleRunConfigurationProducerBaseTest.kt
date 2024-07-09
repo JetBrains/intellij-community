@@ -7,9 +7,14 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.runInEdtAndWait
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.gradle.AbstractKotlinGradleCodeInsightBaseTest
+import org.jetbrains.kotlin.idea.gradleJava.run.findTaskNameAround
+import org.jetbrains.kotlin.idea.gradleJava.run.isInGradleKotlinScript
 import org.jetbrains.kotlin.idea.test.util.elementByOffset
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import org.jetbrains.plugins.gradle.execution.GradleRunnerUtil
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -28,11 +33,33 @@ abstract class AbstractKotlinGradleRunConfigurationProducerBaseTest : AbstractKo
     protected fun verifyGradleConfigurationAtCaret(taskName: String) {
         runInEdtAndWait {
             val context = getConfigurationContextAtCaret()
+            val contextDetails = getConfigurationContextDetails(context)
             val configurationFromContext = context.configurationsFromContext?.singleOrNull()
-                                           ?: error("Unable to find a single configuration from context")
+                ?: error("Unable to find a single configuration from context.\n$contextDetails")
             verifyGradleRunConfiguration(configurationFromContext, taskName)
             verifyConfigurationProducer(configurationFromContext, context)
         }
+    }
+
+    @OptIn(KaAllowAnalysisOnEdt::class)
+    private fun getConfigurationContextDetails(context: ConfigurationContext): String {
+        val module = context.module
+        val location = context.location
+        val psiElement = location?.psiElement
+        val taskName = psiElement?.let {
+            allowAnalysisOnEdt {
+                findTaskNameAround(it)
+            }
+        }
+        return """
+            |Configuration context details:
+            |  Module: $module
+            |  Location: $location
+            |  Kotlin: ${psiElement?.let { isInGradleKotlinScript(it) }}
+            |  Project path: ${module?.let { GradleRunnerUtil.resolveProjectPath(it) }}
+            |  Task: $taskName
+        }
+        """.trimMargin()
     }
 
     private fun getConfigurationContextAtCaret(): ConfigurationContext {
