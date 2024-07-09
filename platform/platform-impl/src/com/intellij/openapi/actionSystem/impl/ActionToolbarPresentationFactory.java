@@ -3,12 +3,14 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public final class ActionToolbarPresentationFactory extends PresentationFactory {
-  public static final Key<Integer> ID_KEY = Key.create("ActionToolbarPresentationFactory.id");
+  public static final Key<Integer> ID_KEY = Key.create("internal.ActionToolbarPresentationFactory.id");
 
   private static final AtomicInteger ourIdCounter = new AtomicInteger();
 

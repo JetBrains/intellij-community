@@ -11914,11 +11914,6 @@ c:com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 - validate():V
 com.intellij.openapi.actionSystem.impl.ActionToolbarImpl$SecondaryGroupUpdater
 - a:update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.openapi.actionSystem.impl.ActionToolbarPresentationFactory
-- com.intellij.openapi.actionSystem.impl.PresentationFactory
-- sf:ID_KEY:com.intellij.openapi.util.Key
-- <init>():V
-- getId():I
 f:com.intellij.openapi.actionSystem.impl.ActionUpdaterInterceptorImpl
 - com.intellij.openapi.actionSystem.ActionUpdaterInterceptor
 - <init>():V

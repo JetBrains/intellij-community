@@ -68,7 +68,7 @@ import kotlin.coroutines.EmptyCoroutineContext
 private val LOG = logger<ActionUpdater>()
 
 @JvmField
-internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("SUPPRESS_SUBMENU_IMPL")
+internal val SUPPRESS_SUBMENU_IMPL: Key<Boolean> = Key.create("internal.SUPPRESS_SUBMENU_IMPL")
 
 private const val OLD_EDT_MSG_SUFFIX = ". Revise AnAction.getActionUpdateThread property"
 
