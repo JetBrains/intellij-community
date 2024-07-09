@@ -7,7 +7,8 @@ private val pluginIdsToIgnoreK2KotlinCompatibility: List<String> =
   System.getProperty("idea.kotlin.plugin.plugin.ids.to.ignore.k2.compatibility")?.split(',')?.map { it.trim() }.orEmpty() +
   listOf("fleet.backend.kotlin", "fleet.backend.mercury", "fleet.backend.mercury.kotlin.macos")
 
-internal fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
+@ApiStatus.Internal
+fun pluginCanWorkInK2Mode(plugin: IdeaPluginDescriptorImpl): Boolean {
   return plugin.epNameToExtensions["org.jetbrains.kotlin.supportsKotlinK2Mode"]?.isNotEmpty() == true
          || plugin.pluginId.idString in pluginIdsToIgnoreK2KotlinCompatibility
 }
