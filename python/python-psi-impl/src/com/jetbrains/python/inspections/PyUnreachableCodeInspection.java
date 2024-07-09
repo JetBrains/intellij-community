@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyStatementListContainer;
@@ -45,7 +46,7 @@ public final class PyUnreachableCodeInspection extends PyInspection {
         final List<PsiElement> unreachable = new ArrayList<>();
         if (instructions.length > 0) {
           ControlFlowUtil.iteratePrev(instructions.length - 1, instructions, instruction -> {
-            if (instruction.allPred().isEmpty() && !PyInspectionsUtil.isFirstInstruction(instruction)) {
+            if (CallInstruction.Companion.allPredWithoutNoReturn(instruction, myTypeEvalContext).isEmpty() && !PyInspectionsUtil.isFirstInstruction(instruction)) {
               unreachable.add(unwrapStatementListContainer(instruction.getElement()));
             }
             return ControlFlowUtil.Operation.NEXT;

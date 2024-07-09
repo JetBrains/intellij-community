@@ -32,7 +32,10 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
+import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import kotlin.Triple;
@@ -167,21 +170,16 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     final PyExpression callee = node.getCallee();
     final var callNodeType = getCalleeNodeType(callee);
 
-    // Flow abrupted
-    if (callNodeType instanceof NoReturnCallKind) {
-      callee.accept(this);
-      for (PyExpression expression : node.getArguments()) {
-        expression.accept(this);
-      }
-      abruptFlow(node);
-    }
-    else if (callNodeType instanceof TypeGuardCallKind typeGuardCallKind && node.getArguments().length > 0) {
+    if (callNodeType instanceof TypeGuardCallKind typeGuardCallKind && node.getArguments().length > 0) {
       expressionToGuards.put(node, typeGuardCallKind.pyFunction);
       super.visitPyCallExpression(node);
     }
     else {
       super.visitPyCallExpression(node);
     }
+
+    var callInstruction = new CallInstruction(myBuilder, node);
+    myBuilder.addNodeAndCheckPending(callInstruction);
 
     if (node.isCalleeText(PyNames.ASSERT_IS_INSTANCE)) {
       final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
@@ -1072,9 +1070,9 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
           .of(PyResolveUtil.resolveQualifiedNameInScope(qName, scopeOwner, context))
           .select(PyFunction.class)
           .map(function -> {
-            if (PyTypingTypeProvider.isNoReturn(function, context)) {
-              return NoReturnCallKind.INSTANCE;
-            }
+            //if (PyTypingTypeProvider.isNoReturn(function, context)) {
+            //  return NoReturnCallKind.INSTANCE;
+            //}
             if (PyTypingTypeProvider.isTypeGuard(function, context)) {
               return new TypeGuardCallKind(function);
             }
@@ -1110,11 +1108,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   private interface CallTypeKind { }
-
-  private static class NoReturnCallKind implements CallTypeKind {
-    private NoReturnCallKind() {}
-    public static final NoReturnCallKind INSTANCE = new NoReturnCallKind();
-  }
 
   private record TypeGuardCallKind(@NotNull PyFunction pyFunction) implements CallTypeKind {}
 }

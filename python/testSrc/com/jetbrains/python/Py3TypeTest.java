@@ -2004,6 +2004,26 @@ public class Py3TypeTest extends PyTestCase {
                      """);
   }
 
+  public void testNoReturn() {
+    doTest("Bar",
+           """
+             from typing import NoReturn
+             
+             class Foo:
+                 def stop(self) -> NoReturn:
+                     raise RuntimeError('no way')
+             
+             class Bar:
+                 ...
+             
+             def foo(x):
+                 f = Foo()
+                 if not isinstance(x, Bar):
+                     f.stop()
+                 expr = x # expr is Bar, not Union[Bar, Any]
+             """);
+  }
+
   // PY-61137
   public void testLiteralStringIsNotInferredWithoutExplicitAnnotation() {
     doTest("list[str]",
