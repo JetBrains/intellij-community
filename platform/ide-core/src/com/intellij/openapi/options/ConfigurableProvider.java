@@ -5,7 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Register implementations of this class as {@code com.intellij.projectConfigurable} or {@code com.intellij.applicationConfigurable}
- * extension to provide items "Settings" dialog.
+ * extension to provide items for "Settings" dialog.
  *
  * @see Configurable
  * @see Configurable.WithEpDependencies
