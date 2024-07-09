@@ -20,6 +20,7 @@ import com.intellij.util.xml.Converter;
 
 import java.lang.annotation.Annotation;
 
+@SuppressWarnings("ClassExplicitlyAnnotation")
 public class ConvertAnnotationImpl implements Convert {
   private final Converter<?> myConverter;
   private final boolean mySoft;
