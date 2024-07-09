@@ -4996,11 +4996,6 @@ c:com.intellij.ide.actions.RevealFileAction
 - s:openFile(java.nio.file.Path):V
 - s:showDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.io.File,com.intellij.openapi.ui.DialogWrapper$DoNotAskOption):V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.RevealGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- postProcessVisibleChildren(java.util.List,com.intellij.openapi.actionSystem.UpdateSession):java.util.List
 Fc:com.intellij.ide.actions.SaveAllAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.ide.lightEdit.LightEditCompatible
@@ -5091,10 +5086,6 @@ a:com.intellij.ide.actions.SettingsEntryPointAction$UpdateAction
 - isNewAction():Z
 - isRestartRequired():Z
 - markAsRead():V
-c:com.intellij.ide.actions.SettingsEntryPointGroup
-- com.intellij.openapi.actionSystem.DefaultActionGroup
-- <init>():V
-- postProcessVisibleChildren(java.util.List,com.intellij.openapi.actionSystem.UpdateSession):java.util.List
 f:com.intellij.ide.actions.ShowContentAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware

@@ -182,9 +182,8 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
 suspend fun IdeMainMenuActionGroup(): ActionGroup? {
   val group = CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU) ?: return null
   return object : ActionGroupWrapper(group) {
-    override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
-                                            updateSession: UpdateSession): List<AnAction?> {
-      return super.postProcessVisibleChildren(visibleChildren, updateSession)
+    override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+      return super.postProcessVisibleChildren(e, visibleChildren)
         .filterIsInstance<ActionGroup>()
     }
   }

@@ -147,15 +147,6 @@ public abstract class ActionGroup extends AnAction {
   public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(
     @NotNull AnActionEvent e,
     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
-    return postProcessVisibleChildren(visibleChildren, e.getUpdateSession());
-  }
-
-  /**
-   * @deprecated Use {@link #postProcessVisibleChildren(AnActionEvent, List)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
-                                                            @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);
   }
 

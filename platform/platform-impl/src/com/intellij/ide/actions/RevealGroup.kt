@@ -3,17 +3,15 @@ package com.intellij.ide.actions
 
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.UpdateSession
 import com.intellij.openapi.project.DumbAware
 
-class RevealGroup : DefaultActionGroup(), DumbAware {
-
-  override fun postProcessVisibleChildren(visibleChildren: MutableList<out AnAction>, updateSession: UpdateSession): List<AnAction> =
-    visibleChildren.map { child ->
-      child.apply {
-        applyTextOverride(ActionPlaces.REVEAL_IN_POPUP, updateSession.presentation(child))
-      }
+internal class RevealGroup : DefaultActionGroup(), DumbAware {
+  override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+    visibleChildren.forEach {
+      it.applyTextOverride(ActionPlaces.REVEAL_IN_POPUP, e.updateSession.presentation(it))
     }
-
+    return super.postProcessVisibleChildren(e, visibleChildren);
+  }
 }

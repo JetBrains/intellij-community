@@ -4,10 +4,12 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class WeighingNewActionGroup extends WeighingActionGroup implements DumbAware {
   private ActionGroup myDelegate;
 

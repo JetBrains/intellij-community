@@ -303,9 +303,9 @@ class ActionUpdaterTest {
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
       }
-      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
-                                              updateSession: UpdateSession): List<AnAction?> {
-        updateSession.presentation(extra).isEnabledAndVisible = true
+
+      override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+        e.updateSession.presentation(extra).isEnabledAndVisible = true
         return visibleChildren + listOf(extra)
       }
     }
@@ -337,9 +337,9 @@ class ActionUpdaterTest {
         updateNewInstance(e!!.updateSession, 1)
         return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
       }
-      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
-                                              updateSession: UpdateSession): List<AnAction?> {
-        updateNewInstance(updateSession, 2)
+
+      override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+        updateNewInstance(e.updateSession, 2)
         return visibleChildren
       }
     }
