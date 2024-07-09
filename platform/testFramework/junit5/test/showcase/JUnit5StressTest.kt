@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test
 
 @StressTestApplication
 class JUnit5StressTest {
+
   @Test
   fun ensureStress() {
     assertNotNull(ApplicationManager.getApplication(), "Application should exist as stress mode depends on application")
