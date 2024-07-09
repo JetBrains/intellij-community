@@ -2,11 +2,20 @@
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -83,32 +92,39 @@ fun disposableFixture(): TestFixture<Disposable> = testFixture { debugString ->
   }
 }
 
+@TestOnly
+fun TestFixture<Module>.sourceRootFixture(isTestSource: Boolean = false, pathFixture: TestFixture<Path> = tempPathFixture()): TestFixture<PsiDirectory> =
+  testFixture { _ ->
+    val module = this@sourceRootFixture.init()
+    val directoryPath: Path = pathFixture.init()
+    val directoryVfs = VfsUtil.createDirectories(directoryPath.toCanonicalPath())
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      model.addContentEntry(directoryVfs).addSourceFolder(directoryVfs, isTestSource)
+    }
+    val directory = readAction {
+      PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
+    }
+    initialized(directory) {
+      writeAction {
+        directory.delete()
+      }
+    }
+  }
 
 @TestOnly
-fun TestFixture<Project>.psiFile(
+fun TestFixture<PsiDirectory>.psiFileFixture(
   name: String,
-  path: String,
   content: String,
 ): TestFixture<PsiFile> = testFixture { _ ->
-  val project = this@psiFile.init()
-  val basePath = project.basePath ?: error("Base path is null")
-  val parent = VirtualFileManager.getInstance().findFileByUrl("file://" + project.basePath) ?: error("Cannot find virtual file $basePath")
-  val dir = writeAction {
-    VfsUtil.createDirectoryIfMissing(parent, path)
-  }
+  val sor = this@psiFileFixture.init()
   val file = writeAction {
-    dir.createChildData(this, name)
+    sor.createFile(name).also {
+      it.virtualFile.setBinaryContent(content.toByteArray())
+    }
   }
-  writeAction {
-    file.setBinaryContent(content.toByteArray())
-  }
-  val psiFile: PsiFile = writeAction {
-    PsiManager.getInstance(project).findFile(file) ?: error("Fail to find psi file")
-  }
-  initialized(psiFile) {
+  initialized(file) {
     writeAction {
-      psiFile.delete()
-      dir.delete(this)
+      file.delete()
     }
   }
 }
