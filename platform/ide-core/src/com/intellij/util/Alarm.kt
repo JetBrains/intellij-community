@@ -66,13 +66,6 @@ open class Alarm @Internal constructor(
 
   private val LOCK = Any()
 
-  override fun dispose() {
-    if (taskCoroutineScope.isActive) {
-      taskCoroutineScope.cancel()
-      cancelAllRequests()
-    }
-  }
-
   enum class ThreadToUse {
     /**
      * Run request in Swing event dispatch thread; this is the default.
@@ -132,6 +125,13 @@ open class Alarm @Internal constructor(
     else {
       @Suppress("LeakingThis")
       Disposer.register(parentDisposable, this)
+    }
+  }
+
+  override fun dispose() {
+    if (taskCoroutineScope.isActive) {
+      taskCoroutineScope.cancel()
+      cancelAllRequests()
     }
   }
 
