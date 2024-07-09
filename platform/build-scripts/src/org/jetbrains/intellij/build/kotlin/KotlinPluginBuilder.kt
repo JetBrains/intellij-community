@@ -71,6 +71,7 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.kapt",
     "kotlin.compiler-plugins.kotlinx-serialization.common",
     "kotlin.compiler-plugins.kotlinx-serialization.gradle",
+    "kotlin.compiler-plugins.kotlinx-serialization.k2",
     "kotlin.compiler-plugins.kotlinx-serialization.maven",
     "kotlin.compiler-plugins.noarg.common",
     "kotlin.compiler-plugins.noarg.gradle",
