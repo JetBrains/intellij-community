@@ -83,7 +83,6 @@ private val IS_MODAL_CONTEXT = Key.create<Boolean>("Component.isModalContext")
 private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
 private var ourExpandActionGroupImplEDTLoopLevel = 0
 private var ourInUpdateSessionForInputEventEDTLoop = false
-private var ourCurrentInputEventProcessingJobFlow = MutableStateFlow<Job?>(null)
 
 private val LOG = logger<Utils>()
 
@@ -980,15 +979,16 @@ object Utils {
 
   // this dispatcher should always be available
   private val cancellationDispatcher = Dispatchers.IO.limitedParallelism(1)
+  private var ourCurrentInputEventProcessingJobFlow = MutableStateFlow<Job?>(null)
+
+  // DO NOT USE. RIDER ONLY!
   suspend fun <T> cancelCurrentInputEventProcessingAndRun(block: suspend () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
       ourCurrentInputEventProcessingJobFlow.collectLatest {
         it?.cancel()
       }
     }
-
     val result = block()
-
     cancelJob.cancel()
     result
   }
