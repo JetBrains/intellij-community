@@ -42,4 +42,5 @@ fun main() {
 // STEP_OVER: 3
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
 // REGISTRY: debugger.always.suspend.thread.before.switch=true
+// REGISTRY: debugger.log.jdi.in.unit.tests=true
 // REGISTRY: debugger.how.to.switch.to.suspend.all=[IMMEDIATE_PAUSE*]
