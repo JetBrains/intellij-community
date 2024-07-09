@@ -45,7 +45,7 @@ fun matchesHashCodeMethodSignature(function: KaNamedFunctionSymbol): Boolean {
     if (function.typeParameters.isNotEmpty()) return false
     if (function.valueParameters.isNotEmpty()) return false
     val returnType = function.returnType
-    return returnType.isInt && !returnType.isMarkedNullable
+    return returnType.isIntType && !returnType.isMarkedNullable
 }
 
 fun generateEqualsHeaderAndBodyTexts(targetClass: KtClass): Pair<String, String> {
@@ -58,7 +58,7 @@ fun generateEqualsHeaderAndBodyTexts(targetClass: KtClass): Pair<String, String>
     }
     var bodyText = ""
     analyze(targetClass) {
-        val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
+        val classSymbol = targetClass.classSymbol ?: return@analyze
         val equalsMethod = findEqualsMethodForClass(classSymbol) as? KaNamedFunctionSymbol ?: return@analyze
         val superContainingEqualsMethod = equalsMethod.containingDeclaration ?: return@analyze
 
@@ -100,7 +100,7 @@ fun generateEqualsHeaderAndBodyTexts(targetClass: KtClass): Pair<String, String>
         bodyText = buildString {
             append("if (this === $parameterName) return true\n")
             append("if ($isNotInstanceCondition) return false\n")
-            if (superContainingEqualsMethod != builtinTypes.ANY.expandedSymbol) {
+            if (superContainingEqualsMethod != builtinTypes.any.expandedSymbol) {
                 append("if (!super.equals($parameterName)) return false\n")
             }
 
@@ -172,7 +172,8 @@ fun generateHashCodeHeaderAndBodyTexts(targetClass: KtClass): Pair<String, Strin
             val isNullable = type.isMarkedNullable
 
             var text = when {
-                type.isEqualTo(builtinTypes.BYTE) || type.isEqualTo(builtinTypes.SHORT) || type.isEqualTo(builtinTypes.INT) -> ref
+                type.semanticallyEquals(builtinTypes.byte) || type.semanticallyEquals(builtinTypes.short)
+                        || type.semanticallyEquals(builtinTypes.int) -> ref
 
                 type.isArrayOrPrimitiveArray -> {
                     val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
@@ -194,7 +195,7 @@ fun generateHashCodeHeaderAndBodyTexts(targetClass: KtClass): Pair<String, Strin
             return text
         }
 
-        val classSymbol = targetClass.getClassOrObjectSymbol() ?: return@analyze
+        val classSymbol = targetClass.classSymbol ?: return@analyze
         val hashCodeMethod = findHashCodeMethodForClass(classSymbol) as? KaNamedFunctionSymbol ?: return@analyze
         val superContainingHashCodeMethod = hashCodeMethod.containingDeclaration ?: return@analyze
 
@@ -207,7 +208,7 @@ fun generateHashCodeHeaderAndBodyTexts(targetClass: KtClass): Pair<String, Strin
         val propertyIterator = variablesForHashCode.iterator()
 
         val initialValue = when {
-            superContainingHashCodeMethod != builtinTypes.ANY.expandedSymbol -> "super.hashCode()"
+            superContainingHashCodeMethod != builtinTypes.any.expandedSymbol -> "super.hashCode()"
             propertyIterator.hasNext() -> propertyIterator.next().genVariableHashCode(false)
             else -> generateClassLiteral(targetClass) + ".hashCode()"
         }
@@ -239,15 +240,13 @@ private fun findEqualsMethodForClass(classSymbol: KaClassSymbol): KaCallableSymb
 context(KaSession)
 private fun findMethod(
     classSymbol: KaClassSymbol, methodName: Name, condition: (KaCallableSymbol) -> Boolean
-): KaCallableSymbol? = classSymbol.memberScope.getCallableSymbols(methodName).filter(condition).singleOrNull()
+): KaCallableSymbol? = classSymbol.memberScope.callables(methodName).filter(condition).singleOrNull()
 
 context(KaSession)
 private fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
     findMethod(classSymbol, HASH_CODE) { callableSymbol ->
         (callableSymbol as? KaNamedFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
     }
-
-
 
 /**
  * A function to generate the "not equals" comparison between the class of `this` and the class of the parameter.
@@ -280,7 +279,7 @@ private fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject):
     buildList<KtNamedDeclaration> {
         classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
         classOrObject.declarations.asSequence().filterIsInstance<KtProperty>().filterTo(this) {
-            it.getVariableSymbol() is KaPropertySymbol
+            it.symbol is KaPropertySymbol
         }
     }.filter {
         it.name?.quoteIfNeeded().isIdentifier()
