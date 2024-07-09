@@ -50,8 +50,6 @@ class EditorCellRunGutterButton(private val editor: EditorEx, private val cell: 
 
   inner class DummyEmptyAction: AnAction(AllIcons.Empty) { override fun actionPerformed(e: AnActionEvent) { } }
 
-  fun dispose() = hideRunButton()
-
   companion object {
     private val runCellAction = ActionManager.getInstance().getAction("NotebookRunCellAction")
     private val interruptKernelAction = ActionManager.getInstance().getAction("JupyterInterruptKernelAction")

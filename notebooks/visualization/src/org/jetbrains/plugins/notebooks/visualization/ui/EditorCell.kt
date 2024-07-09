@@ -8,6 +8,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController
+import org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayManager
 import org.jetbrains.plugins.notebooks.visualization.NotebookCellLines
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointer
 import org.jetbrains.plugins.notebooks.visualization.execution.ExecutionEvent
@@ -17,6 +18,7 @@ import kotlin.reflect.KClass
 
 class EditorCell(
   private val editor: EditorEx,
+  private val manager: NotebookCellInlayManager,
   internal var intervalPointer: NotebookIntervalPointer,
   private val viewFactory: (EditorCell) -> EditorCellView,
 ) : Disposable, UserDataHolder by UserDataHolderBase() {
@@ -34,7 +36,7 @@ class EditorCell(
 
   val interval get() = intervalPointer.get() ?: error("Invalid interval")
 
-  var view: EditorCellView? = viewFactory(this)
+  var view: EditorCellView? = createView()
 
   var visible: Boolean = true
     set(value) {
@@ -43,19 +45,30 @@ class EditorCell(
 
       if (value) {
         view?.let {
-          Disposer.dispose(it)
-          view = null
+          disposeView(it)
         }
       }
       else {
         if (view == null) {
-          view = viewFactory(this).also { Disposer.register(this, it) }
+          view = createView()
           view?.selected = selected
           gutterAction?.let { view?.setGutterAction(it) }
           view?.updateExecutionStatus(executionCount, progressStatus, executionStartTime, executionEndTime)
         }
       }
     }
+
+  private fun createView(): EditorCellView {
+    val view = viewFactory(this).also { Disposer.register(this, it) }
+    manager.fireCellViewCreated(view)
+    return view
+  }
+
+  private fun disposeView(it: EditorCellView) {
+    Disposer.dispose(it)
+    view = null
+    manager.fireCellViewRemoved(it)
+  }
 
   var selected: Boolean = false
     set(value) {
@@ -76,7 +89,7 @@ class EditorCell(
   private var executionEndTime: ZonedDateTime? = null
 
   override fun dispose() {
-    view?.let { Disposer.dispose(it) }
+    view?.let { disposeView(it) }
   }
 
   fun update(force: Boolean = false) {
