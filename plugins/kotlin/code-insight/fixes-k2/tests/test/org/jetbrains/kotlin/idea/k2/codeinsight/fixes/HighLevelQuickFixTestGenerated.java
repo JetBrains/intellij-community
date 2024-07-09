@@ -1286,6 +1286,45 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/changeToMutableCollection")
+    public static class ChangeToMutableCollection extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("list.kt")
+        public void testList() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/list.kt");
+        }
+
+        @TestMetadata("list2.kt")
+        public void testList2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/list2.kt");
+        }
+
+        @TestMetadata("map.kt")
+        public void testMap() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/map.kt");
+        }
+
+        @TestMetadata("map2.kt")
+        public void testMap2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/map2.kt");
+        }
+
+        @TestMetadata("set.kt")
+        public void testSet() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeToMutableCollection/set.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/checkArguments")
     public static class CheckArguments extends AbstractHighLevelQuickFixTest {
         @java.lang.Override

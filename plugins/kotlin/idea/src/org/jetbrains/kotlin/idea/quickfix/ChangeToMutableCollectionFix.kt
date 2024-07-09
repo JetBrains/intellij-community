@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
 class ChangeToMutableCollectionFix(property: KtProperty, private val type: String) : KotlinQuickFixAction<KtProperty>(property) {
-    override fun getText() = KotlinBundle.message("fix.change.to.mutable.type", "Mutable$type")
+    override fun getText() = KotlinBundle.message("fix.change.to.mutable.type.text", "Mutable$type")
 
     override fun getFamilyName() = text
 

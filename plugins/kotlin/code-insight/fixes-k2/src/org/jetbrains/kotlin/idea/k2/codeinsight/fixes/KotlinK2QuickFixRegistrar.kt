@@ -150,6 +150,10 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(AddValVarToConstructorParameterFixFactory.valueClassConstructorNotFinalReadOnlyParameterFactory)
     }
 
+    private val changeToMutableCollection = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerFactory(ChangeToMutableCollectionFixFactories.noSetMethod)
+    }
+
     private val changeToLabeledReturn = KtQuickFixesListBuilder.registerPsiQuickFix {
         registerFactory(ChangeToLabeledReturnFixFactory.nullForNonnullType)
         registerFactory(ChangeToLabeledReturnFixFactory.returnNotAllowed)
@@ -457,6 +461,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         addFinal,
         addInline,
         addValVarToConstructorParameter,
+        changeToMutableCollection,
         changeToLabeledReturn,
         convertStringToCharLiteral,
         insertDelegationCall,
