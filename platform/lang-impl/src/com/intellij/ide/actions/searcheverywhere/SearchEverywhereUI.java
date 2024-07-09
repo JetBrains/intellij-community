@@ -1043,7 +1043,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       return;
     }
     Component oppositeComponent = e.getOppositeComponent();
-    if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(SearchEverywhereUI.this, oppositeComponent)) {
+    if (!isHintComponent(oppositeComponent) && !UIUtil.haveCommonOwner(this, oppositeComponent)) {
       sendStatisticsAndClose();
     }
   }

@@ -273,14 +273,14 @@ public class TypeAnnotationContainer {
       myReferenceElement = NotNullLazyValue.atomicLazy(() -> {
         int index = myText.indexOf('(');
         String refText = index > 0 ? myText.substring(1, index) : myText.substring(1);
-        return new ClsJavaCodeReferenceElementImpl(ClsTypeAnnotationImpl.this, refText);
+        return new ClsJavaCodeReferenceElementImpl(this, refText);
       });
       myParameterList = NotNullLazyValue.atomicLazy(() -> {
         PsiNameValuePair[] attrs = myText.indexOf('(') > 0
                                    ? JavaPsiFacade.getElementFactory(getProject()).createAnnotationFromText(myText, myParent)
                                      .getParameterList().getAttributes()
                                    : PsiNameValuePair.EMPTY_ARRAY;
-        return new ClsAnnotationParameterListImpl(ClsTypeAnnotationImpl.this, attrs);
+        return new ClsAnnotationParameterListImpl(this, attrs);
       });
     }
 

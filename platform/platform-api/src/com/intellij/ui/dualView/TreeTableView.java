@@ -83,7 +83,7 @@ public class TreeTableView extends TreeTable implements SelectionProvider {
 
   @Override
   public TreeTableCellRenderer createTableRenderer(TreeTableModel treeTableModel) {
-    return new TreeTableCellRenderer(TreeTableView.this, getTree()) {
+    return new TreeTableCellRenderer(this, getTree()) {
       @Override
       public Component getTableCellRendererComponent(JTable table,
                                                      Object value,

@@ -379,7 +379,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
       try {
         if (declaration instanceof PsiClass &&
-            new TestClassBrowser(project, TestNGConfigurationEditor.this).getFilter().isAccepted((PsiClass)declaration)) {
+            new TestClassBrowser(project, this).getFilter().isAccepted((PsiClass)declaration)) {
           return JavaCodeFragment.VisibilityChecker.Visibility.VISIBLE;
         }
       }

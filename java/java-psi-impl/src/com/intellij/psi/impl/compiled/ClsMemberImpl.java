@@ -19,10 +19,10 @@ public abstract class ClsMemberImpl<T extends PsiMemberStub> extends ClsReposito
   protected ClsMemberImpl(T stub) {
     super(stub);
     myDocComment = !stub.isDeprecated() ? null : NotNullLazyValue.atomicLazy(() -> {
-      return new ClsDocCommentImpl(ClsMemberImpl.this);
+      return new ClsDocCommentImpl(this);
     });
     myNameIdentifier = NotNullLazyValue.atomicLazy(() -> {
-      return new ClsIdentifierImpl(ClsMemberImpl.this, getName());
+      return new ClsIdentifierImpl(this, getName());
     });
   }
 

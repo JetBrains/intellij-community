@@ -580,7 +580,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @ApiStatus.Internal
   public void fireAccessibleTreeExpanded(@NotNull TreePath path) {
     if (accessibleContext != null) {
-      ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(Tree.this, path));
+      ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(this, path));
     }
   }
 
@@ -597,7 +597,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @ApiStatus.Internal
   public void fireAccessibleTreeCollapsed(@NotNull TreePath path) {
     if (accessibleContext != null) {
-      ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(Tree.this, path));
+      ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(this, path));
     }
   }
 
