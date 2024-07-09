@@ -56,7 +56,7 @@ import static com.intellij.execution.ui.RunToolbarPopupKt.RUN_CONFIGURATION_KEY;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final String BUTTON_MODE = "ButtonMode";
-  private static final String RUN_CONFIGURATION_GROUP_ID = "RunConfigurationGroup";
+  private static final String RUN_CONFIGURATION_GROUP_ID = "RunConfiguration.Group";
 
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 

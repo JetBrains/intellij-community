@@ -6,7 +6,7 @@
     <action id="ChooseRunConfiguration" class="com.intellij.execution.actions.ChooseRunConfigurationPopupAction" icon="AllIcons.Actions.Execute"/>
     <action id="ChooseDebugConfiguration" class="com.intellij.execution.actions.ChooseDebugConfigurationPopupAction" icon="AllIcons.Actions.StartDebugger"/>
 
-    <group id="RunConfigurationGroup">
+    <group id="RunConfiguration.Group">
       <action id="SaveTemporaryRunConfiguration" class="com.intellij.execution.actions.more.SaveTemporaryRunConfigurationMoreAction"/>
       <action id="DeleteRunConfiguration" class="com.intellij.execution.actions.more.DeleteRunConfigurationMoreAction"/>
     </group>
