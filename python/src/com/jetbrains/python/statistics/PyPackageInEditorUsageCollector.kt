@@ -13,7 +13,7 @@ class PyPackageInEditorUsageCollector : ProjectUsagesCollector() {
   override fun getMetrics(project: Project): Set<MetricEvent> {
     val keys = PyPackageUsageStatistics.getInstance(project).getStatisticsAndResetState().keys
     return keys.map { packageUsage ->
-      PYTHON_PACKAGES_IN_EDITOR.metric(PACKAGE_FIELD.with(normalizePackageName((packageUsage.name))),
+      PYTHON_PACKAGES_IN_EDITOR.metric(PACKAGE_FIELD.with(packageUsage.name?.let { normalizePackageName(it) }),
                                        PACKAGE_VERSION_FIELD.with(packageUsage.version),
                                        INTERPRETER_TYPE.with(packageUsage.interpreterTypeValue),
                                        EXECUTION_TYPE.with(packageUsage.targetTypeValue),
