@@ -37,15 +37,16 @@ class EnableK2NotificationService {
     private val applicableVersions = setOf("2024.2", "2024.3")
 
     fun showEnableK2Notification(project: Project, state: K2UserTrackerState) {
+        // We shouldn't show this notification in the K2 mode:)
+        if (KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K2) return
 
+        // Ignore state if testing
         if (!Registry.`is`("test.enable.k2.notification", false)) {
-            if (state.userSawEnableK2Notification) return // We show this notification only once
-        } else { // We manually update the state for testing, pretending that we haven't tried the K2 mode yet
-            state.k2UserSince = K2_SINCE_NOT_DEFINED
+            // We show this notification only once
+            if (state.userSawEnableK2Notification) return
+            // The user shouldn't have tried the K2 mode yet
+            if (state.k2UserSince != K2_SINCE_NOT_DEFINED) return
         }
-
-        // The user shouldn't have tried the K2 mode yet
-        if (state.k2UserSince != K2_SINCE_NOT_DEFINED || KotlinPluginModeProvider.currentPluginMode == KotlinPluginMode.K2) return
 
         // They should use Kotlin compiler 2.0 and higher
         if (!KotlinJpsPluginSettings.jpsVersion(project).startsWith("2.0")) return // TODO probably better to parse it properly
