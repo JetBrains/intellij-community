@@ -346,7 +346,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   private void update() {
     ProgressDialog dialog = myDialog;
     if (dialog != null) {
-      dialog.update();
+      dialog.scheduleUpdate();
     }
   }
 

@@ -1,11 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.openapi.progress.util
 
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapperPeer
@@ -14,18 +18,25 @@ import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer.GlasspanePeerUnav
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.ui.PopupBorder
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
-import com.intellij.util.ui.EdtInvocationManager
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Window
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
+import java.lang.Runnable
 import javax.swing.*
 import javax.swing.border.Border
 
+@Internal
 class ProgressDialog(
   private val progressWindow: ProgressWindow,
   private val shouldShowBackground: Boolean,
@@ -37,31 +48,13 @@ class ProgressDialog(
   }
 
   private var lastTimeDrawn: Long = -1
-  private val updateAlarm = SingleAlarm(task = this::update, delay = 500, parentDisposable = this)
+  private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var wasShown = false
   private val startMillis = System.currentTimeMillis()
 
   private val ui = ProgressDialogUI()
 
-  private val repaintRunnable = Runnable {
-    ui.updateTitle(progressWindow.title)
-    ui.updateProgress(
-      text = progressWindow.text,
-      details = progressWindow.text2,
-      fraction = if (progressWindow.isIndeterminate) null else progressWindow.fraction,
-    )
-    val progressBar = ui.progressBar
-    if (progressBar.isShowing && progressBar.isIndeterminate && isWriteActionProgress()) {
-      val progressBarUI = progressBar.ui
-      if (progressBarUI is DarculaProgressBarUI) {
-        progressBarUI.updateIndeterminateAnimationIndex(startMillis)
-      }
-    }
-    lastTimeDrawn = System.currentTimeMillis()
-    synchronized(this@ProgressDialog) {
-      repaintedFlag = true
-    }
-  }
+  private val repaintRunnable = Runnable(::doRepaint)
 
   private var repaintedFlag = true // guarded by this
   private var popup: DialogWrapper? = null
@@ -81,6 +74,9 @@ class ProgressDialog(
     threadToUse = Alarm.ThreadToUse.SWING_THREAD,
     modalityState = ModalityState.any()
   )
+
+  @Suppress("SSBasedInspection")
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
 
   init {
     ui.progressBar.isIndeterminate = progressWindow.isIndeterminate
@@ -115,9 +111,51 @@ class ProgressDialog(
     else {
       backgroundButton.isVisible = false
     }
+
+    coroutineScope.launch {
+      updateRequests
+        .throttle(500)
+        .collectLatest {
+          withContext(Dispatchers.EDT + progressWindow.modalityState.asContextElement()) {
+            if (!repaintedFlag) {
+              return@withContext
+            }
+
+            if (System.currentTimeMillis() > lastTimeDrawn + UPDATE_INTERVAL) {
+              repaintedFlag = false
+              doRepaint()
+            }
+            else {
+              scheduleUpdate()
+            }
+          }
+        }
+    }
+  }
+
+  private fun doRepaint() {
+    ui.updateTitle(progressWindow.title)
+    ui.updateProgress(
+      text = progressWindow.text,
+      details = progressWindow.text2,
+      fraction = if (progressWindow.isIndeterminate) null else progressWindow.fraction,
+    )
+    val progressBar = ui.progressBar
+    if (progressBar.isShowing && progressBar.isIndeterminate && isWriteActionProgress()) {
+      val progressBarUI = progressBar.ui
+      if (progressBarUI is DarculaProgressBarUI) {
+        progressBarUI.updateIndeterminateAnimationIndex(startMillis)
+      }
+    }
+    lastTimeDrawn = System.currentTimeMillis()
+    synchronized(this@ProgressDialog) {
+      repaintedFlag = true
+    }
   }
 
   override fun dispose() {
+    coroutineScope.cancel()
+
     Disposer.dispose(ui)
     enableCancelAlarm.cancelAllRequests()
     disableCancelAlarm.cancelAllRequests()
@@ -134,29 +172,13 @@ class ProgressDialog(
   }
 
   fun enableCancelButtonIfNeeded(enable: Boolean) {
-    if (progressWindow.myShouldShowCancel && !updateAlarm.isDisposed) {
+    if (progressWindow.myShouldShowCancel && coroutineScope.isActive) {
       (if (enable) enableCancelAlarm else disableCancelAlarm).request()
     }
   }
 
-  @Synchronized
-  fun update() {
-    if (repaintedFlag) {
-      if (System.currentTimeMillis() > lastTimeDrawn + UPDATE_INTERVAL) {
-        repaintedFlag = false
-        EdtInvocationManager.invokeLaterIfNeeded(repaintRunnable)
-      }
-      else {
-        // later to avoid concurrent dispose/addRequest
-        if (!updateAlarm.isDisposed && updateAlarm.isEmpty) {
-          EdtInvocationManager.invokeLaterIfNeeded {
-            if (!updateAlarm.isDisposed) {
-              updateAlarm.request(progressWindow.modalityState)
-            }
-          }
-        }
-      }
-    }
+  fun scheduleUpdate() {
+    check(updateRequests.tryEmit(Unit))
   }
 
   @Synchronized
@@ -209,7 +231,7 @@ class ProgressDialog(
           }
         }
         ui.cancelButton.requestFocusInWindow()
-        repaintRunnable.run()
+        doRepaint()
       }
     }
   }
