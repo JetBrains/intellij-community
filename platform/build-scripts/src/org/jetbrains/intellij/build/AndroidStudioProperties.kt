@@ -67,6 +67,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.grazie",
       "intellij.java.byteCodeViewer",
       "intellij.java.guiForms.designer",
+      "intellij.marketplaceMl", // Currently experimental and disabled by default anyway (in IJ 2024.2).
       "intellij.maven",
       "intellij.platform.tracing.ide",
       "intellij.searchEverywhereMl",
