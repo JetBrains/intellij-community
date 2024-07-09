@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.ui.ideScaleIndicator
 
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.ide.ui.percentValue
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -15,22 +16,42 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.Alarm
 import com.intellij.util.ui.UpdateScaleHelper
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import java.awt.Point
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-internal class IdeScaleIndicatorManager(private val project: Project) {
+internal class IdeScaleIndicatorManager(private val project: Project, coroutineScope: CoroutineScope) {
   private var balloon: Balloon? = null
   private var indicator: IdeScaleIndicator? = null
-  private val alarm = Alarm(project)
+  private val updateRequests = MutableSharedFlow<Duration>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val updateScaleHelper = UpdateScaleHelper { UISettingsUtils.getInstance().currentIdeScale }
 
   init {
-    setupLafListener()
+    setupLafListener(coroutineScope)
+
+    coroutineScope.launch {
+      updateRequests.collectLatest {
+        if (it == Duration.ZERO) {
+          // cancel request
+          return@collectLatest
+        }
+
+        delay(it)
+        withContext(Dispatchers.EDT) {
+          cancelPopupIfNotHovered()
+        }
+      }
+    }
   }
 
   private fun showIndicator() {
+    check(updateRequests.tryEmit(Duration.ZERO))
     cancelCurrentPopup()
     val ideFrame = WindowManager.getInstance().getIdeFrame(project)?.component ?: return
     val indicator = IdeScaleIndicator(UISettingsUtils.getInstance().currentIdeScale.percentValue)
@@ -50,16 +71,16 @@ internal class IdeScaleIndicatorManager(private val project: Project) {
 
     val point = RelativePoint(ideFrame, Point(ideFrame.width / 2, ideFrame.height - JBUIScale.scale(70)))
     balloon?.show(point, Balloon.Position.above)
-    scheduleCancellation(POPUP_TIMEOUT_MS)
+    scheduleCancellation(POPUP_TIMEOUT)
   }
 
-  private fun scheduleCancellation(delay: Int) {
-    alarm.addRequest(::cancelPopupIfNotHovered, delay)
+  private fun scheduleCancellation(delay: Duration) {
+    check(updateRequests.tryEmit(delay))
   }
 
   private fun cancelPopupIfNotHovered() {
     if (indicator?.isHovered == true) {
-      scheduleCancellation(POPUP_SHORT_TIMEOUT_MS)
+      scheduleCancellation(POPUP_SHORT_TIMEOUT)
     }
     else {
       cancelCurrentPopup()
@@ -67,23 +88,24 @@ internal class IdeScaleIndicatorManager(private val project: Project) {
   }
 
   private fun cancelCurrentPopup() {
-    alarm.cancelAllRequests()
     balloon?.hide()
     balloon = null
     indicator = null
   }
 
-  private fun setupLafListener() {
-    ApplicationManager.getApplication().messageBus.connect(project).subscribe(LafManagerListener.TOPIC, LafManagerListener {
+  private fun setupLafListener(coroutineScope: CoroutineScope) {
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope).subscribe(LafManagerListener.TOPIC, LafManagerListener {
       updateScaleHelper.saveScaleAndRunIfChanged {
-        if (shouldIndicate) showIndicator()
+        if (shouldIndicate) {
+          showIndicator()
+        }
       }
     })
   }
 
   companion object {
-    private const val POPUP_TIMEOUT_MS = 4000
-    private const val POPUP_SHORT_TIMEOUT_MS = 1000
+    private val POPUP_TIMEOUT = 4.seconds
+    private val POPUP_SHORT_TIMEOUT = 1.seconds
     private var shouldIndicate: Boolean = false
 
     fun getInstance(project: Project): IdeScaleIndicatorManager = project.service<IdeScaleIndicatorManager>()
