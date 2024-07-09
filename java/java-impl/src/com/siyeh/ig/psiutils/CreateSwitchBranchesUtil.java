@@ -141,6 +141,7 @@ public final class CreateSwitchBranchesUtil {
     List<PsiExpression> elementsToReplace = getElementsToReplace(addedLabels);
     ModTemplateBuilder builder = updater.templateBuilder();
     for (PsiExpression expression : elementsToReplace) {
+      if (!expression.isValid()) continue;
       builder.field(expression, new ConstantNode(expression.getText()));
     }
   }
