@@ -28,7 +28,7 @@ import java.util.*
 import javax.swing.*
 import javax.swing.border.Border
 
-private val localeMappings = mapOf(Locale.CHINA to listOf("zh-CN", "CN"), Locale.JAPANESE to listOf("ja", "JP"),
+private val localeMappings = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans", "CN"), Locale.JAPANESE to listOf("ja", "JP"),
                                    Locale.KOREAN to listOf("ko", "KR", "KP"))
 
 private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
