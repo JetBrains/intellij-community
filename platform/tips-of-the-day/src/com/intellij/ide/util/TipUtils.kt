@@ -188,6 +188,8 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
   val retrievers: MutableList<TipRetriever> = ArrayList()
   val locale = LocalizationUtil.getLocaleOrNullForDefault()
   if (locale != null) {
+    //tips from locally placed localization
+    retrievers.addAll(getLocalizationTipRetrievers(defaultLoader))
     val localizationPluginLoader: ClassLoader? = LocalizationUtil.getPluginClassLoader()
     if (localizationPluginLoader != null) {
       var ideCode = ApplicationInfoEx.getInstanceEx().apiVersionAsNumber.productCode.lowercase()
@@ -198,8 +200,6 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
       //tips from language plugin
       listOf(ideCode, fallbackIdeCode, "db_pl", "bdt", "misc").forEach { retrievers.add(TipRetriever(localizationPluginLoader, tipDirectory, it)) }
     }
-    //tips from locally placed localization
-    retrievers.addAll(getLocalizationTipRetrievers(defaultLoader))
   }
   val defaultRetriever = TipRetriever(defaultLoader, tipDirectory, "")
   retrievers.add(defaultRetriever)
