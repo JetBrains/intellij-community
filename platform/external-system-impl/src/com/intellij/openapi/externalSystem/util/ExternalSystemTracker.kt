@@ -1,14 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util
 
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
-import com.intellij.platform.backend.observation.ActivityKey
 import com.intellij.platform.backend.observation.ActivityTracker
 import kotlinx.coroutines.delay
-import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 class ExternalSystemTracker : ActivityTracker {
   override val presentableName: String = "external-system (startup)"
 
@@ -22,9 +21,4 @@ class ExternalSystemTracker : ActivityTracker {
       delay(1000)
     }
   }
-}
-
-object ExternalSystemActivityKey : ActivityKey {
-  override val presentableName: @Nls String
-    get() = "external-system"
 }

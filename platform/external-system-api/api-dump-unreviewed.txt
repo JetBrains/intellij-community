@@ -1,8 +1,3 @@
-f:com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl
-- com.intellij.openapi.roots.ExternalProjectSystemRegistry
-- <init>():V
-- getExternalSource(com.intellij.openapi.module.Module):com.intellij.openapi.roots.ProjectModelExternalSource
-- getSourceById(java.lang.String):com.intellij.openapi.roots.ProjectModelExternalSource
 com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware
 - getAffectedExternalProjectFiles(java.lang.String,com.intellij.openapi.project.Project):java.util.List
 - a:getAffectedExternalProjectPath(java.lang.String,com.intellij.openapi.project.Project):java.lang.String
@@ -1546,12 +1541,6 @@ f:com.intellij.openapi.externalSystem.util.ExternalSystemInProgressService
 - f:externalSystemActivityStarted():V
 - f:isInProgress():Z
 - f:unlinkedActivityStarted():V
-f:com.intellij.openapi.externalSystem.util.ExternalSystemTracker
-- com.intellij.platform.backend.observation.ActivityTracker
-- <init>():V
-- awaitConfiguration(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
-- getPresentableName():java.lang.String
-- isInProgress(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.openapi.externalSystem.util.IntegrationKey
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String):V

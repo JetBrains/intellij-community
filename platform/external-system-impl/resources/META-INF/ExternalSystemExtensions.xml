@@ -117,7 +117,7 @@
                    serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
-                        serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalProjectSystemRegistryImpl" overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemJdkProvider"/>
