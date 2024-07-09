@@ -427,7 +427,7 @@ private fun createRunConfigurationWithInlines(project: Project,
     override fun update(e: AnActionEvent) {
       super.update(e)
       val filtered = filterOutRunIfDebugResumeIsPresent(
-        ActionGroupUtil.getVisibleActions(inlineActionGroup, e).toList())
+        e, ActionGroupUtil.getVisibleActions(inlineActionGroup, e).toList())
       e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, filtered)
       if (Registry.`is`("run.popup.show.inlines.for.active.configurations", false)) {
         val isRunning = getActiveExecutor(project, conf) != null

@@ -87,8 +87,8 @@ private fun createRunActionToolbar(): ActionToolbar {
       return arrayOf(e.actionManager.getAction("RunToolbarMainActionGroup"))
     }
 
-    override fun postProcessVisibleChildren(visibleChildren: List<AnAction>, updateSession: UpdateSession): List<AnAction?> {
-      return filterOutRunIfDebugResumeIsPresent(visibleChildren)
+    override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+      return filterOutRunIfDebugResumeIsPresent(e, visibleChildren)
     }
   }
   val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.NEW_UI_RUN_TOOLBAR, group, true)
@@ -404,10 +404,18 @@ private class MoreRunToolbarActions : TogglePopupAction(
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 }
 
-internal fun filterOutRunIfDebugResumeIsPresent(actions: List<AnAction>): List<AnAction> {
-  val hasPause = actions.find { it.javaClass.name.endsWith("XDebuggerResumeAction") } != null
+internal fun filterOutRunIfDebugResumeIsPresent(e: AnActionEvent, actions: List<AnAction>): List<AnAction> {
+  val hasPause = actions.find {
+    it.javaClass.simpleName.let {
+      it == "InlineXDebuggerResumeAction" ||
+      it == "ConfigurationXDebuggerResumeAction"
+    } ||
+    e.actionManager.getId(it)?.contains("XDebuggerResumeAction") == true
+  } != null
   if (!hasPause) return actions
-  return actions.filter { (it as? ExecutorAction)?.id != ToolWindowId.RUN }
+  return actions.filter {
+    ((it as? ExecutorAction)?.id ?: e.actionManager.getId(it)) != "Run"
+  }
 }
 
 internal fun executorFilterByParentGroupFactory(parentGroup: ActionGroup?): (AnActionEvent?) -> Predicate<Executor>? {
