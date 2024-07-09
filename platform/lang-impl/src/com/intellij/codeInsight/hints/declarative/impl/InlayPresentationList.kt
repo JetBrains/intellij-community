@@ -2,11 +2,9 @@
 package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.InlayHintsUtils
-import com.intellij.codeInsight.hints.declarative.HintColorKind
-import com.intellij.codeInsight.hints.declarative.InlayActionPayload
-import com.intellij.codeInsight.hints.declarative.InlayPayload
-import com.intellij.codeInsight.hints.declarative.InlayPosition
+import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.codeInsight.hints.presentation.InlayTextMetricsStorage
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
@@ -30,7 +28,7 @@ import java.awt.geom.Rectangle2D
  */
 class InlayPresentationList(
   private var state: TinyTree<Any?>,
-  @TestOnly var hintColorKind: HintColorKind,
+  @TestOnly var hintFormat: HintFormat,
   @TestOnly var isDisabled: Boolean,
   var payloads: Map<String, InlayActionPayload>? = null,
   private val providerClass: Class<*>,
@@ -38,11 +36,9 @@ class InlayPresentationList(
   internal val sourceId: String,
 ) {
   companion object {
-    private const val NOT_COMPUTED = -1
-    private const val LEFT_MARGIN = 7
-    private const val RIGHT_MARGIN = 7
-    private const val BOTTOM_MARGIN = 1
-    private const val TOP_MARGIN = 1
+    private val NOT_COMPUTED = DeclarativeHintWidth(-1, -1, -1)
+    private const val HORIZONTAL_PADDING = 6
+    private const val HORIZONTAL_MARGIN = 2
     private const val ARC_WIDTH = 8
     private const val ARC_HEIGHT = 8
     private const val BACKGROUND_ALPHA: Float = 0.55f
@@ -50,7 +46,7 @@ class InlayPresentationList(
 
   private var entries: Array<InlayPresentationEntry> = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
   private var _partialWidthSums: IntArray? = null
-  private var computedWidth: Int = NOT_COMPUTED
+  private var computedWidth: DeclarativeHintWidth = NOT_COMPUTED
   private var size: Float = Float.MAX_VALUE
   private var fontName: String = ""
 
@@ -59,7 +55,7 @@ class InlayPresentationList(
     return IntArray(entries.size) {
       val entry = entries[it]
       val oldWidth = width
-      width += entry.computeWidth(fontMetricsStorage)
+      width += entry.computeWidth(getMetrics(fontMetricsStorage))
       oldWidth
     }
   }
@@ -82,9 +78,11 @@ class InlayPresentationList(
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {
     val x = pointInsideInlay.x
     val partialWidthSums = getPartialWidthSums(fontMetricsStorage)
+    val hintWidth = getWidthInPixels(fontMetricsStorage)
     for ((index, entry) in entries.withIndex()) {
-      val leftBound = partialWidthSums[index] + LEFT_MARGIN
-      val rightBound = partialWidthSums.getOrElse(index + 1) { Int.MAX_VALUE - LEFT_MARGIN } + LEFT_MARGIN
+      val leftBound = partialWidthSums[index] + hintWidth.marginAndPadding
+      val rightBound = partialWidthSums.getOrNull(index + 1)?.let { it + hintWidth.marginAndPadding }
+                       ?: Int.MAX_VALUE
 
       if (x in leftBound..rightBound) {
         return entry
@@ -99,14 +97,14 @@ class InlayPresentationList(
   }
 
   @RequiresEdt
-  fun updateState(state: TinyTree<Any?>, disabled: Boolean, hintColorKind: HintColorKind) {
+  fun updateState(state: TinyTree<Any?>, disabled: Boolean, hintFormat: HintFormat) {
     updateStateTree(state, this.state, 0, 0)
     this.state = state
     this.entries = PresentationEntryBuilder(state, providerClass).buildPresentationEntries()
     this.computedWidth = NOT_COMPUTED
     this._partialWidthSums = null
     this.isDisabled = disabled
-    this.hintColorKind = hintColorKind
+    this.hintFormat = hintFormat
   }
 
   private fun updateStateTree(treeToUpdate: TinyTree<Any?>,
@@ -145,48 +143,58 @@ class InlayPresentationList(
         error("Unexpected payload: $payload")
       }
     }
-    updateState(state, isDisabled, hintColorKind)
+    updateState(state, isDisabled, hintFormat)
   }
 
-  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): Int {
-    val metrics = textMetricsStorage.getFontMetrics(true)
+  fun getWidthInPixels(textMetricsStorage: InlayTextMetricsStorage): DeclarativeHintWidth {
+    val metrics = getMetrics(textMetricsStorage)
     val isActual = metrics.isActual(size, fontName)
     if (!isActual || computedWidth == NOT_COMPUTED) {
       size = metrics.font.size2D
       fontName = metrics.font.family
-      val width = entries.sumOf { it.computeWidth(textMetricsStorage) } + LEFT_MARGIN + RIGHT_MARGIN
-      computedWidth = width
-      return width
+      val textWidth = entries.sumOf { it.computeWidth(metrics) }
+      computedWidth = DeclarativeHintWidth(HORIZONTAL_MARGIN, HORIZONTAL_PADDING, textWidth)
+      return computedWidth
     }
     return computedWidth
+  }
+
+  data class DeclarativeHintWidth(
+    internal val margin: Int,
+    internal val padding: Int,
+    internal val textWidth: Int,
+  ) {
+    val marginAndPadding: Int get() = margin + padding
+    val boxWidth: Int get() = 2 * padding + textWidth
+    val fullWidth: Int get() = 2 * margin + boxWidth
   }
 
   fun paint(inlay: Inlay<*>, g: Graphics2D, targetRegion: Rectangle2D, textAttributes: TextAttributes) {
     val editor = inlay.editor as EditorImpl
     val storage = InlayHintsUtils.getTextMetricStorage(editor)
     var xOffset = 0
-    val metrics = storage.getFontMetrics(small = false)
+    val metrics = getMetrics(storage)
     val gap =  if (targetRegion.height.toInt() < metrics.lineHeight + 2) 1 else 2
-    val attrKey = when (hintColorKind) {
+    val attrKey = when (hintFormat.colorKind) {
       HintColorKind.Default -> DefaultLanguageHighlighterColors.INLAY_DEFAULT
       HintColorKind.Parameter -> DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT
       HintColorKind.TextWithoutBackground -> DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND
     }
     val attrs = editor.colorsScheme.getAttributes(attrKey)
     g.withTranslated(targetRegion.x, targetRegion.y) {
-      if (hintColorKind.hasBackground()) {
+      if (hintFormat.colorKind.hasBackground()) {
         val rectHeight = targetRegion.height.toInt() - gap * 2
         val rectWidth = getWidthInPixels(storage)
         val config = GraphicsUtil.setupAAPainting(g)
         GraphicsUtil.paintWithAlpha(g, BACKGROUND_ALPHA)
         g.color = attrs.backgroundColor ?: textAttributes.backgroundColor
-        g.fillRoundRect(0, gap, rectWidth, rectHeight, ARC_WIDTH, ARC_HEIGHT)
+        g.fillRoundRect(rectWidth.margin, gap, rectWidth.boxWidth, rectHeight, ARC_WIDTH, ARC_HEIGHT)
         config.restore()
       }
     }
 
 
-    g.withTranslated(LEFT_MARGIN + targetRegion.x, targetRegion.y) {
+    g.withTranslated(getWidthInPixels(storage).marginAndPadding + targetRegion.x, targetRegion.y) {
       for (entry in entries) {
         val hoveredWithCtrl = entry.isHoveredWithCtrl
         val finalAttrs = if (hoveredWithCtrl) {
@@ -199,12 +207,15 @@ class InlayPresentationList(
           attrs
         }
         g.withTranslated(xOffset, 0) {
-          entry.render(g, storage, finalAttrs, isDisabled, gap, targetRegion.height.toInt(), editor)
+          entry.render(g, metrics, finalAttrs, isDisabled, gap, targetRegion.height.toInt(), editor)
         }
-        xOffset += entry.computeWidth(storage)
+        xOffset += entry.computeWidth(metrics)
       }
     }
   }
+
+  private fun getMetrics(fontMetricsStorage: InlayTextMetricsStorage): InlayTextMetrics =
+    fontMetricsStorage.getFontMetrics(small = hintFormat.fontSize == HintFontSize.ABitSmallerThanInEditor)
 
   @TestOnly
   fun getEntries(): Array<InlayPresentationEntry> {
@@ -220,7 +231,7 @@ class InlayPresentationList(
     return InlayData(
       position,
       tooltip,
-      hintColorKind,
+      hintFormat,
       state,
       providerId,
       isDisabled,

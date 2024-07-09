@@ -1254,6 +1254,28 @@ e:com.intellij.codeInsight.hints.declarative.HintColorKind
 - f:hasBackground():Z
 - s:valueOf(java.lang.String):com.intellij.codeInsight.hints.declarative.HintColorKind
 - s:values():com.intellij.codeInsight.hints.declarative.HintColorKind[]
+e:com.intellij.codeInsight.hints.declarative.HintFontSize
+- java.lang.Enum
+- sf:ABitSmallerThanInEditor:com.intellij.codeInsight.hints.declarative.HintFontSize
+- sf:AsInEditor:com.intellij.codeInsight.hints.declarative.HintFontSize
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.codeInsight.hints.declarative.HintFontSize
+- s:values():com.intellij.codeInsight.hints.declarative.HintFontSize[]
+f:com.intellij.codeInsight.hints.declarative.HintFormat
+- sf:Companion:com.intellij.codeInsight.hints.declarative.HintFormat$Companion
+- <init>(com.intellij.codeInsight.hints.declarative.HintColorKind,com.intellij.codeInsight.hints.declarative.HintFontSize):V
+- f:component1():com.intellij.codeInsight.hints.declarative.HintColorKind
+- f:component2():com.intellij.codeInsight.hints.declarative.HintFontSize
+- f:copy(com.intellij.codeInsight.hints.declarative.HintColorKind,com.intellij.codeInsight.hints.declarative.HintFontSize):com.intellij.codeInsight.hints.declarative.HintFormat
+- bs:copy$default(com.intellij.codeInsight.hints.declarative.HintFormat,com.intellij.codeInsight.hints.declarative.HintColorKind,com.intellij.codeInsight.hints.declarative.HintFontSize,I,java.lang.Object):com.intellij.codeInsight.hints.declarative.HintFormat
+- equals(java.lang.Object):Z
+- f:getColorKind():com.intellij.codeInsight.hints.declarative.HintColorKind
+- f:getFontSize():com.intellij.codeInsight.hints.declarative.HintFontSize
+- hashCode():I
+- f:withColorKind(com.intellij.codeInsight.hints.declarative.HintColorKind):com.intellij.codeInsight.hints.declarative.HintFormat
+- f:withFontSize(com.intellij.codeInsight.hints.declarative.HintFontSize):com.intellij.codeInsight.hints.declarative.HintFormat
+f:com.intellij.codeInsight.hints.declarative.HintFormat$Companion
+- f:getDefault():com.intellij.codeInsight.hints.declarative.HintFormat
 f:com.intellij.codeInsight.hints.declarative.InlayActionData
 - <init>(com.intellij.codeInsight.hints.declarative.InlayActionPayload,java.lang.String):V
 - equals(java.lang.Object):Z
@@ -1387,9 +1409,9 @@ f:com.intellij.codeInsight.hints.declarative.InlayProviderPassInfo
 - f:getProvider():com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 - f:getProviderId():java.lang.String
 com.intellij.codeInsight.hints.declarative.InlayTreeSink
-- a:addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintColorKind,kotlin.jvm.functions.Function1):V
+- a:addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,kotlin.jvm.functions.Function1):V
 - addPresentation(com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1):V
-- bs:addPresentation$default(com.intellij.codeInsight.hints.declarative.InlayTreeSink,com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintColorKind,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+- bs:addPresentation$default(com.intellij.codeInsight.hints.declarative.InlayTreeSink,com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,com.intellij.codeInsight.hints.declarative.HintFormat,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - bs:addPresentation$default(com.intellij.codeInsight.hints.declarative.InlayTreeSink,com.intellij.codeInsight.hints.declarative.InlayPosition,java.util.List,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):V
 - a:whenOptionEnabled(java.lang.String,kotlin.jvm.functions.Function0):V
 f:com.intellij.codeInsight.hints.declarative.InlineInlayPosition
