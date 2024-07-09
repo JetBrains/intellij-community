@@ -61,10 +61,10 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
             val targetDescriptor = when {
                 targetDir != null -> {
                     val targetDirectory = rootDir.findFileByRelativePath(targetDir)?.toPsiDirectory(project)!!
-                    K2MoveTargetDescriptor.SourceDirectory(targetDirectory)
+                    K2MoveTargetDescriptor.Directory(targetDirectory)
                 }
                 targetPackage != null -> {
-                    K2MoveTargetDescriptor.SourceDirectory(FqName(targetPackage), rootDir.toPsiDirectory(project)!!)
+                    K2MoveTargetDescriptor.Directory(FqName(targetPackage), rootDir.toPsiDirectory(project)!!)
                 }
 
                 else -> fail("No target specified")

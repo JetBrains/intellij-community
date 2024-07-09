@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.SourceDirectory
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Directory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsagesForCopyFile
@@ -75,7 +75,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             return TargetData(
                 openInEditor = false,
                 newName = newName,
-                targetDirWrapper = sourceData.initialTargetDirectory.toSourceDirectory(),
+                targetDirWrapper = sourceData.initialTargetDirectory.toDirectory(),
                 targetSourceRoot = targetSourceRoot
             )
 
@@ -95,7 +95,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
             openInEditor = dialog.openInEditor
             newName = dialog.newName
-            targetDirWrapper = dialog.targetDirectory?.toSourceDirectory(sourceData)
+            targetDirWrapper = dialog.targetDirectory?.toDirectory(sourceData)
             targetSourceRoot = dialog.targetSourceRoot
         } else {
             val dialog = CopyFilesOrDirectoriesDialog(
@@ -104,7 +104,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             if (!dialog.showAndGet()) return null
             openInEditor = dialog.openInEditor()
             newName = dialog.newName
-            targetDirWrapper = dialog.targetDirectory?.toSourceDirectory()
+            targetDirWrapper = dialog.targetDirectory?.toDirectory()
             targetSourceRoot = dialog.targetDirectory?.sourceRoot
         }
 
@@ -117,12 +117,12 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         )
     }
 
-    private fun MoveDestination.toSourceDirectory(
+    private fun MoveDestination.toDirectory(
         sourceData: SourceData
-    ): SourceDirectory = SourceDirectory(FqName(targetPackage.qualifiedName), runWriteAction { getTargetDirectory(sourceData.initialTargetDirectory) })
+    ): Directory = Directory(FqName(targetPackage.qualifiedName), runWriteAction { getTargetDirectory(sourceData.initialTargetDirectory) })
 
-    private fun PsiDirectory.toSourceDirectory(
-    ): SourceDirectory = SourceDirectory(getFqNameWithImplicitPrefixOrRoot(), this)
+    private fun PsiDirectory.toDirectory(
+    ): Directory = Directory(getFqNameWithImplicitPrefixOrRoot(), this)
 
     private fun doCopyFiles(filesToCopy: Array<out PsiFileSystemItem>, initialTargetDirectory: PsiDirectory?) {
         if (filesToCopy.isEmpty()) return

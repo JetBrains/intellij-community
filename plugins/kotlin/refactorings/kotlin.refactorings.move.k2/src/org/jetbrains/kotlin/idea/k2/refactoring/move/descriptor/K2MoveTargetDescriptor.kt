@@ -45,7 +45,7 @@ sealed interface K2MoveTargetDescriptor {
     @RequiresWriteLock
     fun getOrCreateTarget(): PsiFileSystemItem
 
-    open class SourceDirectory(
+    open class Directory(
         override val pkgName: FqName,
         override val baseDirectory: PsiDirectory
     ) : K2MoveTargetDescriptor {
@@ -62,7 +62,7 @@ sealed interface K2MoveTargetDescriptor {
         val fileName: String,
         pkgName: FqName,
         baseDirectory: PsiDirectory
-    ) : SourceDirectory(pkgName, baseDirectory) {
+    ) : Directory(pkgName, baseDirectory) {
         override fun getOrCreateTarget(): KtFile {
             val directory = super.getOrCreateTarget() as PsiDirectory
             return getOrCreateKotlinFile(fileName, directory, pkgName.asString())
@@ -70,8 +70,8 @@ sealed interface K2MoveTargetDescriptor {
     }
 
     companion object {
-        fun SourceDirectory(directory: PsiDirectory): SourceDirectory {
-            return SourceDirectory(directory.getFqNameWithImplicitPrefixOrRoot(), directory)
+        fun Directory(directory: PsiDirectory): Directory {
+            return Directory(directory.getFqNameWithImplicitPrefixOrRoot(), directory)
         }
 
         fun File(file: KtFile): File {

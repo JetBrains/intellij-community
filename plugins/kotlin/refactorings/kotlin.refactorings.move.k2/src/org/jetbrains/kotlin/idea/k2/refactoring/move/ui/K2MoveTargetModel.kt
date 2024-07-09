@@ -42,7 +42,7 @@ sealed interface K2MoveTargetModel {
     ) : K2MoveTargetModel {
         private val initialDirectory = directory
 
-        override fun toDescriptor(): K2MoveTargetDescriptor.SourceDirectory = K2MoveTargetDescriptor.SourceDirectory(pkgName, directory)
+        override fun toDescriptor(): K2MoveTargetDescriptor.Directory = K2MoveTargetDescriptor.Directory(pkgName, directory)
 
         protected lateinit var pkgChooser: PackageNameReferenceEditorCombo
 
