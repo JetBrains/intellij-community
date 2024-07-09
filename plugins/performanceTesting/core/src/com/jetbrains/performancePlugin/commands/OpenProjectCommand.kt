@@ -126,12 +126,12 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       if (shouldOpenInSmartMode(newProject)) {
         val job = CompletableDeferred<Any?>()
         DumbService.getInstance(newProject).smartInvokeLater {
-          if (detectProjectLeak) {
-            analyzeSnapshot(newProject)
-          }
           job.complete(null)
         }
         job.join()
+        if (detectProjectLeak) {
+          analyzeSnapshot(newProject)
+        }
       }
     }
     context.setProject(newProject)
@@ -148,7 +148,9 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
         if (classDefinition.name == ProjectImpl::class.java.name) {
           navigator.goTo(l)
           navigator.goToInstanceField(ProjectImpl::class.java.name, "cachedName")
-          if (navigator.getStringInstanceFieldValue() != projectName) {
+          val projectUnderAnalysis = navigator.getStringInstanceFieldValue()
+          if (projectUnderAnalysis != projectName) {
+            LOG.info("Analyzing GC Root for $projectUnderAnalysis")
             val gcRootPathsTree = GCRootPathsTree(analysisContext, AnalysisConfig.TreeDisplayOptions.all(showSize = false), null)
             gcRootPathsTree.registerObject(l.toInt())
             mainReport.append(gcRootPathsTree.printTree())
