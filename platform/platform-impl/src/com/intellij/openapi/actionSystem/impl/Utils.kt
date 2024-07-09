@@ -980,7 +980,7 @@ object Utils {
 
   // this dispatcher should always be available
   private val cancellationDispatcher = Dispatchers.IO.limitedParallelism(1)
-  suspend fun <T> cancelCurrentInputEventProcessingAndRun( block: suspend () -> T): T = coroutineScope {
+  suspend fun <T> cancelCurrentInputEventProcessingAndRun(block: suspend () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
       ourCurrentInputEventProcessingJobFlow.collectLatest {
         it?.cancel()
