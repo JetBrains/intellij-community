@@ -20,11 +20,15 @@ class TextEditorCellViewComponent(
   private val interval: NotebookCellLines.Interval
     get() = cell.intervalPointer.get() ?: error("Invalid interval")
 
+  // todo: must be removed once we have a robust way to avoid getting interval for an invalid/deleted cell
+  private val safeInterval: NotebookCellLines.Interval?
+    get() = cell.intervalPointer.get()
+
   override fun updateGutterIcons(gutterAction: AnAction?) {
     disposeExistingHighlighter()
     if (gutterAction != null && cell.view?.isValid() == true) {
       val markupModel = editor.markupModel
-      val interval = interval
+      val interval = safeInterval ?: return
       val startOffset = editor.document.getLineStartOffset(interval.lines.first)
       val endOffset = editor.document.getLineEndOffset(interval.lines.last)
       val highlighter = markupModel.addRangeHighlighter(
