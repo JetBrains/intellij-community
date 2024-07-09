@@ -477,7 +477,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
     final PyElement element = augAssignment != null ? augAssignment : anchor;
     try {
-      final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false);
+      final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
       // null means empty set of possible types, Ref(null) means Any
       final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
         .select(ReadWriteInstruction.class)

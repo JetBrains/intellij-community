@@ -28,6 +28,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,14 +43,14 @@ public final class PyDefUseUtil {
 
   @NotNull
   public static List<Instruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports) {
-    return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports);
+                                                boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
+    return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports, context);
   }
 
 
   @NotNull
   public static List<Instruction> getLatestDefs(ControlFlow controlFlow, String varName, PsiElement anchor, boolean acceptTypeAssertions,
-                                                boolean acceptImplicitImports) {
+                                                boolean acceptImplicitImports, @NotNull TypeEvalContext context) {
     final Instruction[] instructions = controlFlow.getInstructions();
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(anchor);
     if (augAssignment != null) {
@@ -65,12 +66,13 @@ public final class PyDefUseUtil {
         instr = pred.iterator().next().num();
       }
     }
-    final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports);
+    final Collection<Instruction> result = getLatestDefs(varName, instructions, instr, acceptTypeAssertions, acceptImplicitImports, context);
     return new ArrayList<>(result);
   }
 
   private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
-                                                       final boolean acceptTypeAssertions, final boolean acceptImplicitImports) {
+                                                       final boolean acceptTypeAssertions, final boolean acceptImplicitImports,
+                                                       @NotNull final TypeEvalContext context) {
     final Collection<Instruction> result = new LinkedHashSet<>();
     ControlFlowUtil.iteratePrev(instr, instructions,
                                 instruction -> {
