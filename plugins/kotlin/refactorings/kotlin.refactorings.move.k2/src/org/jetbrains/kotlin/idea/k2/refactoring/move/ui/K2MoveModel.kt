@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.RowLayout
@@ -46,6 +47,8 @@ sealed class K2MoveModel {
     val searchReferences: Setting = Setting.SEARCH_REFERENCES
 
     val mppDeclarations: Setting = Setting.MPP_DECLARATIONS
+
+    abstract val moveCallBack: MoveCallback?
 
     @RequiresReadLock
     abstract fun toDescriptor(): K2MoveOperationDescriptor<*>
@@ -123,6 +126,7 @@ sealed class K2MoveModel {
         override val source: K2MoveSourceModel.FileSource,
         override val target: K2MoveTargetModel.SourceDirectory,
         override val inSourceRoot: Boolean,
+        override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
         override fun toDescriptor(): K2MoveOperationDescriptor.Files {
             val srcDescr = source.toDescriptor()
@@ -138,7 +142,8 @@ sealed class K2MoveModel {
                 listOf(moveDescriptor),
                 searchForText.state,
                 searchReferences,
-                searchInComments.state
+                searchInComments.state,
+                moveCallBack
             )
             return operationDescriptor
         }
@@ -152,6 +157,7 @@ sealed class K2MoveModel {
         override val source: K2MoveSourceModel.ElementSource,
         override val target: K2MoveTargetModel.File,
         override val inSourceRoot: Boolean,
+        override val moveCallBack: MoveCallback? = null
     ) : K2MoveModel() {
         override fun toDescriptor(): K2MoveOperationDescriptor.Declarations {
             val srcDescr = source.toDescriptor()
@@ -167,7 +173,8 @@ sealed class K2MoveModel {
                 listOf(moveDescriptor),
                 searchForText.state,
                 searchReferences,
-                searchInComments.state
+                searchInComments.state,
+                moveCallBack
             )
         }
     }
@@ -182,7 +189,8 @@ sealed class K2MoveModel {
         fun create(
             elements: Array<out PsiElement>,
             targetContainer: PsiElement?,
-            editor: Editor? = null
+            editor: Editor? = null,
+            moveCallBack: MoveCallback? = null
         ): K2MoveModel? {
             val project = elements.firstOrNull()?.project ?: error("Elements not part of project")
 
@@ -258,7 +266,7 @@ sealed class K2MoveModel {
                         val pkgName = elementsToMove.firstIsInstanceOrNull<KtFile>()?.containingKtFile?.packageFqName ?: FqName.ROOT
                         K2MoveTargetModel.SourceDirectory(pkgName, directory)
                     }
-                    Files(project, source, target, inSourceRoot)
+                    Files(project, source, target, inSourceRoot, moveCallBack)
                 }
                 targetContainer is KtFile || targetContainer.isSingleClassContainer() || isSingleFileMove(elementsToMove) -> {
                     val elementsFromFiles = elementsToMove.flatMap { elem ->
@@ -283,7 +291,7 @@ sealed class K2MoveModel {
                         val psiDirectory = containingFile.containingDirectory ?: error("No directory found")
                         K2MoveTargetModel.File(fileName, containingFile.packageFqName, psiDirectory)
                     }
-                    Declarations(project, source, target, inSourceRoot)
+                    Declarations(project, source, target, inSourceRoot, moveCallBack)
                 }
                 else -> error("Unsupported move operation")
             }

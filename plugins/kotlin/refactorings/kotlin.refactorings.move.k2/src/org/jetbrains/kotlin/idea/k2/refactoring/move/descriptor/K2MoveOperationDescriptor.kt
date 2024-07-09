@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.move.MoveCallback
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveFilesOrDirectoriesRefactoringProcessor
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -14,7 +15,8 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val moveDescriptors: List<T>,
     val searchForText: Boolean,
     val searchInComments: Boolean,
-    val searchReferences: Boolean
+    val searchReferences: Boolean,
+    val moveCallBack: MoveCallback? = null
 ) {
     init {
       require(moveDescriptors.isNotEmpty()) { "No move descriptors were provided" }
@@ -29,8 +31,16 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         moveDescriptors: List<K2MoveDescriptor.Files>,
         searchForText: Boolean,
         searchInComments: Boolean,
-        searchReferences: Boolean
-    ) : K2MoveOperationDescriptor<K2MoveDescriptor.Files>(project, moveDescriptors, searchForText, searchInComments, searchReferences) {
+        searchReferences: Boolean,
+        moveCallBack: MoveCallback? = null
+    ) : K2MoveOperationDescriptor<K2MoveDescriptor.Files>(
+        project,
+        moveDescriptors,
+        searchForText,
+        searchInComments,
+        searchReferences,
+        moveCallBack
+    ) {
         override val sourceElements: List<PsiFileSystemItem> get() = moveDescriptors.flatMap { it.source.elements }
 
         override fun refactoringProcessor(): BaseRefactoringProcessor {
@@ -43,8 +53,16 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         moveDescriptors: List<K2MoveDescriptor.Declarations>,
         searchForText: Boolean,
         searchInComments: Boolean,
-        searchReferences: Boolean
-    ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(project, moveDescriptors, searchForText, searchInComments, searchReferences) {
+        searchReferences: Boolean,
+        moveCallBack: MoveCallback? = null
+    ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
+        project,
+        moveDescriptors,
+        searchForText,
+        searchInComments,
+        searchReferences,
+        moveCallBack
+    ) {
         override val sourceElements: List<KtNamedDeclaration> get() = moveDescriptors.flatMap { it.source.elements }
 
         override fun refactoringProcessor(): BaseRefactoringProcessor {

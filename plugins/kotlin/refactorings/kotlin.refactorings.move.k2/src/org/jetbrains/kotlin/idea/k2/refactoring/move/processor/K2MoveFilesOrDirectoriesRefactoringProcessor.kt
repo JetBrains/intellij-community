@@ -8,7 +8,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.move.MoveCallback
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 import com.intellij.refactoring.util.MoveRenameUsageInfo
@@ -31,7 +30,7 @@ class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDe
     descriptor.searchReferences,
     descriptor.searchInComments,
     descriptor.searchForText,
-    MoveCallback { },
+    descriptor.moveCallBack,
     Runnable { }
 ) {
     private fun PsiElement.allFiles(): List<KtFile> = when (this) {

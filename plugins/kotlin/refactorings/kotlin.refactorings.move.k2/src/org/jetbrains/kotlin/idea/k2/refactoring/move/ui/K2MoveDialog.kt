@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import javax.swing.JComponent
 
-internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : RefactoringDialog(project, true) {
+class K2MoveDialog(project: Project, private val model: K2MoveModel) : RefactoringDialog(project, true) {
     private lateinit var mainPanel: DialogPanel
 
     init {
