@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
-import com.intellij.util.Alarm
+import com.intellij.openapi.application.EDT
 import com.intellij.util.ui.Animator
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 
 internal abstract class TwoWayAnimator(
   name: String,
@@ -12,13 +16,14 @@ internal abstract class TwoWayAnimator(
   pauseBackward: Int,
   durationBackward: Int,
 ) {
-  private val alarm = Alarm()
+  private val animateRequests = MutableSharedFlow<MyAnimator>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
   private val forwardAnimator = lazy(LazyThreadSafetyMode.NONE) {
     MyAnimator(
       name = "${name}ForwardAnimator",
       totalFrames = totalFrames,
       cycleDuration = durationForward,
-      pause = pauseForward,
+      pauseInMs = pauseForward,
       forward = true,
     )
   }
@@ -28,7 +33,7 @@ internal abstract class TwoWayAnimator(
       name = """${name}BackwardAnimator""",
       totalFrames = totalFrames,
       cycleDuration = durationBackward,
-      pause = pauseBackward,
+      pauseInMs = pauseBackward,
       forward = false,
     )
   }
@@ -39,23 +44,40 @@ internal abstract class TwoWayAnimator(
   @JvmField
   var value: Float = 0f
 
+  private var coroutineScope: CoroutineScope? = null
+
   abstract fun onValueUpdate()
 
   fun start(forward: Boolean) {
-    stop()
+    @Suppress("SSBasedInspection")
+    if (coroutineScope == null) {
+      coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("TwoWayAnimator"))
+      coroutineScope!!.launch {
+        animateRequests.collectLatest { animator ->
+          delay(animator.pauseInMs.toLong())
+          withContext(Dispatchers.EDT) {
+            animator.reset()
+            animator.resume()
+          }
+        }
+      }
+    }
+
+    suspendAnimation()
     val animator = (if (forward) forwardAnimator else backwardAnimator).value
     if (if (forward) frame < maxFrame else frame > 0) {
       if (if (forward) frame > 0 else frame < maxFrame) {
-        animator.run()
+        animator.reset()
+        animator.resume()
       }
       else {
-        alarm.addRequest(animator, animator.pause)
+        check(animateRequests.tryEmit(animator))
       }
     }
   }
 
   fun rewind(forward: Boolean) {
-    stop()
+    suspendAnimation()
     if (forward) {
       if (frame != maxFrame) {
         setFrame(maxFrame)
@@ -69,7 +91,14 @@ internal abstract class TwoWayAnimator(
   }
 
   fun stop() {
-    alarm.cancelAllRequests()
+    coroutineScope?.let {
+      coroutineScope = null
+      it.cancel()
+    }
+    suspendAnimation()
+  }
+
+  private fun suspendAnimation() {
     if (forwardAnimator.isInitialized()) {
       forwardAnimator.value.suspend()
     }
@@ -88,7 +117,7 @@ internal abstract class TwoWayAnimator(
     name: String,
     totalFrames: Int,
     cycleDuration: Int,
-    @JvmField val pause: Int,
+    @JvmField val pauseInMs: Int,
     forward: Boolean,
   ) : Animator(
     name = name,
@@ -96,12 +125,7 @@ internal abstract class TwoWayAnimator(
     cycleDuration = cycleDuration,
     isRepeatable = false,
     isForward = forward,
-  ), Runnable {
-    override fun run() {
-      reset()
-      resume()
-    }
-
+  ) {
     override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
       if (if (isForward) frame > this@TwoWayAnimator.frame else frame < this@TwoWayAnimator.frame) {
         setFrame(frame)
