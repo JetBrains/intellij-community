@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.List;
 
@@ -31,9 +30,6 @@ final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigur
   public boolean setupConfigurationFromContext(@NotNull GradleRunConfiguration configuration,
                                                   @NotNull ConfigurationContext context,
                                                   @NotNull Ref<PsiElement> sourceElement) {
-    ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
-    if (!GradleConstants.SYSTEM_ID.equals(taskExecutionSettings.getExternalSystemId())) return false;
-
     final Location contextLocation = context.getLocation();
     if (!isFromGroovyGradleScript(contextLocation)) return false;
 
@@ -50,6 +46,7 @@ final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigur
     }
 
     List<String> tasksToRun = getTasksTarget(contextLocation);
+    ExternalSystemTaskExecutionSettings taskExecutionSettings = configuration.getSettings();
     taskExecutionSettings.setExternalProjectPath(projectPath);
     taskExecutionSettings.setTaskNames(tasksToRun);
     configuration.setName(AbstractExternalSystemTaskConfigurationType.generateName(module.getProject(), taskExecutionSettings));
@@ -58,8 +55,6 @@ final class GradleGroovyScriptRunConfigurationProducer extends GradleRunConfigur
 
   @Override
   public boolean isConfigurationFromContext(@NotNull GradleRunConfiguration configuration, @NotNull ConfigurationContext context) {
-    if (!GradleConstants.SYSTEM_ID.equals(configuration.getSettings().getExternalSystemId())) return false;
-
     final Location contextLocation = context.getLocation();
     if (!isFromGroovyGradleScript(contextLocation)) return false;
 

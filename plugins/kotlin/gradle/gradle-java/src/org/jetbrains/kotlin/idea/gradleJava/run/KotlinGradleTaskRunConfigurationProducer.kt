@@ -18,7 +18,6 @@ class KotlinGradleTaskRunConfigurationProducer : GradleRunConfigurationProducer(
         context: ConfigurationContext,
         sourceElement: Ref<PsiElement>
     ): Boolean {
-        if (!isGradleConfiguration(configuration)) return false
         val module = context.module ?: return false
         val location = context.location ?: return false
         if (!isInGradleKotlinScript(location.psiElement)) return false
@@ -35,7 +34,6 @@ class KotlinGradleTaskRunConfigurationProducer : GradleRunConfigurationProducer(
     }
 
     override fun isConfigurationFromContext(configuration: GradleRunConfiguration, context: ConfigurationContext): Boolean {
-        if (!isGradleConfiguration(configuration)) return false
         val module = context.module ?: return false
         val location = context.location ?: return false
         if (!isInGradleKotlinScript(location.psiElement)) return false
