@@ -361,13 +361,13 @@ internal class ActionUpdater @JvmOverloads constructor(
       return result
     }
     val opElement = OpElement.next(group, OP_groupPostProcess, place, null)
+    val event = createActionEvent(opElement, updatedPresentations[group] ?: initialBgtPresentation(group))
     return try {
-      val updateSession = asUpdateSession()
       retryOnAwaitSharedData(opElement, maxAwaitSharedDataRetries) {
         blockingContext { // no data-context hence no RA, just blockingContext
           val spanBuilder = Utils.getTracer(true).spanBuilder(opElement.operationName)
           spanBuilder.use {
-            group.postProcessVisibleChildren(result, updateSession)
+            group.postProcessVisibleChildren(event, result)
           }
         }
       }

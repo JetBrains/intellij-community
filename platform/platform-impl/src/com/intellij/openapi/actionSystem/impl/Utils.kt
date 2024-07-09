@@ -1009,8 +1009,7 @@ object Utils {
     val edtDispatcher = coroutineContext[CoroutineDispatcher]!!
     val actionUpdater = ActionUpdater(factory, dataContext, place, false, false, edtDispatcher) {
       val event = actionProcessor.createEvent(inputEvent, it.dataContext, it.place, it.presentation, it.actionManager)
-      events.put(event.presentation, event)
-      event
+      events.putIfAbsent(event.presentation, event) ?: event
     }
     cancelAllUpdates("'$place' invoked")
 

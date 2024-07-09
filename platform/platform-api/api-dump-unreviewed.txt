@@ -1595,6 +1595,7 @@ c:com.intellij.openapi.actionSystem.ActionGroupWrapper
 - isDumbAware():Z
 - isInInjectedContext():Z
 - isPerformWithDocumentsCommitted():Z
+- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
 - postProcessVisibleChildren(java.util.List,com.intellij.openapi.actionSystem.UpdateSession):java.util.List
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.actionSystem.ActionInGroup

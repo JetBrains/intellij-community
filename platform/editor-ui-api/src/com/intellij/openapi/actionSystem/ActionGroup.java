@@ -19,8 +19,6 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * Represents a group of actions.
  *
  * @see com.intellij.openapi.actionSystem.DefaultActionGroup
- * @see com.intellij.openapi.actionSystem.CheckedActionGroup
- * @see com.intellij.openapi.actionSystem.CompactActionGroup
  */
 public abstract class ActionGroup extends AnAction {
   public static final ActionGroup EMPTY_GROUP = new ActionGroup() {
@@ -144,8 +142,18 @@ public abstract class ActionGroup extends AnAction {
   }
 
   /**
-   * Allows the group to intercept and transform its expanded content.
+   * Allows the group to intercept and transform its expanded visible children.
    */
+  public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(
+    @NotNull AnActionEvent e,
+    @NotNull List<? extends @NotNull AnAction> visibleChildren) {
+    return postProcessVisibleChildren(visibleChildren, e.getUpdateSession());
+  }
+
+  /**
+   * @deprecated Use {@link #postProcessVisibleChildren(AnActionEvent, List)} instead.
+   */
+  @Deprecated(forRemoval = true)
   public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
                                                             @NotNull UpdateSession updateSession) {
     return Collections.unmodifiableList(visibleChildren);

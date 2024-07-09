@@ -1075,6 +1075,7 @@ a:com.intellij.openapi.actionSystem.ActionGroup
 - f:isPopup():Z
 - f:isPrimary(com.intellij.openapi.actionSystem.AnAction):Z
 - f:isSearchable():Z
+- postProcessVisibleChildren(com.intellij.openapi.actionSystem.AnActionEvent,java.util.List):java.util.List
 - postProcessVisibleChildren(java.util.List,com.intellij.openapi.actionSystem.UpdateSession):java.util.List
 - f:setPopup(Z):V
 - f:setSearchable(Z):V
