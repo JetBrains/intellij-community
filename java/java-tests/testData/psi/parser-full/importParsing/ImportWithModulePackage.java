@@ -1,1 +1,1 @@
-import module;
+import module.*;
