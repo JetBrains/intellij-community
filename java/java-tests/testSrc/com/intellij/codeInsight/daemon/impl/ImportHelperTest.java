@@ -124,7 +124,7 @@ public class ImportHelperTest extends LightDaemonAnalyzerTestCase {
                 || ApplicationManager.getApplication().isWriteAccessAllowed())) {
           return; // optimization: try not to call getStackTrace() if we can
         }
-        boolean isFromResolve = isInsideResolve.getAsBoolean(); ;
+        boolean isFromResolve = isInsideResolve.getAsBoolean();
         if (isFromResolve) resolveHappened.set(true);
         assertTrue("Resolve in EDT happened",
           !isFromResolve
