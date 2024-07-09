@@ -78,6 +78,10 @@ public class ReplaceConstructorWithBuilderTest extends LightMultiFileTestCase {
   public void testImports() {
     doTest(true, null, null, "foo");
   }
+  
+  public void testAnonymousInheritor() {
+    doTest(true);
+  }
 
   private void doTest(final boolean createNewBuilderClass) {
     doTest(createNewBuilderClass, null);
