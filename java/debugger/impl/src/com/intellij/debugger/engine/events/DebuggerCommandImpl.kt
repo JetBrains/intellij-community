@@ -13,7 +13,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Async
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.CoroutineContext.Key
@@ -49,21 +48,6 @@ abstract class DebuggerCommandImpl(private val myPriority: PrioritizedTask.Prior
       release()
       myCoroutineScope?.cancel()
       executeContinuation()
-    }
-  }
-
-  @Throws(Exception::class)
-  fun run() {
-    val managerThreadImpl = InvokeThread.currentThread() as DebuggerManagerThreadImpl
-    myThread = managerThreadImpl
-    val commands = (managerThreadImpl).unfinishedCommands
-    commands.add(this)
-    try {
-      action()
-    }
-    finally {
-      commands.remove(this)
-      release()
     }
   }
 
