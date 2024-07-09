@@ -32,7 +32,7 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     return !file.isDirectory && BUILD_FILE_EXTENSIONS.any { file.name.endsWith(it) }
   }
 
-  override fun linkToExistingProject(projectFile: VirtualFile, project: Project) {
+  override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
     LOG.debug("Link Gradle project '$projectFile' to existing project ${project.name}")
 
     val projectPath = getProjectDirectory(projectFile).toNioPath()
