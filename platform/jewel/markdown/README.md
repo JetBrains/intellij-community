@@ -69,17 +69,20 @@ dependencies {
 
 The process that leads to rendering Markdown in a native UI is two-pass.
 
-The first pass is an upfront rendering that pre-processes blocks into `MarkdownBlock`s but doesn't touch the inline
+The first pass is an upfront rendering that pre-processes blocks into `MarkdownBlock`s, but doesn't touch the inline
 Markdown. It's recommended to run this outside of the composition, since it has no dependencies on it.
 
 ```kotlin
 // Somewhere outside of composition...
 val processor = MarkdownProcessor()
 val rawMarkdown = "..."
-val processedBlocks = processor.processMarkdownDocument(rawMarkdown)
+var markdownBlocks: List<MarkdownBlock> = processor.processMarkdownDocument(rawMarkdown)
 ```
 
-The second pass is done in the composition, and essentially renders a series of `MarkdownBlock`s into native Jewel UI:
+Once you have your list of `MarkdownBlock`s, you can do the second step in the composition: 
+render a series of `MarkdownBlock`s into native Jewel UI.
+
+Here is an example:
 
 ```kotlin
 @Composable
@@ -102,7 +105,8 @@ fun Markdown(blocks: List<MarkdownBlock>) {
 }
 ```
 
-If you expect long Markdown documents, you can also use a `LazyColumn` to get better performances.
+If you expect long Markdown documents, you can also use a `LazyMarkdown` to get better performances.
+You can find an example in [`MarkdownPreview`](samples/standalone/src/main/kotlin/org/jetbrains/jewel/samples/standalone/view/markdown/MarkdownPreview.kt).
 
 ### Using extensions
 
@@ -116,8 +120,8 @@ Extensions are composed of two parts: a parsing and a rendering part. The two pa
 
 ```kotlin
 // Where the parsing happens...
-val parsingExtensions = listOf(/*...*/)
-val processor = MarkdownProcessor(extensions)
+val parsingExtensions: List<MarkdownProcessorExtension> = listOf(/*...*/)
+val processor = MarkdownProcessor(parsingExtensions)
 
 // Where the rendering happens...
 val blockRenderer = remember(markdownStyling, isDark) {
@@ -140,3 +144,11 @@ the custom blocks will be parsed but not rendered.
 
 Note that you should create an `InlineMarkdownRenderer` with the same list of extensions that was used to build the
 processor, as even though inline rendering extensions are not supported yet, they will be in the future.
+
+### Showcase
+
+You can see this in action running the Standalone sample, and selecting Markdown from the top-left menu.
+
+
+The following image shows Jewel Markdown rendering this very Jewel Markdown README.
+![Image showing the Markdown showcase from the Jewel standalone sample](https://github.com/JetBrains/jewel/assets/19003/67e2cc4e-c9b8-454b-884a-bba526ad2fe4)

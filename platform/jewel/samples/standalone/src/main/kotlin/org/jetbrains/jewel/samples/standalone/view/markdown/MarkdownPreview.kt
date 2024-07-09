@@ -53,13 +53,20 @@ internal fun MarkdownPreview(
 
     var markdownBlocks by remember { mutableStateOf(emptyList<MarkdownBlock>()) }
     val extensions = listOf(GitHubAlertProcessorExtension, AutolinkProcessorExtension)
+
+    // We are doing this here for the sake of simplicity.
+    // In a real-world scenario you would be doing this outside your Composables,
+    // potentially involving ViewModels, dependency injection, etc.
     val processor = remember { MarkdownProcessor(extensions) }
 
     LaunchedEffect(rawMarkdown) {
         // TODO you may want to debounce or drop on backpressure, in real usages. You should also not do this
         //  in the UI to begin with.
         @Suppress("InjectDispatcher") // This should never go in the composable IRL
-        markdownBlocks = withContext(Dispatchers.Default) { processor.processMarkdownDocument(rawMarkdown) }
+        markdownBlocks =
+            withContext(Dispatchers.Default) {
+                processor.processMarkdownDocument(rawMarkdown)
+            }
     }
 
     val blockRenderer =
