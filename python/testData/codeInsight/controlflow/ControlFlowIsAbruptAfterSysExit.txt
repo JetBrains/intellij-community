@@ -2,18 +2,21 @@
 1(2) element: PyImportStatement
 2(3) WRITE ACCESS: sys
 3(4) element: PyTryExceptStatement
-4(5,10) element: PyTryPart
-5(6,10) element: PyAssignmentStatement
-6(7,10) READ ACCESS: int
-7(8,10) element: PySubscriptionExpression
-8(9,10) READ ACCESS: sys
-9(10,15) WRITE ACCESS: n
-10(11) element: PyExceptPart
-11(12) READ ACCESS: ValueError
-12(13) element: PyPrintStatement
-13(14) element: PyExpressionStatement
-14(18) READ ACCESS: sys
-15(16) element: PyPrintStatement
-16(17) READ ACCESS: str
-17(18) READ ACCESS: n
-18() element: null
+4(5,11) element: PyTryPart
+5(6,11) element: PyAssignmentStatement
+6(7,11) READ ACCESS: int
+7(8,11) element: PySubscriptionExpression
+8(9,11) READ ACCESS: sys
+9(10,11) element: PyCallExpression: int
+10(11,17) WRITE ACCESS: n
+11(12) element: PyExceptPart
+12(13) READ ACCESS: ValueError
+13(14) element: PyPrintStatement
+14(15) element: PyExpressionStatement
+15(16) READ ACCESS: sys
+16(17) element: PyCallExpression: sys.exit
+17(18) element: PyPrintStatement
+18(19) READ ACCESS: str
+19(20) READ ACCESS: n
+20(21) element: PyCallExpression: str
+21() element: null
