@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("WebTestUtil")
 
 package com.intellij.webSymbols
@@ -17,16 +17,15 @@ import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.psi.PsiSymbolReference
 import com.intellij.model.psi.impl.referencesAt
-import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.documentation.impl.computeDocumentationBlocking
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -37,7 +36,6 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.elementsAtOffsetUp
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
-import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestDataFile
 import com.intellij.testFramework.UsefulTestCase
@@ -579,25 +577,6 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
   renameTarget(target, newName)
 }
 
-fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destinationFile: String) {
-  configureFromTempProjectFile(sourceFile)
-  performEditorAction(IdeActions.ACTION_EDITOR_COPY)
-  configureFromTempProjectFile(destinationFile)
-  performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-  WriteAction.runAndWait<Throwable> {
-    FileDocumentManager.getInstance().saveAllDocuments()
-  }
-}
-
-fun CodeInsightTestFixture.performCopyPaste(destinationSignature: String) {
-  performEditorAction(IdeActions.ACTION_EDITOR_COPY)
-  editor.caretModel.primaryCaret.setSelection(0,0)
-  moveToOffsetBySignature(destinationSignature)
-  performEditorAction(IdeActions.ACTION_EDITOR_PASTE)
-  WriteAction.runAndWait<Throwable> {
-    FileDocumentManager.getInstance().saveAllDocuments()
-  }
-}
 
 fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
                           fileName: String,
