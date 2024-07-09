@@ -46,7 +46,7 @@ f:com.intellij.openapi.actionSystem.CompositeDataProvider
 - getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
-- getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
+- F:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 - a:getData(java.lang.String):java.lang.Object
 f:com.intellij.openapi.actionSystem.DataKey
 - com.intellij.openapi.util.ValueKey
@@ -80,7 +80,7 @@ com.intellij.openapi.actionSystem.DataSnapshotProvider
 com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.DataSnapshotProvider
-- getData(java.lang.String):java.lang.Object
+- F:getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.UiDataProvider

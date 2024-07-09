@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.visitor
 
-import com.intellij.cce.core.*
+import com.intellij.cce.core.CodeFragment
+import com.intellij.cce.core.Language
 import com.intellij.cce.visitor.exceptions.PsiConverterException
-import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 
 class KotlinMultiLineEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() {
@@ -30,16 +28,8 @@ class KotlinMultiLineEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid() 
   override fun visitNamedFunction(function: KtNamedFunction) {
     val body = function.bodyExpression ?: return
     codeFragment?.let { file ->
-      if (body is KtBlockExpression && body.children.isNotEmpty()) {
-        val startOffset = body.children.first().startOffset
-        val endOffset = body.children.last().endOffset
-        val text = file.text.substring(startOffset, endOffset)
-        file.addChild(CodeToken(text, startOffset, BODY))
-      } else {
-        file.addChild(CodeToken(body.text, body.textOffset, BODY))
-      }
+      val splits = MultiLineVisitorUtils.splitElementByIndents(body)
+      splits.forEach { file.addChild(it) }
     }
   }
 }
-
-private val BODY = SimpleTokenProperties.create(TypeProperty.UNKNOWN, SymbolLocation.UNKNOWN) {}

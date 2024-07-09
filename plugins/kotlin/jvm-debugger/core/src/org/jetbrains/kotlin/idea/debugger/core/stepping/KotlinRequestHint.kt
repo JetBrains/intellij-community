@@ -60,30 +60,38 @@ open class KotlinRequestHint(
 }
 
 class KotlinStepOutRequestHint(
-    private val returnAfterSuspendIndex: Int,
+    private val returnAfterSuspendLocation: Location?,
     stepThread: ThreadReferenceProxyImpl,
     suspendContext: SuspendContextImpl,
     stepSize: Int,
     depth: Int,
     filter: MethodFilter?,
     parentHint: RequestHint?
-): KotlinRequestHint(stepThread, suspendContext, stepSize, depth, filter, parentHint) {
+): RequestHint(stepThread, suspendContext, stepSize, depth, filter, parentHint) {
     override fun getNextStepDepth(context: SuspendContextImpl): Int {
         val currentLocation = context.location
-        if (currentLocation != null) {
+        if (currentLocation != null && returnAfterSuspendLocation != null) {
             /*
                If the coroutine suspends, then the suspending function returns COROUTINE_SUSPENDED:
                if (foo(arg) == COROUTINE_SUSPENDED) {
-                  return COROUTINE_SUSPENDED // returnAfterSuspendIndex
+                  return COROUTINE_SUSPENDED // returnAfterSuspendLocation
                }
                If the execution reaches this suspend return instruction, the coroutine was suspended ->
                resume and wait till the resume breakpoint set at the caller method is reached.
              */
+            val currentMethod = currentLocation.safeMethod()
+            // Make sure that we are stepping to the returnAfterSuspendLocation in the correct method;
+            if (currentMethod != null && currentMethod != returnAfterSuspendLocation.safeMethod()) {
+                // Before stop at the caller method frame, we can get to Foo$Continuation.invokeSuspend first (in case a suspension happened before step out e.g.)
+                if (isInSuspendMethod(currentLocation) && currentLocation.safeLineNumber() < 0) return StepRequest.STEP_OVER
+                // Otherwise perform regular step out.
+                return super.getNextStepDepth(context)
+            }
             val filterThread = context.debugProcess.requestsManager.filterThread
-            thisLogger().debug("KotlinStepOutRequestHint#getNextStepDepth: stepping to the suspend RETURN in method ${currentLocation.method()?.name()}, filterThread = $filterThread, resumeLocationIndex = $returnAfterSuspendIndex, currentIndex = ${currentLocation.codeIndex()}")
-            if (currentLocation.codeIndex() < returnAfterSuspendIndex) return StepRequest.STEP_OVER
-            if (currentLocation.codeIndex() == returnAfterSuspendIndex.toLong()) {
-                thisLogger().debug("KotlinStepOutRequestHint#getNextStepDepth: reached suspend RETURN, currentIndex = ${currentLocation.codeIndex()} -> RESUME")
+            thisLogger().debug("KotlinStepOutRequestHint: stepping to the suspend RETURN in method ${currentLocation.method()?.name()}, filterThread = $filterThread, resumeLocationIndex = $returnAfterSuspendLocation, currentIndex = ${currentLocation.codeIndex()}")
+            if (currentLocation.codeIndex() < returnAfterSuspendLocation.codeIndex()) return StepRequest.STEP_OVER
+            if (currentLocation.codeIndex() == returnAfterSuspendLocation.codeIndex()) {
+                thisLogger().debug("KotlinStepOutRequestHint: reached suspend RETURN, currentIndex = ${currentLocation.codeIndex()} -> RESUME")
                 return RESUME
             }
         }

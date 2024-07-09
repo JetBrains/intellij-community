@@ -84,7 +84,7 @@ private val defaultHandlerActions = object : MoveKotlinDeclarationsHandlerAction
         elements: List<PsiFileSystemItem>,
         moveCallback: MoveCallback?
     ) = KotlinAwareMoveFilesOrDirectoriesDialog(project, initialDirectory, elements, moveCallback).let {
-        if (getBoolean("ide.performance.skip.move.files.dialog"))
+        if (getBoolean("ide.performance.skip.refactoring.dialogs"))
             it.performOKAction()
         else
             it.show()
@@ -179,7 +179,7 @@ class MoveKotlinDeclarationsHandler internal constructor(private val handlerActi
             }
             val initialTargetDirectory = MoveFilesOrDirectoriesUtil.resolveToDirectory(project, initialTargetElement)
 
-            if (!getBoolean("ide.performance.skip.move.files.dialog") && !isUnitTestMode() &&
+            if (!getBoolean("ide.performance.skip.refactoring.dialogs") && !isUnitTestMode() &&
                 elementsToSearch.any { it.isExpectDeclaration() || it.isEffectivelyActual() }
             ) {
                 val message =

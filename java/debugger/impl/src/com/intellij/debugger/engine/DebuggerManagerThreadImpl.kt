@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.util.ProgressIndicatorListener
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.sun.jdi.VMDisconnectedException
 import kotlinx.coroutines.*
@@ -31,7 +32,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.Volatile
 
-class DebuggerManagerThreadImpl(parent: Disposable, private val coroutineScope: CoroutineScope) :
+class DebuggerManagerThreadImpl(parent: Disposable, private val parentScope: CoroutineScope) :
   InvokeAndWaitThread<DebuggerCommandImpl?>(), DebuggerManagerThread, Disposable {
 
   @Volatile
@@ -40,6 +41,10 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val coroutineScope: 
   private val myDebuggerThreadDispatcher = DebuggerThreadDispatcher(this)
   val unfinishedCommands = ConcurrentCollectionFactory.createConcurrentSet<DebuggerCommandImpl>()
 
+  @ApiStatus.Internal
+  var coroutineScope = createScope()
+    private set
+
   init {
     Disposer.register(parent, this)
   }
@@ -47,6 +52,8 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val coroutineScope: 
   override fun dispose() {
     myDisposed = true
   }
+
+  private fun createScope() = parentScope.childScope("DebuggerManagerThreadImpl")
 
   override fun invokeAndWait(managerCommand: DebuggerCommandImpl) {
     LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.getInstance(..).invoke...")
@@ -236,11 +243,18 @@ class DebuggerManagerThreadImpl(parent: Disposable, private val coroutineScope: 
     return myEvents.hasAsyncCommands()
   }
 
+  @ApiStatus.Internal
   fun restartIfNeeded() {
     if (myEvents.isClosed) {
       myEvents.reopen()
+      coroutineScope = createScope()
       startNewWorkerThread()
     }
+  }
+
+  @ApiStatus.Internal
+  fun cancelScope() {
+    coroutineScope.cancel()
   }
 
   companion object {

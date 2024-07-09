@@ -359,14 +359,12 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   }
 
   @Nullable
-  private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, VirtualFile file) {
-    if (editor == null ||
-        !file.equals(editor.getVirtualFile()) ||
-        // EditorComboBox and similar components might provide no virtual file
-        !editor.getDocument().equals(FileDocumentManager.getInstance().getDocument(file))) {
-      Editor finalEditor = getEditor(project, file);
-      if (finalEditor == null) return null;
-      return finalEditor;
+  private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, @NotNull VirtualFile file) {
+    if (editor == null) return getEditor(project, file);
+    VirtualFile editorVirtualFile = editor.getVirtualFile(); // EditorComboBox and similar components might provide no virtual file
+    if (editorVirtualFile != null &&
+        !file.equals(editorVirtualFile) && !editor.getDocument().equals(FileDocumentManager.getInstance().getDocument(file))) {
+      return getEditor(project, file);
     }
     else {
       return editor;

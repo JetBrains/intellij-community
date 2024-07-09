@@ -38,7 +38,7 @@ public final class LookupActionsStep extends BaseListPopupStep<LookupElementActi
   }
 
   @Override
-  public PopupStep onChosen(LookupElementAction selectedValue, boolean finalChoice) {
+  public PopupStep<?> onChosen(LookupElementAction selectedValue, boolean finalChoice) {
     UIEventLogger.LookupExecuteElementAction.log(myLookup.getProject());
 
     final LookupElementAction.Result result = selectedValue.performLookupAction();

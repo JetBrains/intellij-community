@@ -198,5 +198,5 @@ private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
     return symbol is KaPropertySymbol &&
             symbol.isStatic &&
             symbol.callableId?.callableName == StandardNames.ENUM_ENTRIES &&
-            (symbol.containingSymbol as? KaClassSymbol)?.classKind == KaClassKind.ENUM_CLASS
+            (symbol.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.ENUM_CLASS
 }

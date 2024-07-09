@@ -98,7 +98,7 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
     // class name reference resolves to companion
     if (expression.name == symbol.name?.asString()) return null
 
-    val containingSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol
+    val containingSymbol = symbol.containingDeclaration as? KaNamedClassOrObjectSymbol
     return containingSymbol?.takeIf { it.companionObject == symbol }
 }
 

@@ -2,11 +2,13 @@
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -72,5 +74,13 @@ fun TestFixture<Project>.moduleFixture(
     writeAction {
       manager.disposeModule(module)
     }
+  }
+}
+
+@TestOnly
+fun disposableFixture(): TestFixture<Disposable> = testFixture { debugString ->
+  val disposable = Disposer.newCheckedDisposable(debugString)
+  initialized(disposable) {
+    Disposer.dispose(disposable)
   }
 }

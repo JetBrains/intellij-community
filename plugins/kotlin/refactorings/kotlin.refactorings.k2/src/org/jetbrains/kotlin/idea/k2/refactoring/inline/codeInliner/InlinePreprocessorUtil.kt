@@ -208,7 +208,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         fun isImportable(t: KtNamedDeclaration): Boolean {
             analyze(t) {
                 val resolvedSymbol = t.symbol
-                val containingSymbol = resolvedSymbol.containingSymbol ?: return true
+                val containingSymbol = resolvedSymbol.containingDeclaration ?: return true
                 if (containingSymbol is KaDeclarationContainerSymbol) {
                     val staticScope = containingSymbol.staticMemberScope
                     return resolvedSymbol in staticScope.declarations

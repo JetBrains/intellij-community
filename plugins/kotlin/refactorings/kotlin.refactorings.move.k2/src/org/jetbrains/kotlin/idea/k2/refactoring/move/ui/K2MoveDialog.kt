@@ -38,6 +38,7 @@ internal class K2MoveDialog(project: Project, private val model: K2MoveModel) : 
                 }.align(AlignY.TOP + AlignX.LEFT)
                 panel {
                     model.searchInComments.createComboBox(this)
+                    model.mppDeclarations.createComboBox(this)
                 }.align(AlignY.TOP + AlignX.RIGHT)
             }
         }

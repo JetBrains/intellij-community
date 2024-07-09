@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.extensions
 
+import androidx.compose.compiler.plugins.kotlin.ComposePluginRegistrar
 import com.intellij.openapi.application.PathManager
 import org.jetbrains.kotlin.allopen.AllOpenComponentRegistrar
 import org.jetbrains.kotlin.assignment.plugin.AssignmentComponentRegistrar
@@ -41,6 +42,10 @@ enum class KotlinK2BundledCompilerPlugins(
 
     ALL_OPEN_COMPILER_PLUGIN(
         AllOpenComponentRegistrar::class,
+    ),
+
+    COMPOSE_COMPILER_PLUGIN(
+        ComposePluginRegistrar::class
     ),
 
     NO_ARG_COMPILER_PLUGIN(

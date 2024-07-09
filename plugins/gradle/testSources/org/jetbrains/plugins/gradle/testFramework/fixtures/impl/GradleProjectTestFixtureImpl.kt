@@ -72,7 +72,11 @@ internal class GradleProjectTestFixtureImpl(
 
     installGradleProjectReloadWatcher()
 
-    _project = runBlocking { openProjectAsync(fileFixture.root) }
+    _project = runBlocking {
+      awaitGradleOpenProjectConfiguration {
+        openProjectAsync(fileFixture.root)
+      }
+    }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 

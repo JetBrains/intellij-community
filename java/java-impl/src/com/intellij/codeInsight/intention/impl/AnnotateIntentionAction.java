@@ -119,7 +119,7 @@ public final class AnnotateIntentionAction extends BaseIntentionAction implement
     JBPopupFactory.getInstance().createListPopup(
       new BaseListPopupStep<>(JavaBundle.message("annotate.intention.chooser.title"), annotations) {
         @Override
-        public PopupStep onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
+        public PopupStep<?> onChosen(final AnnotationProvider selectedValue, final boolean finalChoice) {
           return doFinalStep(() -> ReadAction.nonBlocking(() -> selectedValue.createFix(owner, place))
                 .finishOnUiThread(ModalityState.current(), fix -> fix.invoke(project, editor, file))
                 .submit(AppExecutorUtil.getAppExecutorService()));

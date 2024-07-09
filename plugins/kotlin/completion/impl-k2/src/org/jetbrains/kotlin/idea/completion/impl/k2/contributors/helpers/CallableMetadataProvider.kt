@@ -165,7 +165,7 @@ internal object CallableMetadataProvider {
     private fun getExpectedNonExtensionReceiver(symbol: KaCallableSymbol): KaClassSymbol? {
         val containingClass = symbol.originalContainingClassForOverride
         return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassOrObjectSymbol)?.isInner == true) {
-            containingClass.containingSymbol as? KaClassSymbol
+            containingClass.containingDeclaration as? KaClassSymbol
         } else {
             containingClass
         }
@@ -305,7 +305,7 @@ internal object CallableMetadataProvider {
     private fun isExtensionCallOnTypeParameterReceiver(symbol: KaCallableSymbol): Boolean {
         val originalSymbol = symbol.fakeOverrideOriginal
         val receiverParameterType = originalSymbol.receiverType as? KaTypeParameterType ?: return false
-        val parameterTypeOwner = receiverParameterType.symbol.containingSymbol ?: return false
+        val parameterTypeOwner = receiverParameterType.symbol.containingDeclaration ?: return false
         return parameterTypeOwner == originalSymbol
     }
 }

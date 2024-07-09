@@ -738,7 +738,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
         }
       }
       else {
-        Color hovered = isHoverPaintingDisabled(this) ? null : getHoveredRowBackground();
+        Color hovered = isHoverPaintingDisabled(this) || isHoverPaintingDisabled(component) ? null : getHoveredRowBackground();
         if (hovered != null) {
           if (row == TableHoverListener.getHoveredRow(this)) {
             setRendererBackground(component, hovered);

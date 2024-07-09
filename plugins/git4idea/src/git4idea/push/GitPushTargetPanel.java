@@ -212,7 +212,7 @@ public class GitPushTargetPanel extends PushTargetPanel<GitPushTarget> {
     }
     ListPopup popup = new ListPopupImpl(myProject, new BaseListPopupStep<>(null, remotes) {
       @Override
-      public PopupStep onChosen(@NotNull PopupItem selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(@NotNull PopupItem selectedValue, boolean finalChoice) {
         return doFinalStep(() -> {
           if (selectedValue.isDefineRemote()) {
             showDefineRemoteDialog();

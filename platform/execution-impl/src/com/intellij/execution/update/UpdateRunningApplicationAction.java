@@ -124,7 +124,7 @@ final class UpdateRunningApplicationAction extends AnAction {
           }
 
           @Override
-          public PopupStep onChosen(final RunningApplicationUpdater selectedValue, boolean finalChoice) {
+          public PopupStep<?> onChosen(final RunningApplicationUpdater selectedValue, boolean finalChoice) {
             return doFinalStep(() -> selectedValue.performUpdate(e));
           }
         });

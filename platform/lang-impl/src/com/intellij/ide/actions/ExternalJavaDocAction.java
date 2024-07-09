@@ -111,7 +111,7 @@ public final class ExternalJavaDocAction extends AnAction {
             LangBundle.message("popup.title.choose.external.documentation.root"),
             ArrayUtilRt.toStringArray(finalUrls)) {
             @Override
-            public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
+            public PopupStep<?> onChosen(final String selectedValue, final boolean finalChoice) {
               BrowserUtil.browse(selectedValue);
               return FINAL_CHOICE;
             }

@@ -146,7 +146,7 @@ public final class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      public PopupStep onChosen(final FrameworkType frameworkType, boolean finalChoice) {
+      public PopupStep<?> onChosen(final FrameworkType frameworkType, boolean finalChoice) {
         if (frameworkType == null) {
           return doFinalStep(() -> chooseDirectoryAndAdd(null));
         }
@@ -168,11 +168,11 @@ public final class DetectionExcludesConfigurable implements Configurable {
     return false;
   }
 
-  private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
+  private PopupStep<?> addExcludedFramework(final @NotNull FrameworkType frameworkType) {
     String projectItem = LangBundle.message("list.item.disable.framework.detection.in.whole.project");
     return new BaseListPopupStep<>(null, projectItem, LangBundle.message("list.item.disable.framework.detection.in.directory")) {
       @Override
-      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {
           addAndRemoveDuplicates(frameworkType, null);
           return FINAL_CHOICE;

@@ -44,6 +44,7 @@ Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.c
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
+     +PsiDirectory: uuid
      _Assertions
      BuilderInference
      ConsistentCopyVisibility

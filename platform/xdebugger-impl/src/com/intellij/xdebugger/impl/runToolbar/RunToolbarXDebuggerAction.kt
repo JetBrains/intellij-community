@@ -8,6 +8,7 @@ import com.intellij.execution.runToolbar.*
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.impl.DebuggerSupport
@@ -66,7 +67,7 @@ class InlineXDebuggerResumeAction(configurationSettings: RunnerAndConfigurationS
   }
 }
 
-open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
+open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction(), ActionRemoteBehaviorSpecification.Duplicated {
   private val handler = XDebuggerResumeHandler()
   override fun getResumeHandler(): XDebuggerResumeHandler {
     return handler

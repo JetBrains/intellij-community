@@ -31,6 +31,7 @@ class K2UserTrackerState : BaseState() {
     doesn't migrate when updating the IDE */
     var userSawSurvey by property(false)
     var lastSavedPluginMode by string(PluginModes.UNDEFINED.value)
+    var userSawEnableK2Notification by property(false)
 }
 
 @State(name = "K2NewUserTracker", storages = [Storage("k2-feedback.xml")])

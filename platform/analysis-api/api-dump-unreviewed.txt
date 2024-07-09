@@ -2359,7 +2359,7 @@ com.intellij.lang.annotation.AnnotationHolder
 - a:isBatchMode():Z
 - newAnnotation(com.intellij.lang.annotation.HighlightSeverity,java.lang.String):com.intellij.lang.annotation.AnnotationBuilder
 - newSilentAnnotation(com.intellij.lang.annotation.HighlightSeverity):com.intellij.lang.annotation.AnnotationBuilder
-c:com.intellij.lang.annotation.AnnotationSession
+Fc:com.intellij.lang.annotation.AnnotationSession
 - com.intellij.openapi.util.UserDataHolder
 - <init>(com.intellij.psi.PsiFile):V
 - getFile():com.intellij.psi.PsiFile

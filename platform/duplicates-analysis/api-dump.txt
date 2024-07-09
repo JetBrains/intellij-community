@@ -205,7 +205,7 @@ a:com.intellij.dupLocator.treeHash.DuplicatesProfileBase
 - getDuplocatorState(com.intellij.lang.Language):com.intellij.dupLocator.ExternalizableDuplocatorState
 - getLiterals():com.intellij.psi.tree.TokenSet
 - a:getNodeCost(com.intellij.psi.PsiElement):I
-c:com.intellij.dupLocator.treeHash.DuplocatorHashCallback
+Fc:com.intellij.dupLocator.treeHash.DuplocatorHashCallback
 - com.intellij.dupLocator.treeHash.FragmentsCollector
 - <init>(I):V
 - <init>(I,I):V

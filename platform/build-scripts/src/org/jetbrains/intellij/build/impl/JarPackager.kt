@@ -832,13 +832,9 @@ private class NativeFileHandlerImpl(private val context: BuildContext, private v
     descriptor.nativeFiles?.let { return descriptor.nativeFiles.contains(name) }
 
     @Suppress("SpellCheckingInspection", "RedundantSuppression")
-    return name.endsWith(".jnilib") ||
-           name.endsWith(".dylib") ||
-           name.endsWith(".so") ||
+    return isMacLibrary(name) ||
            name.endsWith(".exe") ||
            name.endsWith(".dll") ||
-           name.endsWith(".node") ||
-           name.endsWith(".tbd") ||
            name.endsWith("pty4j-unix-spawn-helper")
   }
 

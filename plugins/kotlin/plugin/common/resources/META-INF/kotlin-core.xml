@@ -88,7 +88,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <gotoRelatedProvider implementation="org.jetbrains.kotlin.idea.goto.KotlinExpectOrActualGotoRelatedProvider"/>
 
-    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInsVirtualFileProvider"
+    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider"
                         serviceImplementation="org.jetbrains.kotlin.idea.base.analysis.builtins.IdeBuiltInsVirtualFileProviderImpl"/>
     
     <aboutPopupDescriptionProvider implementation="org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKindAboutPopupDescriptionProvider"/>
@@ -493,6 +493,12 @@
             displayType="STICKY_BALLOON"
             key="configure.kotlin"
             bundle="messages.KotlinProjectConfigurationBundle"
+    />
+    <notificationGroup
+            id="Configure K2"
+            displayType="STICKY_BALLOON"
+            key="enable.k2"
+            bundle="messages.FeedbackBundle"
     />
   </extensions>
 

@@ -1205,6 +1205,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*, a: int", new String[]{"*, a: int"});
   }
 
+  // PY-53693
+  public void testInitializingDataclassKwOnlyAttribute() {
+    final Map<String, PsiElement> marks = loadTest(6);
+
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg2>").getTextOffset()).check("a: int, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg3>").getTextOffset()).check("a: int, qq: int, *, b: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg4>").getTextOffset()).check("a: int, c: int, *, b: int, d: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg5>").getTextOffset()).check("a: int, *, b: int, qq: int", new String[]{"a: int, "});
+    feignCtrlP(marks.get("<arg6>").getTextOffset()).check("a: str", new String[]{"a: str"});
+  }
+
   // PY-49946
   public void testInitializingDataclassKwOnlyOnClassOverridingHierarchy() {
     final Map<String, PsiElement> marks = loadTest(3);

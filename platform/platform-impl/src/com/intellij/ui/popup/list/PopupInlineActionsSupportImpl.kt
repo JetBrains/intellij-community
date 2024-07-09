@@ -88,6 +88,7 @@ internal class PopupInlineActionsSupportImpl(private val myListPopup: ListPopupI
   }
 
   override fun isMoreButton(element: Any?, index: Int): Boolean {
+    if (element !is ActionItem || !hasMoreButton(element)) return false
     val count = calcExtraButtonsCount(element)
     return count > 0 && index == count - 1
   }

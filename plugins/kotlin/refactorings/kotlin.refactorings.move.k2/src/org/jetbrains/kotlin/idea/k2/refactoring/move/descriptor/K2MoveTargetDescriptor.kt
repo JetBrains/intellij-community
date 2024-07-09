@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor
 
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.ide.util.DirectoryUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
@@ -49,15 +50,11 @@ sealed interface K2MoveTargetDescriptor {
         override val baseDirectory: PsiDirectory
     ) : K2MoveTargetDescriptor {
         override fun getOrCreateTarget(): PsiFileSystemItem {
-            val basePkg = baseDirectory.getFqNameWithImplicitPrefixOrRoot()
-            return if (basePkg != pkgName) {
-                val pkgDiff = pkgName.asString()
-                    .removePrefix(basePkg.asString())
-                    .replace(".", "/")
-                VfsUtil.createDirectoryIfMissing(baseDirectory.virtualFile, pkgDiff)
-                    .toPsiDirectory(baseDirectory.project)
-                    ?: error("Could not create directory structure")
-            } else baseDirectory
+            val implicitPkgPrefix = baseDirectory.getFqNameWithImplicitPrefixOrRoot()
+            val pkgSuffix = pkgName.asString().removePrefix(implicitPkgPrefix.asString()).removePrefix(".")
+            val file = VfsUtilCore.findRelativeFile(pkgSuffix.replace('.', java.io.File.separatorChar), baseDirectory.virtualFile)
+            if (file != null) return file.toPsiDirectory(baseDirectory.project) ?: error("Could not find directory $pkgName")
+            return DirectoryUtil.createSubdirectories(pkgSuffix, baseDirectory, ".")
         }
     }
 
@@ -73,6 +70,10 @@ sealed interface K2MoveTargetDescriptor {
     }
 
     companion object {
+        fun SourceDirectory(directory: PsiDirectory): SourceDirectory {
+            return SourceDirectory(directory.getFqNameWithImplicitPrefixOrRoot(), directory)
+        }
+
         fun File(file: KtFile): File {
             val directory = file.containingDirectory ?: error("No containing directory was found")
             return File(file.name, file.packageFqName, directory)

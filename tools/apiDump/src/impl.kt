@@ -129,7 +129,7 @@ private fun ClassBinarySignature.handleAnnotationsAndVisibility(index: ApiIndex)
   if (outerName != null) {
     val outerClass = index.resolveClass(outerName) ?: error("Outer class $outerName is unknown")
     signature = signature.annotate(outerClass.annotations.apiAnnotations())
-    if (!outerClass.isEffectivelyPublic || access.isProtected && outerClass.access.isFinal) {
+    if (!outerClass.isEffectivelyPublic || access.isProtected && outerClass.isEffectivelyFinal()) {
       signature = signature.copy(isEffectivelyPublic = false)
     }
   }
@@ -178,7 +178,7 @@ private fun ClassBinarySignature.removePrivateSupertypes(index: ApiIndex): Class
   if (privateSupertypes.isEmpty()) {
     return this
   }
-  val isFinal = access.isFinal
+  val isFinal = isEffectivelyFinal()
   val signatures = memberSignatures.mapTo(HashSet()) { it.jvmMember }
   val inheritedSignatures = sequence {
     for (supertype in privateSupertypes) {
@@ -215,6 +215,7 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
   val result = ArrayList<ApiClass>()
   for (signature in publicSignatures) {
     val className = signature.name
+    val isFinal = signature.isEffectivelyFinal()
     val members = signature.memberSignatures
       .sortedWith(MEMBER_SORT_ORDER)
       .mapNotNull { memberSignature ->
@@ -225,9 +226,16 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
         if (memberSignature.isConstructorAccessor()) {
           return@mapNotNull null
         }
+        if (isFinal && memberSignature.access.isProtected) {
+          return@mapNotNull null
+        }
         ApiMember(
           ApiRef(memberSignature.name, memberSignature.desc),
-          ApiFlags(memberSignature.access.access, memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental),
+          ApiFlags(
+            memberSignature.access.access,
+            annotationExperimental = memberSignature.annotations.isExperimental() || companionAnnotations.isExperimental,
+            annotationNonExtendable = memberSignature.annotations.isNonExtendable(),
+          ),
         )
       }
     if (members.isEmpty() && signature.isNotUsedWhenEmpty) {
@@ -235,7 +243,11 @@ private fun publicApi(index: ApiIndex, classSignatures: List<ClassBinarySignatur
     }
     result += ApiClass(
       className,
-      flags = ApiFlags(signature.access.access, signature.annotations.isExperimental()),
+      flags = ApiFlags(
+        signature.access.access,
+        signature.annotations.isExperimental(),
+        signature.annotations.isNonExtendable(),
+      ),
       supers = signature.supertypes,
       members,
     )
@@ -288,6 +300,7 @@ private fun Sequence<Path>.packages(): Map<String, ApiAnnotations> {
 
 private const val API_STATUS_INTERNAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Internal;"
 private const val API_STATUS_EXPERIMENTAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus\$Experimental;"
+private const val API_STATUS_NON_EXTENDABLE = "Lorg/jetbrains/annotations/ApiStatus\$NonExtendable;"
 
 private fun List<AnnotationNode>.apiAnnotations(): ApiAnnotations {
   var isInternal = false
@@ -308,12 +321,20 @@ private fun List<AnnotationNode>.apiAnnotations(): ApiAnnotations {
   }
 }
 
+private fun ClassBinarySignature.isEffectivelyFinal(): Boolean {
+  return access.isFinal || annotations.isNonExtendable()
+}
+
 private fun List<AnnotationNode>?.isInternal(): Boolean {
   return hasAnnotation(API_STATUS_INTERNAL_DESCRIPTOR)
 }
 
 private fun List<AnnotationNode>?.isExperimental(): Boolean {
   return hasAnnotation(API_STATUS_EXPERIMENTAL_DESCRIPTOR)
+}
+
+private fun List<AnnotationNode>?.isNonExtendable(): Boolean {
+  return hasAnnotation(API_STATUS_NON_EXTENDABLE)
 }
 
 private typealias ClassResolver = (String) -> ClassBinarySignature?

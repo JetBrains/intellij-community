@@ -76,7 +76,7 @@ private fun computeElementContext(element: KtNamedDeclaration): ElementContext? 
     val allOverriddenSymbols = symbol.allOverriddenSymbols.toList()
     for (overriddenSymbol in retainNonOverridableMembers(allOverriddenSymbols)) {
         val overriddenMember = overriddenSymbol.psi
-        val containingSymbol = overriddenSymbol.containingSymbol
+        val containingSymbol = overriddenSymbol.containingDeclaration
         if (overriddenMember == null || overriddenMember !is KtCallableDeclaration || !overriddenMember.canRefactorElement() ||
             containingSymbol !is KaNamedSymbol || overriddenMember.modifierList?.hasModifier(KtTokens.OPEN_KEYWORD) == true
         ) {

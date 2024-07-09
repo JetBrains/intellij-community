@@ -205,7 +205,6 @@
     "fileTypes": {
       "actionScript.svg": "fileTypes/as.svg",
       "addAny.svg": "fileTypes/addAny.svg",
-      "angularJS.svg": "icons/AngularJS.svg",
       "anyType.svg": "fileTypes/any_type.svg",
       "archive.svg": [
         "fileTypes/archive.svg",

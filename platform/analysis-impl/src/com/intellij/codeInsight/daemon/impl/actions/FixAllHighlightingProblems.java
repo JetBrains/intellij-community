@@ -7,7 +7,9 @@ import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandWithContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
@@ -129,7 +131,6 @@ class FixAllHighlightingProblems implements IntentionAction {
     final SequentialModalProgressTask progressTask =
       new SequentialModalProgressTask(project, actionName, true);
     progressTask.setMinIterationTime(200);
-    ActionContext context = ActionContext.from(editor, file);
     SequentialTask task = new SequentialTask() {
       int fixNumber = 0;
 
@@ -152,7 +153,7 @@ class FixAllHighlightingProblems implements IntentionAction {
           ModCommandWithContext contextAndCommand =
             ModCommandService.getInstance().chooseFileAndPerform(file, editor, pair.first, range.getStartOffset());
           if (contextAndCommand == null) return true;
-          ModCommandExecutor.getInstance().executeInBatch(contextAndCommand.context(), contextAndCommand.command());
+          contextAndCommand.executeInBatch();
           psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
           psiDocumentManager.commitDocument(document);
         }

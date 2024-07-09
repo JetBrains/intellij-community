@@ -70,7 +70,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
         }
 
         @Override
-        public PopupStep onChosen(final ConfigurableUsageTarget selectedValue, final boolean finalChoice) {
+        public PopupStep<?> onChosen(final ConfigurableUsageTarget selectedValue, final boolean finalChoice) {
           return doFinalStep(() -> {
             if (selectedValue != null) {
               findUsagesManager.rerunAndRecallFromHistory(selectedValue);

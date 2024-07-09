@@ -176,7 +176,7 @@ internal class KotlinFirStructureElementPresentation(
                 }
             }
 
-            val containingSymbol = symbol?.containingSymbol
+            val containingSymbol = symbol?.containingDeclaration
             
             if (ktElement is KtDeclaration && containingSymbol == ktElement.symbol) {
                 return null

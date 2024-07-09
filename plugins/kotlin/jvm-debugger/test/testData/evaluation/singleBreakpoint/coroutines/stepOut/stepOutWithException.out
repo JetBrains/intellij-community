@@ -1,12 +1,12 @@
-LineBreakpoint created at stepOutWithException.kt:21
+LineBreakpoint created at stepOutWithException.kt:24
 Run Java
 Connected to the target VM
-stepOutWithException.kt:21
+stepOutWithException.kt:24
 Disconnected from the target VM
 
 Process finished with exit code 1
 Exception in thread "main" java.lang.IllegalStateException: This exception should be thrown
-	at StepOutWithExceptionKt.funWithSuspendLast(stepOutWithException.kt:22)
+	at StepOutWithExceptionKt.funWithSuspendLast(stepOutWithException.kt:25)
 	at StepOutWithExceptionKt$funWithSuspendLast$1.invokeSuspend(stepOutWithException.kt)
 	at kotlin.coroutines.jvm.internal.BaseContinuationImpl.resumeWith(ContinuationImpl.kt:33)
 	at kotlinx.coroutines.DispatchedTask.run(DispatchedTask.kt:108)

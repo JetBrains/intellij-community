@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.base.fe10.analysis
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.AnalysisMode
@@ -34,7 +35,7 @@ import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.util.CancellationChecker
 
-@OptIn(FrontendInternals::class)
+@OptIn(FrontendInternals::class, KaPlatformInterface::class)
 internal class IdeFe10AnalysisFacade(private val project: Project) : Fe10AnalysisFacade {
 
     @OptIn(Frontend10ApiUsage::class)

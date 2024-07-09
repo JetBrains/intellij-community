@@ -72,11 +72,12 @@ object ExcludingApproximateChangedRangesShifter {
             if (rightEnd == leftEnd) {
               // "later" fully inside "early"
               cShift += laterDelta
+              iLater.next()
               fullyMapped = true
               break
             }
             else if (rightEnd < leftEnd) {
-              // "later" partially inside "early"
+              // "later" inside "early"
               bStart = rightEnd
               cShift += laterDelta
               iLater.next()

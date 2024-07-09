@@ -172,7 +172,13 @@ internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<P
 
 internal fun <T : MoveRenameUsageInfo> List<T>.groupByFile(): Map<PsiFile, List<T>> = groupBy {
     it.element?.containingFile ?: error("Could not find containing file")
-}
+}.toSortedMap(object : Comparator<PsiFile> {
+    // Use a sorted map to get consistent results by the refactoring
+    // This is done to reduce flakiness and make the results reproducible
+    override fun compare(o1: PsiFile?, o2: PsiFile?): Int {
+        return o1?.virtualFile?.path?.compareTo(o2?.virtualFile?.path ?: return -1) ?: -1
+    }
+})
 
 internal fun <T : MoveRenameUsageInfo> Map<PsiFile, List<T>>.sortedByOffset(): Map<PsiFile, List<T>> = mapValues { (_, value) ->
     value.sortedBy { it.element?.textOffset }

@@ -5751,7 +5751,7 @@ a:com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
 com.intellij.codeInsight.highlighting.HighlightedReference
 - com.intellij.psi.PsiReference
 - isHighlightedWhenSoft():Z
-c:com.intellij.codeInsight.highlighting.HyperlinkAnnotator
+Fc:com.intellij.codeInsight.highlighting.HyperlinkAnnotator
 - com.intellij.lang.annotation.Annotator
 - com.intellij.openapi.project.DumbAware
 - <init>():V
@@ -25934,6 +25934,7 @@ c:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHan
 c:com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesProcessor
 - com.intellij.refactoring.BaseRefactoringProcessor
 - pf:myElementsToMove:com.intellij.psi.PsiElement[]
+- pf:myFoundUsages:java.util.Map
 - pf:mySearchInComments:Z
 - pf:mySearchInNonJavaFiles:Z
 - <init>(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement[],com.intellij.psi.PsiDirectory,Z,Z,com.intellij.refactoring.move.MoveCallback,java.lang.Runnable):V

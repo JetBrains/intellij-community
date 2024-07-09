@@ -77,6 +77,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final Map<Language, FileHighlightingSetting> myFileHighlightingSettings; // each root language -> its highlighting level
   private volatile long myHighlightingSettingsModificationCount;
 
+  /**
+   * Prefer using {@link TrafficLightRendererContributor} instead
+   */
   public static void setTrafficLightOnEditor(@NotNull Project project,
                                              @NotNull EditorMarkupModel editorMarkupModel,
                                              @NotNull ModalityState modalityState,
@@ -401,7 +404,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     if (!statusItems.isEmpty()) {
       AnalyzerStatus result = new AnalyzerStatus(statusItems.get(0).getIcon(), title, "", myUIController).
-        withNavigation().
+        withNavigation(true).
         withState(state).
         withExpandedStatus(ContainerUtil.map(statusItems, i -> {
           TrafficLightStatusItemMetadata metadata = new TrafficLightStatusItemMetadata(i.getProblemCount(), i.getSeverity());

@@ -137,10 +137,10 @@ sealed class K2MoveRenameUsageInfo(
             if (refExpr.isUnqualifiable()) return true
             val refChain = (refExpr.getTopmostParentQualifiedExpressionForReceiver() ?: refExpr)
                 .collectDescendantsOfType<KtSimpleNameExpression>()
-                .filter { it.canBeUsedInImport() }
+                .filter { it.canBeUsedInImport() && it.isNameDeterminantInQualifiedChain() }
             return if (isInternal) {
                 // for internal usages, update the first name determinant in the call chain
-                refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.isNameDeterminantInQualifiedChain() } == refExpr
+                refChain.firstOrNull() == refExpr
             } else {
                 // for external usages, update the first reference to a moved element
                 refChain.firstOrNull { simpleNameExpr -> simpleNameExpr.mainReference.resolve() in movedElements } == refExpr
@@ -159,7 +159,7 @@ sealed class K2MoveRenameUsageInfo(
                 val resolvedSymbol = mainReference.resolveToSymbol()
                 if (resolvedSymbol is KaClassSymbol && resolvedSymbol.classKind == KaClassKind.COMPANION_OBJECT) return true
                 if (resolvedSymbol is KaConstructorSymbol) return true
-                val containingSymbol = resolvedSymbol?.containingSymbol
+                val containingSymbol = resolvedSymbol?.containingDeclaration
                 if (resolvedSymbol is KaPackageSymbol) return false // ignore packages
                 if (containingSymbol == null) return true // top levels are static
                 if (containingSymbol is KaClassSymbol) {

@@ -44,7 +44,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
             return true
         }
 
-        val containingSymbol = symbol.containingSymbol as? KaClassSymbol ?: return false
+        val containingSymbol = symbol.containingDeclaration as? KaClassSymbol ?: return false
         return isIgnored(containingSymbol)
     }
 }

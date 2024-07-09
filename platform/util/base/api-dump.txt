@@ -514,7 +514,7 @@ com.intellij.util.containers.HashingStrategy
 - a:equals(java.lang.Object,java.lang.Object):Z
 - a:hashCode(java.lang.Object):I
 - s:identity():com.intellij.util.containers.HashingStrategy
-a:com.intellij.util.containers.Interner
+Fa:com.intellij.util.containers.Interner
 - <init>():V
 - a:clear():V
 - s:createInterner():com.intellij.util.containers.Interner

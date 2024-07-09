@@ -215,8 +215,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public @Nullable PopupStep onChosen(T selectedValue, boolean finalChoice) {
+    public @Nullable PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
       ListModel<T> model = myGetComboboxModel.get();
       if (model instanceof ComboBoxPopupState) {
         //noinspection unchecked

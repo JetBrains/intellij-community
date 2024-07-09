@@ -76,7 +76,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   private var myProjectRoot: VirtualFile? = null
 
   private var myProjectPom: VirtualFile? = null
-  private val myAllPoms: MutableList<VirtualFile> = ArrayList()
+  private val myAllPoms: MutableSet<VirtualFile> = mutableSetOf()
 
   val pathTransformer: RemotePathTransformerFactory.Transformer
     get() = myPathTransformer!!
@@ -107,7 +107,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
 
   val allPoms: List<VirtualFile>
-    get() = myAllPoms
+    get() = myAllPoms.toList()
 
   fun addPom(pom: VirtualFile) {
     myAllPoms.add(pom)
@@ -422,18 +422,11 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun createPomFile(dir: VirtualFile, fileName: String? = "pom.xml",
                               @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
     val pomName = fileName ?: "pom.xml"
-    var f = dir.findChild(pomName)
-    if (f == null) {
-      try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }!!
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
-      myAllPoms.add(f)
-    }
-    setPomContent(f, xml)
-    return f!!
+    val filePath = Path.of(dir.path, pomName)
+    setPomContent(filePath, xml)
+    val f = dir.findChild(pomName)!!
+    myAllPoms.add(f)
+    return f
   }
 
   protected fun createProfilesXmlOldStyle(xml: String): VirtualFile {
@@ -610,16 +603,10 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun createProfilesFile(dir: VirtualFile, content: String): VirtualFile {
-    var f = dir.findChild("profiles.xml")
-    if (f == null) {
-      try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, "profiles.xml") }!!
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
-    }
-    setFileContent(f, content)
+    val fileName = "profiles.xml"
+    val filePath = Path.of(dir.path, fileName)
+    setFileContent(filePath, content)
+    val f = dir.findChild(fileName)!!
     return f
   }
 
@@ -643,6 +630,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     setFileContent(file, createPomXml(xml))
   }
 
+  protected fun setPomContent(file: Path, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
+    setFileContent(file, createPomXml(xml))
+  }
+
   protected suspend fun setPomContentAsync(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
     setFileContentAsync(file, createPomXml(xml))
   }
@@ -652,8 +643,12 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setFileContent(file: VirtualFile, content: String) {
-    Files.write(file.toNioPath(), content.toByteArray(StandardCharsets.UTF_8))
-    LocalFileSystem.getInstance().refreshFiles(listOf(file))
+    return setFileContent(file.toNioPath(), content)
+  }
+
+  private fun setFileContent(file: Path, content: String) {
+    Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
+    LocalFileSystem.getInstance().refreshNioFiles(listOf(file))
   }
 
   protected fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {

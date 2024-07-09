@@ -635,7 +635,7 @@ object KotlinUnusedSymbolUtil {
   private fun KtCallableDeclaration.canBeHandledByLightMethods(symbol: KaDeclarationSymbol?): Boolean {
       return when {
           symbol is KaConstructorSymbol -> {
-              val classSymbol = symbol.containingSymbol as? KaNamedClassOrObjectSymbol ?: return false
+              val classSymbol = symbol.containingDeclaration as? KaNamedClassOrObjectSymbol ?: return false
               !classSymbol.isInline && !classSymbol.visibility.isPrivateOrPrivateToThis()
           }
           hasModifier(KtTokens.INTERNAL_KEYWORD) -> false

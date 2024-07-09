@@ -399,7 +399,7 @@ private fun isExtensionFunctionType(type: KaType): Boolean {
 
 context(KaSession)
 private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaExpression): List<KaNamedFunctionSymbol> {
-    val scope = when (val containingSymbol = this.containingSymbol) {
+    val scope = when (val containingSymbol = this.containingDeclaration) {
         is KaClassSymbol -> containingSymbol.memberScope
         else -> lambdaArgument.containingKtFile.scopeContext(lambdaArgument).compositeScope()
     }

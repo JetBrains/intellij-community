@@ -59,7 +59,7 @@ object ScrollPaneWithStickyHeaders {
         var topLimit = 0
         var bottomLimit = scrollPane.height
 
-        val elements = scrolledBody.components.mapNotNull { stickyElements[it] }
+        val elements = scrolledBody.components.mapNotNull { stickyElements[it] }.filter { it.component.isVisible }
         elements.forEach { element ->
           val elemPosition = element.wrapperBody.y - scrollPosition
           if (elemPosition < topLimit) {

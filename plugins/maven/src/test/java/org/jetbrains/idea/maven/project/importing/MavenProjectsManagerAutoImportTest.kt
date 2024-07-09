@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
@@ -264,7 +265,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     <packaging>pom</packaging>
                     <version>1</version>
                     """.trimIndent())
-    createModulePom("dir/module", """
+    createPom("dir/module", """
       <groupId>test</groupId>
       <artifactId>module</artifactId>
       <version>1</version>
@@ -343,7 +344,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val parentNode = roots[0]
     assertNotNull(parentNode)
     assertTrue(projectsTree.getModules(roots[0]).isEmpty())
-    val m = createModulePom("m",
+    val m = createPom("m",
                             """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
@@ -461,7 +462,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       <module>m</module>
                     </modules>
                     """.trimIndent())
-    val m = createModulePom("m",
+    val m = createPom("m",
                             """
                             <groupId>test</groupId>
                             <artifactId>m</artifactId>
@@ -475,7 +476,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
 
-    createProjectPom("""
+    createPom("", """
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -555,7 +556,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
     importProjectAsync()
     assertEquals(0, projectsTree.rootProjects.size)
-    createProjectPom("""
+    createPom("", """"
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -680,6 +681,22 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   @RequiresEdt
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
+  }
+
+  private fun createPom(relativePath: String, xml: String): VirtualFile {
+    val dir = createProjectSubDir(relativePath)
+    val pomName = "pom.xml"
+    var f = dir.findChild(pomName)
+    if (f == null) {
+      try {
+        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }!!
+      }
+      catch (e: IOException) {
+        throw RuntimeException(e)
+      }
+    }
+    replaceContent(f, xml)
+    return f
   }
 
   private fun replaceContent(file: VirtualFile, content: String) {

@@ -451,7 +451,6 @@ public class AllIcons {
   public static final class FileTypes {
     /** 16x16 */ public static final @NotNull Icon ActionScript = load("expui/fileTypes/actionScript.svg", 268585626, 2);
     /** 16x16 */ public static final @NotNull Icon AddAny = load("fileTypes/addAny.svg", "expui/", 978449674, 0);
-    /** 16x16 */ public static final @NotNull Icon AngularJS = load("expui/fileTypes/angularJS.svg", -1837706255, 0);
     /** 16x16 */ public static final @NotNull Icon Any_type = load("fileTypes/any_type.svg", "expui/fileTypes/anyType.svg", 1453411109, 0);
     /** 16x16 */ public static final @NotNull Icon Archive = load("fileTypes/archive.svg", "expui/", 2114774615, 0);
     /** 16x16 */ public static final @NotNull Icon AS = load("fileTypes/as.svg", "expui/fileTypes/actionScript.svg", -1805543846, 0);

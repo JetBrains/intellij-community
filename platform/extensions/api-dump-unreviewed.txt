@@ -257,7 +257,7 @@ com.intellij.util.messages.MessageHandler
 com.intellij.util.messages.SimpleMessageBusConnection
 - a:disconnect():V
 - a:subscribe(com.intellij.util.messages.Topic,java.lang.Object):V
-c:com.intellij.util.messages.Topic
+Fc:com.intellij.util.messages.Topic
 - <init>(java.lang.Class):V
 - <init>(java.lang.Class,com.intellij.util.messages.Topic$BroadcastDirection):V
 - <init>(java.lang.Class,com.intellij.util.messages.Topic$BroadcastDirection,Z):V

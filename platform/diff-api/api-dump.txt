@@ -624,7 +624,7 @@ a:com.intellij.openapi.diff.LineTokenizerBase
 - getLineSeparator():java.lang.String
 - pa:length():I
 - pa:substring(I,I):java.lang.String
-c:com.intellij.openapi.diff.impl.GenericDataProvider
+Fc:com.intellij.openapi.diff.impl.GenericDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - <init>():V
 - <init>(com.intellij.openapi.actionSystem.DataProvider):V

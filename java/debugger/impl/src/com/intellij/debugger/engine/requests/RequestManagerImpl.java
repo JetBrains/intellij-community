@@ -79,6 +79,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
   public void setThreadFilter(@Nullable final LightOrRealThreadInfo filter) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Thread filter is set to " + filter);
+    }
     myFilterThread = filter;
   }
 

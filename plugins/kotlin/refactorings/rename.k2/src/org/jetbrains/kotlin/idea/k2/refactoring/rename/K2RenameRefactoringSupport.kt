@@ -31,23 +31,6 @@ import kotlin.contracts.contract
 
 internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
 
-    override fun processForeignUsages(
-        element: PsiElement,
-        newName: String,
-        usages: Array<UsageInfo>,
-        fallbackHandler: (UsageInfo) -> Unit
-    ) {
-        usages.forEach(fallbackHandler)
-    }
-
-    override fun prepareForeignUsagesRenaming(
-        element: PsiElement,
-        newName: String,
-        allRenames: MutableMap<PsiElement, String>,
-        scope: SearchScope
-    ) {
-    }
-
     override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,

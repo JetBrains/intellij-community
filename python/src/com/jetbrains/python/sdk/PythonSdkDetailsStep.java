@@ -87,7 +87,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   }
 
   @Override
-  public PopupStep onChosen(final String selectedValue, boolean finalChoice) {
+  public PopupStep<?> onChosen(final String selectedValue, boolean finalChoice) {
     return doFinalStep(() -> optionSelected(selectedValue));
   }
 

@@ -392,6 +392,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(DeprecationFixFactory.deprecatedError)
         registerFactory(DeprecationFixFactory.deprecatedWarning)
 
+        registerFactory(DeprecationFixFactory.deprecatedAliasError)
+        registerFactory(DeprecationFixFactory.deprecatedAliasWarning)
+
         registerFactory(ChangeMemberFunctionSignatureFixFactory.nothingToOverrideFixFactory)
     }
 

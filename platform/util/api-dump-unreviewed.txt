@@ -570,14 +570,13 @@ a:com.intellij.openapi.util.AtomicClearableLazyValue
 - f:drop():V
 - f:getValue():java.lang.Object
 - f:isCached():Z
-a:com.intellij.openapi.util.AtomicNotNullLazyValue
+Fa:com.intellij.openapi.util.AtomicNotNullLazyValue
 - com.intellij.openapi.util.NotNullLazyValue
 - s:createValue(com.intellij.openapi.util.NotNullFactory):com.intellij.openapi.util.AtomicNotNullLazyValue
 - f:getValue():java.lang.Object
 - isComputed():Z
-a:com.intellij.openapi.util.AtomicNullableLazyValue
+Fa:com.intellij.openapi.util.AtomicNullableLazyValue
 - com.intellij.openapi.util.NullableLazyValue
-- p:<init>():V
 - f:getValue():java.lang.Object
 - isComputed():Z
 com.intellij.openapi.util.BooleanGetter
@@ -728,7 +727,7 @@ f:com.intellij.openapi.util.IntRef
 - set(I):V
 @:com.intellij.openapi.util.IntellijInternalApi
 - java.lang.annotation.Annotation
-f:com.intellij.openapi.util.InvalidDataException
+Ff:com.intellij.openapi.util.InvalidDataException
 - java.lang.RuntimeException
 - <init>():V
 - <init>(java.lang.String):V
@@ -999,11 +998,9 @@ f:com.intellij.openapi.util.NotNullLazyKey
 - s:create(java.lang.String,com.intellij.util.NotNullFunction):com.intellij.openapi.util.NotNullLazyKey
 - s:createLazyKey(java.lang.String,java.util.function.Function):com.intellij.openapi.util.NotNullLazyKey
 - getValue(com.intellij.openapi.util.UserDataHolder):java.lang.Object
-a:com.intellij.openapi.util.NotNullLazyValue
+Fa:com.intellij.openapi.util.NotNullLazyValue
 - java.util.function.Supplier
-- p:<init>():V
 - s:atomicLazy(java.util.function.Supplier):com.intellij.openapi.util.NotNullLazyValue
-- pa:compute():java.lang.Object
 - s:createConstantValue(java.lang.Object):com.intellij.openapi.util.NotNullLazyValue
 - s:createValue(com.intellij.openapi.util.NotNullFactory):com.intellij.openapi.util.NotNullLazyValue
 - f:get():java.lang.Object
@@ -1327,7 +1324,7 @@ c:com.intellij.openapi.util.Version
 - s:parseVersion(java.lang.String):com.intellij.openapi.util.Version
 - toCompactString():java.lang.String
 - s:toCompactString(I,I,I):java.lang.String
-a:com.intellij.openapi.util.VolatileNullableLazyValue
+Fa:com.intellij.openapi.util.VolatileNullableLazyValue
 - com.intellij.openapi.util.NullableLazyValue
 - getValue():java.lang.Object
 - isComputed():Z
@@ -1417,7 +1414,7 @@ f:com.intellij.openapi.util.io.FileSystemUtil
 - s:lastModified(java.io.File):J
 - s:resolveSymLink(java.io.File):java.lang.String
 - s:resolveSymLink(java.lang.String):java.lang.String
-c:com.intellij.openapi.util.io.FileUtil
+Fc:com.intellij.openapi.util.io.FileUtil
 - sf:ASYNC_DELETE_EXTENSION:java.lang.String
 - sf:REGEX_PATTERN_FLAGS:I
 - <init>():V
@@ -1796,7 +1793,7 @@ f:com.intellij.openapi.util.text.LineColumn
 f:com.intellij.openapi.util.text.PastParticiple
 - <init>():V
 - s:pastParticiple(java.lang.String):java.lang.String
-c:com.intellij.openapi.util.text.StringUtil
+Fc:com.intellij.openapi.util.text.StringUtil
 - sf:ELLIPSIS:java.lang.String
 - sf:NON_BREAK_SPACE:java.lang.String
 - sf:QUOTER:java.util.function.Function
@@ -3936,9 +3933,8 @@ pf:com.intellij.util.containers.MostlySingularMultiMap$ValueList
 - <init>():V
 - <init>(I):V
 - <init>(java.util.Collection):V
-c:com.intellij.util.containers.MultiMap
+Fc:com.intellij.util.containers.MultiMap
 - java.io.Serializable
-- pf:myMap:java.util.Map
 - <init>():V
 - <init>(I):V
 - <init>(I,F):V
@@ -3950,10 +3946,8 @@ c:com.intellij.util.containers.MultiMap
 - copy():com.intellij.util.containers.MultiMap
 - s:create():com.intellij.util.containers.MultiMap
 - s:create(I,F):com.intellij.util.containers.MultiMap
-- p:createCollection():java.util.Collection
 - s:createConcurrent():com.intellij.util.containers.MultiMap
 - s:createConcurrentSet():com.intellij.util.containers.MultiMap
-- p:createEmptyCollection():java.util.Collection
 - s:createIdentity():com.intellij.util.containers.MultiMap
 - s:createLinked():com.intellij.util.containers.MultiMap
 - s:createLinkedSet():com.intellij.util.containers.MultiMap

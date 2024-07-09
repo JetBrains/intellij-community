@@ -83,7 +83,7 @@ public class RegisterExtensionFix extends IntentionAndQuickFixAction {
       final BaseListPopupStep<ExtensionPointCandidate> popupStep =
         new BaseListPopupStep<>(DevKitBundle.message("register.extension.fix.popup.title"), new ArrayList<>(myEPCandidates)) {
           @Override
-          public PopupStep onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
+          public PopupStep<?> onChosen(ExtensionPointCandidate selectedValue, boolean finalChoice) {
             registerExtension(element, selectedValue, extensionClass);
             return FINAL_CHOICE;
           }

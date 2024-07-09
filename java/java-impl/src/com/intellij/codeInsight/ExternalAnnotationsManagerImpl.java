@@ -556,7 +556,7 @@ public final class ExternalAnnotationsManagerImpl extends ModCommandAwareExterna
         }
 
         @Override
-        public PopupStep onChosen(@NotNull VirtualFile file, final boolean finalChoice) {
+        public PopupStep<?> onChosen(@NotNull VirtualFile file, final boolean finalChoice) {
           annotateExternally(file, annotation);
           return FINAL_CHOICE;
         }

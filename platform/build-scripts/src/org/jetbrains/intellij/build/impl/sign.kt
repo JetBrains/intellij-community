@@ -39,12 +39,11 @@ import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.name
 
-private fun isMacLibrary(name: String): Boolean =
+internal fun isMacLibrary(name: String): Boolean =
   name.endsWith(".jnilib") ||
   name.endsWith(".dylib") ||
   name.endsWith(".so") ||
-  name.endsWith(".tbd") ||
-  name.endsWith(".node")
+  name.endsWith(".tbd")
 
 internal fun CoroutineScope.recursivelySignMacBinaries(root: Path,
                                                        context: BuildContext,

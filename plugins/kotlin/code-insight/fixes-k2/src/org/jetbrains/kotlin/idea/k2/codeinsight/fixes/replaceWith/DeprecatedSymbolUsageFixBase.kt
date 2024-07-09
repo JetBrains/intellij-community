@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnl
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.TypeAliasUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
@@ -37,6 +37,9 @@ import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
+import org.jetbrains.kotlin.psi.KtTypeAlias
+import org.jetbrains.kotlin.psi.KtTypeReference
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
 
@@ -51,6 +54,16 @@ object DeprecationFixFactory {
         createDeprecation(kaSymbol, diagnostics.psi)
     }
 
+    val deprecatedAliasWarning = IntentionBased { diagnostics: KaFirDiagnostic.TypealiasExpansionDeprecation ->
+        val kaSymbol = diagnostics.reference as? KaDeclarationSymbol ?: return@IntentionBased emptyList()
+        createDeprecation(kaSymbol, diagnostics.psi)
+    }
+
+    val deprecatedAliasError = IntentionBased { diagnostics: KaFirDiagnostic.TypealiasExpansionDeprecationError ->
+        val kaSymbol = diagnostics.reference as? KaDeclarationSymbol ?: return@IntentionBased emptyList()
+        createDeprecation(kaSymbol, diagnostics.psi)
+    }
+
     context(KaSession)
     private fun createDeprecation(
         kaSymbol: KaDeclarationSymbol,
@@ -59,6 +72,7 @@ object DeprecationFixFactory {
         val referenceExpression = when (val psiElement = psi) {
             is KtArrayAccessExpression -> psiElement
             is KtSimpleNameExpression -> psiElement
+            is KtTypeReference -> (psiElement.typeElement as? KtUserType)?.referenceExpression
             is KtConstructorCalleeExpression -> psiElement.constructorReferenceExpression
             is KtBinaryExpression -> psiElement.operationReference
             else -> null
@@ -125,18 +139,30 @@ abstract class DeprecatedSymbolUsageFixBase(
             element: KtReferenceExpression,
             replaceWith: ReplaceWithData,
         ): UsageReplacementStrategy? {
-            val function = element.mainReference.resolve() as? KtCallableDeclaration ?: return null
-            val psiFactory = KtPsiFactory(element.project)
-            val context = (if (function is KtFunction) (function.bodyBlockExpression ?: function.bodyExpression
-            ?: function.valueParameterList?.parameters?.lastOrNull()) else null)
-                ?: (function as? KtProperty)?.getter ?: (function as? KtProperty)?.setter ?: (function as? KtProperty)?.initializer
-                ?: function
-            val expression = psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
 
-            val replacement = buildCodeToInline(function, expression, false, null, CodeToInlineBuilder(
-                original = function
-            )) ?: return null
-            return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
+            val target = element.mainReference.resolve()
+            when (target) {
+                is KtCallableDeclaration -> {
+                    val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
+                    ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
+                        ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
+                        ?: target
+                    val psiFactory = KtPsiFactory(element.project)
+                    val expression =
+                        psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
+
+                    val replacement = buildCodeToInline(
+                        target, expression, false, null, CodeToInlineBuilder(
+                            original = target
+                        )
+                    ) ?: return null
+                    return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
+                }
+                is KtTypeAlias -> {
+                    return TypeAliasUsageReplacementStrategy(target)
+                }
+                else -> return null
+            }
         }
     }
 }

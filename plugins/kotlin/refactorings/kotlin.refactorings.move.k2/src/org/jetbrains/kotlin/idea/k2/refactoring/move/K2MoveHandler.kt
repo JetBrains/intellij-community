@@ -73,7 +73,7 @@ class K2MoveHandler : MoveHandlerDelegate() {
     ) {
         val type = K2MoveModel.create(elements, targetContainer, editor) ?: return
         K2MoveDialog(project, type).apply {
-            if (getBoolean("ide.performance.skip.move.files.dialog"))
+            if (getBoolean("ide.performance.skip.refactoring.dialogs"))
                 performOKAction()
             else
                 show()

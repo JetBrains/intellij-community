@@ -29,17 +29,19 @@ object CoroutineBreakpointFacility {
         } else {
             currentLocation
         } ?: return false
-        val nextLocationAfterResumeIndex = getLocationOfNextInstructionAfterResume(resumeLocation)
-        return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResumeIndex)
+        val nextLocationAfterResume = getLocationOfNextInstructionAfterResume(resumeLocation)
+        thisLogger().debug("Trying to set a resume breakpoint in the current method: resumeLocation: $resumeLocation, method: ${resumeLocation.safeMethod()}, nextLocationAfterResumeIndex = $nextLocationAfterResume")
+        return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResume)
     }
 
     fun installResumeBreakpointInCallerMethod(suspendContext: SuspendContextImpl): Boolean {
         val resumeLocation = StackFrameInterceptor.instance?.callerLocation(suspendContext) ?: return false
-        val nextLocationAfterResumeIndex: Int = getLocationOfNextInstructionAfterResume(resumeLocation)
-        return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResumeIndex)
+        val nextLocationAfterResume = getLocationOfNextInstructionAfterResume(resumeLocation)
+        thisLogger().debug("Trying to set a resume breakpoint in the caller method: resumeLocation: $resumeLocation, method: ${resumeLocation.safeMethod()}, nextLocationAfterResumeIndex = $nextLocationAfterResume")
+        return installCoroutineResumedBreakpoint(suspendContext, resumeLocation, nextLocationAfterResume)
     }
 
-    private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, resumedLocation: Location, nextCallAfterResume: Int = -1): Boolean {
+    private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl, resumedLocation: Location, nextLocationAfterResume: Location?): Boolean {
         val debugProcess = context.debugProcess
         debugProcess.cancelRunToCursorBreakpoint()
         val project = debugProcess.project
@@ -53,6 +55,7 @@ object CoroutineBreakpointFacility {
             override fun stopOnlyInBaseClass() = true
 
             override fun processLocatableEvent(action: SuspendContextCommandImpl, event: LocatableEvent): Boolean {
+                thisLogger().debug("Hit the resume breakpoint at ${context.location}")
                 val result = super.processLocatableEvent(action, event)
                 if (result) {
                     debugProcess.requestsManager.deleteRequest(this) // breakpoint is hit - disable the request already
@@ -67,22 +70,22 @@ object CoroutineBreakpointFacility {
                 if (!result) return false
 
                 val suspendContextImpl = action.suspendContext ?: return true
-                return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl, nextCallAfterResume)
+                return scheduleStepOverCommandForSuspendSwitch(suspendContextImpl, nextLocationAfterResume)
             }
 
             override fun customVoteSuspend(suspendContext: SuspendContextImpl): Boolean {
                 if (!suspendAll) return false
                 return SuspendOtherThreadsRequestor.initiateTransferToSuspendAll(suspendContext) {
-                    scheduleStepOverCommandForSuspendSwitch(it, nextCallAfterResume)
+                    scheduleStepOverCommandForSuspendSwitch(it, nextLocationAfterResume)
                 }
             }
 
             override fun applyAfterContextSwitch() = Function<SuspendContextImpl, Boolean> { c ->
-                scheduleStepOverCommandForSuspendSwitch(c, nextCallAfterResume)
+                scheduleStepOverCommandForSuspendSwitch(c, nextLocationAfterResume)
             }
 
-            private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl, nextCallAfterResume: Int): Boolean {
-                DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(it, nextCallAfterResume).prepareSteppingRequestsAndHints(it)
+            private fun scheduleStepOverCommandForSuspendSwitch(it: SuspendContextImpl, nextLocationAfterResume: Location?): Boolean {
+                DebuggerSteppingHelper.createStepOverCommandForSuspendSwitch(it, nextLocationAfterResume).prepareSteppingRequestsAndHints(it)
                 // false return value will resume the execution in the `DebugProcessEvents` and
                 // the scheduled above steps will perform stepping through the coroutine switch until line location.
                 return false

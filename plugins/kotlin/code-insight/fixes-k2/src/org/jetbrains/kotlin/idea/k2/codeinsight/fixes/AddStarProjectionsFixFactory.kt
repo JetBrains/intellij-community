@@ -81,7 +81,7 @@ private fun getTargetClasses(
 
 context(KaSession)
 private val KaDeclarationSymbol.parentsWithSelf: Sequence<KaDeclarationSymbol>
-    get() = generateSequence(this) { it.containingSymbol }
+    get() = generateSequence(this) { it.containingDeclaration }
 
 private fun createReplaceString(targetClasses: List<KaNamedClassOrObjectSymbol>): String {
     return targetClasses.mapIndexed { index, c ->

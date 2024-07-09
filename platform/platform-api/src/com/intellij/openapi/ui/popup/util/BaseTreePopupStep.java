@@ -54,7 +54,7 @@ public class BaseTreePopupStep<T> extends BaseStep<T> implements TreePopupStep<T
   }
 
   @Override
-  public PopupStep onChosen(T selectedValue, final boolean finalChoice) {
+  public PopupStep<?> onChosen(T selectedValue, final boolean finalChoice) {
     return FINAL_CHOICE;
   }
 

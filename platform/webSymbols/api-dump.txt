@@ -644,7 +644,7 @@ e:com.intellij.webSymbols.js.WebSymbolJsKind
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.webSymbols.js.WebSymbolJsKind
 - s:values():com.intellij.webSymbols.js.WebSymbolJsKind[]
-*a:com.intellij.webSymbols.patterns.WebSymbolsPattern
+*Fa:com.intellij.webSymbols.patterns.WebSymbolsPattern
 *:com.intellij.webSymbols.query.WebSymbolDefaultIconProvider
 - *sf:Companion:com.intellij.webSymbols.query.WebSymbolDefaultIconProvider$Companion
 - a:getDefaultIcon(java.lang.String,java.lang.String):javax.swing.Icon

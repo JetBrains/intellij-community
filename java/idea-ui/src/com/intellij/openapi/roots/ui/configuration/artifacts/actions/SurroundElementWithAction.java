@@ -83,7 +83,7 @@ public class SurroundElementWithAction extends LayoutTreeActionBase {
         }
 
         @Override
-        public PopupStep onChosen(final CompositePackagingElementType selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(final CompositePackagingElementType selectedValue, boolean finalChoice) {
           return doFinalStep(() -> surroundWith(selectedValue, parent, selected, treeComponent));
         }
       }).showInBestPositionFor(e.getDataContext());

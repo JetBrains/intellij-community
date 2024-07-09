@@ -2334,7 +2334,7 @@ com.intellij.openapi.progress.CoroutineSuspender
 - a:isPaused():Z
 - a:pause():V
 - a:resume():V
-f:com.intellij.openapi.progress.CoroutineSuspender$DefaultImpls
+Ff:com.intellij.openapi.progress.CoroutineSuspender$DefaultImpls
 - s:plus(com.intellij.openapi.progress.CoroutineSuspender,kotlin.coroutines.CoroutineContext):kotlin.coroutines.CoroutineContext
 *f:com.intellij.openapi.progress.CoroutinesKt
 - sf:blockingContext(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
@@ -2728,7 +2728,7 @@ f:com.intellij.openapi.project.ProjectCoreUtil
 - a:getValues(com.intellij.openapi.project.Project):kotlinx.coroutines.flow.Flow
 *f:com.intellij.openapi.project.ProjectCustomDataSynchronizer$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-a:com.intellij.openapi.project.ProjectLocator
+Fa:com.intellij.openapi.project.ProjectLocator
 - sf:Companion:com.intellij.openapi.project.ProjectLocator$Companion
 - <init>():V
 - sf:getInstance():com.intellij.openapi.project.ProjectLocator
@@ -4425,7 +4425,7 @@ com.intellij.psi.PsiFile
 - sf:EMPTY_ARRAY:com.intellij.psi.PsiFile[]
 - clearCaches():V
 - a:getContainingDirectory():com.intellij.psi.PsiDirectory
-- getFileDocument():com.intellij.openapi.editor.Document
+- F:getFileDocument():com.intellij.openapi.editor.Document
 - getFileElementType():com.intellij.psi.tree.IFileElementType
 - a:getFileType():com.intellij.openapi.fileTypes.FileType
 - a:getModificationStamp():J
@@ -5101,7 +5101,7 @@ a:com.intellij.psi.search.GlobalSearchScope
 - s:filesScope(com.intellij.openapi.project.Project,java.util.function.Supplier):com.intellij.psi.search.GlobalSearchScope
 - s:filesWithLibrariesScope(com.intellij.openapi.project.Project,java.util.Collection):com.intellij.psi.search.GlobalSearchScope
 - s:filesWithoutLibrariesScope(com.intellij.openapi.project.Project,java.util.Collection):com.intellij.psi.search.GlobalSearchScope
-- getProject():com.intellij.openapi.project.Project
+- F:getProject():com.intellij.openapi.project.Project
 - s:getScopeRestrictedByFileTypes(com.intellij.psi.search.GlobalSearchScope,com.intellij.openapi.fileTypes.FileType[]):com.intellij.psi.search.GlobalSearchScope
 - getUnloadedModulesBelongingToScope():java.util.Collection
 - intersectWith(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.search.GlobalSearchScope
@@ -5233,7 +5233,7 @@ a:com.intellij.psi.search.SearchScope
 - a:contains(com.intellij.openapi.vfs.VirtualFile):Z
 - getDisplayName():java.lang.String
 - getIcon():javax.swing.Icon
-- hashCode():I
+- F:hashCode():I
 - a:intersectWith(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
 - s:isEmptyScope(com.intellij.psi.search.SearchScope):Z
 - a:union(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
@@ -5276,9 +5276,9 @@ a:com.intellij.psi.stubs.EmptyStubElementType
 - f:serialize(com.intellij.psi.stubs.EmptyStub,com.intellij.psi.stubs.StubOutputStream):V
 com.intellij.psi.stubs.EmptyStubSerializer
 - com.intellij.psi.stubs.StubSerializer
-- deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
+- F:deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
 - a:instantiate(com.intellij.psi.stubs.StubElement):com.intellij.psi.stubs.StubElement
-- serialize(com.intellij.psi.stubs.StubElement,com.intellij.psi.stubs.StubOutputStream):V
+- F:serialize(com.intellij.psi.stubs.StubElement,com.intellij.psi.stubs.StubOutputStream):V
 a:com.intellij.psi.stubs.ILightStubElementType
 - com.intellij.psi.stubs.IStubElementType
 - <init>(java.lang.String,com.intellij.lang.Language):V
@@ -5590,7 +5590,7 @@ com.intellij.psi.util.PsiModificationTracker$Listener
 - a:modificationCountChanged():V
 f:com.intellij.psi.util.PsiModificationTracker$SERVICE
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.util.PsiModificationTracker
-c:com.intellij.psi.util.PsiTreeUtil
+Fc:com.intellij.psi.util.PsiTreeUtil
 - <init>():V
 - s:collectElements(com.intellij.psi.PsiElement,com.intellij.psi.util.PsiElementFilter):com.intellij.psi.PsiElement[]
 - s:collectElementsOfType(com.intellij.psi.PsiElement,java.lang.Class[]):java.util.Collection

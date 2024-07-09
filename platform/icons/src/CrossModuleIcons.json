@@ -4,7 +4,6 @@
       "task.svg": "icons/task.svg"
     },
     "fileTypes": {
-      "angularJS.svg": "icons/AngularJS.svg",
       "cucumber.svg": "org/jetbrains/plugins/cucumber/icons/cucumber.svg",
       "jest.svg": "icons/fileTypes/jestSnapshot.svg",
       "less.svg": "icons/less.svg",

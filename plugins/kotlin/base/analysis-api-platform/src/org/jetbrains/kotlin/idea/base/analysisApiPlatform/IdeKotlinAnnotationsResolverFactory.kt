@@ -29,15 +29,15 @@ private class IdeKotlinAnnotationsResolver(
     private val project: Project,
     private val searchScope: GlobalSearchScope,
 ) : KotlinAnnotationsResolver {
-    override fun declarationsByAnnotation(queriedAnnotation: ClassId): Set<KtAnnotated> {
-        require(!queriedAnnotation.isLocal && !queriedAnnotation.isNestedClass) {
-            "Queried annotation must be top-level, but was $queriedAnnotation"
+    override fun declarationsByAnnotation(annotationClassId: ClassId): Set<KtAnnotated> {
+        require(!annotationClassId.isLocal && !annotationClassId.isNestedClass) {
+            "Queried annotation must be top-level, but was $annotationClassId"
         }
 
-        val annotationEntries = KotlinAnnotationsIndex[queriedAnnotation.shortClassName.asString(), project, searchScope]
+        val annotationEntries = KotlinAnnotationsIndex[annotationClassId.shortClassName.asString(), project, searchScope]
 
         return annotationEntries.asSequence()
-            .filter { it.resolveAnnotationId() == queriedAnnotation }
+            .filter { it.resolveAnnotationId() == annotationClassId }
             .mapNotNull { it.annotationOwner }
             .filter { it is KtFile || it is KtDeclaration }
             .toSet()

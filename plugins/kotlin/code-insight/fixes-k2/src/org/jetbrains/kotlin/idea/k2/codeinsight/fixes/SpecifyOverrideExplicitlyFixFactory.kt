@@ -48,10 +48,10 @@ internal object SpecifyOverrideExplicitlyFixFactory {
                     val delegateTargetSymbol = specifier.getSymbol() ?: return@ModCommandBased emptyList()
 
                     if (delegateTargetSymbol is KaValueParameterSymbol &&
-                        delegateTargetSymbol.containingSymbol.let {
+                        delegateTargetSymbol.containingDeclaration.let {
                             it is KaConstructorSymbol &&
                                     it.isPrimary &&
-                                    it.containingSymbol == delegatedDeclaration.containingSymbol
+                                    it.containingDeclaration == delegatedDeclaration.containingDeclaration
                         }
                     ) {
                         val delegateParameter = delegateTargetSymbol.psi as? KtParameter

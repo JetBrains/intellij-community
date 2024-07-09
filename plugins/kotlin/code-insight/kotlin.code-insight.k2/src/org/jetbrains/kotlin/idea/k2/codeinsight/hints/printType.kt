@@ -6,18 +6,19 @@ import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
@@ -129,7 +131,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
 
 context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    type.classId.let { printClassId(it, shortNameWithCompanionNameSkip(it)) }
+    type.classId.let { printClassId(it, shortName(it)) }
 
     val ownTypeArguments = type.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
@@ -224,8 +226,22 @@ private fun isSimilarTypes(
 ): Boolean = lower.typeArguments.zip(upper.typeArguments)
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
-private fun shortNameWithCompanionNameSkip(classId: ClassId): String {
-    return classId.relativeClassName.pathSegments()
+private fun shortName(classId: ClassId): String {
+    val names = classId.relativeClassName.pathSegments()
         .filter { it != SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT }
-        .joinToString(".")
+
+    names.joinToString(".", transform = Name::asString)
+        .takeIf { names.size <= 1 || it.length < PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH }
+        ?.let { return it }
+
+    var lastJoinString: String = ""
+    for (name in names.reversed()) {
+        val nameAsString = name.asString()
+        if (lastJoinString.length + nameAsString.length + 1 > PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH) {
+            break
+        }
+        lastJoinString = if (lastJoinString.isEmpty()) nameAsString else "$nameAsString.$lastJoinString"
+    }
+
+    return Typography.ellipsis.toString() + lastJoinString
 }
