@@ -49,13 +49,29 @@ public final class ParameterInfoTaskRunnerUtil {
                                  Consumer<? super T> continuationConsumer,
                                  @Nullable @NlsContexts.ProgressTitle String progressTitle,
                                  Editor editor) {
+    runTask(project, nonBlockingReadAction, continuationConsumer, progressTitle, editor, true);
+  }
+
+
+  /**
+   * @param progressTitle null means no loading panel should be shown
+   * @param stopOnScrolling cancel execution on scrolling
+   */
+  public static <T> void runTask(Project project,
+                                 NonBlockingReadAction<T> nonBlockingReadAction,
+                                 Consumer<? super T> continuationConsumer,
+                                 @Nullable @NlsContexts.ProgressTitle String progressTitle,
+                                 Editor editor,
+                                 boolean stopOnScrolling) {
     AtomicReference<CancellablePromise<?>> cancellablePromiseRef = new AtomicReference<>();
     Consumer<Boolean> stopAction =
       startProgressAndCreateStopAction(editor.getProject(), progressTitle, cancellablePromiseRef, editor);
 
     final VisibleAreaListener visibleAreaListener = new CancelProgressOnScrolling(cancellablePromiseRef);
 
-    editor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
+    if (stopOnScrolling) {
+      editor.getScrollingModel().addVisibleAreaListener(visibleAreaListener);
+    }
 
     final Component focusOwner = getFocusOwner(project);
 
@@ -72,7 +88,9 @@ public final class ParameterInfoTaskRunnerUtil {
         .submit(AppExecutorUtil.getAppExecutorService())
         .onProcessed(ignore -> {
           stopAction.accept(false);
-          editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
+          if (stopOnScrolling) {
+            editor.getScrollingModel().removeVisibleAreaListener(visibleAreaListener);
+          }
         }));
   }
 
