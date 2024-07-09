@@ -6,10 +6,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
-import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.util.startOffset as psiTreeUtilStartOffset
 
