@@ -1,9 +1,3 @@
-f:com.intellij.dvcs.DvcsNotificationIdsHolder
-- sf:BRANCH_OPERATIONS_ON_ALL_ROOTS:java.lang.String
-- sf:Companion:com.intellij.dvcs.DvcsNotificationIdsHolder$Companion
-- <init>():V
-- getNotificationIds():java.util.List
-f:com.intellij.dvcs.DvcsNotificationIdsHolder$Companion
 c:com.intellij.dvcs.DvcsRememberedInputs
 - <init>():V
 - addUrl(java.lang.String):V
@@ -105,11 +99,6 @@ a:com.intellij.dvcs.actions.DvcsQuickListContentProvider
 - getVcsActions(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):java.util.List
 - pa:getVcsName():java.lang.String
 - replaceVcsActionsFor(com.intellij.openapi.vcs.AbstractVcs,com.intellij.openapi.actionSystem.DataContext):Z
-f:com.intellij.dvcs.actions.SetRepositoryChangesGroupingAction
-- com.intellij.openapi.vcs.changes.actions.SetChangesGroupingAction
-- <init>():V
-- getGroupingKey():java.lang.String
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.dvcs.branch.BranchStorage
 - com.intellij.openapi.components.BaseState
 - <init>():V
@@ -233,12 +222,6 @@ a:com.intellij.dvcs.branch.TrackReposSynchronouslyAction
 - pa:getSettings(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.dvcs.branch.DvcsSyncSettings
 - isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
-c:com.intellij.dvcs.cherrypick.VcsCherryPickAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.dvcs.cherrypick.VcsCherryPickManager
 - <init>(com.intellij.openapi.project.Project):V
 - cherryPick(com.intellij.vcs.log.VcsLogCommitSelection):V
@@ -251,13 +234,7 @@ a:com.intellij.dvcs.commit.AmendCommitService
 - getAmendCommitDetails(com.intellij.openapi.vfs.VirtualFile):org.jetbrains.concurrency.CancellablePromise
 - pf:getProject():com.intellij.openapi.project.Project
 f:com.intellij.dvcs.commit.CommitAndPushExecutorKt
-- sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandler):java.lang.String
 - sf:getCommitAndPushActionName(com.intellij.vcs.commit.CommitWorkflowHandlerState):java.lang.String
-f:com.intellij.dvcs.ignore.IgnoredToExcludeNotificationProvider
-- com.intellij.openapi.project.DumbAware
-- com.intellij.ui.EditorNotificationProvider
-- <init>():V
-- collectNotificationData(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.util.function.Function
 f:com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer
 - com.intellij.openapi.vcs.FilesProcessorImpl
 - <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
@@ -346,12 +323,6 @@ com.intellij.dvcs.push.RepositoryNodeListener
 - a:onSelectionChanged(Z):V
 - a:onTargetChanged(com.intellij.dvcs.push.PushTarget):V
 - a:onTargetInEditMode(java.lang.String):V
-c:com.intellij.dvcs.push.VcsPushAction
-- com.intellij.openapi.project.DumbAwareAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.dvcs.push.ui.CheckBoxModel
 - <init>(Z):V
 - isChecked():Z
@@ -448,17 +419,7 @@ c:com.intellij.dvcs.push.ui.TextWithLinkNode
 - render(com.intellij.ui.ColoredTreeCellRenderer):V
 com.intellij.dvcs.push.ui.TooltipNode
 - a:getTooltip():java.lang.String
-c:com.intellij.dvcs.push.ui.VcsBranchEditorListener
-- com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
-- <init>(com.intellij.ui.CheckboxTree$CheckboxTreeCellRenderer):V
-- p:getTagAt(java.awt.event.MouseEvent):java.lang.Object
-- p:handleTagClick(java.lang.Object,java.awt.event.MouseEvent):V
-- mouseMoved(java.awt.event.MouseEvent):V
 com.intellij.dvcs.push.ui.VcsEditableComponent
-c:com.intellij.dvcs.push.ui.VcsEditableTextComponent
-- com.intellij.dvcs.push.ui.VcsLinkedTextComponent
-- com.intellij.dvcs.push.ui.VcsEditableComponent
-- <init>(java.lang.String,com.intellij.dvcs.push.ui.VcsLinkListener):V
 com.intellij.dvcs.push.ui.VcsLinkListener
 - a:hyperlinkActivated(javax.swing.tree.DefaultMutableTreeNode,java.awt.event.MouseEvent):V
 c:com.intellij.dvcs.push.ui.VcsLinkedTextComponent
@@ -590,10 +551,6 @@ f:com.intellij.dvcs.repo.VcsRepositoryManager
 - waitForAsyncTaskCompletion():V
 com.intellij.dvcs.repo.VcsRepositoryMappingListener
 - a:mappingChanged():V
-f:com.intellij.dvcs.shelf.ShelfViewUpdater
-- com.intellij.dvcs.repo.VcsRepositoryMappingListener
-- <init>(com.intellij.openapi.project.Project):V
-- mappingChanged():V
 a:com.intellij.dvcs.ui.BranchActionGroup
 - com.intellij.openapi.actionSystem.ActionGroup
 - com.intellij.dvcs.ui.CustomIconProvider
@@ -783,7 +740,7 @@ f:com.intellij.dvcs.ui.RepositoryChangesGroupingPolicy
 - com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy
 - <init>(com.intellij.openapi.project.Project,javax.swing.tree.DefaultTreeModel):V
 - f:getProject():com.intellij.openapi.project.Project
-c:com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer
+f:com.intellij.dvcs.ui.RepositoryComboboxListCellRenderer
 - com.intellij.ui.SimpleListCellRenderer
 - <init>():V
 - customize(javax.swing.JList,com.intellij.dvcs.repo.Repository,I,Z,Z):V

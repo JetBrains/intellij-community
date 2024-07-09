@@ -52,6 +52,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
@@ -211,6 +212,7 @@ private fun selectFilesToExclude(project: Project, ignoredDirs: List<VirtualFile
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 private fun synchronizationTurnOff() = !Registry.`is`("vcs.enable.add.ignored.directories.to.exclude", true)
 
+@ApiStatus.Internal
 class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAware {
   private fun canCreateNotification(project: Project, file: VirtualFile): Boolean {
     return file.fileType is IgnoreFileType &&
