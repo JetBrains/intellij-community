@@ -160,7 +160,8 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
     }
 
     LOG.error("Found items expected to be PsiItems or to have [com.intellij.navigation.ItemPresentation] field. But item [" + item.getClass() + "] is not");
-    return TargetPresentation.builder(item != null ? item.toString() : "").icon(IconUtil.getEmptyIcon(false)).presentation();
+    @NlsSafe String text = item.toString();
+    return TargetPresentation.builder(text).icon(IconUtil.getEmptyIcon(false)).presentation();
   }
 
   @ApiStatus.Internal
