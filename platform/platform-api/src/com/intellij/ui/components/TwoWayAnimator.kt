@@ -1,30 +1,36 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.util.Alarm
 import com.intellij.util.ui.Animator
 
-internal abstract class TwoWayAnimator(name: String,
-                                       totalFrames: Int,
-                                       pauseForward: Int,
-                                       durationForward: Int,
-                                       pauseBackward: Int,
-                                       durationBackward: Int) {
+internal abstract class TwoWayAnimator(
+  name: String,
+  totalFrames: Int,
+  pauseForward: Int,
+  durationForward: Int,
+  pauseBackward: Int,
+  durationBackward: Int,
+) {
   private val alarm = Alarm()
   private val forwardAnimator = lazy(LazyThreadSafetyMode.NONE) {
-    MyAnimator(name = "${name}ForwardAnimator",
-                                     totalFrames = totalFrames,
-                                     cycleDuration = durationForward,
-                                     pause = pauseForward,
-                                     forward = true)
+    MyAnimator(
+      name = "${name}ForwardAnimator",
+      totalFrames = totalFrames,
+      cycleDuration = durationForward,
+      pause = pauseForward,
+      forward = true,
+    )
   }
 
   private val backwardAnimator = lazy(LazyThreadSafetyMode.NONE) {
-    MyAnimator(name = """${name}BackwardAnimator""",
-                                      totalFrames = totalFrames,
-                                      cycleDuration = durationBackward,
-                                      pause = pauseBackward,
-                                      forward = false)
+    MyAnimator(
+      name = """${name}BackwardAnimator""",
+      totalFrames = totalFrames,
+      cycleDuration = durationBackward,
+      pause = pauseBackward,
+      forward = false,
+    )
   }
 
   private val maxFrame = totalFrames - 1
@@ -78,15 +84,19 @@ internal abstract class TwoWayAnimator(name: String,
     onValueUpdate()
   }
 
-  private inner class MyAnimator(name: String,
-                                 totalFrames: Int,
-                                 cycleDuration: Int,
-                                 @JvmField val pause: Int,
-                                 forward: Boolean) : Animator(name = name,
-                                                              totalFrames = totalFrames,
-                                                              cycleDuration = cycleDuration,
-                                                              isRepeatable = false,
-                                                              isForward = forward), Runnable {
+  private inner class MyAnimator(
+    name: String,
+    totalFrames: Int,
+    cycleDuration: Int,
+    @JvmField val pause: Int,
+    forward: Boolean,
+  ) : Animator(
+    name = name,
+    totalFrames = totalFrames,
+    cycleDuration = cycleDuration,
+    isRepeatable = false,
+    isForward = forward,
+  ), Runnable {
     override fun run() {
       reset()
       resume()
