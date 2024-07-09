@@ -1,4 +1,5 @@
 // "Remove invocation" "true"
+
 enum class Test {
     A
 }
@@ -6,4 +7,6 @@ enum class Test {
 fun test() {
     Test.A
 }
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToPropertyAccessFix
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix$RemoveInvocationQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix$RemoveInvocationQuickFix
