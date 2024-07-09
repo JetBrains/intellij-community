@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -118,7 +119,7 @@ fun generateEqualsHeaderAndBodyTexts(targetClass: KtClass): Pair<String, String>
                 append('\n')
 
                 variablesForEquals.forEach {
-                    val variableType = it.expressionType ?: return@forEach
+                    val variableType = it.returnType
                     val isNullableType = variableType.isMarkedNullable
                     val isArray = variableType.isArrayOrPrimitiveArray
                     val canUseArrayContentFunctions = targetClass.canUseArrayContentFunctions()
@@ -229,9 +230,26 @@ fun generateHashCodeHeaderAndBodyTexts(targetClass: KtClass): Pair<String, Strin
 
 context(KaSession)
 private fun findEqualsMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
-    findMethod(classSymbol, EQUALS) { callableSymbol ->
-        (callableSymbol as? KaNamedFunctionSymbol)?.let { matchesEqualsMethodSignature(it) } == true
-    }
+    findMethodInMemberScopeOrInAny(classSymbol, EQUALS) { matchesEqualsMethodSignature(it) }
+
+context(KaSession)
+private fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
+    findMethodInMemberScopeOrInAny(classSymbol, HASH_CODE) { matchesHashCodeMethodSignature(it) }
+
+context(KaSession)
+private fun findMethodInMemberScopeOrInAny(
+    classSymbol: KaClassSymbol,
+    methodName: Name,
+    signatureFilter: (KaNamedFunctionSymbol) -> Boolean
+): KaCallableSymbol? {
+    findMethod(classSymbol, methodName) { callableSymbol ->
+        if (callableSymbol !is KaNamedFunctionSymbol) return@findMethod false
+        signatureFilter(callableSymbol) && callableSymbol.origin != KaSymbolOrigin.SOURCE_MEMBER_GENERATED
+    }?.let { return it }
+
+    val anySuperClassSymbol = classSymbol.superTypes.find { it.isAnyType }?.symbol as? KaClassSymbol ?: return null
+    return anySuperClassSymbol.memberScope.callables(methodName).singleOrNull()
+}
 
 /**
  * Finds methods whose name is [methodName] not only from the class [classSymbol] but also its parent classes,
@@ -241,12 +259,6 @@ context(KaSession)
 private fun findMethod(
     classSymbol: KaClassSymbol, methodName: Name, condition: (KaCallableSymbol) -> Boolean
 ): KaCallableSymbol? = classSymbol.memberScope.callables(methodName).filter(condition).singleOrNull()
-
-context(KaSession)
-private fun findHashCodeMethodForClass(classSymbol: KaClassSymbol): KaCallableSymbol? =
-    findMethod(classSymbol, HASH_CODE) { callableSymbol ->
-        (callableSymbol as? KaNamedFunctionSymbol)?.let { matchesHashCodeMethodSignature(it) } == true
-    }
 
 /**
  * A function to generate the "not equals" comparison between the class of `this` and the class of the parameter.
