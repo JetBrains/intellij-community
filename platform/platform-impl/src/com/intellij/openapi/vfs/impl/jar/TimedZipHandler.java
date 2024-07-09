@@ -11,14 +11,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipFile;
 
@@ -28,17 +25,14 @@ import java.util.zip.ZipFile;
 */
 public final class TimedZipHandler extends ZipHandlerBase {
   private static final Logger LOG = Logger.getInstance(TimedZipHandler.class);
-  private static final boolean doTracing = LOG.isTraceEnabled();
-  private static final AtomicLong ourOpenTime = new AtomicLong();
-  private static final AtomicInteger ourOpenCount = new AtomicInteger();
-  private static final AtomicInteger ourCloseCount = new AtomicInteger();
-  private static final AtomicLong ourCloseTime = new AtomicLong();
 
   private static final long RETENTION_MS = 2000L;
   private static final int LRU_CACHE_SIZE = 30;
   @SuppressWarnings("SSBasedInspection")
   private static final Object2ObjectLinkedOpenHashMap<TimedZipHandler, ScheduledFuture<?>> ourLRUCache =
     new Object2ObjectLinkedOpenHashMap<>(LRU_CACHE_SIZE + 1);
+  private static final ScheduledExecutorService ourScheduledExecutorService =
+    AppExecutorUtil.createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
 
   @ApiStatus.Internal
   public static void closeOpenZipReferences() {
@@ -49,9 +43,6 @@ public final class TimedZipHandler extends ZipHandlerBase {
       ourLRUCache.clear();
     }
   }
-
-  private static final ScheduledExecutorService ourScheduledExecutorService =
-    AppExecutorUtil.createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
 
   private final ZipResourceHandle myHandle;
 
@@ -100,21 +91,10 @@ public final class TimedZipHandler extends ZipHandlerBase {
           myInvalidationRequest.cancel(false);
           myInvalidationRequest = null;
         }
-
         if (myFile == null) {
-          File fileToUse = getFile();
-          if (doTracing) LOG.trace("Opening: " + fileToUse);
-          long t = doTracing ? System.nanoTime() : 0;
-          myFileStamp = Files.getLastModifiedTime(fileToUse.toPath()).toMillis();
-          ZipFile file = new ZipFile(fileToUse);
-          if (doTracing) {
-            t = System.nanoTime() - t;
-            LOG.trace("Opened in " + TimeUnit.NANOSECONDS.toMillis(t) + "ms" +
-                      ", times opened: " + ourOpenCount.incrementAndGet() +
-                      ", open time: " + TimeUnit.NANOSECONDS.toMillis(ourOpenTime.addAndGet(t)) + "ms" +
-                      ", reference will be cached for " + myRetentionTime + "ms");
-          }
-          myFile = file;
+          var file = getFile();
+          myFileStamp = Files.getLastModifiedTime(file.toPath()).toMillis();
+          myFile = new ZipFile(file);
         }
       }
       catch (Throwable t) {
@@ -158,29 +138,18 @@ public final class TimedZipHandler extends ZipHandlerBase {
     private void invalidateZipReference(@Nullable ScheduledFuture<?> expectedInvalidationRequest) {
       myLock.lock();
       try {
-        if (myFile == null) return;
-        if (expectedInvalidationRequest != null) {
-          if (doTracing) LOG.trace("Invalidation cache size exceeded");
-          if (myInvalidationRequest != expectedInvalidationRequest) {
-            return; // the handler is re-acquired
-          }
+        if (myFile == null || expectedInvalidationRequest != null && myInvalidationRequest != expectedInvalidationRequest) {
+          return; // already closed || the handler is re-acquired
         }
         if (myInvalidationRequest != null) {
           myInvalidationRequest.cancel(false);
           myInvalidationRequest = null;
         }
-        long t = doTracing ? System.nanoTime() : 0;
         try {
           myFile.close();
         }
-        catch (IOException ex) {
-          LOG.info(ex);
-        }
-        if (doTracing) {
-          t = System.nanoTime() - t;
-          LOG.trace("Closed: " + getFile() + " in " + TimeUnit.NANOSECONDS.toMillis(t) + "ms" +
-                    ", times closed: " + ourCloseCount.incrementAndGet() +
-                    ", close time: " + TimeUnit.NANOSECONDS.toMillis(ourCloseTime.addAndGet(t)) + "ms");
+        catch (IOException e) {
+          LOG.info(e);
         }
         myFile = null;
       }
