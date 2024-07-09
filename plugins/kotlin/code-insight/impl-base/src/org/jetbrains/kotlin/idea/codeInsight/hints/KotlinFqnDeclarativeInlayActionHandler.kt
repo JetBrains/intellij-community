@@ -5,9 +5,9 @@ import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.declarative.InlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.util.module
 
 class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
@@ -19,7 +19,10 @@ class KotlinFqnDeclarativeInlayActionHandler : InlayActionHandler {
         val project = editor.project ?: return
         val fqName = (payload as? StringInlayActionPayload)?.text ?: return
         val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
-        val scope = psiFile?.module?.moduleContentWithDependenciesScope ?: GlobalSearchScope.allScope(project)
+        val module = psiFile?.module ?: return
+        val index = ProjectFileIndex.getInstance(project)
+        val includeTests = index.isInTestSourceContent(psiFile.virtualFile)
+        val scope = module.getModuleWithDependenciesAndLibrariesScope(includeTests)
         val navigatable = project.resolveClass(fqName, scope)?.navigationElement as? Navigatable
         navigatable?.navigate(true)
     }
