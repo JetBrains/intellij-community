@@ -20,10 +20,10 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.plugins.notebooks.ui.isFoldingEnabledKey
-import org.jetbrains.plugins.notebooks.visualization.ui.EditorCell
-import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener
+import org.jetbrains.plugins.notebooks.visualization.ui.*
 import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellEventListener.*
-import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellView
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewCreated
+import org.jetbrains.plugins.notebooks.visualization.ui.EditorCellViewEventListener.CellViewRemoved
 import org.jetbrains.plugins.notebooks.visualization.ui.keepScrollingPositionWhile
 import java.util.*
 
@@ -45,6 +45,8 @@ class NotebookCellInlayManager private constructor(
   var changedListener: InlaysChangedListener? = null
 
   private val cellEventListeners = EventDispatcher.create(EditorCellEventListener::class.java)
+
+  private val cellViewEventListeners = EventDispatcher.create(EditorCellViewEventListener::class.java)
 
   private val invalidationListeners = mutableListOf<Runnable>()
 
@@ -230,7 +232,7 @@ class NotebookCellInlayManager private constructor(
     inlaysChanged()
   }
 
-  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, interval) { cell ->
+  private fun createCell(interval: NotebookIntervalPointer) = EditorCell(editor, this, interval) { cell ->
     EditorCellView(editor, notebookCellLines, cell, this).also { Disposer.register(cell, it) }
   }.also { Disposer.register(this, it) }
 
@@ -347,6 +349,18 @@ class NotebookCellInlayManager private constructor(
 
   fun addCellEventsListener(editorCellEventListener: EditorCellEventListener, disposable: Disposable) {
     cellEventListeners.addListener(editorCellEventListener, disposable)
+  }
+
+  fun addCellViewEventsListener(editorCellViewEventListener: EditorCellViewEventListener, disposable: Disposable) {
+    cellViewEventListeners.addListener(editorCellViewEventListener, disposable)
+  }
+
+  internal fun fireCellViewCreated(cellView: EditorCellView) {
+    cellViewEventListeners.multicaster.onEditorCellViewEvents(listOf(CellViewCreated(cellView)))
+  }
+
+  internal fun fireCellViewRemoved(cellView: EditorCellView) {
+    cellViewEventListeners.multicaster.onEditorCellViewEvents(listOf(CellViewRemoved(cellView)))
   }
 
   fun getCell(index: Int): EditorCell {
