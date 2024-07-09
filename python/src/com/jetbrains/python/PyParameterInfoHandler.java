@@ -126,17 +126,17 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     boolean showAllHints = Registry.is("python.parameter.info.show.all.hints");
     List<PyParameterInfoUtils.ParameterDescription> parameterDescriptions = parameterHints.getParameterDescriptors();
     String[] hintsToShow = new String[parameterDescriptions.size()];
+    //noinspection unchecked
+    EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[parameterHints.getFlags().size()];
+    for (int i = 0; i < flags.length; i++) {
+      EnumSet<ParameterFlag> curFlags = parameterHints.getFlags().get(i);
+      PyParameterInfoUtils.ParameterDescription representation = parameterDescriptions.get(i);
+      hintsToShow[i] = getRepresentationToShow(representation, curFlags.contains(ParameterFlag.HIGHLIGHT), showAllHints);
+      flags[i] = StreamEx.of(parameterHints.getFlags().get(i))
+        .map(PARAM_FLAG_TO_UI_FLAG::get)
+        .collect(MoreCollectors.toEnumSet(ParameterInfoUIContextEx.Flag.class));
+    }
     if (context instanceof ParameterInfoUIContextEx) {
-      //noinspection unchecked
-      EnumSet<ParameterInfoUIContextEx.Flag>[] flags = new EnumSet[parameterHints.getFlags().size()];
-      for (int i = 0; i < flags.length; i++) {
-        EnumSet<ParameterFlag> curFlags = parameterHints.getFlags().get(i);
-        PyParameterInfoUtils.ParameterDescription representation = parameterDescriptions.get(i);
-        hintsToShow[i] = getRepresentationToShow(representation, curFlags.contains(ParameterFlag.HIGHLIGHT), showAllHints);
-        flags[i] = StreamEx.of(parameterHints.getFlags().get(i))
-          .map(PARAM_FLAG_TO_UI_FLAG::get)
-          .collect(MoreCollectors.toEnumSet(ParameterInfoUIContextEx.Flag.class));
-      }
       if (parameterDescriptions.isEmpty()) {
         hintsToShow = new String[]{getNoParamsMsg()};
         //noinspection unchecked
