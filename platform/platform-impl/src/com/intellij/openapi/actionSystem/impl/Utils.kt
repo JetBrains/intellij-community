@@ -58,6 +58,8 @@ import io.opentelemetry.context.Context
 import io.opentelemetry.context.ContextKey
 import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
@@ -81,6 +83,7 @@ private val IS_MODAL_CONTEXT = Key.create<Boolean>("Component.isModalContext")
 private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
 private var ourExpandActionGroupImplEDTLoopLevel = 0
 private var ourInUpdateSessionForInputEventEDTLoop = false
+private var ourCurrentInputEventProcessingJobFlow = MutableStateFlow<Job?>(null)
 
 private val LOG = logger<Utils>()
 
@@ -951,6 +954,7 @@ object Utils {
       return runBlockingForActionExpand(CoroutineName("runWithInputEventEdtDispatcher") +
                                         PotemkinElement(potemkin)) {
         val mainJob = coroutineContext.job
+        ourCurrentInputEventProcessingJobFlow.value = mainJob
         val potemkinJob = launch(EmptyCoroutineContext, CoroutineStart.UNDISPATCHED) {
           delay(400)
           while (!potemkin.isCanceled) {
@@ -969,8 +973,24 @@ object Utils {
     }
     finally {
       ourInUpdateSessionForInputEventEDTLoop = false
+      ourCurrentInputEventProcessingJobFlow.value = null
       potemkin.stop()
     }
+  }
+
+  // this dispatcher should always be available
+  private val cancellationDispatcher = Dispatchers.IO.limitedParallelism(1)
+  suspend fun <T> cancelCurrentInputEventProcessingAndRun( block: suspend () -> T): T = coroutineScope {
+    val cancelJob = launch(cancellationDispatcher) {
+      ourCurrentInputEventProcessingJobFlow.collectLatest {
+        it?.cancel()
+      }
+    }
+
+    val result = block()
+
+    cancelJob.cancel()
+    result
   }
 
   suspend fun <T> runUpdateSessionForInputEvent(actions: List<AnAction>,
