@@ -7,12 +7,12 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.ui.component.styling.RadioButtonColors
 import org.jetbrains.jewel.ui.component.styling.RadioButtonIcons
 import org.jetbrains.jewel.ui.component.styling.RadioButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.PathIconKey
 
 @Composable
 public fun RadioButtonStyle.Companion.light(
@@ -82,11 +82,8 @@ public fun RadioButtonMetrics.Companion.defaults(
     )
 
 public fun RadioButtonIcons.Companion.light(
-    radioButton: PainterProvider =
-        standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/radio.svg"),
+    radioButton: IconKey = PathIconKey("com/intellij/ide/ui/laf/icons/intellij/radio.svg"),
 ): RadioButtonIcons = RadioButtonIcons(radioButton)
 
-public fun RadioButtonIcons.Companion.dark(
-    radioButton: PainterProvider =
-        standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/radio.svg"),
-): RadioButtonIcons = RadioButtonIcons(radioButton)
+public fun RadioButtonIcons.Companion.dark(radioButton: IconKey = PathIconKey("com/intellij/ide/ui/laf/icons/darcula/radio.svg")): RadioButtonIcons =
+    RadioButtonIcons(radioButton)

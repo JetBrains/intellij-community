@@ -14,7 +14,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpOffset
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.MenuItemState
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 
 @Stable
 @GenerateDataFunctions
@@ -157,7 +157,7 @@ public class SubmenuMetrics(public val offset: DpOffset) {
 
 @Immutable
 @GenerateDataFunctions
-public class MenuIcons(public val submenuChevron: PainterProvider) {
+public class MenuIcons(public val submenuChevron: IconKey) {
     public companion object
 }
 

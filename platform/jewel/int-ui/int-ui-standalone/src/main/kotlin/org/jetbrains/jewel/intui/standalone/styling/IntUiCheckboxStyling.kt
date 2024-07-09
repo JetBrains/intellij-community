@@ -8,12 +8,12 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.ui.component.styling.CheckboxColors
 import org.jetbrains.jewel.ui.component.styling.CheckboxIcons
 import org.jetbrains.jewel.ui.component.styling.CheckboxMetrics
 import org.jetbrains.jewel.ui.component.styling.CheckboxStyle
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.PathIconKey
 
 @Composable
 public fun CheckboxStyle.Companion.light(
@@ -69,11 +69,9 @@ public fun CheckboxMetrics.Companion.defaults(
     )
 
 @Composable
-public fun CheckboxIcons.Companion.light(
-    checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/intellij/checkBox.svg"),
-): CheckboxIcons = CheckboxIcons(checkbox)
+public fun CheckboxIcons.Companion.light(checkbox: IconKey = PathIconKey("com/intellij/ide/ui/laf/icons/intellij/checkBox.svg")): CheckboxIcons =
+    CheckboxIcons(checkbox)
 
 @Composable
-public fun CheckboxIcons.Companion.dark(
-    checkbox: PainterProvider = standalonePainterProvider("com/intellij/ide/ui/laf/icons/darcula/checkBox.svg"),
-): CheckboxIcons = CheckboxIcons(checkbox)
+public fun CheckboxIcons.Companion.dark(checkbox: IconKey = PathIconKey("com/intellij/ide/ui/laf/icons/darcula/checkBox.svg")): CheckboxIcons =
+    CheckboxIcons(checkbox)

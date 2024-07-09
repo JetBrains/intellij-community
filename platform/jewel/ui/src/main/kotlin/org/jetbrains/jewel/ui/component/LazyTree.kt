@@ -53,9 +53,8 @@ public fun <T> LazyTree(
         onSelectionChange = onSelectionChange,
         keyActions = keyActions,
         chevronContent = { elementState ->
-            val painterProvider = style.icons.chevron(elementState.isExpanded, elementState.isSelected)
-            val painter by painterProvider.getPainter()
-            Icon(painter = painter, contentDescription = null)
+            val iconKey = style.icons.chevron(elementState.isExpanded, elementState.isSelected)
+            Icon(iconKey, contentDescription = null)
         },
     ) {
         val resolvedContentColor =

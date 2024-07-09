@@ -15,6 +15,8 @@ import androidx.compose.ui.res.loadSvgPainter
 import androidx.compose.ui.res.loadXmlImageVector
 import androidx.compose.ui.unit.Density
 import org.jetbrains.jewel.foundation.util.inDebugMode
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icon.LocalNewUiChecker
 import org.w3c.dom.Document
 import org.xml.sax.InputSource
 import java.io.IOException
@@ -279,6 +281,20 @@ internal fun Document.writeToString(): String {
         error("Unable to render XML document to string: ${e.message}")
     } catch (e: IOException) {
         error("Unable to render XML document to string: ${e.message}")
+    }
+}
+
+@Composable
+public fun rememberResourcePainterProvider(
+    iconKey: IconKey,
+    iconClass: Class<*> = iconKey::class.java,
+): PainterProvider {
+    val isNewUi = LocalNewUiChecker.current.isNewUi()
+    return remember(iconKey, iconClass.classLoader, isNewUi) {
+        ResourcePainterProvider(
+            iconKey.path(isNewUi),
+            iconClass.classLoader
+        )
     }
 }
 

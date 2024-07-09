@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.LinkState
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 
 @Immutable
 @GenerateDataFunctions
@@ -66,8 +66,8 @@ public class LinkMetrics(
 @Immutable
 @GenerateDataFunctions
 public class LinkIcons(
-    public val dropdownChevron: PainterProvider,
-    public val externalLink: PainterProvider,
+    public val dropdownChevron: IconKey,
+    public val externalLink: IconKey,
 ) {
     public companion object
 }

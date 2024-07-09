@@ -13,7 +13,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.foundation.lazy.tree.TreeElementState
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 
 @Stable
 @GenerateDataFunctions
@@ -66,16 +66,16 @@ public class LazyTreeMetrics(
 @Immutable
 @GenerateDataFunctions
 public class LazyTreeIcons(
-    public val chevronCollapsed: PainterProvider,
-    public val chevronExpanded: PainterProvider,
-    public val chevronSelectedCollapsed: PainterProvider,
-    public val chevronSelectedExpanded: PainterProvider,
+    public val chevronCollapsed: IconKey,
+    public val chevronExpanded: IconKey,
+    public val chevronSelectedCollapsed: IconKey,
+    public val chevronSelectedExpanded: IconKey,
 ) {
     @Composable
     public fun chevron(
         isExpanded: Boolean,
         isSelected: Boolean,
-    ): PainterProvider =
+    ): IconKey =
         when {
             isSelected && isExpanded -> chevronSelectedExpanded
             isSelected && !isExpanded -> chevronSelectedCollapsed

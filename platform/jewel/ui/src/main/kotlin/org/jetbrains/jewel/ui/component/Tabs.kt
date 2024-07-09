@@ -1,6 +1,5 @@
 package org.jetbrains.jewel.ui.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.HoverInteraction
@@ -50,7 +49,8 @@ import org.jetbrains.jewel.ui.theme.editorTabStyle
 
 public interface TabContentScope {
     @Composable
-    public fun Modifier.tabContentAlpha(state: TabState): Modifier = alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
+    public fun Modifier.tabContentAlpha(state: TabState): Modifier =
+        alpha(JewelTheme.editorTabStyle.contentAlpha.contentFor(state).value)
 }
 
 internal class TabContentScopeContainer : TabContentScope
@@ -184,19 +184,19 @@ internal fun TabImpl(
                     }
                 }
 
-                val closePainter by tabStyle.icons.close.getPainter(Stateful(closeButtonState))
-                Image(
+                Icon(
+                    key = tabStyle.icons.close,
                     modifier =
-                        Modifier
-                            .clickable(
-                                interactionSource = closeActionInteractionSource,
-                                indication = null,
-                                onClick = tabData.onClose,
-                                role = Role.Button,
-                            )
-                            .size(16.dp),
-                    painter = closePainter,
+                    Modifier
+                        .clickable(
+                            interactionSource = closeActionInteractionSource,
+                            indication = null,
+                            onClick = tabData.onClose,
+                            role = Role.Button,
+                        )
+                        .size(16.dp),
                     contentDescription = "Close tab",
+                    hint = Stateful(closeButtonState),
                 )
             } else if (tabData.closable) {
                 Spacer(Modifier.size(16.dp))

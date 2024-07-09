@@ -8,12 +8,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.ui.component.styling.LazyTreeColors
 import org.jetbrains.jewel.ui.component.styling.LazyTreeIcons
 import org.jetbrains.jewel.ui.component.styling.LazyTreeMetrics
 import org.jetbrains.jewel.ui.component.styling.LazyTreeStyle
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
 public fun LazyTreeStyle.Companion.light(
@@ -87,10 +87,10 @@ public fun LazyTreeMetrics.Companion.defaults(
     )
 
 public fun LazyTreeIcons.Companion.defaults(
-    chevronCollapsed: PainterProvider = standalonePainterProvider("expui/general/chevronRight.svg"),
-    chevronExpanded: PainterProvider = standalonePainterProvider("expui/general/chevronDown.svg"),
-    chevronSelectedCollapsed: PainterProvider = chevronCollapsed,
-    chevronSelectedExpanded: PainterProvider = chevronExpanded,
+    chevronCollapsed: IconKey = AllIconsKeys.General.ChevronRight,
+    chevronExpanded: IconKey = AllIconsKeys.General.ChevronDown,
+    chevronSelectedCollapsed: IconKey = chevronCollapsed,
+    chevronSelectedExpanded: IconKey = chevronExpanded,
 ): LazyTreeIcons =
     LazyTreeIcons(
         chevronCollapsed,

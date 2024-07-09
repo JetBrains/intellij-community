@@ -344,10 +344,11 @@ public final class org/jetbrains/jewel/ui/component/IconKt {
 	public static final fun Icon (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Icon (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
-	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-ww6aTOc (Landroidx/compose/ui/graphics/ImageBitmap;Ljava/lang/String;Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-ww6aTOc (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-ww6aTOc (Landroidx/compose/ui/graphics/vector/ImageVector;Ljava/lang/String;Landroidx/compose/ui/Modifier;JLandroidx/compose/runtime/Composer;II)V
@@ -852,9 +853,9 @@ public final class org/jetbrains/jewel/ui/component/styling/CheckboxColors$Compa
 public final class org/jetbrains/jewel/ui/component/styling/CheckboxIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/CheckboxIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getCheckbox ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getCheckbox ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1072,9 +1073,9 @@ public final class org/jetbrains/jewel/ui/component/styling/DropdownColors$Compa
 public final class org/jetbrains/jewel/ui/component/styling/DropdownIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/DropdownIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getChevronDown ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getChevronDown ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1350,13 +1351,13 @@ public final class org/jetbrains/jewel/ui/component/styling/LazyTreeColors$Compa
 public final class org/jetbrains/jewel/ui/component/styling/LazyTreeIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LazyTreeIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
-	public final fun chevron (ZZLandroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;)V
+	public final fun chevron (ZZLandroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getChevronCollapsed ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getChevronExpanded ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getChevronSelectedCollapsed ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getChevronSelectedExpanded ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getChevronCollapsed ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getChevronExpanded ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getChevronSelectedCollapsed ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getChevronSelectedExpanded ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1423,10 +1424,10 @@ public final class org/jetbrains/jewel/ui/component/styling/LinkColors$Companion
 public final class org/jetbrains/jewel/ui/component/styling/LinkIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/LinkIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getDropdownChevron ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
-	public final fun getExternalLink ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getDropdownChevron ()Lorg/jetbrains/jewel/ui/icon/IconKey;
+	public final fun getExternalLink ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1507,9 +1508,9 @@ public final class org/jetbrains/jewel/ui/component/styling/MenuColors$Companion
 public final class org/jetbrains/jewel/ui/component/styling/MenuIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/MenuIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getSubmenuChevron ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getSubmenuChevron ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1637,9 +1638,9 @@ public final class org/jetbrains/jewel/ui/component/styling/RadioButtonColors$Co
 public final class org/jetbrains/jewel/ui/component/styling/RadioButtonIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/RadioButtonIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getRadioButton ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getRadioButton ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -1870,9 +1871,9 @@ public final class org/jetbrains/jewel/ui/component/styling/TabContentAlpha$Comp
 public final class org/jetbrains/jewel/ui/component/styling/TabIcons {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/TabIcons$Companion;
-	public fun <init> (Lorg/jetbrains/jewel/ui/painter/PainterProvider;)V
+	public fun <init> (Lorg/jetbrains/jewel/ui/icon/IconKey;)V
 	public fun equals (Ljava/lang/Object;)Z
-	public final fun getClose ()Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public final fun getClose ()Lorg/jetbrains/jewel/ui/icon/IconKey;
 	public fun hashCode ()I
 	public fun toString ()Ljava/lang/String;
 }
@@ -3786,6 +3787,7 @@ public final class org/jetbrains/jewel/ui/painter/ResourcePainterProvider : org/
 
 public final class org/jetbrains/jewel/ui/painter/ResourcePainterProviderKt {
 	public static final fun rememberResourcePainterProvider (Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/runtime/Composer;I)Lorg/jetbrains/jewel/ui/painter/PainterProvider;
+	public static final fun rememberResourcePainterProvider (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/Class;Landroidx/compose/runtime/Composer;II)Lorg/jetbrains/jewel/ui/painter/PainterProvider;
 }
 
 public abstract interface class org/jetbrains/jewel/ui/painter/ResourcePainterProviderScope : org/jetbrains/jewel/ui/painter/PainterProviderScope {

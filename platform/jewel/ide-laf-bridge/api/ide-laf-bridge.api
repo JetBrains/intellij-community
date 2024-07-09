@@ -15,6 +15,7 @@ public final class org/jetbrains/jewel/bridge/BridgePainterHintsProvider$Compani
 
 public final class org/jetbrains/jewel/bridge/BridgeResourceResolverKt {
 	public static final fun bridgePainterProvider (Ljava/lang/String;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
+	public static final fun bridgePainterProvider (Lorg/jetbrains/jewel/ui/icon/IconKey;)Lorg/jetbrains/jewel/ui/painter/ResourcePainterProvider;
 }
 
 public final class org/jetbrains/jewel/bridge/BridgeUtilsKt {

@@ -134,11 +134,11 @@ public fun Dropdown(
                 modifier = Modifier.size(arrowMinSize).align(Alignment.CenterEnd),
                 contentAlignment = Alignment.Center,
             ) {
-                val chevronIcon by style.icons.chevronDown.getPainter(Stateful(dropdownState))
                 Icon(
-                    painter = chevronIcon,
+                    key = style.icons.chevronDown,
                     contentDescription = null,
                     tint = colors.iconTintFor(dropdownState).value,
+                    hint = Stateful(dropdownState)
                 )
             }
         }

@@ -48,7 +48,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.disabled
 import org.jetbrains.jewel.ui.focusOutline
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.util.thenIf
 import java.awt.Cursor
@@ -206,7 +206,7 @@ private fun LinkImpl(
     overflow: TextOverflow,
     lineHeight: TextUnit,
     interactionSource: MutableInteractionSource,
-    icon: PainterProvider?,
+    icon: IconKey?,
 ) {
     var linkState by remember(interactionSource, enabled) { mutableStateOf(LinkState.of(enabled = enabled)) }
     remember(enabled) { linkState = linkState.copy(enabled = enabled) }
@@ -267,8 +267,7 @@ private fun LinkImpl(
                     role = Role.Button,
                     interactionSource = interactionSource,
                     indication = null,
-                )
-                .focusOutline(linkState, RoundedCornerShape(style.metrics.focusHaloCornerSize)),
+                ).focusOutline(linkState, RoundedCornerShape(style.metrics.focusHaloCornerSize)),
         horizontalArrangement = Arrangement.spacedBy(style.metrics.textIconGap),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -281,12 +280,12 @@ private fun LinkImpl(
         )
 
         if (icon != null) {
-            val iconPainter by icon.getPainter(Stateful(linkState))
             Icon(
-                iconPainter,
+                key = icon,
                 contentDescription = null,
                 modifier = Modifier.size(style.metrics.iconSize),
                 colorFilter = if (!linkState.isEnabled) ColorFilter.disabled() else null,
+                hint = Stateful(linkState),
             )
         }
     }
@@ -294,7 +293,9 @@ private fun LinkImpl(
 
 @Immutable
 @JvmInline
-public value class LinkState(public val state: ULong) : FocusableComponentState {
+public value class LinkState(
+    public val state: ULong,
+) : FocusableComponentState {
     override val isActive: Boolean
         get() = state and Active != 0UL
 

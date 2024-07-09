@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.ui.component.styling.MenuColors
 import org.jetbrains.jewel.ui.component.styling.MenuIcons
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
@@ -17,7 +16,8 @@ import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
 import org.jetbrains.jewel.ui.component.styling.SubmenuMetrics
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 @Composable
 public fun MenuStyle.Companion.light(
@@ -203,5 +203,4 @@ public fun MenuItemMetrics.Companion.defaults(
 
 public fun SubmenuMetrics.Companion.defaults(offset: DpOffset = DpOffset(0.dp, (-8).dp)): SubmenuMetrics = SubmenuMetrics(offset)
 
-public fun MenuIcons.Companion.defaults(submenuChevron: PainterProvider = standalonePainterProvider("expui/general/chevronRight.svg")): MenuIcons =
-    MenuIcons(submenuChevron)
+public fun MenuIcons.Companion.defaults(submenuChevron: IconKey = AllIconsKeys.General.ChevronRight): MenuIcons = MenuIcons(submenuChevron)

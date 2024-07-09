@@ -7,13 +7,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.intui.core.theme.IntUiLightTheme
-import org.jetbrains.jewel.intui.standalone.standalonePainterProvider
 import org.jetbrains.jewel.ui.component.styling.TabColors
 import org.jetbrains.jewel.ui.component.styling.TabContentAlpha
 import org.jetbrains.jewel.ui.component.styling.TabIcons
 import org.jetbrains.jewel.ui.component.styling.TabMetrics
 import org.jetbrains.jewel.ui.component.styling.TabStyle
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 
 public val TabStyle.Companion.Default: IntUiDefaultTabStyleFactory
     get() = IntUiDefaultTabStyleFactory
@@ -265,4 +265,4 @@ public fun TabContentAlpha.Companion.editor(
         contentSelected = contentSelected,
     )
 
-public fun TabIcons.Companion.defaults(close: PainterProvider = standalonePainterProvider("expui/general/closeSmall.svg")): TabIcons = TabIcons(close)
+public fun TabIcons.Companion.defaults(close: IconKey = AllIconsKeys.General.CloseSmall): TabIcons = TabIcons(close)

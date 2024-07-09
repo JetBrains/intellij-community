@@ -124,8 +124,8 @@ public fun Icon(
 public fun Icon(
     key: IconKey,
     contentDescription: String?,
-    iconClass: Class<*>,
     modifier: Modifier = Modifier,
+    iconClass: Class<*> = key::class.java,
     tint: Color = Color.Unspecified,
     vararg hints: PainterHint,
 ) {
@@ -138,8 +138,8 @@ public fun Icon(
 public fun Icon(
     key: IconKey,
     contentDescription: String?,
-    iconClass: Class<*>,
     modifier: Modifier = Modifier,
+    iconClass: Class<*> = key::class.java,
     tint: Color = Color.Unspecified,
     hint: PainterHint,
 ) {
@@ -148,18 +148,32 @@ public fun Icon(
     Icon(path, contentDescription, iconClass, modifier, tint, hint)
 }
 
+@Composable
+public fun Icon(
+    key: IconKey,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    iconClass: Class<*> = key::class.java,
+    colorFilter: ColorFilter?,
+    hint: PainterHint,
+) {
+    val isNewUi = JewelTheme.newUiChecker.isNewUi()
+    val path = remember(key, isNewUi) { key.path(isNewUi) }
+    Icon(path, contentDescription, iconClass, colorFilter, modifier, hint)
+}
+
 /**
  * Icon component that draws [imageVector] using [tint], defaulting to
  * [Color.Unspecified].
  *
  * @param imageVector [ImageVector] to draw inside this Icon
  * @param contentDescription text used by accessibility services to
- *     describe what this icon represents. This should always be provided
- *     unless this icon is used for decorative purposes, and does not
- *     represent a meaningful action that a user can take.
+ *    describe what this icon represents. This should always be provided
+ *    unless this icon is used for decorative purposes, and does not
+ *    represent a meaningful action that a user can take.
  * @param modifier optional [Modifier] for this Icon
  * @param tint tint to be applied to [imageVector]. If [Color.Unspecified]
- *     is provided, then no tint is applied
+ *    is provided, then no tint is applied
  */
 @Composable
 public fun Icon(
@@ -182,12 +196,12 @@ public fun Icon(
  *
  * @param bitmap [ImageBitmap] to draw inside this Icon
  * @param contentDescription text used by accessibility services to
- *     describe what this icon represents. This should always be provided
- *     unless this icon is used for decorative purposes, and does not
- *     represent a meaningful action that a user can take.
+ *    describe what this icon represents. This should always be provided
+ *    unless this icon is used for decorative purposes, and does not
+ *    represent a meaningful action that a user can take.
  * @param modifier optional [Modifier] for this Icon
  * @param tint tint to be applied to [bitmap]. If [Color.Unspecified] is
- *     provided, then no tint is applied
+ *    provided, then no tint is applied
  */
 @Composable
 public fun Icon(
@@ -211,12 +225,12 @@ public fun Icon(
  *
  * @param painter [Painter] to draw inside this Icon
  * @param contentDescription text used by accessibility services to
- *     describe what this icon represents. This should always be provided
- *     unless this icon is used for decorative purposes, and does not
- *     represent a meaningful action that a user can take.
+ *    describe what this icon represents. This should always be provided
+ *    unless this icon is used for decorative purposes, and does not
+ *    represent a meaningful action that a user can take.
  * @param modifier optional [Modifier] for this Icon
  * @param tint tint to be applied to [painter]. If [Color.Unspecified] is
- *     provided, then no tint is applied
+ *    provided, then no tint is applied
  */
 @Composable
 public fun Icon(
@@ -234,9 +248,9 @@ public fun Icon(
  *
  * @param painter [Painter] to draw inside this Icon
  * @param contentDescription text used by accessibility services to
- *     describe what this icon represents. This should always be provided
- *     unless this icon is used for decorative purposes, and does not
- *     represent a meaningful action that a user can take.
+ *    describe what this icon represents. This should always be provided
+ *    unless this icon is used for decorative purposes, and does not
+ *    represent a meaningful action that a user can take.
  * @param colorFilter color filter to be applied to [painter]
  * @param modifier optional [Modifier] for this Icon
  */

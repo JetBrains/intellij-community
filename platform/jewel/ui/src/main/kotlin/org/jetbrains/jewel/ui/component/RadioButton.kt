@@ -43,6 +43,7 @@ import org.jetbrains.jewel.ui.component.styling.RadioButtonStyle
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Selected
 import org.jetbrains.jewel.ui.painter.hints.Stateful
+import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.radioButtonStyle
 
 @Composable
@@ -161,6 +162,7 @@ private fun RadioButtonImpl(
                 is HoverInteraction.Enter ->
                     radioButtonState =
                         radioButtonState.copy(hovered = !swingCompatMode)
+
                 is HoverInteraction.Exit -> radioButtonState = radioButtonState.copy(hovered = false)
                 is FocusInteraction.Focus -> radioButtonState = radioButtonState.copy(focused = true)
                 is FocusInteraction.Unfocus -> radioButtonState = radioButtonState.copy(focused = false)
@@ -189,7 +191,8 @@ private fun RadioButtonImpl(
                 alignment = Stroke.Alignment.Center,
             )
 
-    val radioButtonPainter by style.icons.radioButton.getPainter(
+    val radioButtonPainterProvider = rememberResourcePainterProvider(style.icons.radioButton)
+    val radioButtonPainter by radioButtonPainterProvider.getPainter(
         Selected(radioButtonState),
         Stateful(radioButtonState),
     )

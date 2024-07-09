@@ -21,6 +21,18 @@ dependencies {
     implementation(libs.intellijPlatform.icons)
 }
 
+java {
+    toolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+    }
+}
+
+kotlin {
+    jvmToolchain {
+        vendor = JvmVendorSpec.JETBRAINS
+    }
+}
+
 compose.desktop {
     application {
         mainClass = "org.jetbrains.jewel.samples.standalone.MainKt"

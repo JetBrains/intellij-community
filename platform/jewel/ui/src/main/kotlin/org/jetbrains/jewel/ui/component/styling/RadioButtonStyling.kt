@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.RadioButtonState
-import org.jetbrains.jewel.ui.painter.PainterProvider
+import org.jetbrains.jewel.ui.icon.IconKey
 
 @Immutable
 @GenerateDataFunctions
@@ -75,7 +75,7 @@ public class RadioButtonMetrics(
 
 @Immutable
 @GenerateDataFunctions
-public class RadioButtonIcons(public val radioButton: PainterProvider) {
+public class RadioButtonIcons(public val radioButton: IconKey) {
     public companion object
 }
 

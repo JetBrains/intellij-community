@@ -553,12 +553,12 @@ public fun MenuSubmenuItem(
 
                 Box(Modifier.weight(1f)) { content() }
 
-                val chevronPainter by style.icons.submenuChevron.getPainter(Stateful(itemState))
                 Icon(
-                    painter = chevronPainter,
+                    key = style.icons.submenuChevron,
                     tint = itemColors.iconTintFor(itemState).value,
                     contentDescription = null,
                     modifier = Modifier.size(style.metrics.itemMetrics.iconSize),
+                    hint = Stateful(itemState)
                 )
             }
         }

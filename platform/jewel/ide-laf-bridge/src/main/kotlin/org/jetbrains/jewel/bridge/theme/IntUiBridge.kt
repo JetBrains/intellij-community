@@ -26,7 +26,6 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.DirProvider
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
-import org.jetbrains.jewel.bridge.bridgePainterProvider
 import org.jetbrains.jewel.bridge.createVerticalBrush
 import org.jetbrains.jewel.bridge.dp
 import org.jetbrains.jewel.bridge.isNewUiTheme
@@ -118,6 +117,8 @@ import org.jetbrains.jewel.ui.component.styling.TextFieldStyle
 import org.jetbrains.jewel.ui.component.styling.TooltipColors
 import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
+import org.jetbrains.jewel.ui.icon.PathIconKey
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import javax.swing.UIManager
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -378,7 +379,7 @@ private fun readCheckboxStyle(): CheckboxStyle {
                 outlineSelectedFocusedSize = metrics.outlineSelectedFocusedSize,
                 iconContentGap = metrics.iconContentGap,
             ),
-        icons = CheckboxIcons(checkbox = bridgePainterProvider("${iconsBasePath}checkBox.svg")),
+        icons = CheckboxIcons(checkbox = PathIconKey("${iconsBasePath}checkBox.svg")),
     )
 }
 
@@ -539,7 +540,7 @@ private fun readDefaultDropdownStyle(
                 contentPadding = retrieveInsetsAsPaddingValues("ComboBox.padding"),
                 borderWidth = DarculaUIUtil.LW.dp,
             ),
-        icons = DropdownIcons(chevronDown = bridgePainterProvider("general/chevron-down.svg")),
+        icons = DropdownIcons(chevronDown = AllIconsKeys.General.ChevronDown),
         textStyle = dropdownTextStyle,
         menuStyle = menuStyle,
     )
@@ -590,7 +591,7 @@ private fun readUndecoratedDropdownStyle(
                 contentPadding = PaddingValues(3.dp), // from com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getDefaultComboBoxInsets
                 borderWidth = 0.dp,
             ),
-        icons = DropdownIcons(chevronDown = bridgePainterProvider("general/chevron-down.svg")),
+        icons = DropdownIcons(chevronDown = AllIconsKeys.General.ChevronDown),
         textStyle = dropdownTextStyle,
         menuStyle = menuStyle,
     )
@@ -664,8 +665,8 @@ private fun readLinkStyle(linkTextStyle: TextStyle): LinkStyle {
             ),
         icons =
             LinkIcons(
-                dropdownChevron = bridgePainterProvider("general/chevron-down.svg"),
-                externalLink = bridgePainterProvider("ide/external_link_arrow.svg"),
+                dropdownChevron = AllIconsKeys.General.ChevronDown,
+                externalLink = AllIconsKeys.Ide.External_link_arrow,
             ),
         textStyles =
             LinkTextStyles(
@@ -755,7 +756,7 @@ private fun readMenuStyle(): MenuStyle {
                     ),
                 submenuMetrics = SubmenuMetrics(offset = DpOffset(0.dp, (-8).dp)),
             ),
-        icons = MenuIcons(submenuChevron = bridgePainterProvider("general/chevron-right.svg")),
+        icons = MenuIcons(submenuChevron = AllIconsKeys.General.ChevronRight),
     )
 }
 
@@ -798,7 +799,7 @@ private fun readRadioButtonStyle(): RadioButtonStyle {
                     retrieveIntAsDpOrUnspecified("RadioButton.textIconGap")
                         .takeOrElse { metrics.iconContentGap },
             ),
-        icons = RadioButtonIcons(radioButton = bridgePainterProvider("${iconsBasePath}radio.svg")),
+        icons = RadioButtonIcons(radioButton = PathIconKey("${iconsBasePath}radio.svg")),
     )
 }
 
@@ -976,11 +977,9 @@ private fun readLazyTreeStyle(): LazyTreeStyle {
             elementBackgroundSelectedFocused = selectedElementBackground,
         )
 
-    val chevronCollapsed = bridgePainterProvider("general/chevron-right.svg")
-    val chevronExpanded = bridgePainterProvider("general/chevron-down.svg")
-
     val leftIndent = retrieveIntAsDpOrUnspecified("Tree.leftChildIndent").takeOrElse { 7.dp }
     val rightIndent = retrieveIntAsDpOrUnspecified("Tree.rightChildIndent").takeOrElse { 11.dp }
+
     return LazyTreeStyle(
         colors = colors,
         metrics =
@@ -994,10 +993,10 @@ private fun readLazyTreeStyle(): LazyTreeStyle {
             ),
         icons =
             LazyTreeIcons(
-                chevronCollapsed = chevronCollapsed,
-                chevronExpanded = chevronExpanded,
-                chevronSelectedCollapsed = chevronCollapsed,
-                chevronSelectedExpanded = chevronExpanded,
+                chevronCollapsed = AllIconsKeys.General.ChevronRight,
+                chevronExpanded = AllIconsKeys.General.ChevronDown,
+                chevronSelectedCollapsed = AllIconsKeys.General.ChevronRight,
+                chevronSelectedExpanded = AllIconsKeys.General.ChevronDown,
             ),
     )
 }
@@ -1040,7 +1039,7 @@ private fun readDefaultTabStyle(): TabStyle {
                 tabContentSpacing = 4.dp,
                 tabHeight = retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight").takeOrElse { 24.dp },
             ),
-        icons = TabIcons(close = bridgePainterProvider("expui/general/closeSmall.svg")),
+        icons = TabIcons(close = AllIconsKeys.General.CloseSmall),
         contentAlpha =
             TabContentAlpha(
                 iconNormal = 1f,
@@ -1096,7 +1095,7 @@ private fun readEditorTabStyle(): TabStyle {
                     retrieveIntAsDpOrUnspecified("TabbedPane.tabHeight")
                         .takeOrElse { 24.dp },
             ),
-        icons = TabIcons(close = bridgePainterProvider("expui/general/closeSmall.svg")),
+        icons = TabIcons(close = AllIconsKeys.General.CloseSmall),
         contentAlpha =
             TabContentAlpha(
                 iconNormal = .7f,
