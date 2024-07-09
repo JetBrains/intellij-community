@@ -21,6 +21,7 @@ import com.intellij.util.ui.JBSwingUtilities
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
+import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.util.*
@@ -75,7 +76,7 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
     ButtonPanel(createButton(false, getLocaleName(selectedLanguage), AllIcons.General.ChevronDown) { createLanguagePopup(it) })
 
   private fun getRegionButton() = ButtonPanel(
-    createButton(false, getRegionName(region), AllIcons.General.ChevronDown) { createRegionPopup(it) })
+    createButton(false, getRegionLabel(region), AllIcons.General.ChevronDown) { createRegionPopup(it) })
 
   private fun getNextButton() = ButtonPanel(createButton(true, getMessageBundle().getString("button.next"), null) { this.doOKAction() })
 
@@ -122,7 +123,9 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
       .setItemChosenCallback {
         selectedLanguage = it
         contentPanel.removeAll()
-        init()
+        val panel = createCenterPanel()
+        contentPanel.add(panel, BorderLayout.CENTER)
+        contentPanel.doLayout()
         contentPanel.revalidate()
         contentPanel.repaint()
       }
