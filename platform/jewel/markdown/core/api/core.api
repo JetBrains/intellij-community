@@ -457,7 +457,7 @@ public class org/jetbrains/jewel/markdown/rendering/DefaultInlineMarkdownRendere
 	public static final field Companion Lorg/jetbrains/jewel/markdown/rendering/DefaultInlineMarkdownRenderer$Companion;
 	public fun <init> (Ljava/util/List;)V
 	public fun <init> ([Lorg/jetbrains/jewel/markdown/extensions/MarkdownProcessorExtension;)V
-	public fun renderAsAnnotatedString (Ljava/lang/Iterable;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;Z)Landroidx/compose/ui/text/AnnotatedString;
+	public fun renderAsAnnotatedString (Ljava/lang/Iterable;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/text/AnnotatedString;
 }
 
 public final class org/jetbrains/jewel/markdown/rendering/DefaultInlineMarkdownRenderer$Companion {
@@ -486,12 +486,16 @@ public class org/jetbrains/jewel/markdown/rendering/DefaultMarkdownBlockRenderer
 
 public abstract interface class org/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer {
 	public static final field Companion Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer$Companion;
-	public abstract fun renderAsAnnotatedString (Ljava/lang/Iterable;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;Z)Landroidx/compose/ui/text/AnnotatedString;
+	public abstract fun renderAsAnnotatedString (Ljava/lang/Iterable;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;)Landroidx/compose/ui/text/AnnotatedString;
 }
 
 public final class org/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer$Companion {
 	public final fun default (Ljava/util/List;)Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;
 	public static synthetic fun default$default (Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer$Companion;Ljava/util/List;ILjava/lang/Object;)Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;
+}
+
+public final class org/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer$DefaultImpls {
+	public static synthetic fun renderAsAnnotatedString$default (Lorg/jetbrains/jewel/markdown/rendering/InlineMarkdownRenderer;Ljava/lang/Iterable;Lorg/jetbrains/jewel/markdown/rendering/InlinesStyling;ZLkotlin/jvm/functions/Function1;ILjava/lang/Object;)Landroidx/compose/ui/text/AnnotatedString;
 }
 
 public final class org/jetbrains/jewel/markdown/rendering/InlinesStyling {

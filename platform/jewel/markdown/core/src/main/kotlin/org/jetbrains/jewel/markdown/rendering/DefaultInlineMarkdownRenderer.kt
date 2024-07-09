@@ -4,9 +4,8 @@ import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.AnnotatedString.Builder
-import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import org.commonmark.renderer.text.TextContentRenderer
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
@@ -14,11 +13,14 @@ import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.extensions.MarkdownProcessorExtension
 
 @ExperimentalJewelApi
-public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<MarkdownProcessorExtension>) : InlineMarkdownRenderer {
+public open class DefaultInlineMarkdownRenderer(
+    rendererExtensions: List<MarkdownProcessorExtension>,
+) : InlineMarkdownRenderer {
     public constructor(vararg extensions: MarkdownProcessorExtension) : this(extensions.toList())
 
     private val plainTextRenderer =
-        TextContentRenderer.builder()
+        TextContentRenderer
+            .builder()
             .extensions(rendererExtensions.map { it.textRendererExtension })
             .build()
 
@@ -26,16 +28,17 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
         enabled: Boolean,
+        onUrlClicked: ((String) -> Unit)?,
     ): AnnotatedString =
         buildAnnotatedString {
-            appendInlineMarkdownFrom(inlineMarkdown, styling, enabled)
+            appendInlineMarkdownFrom(inlineMarkdown, styling, enabled, onUrlClicked)
         }
 
-    @OptIn(ExperimentalTextApi::class)
     private fun Builder.appendInlineMarkdownFrom(
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
         enabled: Boolean,
+        onUrlClicked: ((String) -> Unit)? = null,
     ) {
         for (child in inlineMarkdown) {
             when (child) {
@@ -60,7 +63,15 @@ public open class DefaultInlineMarkdownRenderer(rendererExtensions: List<Markdow
 
                 is InlineMarkdown.Link -> {
                     withStyles(styling.link.withEnabled(enabled), child) {
-                        pushUrlAnnotation(UrlAnnotation(it.nativeNode.destination))
+                        if (enabled) {
+                            val destination = it.nativeNode.destination
+                            val link =
+                                LinkAnnotation.Clickable(
+                                    tag = destination,
+                                    linkInteractionListener = { _ -> onUrlClicked?.invoke(destination) },
+                                )
+                            pushLink(link)
+                        }
                         appendInlineMarkdownFrom(it.children, styling, enabled)
                     }
                 }

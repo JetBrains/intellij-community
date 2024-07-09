@@ -6,7 +6,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.HorizontalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,7 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -42,7 +43,6 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection.Ltr
@@ -109,7 +109,8 @@ public open class DefaultMarkdownBlockRenderer(
             is Paragraph -> render(block, rootStyling.paragraph, enabled, onUrlClick, onTextClick)
             ThematicBreak -> renderThematicBreak(rootStyling.thematicBreak)
             is CustomBlock -> {
-                rendererExtensions.find { it.blockRenderer.canRender(block) }
+                rendererExtensions
+                    .find { it.blockRenderer.canRender(block) }
                     ?.blockRenderer
                     ?.render(block, blockRenderer = this, inlineRenderer, enabled, onUrlClick, onTextClick)
             }
@@ -124,14 +125,29 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
-        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled)
-        SimpleClickableText(
+        val renderedContent =
+            rememberRenderedContent(
+                block,
+                styling.inlinesStyling,
+                enabled,
+                onUrlClick,
+            )
+        val textColor =
+            styling.inlinesStyling.textStyle.color
+                .takeOrElse { LocalContentColor.current }
+                .takeOrElse { styling.inlinesStyling.textStyle.color }
+        val mergedStyle = styling.inlinesStyling.textStyle.merge(TextStyle(color = textColor))
+        val interactionSource = remember { MutableInteractionSource() }
+
+        Text(
+            modifier =
+                Modifier.clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onClick = onTextClick,
+                ),
             text = renderedContent,
-            textStyle = styling.inlinesStyling.textStyle,
-            color = styling.inlinesStyling.textStyle.color.takeOrElse { LocalContentColor.current },
-            enabled = enabled,
-            onUnhandledClick = onTextClick,
-            onUrlClick = onUrlClick,
+            style = mergedStyle,
         )
     }
 
@@ -162,7 +178,13 @@ public open class DefaultMarkdownBlockRenderer(
         onUrlClick: (String) -> Unit,
         onTextClick: () -> Unit,
     ) {
-        val renderedContent = rememberRenderedContent(block, styling.inlinesStyling, enabled)
+        val renderedContent =
+            rememberRenderedContent(
+                block,
+                styling.inlinesStyling,
+                enabled,
+                onUrlClick,
+            )
         Heading(
             renderedContent,
             styling.inlinesStyling.textStyle,
@@ -170,9 +192,6 @@ public open class DefaultMarkdownBlockRenderer(
             styling.underlineWidth,
             styling.underlineColor,
             styling.underlineGap,
-            enabled,
-            onUrlClick,
-            onTextClick,
         )
     }
 
@@ -184,18 +203,15 @@ public open class DefaultMarkdownBlockRenderer(
         underlineWidth: Dp,
         underlineColor: Color,
         underlineGap: Dp,
-        enabled: Boolean,
-        onUrlClick: (String) -> Unit,
-        onTextClick: () -> Unit,
     ) {
         Column(modifier = Modifier.padding(paddingValues)) {
-            SimpleClickableText(
+            val textColor =
+                textStyle.color
+                    .takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
+            val mergedStyle = textStyle.merge(TextStyle(color = textColor))
+            Text(
                 text = renderedContent,
-                textStyle = textStyle,
-                color = textStyle.color.takeOrElse { LocalContentColor.current },
-                enabled = enabled,
-                onUnhandledClick = onTextClick,
-                onUrlClick = onUrlClick,
+                style = mergedStyle,
             )
 
             if (underlineWidth > 0.dp && underlineColor.isSpecified) {
@@ -214,21 +230,21 @@ public open class DefaultMarkdownBlockRenderer(
         onTextClick: () -> Unit,
     ) {
         Column(
-            Modifier.drawBehind {
-                val isLtr = layoutDirection == Ltr
-                val lineWidthPx = styling.lineWidth.toPx()
-                val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
+            Modifier
+                .drawBehind {
+                    val isLtr = layoutDirection == Ltr
+                    val lineWidthPx = styling.lineWidth.toPx()
+                    val x = if (isLtr) lineWidthPx / 2 else size.width - lineWidthPx / 2
 
-                drawLine(
-                    styling.lineColor,
-                    Offset(x, 0f),
-                    Offset(x, size.height),
-                    lineWidthPx,
-                    styling.strokeCap,
-                    styling.pathEffect,
-                )
-            }
-                .padding(styling.padding),
+                    drawLine(
+                        styling.lineColor,
+                        Offset(x, 0f),
+                        Offset(x, size.height),
+                        lineWidthPx,
+                        styling.strokeCap,
+                        styling.pathEffect,
+                    )
+                }.padding(styling.padding),
             verticalArrangement = Arrangement.spacedBy(rootStyling.blockVerticalSpacing),
         ) {
             CompositionLocalProvider(LocalContentColor provides styling.textColor) {
@@ -278,7 +294,8 @@ public open class DefaultMarkdownBlockRenderer(
                         style = styling.numberStyle,
                         color = styling.numberStyle.color.takeOrElse { LocalContentColor.current },
                         modifier =
-                            Modifier.widthIn(min = styling.numberMinWidth)
+                            Modifier
+                                .widthIn(min = styling.numberMinWidth)
                                 .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
                         textAlign = styling.numberTextAlign,
                     )
@@ -357,7 +374,8 @@ public open class DefaultMarkdownBlockRenderer(
     ) {
         HorizontallyScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier.background(styling.background, styling.shape)
+            Modifier
+                .background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
@@ -366,7 +384,8 @@ public open class DefaultMarkdownBlockRenderer(
                 style = styling.editorTextStyle,
                 color = styling.editorTextStyle.color.takeOrElse { LocalContentColor.current },
                 modifier =
-                    Modifier.padding(styling.padding)
+                    Modifier
+                        .padding(styling.padding)
                         .pointerHoverIcon(PointerIcon.Default, overrideDescendants = true),
             )
         }
@@ -379,7 +398,8 @@ public open class DefaultMarkdownBlockRenderer(
     ) {
         HorizontallyScrollingContainer(
             isScrollable = styling.scrollsHorizontally,
-            Modifier.background(styling.background, styling.shape)
+            Modifier
+                .background(styling.background, styling.shape)
                 .border(styling.borderWidth, styling.borderColor, styling.shape)
                 .then(if (styling.fillWidth) Modifier.fillMaxWidth() else Modifier),
         ) {
@@ -419,7 +439,7 @@ public open class DefaultMarkdownBlockRenderer(
         infoText: String,
         alignment: Alignment.Horizontal,
         textStyle: TextStyle,
-        modifier: Modifier,
+        modifier: Modifier = Modifier,
     ) {
         Column(modifier, horizontalAlignment = alignment) {
             DisableSelection {
@@ -450,53 +470,9 @@ public open class DefaultMarkdownBlockRenderer(
         block: BlockWithInlineMarkdown,
         styling: InlinesStyling,
         enabled: Boolean,
+        onUrlClick: ((String) -> Unit)? = null,
     ) = remember(block.inlineContent, styling, enabled) {
-        inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled)
-    }
-
-    @OptIn(ExperimentalTextApi::class)
-    @Composable
-    private fun SimpleClickableText(
-        text: AnnotatedString,
-        textStyle: TextStyle,
-        enabled: Boolean,
-        modifier: Modifier = Modifier,
-        color: Color = Color.Unspecified,
-        onUrlClick: (String) -> Unit,
-        onUnhandledClick: () -> Unit,
-    ) {
-        var hoverPointerIcon by remember { mutableStateOf(PointerIcon.Default) }
-        val actualPointerIcon =
-            remember(hoverPointerIcon, enabled) {
-                if (enabled) hoverPointerIcon else PointerIcon.Default
-            }
-
-        val textColor = color.takeOrElse { LocalContentColor.current.takeOrElse { textStyle.color } }
-
-        val mergedStyle = textStyle.merge(TextStyle(color = textColor))
-
-        ClickableText(
-            text = text,
-            style = mergedStyle,
-            modifier = modifier.pointerHoverIcon(actualPointerIcon, true),
-            onHover = { offset ->
-                hoverPointerIcon =
-                    if (offset == null || text.getUrlAnnotations(offset, offset).isEmpty()) {
-                        PointerIcon.Default
-                    } else {
-                        PointerIcon.Hand
-                    }
-            },
-        ) { offset ->
-            if (!enabled) return@ClickableText
-
-            val span = text.getUrlAnnotations(offset, offset).firstOrNull()
-            if (span != null) {
-                onUrlClick(span.item.url)
-            } else {
-                onUnhandledClick()
-            }
-        }
+        inlineRenderer.renderAsAnnotatedString(block.inlineContent, styling, enabled, onUrlClick)
     }
 
     @Composable
@@ -511,7 +487,8 @@ public open class DefaultMarkdownBlockRenderer(
             content = {
                 val scrollState = rememberScrollState()
                 Box(
-                    Modifier.layoutId("mainContent")
+                    Modifier
+                        .layoutId("mainContent")
                         .then(if (isScrollable) Modifier.horizontalScroll(scrollState) else Modifier),
                 ) {
                     content()
@@ -529,7 +506,8 @@ public open class DefaultMarkdownBlockRenderer(
 
                     HorizontalScrollbar(
                         rememberScrollbarAdapter(scrollState),
-                        Modifier.layoutId("containerHScrollbar")
+                        Modifier
+                            .layoutId("containerHScrollbar")
                             .padding(start = 2.dp, end = 2.dp, bottom = 2.dp)
                             .alpha(alpha),
                     )

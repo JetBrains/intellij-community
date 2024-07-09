@@ -24,6 +24,7 @@ import com.darkrockstudios.libraries.mpfilepicker.JvmFile
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.ui.Orientation
+import org.jetbrains.jewel.ui.component.Checkbox
 import org.jetbrains.jewel.ui.component.Divider
 import org.jetbrains.jewel.ui.component.Icon
 import org.jetbrains.jewel.ui.component.OutlinedButton
@@ -35,22 +36,29 @@ import org.jetbrains.jewel.ui.component.TextArea
 internal fun MarkdownEditor(
     currentMarkdown: String,
     onMarkdownChange: (String) -> Unit,
+    onLinksEnabledChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier) {
         ControlsRow(
-            onMarkdownChange,
-            Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),
+            modifier = Modifier.fillMaxWidth().background(JewelTheme.globalColors.panelBackground).padding(8.dp),
+            onMarkdownChange = onMarkdownChange,
+            onLinksEnabledChange = onLinksEnabledChange,
         )
         Divider(orientation = Orientation.Horizontal)
-        Editor(currentMarkdown, onMarkdownChange, Modifier.fillMaxWidth().weight(1f))
+        Editor(
+            currentMarkdown = currentMarkdown,
+            onMarkdownChange = onMarkdownChange,
+            modifier = Modifier.fillMaxWidth().weight(1f),
+        )
     }
 }
 
 @Composable
 private fun ControlsRow(
-    onMarkdownChange: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onMarkdownChange: (String) -> Unit,
+    onLinksEnabledChange: (Boolean) -> Unit,
 ) {
     Row(
         modifier.horizontalScroll(rememberScrollState()),
@@ -117,6 +125,20 @@ private fun ControlsRow(
                 }
             }
         }
+
+        var linksAreEnabled by remember { mutableStateOf(true) }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text("Links enabled")
+            Checkbox(
+                checked = linksAreEnabled,
+                onCheckedChange = {
+                    linksAreEnabled = it
+                    onLinksEnabledChange(it)
+                },
+            )
+        }
     }
 }
 
@@ -124,7 +146,7 @@ private fun ControlsRow(
 private fun Editor(
     currentMarkdown: String,
     onMarkdownChange: (String) -> Unit,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     Box(modifier.padding(16.dp)) {
         TextArea(

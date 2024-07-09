@@ -24,10 +24,20 @@ import org.jetbrains.jewel.ui.component.Divider
 fun MarkdownDemo() {
     Row(Modifier.trackActivation().fillMaxSize().background(JewelTheme.globalColors.panelBackground)) {
         var currentMarkdown by remember { mutableStateOf(JewelReadme) }
-        MarkdownEditor(currentMarkdown, { currentMarkdown = it }, Modifier.fillMaxHeight().weight(1f))
+        var linksAreEnabled by remember { mutableStateOf(true) }
+        MarkdownEditor(
+            currentMarkdown = currentMarkdown,
+            onMarkdownChange = { currentMarkdown = it },
+            onLinksEnabledChange = { linksAreEnabled = it },
+            modifier = Modifier.fillMaxHeight().weight(1f),
+        )
 
         Divider(Orientation.Vertical, Modifier.fillMaxHeight())
 
-        MarkdownPreview(currentMarkdown, Modifier.fillMaxHeight().weight(1f))
+        MarkdownPreview(
+            modifier = Modifier.fillMaxHeight().weight(1f),
+            rawMarkdown = currentMarkdown,
+            linksAreEnabled = linksAreEnabled,
+        )
     }
 }

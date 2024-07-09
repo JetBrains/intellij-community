@@ -15,6 +15,7 @@ public interface InlineMarkdownRenderer {
         inlineMarkdown: Iterable<InlineMarkdown>,
         styling: InlinesStyling,
         enabled: Boolean,
+        onUrlClicked: ((String) -> Unit)? = null,
     ): AnnotatedString
 
     public companion object {
