@@ -714,6 +714,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   public void showStatusText(final @Nls String text) {
+    LOG.debug("Show status text: " + text);
     myStatusUpdateAlarm.cancelAllRequests();
     myStatusUpdateAlarm.addRequest(() -> {
       if (!myProject.isDisposed()) {
@@ -2130,6 +2131,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     protected void resumeAction() {
+      LOG.debug("Resuming for command " + this);
       getSuspendManager().resume(getSuspendContext());
     }
 

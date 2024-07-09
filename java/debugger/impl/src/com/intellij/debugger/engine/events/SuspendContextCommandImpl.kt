@@ -38,6 +38,7 @@ abstract class SuspendContextCommandImpl protected constructor(open val suspendC
     }
 
     invokeWithChecks(suspendContext) {
+      LOG.debug("Executing suspend-context-command: $this")
       contextActionSuspend(suspendContext)
     }
     check(resetContinuation(null) == null) { "Continuation is not null after resume" }
