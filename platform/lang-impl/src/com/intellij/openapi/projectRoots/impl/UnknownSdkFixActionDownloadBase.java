@@ -45,13 +45,30 @@ public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActio
       return createTask().withListener(getMulticaster());
     }
 
-    collectConsent(project);
+    if (supportsSdkChoice()) {
+      doChooseSdk();
+    } else {
+      collectConsent(project);
+    }
 
     if (hasConsent()) {
       return createTask().withListener(getMulticaster());
     } else {
       getMulticaster().onResolveCancelled();
       return null;
+    }
+  }
+
+  private void doChooseSdk() {
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+        if (chooseSdk()) {
+          giveConsent();
+        }
+      });
+    }
+    catch (InterruptedException | InvocationTargetException e) {
+      LOG.warn("Failed to get SDK download consent", e);
     }
   }
 

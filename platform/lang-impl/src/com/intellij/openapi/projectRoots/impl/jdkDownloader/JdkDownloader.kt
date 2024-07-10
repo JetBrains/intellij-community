@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -173,6 +174,29 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     ProgressManager.getInstance().run(object : Task.WithResult<T, Exception>(project, title, true) {
       override fun compute(indicator: ProgressIndicator) = action(indicator)
     })
+}
+
+internal fun selectJdkAndPath(
+  project: Project?,
+  parentComponent: JComponent?,
+  items: List<JdkItem>,
+  sdkTypeId: SdkTypeId,
+  extension: JdkDownloaderDialogHostExtension?,
+  text: @Nls String?,
+  okActionText: @NlsContexts.Button String,
+): Pair<JdkItem, Path>? {
+  val extension = extension ?: object : JdkDownloaderDialogHostExtension {}
+
+  val allowWsl = extension.allowWsl()
+  val wslDistributions = if (allowWsl) WslDistributionManager.getInstance().installedDistributions else listOf()
+  val projectWslDistribution = if (allowWsl) project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) } else null
+
+  val mainModel = buildJdkDownloaderModel(items) { extension.shouldIncludeItem(sdkTypeId, it) }
+  val mergedModel = JdkDownloaderMergedModel(mainModel, null, wslDistributions, projectWslDistribution)
+
+  if (project?.isDisposed == true) return null
+
+  return JdkDownloadDialog(project, parentComponent, sdkTypeId, mergedModel, okActionText, text).selectJdkAndPath()
 }
 
 interface JdkDownloaderBase {

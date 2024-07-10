@@ -21072,10 +21072,13 @@ com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 - a:addSuggestionListener(com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction$Listener):V
 - a:applySuggestionAsync(com.intellij.openapi.project.Project):V
 - a:applySuggestionBlocking(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.projectRoots.Sdk
+- chooseSdk():Z
 - a:getActionDetailedText():java.lang.String
 - a:getActionShortText():java.lang.String
 - getActionTooltipText():java.lang.String
+- getChoiceActionText():java.lang.String
 - getRegisteredSdkPrototype():com.intellij.openapi.projectRoots.Sdk
+- supportsSdkChoice():Z
 com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction$Listener
 - java.util.EventListener
 - a:onResolveCancelled():V
@@ -22485,6 +22488,9 @@ com.intellij.openapi.roots.ui.configuration.UnknownSdkLocalSdkFix
 - getRegisteredSdkPrototype():com.intellij.openapi.projectRoots.Sdk
 - a:getSuggestedSdkName():java.lang.String
 - a:getVersionString():java.lang.String
+com.intellij.openapi.roots.ui.configuration.UnknownSdkMultipleDownloadsFix
+- com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix
+- a:chooseItem(java.lang.String):Z
 com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver
 - a:createResolver(com.intellij.openapi.project.Project,com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver$UnknownSdkLookup
 - a:supportsResolution(com.intellij.openapi.projectRoots.SdkTypeId):Z

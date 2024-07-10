@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkMultipleDownloadsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,27 @@ final class UnknownInvalidSdkFixDownload extends UnknownSdkFixActionDownloadBase
   @Override
   protected @Nullable String getSdkLookupReason() {
     return myFix.getSdkLookupReason();
+  }
+
+  @Override
+  public boolean supportsSdkChoice() {
+    return myFix instanceof UnknownSdkMultipleDownloadsFix<?>;
+  }
+
+  @Override
+  public @NotNull @Nls String getChoiceActionText() {
+    return ProjectBundle.message("sdk.choice.action.text", mySdk.getSdkType().getPresentableName());
+  }
+
+  @Override
+  public boolean chooseSdk() {
+    if (myFix instanceof UnknownSdkMultipleDownloadsFix<?> multipleDownloadsFix) {
+      if (multipleDownloadsFix.chooseItem(mySdk.mySdkType.getPresentableName())) {
+        giveConsent();
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

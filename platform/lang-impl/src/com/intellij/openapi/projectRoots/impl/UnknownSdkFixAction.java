@@ -48,6 +48,19 @@ public interface UnknownSdkFixAction {
    */
   void addSuggestionListener(@NotNull Listener listener);
 
+  /**
+   * Returns true if the user can choose one Sdk fix with {@link #chooseSdk()}.
+   */
+  default boolean supportsSdkChoice() { return false; }
+
+  @NotNull default @Nls String getChoiceActionText() { return getActionShortText(); }
+
+  /**
+   * Shows UI to pick one of the possible SDK fixes.
+   * This makes it possible to choose a possible SDK download for example.
+   */
+  default boolean chooseSdk() { return false; }
+
   interface Listener extends EventListener {
     /**
      * This event can be called when a prototype SDK object is created,
