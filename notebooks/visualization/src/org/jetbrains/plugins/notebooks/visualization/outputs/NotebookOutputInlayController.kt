@@ -3,7 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.outputs
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.util.asSafely
@@ -61,7 +61,7 @@ class NotebookOutputComponentFactoryGetter : Disposable, Runnable {
           )
         }
       if (collidingExtension != null) {
-        LOG.error("Can't register $extension: it clashes with $collidingExtension by using similar component and data key classes.")
+        thisLogger().error("Can't register $extension: it clashes with $collidingExtension by using similar component and data key classes.")
       }
       else {
         newList += extension
@@ -71,8 +71,6 @@ class NotebookOutputComponentFactoryGetter : Disposable, Runnable {
   }
 
   companion object {
-    private val LOG = logger<NotebookOutputComponentFactoryGetter>()
-
     @JvmStatic
     val instance: NotebookOutputComponentFactoryGetter get() = service()
   }
