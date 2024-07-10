@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.impl.ProjectUtil
 import com.intellij.internal.performance.LatencyRecord
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
@@ -10,6 +11,7 @@ import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
@@ -58,6 +60,10 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
 
     val job = Ref<DaemonCodeAnalyzerResult>()
     val projectConnection = context.project.messageBus.simpleConnect()
+
+    ApplicationManager.getApplication().invokeAndWait {
+      ProjectUtil.focusProjectWindow(context.project, true)
+    }
 
     PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext()).useWithScope { span ->
       coroutineScope {
