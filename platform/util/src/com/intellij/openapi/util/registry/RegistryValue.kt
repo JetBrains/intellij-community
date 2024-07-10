@@ -41,7 +41,7 @@ open class RegistryValue @Internal constructor(
   open fun asBoolean(): Boolean {
     var result = booleanCachedValue
     if (result == null) {
-      result = get(key = key, defaultValue = "false", isValue = true).toBoolean()
+      result = _get(key = key, defaultValue = "false", mustExistInBundle = true).toBoolean()
       booleanCachedValue = result
     }
     return result
