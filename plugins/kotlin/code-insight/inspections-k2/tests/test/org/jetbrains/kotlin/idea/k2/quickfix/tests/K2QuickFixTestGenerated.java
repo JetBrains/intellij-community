@@ -1479,11 +1479,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
             runTest("../../../idea/tests/testData/quickfix/optIn/basicFunctionNotApplicable.kt");
         }
 
-        @TestMetadata("basicFunctionNotApplicableFir.kt")
-        public void testBasicFunctionNotApplicableFir() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/basicFunctionNotApplicableFir.kt");
-        }
-
         @TestMetadata("basicModule.kt")
         public void testBasicModule() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/basicModule.kt");
@@ -1632,11 +1627,6 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/optIn/override.kt");
-        }
-
-        @TestMetadata("overrideFir.kt")
-        public void testOverrideFir() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/optIn/overrideFir.kt");
         }
 
         @TestMetadata("propagateOptIn.kt")

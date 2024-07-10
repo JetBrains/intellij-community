@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -26,17 +26,17 @@ internal object OptInFixUtils {
         ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME.takeIf { it.annotationApplicable() }
 
     context (KaSession)
-    private fun FqName.annotationApplicable(): Boolean =
-        getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
+    fun FqName.annotationApplicable(): Boolean =
+        findClass(ClassId.topLevel(this)) != null
 
     context (KaSession)
-    fun findAnnotation(classId: ClassId): KaNamedClassOrObjectSymbol? =
-        getClassOrObjectSymbolByClassId(classId) as? KaNamedClassOrObjectSymbol
+    fun findAnnotation(classId: ClassId): KaNamedClassSymbol? =
+        findClass(classId) as? KaNamedClassSymbol
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun annotationIsVisible(annotation: KaNamedClassOrObjectSymbol, from: KtElement): Boolean {
-        val file = from.containingKtFile.getFileSymbol()
+    fun annotationIsVisible(annotation: KaNamedClassSymbol, from: KtElement): Boolean {
+        val file = from.containingKtFile.symbol
         return isVisible(annotation, file, receiverExpression = null, from)
     }
 }

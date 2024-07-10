@@ -3,6 +3,7 @@
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_STDLIB
 // ACTION: Opt in for 'MyExperimentalAPI' in containing file 'nestedClassesFir.kt'
+// ACTION: Opt in for 'MyExperimentalAPI' in module 'light_idea_test_case'
 // ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
 // ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Inner'
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to 'bar'
@@ -13,7 +14,8 @@
 annotation class MyExperimentalAPI
 
 @MyExperimentalAPI
-fun foo() {}
+fun foo() {
+}
 
 class Outer {
     class Bar {

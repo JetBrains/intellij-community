@@ -1,12 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.AddModuleOptInFix
 import org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
@@ -36,7 +39,7 @@ internal object OptInFileLevelFixFactories {
     context(KaSession)
     private fun createQuickFix(
         diagnostic: KaFirDiagnostic<PsiElement>,
-    ): List<UseOptInFileAnnotationFix> {
+    ): List<IntentionAction> {
         val element = diagnostic.psi.findParentOfType<KtElement>()
             ?: return emptyList()
 
@@ -54,12 +57,24 @@ internal object OptInFileLevelFixFactories {
             return emptyList()
         }
 
-        return listOf(
-            UseOptInFileAnnotationFix(
-                containingFile, optInFqName, optInMarkerClassId.asSingleFqName(),
-                findFileAnnotation(containingFile, optInFqName)?.createSmartPointer()
-            )
+        val result = mutableListOf<IntentionAction>()
+        val argumentClassFqName = optInMarkerClassId.asSingleFqName()
+        result += UseOptInFileAnnotationFix(
+            file = containingFile,
+            optInFqName = optInFqName,
+            argumentClassFqName = argumentClassFqName,
+            existingAnnotationEntry = findFileAnnotation(containingFile, optInFqName)?.createSmartPointer(),
         )
+
+        containingFile.module?.let { module ->
+            result += AddModuleOptInFix(
+                file = containingFile,
+                module = module,
+                annotationFqName = argumentClassFqName,
+            )
+        }
+
+        return result
     }
 
     // Find the existing file-level annotation of the specified class if it exists

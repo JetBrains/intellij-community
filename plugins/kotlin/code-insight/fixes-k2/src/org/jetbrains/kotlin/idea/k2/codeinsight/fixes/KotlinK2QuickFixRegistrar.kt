@@ -424,6 +424,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         )
 
         registerFactory(OptInAnnotationWrongTargetFixFactory.optInAnnotationWrongTargetFixFactory)
+        registerFactory(OptInModuleLevelFixFactories.optInIsNotEnabledFactory)
         registerFactory(OptInFileLevelFixFactories.optInUsageFactory)
         registerFactory(OptInFileLevelFixFactories.optInUsageErrorFactory)
         registerFactory(OptInFileLevelFixFactories.optInOverrideFactory)
