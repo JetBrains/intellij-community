@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.plugins.notebooks.visualization.SwingClientProperty
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory
@@ -16,8 +16,7 @@ internal class InnerComponent : JPanel() {
 
   var maxHeight: Int = Int.MAX_VALUE
 
-  override fun updateUI() {
-    super.updateUI()
+  init {
     isOpaque = false
   }
 
@@ -104,15 +103,11 @@ internal class InnerComponent : JPanel() {
         NotebookOutputComponentFactory.WidthStretching.SQUEEZE -> min(it, componentDesiredWidth)
         NotebookOutputComponentFactory.WidthStretching.NOTHING -> componentDesiredWidth
         null -> {
-          LOG.error("The component $component has no constraints")
+          thisLogger().error("The component $component has no constraints")
           componentDesiredWidth
         }
       }
     }
 
   private var JComponent.layoutConstraints: Constraint? by SwingClientProperty("layoutConstraints")
-
-  companion object {
-    private val LOG = logger<InnerComponent>()
-  }
 }
