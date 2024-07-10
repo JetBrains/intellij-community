@@ -39,7 +39,7 @@ private val myChkUseSafeWrite
 internal val allOptionDescriptors: List<BooleanOptionDescription>
   get() =
     listOfNotNull(
-      myChkReopenLastProject,
+      myChkReopenLastProject.takeIf { ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup },
       myConfirmExit.takeIf { IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation },
       myChkSyncOnFrameActivation,
       myChkSyncInBackground,
@@ -82,8 +82,10 @@ private class GeneralSettingsConfigurable :
       }.bind(model::processCloseConfirmation) { model.processCloseConfirmation = it }
 
       group(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
-        row {
-          checkBox(myChkReopenLastProject)
+        if (ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup) {
+          row {
+            checkBox(myChkReopenLastProject)
+          }
         }
         if (!ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow) {
           buttonsGroup {
