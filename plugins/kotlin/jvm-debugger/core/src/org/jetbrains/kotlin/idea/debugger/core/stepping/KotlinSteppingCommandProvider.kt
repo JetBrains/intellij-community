@@ -23,6 +23,8 @@ import com.sun.jdi.StackFrame
 import com.sun.jdi.request.StepRequest
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
+import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
+import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
@@ -127,8 +129,11 @@ fun getStepOverAction(
     val srcLocationToken = LocationToken.from(srcStackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.JvmStepOver
 
     if (srcLocationToken.inlineVariables.isEmpty() && srcMethod.isSyntheticMethodForDefaultParameters()) {
-        val psiLineNumber = location.lineNumber() - 1
-        val lineNumbers = Range(psiLineNumber, psiLineNumber)
+        val psiLineNumber = location.safeLineNumber() - 1
+        val startLine = srcMethod.safeAllLineLocations().minOf { it.safeLineNumber() } - 1
+        // Consider [start line, current line] as the current scope
+        // to prevent jumping back to the first line of a default method
+        val lineNumbers = Range(startLine, psiLineNumber)
         return KotlinStepAction.StepInto(KotlinStepOverParamDefaultImplsMethodFilter.create(location, lineNumbers))
     }
 

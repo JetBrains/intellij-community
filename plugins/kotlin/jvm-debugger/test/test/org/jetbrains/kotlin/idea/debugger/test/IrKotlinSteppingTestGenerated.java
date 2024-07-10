@@ -1938,6 +1938,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/stepOverNonLocalReturnInLambda.kt");
         }
 
+        @TestMetadata("stepThroughDefaultArgs.kt")
+        public void testStepThroughDefaultArgs() throws Exception {
+            runTest("testData/stepping/custom/stepThroughDefaultArgs.kt");
+        }
+
         @TestMetadata("syntheticProvider.kt")
         public void testSyntheticProvider() throws Exception {
             runTest("testData/stepping/custom/syntheticProvider.kt");
