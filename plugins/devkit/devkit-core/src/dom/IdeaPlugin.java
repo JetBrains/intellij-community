@@ -67,6 +67,7 @@ public interface IdeaPlugin extends DomElement {
 
   @NotNull GenericAttributeValue<Boolean> getAllowBundledUpdate();
 
+  @Stubbed
   @NotNull GenericAttributeValue<Boolean> getImplementationDetail();
 
   @NotNull GenericAttributeValue<Boolean> getRequireRestart();

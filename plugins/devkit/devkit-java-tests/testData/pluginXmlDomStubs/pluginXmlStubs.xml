@@ -3,7 +3,7 @@
 <!-- Test skipping processing directive and comments before root tag: -->
 <!-- Comment with angle bracket <test> -->
 <!-- Regular comment -->
-<idea-plugin package="idea.plugin.package">
+<idea-plugin package="idea.plugin.package" implementation-detail="true">
   <id>com.intellij.myPlugin</id>
   <name>pluginName</name>
 
