@@ -34,6 +34,7 @@ import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.seconds
 
+@ApiStatus.Internal
 class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistory(), Disposable {
   companion object {
     private const val DAYS_TO_KEEP = "localHistory.daysToKeep"

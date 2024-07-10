@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
@@ -217,11 +217,11 @@ public final class RevisionsList {
     }
   }
 
-  public static final class MyModel extends AbstractTableModel {
+  private static final class MyModel extends AbstractTableModel {
     private final List<? extends RevisionItem> myRevisions;
     private final Map<RevisionItem, Period> myPeriods;
 
-    public MyModel(List<? extends RevisionItem> revisions, Map<RevisionItem, Period> periods) {
+    MyModel(List<? extends RevisionItem> revisions, Map<RevisionItem, Period> periods) {
       myRevisions = revisions;
       myPeriods = periods;
     }

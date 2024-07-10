@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core;
 
 import com.intellij.openapi.util.Clock;
@@ -6,11 +6,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.storage.AbstractRecordsTable;
 import com.intellij.util.io.storage.AbstractStorage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class LocalHistoryStorage extends AbstractStorage {
   private static final StorageLockContext STORAGE_LOCK_CONTEXT = new StorageLockContext();
 
