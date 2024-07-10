@@ -99,8 +99,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     @Override
     protected void addUsagesOptions(@NotNull JPanel optionsPanel) {
-        super.addUsagesOptions(optionsPanel);
-
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();
         if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD) || property.hasModifier(KtTokens.OPEN_KEYWORD) ||
             property instanceof KtParameter && !((KtParameter) property).hasValOrVar()) {
@@ -150,6 +148,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                     ___ -> setDisableComponentAndDestructionSearch(project, dataClassComponentCheckBox.isSelected())
             );
         }
+        addDefaultOptions(optionsPanel);
     }
 
     @Override

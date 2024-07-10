@@ -58,8 +58,6 @@ class KotlinFindFunctionUsagesDialog(
     }
 
     override fun addUsagesOptions(optionsPanel: JPanel) {
-        super.addUsagesOptions(optionsPanel)
-
         val method: KtNamedDeclaration = myUsagesHandler.psiElement as KtNamedDeclaration
         if (Utils.isOpen(method)) {
             overrideUsages = addCheckboxToPanel(
@@ -71,20 +69,12 @@ class KotlinFindFunctionUsagesDialog(
                 true
             )
         }
-
-        if (!Utils.renameCheckbox(
-                optionsPanel,
-                JavaBundle.message("find.options.include.overloaded.methods.checkbox"),
-                message("find.declaration.include.overloaded.methods.checkbox")
-            )
-        ) {
-            addCheckboxToPanel(
-                message("find.declaration.include.overloaded.methods.checkbox"),
-                FindSettings.getInstance().isSearchOverloadedMethods(),
-                optionsPanel,
-                false
-            )
-        }
+        addCheckboxToPanel(
+            message("find.declaration.include.overloaded.methods.checkbox"),
+            FindSettings.getInstance().isSearchOverloadedMethods(),
+            optionsPanel,
+            false
+        )
         val element = psiElement.unwrapped
         val function = if (element is KtNamedDeclaration
         ) element as KtNamedDeclaration?
@@ -100,6 +90,7 @@ class KotlinFindFunctionUsagesDialog(
                 false
             )
         }
+        addDefaultOptions(optionsPanel)
     }
 
     override fun calcFindUsagesOptions(options: JavaMethodFindUsagesOptions) {
