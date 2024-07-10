@@ -7476,6 +7476,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/collectionSubtype.kt");
             }
 
+            @TestMetadata("emptyCollection.kt")
+            public void testEmptyCollection() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/emptyCollection.kt");
+            }
+
+            @TestMetadata("emptyCollectionWithExtensions.kt")
+            public void testEmptyCollectionWithExtensions() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/emptyCollectionWithExtensions.kt");
+            }
+
+            @TestMetadata("emptyCollectionWithOverloads.kt")
+            public void testEmptyCollectionWithOverloads() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/emptyCollectionWithOverloads.kt");
+            }
+
             @TestMetadata("extensionReceiver.kt")
             public void testExtensionReceiver() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSizeCheckWithIsNotEmpty/extensionReceiver.kt");
@@ -7588,6 +7603,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("collectionSubtype.kt")
             public void testCollectionSubtype() throws Exception {
                 runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/collectionSubtype.kt");
+            }
+
+            @TestMetadata("emptyCollection.kt")
+            public void testEmptyCollection() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/emptyCollection.kt");
+            }
+
+            @TestMetadata("emptyCollectionWithExtensions.kt")
+            public void testEmptyCollectionWithExtensions() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/emptyCollectionWithExtensions.kt");
+            }
+
+            @TestMetadata("emptyCollectionWithOverloads.kt")
+            public void testEmptyCollectionWithOverloads() throws Exception {
+                runTest("testData/inspectionsLocal/replaceSizeZeroCheckWithIsEmpty/emptyCollectionWithOverloads.kt");
             }
 
             @TestMetadata("extensionReceiver.kt")

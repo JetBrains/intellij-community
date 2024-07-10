@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal sealed class ReplaceSizeCheckInspectionBase :
     KotlinApplicableInspectionBase.Simple<KtBinaryExpression, ReplaceSizeCheckInspectionBase.ReplacementInfo>() {
@@ -37,7 +38,10 @@ internal sealed class ReplaceSizeCheckInspectionBase :
     protected abstract fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression?
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
-        extractTargetExpressionFromPsi(element) != null
+        element.getStrictParentOfType<KtFunction>()
+            ?.takeIf { it.valueParameters.isEmpty() }
+            ?.name != methodToReplaceWith.methodName
+                && extractTargetExpressionFromPsi(element) != null
 
     context(KaSession)
     final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
@@ -120,7 +124,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
         val receiverTypeAndSuperTypes = sequence {
             yield(receiverType)
-            yieldAll(receiverType.getAllSuperTypes())
+            yieldAll(receiverType.allSupertypes)
         }
         if (receiverTypeAndSuperTypes.any { it.expandedSymbol?.classId in replaceableCall.supportedReceivers }) {
             return replaceableCall
