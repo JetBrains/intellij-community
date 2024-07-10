@@ -11989,15 +11989,6 @@ f:com.intellij.openapi.application.PermanentInstallationID
 - <init>():V
 - s:get():java.lang.String
 - s:syncWithSharedFile(java.lang.String,java.lang.String,java.util.prefs.Preferences,java.lang.String):java.lang.String
-f:com.intellij.openapi.application.PluginMigrationOptions
-- <init>(java.lang.String,java.lang.String,java.nio.file.Path,java.nio.file.Path,java.util.List,java.util.List,com.intellij.openapi.diagnostic.Logger):V
-- f:getCurrentProductVersion():java.lang.String
-- f:getLog():com.intellij.openapi.diagnostic.Logger
-- f:getNewConfigDir():java.nio.file.Path
-- f:getOldConfigDir():java.nio.file.Path
-- f:getPluginsToDownload():java.util.List
-- f:getPluginsToMigrate():java.util.List
-- f:getPreviousVersion():java.lang.String
 f:com.intellij.openapi.application.PluginPathManager
 - s:getPluginHome(java.lang.String):java.io.File
 - s:getPluginHomePath(java.lang.String):java.lang.String
@@ -12092,10 +12083,6 @@ f:com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 - s:waitForAsyncTaskCompletion():V
 - withDocumentsCommitted(com.intellij.openapi.project.Project):com.intellij.openapi.application.NonBlockingReadAction
 - wrapProgress(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.application.NonBlockingReadAction
-f:com.intellij.openapi.application.migrations.RustUltimate241
-- <init>():V
-- migratePlugins(com.intellij.openapi.application.PluginMigrationOptions):V
-- migratePlugins(com.intellij.openapi.application.migrations.PluginMigration$PluginMigrationDescriptor):V
 f:com.intellij.openapi.command.impl.CannotUndoReportDialog
 - com.intellij.openapi.ui.DialogWrapper
 - com.intellij.openapi.actionSystem.DataProvider

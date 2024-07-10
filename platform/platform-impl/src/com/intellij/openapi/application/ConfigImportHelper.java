@@ -15,7 +15,6 @@ import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
 import com.intellij.openapi.application.migrations.AIAssistant241;
 import com.intellij.openapi.application.migrations.PythonProMigration242;
-import com.intellij.openapi.application.migrations.RustUltimate241;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -1063,7 +1062,6 @@ public final class ConfigImportHelper {
   private static void performMigrations(PluginMigrationOptions options) {
     // WRITE IN MIGRATIONS HERE
 
-    new RustUltimate241().migratePlugins(options);
     new AIAssistant241().migratePlugins(options);
     new PythonProMigration242().migratePlugins(options);
   }

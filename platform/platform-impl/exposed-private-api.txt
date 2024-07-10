@@ -44,7 +44,6 @@ com/intellij/openapi/actionSystem/impl/SuspendingUpdateSession
 com/intellij/openapi/application/ConfigImportProgressDialog$ProgressIndicatorAdapter
 com/intellij/openapi/application/constraints/ConstrainedExecutionScheduler
 com/intellij/openapi/application/impl/ApplicationImpl
-com/intellij/openapi/application/migrations/PluginMigration$PluginMigrationDescriptor
 com/intellij/openapi/client/ClientAppSession
 com/intellij/openapi/components/impl/stores/IComponentStore
 com/intellij/openapi/editor/colors/Groups

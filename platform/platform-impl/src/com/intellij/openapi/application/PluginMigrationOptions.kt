@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.diagnostic.Logger
 import java.nio.file.Path
 
-class PluginMigrationOptions(
+internal class PluginMigrationOptions(
   val previousVersion: String?,
   val currentProductVersion: String,
   val newConfigDir: Path,

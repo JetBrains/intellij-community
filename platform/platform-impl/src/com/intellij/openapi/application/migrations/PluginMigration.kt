@@ -9,8 +9,7 @@ import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 
-@Internal
-abstract class PluginMigration {
+internal abstract class PluginMigration {
   open fun migratePlugins(options: PluginMigrationOptions) {
     migratePlugins(PluginMigrationDescriptor(options))
   }
