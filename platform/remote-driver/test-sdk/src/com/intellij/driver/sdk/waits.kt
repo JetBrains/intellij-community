@@ -80,9 +80,9 @@ fun <T> waitAny(
   return waitFor(message = message, timeout = timeout,
                  interval = interval,
                  errorMessage = if (errorMessage == null) {
-                            null
-                          }
-                          else { it -> errorMessage.invoke(it) },
+                   null
+                 }
+                 else { it -> errorMessage.invoke(it) },
                  getter = getter,
                  checker = { it.any { checker(it) } }
   ).filter { checker(it) }
@@ -203,11 +203,12 @@ fun <T> waitForOne(
     now = System.currentTimeMillis()
   }
   if (resultList.size != 1) {
+    val resultListString = if (resultList.isEmpty()) "none" else resultList.joinToString("\n\t")
     throw WaitForException(timeout,
                            errorMessage = errorMessage?.invoke(resultList)
                                           ?: ("Failed: $message. " +
                                               "\n\tExpected one suitable instance, but got:" +
-                                              "\n\t${resultList.joinToString("\n\t")}"))
+                                              "\n\t$resultListString"))
   }
   else {
     return resultList.single().also {
