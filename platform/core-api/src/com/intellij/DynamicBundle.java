@@ -79,7 +79,7 @@ public class DynamicBundle extends AbstractBundle {
                                                                @NotNull BiFunction<? super @NotNull ClassLoader, ? super Locale, ? extends @NotNull ResourceBundle> bundleResolver) {
     Path bundlePath = FileSystems.getDefault().getPath(FileUtil.toCanonicalPath(defaultPath, '.'));
     ClassLoader pluginClassLoader = DefaultBundleService.isDefaultBundle() ? null: LocalizationUtil.INSTANCE.getPluginClassLoader(bundleClassLoader, locale);
-    List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPaths(bundlePath, locale);
+    List<Path> paths = LocalizationUtil.INSTANCE.getLocalizedPathsWithDefault(bundlePath, locale);
     Map<LocalizationOrder, ResourceBundle> bundleOrderMap = new HashMap<>();
     if (pluginClassLoader != null) {
         bundleOrderMap.put(LocalizationOrder.DEFAULT_PLUGIN, bundleResolver.apply(pluginClassLoader, Locale.ROOT));
