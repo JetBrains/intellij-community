@@ -4,6 +4,7 @@ package com.intellij.java.refactoring.convertToInstanceMethod;
 import com.intellij.JavaTestUtil;
 import com.intellij.java.refactoring.LightRefactoringTestCase;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.convertToInstanceMethod.ConvertToInstanceMethodDialog;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Arrays;
 
 public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   @NotNull
@@ -46,12 +48,17 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
     doTest(targetParameter, VisibilityUtil.ESCALATE_VISIBILITY);
   }
 
-  private void doTest(int targetParameter, String visibility) {
+  protected void doTest(int targetParameter, String visibility, String... options) {
     final String filePath = getBasePath() + getTestName(false) + ".java";
     configureByFile(filePath);
-    UiInterceptors.register(new ConvertToInstanceMethodDialogUiInterceptor(targetParameter, visibility));
+    UiInterceptors.register(new ConvertToInstanceMethodDialogUiInterceptor(targetParameter, visibility, options));
     new ConvertToInstanceMethodHandler().invoke(getProject(), getEditor(), getFile(), getCurrentEditorDataContext());
     checkResultByFile(filePath + ".after");
+  }
+  
+  protected void doTestException() {
+    configureByFile(getBasePath() + getTestName(false) + ".java");
+    new ConvertToInstanceMethodHandler().invoke(getProject(), getEditor(), getFile(), getCurrentEditorDataContext());
   }
   
   protected String getBasePath() {
@@ -66,11 +73,13 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   private static class ConvertToInstanceMethodDialogUiInterceptor extends UiInterceptors.UiInterceptor<ConvertToInstanceMethodDialog> {
     private final int myTargetParameter;
     private final String myVisibility;
+    private final String[] myOptions;
 
-    ConvertToInstanceMethodDialogUiInterceptor(int targetParameter, @Nullable String visibility) {
+    ConvertToInstanceMethodDialogUiInterceptor(int targetParameter, @Nullable String visibility, String... options) {
       super(ConvertToInstanceMethodDialog.class);
       myTargetParameter = targetParameter;
       myVisibility = visibility;
+      myOptions = options;
     }
 
     @Override
@@ -81,9 +90,22 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
       if (myTargetParameter < 0 || myTargetParameter >= size) {
         fail("targetParameter out of bounds: " + myTargetParameter);
       }
+      if (myOptions.length > 0) {
+        assertEquals(Arrays.toString(myOptions), toString(model));
+      }
       list.setSelectedIndex(myTargetParameter);
       dialog.setVisibility(myVisibility == null ? VisibilityUtil.ESCALATE_VISIBILITY : myVisibility);
       dialog.performOKAction();
+    }
+
+    private static String toString(ListModel<Object> model) {
+      int size = model.getSize();
+      String[] result = new String[size];
+      for (int i = 0; i < size; i++) {
+        Object o = model.getElementAt(i);
+        result[i] = (o instanceof PsiElement e) ? e.getText() : o.toString();
+      }
+      return Arrays.toString(result);
     }
   }
 }
