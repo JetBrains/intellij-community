@@ -4,6 +4,7 @@
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
@@ -39,12 +40,19 @@ internal class HistoryEntry(
     const val TAG: @NonNls String = "entry"
     const val FILE_ATTRIBUTE: String = "file"
 
-    fun createHeavy(project: Project, e: Element): HistoryEntry {
+    fun createHeavy(project: Project, e: Element): HistoryEntry? {
       val fileEditorProviderManager = FileEditorProviderManager.getInstance()
       val entryData = parseEntry(project = project, element = e, fileEditorProviderManager = fileEditorProviderManager)
 
       val disposable = Disposer.newDisposable()
-      val pointer = VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
+      val pointer = try {
+        VirtualFilePointerManager.getInstance().create(entryData.url, disposable, null)
+      }
+      catch (e: Throwable) {
+        thisLogger().error(e)
+        return null
+      }
+
       val stateMap = LinkedHashMap<FileEditorProvider, FileEditorState>()
       for (state in entryData.providerStates) {
         stateMap.put(state.first, state.second)
