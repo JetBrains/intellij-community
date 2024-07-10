@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.impl.stores.stateStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -19,8 +19,8 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.Function
-import com.intellij.util.io.Ksuid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -29,6 +29,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
@@ -47,7 +48,7 @@ class ModuleStoreRenameTest {
   // we test fireModuleRenamedByVfsEvent
   private val oldModuleNames = mutableListOf<String>()
 
-  private val tempDirManager = TemporaryDirectory()
+  private val tempDirManager = TempDirectory()
 
   @Rule
   @JvmField
@@ -57,7 +58,7 @@ class ModuleStoreRenameTest {
     object : ExternalResource() {
       override fun before() {
         runBlocking {
-          val moduleFileParent = tempDirManager.newPath()
+          val moduleFileParent = tempDirManager.newDirectoryPath("dir")
           module = projectRule.createModule(moduleFileParent.resolve("m.iml"))
           dependentModule = projectRule.createModule(moduleFileParent.resolve("dependent-module.iml"))
           ModuleRootModificationUtil.addDependency(dependentModule, module)
@@ -139,8 +140,9 @@ class ModuleStoreRenameTest {
 
     saveProjectState()
     assertThat(dependentModule.storage.file.readText()).contains("""<orderEntry type="module" module-name="${newName}" />""")
-    assertThat(projectRule.project.stateStore.projectFilePath.readText())
-      .contains("""<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${newFile.parent.fileName}/${newFile.fileName}"""")
+    val stateStore = projectRule.project.stateStore
+    assertThat(stateStore.projectFilePath.readText())
+      .contains("""<module fileurl="file://${'$'}PROJECT_DIR${'$'}/${stateStore.projectBasePath.relativize(newFile).invariantSeparatorsPathString}"""")
   }
 
   @Test
@@ -151,7 +153,7 @@ class ModuleStoreRenameTest {
     val parentVirtualDir = storage.getVirtualFile()!!.parent
     withContext(Dispatchers.EDT) {
       ApplicationManager.getApplication().runWriteAction {
-        parentVirtualDir.rename(null, Ksuid.generate())
+        parentVirtualDir.rename(null, "module2")
       }
     }
 
