@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.util.ShutDownTracker
@@ -8,6 +8,7 @@ import com.intellij.platform.diagnostic.telemetry.exporters.RollingFileSupplier
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.TelemetryMeterJsonExporter
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.SystemProperties.getLongProperty
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -21,8 +22,15 @@ import java.nio.file.Path
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
+
+private val METRICS_REPORTING_PERIOD: Duration = getLongProperty(
+  "idea.diagnostic.opentelemetry.metrics-reporting-period-ms",
+  1.minutes.inWholeMilliseconds
+).milliseconds
 
 @ApiStatus.Internal
 class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetrySdkBuilder,
@@ -85,7 +93,8 @@ class OpenTelemetryConfigurator(@JvmField internal val sdkBuilder: OpenTelemetry
               predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
             ),
           ),
-          duration = 1.minutes)
+          duration = METRICS_REPORTING_PERIOD
+        )
       )
     }
 
