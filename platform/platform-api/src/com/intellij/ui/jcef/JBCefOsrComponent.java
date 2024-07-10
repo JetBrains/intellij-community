@@ -247,11 +247,11 @@ class JBCefOsrComponent extends JPanel {
   /**
    * This class is an adapter between Java and CEF mouse wheel API.
    * CEF scrolling performance in some applications(e.g. PDF viewer) might be not enough to handle every java screen in time.
-   * The purpose of this adapter is to reduce amount of events to handle by CEF.
-   * MouseWheelEventsAccumulator accumulate wheel events(by X and Y axis independent) during the time defined by TIMEOUT_MS and sends
-   * composed events to the browser on timeout or on reaching wheel rotation tolerance(defined by TOLERANCE).
+   * The purpose of this adapter is to reduce the number of events to handle by CEF.
+   * MouseWheelEventsAccumulator accumulates wheel events (by X and Y axis independent) during the time defined by TIMEOUT_MS and sends
+   * composed events to the browser on timeout or on reaching wheel rotation tolerance (defined by TOLERANCE).
    * <p>
-   * In practice, this reduces the number of events by about 2 times
+   * In practice, this reduces the number of events by about two times
    */
   private class MouseWheelEventsAccumulator {
     private final Composition myCompositionX, myCompositionY;
