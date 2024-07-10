@@ -503,7 +503,7 @@ class QuickFixRegistrar : QuickFixContributor {
 
         MISSING_CONSTRUCTOR_KEYWORD.registerFactory(MissingConstructorKeywordFixFactory)
 
-        MISSING_CONSTRUCTOR_BRACKETS.registerFactory(MissingConstructorBracketsFix)
+        MISSING_CONSTRUCTOR_BRACKETS.registerFactory(MissingConstructorBracketsFixFactory)
 
         ANONYMOUS_FUNCTION_WITH_NAME.registerFactory(RemoveNameFromFunctionExpressionFix)
 
