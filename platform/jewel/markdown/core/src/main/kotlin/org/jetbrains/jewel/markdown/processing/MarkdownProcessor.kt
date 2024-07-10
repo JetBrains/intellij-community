@@ -14,7 +14,6 @@ import org.commonmark.node.Node
 import org.commonmark.node.OrderedList
 import org.commonmark.node.Paragraph
 import org.commonmark.node.ThematicBreak
-import org.commonmark.parser.IncludeSourceSpans
 import org.commonmark.parser.Parser
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.TestOnly
@@ -30,25 +29,20 @@ import org.jetbrains.jewel.markdown.rendering.DefaultInlineMarkdownRenderer
 import org.commonmark.node.ListBlock as CMListBlock
 
 /**
- * @param optimizeEdits Optional. Indicates whether the processing should only update the changed blocks
- * by keeping a previous state in memory. Default is `true`, use `false` for immutable data.
+ * @param optimizeEdits Optional. Indicates whether the processing should
+ *    only update the changed blocks by keeping a previous state in memory.
+ *    Default is `true`, use `false` for immutable data.
  */
 @ExperimentalJewelApi
 public class MarkdownProcessor(
     private val extensions: List<MarkdownProcessorExtension> = emptyList(),
     private val optimizeEdits: Boolean = true,
+    private val commonMarkParser: Parser = MarkdownParserFactory.create(optimizeEdits, extensions),
 ) {
-    public constructor(vararg extensions: MarkdownProcessorExtension) : this(extensions.toList())
-
-    private val commonMarkParser =
-        Parser.builder()
-            .let { builder ->
-                builder.extensions(extensions.map(MarkdownProcessorExtension::parserExtension))
-                if (optimizeEdits) {
-                    builder.includeSourceSpans(IncludeSourceSpans.BLOCKS)
-                }
-                builder.build()
-            }
+    public constructor(
+        optimizeEdits: Boolean = true,
+        vararg extensions: MarkdownProcessorExtension,
+    ) : this(extensions.toList(), optimizeEdits)
 
     private data class State(val lines: List<String>, val blocks: List<Block>, val indexes: List<Pair<Int, Int>>)
 
@@ -58,9 +52,9 @@ public class MarkdownProcessor(
     internal fun getCurrentIndexesInTest() = currentState.indexes
 
     /**
-     * Parses a Markdown document, translating from CommonMark 0.31.2
-     * to a list of [MarkdownBlock]. Inline Markdown in leaf nodes
-     * is contained in [InlineMarkdown], which can be rendered
+     * Parses a Markdown document, translating from CommonMark
+     * 0.31.2 to a list of [MarkdownBlock]. Inline Markdown in leaf
+     * nodes is contained in [InlineMarkdown], which can be rendered
      * to an [androidx.compose.ui.text.AnnotatedString] by using
      * [DefaultInlineMarkdownRenderer.renderAsAnnotatedString].
      *
