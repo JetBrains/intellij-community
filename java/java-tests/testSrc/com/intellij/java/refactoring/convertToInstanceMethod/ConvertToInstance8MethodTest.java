@@ -19,6 +19,7 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   public void testThisInsteadOfNoQualifier() { doTest(0); }
   public void testMethodReferenceAcceptableBySecondSearch() { doTest(0); }
   public void testConvertToInstanceMethodOfTheSameClass() { doTest(0); }
+  public void testReassignedParameter() { doTest(0); }
   public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() { doTest(0, null, "I i", "this / new I()"); }
   public void testEnum() { doTest(0, null, "E e"); }
   public void testAnonymousClass() { doTest(0, null, "X x"); }

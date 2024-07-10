@@ -27,6 +27,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   private static final Logger LOG = Logger.getInstance(ConvertToInstanceMethodProcessor.class);
   private PsiMethod myMethod;
   private @Nullable PsiParameter myTargetParameter;
+  private final boolean myParameterIsReassigned;
   private PsiClass myTargetClass;
   private Map<PsiTypeParameter, PsiTypeParameter> myTypeParameterReplacements;
   private static final Key<PsiTypeParameter> BIND_TO_TYPE_PARAMETER = Key.create("REPLACEMENT");
@@ -52,6 +54,8 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     super(project);
     myMethod = method;
     myTargetParameter = targetParameter;
+    myParameterIsReassigned = targetParameter != null && 
+                              VariableAccessUtils.variableIsAssigned(myTargetParameter, myTargetParameter.getDeclarationScope());
     LOG.assertTrue(method.hasModifierProperty(PsiModifier.STATIC));
     if (myTargetParameter != null) {
       LOG.assertTrue(myTargetParameter.getDeclarationScope() == myMethod);
@@ -215,7 +219,7 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       if (usage instanceof MethodCallUsageInfo) {
         processMethodCall(((MethodCallUsageInfo)usage).getMethodCall());
       }
-      else if (usage instanceof ParameterUsageInfo) {
+      else if (usage instanceof ParameterUsageInfo && !myParameterIsReassigned) {
         processParameterUsage((ParameterUsageInfo)usage);
       }
       else if (usage instanceof ImplementingClassUsageInfo) {
@@ -227,7 +231,20 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
     }
 
     prepareTypeParameterReplacement();
-    if (myTargetParameter != null) myTargetParameter.delete();
+    if (myTargetParameter != null) {
+      if (myParameterIsReassigned) {
+        PsiDeclarationStatement statement =
+          JavaPsiFacade.getElementFactory(myProject).createVariableDeclarationStatement(myTargetParameter.getName(),
+                                                                                        myTargetParameter.getType(),
+                                                                                        createThisExpression());
+        PsiCodeBlock body = myMethod.getBody();
+        assert body != null;
+        PsiElement first = body.getFirstBodyElement();
+        assert first != null;
+        first.getParent().addBefore(statement, first);
+      }
+      myTargetParameter.delete();
+    }
     ChangeContextUtil.encodeContextInfo(myMethod, true);
     PsiMethod result;
     if (!myTargetClass.isInterface()) {

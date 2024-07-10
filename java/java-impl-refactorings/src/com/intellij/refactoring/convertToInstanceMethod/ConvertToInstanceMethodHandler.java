@@ -20,7 +20,6 @@ import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -75,7 +74,6 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler,
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     for (final PsiParameter parameter : parameters) {
-      if (VariableAccessUtils.variableIsAssigned(parameter, parameter.getDeclarationScope())) continue;
       final PsiType type = parameter.getType();
       if (type instanceof PsiClassType classType) {
         classTypesFound = true;
