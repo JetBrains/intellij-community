@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.trimIfMangledInByte
 import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalClassName
 import org.jetbrains.kotlin.idea.debugger.core.getJvmInternalName
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.org.objectweb.asm.Type
@@ -157,20 +158,20 @@ private fun sourceParametersCount(z: Int): Int {
 }
 
 private fun BytecodeSignature.handleDefaultArgs(): BytecodeSignature {
-    if (!name.endsWith("\$default")) return this
+    if (!name.endsWith(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX)) return this
     val type = Type.getType(signature)
     val parametersCount = type.argumentCount
     val sourceParametersCount = sourceParametersCount(parametersCount)
     return copy(
-        name = name.substringBefore("\$default"),
+        name = name.substringBefore(JvmAbi.DEFAULT_PARAMS_IMPL_SUFFIX),
         signature = buildSignature(signature, parametersCount - sourceParametersCount, fromStart = false)
     )
 }
 
 private fun BytecodeSignature.handleDefaultInterfaces(): BytecodeSignature {
-    if (!owner.endsWith("\$DefaultImpls")) return this
+    if (!owner.endsWith(JvmAbi.DEFAULT_IMPLS_SUFFIX)) return this
     return copy(
-        owner = owner.removeSuffix("\$DefaultImpls"),
+        owner = owner.removeSuffix(JvmAbi.DEFAULT_IMPLS_SUFFIX),
         signature = buildSignature(signature, 1, fromStart = true)
     )
 }
