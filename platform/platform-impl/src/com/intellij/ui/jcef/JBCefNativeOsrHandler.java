@@ -120,7 +120,7 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
             || image.getDelegate().getHeight(null) != frame.getHeight()) {
           image = (JBHiDPIScaledImage)RetinaImage.createFrom(
             new BufferedImage(frame.getWidth(), frame.getHeight(), BufferedImage.TYPE_INT_ARGB_PRE),
-            myScale.getJreBiased(), null);
+            getPixelDensity(), null);
         }
         loadBuffered((BufferedImage)Objects.requireNonNull(image.getDelegate()), frame);
         myImage = image;

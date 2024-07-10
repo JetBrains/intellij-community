@@ -8,7 +8,6 @@ import com.intellij.ui.Gray;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
-import com.jetbrains.cef.JCefAppConfig;
 import org.cef.browser.CefBrowser;
 import org.cef.callback.CefDragData;
 import org.cef.handler.CefRenderHandler;
@@ -37,7 +36,6 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * @see JBCefOsrComponent
  */
 class JBCefOsrHandler implements CefRenderHandler {
-  protected final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
   private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
@@ -54,17 +52,31 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private volatile @Nullable JBCefCaretListener myCaretListener;
 
+  // DIP(device independent pixel aka logic pixel) size in screen pixels. Expected to be != 1 only if JRE supports HDPI
+  private volatile double myPixelDensity = 1;
+  private volatile double myScaleFactor = 1;
+
+  public void setScreenInfo(double pixelDensity, double scaleFactor) {
+    myPixelDensity = pixelDensity;
+    myScaleFactor = scaleFactor;
+  }
+
+  protected double getPixelDensity() { return myPixelDensity; }
+
+  protected double getScaleFactor() { return myScaleFactor; }
+
   @Override
   public Rectangle getViewRect(CefBrowser browser) {
     Component component = browser.getUIComponent();
-    double scale = myScale.getIdeBiased();
+    double scale = getScaleFactor();
     return new Rectangle(0, 0, CEIL.round(component.getWidth() / scale), CEIL.round(component.getHeight() / scale));
   }
 
   @Override
   public boolean getScreenInfo(CefBrowser browser, CefScreenInfo screenInfo) {
     Rectangle rect = getScreenBoundaries(browser.getUIComponent());
-    screenInfo.Set(getDeviceScaleFactor(browser), 32, 4, false, rect, rect);
+    double scale = myScaleFactor * myPixelDensity;
+    screenInfo.Set(scale, 32, 4, false, rect, rect);
     return true;
   }
 
@@ -99,7 +111,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public double getDeviceScaleFactor(CefBrowser browser) {
-    return JCefAppConfig.getDeviceScaleFactor(browser.getUIComponent());
+    return myScaleFactor * myPixelDensity;
   }
 
   @Override
@@ -124,7 +136,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     Dimension size = getRealImageSize(image);
     if (size.width != width || size.height != height) {
       image = (JBHiDPIScaledImage)RetinaImage.createFrom(new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB_PRE),
-                                                         myScale.getJreBiased(), null);
+                                                         getPixelDensity(), null);
     }
 
     assert image != null;
@@ -224,10 +236,6 @@ class JBCefOsrHandler implements CefRenderHandler {
     myFpsMeter.paintFrameFinished(g);
   }
 
-  public void updateScale(JBCefOsrComponent.MyScale scale) {
-    myScale.update(scale);
-  }
-
   public void setLocationOnScreen(Point location) {
     myLocationOnScreenRef.set(location);
   }
@@ -240,7 +248,7 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   private @NotNull Point toRealCoordinates(@NotNull Point pt) {
-    double scale = myScale.getJreBiased();
+    double scale = getPixelDensity();
     return new Point(ROUND.round(pt.x * scale), ROUND.round(pt.y * scale));
   }
 
