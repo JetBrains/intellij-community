@@ -25,19 +25,7 @@ f:com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 - s:executeAction(java.lang.String,java.awt.event.InputEvent):V
 - s:executeAction(java.lang.String,java.lang.String,java.awt.event.InputEvent):V
 - s:getModule(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.module.Module
-- s:installCheckboxRenderer(com.intellij.ui.treeStructure.SimpleTree,com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckboxHandler):V
 - s:setElements(com.intellij.ide.util.ElementsChooser,java.util.Collection,java.util.Collection,java.util.Comparator):V
-e:com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState
-- java.lang.Enum
-- sf:CHECKED:com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState
-- sf:PARTIAL:com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState
-- sf:UNCHECKED:com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState
-- s:valueOf(java.lang.String):com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState
-- s:values():com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState[]
-com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckboxHandler
-- a:getState(java.lang.Object):com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil$CheckBoxState
-- a:isVisible(java.lang.Object):Z
-- a:toggle(javax.swing.tree.TreePath,java.awt.event.InputEvent):V
 a:com.intellij.openapi.externalSystem.action.ExternalSystemNodeAction
 - com.intellij.openapi.externalSystem.action.ExternalSystemAction
 - <init>(java.lang.Class):V
