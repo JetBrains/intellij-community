@@ -43,4 +43,17 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
 
   @Internal
   boolean isClosed();
+
+  /**
+   * Invalidates all cached {@link ValueContainer}s: persists modified containers, and clear all the entries
+   * from the cache.
+   * TODO RC: most of the time this method is used only for the first of its effects: persisting modified
+   * cache contents to underlying storage (=flush). Clearing caching entries then is useless side-effect, that
+   * is even harmful for performance. Probably, this method should be split in 2: flush() and invalidateCache(),
+   * with the first one only persisting modified ValueContainers, while second one also clearing the cache.
+   */
+  @Internal
+  default void invalidateCachedMappings() {
+    //nothing
+  }
 }
