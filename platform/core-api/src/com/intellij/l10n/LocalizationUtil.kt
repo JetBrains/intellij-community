@@ -56,8 +56,9 @@ object LocalizationUtil {
 
   @Internal
   @JvmOverloads
-  fun getPluginClassLoader(defaultLoader: ClassLoader? = null): ClassLoader? {
-    val langBundle = findLanguageBundle() ?: return null
+  fun getPluginClassLoader(defaultLoader: ClassLoader? = null, locale: Locale = getLocale()): ClassLoader? {
+    if (locale == Locale.ENGLISH || locale == Locale.ROOT) return null
+    val langBundle = findLanguageBundle(locale) ?: return null
     return langBundle.pluginDescriptor?.classLoader ?: defaultLoader
   }
 
@@ -97,12 +98,20 @@ object LocalizationUtil {
     val localizedPaths = getLocalizedPaths(path, locale)
     for (localizedPath in localizedPaths) {
       val pathString = FileUtil.toSystemIndependentName(localizedPath.pathString)
-      if (localizedPath == path) {
-        getPluginClassLoader()?.getResourceAsStream(pathString)?.let { return it }
-      }
       defaultLoader?.getResourceAsStream(pathString)?.let { return it }
     }
-    return null
+    return getPluginClassLoader()?.getResourceAsStream(path.pathString) ?:
+    defaultLoader?.getResourceAsStream(path.pathString)?.let { return it }
+  }
+
+  @Internal
+  @JvmOverloads
+  fun getLocalizedPathsWithDefault(path: Path, specialLocale: Locale? = null): List<Path> {
+    val locale = specialLocale ?: getLocale()
+    return getLocalizedPaths(path, locale).toMutableList().apply {
+      add(path)
+      toList()
+    }
   }
 
   @Internal
@@ -121,9 +130,6 @@ object LocalizationUtil {
 
       //inspectionDescriptions/name_zh.html
       path.convertPathToLocaleSuffixUsage(locale, false),
-
-      //inspectionDescriptions/name.html
-      path
     ).distinct()
   }
 

@@ -375,19 +375,20 @@ private fun loadLocalizedContent(classLoader: ClassLoader, root: Any, path: Stri
   val locale = LocalizationUtil.getLocaleOrNullForDefault()
   if (locale != null) {
     val contentPath = Path.of(path)
-    //loading from localization plugin
-    val localizedPaths = LocalizationUtil.getLocalizedPaths(contentPath).minus(contentPath).map { it.invariantSeparatorsPathString }
+    //loading from source files with localization folder/suffix 
+    val localizedPaths = LocalizationUtil.getLocalizedPaths(contentPath).map { it.invariantSeparatorsPathString }
     for (localizedPath in localizedPaths) {
       result = loadFileContent(classLoader, root, localizedPath)
       if (!result.isNullOrEmpty()) return result
     }
+    //loading from localization plugin
     result = LocalizationUtil.getPluginClassLoader()?.let {
       ResourceUtil.getResourceAsBytesSafely(path, it)?.toString(StandardCharsets.UTF_8)
-    }
+    }  ?: loadFileContent(classLoader, root, path)
     //loading localized content from source files
     if (!result.isNullOrEmpty()) return result
   }
-  //default loading content in case of default locale
+  //default loading content
   result = loadFileContent(classLoader, root, path)
   return result
 }
