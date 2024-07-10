@@ -137,7 +137,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/makeTypeParameterReified", pattern = pattern)
             model("$idea/quickfix/makeUpperBoundNonNullable", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/memberVisibilityCanBePrivate", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/migration", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/migration/missingConstructorKeyword", pattern = pattern)
             model("$idea/quickfix/missingConstructorBrackets", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveMemberToCompanionObject", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/moveReceiverAnnotation", pattern = pattern, isIgnored = true)

@@ -8072,7 +8072,34 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/migration/missingConstructorKeyword")
+    public static class MissingConstructorKeyword extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/missingConstructorKeyword/basic.kt");
+        }
+
+        @TestMetadata("noParentheses.kt")
+        public void testNoParentheses() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/missingConstructorKeyword/noParentheses.kt");
+        }
+
+        @TestMetadata("noParenthesesWithAnnotation.kt")
+        public void testNoParenthesesWithAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/missingConstructorKeyword/noParenthesesWithAnnotation.kt");
+        }
+    }
 
 
 
