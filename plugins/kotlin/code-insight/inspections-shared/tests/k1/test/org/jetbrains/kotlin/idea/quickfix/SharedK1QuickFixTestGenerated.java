@@ -43,4 +43,43 @@ public abstract class SharedK1QuickFixTestGenerated extends AbstractSharedK1Quic
             runTest("../testData/quickfix/redundantSemicolon/afterStatement.kt");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/quickfix/unresolvedInvocation")
+    public static class UnresolvedInvocation extends AbstractSharedK1QuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("enumEntryCall.kt")
+        public void testEnumEntryCall() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/enumEntryCall.kt");
+        }
+
+        @TestMetadata("nonSimpleName.kt")
+        public void testNonSimpleName() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/nonSimpleName.kt");
+        }
+
+        @TestMetadata("objectCall.kt")
+        public void testObjectCall() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/objectCall.kt");
+        }
+
+        @TestMetadata("propertyCall.kt")
+        public void testPropertyCall() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/propertyCall.kt");
+        }
+
+        @TestMetadata("propertyCallWithArguments.kt")
+        public void testPropertyCallWithArguments() throws Exception {
+            runTest("../testData/quickfix/unresolvedInvocation/propertyCallWithArguments.kt");
+        }
+    }
 }

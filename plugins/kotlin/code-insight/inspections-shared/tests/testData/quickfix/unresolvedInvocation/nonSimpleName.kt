@@ -1,0 +1,7 @@
+// "Remove invocation" "true"
+
+fun x() {
+    val y = (1 + 2)(< caret >)
+}
+
+// IGNORE_K1
