@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.j2k
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 
 /**
@@ -16,20 +17,34 @@ import com.intellij.psi.PsiJavaFile
  * </extensions>
  * ```
  *
- * All preprocessors are run on a background thread, write actions must be wrapped in
- * `runUndoTransparentActionInEdt(inWriteAction = true) { ... }` so that they are executed on the EDT thread. As usual, read actions must
- * be wrapped in `runReadAction { ... }`, and analysis must be done outside write actions.
+ * All preprocessors are run on a background thread, so write actions must be wrapped in
+ * `writeAction { ... }` so that they are executed on the EDT thread. As usual, read actions must
+ * be wrapped in `readAction { ... }`, and analysis must be done outside write actions.
+ *
+ * Preprocessors are only applied to file-level conversions; copy-paste conversions ignore registered preprocessors.
+ *
+ * Internally, preprocessors can use either K1 or K2 utilities.
  */
-interface J2kPreprocessorExtension {
+interface J2kPreprocessorExtension : J2kExtension<PsiJavaFile> {
 
     /**
      * Override this method to analyze and edit Java files before conversion. This method is always executed on a background thread, so
      * write actions must be wrapped in `runUndoTransparentActionInEdt(inWriteAction = true) { ... }`. As usual, read actions must be
      * wrapped in `runReadAction { ... }`, and analysis must be done outside write actions.
      */
-    suspend fun processFiles(project: Project, files: List<PsiJavaFile>)
+    override suspend fun processFiles(project: Project, files: List<PsiJavaFile>)
 
     companion object {
         val EP_NAME = ExtensionPointName<J2kPreprocessorExtension>("org.jetbrains.kotlin.j2kPreprocessorExtension")
     }
+}
+
+interface J2kExtension<T : PsiFile> {
+
+    /**
+     * Override this method to analyze and edit Java files before conversion. This method is always executed on a background thread, so
+     * write actions must be wrapped in `runUndoTransparentActionInEdt(inWriteAction = true) { ... }`. As usual, read actions must be
+     * wrapped in `runReadAction { ... }`, and analysis must be done outside write actions.
+     */
+    suspend fun processFiles(project: Project, files: List<T>)
 }

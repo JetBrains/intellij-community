@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.J2KConversionPhase.*
+import org.jetbrains.kotlin.nj2k.PreprocessorExtensionsRunner
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
 import org.jetbrains.kotlin.nj2k.types.JKTypeFactory
@@ -42,17 +43,20 @@ class NewJavaToKotlinConverter(
     override fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
-        progressIndicator: ProgressIndicator
-    ): FilesResult = filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null)
+        progressIndicator: ProgressIndicator,
+        preprocessorExtensions: List<J2kPreprocessorExtension>
+    ): FilesResult = filesToKotlin(files, postProcessor, progressIndicator, bodyFilter = null, preprocessorExtensions)
 
     fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         progressIndicator: ProgressIndicator,
         bodyFilter: ((PsiElement) -> Boolean)?,
+        preprocessorExtensions: List<J2kPreprocessorExtension>
     ): FilesResult {
         val withProgressProcessor = NewJ2kWithProgressProcessor(progressIndicator, files, postProcessor.phasesCount + phasesCount)
         return withProgressProcessor.process {
+            PreprocessorExtensionsRunner.runProcessors(project, files, preprocessorExtensions)
             val (results, externalCodeProcessing, context) = runReadAction {
                 elementsToKotlin(files, withProgressProcessor, bodyFilter)
             }

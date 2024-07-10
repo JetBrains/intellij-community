@@ -5892,9 +5892,9 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("classWithParamsAndProperties.java")
-        public void testClassWithParamsAndProperties() throws Exception {
-            runTest("../../shared/tests/testData/newJ2k/preAndPostprocessorExtensions/classWithParamsAndProperties.java");
+        @TestMetadata("classWithParamsAndPropertiesPreprocessing.java")
+        public void testClassWithParamsAndPropertiesPreprocessing() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/preAndPostprocessorExtensions/classWithParamsAndPropertiesPreprocessing.java");
         }
     }
 

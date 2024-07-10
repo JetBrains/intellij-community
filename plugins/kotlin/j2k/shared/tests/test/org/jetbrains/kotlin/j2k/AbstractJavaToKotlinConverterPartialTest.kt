@@ -19,7 +19,8 @@ abstract class AbstractJavaToKotlinConverterPartialTest : AbstractJavaToKotlinCo
         return NewJavaToKotlinConverter(project, module, settings).filesToKotlin(
             listOf(file),
             postProcessor,
-            EmptyProgressIndicator()
-        ) { it == element }.results.single()
+            EmptyProgressIndicator(),
+        { it == element }, preprocessorExtensions = emptyList()
+        ).results.single()
     }
 }
