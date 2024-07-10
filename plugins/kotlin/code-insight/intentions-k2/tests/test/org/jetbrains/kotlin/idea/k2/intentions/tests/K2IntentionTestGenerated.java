@@ -8696,6 +8696,16 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/addThrowsAnnotation/hasThrowsWithDifferentClassArgument5.kt");
         }
 
+        @TestMetadata("hasThrowsWithDifferentClassArgument6.kt")
+        public void testHasThrowsWithDifferentClassArgument6() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addThrowsAnnotation/hasThrowsWithDifferentClassArgument6.kt");
+        }
+
+        @TestMetadata("hasThrowsWithDifferentClassArgument7.kt")
+        public void testHasThrowsWithDifferentClassArgument7() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addThrowsAnnotation/hasThrowsWithDifferentClassArgument7.kt");
+        }
+
         @TestMetadata("hasThrowsWithEmptyArgument.kt")
         public void testHasThrowsWithEmptyArgument() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addThrowsAnnotation/hasThrowsWithEmptyArgument.kt");

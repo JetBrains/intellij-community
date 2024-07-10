@@ -2264,6 +2264,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/addThrowsAnnotation/hasThrowsWithDifferentClassArgument5.kt");
         }
 
+        @TestMetadata("hasThrowsWithDifferentClassArgument6.kt")
+        public void testHasThrowsWithDifferentClassArgument6() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/hasThrowsWithDifferentClassArgument6.kt");
+        }
+
+        @TestMetadata("hasThrowsWithDifferentClassArgument7.kt")
+        public void testHasThrowsWithDifferentClassArgument7() throws Exception {
+            runTest("testData/intentions/addThrowsAnnotation/hasThrowsWithDifferentClassArgument7.kt");
+        }
+
         @TestMetadata("hasThrowsWithEmptyArgument.kt")
         public void testHasThrowsWithEmptyArgument() throws Exception {
             runTest("testData/intentions/addThrowsAnnotation/hasThrowsWithEmptyArgument.kt");
