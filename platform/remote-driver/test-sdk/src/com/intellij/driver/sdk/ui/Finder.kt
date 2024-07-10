@@ -53,6 +53,10 @@ interface Finder {
     return UIComponentsList(xQuery { init() }, UiComponent::class.java, driver, searchService, robotProvider, searchContext)
   }
 
+  fun <T : UiComponent> xx(type: Class<T>, init: QueryBuilder.() -> String): UIComponentsList<T> {
+    return UIComponentsList(xQuery { init() }, type, driver, searchService, robotProvider, searchContext)
+  }
+
   fun <T : UiComponent> xx(@Language("xpath") xpath: String, type: Class<T>): UIComponentsList<T> {
     return UIComponentsList(xpath, type, driver, searchService, robotProvider, searchContext)
   }
