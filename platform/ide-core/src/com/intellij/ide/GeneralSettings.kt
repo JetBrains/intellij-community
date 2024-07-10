@@ -34,7 +34,7 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     }
 
   var isReopenLastProject: Boolean
-    get() = state.reopenLastProject
+    get() = ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup && state.reopenLastProject
     set(value) {
       state.reopenLastProject = value
     }
