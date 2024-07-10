@@ -9,7 +9,6 @@ class RealProjectsImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportStringBootStarter() = runBlocking {
-    //Registry.get("maven.server.debug").setValue(true)
     importProjectAsync("""
     |  <parent>
     |    <groupId>org.springframework.boot</groupId>

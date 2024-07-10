@@ -586,7 +586,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     DefaultSessionFactory factory = getComponent(DefaultSessionFactory.class);
 
     IdeaMavenSessionBuilderSupplier sessionBuilderSupplier =
-      new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request.getLocalRepositoryPath().toPath());
+      new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request);
     try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionBuilderSupplier.get().build()) {
       MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
       InternalSession session = factory.newSession(mavenSession);

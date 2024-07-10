@@ -2,7 +2,6 @@
 package com.intellij.maven.server.m40.utils;
 
 import com.intellij.maven.server.m40.Maven40ServerEmbedderImpl;
-import com.intellij.maven.server.m40.hacks.DependencyNodeWithoutRecursion;
 import com.intellij.maven.server.telemetry.MavenServerOpenTelemetry;
 import org.apache.maven.AbstractMavenLifecycleParticipant;
 import org.apache.maven.DefaultMaven;
@@ -22,8 +21,6 @@ import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyNode;
 import org.eclipse.aether.graph.DependencyVisitor;
 import org.eclipse.aether.repository.LocalRepositoryManager;
-import org.eclipse.aether.util.filter.AndDependencyFilter;
-import org.eclipse.aether.util.filter.ScopeDependencyFilter;
 import org.eclipse.aether.util.graph.transformer.ConflictResolver;
 import org.eclipse.aether.util.graph.visitor.TreeDependencyVisitor;
 import org.jetbrains.annotations.NotNull;
@@ -240,7 +237,6 @@ public class Maven40ProjectResolver {
 
     Set<Artifact> artifacts = new LinkedHashSet<>();
     if (resolutionResult.getDependencyGraph() != null) {
-      MavenServerGlobals.getLogger().warn(new RuntimeException("!!!!!RESOLVE in project " + project.getArtifactId()));
       try {
         RepositoryUtils.toArtifacts(
           artifacts,
