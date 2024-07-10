@@ -2,7 +2,7 @@
   <id>TestNG-J</id>
   <name>TestNG</name>
   <description><![CDATA[
-    Supports <a href="https://testng.org/doc/">TestNG</a>, a Java unit testing framework
+    Supports <a href="https://testng.org/">TestNG</a>, a Java unit testing framework
     <p></p>
     <p>Originally developed by Theory In Practice.</p>
     ]]></description>

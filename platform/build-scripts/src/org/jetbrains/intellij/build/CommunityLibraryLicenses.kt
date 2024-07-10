@@ -379,10 +379,10 @@ object CommunityLibraryLicenses {
                    version = LibraryLicense.CUSTOM_REVISION)
       .mit("https://github.com/fb55/htmlparser2/blob/master/LICENSE"),
     LibraryLicense(name = "HttpComponents HttpClient", libraryName = "http-client",
-                   url = "https://hc.apache.org/httpcomponents-client-ga/index.html").apache()
+                   url = "https://hc.apache.org/httpcomponents-client-ga/").apache()
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "HttpComponents HttpClient Fluent API", libraryName = "fluent-hc",
-                   url = "https://hc.apache.org/httpcomponents-client-ga/index.html").apache()
+                   url = "https://hc.apache.org/httpcomponents-client-ga/").apache()
       .suppliedByOrganizations("The Apache Software Foundation"),
     LibraryLicense(name = "ICU4J", libraryName = "icu4j", license = "Unicode",
                    url = "https://icu.unicode.org/", licenseUrl = "https://www.unicode.org/copyright.html"),
@@ -807,7 +807,8 @@ object CommunityLibraryLicenses {
                    licenseUrl = "https://microba.sourceforge.net/license.txt").newBsd()
       .suppliedByPersons("Michael Baranov"),
     LibraryLicense(name = "MigLayout", libraryName = "miglayout-swing",
-                   url = "https://www.miglayout.com/", licenseUrl = "https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt").newBsd()
+                   url = "https://github.com/mikaelgrev/miglayout/",
+                   licenseUrl = "https://github.com/mikaelgrev/miglayout/blob/master/src/site/resources/docs/license.txt").newBsd()
       .suppliedByOrganizations("MiG InfoCom AB"),
     LibraryLicense(name = "morfologik-fsa", libraryName = "org.carrot2:morfologik-fsa",
                    url = "https://github.com/morfologik/morfologik-stemming").simplifiedBsd()
@@ -981,7 +982,7 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "Sonatype Nexus: Indexer", attachedTo = "intellij.maven.server.m3.common", version = "3.0.4",
                    additionalLibraryNames = listOf("org.sonatype.nexus:nexus-indexer:3.0.4",
                                                    "org.sonatype.nexus:nexus-indexer-artifact:1.0.1"),
-                   url = "https://nexus.sonatype.org/").eplV1(),
+                   url = "https://maven.apache.org/maven-indexer/").eplV1(),
     LibraryLicense(name = "SourceCodePro", attachedTo = "intellij.platform.resources", version = "2.010", license = "OFL",
                    url = "https://github.com/adobe-fonts/source-code-pro",
                    licenseUrl = "https://github.com/adobe-fonts/source-code-pro/blob/master/LICENSE.md"),
@@ -1009,7 +1010,7 @@ object CommunityLibraryLicenses {
                    url = "https://central.sonatype.com/artifact/org.swinglabs/swingx-core/1.6.2-2",
                    licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1.php")
       .suppliedByOrganizations("Sun Microsystems, Inc."),
-    LibraryLicense(libraryName = "TestNG", url = "https://testng.org/doc/")
+    LibraryLicense(libraryName = "TestNG", url = "https://testng.org/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),
     LibraryLicense(name = "The Erlang LS extension for VSCode", attachedTo = "intellij.textmate", version = "0.0.43",
                    url = "https://github.com/mblode/vscode-twig-language-2")
