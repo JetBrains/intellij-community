@@ -5,12 +5,10 @@ import kotlinx.coroutines.*
 suspend fun foo(i: Int) {
     println("Start foo")
     coroutineScope {
-        trackExecution("Start for $i")
         if (i == 25) {
             //Breakpoint!
             startMethod(i)
         }
-        trackExecution("Middle for $i")
         delay(1)
         // EXPRESSION: i
         // RESULT: 25: I
@@ -41,13 +39,7 @@ fun main() {
     }
 }
 
-fun trackExecution(s: String) {
-    //LogFirstArgumentBreakpoint!
-    s.toString()
-}
-
-
-// STEP_OVER: 4
+// STEP_OVER: 3
 // REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
 // REGISTRY: debugger.always.suspend.thread.before.switch=true
 // REGISTRY: debugger.log.jdi.in.unit.tests=true

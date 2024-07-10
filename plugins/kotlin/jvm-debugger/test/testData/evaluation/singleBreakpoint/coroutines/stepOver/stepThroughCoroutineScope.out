@@ -1,11 +1,10 @@
-LineBreakpoint created at stepThroughCoroutineScope.kt:11
+LineBreakpoint created at stepThroughCoroutineScope.kt:10
 Run Java
 Connected to the target VM
-stepThroughCoroutineScope.kt:11
-stepThroughCoroutineScope.kt:13
-stepThroughCoroutineScope.kt:14
-stepThroughCoroutineScope.kt:17
-stepThroughCoroutineScope.kt:18
+stepThroughCoroutineScope.kt:10
+stepThroughCoroutineScope.kt:12
+stepThroughCoroutineScope.kt:15
+stepThroughCoroutineScope.kt:16
 Compile bytecode for i
 Disconnected from the target VM
 
