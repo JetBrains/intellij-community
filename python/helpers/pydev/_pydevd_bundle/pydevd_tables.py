@@ -68,6 +68,7 @@ def __get_table_provider(output):
     if type_qualified_name in ['pandas.core.frame.DataFrame',
                                'pandas.core.series.Series',
                                'geopandas.geoseries.GeoSeries',
+                               'geopandas.geodataframe.GeoDataFrame',
                                'pandera.typing.pandas.DataFrame']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
