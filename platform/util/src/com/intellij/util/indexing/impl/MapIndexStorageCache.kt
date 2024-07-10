@@ -65,6 +65,12 @@ interface MapIndexStorageCacheProvider {
    */
   fun totalReadsUncached(): Long
 
+  /**
+   * Number of entries evicted from all the caches created by this provider.
+   * Basically it is a number of calls to evictedValuesPersister across all the caches created by this provider
+   */
+  fun totalEvicted(): Long
+
 
   companion object {
     private const val CACHE_PROVIDER_CLASS_PROPERTY = "indexes.storage-cache.provider-class"
@@ -105,10 +111,13 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   //          get()/getIfCached(), and valueReader
   private val totalReads: AtomicLong = AtomicLong()
   private val totalUncachedReads: AtomicLong = AtomicLong()
+  private val totalEvicted: AtomicLong = AtomicLong()
 
   override fun totalReads(): Long = totalReads.get()
 
   override fun totalReadsUncached(): Long = totalUncachedReads.get()
+
+  override fun totalEvicted(): Long = totalEvicted.get()
 
   override fun <Key : Any, Value> createCache(
     valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
@@ -135,6 +144,9 @@ object SlruIndexStorageCacheProvider : MapIndexStorageCacheProvider {
 
       override fun onDropFromCache(key: Key, valueContainer: ChangeTrackingValueContainer<Value>) {
         assert(cacheAccessLock.isHeldByCurrentThread)
+
+        totalEvicted.incrementAndGet()
+
         evictedValuesPersister.accept(key, valueContainer)
       }
     }
@@ -189,7 +201,7 @@ class CaffeineIndexStorageCacheProvider : MapIndexStorageCacheProvider {
   //TODO RC: implement
   override fun totalReads(): Long = 0
   override fun totalReadsUncached(): Long = 0
-
+  override fun totalEvicted(): Long = 0
 
   private class CaffeineCache<Key : Any, Value>(
     valueReader: Function<Key, ChangeTrackingValueContainer<Value>>,
@@ -329,6 +341,8 @@ class SharedCaffeineIndexStorageCacheProvider(totalCacheSize: Long = (256 * 1024
   override fun totalReads(): Long = sharedCache.stats().requestCount()
 
   override fun totalReadsUncached(): Long = sharedCache.stats().loadCount()
+
+  override fun totalEvicted(): Long = sharedCache.stats().evictionCount()
 
   /**
    * 1. Caffeine doesn't allow customizing equals/hashCode evaluation strategy, hence the only way to customize

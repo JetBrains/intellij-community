@@ -308,6 +308,9 @@ object StorageDiagnosticData {
     otelMeter.counterBuilder("Indexes.cache.totalCacheMisses").buildWithCallback {
       it.record(indexCacheProvider.totalReadsUncached())
     }
+    otelMeter.counterBuilder("Indexes.cache.totalCacheEvicted").buildWithCallback {
+      it.record(indexCacheProvider.totalEvicted())
+    }
 
     mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)
   }
