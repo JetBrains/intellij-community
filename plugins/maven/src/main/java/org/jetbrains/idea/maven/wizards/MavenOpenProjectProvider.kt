@@ -30,7 +30,7 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
     return MavenUtil.isPomFile(file)
   }
 
-  override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+  override suspend fun linkProject(projectFile: VirtualFile, project: Project) {
     val autoImportDisabled = Registry.`is`("external.system.auto.import.disabled")
     if (autoImportDisabled) {
       LOG.debug("External system auto import disabled. Adding '$projectFile' to existing project ${project.name}, but not syncing")

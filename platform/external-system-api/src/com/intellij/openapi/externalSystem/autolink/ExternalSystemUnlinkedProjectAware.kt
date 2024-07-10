@@ -35,6 +35,10 @@ interface ExternalSystemUnlinkedProjectAware {
     }
   }
 
+  suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    throw UnsupportedOperationException()
+  }
+
   fun subscribe(project: Project, listener: ExternalSystemProjectLinkListener, parentDisposable: Disposable)
 
   companion object {

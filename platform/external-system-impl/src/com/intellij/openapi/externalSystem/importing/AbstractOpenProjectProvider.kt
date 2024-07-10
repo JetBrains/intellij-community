@@ -43,7 +43,16 @@ abstract class AbstractOpenProjectProvider {
     throw UnsupportedOperationException()
   }
 
-  open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+  suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    unlinkProject(projectFile)
+    LOG.info("Linking $systemId project at ${projectFile.path}")
+    linkProject(projectFile, project)
+  }
+
+  suspend fun unlinkProject(projectFile: VirtualFile) {
+  }
+
+  protected open suspend fun linkProject(projectFile: VirtualFile, project: Project, ) {
     withContext(Dispatchers.EDT) {
       blockingContext {
         @Suppress("DEPRECATION")
