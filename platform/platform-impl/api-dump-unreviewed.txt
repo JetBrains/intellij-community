@@ -3654,14 +3654,6 @@ f:com.intellij.ide.ActiveWindowsWatcher
 - s:nextWindowAfter(java.awt.Window):java.awt.Window
 - s:nextWindowBefore(java.awt.Window):java.awt.Window
 - s:updateActivatedWindowSet():V
-com.intellij.ide.AppLifecycleListener
-- sf:TOPIC:com.intellij.util.messages.Topic
-- appClosing():V
-- appFrameCreated(java.util.List):V
-- appWillBeClosed(Z):V
-- projectFrameClosed():V
-- projectOpenFailed():V
-- welcomeScreenDisplayed():V
 f:com.intellij.ide.AssertiveRepaintManager
 - javax.swing.RepaintManager
 - <init>():V
