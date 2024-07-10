@@ -3,6 +3,9 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericAttributeValue;
@@ -13,6 +16,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.util.DevKitDomUtil;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 /**
  * Check {@link #isAllowed} from {@link #checkDomElement} to skip non-relevant files.
@@ -38,5 +42,11 @@ public abstract class DevKitPluginXmlInspectionBase extends BasicDomElementsInsp
                                            ProblemHighlightType highlightType,
                                            DomElementAnnotationHolder holder) {
     holder.createProblem(element, highlightType, message, null, new RemoveDomElementQuickFix(element)).highlightWholeElement();
+  }
+
+  protected static boolean isUnderProductionSources(DomElement domElement, @NotNull Module module) {
+    VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
+    return virtualFile != null &&
+           ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
   }
 }

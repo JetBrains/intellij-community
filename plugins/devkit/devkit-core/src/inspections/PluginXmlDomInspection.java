@@ -22,18 +22,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,7 +51,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -68,8 +63,6 @@ import static com.intellij.psi.search.GlobalSearchScope.projectScope;
 @VisibleForTesting
 @ApiStatus.Internal
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
-  @NonNls
-  private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
 
   private static final int MINIMAL_DESCRIPTION_LENGTH = 40;
 
@@ -112,7 +105,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       if (module != null) {
         annotateIdeaPlugin((IdeaPlugin)element, holder, module);
         checkJetBrainsPlugin((IdeaPlugin)element, holder, module);
-        checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
     else if (element instanceof Extension) {
@@ -233,12 +225,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
                                                 psiClassFqn, pluginPackage),
                            new MoveToPackageFix(psiClass.getContainingFile(), pluginPackage));
     }
-  }
-
-  private static boolean isUnderProductionSources(DomElement domElement, @NotNull Module module) {
-    VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
-    return virtualFile != null &&
-           ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
   }
 
   private static void annotateListener(Listener listener, DomElementAnnotationHolder holder) {
@@ -453,20 +439,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (DomUtil.hasXml(ideaPlugin.getIdeaVersion())) {
       highlightRedundant(ideaPlugin.getIdeaVersion(),
                          DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.idea.version"), holder);
-    }
-  }
-
-  private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
-    if (!ideaPlugin.hasRealPluginId()) return;
-    if (!isUnderProductionSources(ideaPlugin, module)) return;
-    if (Boolean.TRUE == ideaPlugin.getImplementationDetail().getValue()) return;
-
-    Collection<VirtualFile> pluginIconFiles =
-      FilenameIndex.getVirtualFilesByName(PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
-    if (pluginIconFiles.isEmpty()) {
-      holder.createProblem(ideaPlugin, ProblemHighlightType.WEAK_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
-                           null);
     }
   }
 

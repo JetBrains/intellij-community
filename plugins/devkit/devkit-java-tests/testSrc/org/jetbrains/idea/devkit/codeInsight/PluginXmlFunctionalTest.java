@@ -777,19 +777,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     doHighlightingTest("productDescriptorInvalid.xml");
   }
 
-  public void testPluginIconFound() {
-    myFixture.addFileToProject("pluginIcon.svg", "fake SVG");
-    myFixture.testHighlighting(true, true, true, "pluginIconFound.xml");
-  }
-
-  public void testPluginIconNotNecessaryForImplementationDetail() {
-    myFixture.testHighlighting(true, true, true, "pluginIconNotNecessaryForImplementationDetail.xml");
-  }
-
-  public void testPluginIconNotFound() {
-    myFixture.testHighlighting(true, true, true, "pluginIconNotFound.xml");
-  }
-
   public void testRedundantComponentInterfaceClass() {
     doHighlightingTest("redundantComponentInterfaceClass.xml");
   }
