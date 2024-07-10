@@ -1808,6 +1808,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoOnLambdaBreakpoint.kt");
         }
 
+        @TestMetadata("smartStepIntoPropertyGetter.kt")
+        public void testSmartStepIntoPropertyGetter() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoPropertyGetter.kt");
+        }
+
         @TestMetadata("smartStepIntoPropertyGetterReference.kt")
         public void testSmartStepIntoPropertyGetterReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoPropertyGetterReference.kt");

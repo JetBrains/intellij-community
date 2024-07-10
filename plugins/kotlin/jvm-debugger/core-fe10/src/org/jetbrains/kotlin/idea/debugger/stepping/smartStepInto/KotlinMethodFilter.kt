@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import com.intellij.debugger.PositionManager
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.NamedMethodFilter
+import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.psi.PsiElement
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
+import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
@@ -114,9 +116,26 @@ open class KotlinMethodFilter(
 
 private fun getCurrentDeclaration(positionManager: PositionManager, location: Location): KtDeclaration? {
     val elementAt = positionManager.getSourcePosition(location)?.elementAt
-    return elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
+    val declaration = elementAt?.getParentOfTypesAndPredicate(false, KtDeclaration::class.java) {
         it !is KtProperty || !it.isLocal
+    } ?: return null
+    if (declaration is KtProperty) {
+        // Smart step into visitor provides accessor element as a declaration
+        val currentLine = DebuggerUtilsEx.getLineNumber(location, true)
+        val accessorsOnLine = declaration.accessors.filter { it.getLineNumber() == currentLine }
+        if (accessorsOnLine.isNotEmpty()) {
+            if (accessorsOnLine.size == 1) return accessorsOnLine.single()
+            val methodName = location.safeMethod()?.name()
+            if (methodName != null) {
+                return if (JvmAbi.isSetterName(methodName)) {
+                    accessorsOnLine.firstOrNull { it.isSetter }
+                } else {
+                    accessorsOnLine.firstOrNull { it.isGetter }
+                }
+            }
+        }
     }
+    return declaration
 }
 
 // Internal methods has a '$<MODULE_NAME>' suffix
