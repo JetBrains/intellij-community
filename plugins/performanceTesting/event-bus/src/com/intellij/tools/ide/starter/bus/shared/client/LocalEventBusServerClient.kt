@@ -36,7 +36,7 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     val connection = url.openConnection() as HttpURLConnection
     return try {
       connection.requestMethod = method
-      connection.connectTimeout = 1000 // 1 second
+      connection.connectTimeout = 3000 // 3 seconds
       connection.readTimeout = 10000 // 10 seconds
       requestBody?.also { body ->
         connection.doOutput = true
