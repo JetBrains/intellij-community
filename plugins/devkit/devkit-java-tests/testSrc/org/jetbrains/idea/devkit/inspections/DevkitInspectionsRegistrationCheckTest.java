@@ -17,8 +17,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
   private static final List<String> DISABLED_INSPECTIONS =
     List.of("StatisticsCollectorNotRegistered",
             "PluginXmlI18n",
-            "SerializableCtor",
-            "UastHintedVisitorAdapterHints");
+            "SerializableCtor");
 
   /**
    * Inspections which implementation is in progress
