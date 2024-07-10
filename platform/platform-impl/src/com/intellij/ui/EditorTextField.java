@@ -193,6 +193,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setDocument(myDocument); // reinit editor.
   }
 
+  /**
+   * @see EditorEx#setShowPlaceholderWhenFocused(boolean)
+   */
   public void setShowPlaceholderWhenFocused(boolean b) {
     myShowPlaceholderWhenFocused = b;
     EditorEx editor = getEditor(false);

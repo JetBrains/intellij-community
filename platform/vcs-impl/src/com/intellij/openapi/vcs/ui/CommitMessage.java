@@ -110,6 +110,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField = createCommitMessageEditor(project, runInspections);
     myEditorField.getDocument().putUserData(DATA_KEY, this);
     myEditorField.setPlaceholder(myMessagePlaceholder);
+    myEditorField.setShowPlaceholderWhenFocused(true);
     myEditorField.getAccessibleContext().setAccessibleName(VcsBundle.message("commit.message.editor.accessible.name"));
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 0);
