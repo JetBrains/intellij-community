@@ -418,11 +418,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         public void testJvm() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm/");
         }
-
-        @TestMetadata("jvmWithoutStdlib")
-        public void testJvmWithoutStdlib() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvmWithoutStdlib/");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
