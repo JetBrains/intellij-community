@@ -14,6 +14,8 @@
                         serviceImplementation="com.intellij.notification.impl.NotificationGroupManagerImpl"/>
     <applicationService serviceImplementation="com.intellij.ide.GeneralSettings"/>
     <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization"/>
+    <applicationService serviceImplementation="com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization"/>
+
     <applicationService serviceImplementation="com.intellij.openapi.editor.ex.EditorSettingsExternalizable" client="all"/>
   </extensions>
 </idea-plugin>
