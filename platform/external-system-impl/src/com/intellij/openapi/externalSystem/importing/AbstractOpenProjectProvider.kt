@@ -61,6 +61,10 @@ abstract class AbstractOpenProjectProvider {
     }
   }
 
+  open suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    throw UnsupportedOperationException()
+  }
+
   protected open suspend fun linkProject(projectFile: VirtualFile, project: Project, ) {
     withContext(Dispatchers.EDT) {
       blockingContext {
