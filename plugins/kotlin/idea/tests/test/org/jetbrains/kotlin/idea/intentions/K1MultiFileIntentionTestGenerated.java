@@ -19,7 +19,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/multiFileIntentions")
-public class MultiFileIntentionTestGenerated extends AbstractMultiFileIntentionTest {
+public class K1MultiFileIntentionTestGenerated extends AbstractK1MultiFileIntentionTest {
     @java.lang.Override
     @org.jetbrains.annotations.NotNull
     public final KotlinPluginMode getPluginMode() {

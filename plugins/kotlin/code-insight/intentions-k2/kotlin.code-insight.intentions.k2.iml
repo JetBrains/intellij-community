@@ -54,5 +54,6 @@
     <orderEntry type="module" module-name="kotlin.refactorings.k2" />
     <orderEntry type="module" module-name="kotlin.base.analysis" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
+    <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
   </component>
 </module>

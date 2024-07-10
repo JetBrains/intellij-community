@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2MultiFileIntentionTest
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.*
+import org.jetbrains.kotlin.testGenerator.model.Patterns.TEST
 
 
 internal fun MutableTWorkspace.generateK2IntentionTests() {
@@ -181,6 +183,10 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/convertBlockCommentToLineComment", pattern = pattern, isIgnored = true)
             model("${idea}intentions/removeSingleExpressionStringTemplate", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertLambdaToMultiLine", pattern = pattern, isIgnored = true)
+        }
+
+        testClass<AbstractK2MultiFileIntentionTest> {
+            model("${idea}/multiFileIntentions/moveDeclarationToSeparateFile", pattern = TEST, flatten = true)
         }
 
         testClass<AbstractK2GotoTestOrCodeActionTest> {

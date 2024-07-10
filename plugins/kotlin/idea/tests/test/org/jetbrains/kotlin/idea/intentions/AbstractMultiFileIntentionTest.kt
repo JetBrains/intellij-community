@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -27,6 +27,8 @@ import org.junit.Assert
 import java.io.File
 
 abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTestCase() {
+    abstract val classId: String
+
     override fun getProjectDescriptor(): LightProjectDescriptor {
         val testFile = File(testDataDirectory, fileName())
         val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
@@ -41,7 +43,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
         val testFile = File(path)
         val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
         val mainFilePath = config.getString("mainFile")
-        val intentionAction = Class.forName(config.getString("intentionClass")).getDeclaredConstructor().newInstance() as IntentionAction
+        val intentionAction = Class.forName(config.getString(classId)).getDeclaredConstructor().newInstance() as IntentionAction
         val isApplicableExpected = config["isApplicable"]?.asBoolean ?: true
 
         doTest(path) { rootDir ->

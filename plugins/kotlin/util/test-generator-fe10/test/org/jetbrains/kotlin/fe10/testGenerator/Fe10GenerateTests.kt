@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fe10.testGenerator
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
@@ -82,7 +82,7 @@ import org.jetbrains.kotlin.idea.inspections.AbstractViewOfflineInspectionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractConcatenatedStringGeneratorTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest
 import org.jetbrains.kotlin.idea.intentions.AbstractK1IntentionTest2
-import org.jetbrains.kotlin.idea.intentions.AbstractMultiFileIntentionTest
+import org.jetbrains.kotlin.idea.intentions.AbstractK1MultiFileIntentionTest
 import org.jetbrains.kotlin.idea.intentions.declarations.AbstractJoinLinesTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowMultiplatformTest
 import org.jetbrains.kotlin.idea.internal.AbstractBytecodeToolWindowTest
@@ -823,7 +823,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
     }
 
     testGroup("idea/tests", category = INTENTIONS) {
-        testClass<AbstractMultiFileIntentionTest> {
+        testClass<AbstractK1MultiFileIntentionTest> {
             model("multiFileIntentions", pattern = TEST, flatten = true)
         }
 
