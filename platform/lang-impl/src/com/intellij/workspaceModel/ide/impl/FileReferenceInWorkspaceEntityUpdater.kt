@@ -36,7 +36,9 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
     for (event in events) {
       when (event) {
         is VFilePropertyChangeEvent, is VFileMoveEvent -> {
-          if (event is VFilePropertyChangeEvent) propertyChanged(event, changedModuleStorePaths)
+          if (event is VFilePropertyChangeEvent) {
+            collectChangedModuleStorePathsAfterDirectoryRename(event, changedModuleStorePaths)
+          }
           val (oldUrl, newUrl) = getOldAndNewUrls(event)
           if (oldUrl != newUrl) {
             changedUrlsList.add(Pair(oldUrl, newUrl))
@@ -89,7 +91,7 @@ internal class FileReferenceInWorkspaceEntityUpdater(private val project: Projec
     }
   }
   
-  private fun propertyChanged(event: VFilePropertyChangeEvent, changedModuleStorePaths: ArrayList<Pair<Module, Path>>) {
+  private fun collectChangedModuleStorePathsAfterDirectoryRename(event: VFilePropertyChangeEvent, changedModuleStorePaths: ArrayList<Pair<Module, Path>>) {
     if (!event.file.isDirectory || event.requestor is StateStorage || event.propertyName != VirtualFile.PROP_NAME) return
 
     val parentPath = event.file.parent?.path ?: return
