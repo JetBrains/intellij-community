@@ -11,6 +11,7 @@ import com.intellij.platform.ijent.IjentWindowsInfo
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
+import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
 import java.io.OutputStream
@@ -170,7 +171,7 @@ internal class IjentWslNioFileSystemProvider(
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next()
-            return ijentPath.asSequence().map(Path::name).fold(wslLocalRoot, Path::resolve)
+            return ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
           }
 
           override fun remove() {
