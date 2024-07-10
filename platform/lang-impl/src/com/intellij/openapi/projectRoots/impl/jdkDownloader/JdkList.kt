@@ -97,6 +97,7 @@ data class JdkItem(
 
   private val saveToFile: (Path) -> Unit
 ) {
+  val archiveSizeInMB: String = String.format("%.1f", archiveSize.toDouble() / 1024 / 1024)
 
   fun writeMarkerFile(file: Path) {
     saveToFile(file)

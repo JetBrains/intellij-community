@@ -250,6 +250,12 @@ internal class JdkDownloadDialog(
             else -> null
           }
         }
+        .apply {
+          val cell = comment("")
+          vendorComboBox.onSelectionChange {
+            cell.comment?.text = ProjectBundle.message("dialog.jdk.archive.size", it.item.archiveSizeInMB)
+          }
+        }
     }
     row(ProjectBundle.message("dialog.row.jdk.location")) {
       cell(setupContainer())

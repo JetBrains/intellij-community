@@ -21292,6 +21292,7 @@ f:com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkItem
 - f:getArch():java.lang.String
 - f:getArchiveFileName():java.lang.String
 - f:getArchiveSize():J
+- f:getArchiveSizeInMB():java.lang.String
 - f:getDownloadSizePresentationText():java.lang.String
 - f:getFullPresentationText():java.lang.String
 - f:getFullPresentationWithVendorText():java.lang.String
