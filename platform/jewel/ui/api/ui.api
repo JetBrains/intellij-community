@@ -345,6 +345,7 @@ public final class org/jetbrains/jewel/ui/component/IconKt {
 	public static final fun Icon (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Landroidx/compose/ui/Modifier;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
+	public static final fun Icon (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;Landroidx/compose/ui/graphics/ColorFilter;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Class;Landroidx/compose/ui/Modifier;J[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun Icon-FHprtrg (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Landroidx/compose/ui/Modifier;Ljava/lang/Class;JLorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
@@ -503,12 +504,12 @@ public final class org/jetbrains/jewel/ui/component/MenuManagerKt {
 
 public abstract interface class org/jetbrains/jewel/ui/component/MenuScope {
 	public abstract fun passiveItem (Lkotlin/jvm/functions/Function2;)V
-	public abstract fun selectableItem (ZLjava/lang/String;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
+	public abstract fun selectableItem (ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;)V
 	public abstract fun submenu (ZLjava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)V
 }
 
 public final class org/jetbrains/jewel/ui/component/MenuScope$DefaultImpls {
-	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLjava/lang/String;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
+	public static synthetic fun selectableItem$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/Class;Ljava/util/Set;Lkotlin/jvm/functions/Function0;ZLkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 	public static synthetic fun submenu$default (Lorg/jetbrains/jewel/ui/component/MenuScope;ZLjava/lang/String;Ljava/lang/Class;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)V
 }
 
@@ -725,6 +726,7 @@ public final class org/jetbrains/jewel/ui/component/TabStripState$Companion {
 
 public final class org/jetbrains/jewel/ui/component/TabsKt {
 	public static final fun SimpleTabContent-A5h6_LM (Lorg/jetbrains/jewel/ui/component/TabContentScope;Ljava/lang/String;JLandroidx/compose/ui/Modifier;Landroidx/compose/ui/graphics/painter/Painter;Landroidx/compose/runtime/Composer;II)V
+	public static final fun SimpleTabContent-OOOwjN0 (Lorg/jetbrains/jewel/ui/component/TabContentScope;Ljava/lang/String;JLandroidx/compose/ui/Modifier;Lorg/jetbrains/jewel/ui/icon/IconKey;[Lorg/jetbrains/jewel/ui/painter/PainterHint;Landroidx/compose/runtime/Composer;II)V
 	public static final fun SimpleTabContent-iMiKU5w (Lorg/jetbrains/jewel/ui/component/TabContentScope;JLandroidx/compose/ui/Modifier;Lkotlin/jvm/functions/Function2;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;II)V
 }
 

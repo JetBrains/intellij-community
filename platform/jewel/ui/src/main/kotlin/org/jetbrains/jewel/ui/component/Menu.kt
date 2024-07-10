@@ -81,6 +81,7 @@ import org.jetbrains.jewel.ui.component.styling.LocalMenuStyle
 import org.jetbrains.jewel.ui.component.styling.MenuItemColors
 import org.jetbrains.jewel.ui.component.styling.MenuItemMetrics
 import org.jetbrains.jewel.ui.component.styling.MenuStyle
+import org.jetbrains.jewel.ui.icon.IconKey
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.menuStyle
 
@@ -144,7 +145,7 @@ internal fun MenuContent(
 
     val selectableItems = remember { items.filterIsInstance<MenuSelectableItem>() }
 
-    val anyItemHasIcon = remember { selectableItems.any { it.iconResource != null } }
+    val anyItemHasIcon = remember { selectableItems.any { it.iconKey != null } }
     val anyItemHasKeybinding = remember { selectableItems.any { it.keybinding != null } }
 
     val localMenuManager = LocalMenuManager.current
@@ -154,17 +155,17 @@ internal fun MenuContent(
 
     Box(
         modifier =
-            modifier
-                .shadow(
-                    elevation = style.metrics.shadowSize,
-                    shape = menuShape,
-                    ambientColor = colors.shadow,
-                    spotColor = colors.shadow,
-                )
-                .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
-                .background(colors.background, menuShape)
-                .width(IntrinsicSize.Max)
-                .onHover { localMenuManager.onHoveredChange(it) },
+        modifier
+            .shadow(
+                elevation = style.metrics.shadowSize,
+                shape = menuShape,
+                ambientColor = colors.shadow,
+                spotColor = colors.shadow,
+            )
+            .border(Stroke.Alignment.Inside, style.metrics.borderWidth, colors.border, menuShape)
+            .background(colors.background, menuShape)
+            .width(IntrinsicSize.Max)
+            .onHover { localMenuManager.onHoveredChange(it) },
     ) {
         Column(Modifier.verticalScroll(scrollState).padding(style.metrics.contentPadding)) {
             items.forEach {
@@ -195,7 +196,7 @@ private fun ShowMenuItem(
                 enabled = item.isEnabled,
                 canShowIcon = canShowIcon,
                 canShowKeybinding = canShowKeybinding,
-                iconResource = item.iconResource,
+                iconKey = item.iconKey,
                 iconClass = item.iconClass,
                 keybinding = item.keybinding,
                 content = item.content,
@@ -218,8 +219,8 @@ private fun ShowMenuItem(
 public interface MenuScope {
     public fun selectableItem(
         selected: Boolean,
-        iconResource: String? = null,
-        iconClass: Class<*> = this::class.java,
+        iconKey: IconKey? = null,
+        iconClass: Class<*>? = iconKey?.let { it::class.java },
         keybinding: Set<Char>? = null,
         onClick: () -> Unit,
         enabled: Boolean = true,
@@ -271,8 +272,8 @@ private fun (MenuScope.() -> Unit).asList() =
             object : MenuScope {
                 override fun selectableItem(
                     selected: Boolean,
-                    iconResource: String?,
-                    iconClass: Class<*>,
+                    iconKey: IconKey?,
+                    iconClass: Class<*>?,
                     keybinding: Set<Char>?,
                     onClick: () -> Unit,
                     enabled: Boolean,
@@ -282,7 +283,7 @@ private fun (MenuScope.() -> Unit).asList() =
                         MenuSelectableItem(
                             isSelected = selected,
                             isEnabled = enabled,
-                            iconResource = iconResource,
+                            iconKey = iconKey,
                             iconClass = iconClass,
                             keybinding = keybinding,
                             onClick = onClick,
@@ -315,8 +316,8 @@ private interface MenuItem {
 private data class MenuSelectableItem(
     val isSelected: Boolean,
     val isEnabled: Boolean,
-    val iconResource: String?,
-    val iconClass: Class<*>,
+    val iconKey: IconKey?,
+    val iconClass: Class<*>?,
     val keybinding: Set<Char>?,
     val onClick: () -> Unit = {},
     override val content: @Composable () -> Unit,
@@ -356,8 +357,8 @@ internal fun MenuItem(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    iconResource: String?,
-    iconClass: Class<*>,
+    iconKey: IconKey?,
+    iconClass: Class<*>?,
     keybinding: Set<Char>?,
     canShowIcon: Boolean,
     canShowKeybinding: Boolean,
@@ -396,20 +397,20 @@ internal fun MenuItem(
 
     Box(
         modifier =
-            modifier
-                .focusRequester(focusRequester)
-                .selectable(
-                    selected = selected,
-                    onClick = {
-                        onClick()
-                        menuManager.closeAll(localInputModeManager.inputMode, true)
-                    },
-                    enabled = enabled,
-                    role = Role.Button,
-                    interactionSource = interactionSource,
-                    indication = null,
-                )
-                .fillMaxWidth(),
+        modifier
+            .focusRequester(focusRequester)
+            .selectable(
+                selected = selected,
+                onClick = {
+                    onClick()
+                    menuManager.closeAll(localInputModeManager.inputMode, true)
+                },
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            )
+            .fillMaxWidth(),
     ) {
         DisposableEffect(Unit) {
             if (selected) {
@@ -429,20 +430,20 @@ internal fun MenuItem(
 
             Row(
                 modifier =
-                    Modifier.fillMaxWidth()
-                        .defaultMinSize(minHeight = itemMetrics.minHeight)
-                        .drawItemBackground(itemMetrics, backgroundColor)
-                        .padding(itemMetrics.contentPadding),
+                Modifier.fillMaxWidth()
+                    .defaultMinSize(minHeight = itemMetrics.minHeight)
+                    .drawItemBackground(itemMetrics, backgroundColor)
+                    .padding(itemMetrics.contentPadding),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (canShowIcon) {
                     val iconModifier = Modifier.size(style.metrics.itemMetrics.iconSize)
-                    if (iconResource != null) {
+                    if (iconKey != null) {
                         Icon(
-                            resource = iconResource,
+                            key = iconKey,
                             contentDescription = null,
-                            iconClass = iconClass,
+                            iconClass = iconClass ?: iconKey.javaClass,
                             modifier = iconModifier,
                         )
                     } else {
@@ -514,25 +515,25 @@ public fun MenuSubmenuItem(
     val backgroundColor by itemColors.backgroundFor(itemState)
     Box(
         modifier =
-            modifier
-                .fillMaxWidth()
-                .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
-                .focusRequester(focusRequester)
-                .clickable(
-                    onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
-                    enabled = enabled,
-                    role = Role.Button,
-                    interactionSource = interactionSource,
-                    indication = null,
-                )
-                .onKeyEvent {
-                    if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
-                        itemState = itemState.copy(selected = true)
-                        true
-                    } else {
-                        false
-                    }
-                },
+        modifier
+            .fillMaxWidth()
+            .drawItemBackground(menuMetrics.itemMetrics, backgroundColor)
+            .focusRequester(focusRequester)
+            .clickable(
+                onClick = { itemState = itemState.copy(selected = !itemState.isSelected) },
+                enabled = enabled,
+                role = Role.Button,
+                interactionSource = interactionSource,
+                indication = null,
+            )
+            .onKeyEvent {
+                if (it.type == KeyEventType.KeyDown && it.key == Key.DirectionRight) {
+                    itemState = itemState.copy(selected = true)
+                    true
+                } else {
+                    false
+                }
+            },
     ) {
         CompositionLocalProvider(
             LocalContentColor provides itemColors.contentFor(itemState).value,

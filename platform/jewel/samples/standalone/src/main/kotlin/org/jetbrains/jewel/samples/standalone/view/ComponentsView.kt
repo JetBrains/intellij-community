@@ -19,7 +19,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.foundation.modifier.trackActivation
 import org.jetbrains.jewel.foundation.theme.JewelTheme
-import org.jetbrains.jewel.samples.standalone.StandaloneSampleIcons
 import org.jetbrains.jewel.samples.standalone.viewmodel.ComponentsViewModel
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.samples.standalone.viewmodel.ViewInfo
@@ -35,7 +34,6 @@ import org.jetbrains.jewel.ui.component.styling.TooltipMetrics
 import org.jetbrains.jewel.ui.component.styling.TooltipStyle
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
-import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.tooltipStyle
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -68,9 +66,7 @@ fun ComponentsToolBar() {
                     modifier = Modifier.size(40.dp).padding(5.dp),
                 ) { state ->
                     val tint by LocalIconButtonStyle.current.colors.foregroundFor(state)
-                    val painterProvider = rememberResourcePainterProvider(it.icon, StandaloneSampleIcons::class.java)
-                    val painter by painterProvider.getPainter(Size(20), Stroke(tint))
-                    Icon(painter = painter, "icon")
+                    Icon(it.iconKey, null, hints = arrayOf(Size(20), Stroke(tint)))
                 }
             }
         }

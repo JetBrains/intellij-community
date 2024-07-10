@@ -27,6 +27,7 @@ import org.jetbrains.jewel.ui.component.SimpleTabContent
 import org.jetbrains.jewel.ui.component.TabData
 import org.jetbrains.jewel.ui.component.TabStrip
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
@@ -57,8 +58,7 @@ private fun DefaultTabShowcase() {
                 TabData.Default(
                     selected = index == selectedTabIndex,
                     content = { tabState ->
-                        val iconProvider =
-                            rememberResourcePainterProvider("icons/search.svg", StandaloneSampleIcons::class.java)
+                        val iconProvider = rememberResourcePainterProvider(AllIconsKeys.Actions.Find)
                         val icon by iconProvider.getPainter(Stateful(tabState))
                         SimpleTabContent(
                             label = "Default Tab $id",
@@ -109,7 +109,7 @@ private fun EditorTabShowcase() {
                             modifier = Modifier,
                             icon = {
                                 Icon(
-                                    resource = "icons/search.svg",
+                                    key = AllIconsKeys.Actions.Find,
                                     contentDescription = null,
                                     iconClass = StandaloneSampleIcons::class.java,
                                     modifier = Modifier.size(16.dp).tabContentAlpha(state = tabState),

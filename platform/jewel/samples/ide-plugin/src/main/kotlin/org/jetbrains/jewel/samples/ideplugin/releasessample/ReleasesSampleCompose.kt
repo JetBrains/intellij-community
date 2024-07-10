@@ -52,7 +52,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
@@ -85,6 +84,7 @@ import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticalScrollbar
 import org.jetbrains.jewel.ui.component.items
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.iconButtonStyle
 import org.jetbrains.jewel.ui.util.thenIf
@@ -282,7 +282,7 @@ private fun SearchBar(
         onValueChange = { service.filterContent(it) },
         modifier = modifier.focusRequester(focusRequester),
         leadingIcon = {
-            Icon("actions/search.svg", null, AllIcons::class.java, Modifier.padding(end = 8.dp))
+            Icon(AllIconsKeys.Actions.Find, contentDescription = null, Modifier.padding(end = 8.dp))
         },
         trailingIcon = {
             if (filterText.isNotBlank()) {
@@ -306,15 +306,8 @@ private fun CloseIconButton(service: ReleasesSampleService) {
         }
     }
 
-    val closeIconProvider = rememberResourcePainterProvider("actions/close.svg", AllIcons::class.java)
-    val closeIcon by closeIconProvider.getPainter()
-
-    val hoveredCloseIconProvider =
-        rememberResourcePainterProvider("actions/closeHovered.svg", AllIcons::class.java)
-    val hoveredCloseIcon by hoveredCloseIconProvider.getPainter()
-
     Icon(
-        painter = if (hovered) hoveredCloseIcon else closeIcon,
+        key = if (hovered) AllIconsKeys.Actions.CloseHovered else AllIconsKeys.Actions.Close,
         contentDescription = "Clear",
         modifier =
             Modifier
@@ -378,9 +371,6 @@ private fun OverflowMenu(
         }
 
     if (menuVisible) {
-        val checkedIconProvider = rememberResourcePainterProvider("actions/checked.svg", AllIcons::class.java)
-        val checkedIcon by checkedIconProvider.getPainter()
-
         PopupMenu(
             onDismissRequest = {
                 menuVisible = false
@@ -403,10 +393,9 @@ private fun OverflowMenu(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         if (it.isSameAs(currentContentSource)) {
-                            Icon(checkedIcon, null)
+                            Icon(AllIconsKeys.Actions.Checked, null)
                         } else {
-                            val iconWidth = (checkedIcon.intrinsicSize.width / LocalDensity.current.density).dp
-                            Spacer(Modifier.width(iconWidth))
+                            Spacer(Modifier.width(16.dp))
                         }
 
                         Text(it.displayName)

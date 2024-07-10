@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlendMode
@@ -27,7 +26,6 @@ import org.jetbrains.jewel.ui.painter.badge.DotBadgeShape
 import org.jetbrains.jewel.ui.painter.hints.Badge
 import org.jetbrains.jewel.ui.painter.hints.Size
 import org.jetbrains.jewel.ui.painter.hints.Stroke
-import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.ui.theme.colorPalette
 
 @Composable
@@ -37,18 +35,15 @@ internal fun Icons() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        val iconProvider = rememberResourcePainterProvider("icons/jewel-logo.svg", StandaloneSampleIcons::class.java)
-        val logo by iconProvider.getPainter()
-
-        Icon(logo, "Jewel Logo", Modifier.size(16.dp))
-        Icon(logo, "Jewel Logo", Modifier.size(32.dp))
-        Icon(logo, "Jewel Logo", Modifier.size(64.dp))
-        Icon(logo, "Jewel Logo", Modifier.size(128.dp))
+        Icon(StandaloneSampleIcons.jewelLogo, "Jewel Logo", Modifier.size(16.dp))
+        Icon(StandaloneSampleIcons.jewelLogo, "Jewel Logo", Modifier.size(32.dp))
+        Icon(StandaloneSampleIcons.jewelLogo, "Jewel Logo", Modifier.size(64.dp))
+        Icon(StandaloneSampleIcons.jewelLogo, "Jewel Logo", Modifier.size(128.dp))
         Icon(
-            logo,
-            "Jewel Logo",
-            ColorFilter.tint(Color.Magenta, BlendMode.Multiply),
-            Modifier.size(128.dp),
+            key = StandaloneSampleIcons.jewelLogo,
+            contentDescription = "Jewel Logo",
+            modifier = Modifier.size(128.dp),
+            colorFilter = ColorFilter.tint(Color.Magenta, BlendMode.Multiply),
         )
     }
 

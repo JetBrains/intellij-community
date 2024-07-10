@@ -3,6 +3,7 @@ package org.jetbrains.jewel.samples.standalone.reflection
 import androidx.compose.runtime.Composable
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.samples.standalone.viewmodel.ViewInfo
+import org.jetbrains.jewel.ui.icon.PathIconKey
 import java.nio.file.FileSystemNotFoundException
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -53,7 +54,7 @@ internal fun findViews(packageName: String): List<ViewInfo> {
                             ViewInfo(
                                 title = annotation.title,
                                 position = annotation.position,
-                                icon = annotation.icon,
+                                iconKey = PathIconKey(annotation.icon),
                                 content = it.kotlinFunction as @Composable () -> Unit,
                             )
                         }

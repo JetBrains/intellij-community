@@ -162,6 +162,20 @@ public fun Icon(
     Icon(path, contentDescription, iconClass, colorFilter, modifier, hint)
 }
 
+@Composable
+public fun Icon(
+    key: IconKey,
+    contentDescription: String?,
+    modifier: Modifier = Modifier,
+    iconClass: Class<*> = key::class.java,
+    colorFilter: ColorFilter?,
+    vararg hints: PainterHint,
+) {
+    val isNewUi = JewelTheme.newUiChecker.isNewUi()
+    val path = remember(key, isNewUi) { key.path(isNewUi) }
+    Icon(path, contentDescription, iconClass, colorFilter, modifier, *hints)
+}
+
 /**
  * Icon component that draws [imageVector] using [tint], defaulting to
  * [Color.Unspecified].

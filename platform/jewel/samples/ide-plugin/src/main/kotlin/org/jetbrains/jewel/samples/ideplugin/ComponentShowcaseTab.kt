@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
@@ -207,8 +206,7 @@ private fun RowScope.ColumnOne() {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Tooltip(tooltip = {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon("general/showInfos.svg", contentDescription = null, AllIcons::class.java)
-
+                    Icon(AllIconsKeys.General.ShowInfos, contentDescription = null)
                     Text("This is a tooltip")
                 }
             }) {

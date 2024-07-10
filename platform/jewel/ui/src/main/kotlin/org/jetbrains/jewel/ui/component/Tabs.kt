@@ -43,6 +43,8 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Selected
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.ui.icon.IconKey
+import org.jetbrains.jewel.ui.painter.PainterHint
 import org.jetbrains.jewel.ui.painter.hints.Stateful
 import org.jetbrains.jewel.ui.theme.defaultTabStyle
 import org.jetbrains.jewel.ui.theme.editorTabStyle
@@ -66,6 +68,22 @@ public fun TabContentScope.SimpleTabContent(
         state = state,
         modifier = modifier,
         icon = icon?.let { { Icon(painter = icon, contentDescription = null) } },
+        label = { Text(label) },
+    )
+}
+
+@Composable
+public fun TabContentScope.SimpleTabContent(
+    label: String,
+    state: TabState,
+    modifier: Modifier = Modifier,
+    iconKey: IconKey? = null,
+    vararg painterHints: PainterHint,
+) {
+    SimpleTabContent(
+        state = state,
+        modifier = modifier,
+        icon = iconKey?.let { { Icon(key = iconKey, contentDescription = null, hints = *painterHints) } },
         label = { Text(label) },
     )
 }

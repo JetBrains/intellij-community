@@ -34,8 +34,8 @@ import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.styling.IconButtonColors
 import org.jetbrains.jewel.ui.component.styling.IconButtonMetrics
 import org.jetbrains.jewel.ui.component.styling.IconButtonStyle
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Stateful
-import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 
 @Composable
 @View(title = "TextFields", position = 9, icon = "icons/components/textField.svg")
@@ -73,7 +73,7 @@ fun TextFields() {
             },
             leadingIcon = {
                 Icon(
-                    resource = "icons/search.svg",
+                    key = AllIconsKeys.Actions.Find,
                     contentDescription = "SearchIcon",
                     iconClass = StandaloneSampleIcons::class.java,
                     modifier = Modifier.size(16.dp),
@@ -120,11 +120,7 @@ private fun CloseIconButton(
                 style = style,
                 modifier = Modifier.pointerHoverIcon(PointerIcon.Default),
             ) { state ->
-                val painterProvider =
-                    rememberResourcePainterProvider("icons/close.svg", StandaloneSampleIcons::class.java)
-                val painter by painterProvider.getPainter(Stateful(state))
-
-                Icon(painter, contentDescription = "Clear")
+                Icon(AllIconsKeys.General.Close, contentDescription = "Clear", hint = Stateful(state))
             }
         }
     }

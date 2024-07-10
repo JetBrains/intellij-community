@@ -15,6 +15,7 @@ import org.jetbrains.jewel.ui.component.Dropdown
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.separator
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import kotlin.random.Random
 
 @Composable
@@ -121,7 +122,7 @@ fun Dropdowns() {
                         separator()
                     } else {
                         selectableItem(
-                            iconResource = dropdownIconsSample.random(),
+                            iconKey = dropdownIconsSample.random(),
                             iconClass = DropdownStyle::class.java,
                             keybinding =
                                 if (Random.nextBoolean()) {
@@ -144,7 +145,7 @@ fun Dropdowns() {
                             separator()
                         } else {
                             selectableItem(
-                                iconResource = dropdownIconsSample.random(),
+                                iconKey = dropdownIconsSample.random(),
                                 iconClass = DropdownStyle::class.java,
                                 keybinding =
                                     if (Random.nextBoolean()) {
@@ -168,7 +169,7 @@ fun Dropdowns() {
                                 separator()
                             } else {
                                 selectableItem(
-                                    iconResource = dropdownIconsSample.random(),
+                                    iconKey = dropdownIconsSample.random(),
                                     iconClass = DropdownStyle::class.java,
                                     selected = false,
                                     onClick = { },
@@ -190,5 +191,5 @@ fun Dropdowns() {
     }
 }
 
-private val dropdownIconsSample = listOf("icons/search.svg", "icons/close.svg", null)
+private val dropdownIconsSample = listOf(AllIconsKeys.Actions.Find, AllIconsKeys.Actions.Close, null)
 private val dropdownKeybindingsSample = setOf('A', 'B', '↑', '→', '␡')

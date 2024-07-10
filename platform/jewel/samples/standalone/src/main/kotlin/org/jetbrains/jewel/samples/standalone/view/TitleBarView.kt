@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -19,7 +18,6 @@ import org.jetbrains.jewel.ui.component.IconButton
 import org.jetbrains.jewel.ui.component.Text
 import org.jetbrains.jewel.ui.component.Tooltip
 import org.jetbrains.jewel.ui.painter.hints.Size
-import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
 import org.jetbrains.jewel.window.DecoratedWindowScope
 import org.jetbrains.jewel.window.TitleBar
 import org.jetbrains.jewel.window.newFullscreenControls
@@ -42,10 +40,7 @@ fun DecoratedWindowScope.TitleBarView() {
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            val painterProvider =
-                                rememberResourcePainterProvider(it.icon, StandaloneSampleIcons::class.java)
-                            val painter by painterProvider.getPainter(Size(20))
-                            Icon(painter, "icon", modifier = Modifier.size(20.dp))
+                            Icon(it.iconKey, null, modifier = Modifier.size(20.dp), hint = Size(20))
                             Text(it.title)
                         }
                     }
@@ -59,13 +54,7 @@ fun DecoratedWindowScope.TitleBarView() {
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        val painterProvider =
-                            rememberResourcePainterProvider(
-                                MainViewModel.currentView.icon,
-                                StandaloneSampleIcons::class.java,
-                            )
-                        val painter by painterProvider.getPainter(Size(20))
-                        Icon(painter, "icon")
+                        Icon(MainViewModel.currentView.iconKey, null, hint = Size(20))
                         Text(MainViewModel.currentView.title)
                     }
                 }
@@ -81,7 +70,7 @@ fun DecoratedWindowScope.TitleBarView() {
                 IconButton({
                     Desktop.getDesktop().browse(URI.create("https://github.com/JetBrains/jewel"))
                 }, Modifier.size(40.dp).padding(5.dp)) {
-                    Icon("icons/github@20x20.svg", "Github", StandaloneSampleIcons::class.java)
+                    Icon(StandaloneSampleIcons.gitHub, "Github")
                 }
             }
 
