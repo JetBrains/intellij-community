@@ -107,8 +107,45 @@ public final class SwitchUtils {
     return result;
   }
 
-  public static boolean canBeSwitchCase(PsiExpression expression, PsiExpression switchExpression, LanguageLevel languageLevel,
-                                        @NotNull Set<Object> existingCaseValues, boolean isPatternMatch) {
+  /**
+   * Counts the number of unconditional patterns applicable to the provided selector type.
+   *
+   * @param selector the PSI expression for which unconditionally applicable patterns are to be counted
+   * @param existingCaseValues the set of existing case values to check against
+   * @return the number of unconditional patterns applicable to the selector type
+   */
+  public static int countUnconditionalPatterns(@NotNull PsiExpression selector,
+                                               @NotNull Set<Object> existingCaseValues) {
+    PsiType selectorType = selector.getType();
+    if (selectorType == null) return 0;
+    int count = 0;
+    for (Object caseValue : existingCaseValues) {
+      if (caseValue instanceof PsiPattern && JavaPsiPatternUtil.isUnconditionalForType((PsiPattern)caseValue, selectorType)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
+   * Determines whether a given expression can be used as a case in a switch statement,
+   * considering the provided language level, existing case values, and whether pattern matching is used.
+   * It doesn't check if this expression has several unconditional patterns.
+   * See {@link SwitchUtils#countUnconditionalPatterns(PsiExpression, Set)}
+   *
+   * @param expression         the expression to be checked
+   * @param switchExpression   the selector used in the switch statement
+   * @param languageLevel      the language level at which the switch statement is being compiled
+   * @param existingCaseValues a set of existing case values to ensure no duplicates
+   * @param isPatternMatch     flag indicating if pattern matching is being used
+   * @return true if the expression can be used as a case in the switch statement; false otherwise
+   */
+  public static boolean canBeSwitchCase(@Nullable PsiExpression expression,
+                                        @NotNull PsiExpression switchExpression,
+                                        @NotNull LanguageLevel languageLevel,
+                                        @NotNull Set<Object> existingCaseValues,
+                                        boolean isPatternMatch) {
+    if (expression == null) return false;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
     boolean primitiveTypesInPatternsSufficient = JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.isSufficient(languageLevel);
     if (isPatternMatch || primitiveTypesInPatternsSufficient) {
@@ -229,8 +266,8 @@ public final class SwitchUtils {
     return TypeConversionUtil.isAssignable(selectorType, valueType);
   }
 
-  private static boolean canBePatternSwitchCase(PsiExpression expression,
-                                                PsiExpression switchExpression,
+  private static boolean canBePatternSwitchCase(@Nullable PsiExpression expression,
+                                                @NotNull PsiExpression switchExpression,
                                                 @NotNull Set<Object> existingCaseValues) {
     if (canBePatternSwitchCase(expression, switchExpression)) {
       final PsiCaseLabelElement pattern = createPatternFromExpression(expression);

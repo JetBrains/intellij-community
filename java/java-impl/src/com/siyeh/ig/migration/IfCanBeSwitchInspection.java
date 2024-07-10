@@ -657,7 +657,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       }
 
       final ProblemHighlightType highlightType;
-      if (shouldHighlight(statement, switchExpression) && branchCount >= minimumBranches) {
+      if (shouldHighlight(statement, switchExpression, switchCaseValues) && branchCount >= minimumBranches) {
         highlightType = ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
       }
       else {
@@ -667,7 +667,9 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
       registerError(statement.getFirstChild(), highlightType, additionalIfStatementCount);
     }
 
-    private boolean shouldHighlight(PsiIfStatement ifStatement, PsiExpression switchExpression) {
+    private boolean shouldHighlight(@NotNull PsiIfStatement ifStatement,
+                                    @NotNull PsiExpression switchExpression,
+                                    @NotNull Set<Object> switchCaseValues) {
       final PsiType type = switchExpression.getType();
       if (!suggestIntSwitches) {
         if (type instanceof PsiClassType) {
@@ -701,6 +703,11 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
           return false;
         }
       }
+      int countUnconditionalPatterns = SwitchUtils.countUnconditionalPatterns(switchExpression, switchCaseValues);
+      if (hasDefaultElse(ifStatement)) {
+        countUnconditionalPatterns++;
+      }
+      if (countUnconditionalPatterns > 1) return false;
       return !SideEffectChecker.mayHaveSideEffects(switchExpression);
     }
   }
