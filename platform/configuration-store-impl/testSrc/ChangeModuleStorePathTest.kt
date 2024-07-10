@@ -31,6 +31,7 @@ import org.junit.Test
 import org.junit.rules.ExternalResource
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.readText
 import kotlin.properties.Delegates
 
@@ -176,6 +177,21 @@ class ChangeModuleStorePathTest {
 
       testRenameModule()
     }
+  }
+
+  @Test
+  fun `move iml file`() = runBlocking {
+    saveProjectState()
+    val imlFile = module.storage.getVirtualFile()!!
+    val oldFile = imlFile.toNioPath()
+    val moduleName = module.name
+    writeAction { 
+      imlFile.move(null, tempDirManager.newVirtualDirectory("newParent"))
+    }
+    val newFile = imlFile.toNioPath()
+    assertThat(newFile.isRegularFile())
+    assertModuleFileRenamed(moduleName, oldFile)
+    assertThat(oldModuleNames).isEmpty()
   }
 
   @Test

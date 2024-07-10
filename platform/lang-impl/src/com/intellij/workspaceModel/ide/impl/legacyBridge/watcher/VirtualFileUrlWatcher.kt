@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.watcher
 
+import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.java.workspace.entities.JavaModuleSettingsEntity
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -150,15 +151,37 @@ private class EntitySourceFileWatcher<T : EntitySource>(
     for ((entitySource, entities) in entitiesMap) {
       @Suppress("UNCHECKED_CAST")
       val urlFromContainer = containerToUrl(entitySource as T)
-      if (!FileUtil.startsWith(urlFromContainer, oldUrl)) continue
-
-      val newVfsUrl = virtualFileManager.getOrCreateFromUrl(newUrl + urlFromContainer.substring(oldUrl.length))
-      val newEntitySource = createNewSource(entitySource, newVfsUrl)
+      val newVfsUrl = when {
+        FileUtil.startsWith(urlFromContainer, oldUrl) -> newUrl + urlFromContainer.substring(oldUrl.length)
+        isImlFileOfModuleMoved(oldUrl, newUrl, urlFromContainer, entities) -> newUrl.substringBeforeLast('/') 
+        else -> continue
+      } 
+        
+      val newEntitySource = createNewSource(entitySource, virtualFileManager.getOrCreateFromUrl(newVfsUrl))
 
       entities.forEach { entity ->
         diff.modifyEntity(WorkspaceEntity.Builder::class.java, entity) { this.entitySource = newEntitySource }
       }
     }
+  }
+
+  /**
+   * Detects whether [oldUrl] points of an iml file of a module which was moved to a different directory. 
+   * We need to check this case separately because [ModuleEntity.entitySource] stores the path to the parent directory of iml file, not
+   * path to iml file itself (see IJPL-158284).
+   */
+  private fun isImlFileOfModuleMoved(
+    oldUrl: String,
+    newUrl: String,
+    entitySourceUrl: String,
+    entities: List<WorkspaceEntity>,
+  ): Boolean {
+    if (!oldUrl.endsWith(ModuleFileType.DOT_DEFAULT_EXTENSION) || oldUrl.substringBeforeLast('/') != entitySourceUrl) return false
+    val moduleFileName = oldUrl.substringAfterLast('/')
+    if (moduleFileName != newUrl.substringAfterLast('/')) return false
+    
+    val moduleNameFromUrl = moduleFileName.removeSuffix(ModuleFileType.DOT_DEFAULT_EXTENSION)
+    return entities.any { (it as? ModuleEntity)?.name == moduleNameFromUrl }
   }
 }
 
