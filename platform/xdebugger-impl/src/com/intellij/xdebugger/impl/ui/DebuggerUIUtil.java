@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.ClientEditorManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -546,7 +547,7 @@ public final class DebuggerUIUtil {
     if (component instanceof AntiFlickeringPanel antiFlickeringPanel) {
       int delay = Registry.intValue("debugger.anti.flickering.delay", 0);
       if (delay > 0) {
-        antiFlickeringPanel.freezePainting(delay);
+        ApplicationManager.getApplication().invokeAndWait(() -> antiFlickeringPanel.freezePainting(delay), ModalityState.any());
         return true;
       }
     }
