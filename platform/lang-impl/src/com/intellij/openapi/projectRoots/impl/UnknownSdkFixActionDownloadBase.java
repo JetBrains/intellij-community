@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ public abstract class UnknownSdkFixActionDownloadBase extends UnknownSdkFixActio
 
   @Override
   public final void applySuggestionAsync(@Nullable Project project) {
-    if (hasConsent() || ApplicationManager.getApplication().isUnitTestMode() || Registry.is("jdk.download.consent", false)) {
+    if (hasConsent() || ApplicationManager.getApplication().isUnitTestMode()) {
       doApplySuggestion(project);
     } else {
       final var notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup("JDK Install Request");
