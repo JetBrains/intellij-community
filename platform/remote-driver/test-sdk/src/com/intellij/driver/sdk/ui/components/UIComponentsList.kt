@@ -24,28 +24,28 @@ class UIComponentsList<T : UiComponent>(
     /**
      * Searches for a non-empty list of UI components based on the given XPath until timeout hits.
      */
-    fun Finder.waitAny(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<UiComponent> {
+    fun Finder.waitAny(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): List<UiComponent> {
       return waitFor(message, timeout,
-                     getter = { UIComponentsList(xQuery { init() }, UiComponent::class.java, driver, searchService, robotProvider, searchContext) },
-                     checker = { it.list().isNotEmpty() })
+                     getter = { xx(init = init).list() },
+                     checker = { it.isNotEmpty() })
     }
 
     /**
      * Waits for some ui components matching the given XPath.
      */
-    fun <T : UiComponent> Finder.waitAny(message: String? = null, type: Class<T>, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<T> {
+    fun <T : UiComponent> Finder.waitAny(message: String? = null, type: Class<T>, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): List<T> {
       return waitFor(message, timeout,
-                     getter = { UIComponentsList(xQuery { init() }, type, driver, searchService, robotProvider, searchContext) },
-                     checker = { it.list().isNotEmpty() })
+                     getter = { xx(type = type, init = init).list() },
+                     checker = { it.isNotEmpty() })
     }
 
     /**
      * Waits until there are no ui components matching the given XPath.
      */
-    fun Finder.waitNotFound(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): UIComponentsList<UiComponent> {
+    fun Finder.waitNotFound(message: String? = null, timeout: Duration = DEFAULT_FIND_TIMEOUT, init: QueryBuilder.() -> String): List<UiComponent> {
       return waitFor(message, timeout,
-                     getter = { UIComponentsList(xQuery { init() }, UiComponent::class.java, driver, searchService, robotProvider, searchContext) },
-                     checker = { it.list().isEmpty() })
+                     getter = { xx(init = init).list() },
+                     checker = { it.isEmpty() })
     }
   }
 
