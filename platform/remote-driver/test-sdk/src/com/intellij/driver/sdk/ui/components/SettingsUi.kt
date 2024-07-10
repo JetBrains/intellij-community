@@ -11,8 +11,6 @@ fun IdeaFrameUI.settingsDialog(action: SettingsUiComponent.() -> Unit): Settings
 
 fun WelcomeScreenUI.showSettings() = driver.invokeAction("WelcomeScreen.Settings", now = false)
 
-fun IdeaFrameUI.showSettings() = driver.invokeAction("ShowSettings", now = false)
-
 class SettingsUiComponent(data: ComponentData): UiComponent(data) {
 
   val settingsTree: JTreeUiComponent = tree(xQuery { byType("com.intellij.openapi.options.newEditor.SettingsTreeView${"$"}MyTree") })
