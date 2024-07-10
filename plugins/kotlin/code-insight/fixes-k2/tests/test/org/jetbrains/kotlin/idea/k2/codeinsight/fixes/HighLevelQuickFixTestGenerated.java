@@ -3514,6 +3514,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/when/addRemainingBranchesEnumStatement.kt");
         }
 
+        @TestMetadata("addRemainingBranchesGeneric.kt")
+        public void testAddRemainingBranchesGeneric() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/when/addRemainingBranchesGeneric.kt");
+        }
+
+        @TestMetadata("addRemainingBranchesGeneric2.kt")
+        public void testAddRemainingBranchesGeneric2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/when/addRemainingBranchesGeneric2.kt");
+        }
+
         @TestMetadata("addRemainingBranchesInNonDefaultPackage.kt")
         public void testAddRemainingBranchesInNonDefaultPackage() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/when/addRemainingBranchesInNonDefaultPackage.kt");
