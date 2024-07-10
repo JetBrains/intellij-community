@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
+import org.jetbrains.kotlin.idea.codeinsight.utils.isZeroIntegerConstant
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
@@ -172,16 +173,20 @@ internal class ReplaceCallWithBinaryOperatorInspection :
             OperatorNameConventions.COMPARE_TO -> {
                 if (!isOperatorOrCompatible()) return null
                 val binaryParent = dotQualified.parent as? KtBinaryExpression ?: return null
+
+                val right = binaryParent.right ?: return null
+                val left = binaryParent.left ?: return null
+
                 val comparedToZero = when {
-                    binaryParent.right?.isZeroIntegerConstant() == true -> binaryParent.left
-                    binaryParent.left?.isZeroIntegerConstant() == true -> binaryParent.right
+                    right.isZeroIntegerConstant -> left
+                    left.isZeroIntegerConstant -> right
                     else -> return null
                 }
                 if (comparedToZero != dotQualified) return null
 
                 val token = binaryParent.operationToken as? KtSingleValueToken ?: return null
                 if (token in OperatorConventions.COMPARISON_OPERATIONS) {
-                    if (comparedToZero == binaryParent.left) token else token.invertedComparison()
+                    if (comparedToZero == left) token else token.invertedComparison()
                 } else {
                     null
                 }

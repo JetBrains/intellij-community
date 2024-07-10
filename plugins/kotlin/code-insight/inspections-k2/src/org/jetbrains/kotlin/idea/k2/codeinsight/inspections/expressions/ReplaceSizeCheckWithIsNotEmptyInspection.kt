@@ -28,18 +28,22 @@ internal class ReplaceSizeCheckWithIsNotEmptyInspection : ReplaceSizeCheckInspec
         context: ReplacementInfo,
     ): String = KotlinBundle.message("inspection.replace.size.check.with.is.not.empty.display.name")
 
-    override fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression? =
-        when (expr.operationToken) {
+    override fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression? {
+        val left = expr.left ?: return null
+        val right = expr.right ?: return null
+
+        return when (expr.operationToken) {
             KtTokens.EXCLEQ -> when {
-                expr.right?.isZeroIntegerConstant() == true -> expr.left
-                expr.left?.isZeroIntegerConstant() == true -> expr.right
+                right.isZeroIntegerConstant -> left
+                left.isZeroIntegerConstant -> right
                 else -> null
             }
 
-            KtTokens.GTEQ -> if (expr.right?.isOneIntegerConstant() == true) expr.left else null
-            KtTokens.GT -> if (expr.right?.isZeroIntegerConstant() == true) expr.left else null
-            KtTokens.LTEQ -> if (expr.left?.isOneIntegerConstant() == true) expr.right else null
-            KtTokens.LT -> if (expr.left?.isZeroIntegerConstant() == true) expr.right else null
+            KtTokens.GTEQ -> if (right.isOneIntegerConstant) left else null
+            KtTokens.GT -> if (right.isZeroIntegerConstant) left else null
+            KtTokens.LTEQ -> if (left.isOneIntegerConstant) right else null
+            KtTokens.LT -> if (left.isZeroIntegerConstant) right else null
             else -> null
         }
+    }
 }

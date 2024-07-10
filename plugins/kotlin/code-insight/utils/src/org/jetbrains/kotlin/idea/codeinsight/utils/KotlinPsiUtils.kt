@@ -280,13 +280,20 @@ fun KtConstantExpression.getClassId(): ClassId? {
     }
 }
 
-fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
-    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression ?: return false
-    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT && deparenthesized.text.toIntOrNull() == value
+private fun KtExpression.isIntegerConstantOfValue(value: Int): Boolean {
+    val deparenthesized = KtPsiUtil.deparenthesize(this) as? KtConstantExpression
+        ?: return false
+
+    return deparenthesized.elementType == KtStubElementTypes.INTEGER_CONSTANT
+            && deparenthesized.text.toIntOrNull() == value
 }
 
-fun KtExpression.isZeroIntegerConstant() = isIntegerConstantOfValue(0)
-fun KtExpression.isOneIntegerConstant() = isIntegerConstantOfValue(1)
+val KtExpression.isZeroIntegerConstant: Boolean
+    get() = isIntegerConstantOfValue(0)
+
+
+val KtExpression.isOneIntegerConstant: Boolean
+    get() = isIntegerConstantOfValue(1)
 
 fun KtPsiFactory.appendSemicolonBeforeLambdaContainingElement(element: PsiElement) {
     val previousElement = KtPsiUtil.skipSiblingsBackwardByPredicate(element) {
