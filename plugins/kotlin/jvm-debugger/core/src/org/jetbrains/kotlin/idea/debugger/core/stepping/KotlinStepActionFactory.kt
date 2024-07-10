@@ -116,10 +116,11 @@ object KotlinStepActionFactory {
 
     fun createStepOutCommand(
         debugProcess: DebugProcessImpl,
-        suspendContext: SuspendContextImpl?
+        suspendContext: SuspendContextImpl?,
+        filter: MethodFilter? = null,
     ): DebugProcessImpl.StepOutCommand {
         return with(debugProcess) {
-            object : DebugProcessImpl.StepOutCommand(suspendContext, StepRequest.STEP_LINE) {
+            object : DebugProcessImpl.StepOutCommand(suspendContext, StepRequest.STEP_LINE, filter) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
                         CoroutineBreakpointFacility.installResumeBreakpointInCallerMethod(suspendContext)
@@ -138,7 +139,7 @@ object KotlinStepActionFactory {
                         getLocationOfCoroutineSuspendReturn(resumeLocation)
                     } else null
                     val hint: RequestHint =
-                        KotlinStepOutRequestHint(suspendReturnLocation, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, null, parentHint)
+                        KotlinStepOutRequestHint(suspendReturnLocation, stepThread, suspendContext, StepRequest.STEP_MIN, StepRequest.STEP_OUT, filter, parentHint)
                     hint.isIgnoreFilters = debugProcess.session.shouldIgnoreSteppingFilters()
                     return hint
                 }

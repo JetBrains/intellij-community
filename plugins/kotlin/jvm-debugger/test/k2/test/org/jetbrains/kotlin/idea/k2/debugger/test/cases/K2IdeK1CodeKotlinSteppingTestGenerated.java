@@ -1913,6 +1913,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/stepIntoStdlibInlineFun2step.kt");
         }
 
+        @TestMetadata("stepOutDefaultArgs.kt")
+        public void testStepOutDefaultArgs() throws Exception {
+            runTest("../testData/stepping/custom/stepOutDefaultArgs.kt");
+        }
+
         @TestMetadata("stepOutInlineFunctionStdlib.kt")
         public void testStepOutInlineFunctionStdlib() throws Exception {
             runTest("../testData/stepping/custom/stepOutInlineFunctionStdlib.kt");

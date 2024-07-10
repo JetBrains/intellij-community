@@ -6,6 +6,7 @@ import com.intellij.debugger.PositionManager
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
+import com.intellij.debugger.engine.RequestHint
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
@@ -27,6 +28,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeStackFrame
+import org.jetbrains.kotlin.idea.debugger.base.util.safeThreadProxy
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
@@ -281,10 +283,11 @@ fun PsiElement.getLineRange(): IntRange? {
 }
 
 fun getStepOutAction(location: Location, frameProxy: StackFrameProxyImpl): KotlinStepAction {
-    val stackFrame = frameProxy.safeStackFrame() ?: return KotlinStepAction.StepOut
-    val token = LocationToken.from(stackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.StepOut
+    val stackFrame = frameProxy.safeStackFrame() ?: return KotlinStepAction.StepOut()
+    val token = LocationToken.from(stackFrame).takeIf { it.lineNumber > 0 } ?: return KotlinStepAction.StepOut()
     if (token.inlineVariables.isEmpty()) {
-        return KotlinStepAction.StepOut
+        createStepOutMethodWithDefaultArgsActionIfNeeded(frameProxy)?.let { return it }
+        return KotlinStepAction.StepOut()
     }
     val filter = object : KotlinStepOverFilter(location) {
         override fun isAcceptable(location: Location, locationToken: LocationToken, stackFrame: StackFrame): Boolean =
@@ -299,6 +302,26 @@ fun getStepOutAction(location: Location, frameProxy: StackFrameProxyImpl): Kotli
         else
             StepRequest.STEP_LINE
     return KotlinStepAction.KotlinStepOver(filter, stepSize)
+}
+
+/**
+ * Steps out from the `$default` method also
+ */
+private fun createStepOutMethodWithDefaultArgsActionIfNeeded(frameProxy: StackFrameProxyImpl): KotlinStepAction.StepOut? {
+    val frames = frameProxy.safeThreadProxy()?.frames() ?: return null
+    if (frames.size <= 1) return null
+    val previousLocation = frames.getOrNull(1)?.safeStackFrame()?.location() ?: return null
+    val parentMethod = previousLocation.safeMethod() ?: return null
+    if (!parentMethod.isSyntheticMethodForDefaultParameters()) return null
+
+    val parentLines = parentMethod.allLineLocations().map { it.safeLineNumber() - 1 }
+    val parentRange = Range(parentLines.min(), parentLines.max())
+    return KotlinStepAction.StepOut(object : MethodFilter {
+        override fun getCallingExpressionLines() = parentRange
+        override fun onReached(context: SuspendContextImpl?, hint: RequestHint?) = StepRequest.STEP_OUT
+        override fun locationMatches(process: DebugProcessImpl?, location: Location?): Boolean =
+            location?.safeMethod() == parentMethod
+    })
 }
 
 private fun LocationToken.isInsideOneLineInlineLambda(): Boolean {

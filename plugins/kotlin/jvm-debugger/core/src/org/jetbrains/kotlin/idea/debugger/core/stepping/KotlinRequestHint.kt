@@ -47,7 +47,7 @@ open class KotlinRequestHint(
             val location = frameProxy?.safeLocation()
             if (location !== null) {
                 val action = getStepOutAction(location, frameProxy)
-                if (action !== KotlinStepAction.StepOut) {
+                if (action !is KotlinStepAction.StepOut) {
                     val command = action.createCommand(debugProcess, suspendContext, false)
                     val hint = command.getHint(suspendContext, stepThread, this)!!
                     command.step(suspendContext, stepThread, hint, commandToken)
