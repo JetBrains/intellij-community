@@ -287,6 +287,8 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
     }
 
     public @Nullable FList<TextRange> matchingFragments() {
+      if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
+
       int length = myName.length();
       if (length < myMinNameLength) {
         return null;
@@ -312,8 +314,6 @@ final class TypoTolerantMatcher extends MinusculeMatcher {
           return null;
         }
       }
-
-      if (myPattern.length > TYPO_AWARE_PATTERN_LIMIT) return null;
 
       return matchWildcards(0, 0, new ErrorState());
     }
