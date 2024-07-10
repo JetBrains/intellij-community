@@ -203,6 +203,7 @@ internal suspend fun loadApp(
             if (localizationStateService.getLastSelectedLocale() != localizationStateService.getSelectedLocale()) {
               preloadJob.cancel()
               applicationStarter.cancel()
+              ConfigImportHelper.writeOptionsForRestartIfNeeded(logDeferred.await())
               ApplicationManager.getApplication().restart()
             }
           }

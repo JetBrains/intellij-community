@@ -280,19 +280,8 @@ public final class ConfigImportHelper {
     // TODO If so, we need to patch restarter.
     if (vmOptionFileChanged && !ProjectManagerEx.IS_PER_PROJECT_INSTANCE_ENABLED) {
       log.info("The vmoptions file has changed, restarting...");
-      List<String> properties = new ArrayList<>();
-      properties.add(FIRST_SESSION_KEY);
-      if (isConfigImported()) {
-        properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
-      }
-
       if (settings == null || settings.shouldRestartAfterVmOptionsChange()) {
-        try {
-          new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
-        }
-        catch (IOException e) {
-          log.error("cannot write config migration marker file to " + newConfigDir, e);
-        }
+        writeOptionsForRestart(newConfigDir, log);
         restart(args);
       }
     }
@@ -353,6 +342,27 @@ public final class ConfigImportHelper {
 
   private static boolean doesVmOptionsFileExist(Path configDir) {
     return Files.isRegularFile(configDir.resolve(VMOptions.getFileName()));
+  }
+
+  public static void writeOptionsForRestartIfNeeded(@NotNull Logger log) {
+    if (isFirstSession() && isConfigImported()) {
+      writeOptionsForRestart(PathManager.getConfigDir(), log);
+    }
+  }
+
+  private static void writeOptionsForRestart(@NotNull Path newConfigDir, @NotNull Logger log) {
+    List<String> properties = new ArrayList<>();
+    properties.add(FIRST_SESSION_KEY);
+    if (isConfigImported()) {
+      properties.add(CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY);
+    }
+
+    try {
+      new CustomConfigMigrationOption.SetProperties(properties).writeConfigMarkerFile(newConfigDir);
+    }
+    catch (IOException e) {
+      log.error("cannot write config migration marker file to " + newConfigDir, e);
+    }
   }
 
   private static void restart(List<String> args) {
