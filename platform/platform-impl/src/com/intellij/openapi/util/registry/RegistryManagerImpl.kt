@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry
 
 import com.intellij.diagnostic.runActivity
@@ -73,7 +73,7 @@ internal class RegistryManagerImpl : PersistentStateComponent<Element>, Registry
     Registry.setValueChangeListener(defaultValueChangeListener)
   }
 
-  override fun getState(): Element = Registry.getInstance().state
+  override fun getState(): Element = Registry.getInstance().getState()
 
   override fun noStateLoaded() {
     Registry.loadState(/* state = */ null, /* earlyAccess = */ EarlyAccessRegistryManager.getOrLoadMap())

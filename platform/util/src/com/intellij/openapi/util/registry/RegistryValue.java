@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.openapi.Disposable;
@@ -28,59 +28,59 @@ import java.util.Objects;
 public class RegistryValue {
   private static final Logger LOG = Logger.getInstance(RegistryValue.class);
 
-  private final Registry myRegistry;
-  private final String myKey;
-  private final @Nullable RegistryKeyDescriptor myKeyDescriptor;
+  private final Registry registry;
+  private final String key;
+  private final @Nullable RegistryKeyDescriptor keyDescriptor;
 
-  private final List<RegistryValueListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<RegistryValueListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private boolean myChangedSinceStart;
 
-  private String myStringCachedValue;
-  private Integer myIntCachedValue;
-  private double myDoubleCachedValue = Double.NaN;
-  private Boolean myBooleanCachedValue;
+  private String stringCachedValue;
+  private Integer intCachedValue;
+  private double doubleCachedValue = Double.NaN;
+  private Boolean booleanCachedValue;
 
   RegistryValue(@NotNull Registry registry, @NonNls @NotNull String key, @Nullable RegistryKeyDescriptor keyDescriptor) {
-    myRegistry = registry;
-    myKey = key;
-    myKeyDescriptor = keyDescriptor;
+    this.registry = registry;
+    this.key = key;
+    this.keyDescriptor = keyDescriptor;
   }
 
   public @NotNull @NlsSafe String getKey() {
-    return myKey;
+    return key;
   }
 
   public @NotNull @NlsSafe String asString() {
-    final String value = get(myKey, null, true);
-    assert value != null : myKey;
+    final String value = get(key, null, true);
+    assert value != null : key;
     return value;
   }
 
   public boolean asBoolean() {
-    Boolean result = myBooleanCachedValue;
+    Boolean result = booleanCachedValue;
     if (result == null) {
-      result = Boolean.valueOf(get(myKey, "false", true));
-      myBooleanCachedValue = result;
+      result = Boolean.valueOf(get(key, "false", true));
+      booleanCachedValue = result;
     }
     return result.booleanValue();
   }
 
   public int asInteger() {
-    Integer result = myIntCachedValue;
+    Integer result = intCachedValue;
     if (result == null) {
       result = calcInt();
-      myIntCachedValue = result;
+      intCachedValue = result;
     }
     return result.intValue();
   }
 
   private @NotNull Integer calcInt() {
     try {
-      return Integer.valueOf(get(myKey, "0", true));
+      return Integer.valueOf(get(key, "0", true));
     }
     catch (NumberFormatException e) {
-      return Integer.valueOf(myRegistry.getBundleValue(myKey));
+      return Integer.valueOf(registry.getBundleValue(key));
     }
   }
 
@@ -89,7 +89,7 @@ public class RegistryValue {
   }
 
   public String[] getOptions() {
-    return getOptions(myRegistry.getBundleValue(myKey));
+    return getOptions(registry.getBundleValue(key));
   }
 
   private static String[] getOptions(String value) {
@@ -134,28 +134,28 @@ public class RegistryValue {
   }
 
   public double asDouble() {
-    double result = myDoubleCachedValue;
+    double result = doubleCachedValue;
     if (Double.isNaN(result)) {
       result = calcDouble();
-      myDoubleCachedValue = result;
+      doubleCachedValue = result;
     }
     return result;
   }
 
   private double calcDouble() {
     try {
-      return Double.parseDouble(get(myKey, "0.0", true));
+      return Double.parseDouble(get(key, "0.0", true));
     }
     catch (NumberFormatException e) {
-      return Double.parseDouble(myRegistry.getBundleValue(myKey));
+      return Double.parseDouble(registry.getBundleValue(key));
     }
   }
 
   Color asColor(Color defaultValue) {
-    final String s = get(myKey, null, true);
+    final String s = get(key, null, true);
     if (s != null) {
       Color color = ColorHexUtil.fromHex(s, null);
-      if (color != null && (myKey.endsWith(".color") || myKey.endsWith(".color.dark") || myKey.endsWith(".color.light"))) {
+      if (color != null && (key.endsWith(".color") || key.endsWith(".color.dark") || key.endsWith(".color.light"))) {
         return color;
       }
       final String[] rgb = s.split(",");
@@ -171,43 +171,43 @@ public class RegistryValue {
   }
 
   public @NotNull @NlsSafe String getDescription() {
-    if (myKeyDescriptor != null) {
-      return myKeyDescriptor.getDescription();
+    if (keyDescriptor != null) {
+      return keyDescriptor.getDescription();
     }
-    return get(myKey + ".description", "", false);
+    return get(key + ".description", "", false);
   }
 
   boolean isRestartRequired() {
-    if (myKeyDescriptor != null) {
-      return myKeyDescriptor.isRestartRequired();
+    if (keyDescriptor != null) {
+      return keyDescriptor.isRestartRequired();
     }
-    return Boolean.parseBoolean(get(myKey + ".restartRequired", "false", false));
+    return Boolean.parseBoolean(get(key + ".restartRequired", "false", false));
   }
 
   public boolean isChangedFromDefault() {
-    return isChangedFromDefault(asString(), myRegistry);
+    return isChangedFromDefault(asString(), registry);
   }
 
   public @Nullable String getPluginId() {
-    return myKeyDescriptor != null ? myKeyDescriptor.getPluginId() : null;
+    return keyDescriptor != null ? keyDescriptor.getPluginId() : null;
   }
 
   final boolean isChangedFromDefault(@NotNull String newValue, @NotNull Registry registry) {
-    return !newValue.equals(registry.getBundleValueOrNull(myKey));
+    return !newValue.equals(registry.getBundleValueOrNull(key));
   }
 
   protected String get(@NonNls @NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     if (isValue) {
-      if (myStringCachedValue == null) {
-        myStringCachedValue = _get(key, defaultValue, true);
+      if (stringCachedValue == null) {
+        stringCachedValue = _get(key, defaultValue, true);
       }
-      return myStringCachedValue;
+      return stringCachedValue;
     }
     return _get(key, defaultValue, false);
   }
 
   private @Nullable String _get(@NonNls @NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
-    String userValue = myRegistry.getUserProperties().get(key);
+    String userValue = registry.getUserProperties().get(key);
     if (userValue != null) {
       return userValue;
     }
@@ -217,7 +217,7 @@ public class RegistryValue {
       return systemProperty;
     }
 
-    if (!myRegistry.isLoaded()) {
+    if (!registry.isLoaded()) {
       String message = "Attempt to load key '" + key + "' for not yet loaded registry";
       // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
       if (Disposer.isDebugMode()) {
@@ -229,10 +229,10 @@ public class RegistryValue {
     }
 
     if (mustExistInBundle) {
-      return myRegistry.getBundleValue(key);
+      return registry.getBundleValue(key);
     }
     else {
-      String bundleValue = myRegistry.getBundleValueOrNull(key);
+      String bundleValue = registry.getBundleValueOrNull(key);
       return bundleValue == null ? defaultValue : bundleValue;
     }
   }
@@ -246,22 +246,22 @@ public class RegistryValue {
   }
 
   public void setValue(String value) {
-    RegistryValueListener globalValueChangeListener = myRegistry.getValueChangeListener();
+    RegistryValueListener globalValueChangeListener = registry.getValueChangeListener();
     globalValueChangeListener.beforeValueChanged(this);
-    for (RegistryValueListener each : myListeners) {
+    for (RegistryValueListener each : listeners) {
       each.beforeValueChanged(this);
     }
     resetCache();
-    myRegistry.getUserProperties().put(myKey, value);
-    LOG.info("Registry value '" + myKey + "' has changed to '" + value + '\'');
+    registry.getUserProperties().put(key, value);
+    LOG.info("Registry value '" + key + "' has changed to '" + value + '\'');
 
     globalValueChangeListener.afterValueChanged(this);
-    for (RegistryValueListener each : myListeners) {
+    for (RegistryValueListener each : listeners) {
       each.afterValueChanged(this);
     }
 
     if (!isChangedFromDefault() && !isRestartRequired()) {
-      myRegistry.getUserProperties().remove(myKey);
+      registry.getUserProperties().remove(key);
     }
 
     myChangedSinceStart = true;
@@ -290,37 +290,37 @@ public class RegistryValue {
   }
 
   public void resetToDefault() {
-    String value = myRegistry.getBundleValueOrNull(myKey);
+    String value = registry.getBundleValueOrNull(key);
     if (value == null) {
-      myRegistry.getUserProperties().remove(myKey);
+      registry.getUserProperties().remove(key);
     } else {
       setValue(value);
     }
   }
 
   public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
-    myListeners.add(listener);
-    Disposer.register(parent, () -> myListeners.remove(listener));
+    listeners.add(listener);
+    Disposer.register(parent, () -> listeners.remove(listener));
   }
 
   public void addListener(@NotNull RegistryValueListener listener, @NotNull CoroutineScope coroutineScope) {
-    myListeners.add(listener);
+    listeners.add(listener);
     Objects.requireNonNull(coroutineScope.getCoroutineContext().get(Job.Key)).invokeOnCompletion(__ -> {
-      myListeners.remove(listener);
+      listeners.remove(listener);
       return Unit.INSTANCE;
     });
   }
 
   @Override
   public String toString() {
-    return myKey + "=" + asString();
+    return key + "=" + asString();
   }
 
   void resetCache() {
-    myStringCachedValue = null;
-    myIntCachedValue = null;
-    myDoubleCachedValue = Double.NaN;
-    myBooleanCachedValue = null;
+    stringCachedValue = null;
+    intCachedValue = null;
+    doubleCachedValue = Double.NaN;
+    booleanCachedValue = null;
   }
 
   public boolean isBoolean() {

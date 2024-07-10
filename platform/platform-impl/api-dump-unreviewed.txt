@@ -11805,10 +11805,9 @@ f:com.intellij.openapi.actionSystem.impl.ActionMenuItem
 - f:updateFromPresentation(com.intellij.openapi.actionSystem.Presentation):V
 - updateUI():V
 c:com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-- javax.swing.JPanel
 - com.intellij.openapi.actionSystem.ActionToolbar
 - com.intellij.ui.switcher.QuickActionProvider
-- com.intellij.util.animation.AlphaAnimated
+- javax.swing.JPanel
 - sf:DO_NOT_ADD_CUSTOMIZATION_HANDLER:java.lang.String
 - sf:IMPORTANT_TOOLBAR_KEY:java.lang.String
 - sf:SUPPRESS_FAST_TRACK:java.lang.String
@@ -28697,28 +28696,6 @@ com.intellij.util.User32Ex
 - a:SystemParametersInfo(com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$BOOLByReference,com.sun.jna.platform.win32.WinDef$UINT):Z
 - a:SystemParametersInfo(com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$UINT):Z
 - a:SystemParametersInfo(com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$UINT,com.sun.jna.platform.win32.WinDef$UINTByReference,com.sun.jna.platform.win32.WinDef$UINT):Z
-*:com.intellij.util.animation.AlphaAnimated
-- a:getAlphaContext():com.intellij.util.animation.AlphaAnimationContext
-*f:com.intellij.util.animation.AlphaAnimationContext
-- <init>(java.awt.AlphaComposite,java.util.function.Consumer):V
-- <init>(java.awt.Component):V
-- <init>(java.util.function.Consumer):V
-- f:getAnimator():com.intellij.util.animation.ShowHideAnimator
-- f:getComponent():java.awt.Component
-- f:getComposite():java.awt.AlphaComposite
-- f:getConsumer():java.util.function.Consumer
-- f:getDisposable():com.intellij.openapi.Disposable
-- f:isVisible():Z
-- f:paint(java.awt.Graphics,java.lang.Runnable):V
-- f:paintWithComposite(java.awt.Graphics2D,java.lang.Runnable):V
-- f:setComponent(java.awt.Component):V
-- f:setVisible(Z):V
-*c:com.intellij.util.animation.ShowHideAnimator
-- <init>(com.intellij.util.animation.Easing,java.util.function.DoubleConsumer):V
-- <init>(java.util.function.DoubleConsumer):V
-- f:getDisposable():com.intellij.openapi.Disposable
-- f:setVisible(Z,kotlin.jvm.functions.Function0):V
-- f:setVisibleImmediately(Z):V
 a:com.intellij.util.concurrency.Invoker
 - com.intellij.openapi.Disposable
 - f:compute(java.util.function.Supplier):org.jetbrains.concurrency.CancellablePromise

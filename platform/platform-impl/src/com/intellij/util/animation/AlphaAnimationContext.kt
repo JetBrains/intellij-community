@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation
 
 import com.intellij.openapi.Disposable
@@ -8,7 +8,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.util.function.Consumer
 
-class AlphaAnimationContext(private val base: AlphaComposite, val consumer: Consumer<AlphaComposite?>) {
+internal class AlphaAnimationContext(private val base: AlphaComposite, private val consumer: Consumer<AlphaComposite?>) {
   constructor(consumer: Consumer<AlphaComposite?>) : this(AlphaComposite.SrcOver, consumer)
   constructor(component: Component) : this({ if (component.isShowing) component.repaint() }) {
     this.component = component

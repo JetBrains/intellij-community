@@ -1,402 +1,382 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util.registry;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.MathUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.*;
+package com.intellij.openapi.util.registry
 
-import java.awt.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.List;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
+import com.intellij.diagnostic.LoadingState
+import com.intellij.openapi.util.NlsSafe
+import kotlinx.coroutines.CompletableDeferred
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
+import java.awt.Color
+import java.io.IOException
+import java.lang.ref.Reference
+import java.lang.ref.SoftReference
+import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.Volatile
 
 /**
  * Provides a UI to configure internal settings of the IDE.
- * <p>
+ *
+ *
  * Plugins can provide their own registry keys using the
- * {@code com.intellij.registryKey} extension point (see {@link RegistryKeyBean} for more details).
+ * `com.intellij.registryKey` extension point (see [com.intellij.openapi.util.registry.RegistryKeyBean] for more details).
  */
-public final class Registry {
-  private static Reference<Map<String, String>> bundledRegistry;
+class Registry {
+  private val userProperties = LinkedHashMap<String, String>()
+  private val values = ConcurrentHashMap<String, RegistryValue>()
+  private var contributedKeys = emptyMap<String, RegistryKeyDescriptor>()
 
-  public static final @NonNls String REGISTRY_BUNDLE = "misc.registry";
+  @Volatile
+  var isLoaded: Boolean = false
+    private set
 
-  private static final RegistryValueListener EMPTY_VALUE_LISTENER = new RegistryValueListener() {
-  };
+  @Volatile
+  private var loadFuture = CompletableFuture<Void?>()
 
-  private final Map<String, String> myUserProperties = new LinkedHashMap<>();
-  private final Map<String, RegistryValue> myValues = new ConcurrentHashMap<>();
-  private Map<String, RegistryKeyDescriptor> myContributedKeys = Collections.emptyMap();
+  @Volatile
+  var valueChangeListener: RegistryValueListener = EMPTY_VALUE_LISTENER
+    private set
 
-  private static final Registry ourInstance = new Registry();
-  private volatile boolean isLoaded;
-  private volatile CompletableFuture<Void> myLoadFuture = new CompletableFuture<>();
+  companion object {
+    private var bundledRegistry: Reference<Map<String, String>>? = null
 
-  private volatile @NotNull RegistryValueListener valueChangeListener = EMPTY_VALUE_LISTENER;
+    const val REGISTRY_BUNDLE: @NonNls String = "misc.registry"
 
-  public static @NotNull RegistryValue get(@NonNls @NotNull String key) {
-    return getInstance().doGet(key);
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull RegistryValue _getWithoutStateCheck(@NonNls @NotNull String key) {
-    return ourInstance.doGet(key);
-  }
-
-  private @NotNull RegistryValue doGet(@NonNls @NotNull String key) {
-    return myValues.computeIfAbsent(key, s -> new RegistryValue(this, s, myContributedKeys.get(s)));
-  }
-
-  public static boolean is(@NonNls @NotNull String key) throws MissingResourceException {
-    return get(key).asBoolean();
-  }
-
-  public static boolean is(@NonNls @NotNull String key, boolean defaultValue) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      return defaultValue;
+    private val EMPTY_VALUE_LISTENER: RegistryValueListener = object : RegistryValueListener {
     }
 
-    try {
-      return getInstance().doGet(key).asBoolean();
+    private val registry = Registry()
+
+    @JvmStatic
+    fun get(key: @NonNls String): RegistryValue = getInstance().doGet(key)
+
+    @Suppress("FunctionName")
+    @Internal
+    @JvmStatic
+    fun _getWithoutStateCheck(key: @NonNls String): RegistryValue = registry.doGet(key)
+
+    @Throws(MissingResourceException::class)
+    @JvmStatic
+    fun `is`(key: @NonNls String): Boolean = get(key).asBoolean()
+
+    @JvmStatic
+    fun `is`(key: @NonNls String, defaultValue: Boolean): Boolean {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+        return defaultValue
+      }
+
+      try {
+        return registry.doGet(key).asBoolean()
+      }
+      catch (ignore: MissingResourceException) {
+        return defaultValue
+      }
     }
-    catch (MissingResourceException ignore) {
-      return defaultValue;
+
+    @Throws(MissingResourceException::class)
+    @JvmStatic
+    fun intValue(key: @NonNls String): Int = getInstance().doGet(key).asInteger()
+
+    @JvmStatic
+    fun intValue(key: @NonNls String, defaultValue: Int): Int {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+        LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+        return defaultValue
+      }
+
+      try {
+        return registry.doGet(key).asInteger()
+      }
+      catch (ignore: MissingResourceException) {
+        return defaultValue
+      }
+    }
+
+    @JvmStatic
+    fun doubleValue(key: @NonNls String, defaultValue: Double): Double {
+      if (!LoadingState.COMPONENTS_LOADED.isOccurred) {
+        LoadingState.COMPONENTS_REGISTERED.checkOccurred()
+        return defaultValue
+      }
+
+      try {
+        return registry.doGet(key).asDouble()
+      }
+      catch (ignore: MissingResourceException) {
+        return defaultValue
+      }
+    }
+
+    @Throws(MissingResourceException::class)
+    @JvmStatic
+    fun doubleValue(key: @NonNls String): Double = get(key).asDouble()
+
+    @Throws(MissingResourceException::class)
+    @JvmStatic
+    fun stringValue(key: @NonNls String): String = get(key).asString()
+
+    @Throws(MissingResourceException::class)
+    @JvmStatic
+    fun getColor(key: @NonNls String, defaultValue: Color?): Color = get(key).asColor(defaultValue)
+
+    @Throws(IOException::class)
+    private fun loadFromBundledConfig(): Map<String, String>? {
+      bundledRegistry?.get()?.let {
+        return it
+      }
+
+      val map: MutableMap<String, String> = LinkedHashMap(1800)
+      val mainFound = loadFromResource("misc/registry.properties", map)
+      val overrideFound = loadFromResource("misc/registry.override.properties", map)
+      if (!mainFound && !overrideFound) {
+        return null
+      }
+
+      bundledRegistry = SoftReference(map)
+      return map
+    }
+
+    private fun loadFromResource(sourceResourceName: String, targetMap: MutableMap<String, String>): Boolean {
+      val stream = Registry::class.java.classLoader.getResourceAsStream(sourceResourceName) ?: return false
+      stream.use {
+        object : Properties() {
+          override fun put(key: Any, value: Any): Any? {
+            return targetMap.put(key as String, value as String)
+          }
+        }.load(stream)
+      }
+      return true
+    }
+
+    @JvmStatic
+    fun getInstance(): Registry {
+      LoadingState.COMPONENTS_LOADED.checkOccurred()
+      return registry
+    }
+
+    @JvmStatic
+    fun intValue(key: @NonNls String, defaultValue: Int, minValue: Int, maxValue: Int): Int {
+      require(!(defaultValue < minValue || defaultValue > maxValue)) {
+        "Wrong values for default:min:max ($defaultValue:$minValue:$maxValue)"
+      }
+      return intValue(key, defaultValue).coerceIn(minValue, maxValue)
+    }
+
+    private fun fromState(state: Element): Map<String, String> {
+      val map = LinkedHashMap<String, String>()
+      for (eachEntry in state.getChildren("entry")) {
+        val key = eachEntry.getAttributeValue("key") ?: continue
+        val value = eachEntry.getAttributeValue("value") ?: continue
+        map.put(key, value)
+      }
+      return map
+    }
+
+    private fun updateStateInternal(registry: Registry, state: Element?): Map<String, String> {
+      val userProperties = registry.userProperties
+      if (state == null) {
+        userProperties.clear()
+        return userProperties
+      }
+
+      val map = fromState(state)
+      val keysToProcess = HashSet(userProperties.keys)
+      for ((key, value) in map) {
+        val registryValue = registry.doGet(key)
+        val currentValue = registryValue.get(key, null, false)
+        // currentValue == null means value is not in the bundle. Ignore it
+        if (currentValue != null && currentValue != value) {
+          registryValue.setValue(value)
+        }
+        keysToProcess.remove(key)
+      }
+
+      // keys that are not in the state; we need to reset them to default value
+      for (key in keysToProcess) {
+        registry.doGet(key).resetToDefault()
+      }
+
+      return userProperties
+    }
+
+    @Internal
+    fun loadState(state: Element?, earlyAccess: Map<String, String>?): Map<String, String> {
+      val registry = registry
+      if (registry.isLoaded) {
+        return updateStateInternal(registry, state)
+      }
+      else {
+        return loadStateInternal(registry = registry, state = state, earlyAccess = earlyAccess)
+      }
+    }
+
+    @Internal
+    @JvmStatic
+    fun markAsLoaded() {
+      registry.isLoaded = true
+      registry.loadFuture.complete(null)
+    }
+
+    fun awaitLoad(): CompletionStage<Void?> = registry.loadFuture
+
+    @Internal
+    @JvmStatic
+    fun getAll(): List<RegistryValue> {
+      var bundle: Map<String, String>? = null
+      try {
+        bundle = loadFromBundledConfig()
+      }
+      catch (ignored: IOException) {
+      }
+      val keys = bundle?.keys ?: emptySet()
+      val result = ArrayList<RegistryValue>()
+      // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
+      val instance = registry
+      val contributedKeys = instance.contributedKeys
+      for (key in keys) {
+        if (key.endsWith(".description") || key.endsWith(".restartRequired") || contributedKeys.containsKey(key)) {
+          continue
+        }
+        result.add(instance.doGet(key))
+      }
+
+      for (key in contributedKeys.keys) {
+        result.add(instance.doGet(key))
+      }
+
+      return result
+    }
+
+    private fun isRestartNeeded(map: Map<String, String>): Boolean {
+      val instance = getInstance()
+      for (s in map.keys) {
+        val eachValue = instance.doGet(s)
+        if (eachValue.isRestartRequired && eachValue.isChangedSinceAppStart) {
+          return true
+        }
+      }
+
+      return false
+    }
+
+    @Internal
+    @Synchronized
+    fun setKeys(descriptors: Map<String, RegistryKeyDescriptor>) {
+      // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
+      registry.contributedKeys = descriptors
+    }
+
+    @Internal
+    @Synchronized
+    fun mutateContributedKeys(mutator: (Map<String, RegistryKeyDescriptor>) -> Map<String, RegistryKeyDescriptor>) {
+      // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
+      registry.contributedKeys = mutator(registry.contributedKeys)
+    }
+
+    @Internal
+    fun setValueChangeListener(listener: RegistryValueListener?) {
+      registry.valueChangeListener = listener ?: EMPTY_VALUE_LISTENER
+    }
+
+    private fun loadStateInternal(
+      registry: Registry,
+      state: Element?,
+      earlyAccess: Map<String, String>?
+    ): Map<String, String> {
+      val userProperties = registry.userProperties
+      userProperties.clear()
+      if (state != null) {
+        val map = fromState(state)
+        for ((key, value) in map) {
+          val registryValue = registry.doGet(key)
+          if (registryValue.isChangedFromDefault(value, registry)) {
+            userProperties[key] = value
+            registryValue.resetCache()
+          }
+        }
+      }
+
+      if (earlyAccess != null) {
+        // yes, earlyAccess overrides user properties
+        userProperties.putAll(earlyAccess)
+      }
+      registry.isLoaded = true
+      registry.loadFuture.complete(null)
+      return userProperties
     }
   }
 
-  public static int intValue(@NonNls @NotNull String key) throws MissingResourceException {
-    return getInstance().doGet(key).asInteger();
-  }
-
-  public static int intValue(@NonNls @NotNull String key, int defaultValue) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
-      return defaultValue;
-    }
-
-    try {
-      return getInstance().doGet(key).asInteger();
-    }
-    catch (MissingResourceException ignore) {
-      return defaultValue;
+  private fun doGet(key: @NonNls String): RegistryValue {
+    return values.computeIfAbsent(key) {
+      RegistryValue(this, it, contributedKeys.get(it))
     }
   }
 
   @TestOnly
-  void reset() {
-    myUserProperties.clear();
-    myValues.clear();
-    isLoaded = false;
-    myLoadFuture.cancel(false);
-    myLoadFuture = new CompletableFuture<>();
+  fun reset() {
+    userProperties.clear()
+    values.clear()
+    isLoaded = false
+    loadFuture.cancel(false)
+    loadFuture = CompletableFuture()
   }
 
-  public static double doubleValue(@NonNls @NotNull String key, double defaultValue) {
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      LoadingState.COMPONENTS_REGISTERED.checkOccurred();
-      return defaultValue;
+  fun getBundleValueOrNull(key: @NonNls String): @NlsSafe String? {
+    contributedKeys.get(key)?.let {
+      return it.defaultValue
     }
 
-    try {
-      return getInstance().doGet(key).asDouble();
-    }
-    catch (MissingResourceException ignore) {
-      return defaultValue;
-    }
+    return loadFromBundledConfig()?.get(key)
   }
 
-  public static double doubleValue(@NonNls @NotNull String key) throws MissingResourceException {
-    return get(key).asDouble();
+  @Throws(MissingResourceException::class)
+  fun getBundleValue(key: @NonNls String): @NlsSafe String {
+    contributedKeys.get(key)?.let {
+      return it.defaultValue
+    }
+
+    return getBundleValueOrNull(key) ?: throw MissingResourceException("Registry key $key is not defined", REGISTRY_BUNDLE, key)
   }
 
-  public static @NotNull String stringValue(@NonNls @NotNull String key) throws MissingResourceException {
-    return get(key).asString();
-  }
-
-  public static Color getColor(@NonNls @NotNull String key, Color defaultValue) throws MissingResourceException {
-    return get(key).asColor(defaultValue);
-  }
-
-  private static @Nullable Map<String, String> loadFromBundledConfig() throws IOException {
-    Reference<Map<String, String>> bundleRef = bundledRegistry;
-    Map<String, String> result = bundleRef == null ? null : bundleRef.get();
-    if (result != null) {
-      return result;
-    }
-
-    Map<String, String> map = new LinkedHashMap<>(1_800);
-    boolean mainFound = loadFromResource("misc/registry.properties", map);
-    boolean overrideFound = loadFromResource("misc/registry.override.properties", map);
-    if (!mainFound && !overrideFound) {
-      return null;
-    }
-
-    bundledRegistry = new SoftReference<>(map);
-    return map;
-  }
-
-  private static boolean loadFromResource(String sourceResourceName, Map<String, String> targetMap) throws IOException {
-    InputStream stream = Registry.class.getClassLoader().getResourceAsStream(sourceResourceName);
-    if (stream == null) {
-      return false;
-    }
-
-    try {
-      //noinspection NonSynchronizedMethodOverridesSynchronizedMethod
-      new Properties() {
-        @Override
-        public Object put(Object key, Object value) {
-          return targetMap.put((String)key, (String)value);
-        }
-      }.load(stream);
-    }
-    finally {
-      stream.close();
-    }
-    return true;
-  }
-
-  public @NlsSafe @Nullable String getBundleValueOrNull(@NonNls @NotNull String key) {
-    RegistryKeyDescriptor contributed = myContributedKeys.get(key);
-    if (contributed != null) {
-      return contributed.getDefaultValue();
-    }
-
-    try {
-      Map<String, String> bundle = loadFromBundledConfig();
-      return bundle == null ? null : bundle.get(key);
-    }
-    catch (IOException e) {
-      // critical start-up error (cannot parse properties file), don't bother clients
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @NlsSafe @NotNull String getBundleValue(@NonNls @NotNull String key) throws MissingResourceException {
-    RegistryKeyDescriptor contributed = myContributedKeys.get(key);
-    if (contributed != null) {
-      return contributed.getDefaultValue();
-    }
-
-    String result = getBundleValueOrNull(key);
-    if (result == null) {
-      throw new MissingResourceException("Registry key " + key + " is not defined", REGISTRY_BUNDLE, key);
-    }
-    return result;
-  }
-
-  public static @NotNull Registry getInstance() {
-    LoadingState.COMPONENTS_LOADED.checkOccurred();
-    return ourInstance;
-  }
-
-  public @NotNull Element getState() {
-    Element state = new Element("registry");
-    for (Map.Entry<String, String> entry : myUserProperties.entrySet()) {
-      RegistryValue registryValue = get(entry.getKey());
-      if (registryValue.isChangedFromDefault()) {
-        Element entryElement = new Element("entry");
-        entryElement.setAttribute("key", entry.getKey());
-        entryElement.setAttribute("value", entry.getValue());
-        state.addContent(entryElement);
+  fun getState(): Element {
+    val state = Element("registry")
+    for ((key, value) in userProperties) {
+      val registryValue = getInstance().doGet(key)
+      if (registryValue.isChangedFromDefault) {
+        val entryElement = Element("entry")
+        entryElement.setAttribute("key", key)
+        entryElement.setAttribute("value", value)
+        state.addContent(entryElement)
       }
     }
-    return state;
+    return state
   }
 
-  public static int intValue(@NonNls @NotNull String key, int defaultValue, int minValue, int maxValue) {
-    if (defaultValue < minValue || defaultValue > maxValue) {
-      throw new IllegalArgumentException("Wrong values for default:min:max (" + defaultValue + ":" + minValue + ":" + maxValue + ")");
-    }
-    return MathUtil.clamp(intValue(key, defaultValue), minValue, maxValue);
-  }
+  @Internal
+  fun getUserProperties(): MutableMap<String, String> = userProperties
 
-  private static @NotNull Map<String, String> fromState(@NotNull Element state) {
-    Map<String, String> map = new LinkedHashMap<>();
-    for (Element eachEntry : state.getChildren("entry")) {
-      String key = eachEntry.getAttributeValue("key");
-      String value = eachEntry.getAttributeValue("value");
-      if (key != null && value != null) {
-        map.put(key, value);
-      }
-    }
-    return map;
-  }
-
-  private static @NotNull Map<String, String> updateStateInternal(@NotNull Registry registry, @Nullable Element state) {
-    Map<String, String> userProperties = registry.myUserProperties;
-    if (state == null) {
-      userProperties.clear();
-      return userProperties;
-    }
-
-    Map<String, String> map = fromState(state);
-    Set<String> keys2process = new HashSet<>(userProperties.keySet());
-    for (Map.Entry<String, String> entry : map.entrySet()) {
-      RegistryValue registryValue = registry.doGet(entry.getKey());
-      String currentValue = registryValue.get(entry.getKey(), null, false);
-      // currentValue == null means value is not in the bundle. Simply ignore it
-      if (currentValue != null && !currentValue.equals(entry.getValue())) {
-        registryValue.setValue(entry.getValue());
-      }
-      keys2process.remove(entry.getKey());
-    }
-
-    // keys that are not in the state, we need to reset them to default value
-    for (String key : keys2process) {
-      registry.doGet(key).resetToDefault();
-    }
-
-    return userProperties;
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
-    Registry registry = ourInstance;
-    if (registry.isLoaded) {
-      return updateStateInternal(registry, state);
-    }
-    else {
-      return loadStateInternal(registry, state, earlyAccess);
-    }
-  }
-
-  @ApiStatus.Internal
-  public static void markAsLoaded() {
-    ourInstance.isLoaded = true;
-    ourInstance.myLoadFuture.complete(null);
-  }
-
-  public boolean isLoaded() {
-    return isLoaded;
-  }
-
-  static CompletionStage<Void> awaitLoad() {
-    return ourInstance.myLoadFuture;
-  }
-
-  @NotNull Map<String, String> getUserProperties() {
-    return myUserProperties;
-  }
-
-  @ApiStatus.Internal
-  public static @NotNull List<RegistryValue> getAll() {
-    Map<String, String> bundle = null;
-    try {
-      bundle = loadFromBundledConfig();
-    }
-    catch (IOException ignored) {
-    }
-    Set<String> keys = bundle == null ? Collections.emptySet() : bundle.keySet();
-    List<RegistryValue> result = new ArrayList<>();
-    // don't use getInstance here - https://youtrack.jetbrains.com/issue/IDEA-271748
-    Registry instance = ourInstance;
-    Map<String, RegistryKeyDescriptor> contributedKeys = instance.myContributedKeys;
-    for (String key : keys) {
-      if (key.endsWith(".description") || key.endsWith(".restartRequired") || contributedKeys.containsKey(key)) {
-        continue;
-      }
-      result.add(instance.doGet(key));
-    }
-
-    for (String key : contributedKeys.keySet()) {
-      result.add(instance.doGet(key));
-    }
-
-    return result;
-  }
-
-  void restoreDefaults() {
-    Map<String, String> old = new LinkedHashMap<>(myUserProperties);
-    Registry instance = getInstance();
-    for (String key : old.keySet()) {
-      String v = instance.getBundleValueOrNull(key);
+  fun restoreDefaults() {
+    val old = LinkedHashMap(userProperties)
+    val registry = getInstance()
+    for (key in old.keys) {
+      val v = registry.getBundleValueOrNull(key)
       if (v == null) {
         // outdated property that is not declared in registry.properties anymore
-        myValues.remove(key);
+        values.remove(key)
       }
       else {
-        RegistryValue value = instance.myValues.get(key);
-        if (value != null) {
-          value.setValue(v);
-        }
+        registry.values.get(key)?.setValue(v)
       }
     }
   }
 
-  boolean isInDefaultState() {
-    return myUserProperties.isEmpty();
-  }
+  val isInDefaultState: Boolean
+    get() = userProperties.isEmpty()
 
-  public boolean isRestartNeeded() {
-    return isRestartNeeded(myUserProperties);
-  }
-
-  private static boolean isRestartNeeded(@NotNull Map<String, String> map) {
-    Registry instance = getInstance();
-    for (String s : map.keySet()) {
-      RegistryValue eachValue = instance.doGet(s);
-      if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart()) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  @ApiStatus.Internal
-  public static synchronized void setKeys(@NotNull Map<String, RegistryKeyDescriptor> descriptors) {
-    // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
-    ourInstance.myContributedKeys = descriptors;
-  }
-
-  @ApiStatus.Internal
-  public static synchronized void mutateContributedKeys(@NotNull Function<? super Map<String, RegistryKeyDescriptor>, ? extends Map<String, RegistryKeyDescriptor>> mutator) {
-    // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
-    ourInstance.myContributedKeys = mutator.apply(ourInstance.myContributedKeys);
-  }
-
-  @ApiStatus.Internal
-  public static void setValueChangeListener(@Nullable RegistryValueListener listener) {
-    ourInstance.valueChangeListener = listener == null ? EMPTY_VALUE_LISTENER : listener;
-  }
-
-  @NotNull RegistryValueListener getValueChangeListener() {
-    return valueChangeListener;
-  }
-
-  private static @NotNull Map<String, String> loadStateInternal(@NotNull Registry registry,
-                                                                @Nullable Element state,
-                                                                @Nullable Map<String, String> earlyAccess) {
-    Map<String, String> userProperties = registry.myUserProperties;
-    userProperties.clear();
-    if (state != null) {
-      Map<String, String> map = fromState(state);
-      for (Map.Entry<String, String> entry : map.entrySet()) {
-        RegistryValue registryValue = registry.doGet(entry.getKey());
-        if (registryValue.isChangedFromDefault(entry.getValue(), registry)) {
-          userProperties.put(entry.getKey(), entry.getValue());
-          registryValue.resetCache();
-        }
-      }
-    }
-
-    if (earlyAccess != null) {
-      // yes, earlyAccess overrides user properties
-      userProperties.putAll(earlyAccess);
-    }
-    registry.isLoaded = true;
-    registry.myLoadFuture.complete(null);
-    return userProperties;
-  }
+  val isRestartNeeded: Boolean
+    get() = isRestartNeeded(userProperties)
 }

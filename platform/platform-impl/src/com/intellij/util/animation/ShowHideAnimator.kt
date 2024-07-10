@@ -1,13 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.registry.Registry.intValue
+import com.intellij.openapi.util.registry.Registry
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.DoubleConsumer
 import kotlin.math.roundToInt
 
-open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer) {
+internal open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer) {
   private val animator = JBAnimator()
   private val atomicVisible = AtomicBoolean()
   private val statefulEasing = easing.stateful()
@@ -38,16 +38,16 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
   }
 
   private val showingDelay
-    get() = intValue("ide.animation.showing.delay", 0)
+    get() = Registry.intValue("ide.animation.showing.delay", 0)
 
   private val showingDuration
-    get() = intValue("ide.animation.showing.duration", 130)
+    get() = Registry.intValue("ide.animation.showing.duration", 130)
 
   private val hidingDelay
-    get() = intValue("ide.animation.hiding.delay", 140)
+    get() = Registry.intValue("ide.animation.hiding.delay", 140)
 
   private val hidingDuration
-    get() = intValue("ide.animation.hiding.duration", 150)
+    get() = Registry.intValue("ide.animation.hiding.duration", 150)
 
   private fun createShowingAnimation(value: Double, updateVisibility: () -> Unit) = Animation(consumer).apply {
     if (value > 0.0) {
@@ -60,7 +60,8 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       easing = statefulEasing
     }
   }.runWhenScheduled {
-    if (atomicVisible.get()) { // Most likely not needed, just for consistency with hide. In the worst case we just avoid minor flickering here.
+    if (atomicVisible.get()) { // Most likely not needed, just for consistency with hide.
+      // In the worst case, we just avoid minor flickering here.
       updateVisibility()
     }
   }
@@ -76,7 +77,7 @@ open class ShowHideAnimator(easing: Easing, private val consumer: DoubleConsumer
       easing = statefulEasing.reverse()
     }
   }.runWhenExpiredOrCancelled {
-    if (!atomicVisible.get()) { // If the animation is cancelled and the component was already made visible, we do NOT want to hide it again!
+    if (!atomicVisible.get()) { // If the animation is canceled and the component was already made visible, we do NOT want to hide it again!
       updateVisibility()
     }
   }
