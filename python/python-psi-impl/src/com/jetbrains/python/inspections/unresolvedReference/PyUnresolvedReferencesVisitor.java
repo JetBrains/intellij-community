@@ -296,7 +296,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         return;
       }
       if (!expr.isQualified()) {
-        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(expr)) {
+        if (PyInspectionsUtil.hasAnyInterruptedControlFlowPaths(expr, myTypeEvalContext)) {
           return;
         }
         ContainerUtil.addIfNotNull(fixes, getTrueFalseQuickFix(refText));

@@ -385,6 +385,53 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  public void testVariableReportedAfterNotBuiltinExit() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("""
+                     def foo(x):
+                       exit = lambda : 1
+                       if x:
+                          y = 1
+                       else:
+                         exit()
+                       print(<warning descr="Local variable 'y' might be referenced before assignment">y</warning>)
+                     """);
+    });
+  }
+
+  public void testDoReportInFakeExit() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("""
+                     def foo(x):
+                       exit = lambda : 1
+                       if x:
+                          y = 1
+                       if not x:
+                         exit()
+                         print(<warning descr="Local variable 'y' might be referenced before assignment">y</warning>)
+                     """);
+    });
+  }
+
+
+  public void testDoNoReportInUnreachableCode() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doTestByText("""
+                     def foo(x):
+                       if x:
+                          y = 1
+                       if not x:
+                         exit()
+                         print(y)
+                     """);
+    });
+  }
+
+
+  public void testVariableNotReportedAfterNoReturn() {
+
+  }
+
   // PY-63357
   public void testFunctionParameterAnnotatedWithReferenceToTypeParameter() {
     runWithLanguageLevel(LanguageLevel.PYTHON312, () -> {
