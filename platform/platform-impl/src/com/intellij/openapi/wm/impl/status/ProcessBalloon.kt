@@ -62,15 +62,16 @@ internal class ProcessBalloon(private val maxVisible: Int) {
 
         isVisible++
 
-        indicator.presentationModeProgressPanel = PresentationModeProgressPanel(indicator)
+        val presentationModeProgressPanel = PresentationModeProgressPanel(indicator)
+        indicator.presentationModeProgressPanel = presentationModeProgressPanel
         indicator.updateProgressNow()
 
-        indicator.presentationModeBalloon = create(pane, indicator, indicator.presentationModeProgressPanel!!.progressPanel)
+        indicator.presentationModeBalloon = create(pane, indicator, presentationModeProgressPanel.progressPanel)
         indicator.presentationModeShowBalloon = true
 
         indicators.add(indicator)
       }
-      else if (!indicator.presentationModeBalloon!!.isDisposed) {
+      else if (indicator.presentationModeBalloon?.isDisposed == false) {
         indicators.add(indicator)
       }
     }
@@ -103,7 +104,7 @@ internal class ProcessBalloon(private val maxVisible: Int) {
         }, Balloon.Position.above)
       }
       else {
-        indicator.presentationModeBalloon!!.revalidate()
+        indicator.presentationModeBalloon?.revalidate()
       }
     }
   }
