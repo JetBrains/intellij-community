@@ -36,6 +36,10 @@ internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
     MavenOpenProjectProvider().linkToExistingProjectAsync(externalProjectPath, project)
   }
 
+  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    MavenOpenProjectProvider().unlinkProject(project, externalProjectPath)
+  }
+
   private class ProjectsTreeListener(project: Project, val listener: ExternalSystemProjectLinkListener) : MavenProjectsTree.Listener {
     val mavenProjectsManager: MavenProjectsManager = MavenProjectsManager.getInstance(project)
     var mavenProjects = getMavenProjectPaths()
