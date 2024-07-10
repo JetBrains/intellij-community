@@ -50,19 +50,15 @@ open class RegistryValue @Internal constructor(
   fun asInteger(): Int {
     var result = intCachedValue
     if (result == null) {
-      result = computeInt()
-      intCachedValue = result
+      result = try {
+        _get(key = key, defaultValue = "0", mustExistInBundle = true)!!.toInt()
+      }
+      catch (e: NumberFormatException) {
+        registry.getBundleValue(key).toInt()
+      }
+      intCachedValue = result!!
     }
     return result
-  }
-
-  private fun computeInt(): Int {
-    try {
-      return get(key = key, defaultValue = "0", isValue = true)!!.toInt()
-    }
-    catch (e: NumberFormatException) {
-      return registry.getBundleValue(key).toInt()
-    }
   }
 
   val isMultiValue: Boolean
