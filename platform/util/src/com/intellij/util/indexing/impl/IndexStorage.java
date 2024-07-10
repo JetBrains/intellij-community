@@ -31,6 +31,10 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
   @NotNull
   ValueContainer<Value> read(Key key) throws StorageException;
 
+  /**
+   * Drops (some of) cached data, without touching data that is modified and needs to be persisted.
+   * TODO RC: clearCaches() is an ambiguous name, this method is better called 'trimCaches()'
+   */
   void clearCaches();
 
   @Override
@@ -51,6 +55,10 @@ public interface IndexStorage<Key, Value> extends Flushable, Closeable {
    * cache contents to underlying storage (=flush). Clearing caching entries then is useless side-effect, that
    * is even harmful for performance. Probably, this method should be split in 2: flush() and invalidateCache(),
    * with the first one only persisting modified ValueContainers, while second one also clearing the cache.
+   * TODO RC: in its current version, ChangeTrackingValueContainer can't be flushed without being also evicted
+   * from cache, because it doesn't reset its .isDirty() status after being saveTo()/saveDiffTo(). This could be
+   * re-implemented in a more correct way, or modified containers could be still evicted from cache on flush(),
+   * but un-modified containers could be left in cache.
    */
   @Internal
   default void invalidateCachedMappings() {

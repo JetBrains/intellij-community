@@ -91,6 +91,11 @@ public abstract class MapReduceIndex<Key, Value, Input> implements InvertedIndex
 
   public void clearCaches() {
     try {
+      //TODO RC: it seems useless to clearCaches() before flush() -- clearCaches() basically trims
+      //         mergedSnapshot from all the cached ChangeTrackingValueContainers, while flush() in
+      //         its current implementation persists all the changes in those containers, AND
+      //         invalidates the cache entirely, i.e. remove all the cached content. So flush()
+      //         strongly tops .clearCaches() in its effect on occupied heap space.
       ConcurrencyUtil.withLock(myLock.readLock(), () -> {
         myStorage.clearCaches();
       });
