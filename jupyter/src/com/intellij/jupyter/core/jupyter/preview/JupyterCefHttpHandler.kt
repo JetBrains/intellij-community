@@ -27,7 +27,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
   companion object {
     private val allowedTypes = setOf("css", "js", "html", "svg", "woff", "woff2", "ttf")
     private const val JUPYTER_HTTP_URI = "jupyter"
-    private const val prefix = "/$JUPYTER_HTTP_URI"
+    private const val PATH_PREFIX = "/$JUPYTER_HTTP_URI"
 
     /**
      * Jupyter HTTP files can be accessed with this url
@@ -43,8 +43,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
      * Resources are in different folders when launched locally versus installation.
      * This method handles this difference. See .groovy build scripts
      */
-    private fun getResource(path: String): URL {
-      val javaClass = Companion::class.java
+    private fun getResource(javaClass: Class<*>, path: String): URL {
       // After optimizations in PluginClassLoader, classLoader.getResource return null in debug,
       // so we have additional logic with PluginClassLoader.pluginDescriptor.
       val url = javaClass.classLoader.getResource(path)
@@ -61,7 +60,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
   }
 
   override fun isSupported(request: FullHttpRequest): Boolean {
-    return super.isSupported(request) && request.uri().let { it.startsWith(prefix) || it in absolutePathFiles }
+    return super.isSupported(request) && request.uri().let { it.startsWith(PATH_PREFIX) || it in absolutePathFiles }
   }
 
   override fun process(urlDecoder: QueryStringDecoder,
@@ -97,10 +96,10 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
     if (fullUri in absolutePathFiles) {
       return fullUri
     }
-    if (!fullUri.startsWith(prefix)) {
+    if (!fullUri.startsWith(PATH_PREFIX)) {
       return null
     }
-    val uri = fullUri.replace("//", "/").substring(prefix.length).trimStart('/')
+    val uri = fullUri.replace("//", "/").substring(PATH_PREFIX.length).trimStart('/')
     if (uri.isEmpty()) {
       return null
     }
@@ -113,12 +112,17 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
 
   abstract val appName: String
 
+  // Each handler implementation has resources in its own module.
+  // If this contract is changed in the future, then please override
+  // this property in the subclasses
+  private val classToLoadResources: Class<*> get() = this::class.java
+
   private fun readFile(file: String): ByteArray? {
     //Ignore this one because it is used for Widget support
     if (file.contains("BASE_EXTENSION_PATH"))
       return null
     val appName = appName
-    val resource = getResource("$appName/$file")
+    val resource = getResource(classToLoadResources, "$appName/$file")
     return resource.readBytes()
   }
 }
