@@ -36,14 +36,26 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 
     protected abstract fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression?
 
-    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean {
-        return extractTargetExpressionFromPsi(element) != null
-    }
+    override fun isApplicableByPsi(element: KtBinaryExpression): Boolean =
+        extractTargetExpressionFromPsi(element) != null
 
     context(KaSession)
     final override fun prepareContext(element: KtBinaryExpression): ReplacementInfo? {
-        val target = extractTargetExpressionFromPsi(element) ?: return null
-        return getReplacementIfApplicable(target)
+        val replaceableCall = extractTargetExpressionFromPsi(element)
+            ?.resolveToCall()
+            ?.singleCallOrNull<KaCallableMemberCall<*, *>>()
+            ?.findReplaceableOverride()
+            ?: return null
+
+        val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY
+                && !replaceableCall.hasIsNotEmpty
+
+        return if (replaceWithNegatedIsEmpty) {
+            // Some classes (like *Progression) don't have isNotEmpty() (KT-51560), so we use !isEmpty() instead
+            ReplacementInfo(EmptinessCheckMethod.IS_EMPTY, negate = true)
+        } else {
+            ReplacementInfo(methodToReplaceWith, negate = false)
+        }
     }
 
     protected abstract inner class ReplaceSizeCheckQuickFixBase(
@@ -83,20 +95,6 @@ internal sealed class ReplaceSizeCheckInspectionBase :
         }
         append(info.method.methodName)
         append("()")
-    }
-
-    context(KaSession)
-    private fun getReplacementIfApplicable(target: KtExpression): ReplacementInfo? {
-        val resolvedCall = target.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>() ?: return null
-        val replaceableCall = resolvedCall.findReplaceableOverride() ?: return null
-
-        val replaceWithNegatedIsEmpty = methodToReplaceWith == EmptinessCheckMethod.IS_NOT_EMPTY && !replaceableCall.hasIsNotEmpty
-        return if (replaceWithNegatedIsEmpty) {
-            // Some classes (like *Progression) don't have isNotEmpty() (KT-51560), so we use !isEmpty() instead
-            ReplacementInfo(EmptinessCheckMethod.IS_EMPTY, negate = true)
-        } else {
-            ReplacementInfo(methodToReplaceWith, negate = false)
-        }
     }
 
     context(KaSession)
