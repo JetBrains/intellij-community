@@ -89,12 +89,10 @@ public final class PyExtractSuperclassHelper {
       }
     }
 
-
-    boolean isNamespace = isInNamespacePackage(clazz);
     final String text = "class " + superBaseName + ":\n  pass" + "\n";
     PyClass newClass = PyElementGenerator.getInstance(project).createFromText(LanguageLevel.getDefault(), PyClass.class, text);
 
-    newClass = placeNewClass(project, newClass, clazz, targetFile, isNamespace);
+    newClass = placeNewClass(project, newClass, clazz, targetFile);
     MembersManager.moveAllMembers(selectedMemberInfos, clazz, newClass);
     if (! newClass.getContainingFile().equals(clazz.getContainingFile())) {
       PyClassRefactoringUtil.optimizeImports(clazz.getContainingFile()); // To remove unneeded imports only if user used different file
@@ -120,14 +118,14 @@ public final class PyExtractSuperclassHelper {
            Comparing.equal(((BackedVirtualFile)file).getOriginFile(), targetFile);
   }
   
-  private static PyClass placeNewClass(@NotNull final Project project, @NotNull PyClass newClass, @NotNull final PyClass clazz, @NotNull final String targetFile, boolean isNamespace) {
+  private static PyClass placeNewClass(@NotNull final Project project, @NotNull PyClass newClass, @NotNull final PyClass clazz, @NotNull final String targetFile) {
     VirtualFile file = VirtualFileManager.getInstance()
       .findFileByUrl(ApplicationManager.getApplication().isUnitTestMode() ? targetFile : VfsUtilCore.pathToUrl(targetFile));
     // file is the same as the source
     if (Comparing.equal(file, clazz.getContainingFile().getVirtualFile()) || isRefactoredClassInBackedFile(file, clazz)) {
       return (PyClass)clazz.getParent().addBefore(newClass, clazz);
     }
-
+    boolean isNamespace = isInNamespacePackage(clazz);
     PsiFile psiFile = null;
     try {
       if (file == null) {

@@ -168,7 +168,7 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
   }
 
   private void doTestNotCreateInitCommon(@NotNull String baseName, @NotNull String pathToSuperclass, @NotNull String pathToOriginClass){
-    VirtualFile pkg_dir = myFixture.copyDirectoryToProject(baseName, "");
+    VirtualFile pkgDir = myFixture.copyDirectoryToProject(baseName, "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     String className = "Foo";
     String superclassName = "Suppa";
@@ -178,20 +178,20 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
     members.add(MembersManager.findMember(clazz, member));
 
     WriteCommandAction.writeCommandAction(myFixture.getProject()).run(() -> {
-      String path = pkg_dir.getPath() + "/mypkg/" + pathToSuperclass;
+      String path = pkgDir.getPath() + "/mypkg/" + pathToSuperclass;
       PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
     });
 
-    VirtualFile vfile = pkg_dir.findFileByRelativePath(pathToOriginClass);
+    VirtualFile vfile = pkgDir.findFileByRelativePath(pathToOriginClass);
     vfile = vfile.findChild(PyNames.INIT_DOT_PY);
     assertNull(vfile);
 
-    vfile = pkg_dir.findFileByRelativePath(pathToSuperclass);
+    vfile = pkgDir.findFileByRelativePath(pathToSuperclass);
     assertTrue(vfile.isDirectory());
     vfile = vfile.findChild(PyNames.INIT_DOT_PY);
     assertNull(vfile);
 
-    vfile = pkg_dir.findChild(PyNames.INIT_DOT_PY);
+    vfile = pkgDir.findChild(PyNames.INIT_DOT_PY);
     assertNull(vfile);
 
   }
