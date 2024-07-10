@@ -19,6 +19,13 @@ open class ProjectLifecycleUiCustomization {
    */
   open val alwaysOpenProjectInNewWindow: Boolean
     get() = false
+
+  /**
+   * Returns `true` if an IDE can reopen the project which was opened in the previous IDE session, and it can be switched off by a user.
+   * Returns `false` if this functionality should be disabled, and the user shouldn't be able to switch it on.  
+   */
+  open val canReopenProjectOnStartup: Boolean
+    get() = true
   
   companion object {
     @JvmStatic
