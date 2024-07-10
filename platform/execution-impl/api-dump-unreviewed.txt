@@ -467,6 +467,7 @@ c:com.intellij.execution.actions.RunConfigurationsComboBoxAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:addTargetGroup(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DefaultActionGroup):V
+- p:createActionPopup(com.intellij.openapi.actionSystem.DefaultActionGroup,com.intellij.openapi.actionSystem.DataContext,java.lang.Runnable):com.intellij.openapi.ui.popup.JBPopup
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
 - p:createFinalAction(com.intellij.openapi.project.Project,com.intellij.execution.RunnerAndConfigurationSettings):com.intellij.openapi.actionSystem.AnAction
 - p:createPopupActionGroup(javax.swing.JComponent,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DefaultActionGroup
