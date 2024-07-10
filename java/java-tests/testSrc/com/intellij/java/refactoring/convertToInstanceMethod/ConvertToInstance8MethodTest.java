@@ -14,26 +14,14 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   public void testConflictingMembers() { doTest(0); }
   public void testNoConflictingMembers() { doTest(0); }
   public void testNoConflictingMembers2() { doTest(0); }
-
-  public void testThisInsteadOfNoQualifier() {
-    doTest(0);
-  }
-
-  public void testMethodReferenceAcceptableBySecondSearch() {
-    doTest(0);
-  }
-
-  public void testConvertToInstanceMethodOfTheSameClass() {
-    doTest(-1);
-  }
-
-  public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() {
-    doTest(0);
-  }
+  public void testThisInsteadOfNoQualifier() { doTest(0); }
+  public void testMethodReferenceAcceptableBySecondSearch() { doTest(0); }
+  public void testConvertToInstanceMethodOfTheSameClass() { doTest(0); }
+  public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() { doTest(0); }
 
   public void testConvertToInstanceMethodOfTheSameClassWithTypeParams() {
     try {
-      doTest(-1);
+      doTest(0);
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals(StringUtil.trimEnd(StringUtil.repeat("Impossible to infer class type arguments. When proceed, raw Bar would be created\n", 3), "\n"), e.getMessage());
@@ -41,12 +29,11 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
   }
 
   public void testMethodReferenceToLambda() {
-    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(1));
+    BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> doTest(0));
   }
 
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_8;
   }
-
 }
