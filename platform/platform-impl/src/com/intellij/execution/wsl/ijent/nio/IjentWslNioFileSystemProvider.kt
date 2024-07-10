@@ -3,14 +3,11 @@ package com.intellij.execution.wsl.ijent.nio
 
 import com.intellij.platform.core.nio.fs.DelegatingFileSystemProvider
 import com.intellij.platform.core.nio.fs.RoutingAwareFileSystemProvider
-import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.IjentInfo
-import com.intellij.platform.ijent.IjentPosixInfo
-import com.intellij.platform.ijent.IjentSessionRegistry
-import com.intellij.platform.ijent.IjentWindowsInfo
+import com.intellij.platform.ijent.*
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentPosixUserPrincipal
+import com.intellij.util.io.sanitizeFileName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
@@ -20,11 +17,7 @@ import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.FileChannel
 import java.nio.channels.SeekableByteChannel
 import java.nio.file.*
-import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributes
-import java.nio.file.attribute.FileAttribute
-import java.nio.file.attribute.FileAttributeView
-import java.nio.file.attribute.PosixFileAttributes
+import java.nio.file.attribute.*
 import java.nio.file.attribute.PosixFilePermission.*
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ExecutorService
@@ -171,7 +164,7 @@ internal class IjentWslNioFileSystemProvider(
           override fun next(): Path {
             // resolve() can't be used there because WindowsPath.resolve() checks that the other path is WindowsPath.
             val ijentPath = delegateIterator.next()
-            return ijentPath.asSequence().map(Path::name).fold(wslLocalRoot, Path::resolve)
+            return ijentPath.asSequence().map(Path::name).map(::sanitizeFileName).fold(wslLocalRoot, Path::resolve)
           }
 
           override fun remove() {
