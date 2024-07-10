@@ -6,8 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.impl.stores.stateStore
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
@@ -16,6 +16,7 @@ import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -146,23 +147,35 @@ class ModuleStoreRenameTest {
   }
 
   @Test
-  fun `rename module parent virtual dir`() = runBlocking {
-    saveProjectState()
-    val storage = module.storage
-    val oldFile = storage.file
-    val parentVirtualDir = storage.getVirtualFile()!!.parent
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction {
-        parentVirtualDir.rename(null, "module2")
+  fun `rename module parent virtual dir`() = testChangeModuleParentVirtualDir { parentVirtualDir -> 
+    parentVirtualDir.rename(null, "module2") 
+  }
+
+  @Test
+  fun `move module parent virtual dir`() = testChangeModuleParentVirtualDir { parentVirtualDir ->
+    val newParent = tempDirManager.newVirtualDirectory("newParent")
+    parentVirtualDir.move(null, newParent)
+  }
+
+  private fun testChangeModuleParentVirtualDir(updateDirectoryAction: (VirtualFile) -> Unit) {
+    runBlocking {
+      saveProjectState()
+      val storage = module.storage
+      val oldFile = storage.file
+      val parentVirtualDir = storage.getVirtualFile()!!.parent
+      withContext(Dispatchers.EDT) {
+        writeAction {
+          updateDirectoryAction(parentVirtualDir)
+        }
       }
+
+      val newFile = parentVirtualDir.toNioPath().resolve("${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
+      assertThat(newFile).isRegularFile
+      assertModuleFileRenamed(module.name, oldFile)
+      assertThat(oldModuleNames).isEmpty()
+
+      testRenameModule()
     }
-
-    val newFile = parentVirtualDir.toNioPath().resolve("${module.name}${ModuleFileType.DOT_DEFAULT_EXTENSION}")
-    assertThat(newFile).isRegularFile
-    assertModuleFileRenamed(module.name, oldFile)
-    assertThat(oldModuleNames).isEmpty()
-
-    testRenameModule()
   }
 
   @Test
