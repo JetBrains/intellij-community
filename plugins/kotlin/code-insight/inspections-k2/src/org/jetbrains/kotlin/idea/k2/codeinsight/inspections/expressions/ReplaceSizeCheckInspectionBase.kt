@@ -2,10 +2,13 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections.expressions
 
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.*
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.name.CallableId
@@ -20,15 +23,13 @@ internal sealed class ReplaceSizeCheckInspectionBase :
     override fun buildVisitor(
         holder: ProblemsHolder,
         isOnTheFly: Boolean,
-    ) = object : KtVisitorVoid() {
-
-        override fun visitBinaryExpression(expression: KtBinaryExpression) {
-            visitTargetElement(expression, holder, isOnTheFly)
-        }
+    ) = binaryExpressionVisitor {
+        visitTargetElement(it, holder, isOnTheFly)
     }
 
-    enum class EmptinessCheckMethod(val callString: String) {
-        IS_EMPTY("isEmpty()"), IS_NOT_EMPTY("isNotEmpty()")
+    enum class EmptinessCheckMethod(val methodName: String) {
+        IS_EMPTY("isEmpty"),
+        IS_NOT_EMPTY("isNotEmpty"),
     }
 
     protected abstract val methodToReplaceWith: EmptinessCheckMethod
@@ -54,21 +55,34 @@ internal sealed class ReplaceSizeCheckInspectionBase :
             element: KtBinaryExpression,
             updater: ModPsiUpdater,
         ) {
-            val target = extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression
-            val replacedCheck = KtPsiFactory(project).createExpression(context.expressionString(target))
+            val receiverExpression = (extractTargetExpressionFromPsi(element) as? KtDotQualifiedExpression)
+                ?.receiverExpression
+
+            val replacedCheck = KtPsiFactory(project)
+                .createExpression(expressionString(context, receiverExpression?.text))
             element.replace(replacedCheck)
         }
+
+        override fun getName(): @IntentionName String =
+            KotlinBundle.message("replace.size.check.with.0", expressionString(context))
     }
 
-    data class ReplacementInfo(val method: EmptinessCheckMethod, val negate: Boolean) {
+    data class ReplacementInfo(
+        val method: EmptinessCheckMethod,
+        val negate: Boolean,
+    )
 
-        fun expressionString(expr: KtDotQualifiedExpression?) = buildString {
-            if (negate) append("!")
-            if (expr != null) append("${expr.receiverExpression.text}.")
-            append(method.callString)
+    private fun expressionString(
+        info: ReplacementInfo,
+        receiverText: @NlsSafe String? = null,
+    ): @NlsSafe String = buildString {
+        if (info.negate) append("!")
+        if (receiverText != null) {
+            append(receiverText)
+            append(".")
         }
-
-        fun fixMessage(): String = expressionString(null)
+        append(info.method.methodName)
+        append("()")
     }
 
     context(KaSession)
@@ -131,7 +145,7 @@ internal sealed class ReplaceSizeCheckInspectionBase :
 private data class ReplaceableCall(
     val callableId: CallableId,
     val supportedReceivers: Set<ClassId>,
-    val hasIsNotEmpty: Boolean
+    val hasIsNotEmpty: Boolean,
 )
 
 private val COUNT_CALLABLE_ID = CallableId(StandardClassIds.BASE_COLLECTIONS_PACKAGE, Name.identifier("count"))

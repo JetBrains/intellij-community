@@ -11,7 +11,8 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 internal class ReplaceSizeZeroCheckWithIsEmptyInspection : ReplaceSizeCheckInspectionBase() {
 
-    override val methodToReplaceWith = EmptinessCheckMethod.IS_EMPTY
+    override val methodToReplaceWith: EmptinessCheckMethod
+        get() = EmptinessCheckMethod.IS_EMPTY
 
     override fun createQuickFix(
         element: KtBinaryExpression,
@@ -20,13 +21,12 @@ internal class ReplaceSizeZeroCheckWithIsEmptyInspection : ReplaceSizeCheckInspe
 
         override fun getFamilyName(): String =
             KotlinBundle.message("replace.size.zero.check.with.isempty")
-
-        override fun getName(): String =
-            KotlinBundle.message("replace.size.check.with.0", context.fixMessage())
     }
 
-    override fun getProblemDescription(element: KtBinaryExpression, context: ReplacementInfo) =
-        KotlinBundle.message("inspection.replace.size.zero.check.with.is.empty.display.name")
+    override fun getProblemDescription(
+        element: KtBinaryExpression,
+        context: ReplacementInfo,
+    ): String = KotlinBundle.message("inspection.replace.size.zero.check.with.is.empty.display.name")
 
     override fun extractTargetExpressionFromPsi(expr: KtBinaryExpression): KtExpression? =
         when (expr.operationToken) {
