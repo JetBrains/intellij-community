@@ -86,6 +86,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.SmartHashSet
+import com.intellij.util.containers.sequenceOfNotNull
 import com.intellij.util.containers.toArray
 import com.intellij.util.messages.impl.MessageListenerList
 import com.intellij.util.ui.EDT
@@ -826,11 +827,11 @@ open class FileEditorManagerImpl(
   private val allClientFileEditorManagers: List<ClientFileEditorManager>
     get() = project.getServices(ClientFileEditorManager::class.java, ClientKind.REMOTE)
 
-  override fun isFileOpenWithRemotes(file: VirtualFile): Boolean {
+  final override fun isFileOpenWithRemotes(file: VirtualFile): Boolean {
     return isFileOpen(file) || allClientFileEditorManagers.any { it.isFileOpen(file) }
   }
 
-  override fun openFile(file: VirtualFile, window: EditorWindow?, options: FileEditorOpenOptions): FileEditorComposite {
+  final override fun openFile(file: VirtualFile, window: EditorWindow?, options: FileEditorOpenOptions): FileEditorComposite {
     require(file.isValid) { "file is not valid: $file" }
 
     var windowToOpenIn = window
@@ -841,10 +842,36 @@ open class FileEditorManagerImpl(
     if (windowToOpenIn == null) {
       val mode = options.openMode ?: getOpenMode(IdeEventQueue.getInstance().trueCurrentEvent)
       if (mode == OpenMode.NEW_WINDOW) {
+        if (options.reuseOpen) {
+          val existingWindowAndComposite = (project.serviceIfCreated<DockManager>()?.containers?.asSequence() ?: emptySequence())
+            .filterIsInstance<DockableEditorTabbedContainer>()
+            .map { it.splitters }
+            .filter { it != mainSplitters }
+            .flatMap { sequenceOfNotNull(it.currentWindow) /* check current first */ + it.windows() }
+            .mapNotNull {
+              val composite = it.getComposite(file) ?: return@mapNotNull  null
+              it to composite
+            }
+            .firstOrNull()
+          if (existingWindowAndComposite != null) {
+            val existingWindow = existingWindowAndComposite.first
+            existingWindow.setSelectedComposite(file = file, focusEditor = options.requestFocus)
+            if (options.requestFocus) {
+              existingWindow.requestFocus(true)
+              existingWindow.toFront()
+            }
+            return existingWindowAndComposite.second
+          }
+        }
+
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
+          file = file,
+          fileEditorManager = this,
+          isSingletonEditorInWindow = options.isSingletonEditorInWindow,
+        ) { editorWindow ->
           if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
             closeFile(file = file)
           }
@@ -887,7 +914,11 @@ open class FileEditorManagerImpl(
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
+        (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
+          file = file,
+          fileEditorManager = this@FileEditorManagerImpl,
+          isSingletonEditorInWindow = false,
+        ) { editorWindow ->
           if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
             closeFile(file = file)
           }
@@ -995,12 +1026,14 @@ open class FileEditorManagerImpl(
   }
 
   fun openFileInNewWindow(file: VirtualFile): Pair<Array<FileEditor>, Array<FileEditorProvider>> {
-    if (forbidSplitFor(file)) {
-      closeFile(file)
-    }
-    return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(file) { editorWindow ->
-      openFileImpl2(editorWindow, file, FileEditorOpenOptions(requestFocus = true))
-    }.retrofit()
+    return openFile(
+      file = file,
+      window = null,
+      options = FileEditorOpenOptions(
+        requestFocus = true,
+        openMode = OpenMode.NEW_WINDOW,
+      ),
+    ).retrofit()
   }
 
   @RequiresEdt

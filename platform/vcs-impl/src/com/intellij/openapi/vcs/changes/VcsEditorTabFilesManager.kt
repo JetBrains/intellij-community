@@ -12,6 +12,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorWindow
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
+import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -53,7 +54,7 @@ class VcsEditorTabFilesManager :
                file: VirtualFile,
                focusEditor: Boolean,
                openInNewWindow: Boolean,
-               shouldCloseFile: Boolean): Array<out FileEditor> {
+               shouldCloseFile: Boolean): List<FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
     if (shouldCloseFile && editorManager.isFileOpen(file)) {
       editorManager.closeFile(file)
@@ -63,34 +64,24 @@ class VcsEditorTabFilesManager :
     return openFile(project, file, focusEditor)
   }
 
-  fun openFile(project: Project, file: VirtualFile, focusEditor: Boolean): Array<out FileEditor> {
+  fun openFile(project: Project, file: VirtualFile, focusEditor: Boolean): List<FileEditor> {
     val editorManager = FileEditorManager.getInstance(project) as FileEditorManagerImpl
 
     if (!ClientId.isCurrentlyUnderLocalId) {
       // do not use FileEditorManagerImpl.getWindows - these are not implemented for clients
-      return editorManager.openFile(file, focusEditor, true)
+      return editorManager.openFile(file = file, focusEditor = focusEditor, searchForOpen = true).toList()
     }
 
-    if (editorManager.isFileOpen(file)) {
-      editorManager.selectAndFocusEditor(file, focusEditor)
-      return emptyArray()
-    }
-
-    if (shouldOpenInNewWindow) {
-      return editorManager.openFileInNewWindow(file).first
-    }
-    else {
-      return editorManager.openFile(file, focusEditor, true)
-    }
-  }
-
-  private fun FileEditorManagerImpl.selectAndFocusEditor(file: VirtualFile, focusEditor: Boolean) {
-    val window = windows.find { it.isFileOpen(file) } ?: return
-    window.setSelectedComposite(file = file, focusEditor = focusEditor)
-    if (focusEditor) {
-      window.requestFocus(true)
-      window.toFront()
-    }
+    return editorManager.openFile(
+      file = file,
+      window = null,
+      options = FileEditorOpenOptions(
+        openMode = if (shouldOpenInNewWindow) FileEditorManagerImpl.OpenMode.NEW_WINDOW else FileEditorManagerImpl.OpenMode.NEW_WINDOW,
+        isSingletonEditorInWindow = true,
+        reuseOpen = true,
+        requestFocus = focusEditor,
+      ),
+    ).allEditors
   }
 
   override fun dispose() {}

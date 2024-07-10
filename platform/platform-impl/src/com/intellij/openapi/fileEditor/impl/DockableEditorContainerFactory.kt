@@ -18,45 +18,52 @@ internal class DockableEditorContainerFactory(private val fileEditorManager: Fil
 
   override fun createContainer(content: DockableContent<*>?): DockContainer {
     @Suppress("DEPRECATION")
-    return createContainer(
+    return createEditorDockContainer(
+      fileEditorManager = fileEditorManager,
       loadingState = false,
       coroutineScope = coroutineScope.childScope(),
       isSingletonEditorInWindow = content is DockableEditor && content.isSingletonEditorInWindow,
     )
   }
 
-  private fun createContainer(
-    loadingState: Boolean,
-    coroutineScope: CoroutineScope,
-    isSingletonEditorInWindow: Boolean,
-  ): DockableEditorTabbedContainer {
-    var container: DockableEditorTabbedContainer? = null
-    val splitters = object : EditorsSplitters(manager = fileEditorManager, coroutineScope = coroutineScope) {
-      override val isSingletonEditorInWindow: Boolean
-        get() = isSingletonEditorInWindow
-
-      override fun afterFileClosed(file: VirtualFile) {
-        container!!.fireContentClosed(file)
-      }
-
-      override fun afterFileOpen(file: VirtualFile) {
-        container!!.fireContentOpen(file)
-      }
-
-      override val isFloating: Boolean
-        get() = true
-    }
-    if (!loadingState) {
-      splitters.createCurrentWindow()
-    }
-    container = DockableEditorTabbedContainer(splitters = splitters, disposeWhenEmpty = true, coroutineScope = coroutineScope)
-    return container
-  }
-
   override fun loadContainerFrom(element: Element): DockContainer {
     @Suppress("DEPRECATION")
-    val container = createContainer(loadingState = true, coroutineScope = coroutineScope.childScope(), isSingletonEditorInWindow = false)
+    val container = createEditorDockContainer(
+      fileEditorManager = fileEditorManager,
+      loadingState = true,
+      coroutineScope = coroutineScope.childScope(),
+      isSingletonEditorInWindow = false,
+    )
     container.splitters.readExternal(element.getChild("state"))
     return container
   }
+}
+
+internal fun createEditorDockContainer(
+  fileEditorManager: FileEditorManagerImpl,
+  loadingState: Boolean,
+  coroutineScope: CoroutineScope,
+  isSingletonEditorInWindow: Boolean,
+): DockableEditorTabbedContainer {
+  var container: DockableEditorTabbedContainer? = null
+  val splitters = object : EditorsSplitters(manager = fileEditorManager, coroutineScope = coroutineScope) {
+    override val isSingletonEditorInWindow: Boolean
+      get() = isSingletonEditorInWindow
+
+    override fun afterFileClosed(file: VirtualFile) {
+      container!!.fireContentClosed(file)
+    }
+
+    override fun afterFileOpen(file: VirtualFile) {
+      container!!.fireContentOpen(file)
+    }
+
+    override val isFloating: Boolean
+      get() = true
+  }
+  if (!loadingState) {
+    splitters.createCurrentWindow()
+  }
+  container = DockableEditorTabbedContainer(splitters = splitters, disposeWhenEmpty = true, coroutineScope = coroutineScope)
+  return container
 }
