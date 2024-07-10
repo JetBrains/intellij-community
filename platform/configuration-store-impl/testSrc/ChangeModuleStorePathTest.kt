@@ -38,7 +38,7 @@ private val Module.storage: FileBasedStorage
   get() = (stateStore.storageManager as StateStorageManagerImpl).getCachedFileStorages(listOf(StoragePathMacros.MODULE_FILE)).first()
 
 @RunsInActiveStoreMode
-class ModuleStoreRenameTest {
+class ChangeModuleStorePathTest {
   companion object {
     @JvmField @ClassRule val projectRule = ProjectRule()
   }
