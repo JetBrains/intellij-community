@@ -246,12 +246,13 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
       if (!markAsDefault) {
         for (final PsiClass psiClass : inheritors) {
           final PsiMethod newMethod = addMethodToClass(psiClass);
-          PsiUtil.setModifierProperty(newMethod, myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY) ? myNewVisibility
-                                                                                                                                        : PsiModifier.PUBLIC, true);
+          String modifier = myNewVisibility != null && !myNewVisibility.equals(VisibilityUtil.ESCALATE_VISIBILITY)
+                            ? myNewVisibility
+                            : PsiModifier.PUBLIC;
+          PsiUtil.setModifierProperty(newMethod, modifier, true);
         }
       }
     }
-    myMethod.delete();
     return result;
   }
 
@@ -326,7 +327,16 @@ public final class ConvertToInstanceMethodProcessor extends BaseRefactoringProce
   }
 
   private PsiMethod addMethodToClass(final PsiClass targetClass) {
-    final PsiMethod newMethod = (PsiMethod)targetClass.add(myMethod);
+    final PsiMethod newMethod;
+    if (targetClass == myMethod.getContainingClass()) {
+      newMethod = myMethod;
+    }
+    else {
+      newMethod = (PsiMethod)targetClass.add(myMethod);
+      PsiMethod copy = (PsiMethod)myMethod.copy();
+      myMethod.delete();
+      myMethod = copy;
+    }
     final PsiModifierList modifierList = newMethod.getModifierList();
     modifierList.setModifierProperty(PsiModifier.STATIC, false);
     ChangeContextUtil.decodeContextInfo(newMethod, null, null);

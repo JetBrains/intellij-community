@@ -1,7 +1,6 @@
 enum E {
   A, B;
-
-    boolean x() {
-      return true;
-    }
+  boolean x() {
+    return true;
+  }
 }

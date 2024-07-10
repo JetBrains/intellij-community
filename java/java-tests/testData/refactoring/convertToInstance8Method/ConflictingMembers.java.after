@@ -1,7 +1,8 @@
 class Test {
   int i;
+  void run() {}
 
-    Test getDelegate() {
+  Test getDelegate() {
     return new Test() {
       int i;
 
@@ -12,7 +13,4 @@ class Test {
       }
     };
   }
-
-    void run() {}
-
 }
