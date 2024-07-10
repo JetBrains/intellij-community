@@ -114,7 +114,7 @@ open class RegistryValue @Internal constructor(
 
   private fun calcDouble(): Double {
     try {
-      return get(key, "0.0", true)!!.toDouble()
+      return get(key = key, defaultValue = "0.0", isValue = true)!!.toDouble()
     }
     catch (e: NumberFormatException) {
       return registry.getBundleValue(key).toDouble()
@@ -127,7 +127,7 @@ open class RegistryValue @Internal constructor(
     if (color != null && (key.endsWith(".color") || key.endsWith(".color.dark") || key.endsWith(".color.light"))) {
       return color
     }
-    val rgb = s.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    val rgb = s.split(',').dropLastWhile { it.isEmpty() }
     if (rgb.size == 3) {
       try {
         return Color(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt())

@@ -5,7 +5,7 @@ package com.intellij.openapi.util.registry
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.util.NlsSafe
-import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.future.asDeferred
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -15,6 +15,7 @@ import java.io.IOException
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.Volatile
 
@@ -34,6 +35,7 @@ class Registry {
   var isLoaded: Boolean = false
     private set
 
+  // we cannot use kotlin CompletableDeferred - kotlin coroutines lib maybe not available in classpath (only kotlin stdlib)
   @Volatile
   private var loadFuture = CompletableFuture<Void?>()
 
@@ -61,7 +63,7 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun `is`(key: @NonNls String): Boolean = get(key).asBoolean()
+    fun `is`(key: @NonNls String): Boolean = getInstance().doGet(key).asBoolean()
 
     @JvmStatic
     fun `is`(key: @NonNls String, defaultValue: Boolean): Boolean {
@@ -221,7 +223,10 @@ class Registry {
       registry.loadFuture.complete(null)
     }
 
-    fun awaitLoad(): CompletionStage<Void?> = registry.loadFuture
+    @Internal
+    suspend fun awaitLoad() {
+      registry.loadFuture.asDeferred().join()
+    }
 
     @Internal
     @JvmStatic
@@ -312,7 +317,7 @@ class Registry {
 
   private fun doGet(key: @NonNls String): RegistryValue {
     return values.computeIfAbsent(key) {
-      RegistryValue(this, it, contributedKeys.get(it))
+      RegistryValue(registry = this, key = it, keyDescriptor = contributedKeys.get(it))
     }
   }
 
@@ -334,7 +339,7 @@ class Registry {
   }
 
   @Throws(MissingResourceException::class)
-  fun getBundleValue(key: @NonNls String): @NlsSafe String {
+  internal fun getBundleValue(key: @NonNls String): @NlsSafe String {
     contributedKeys.get(key)?.let {
       return it.defaultValue
     }

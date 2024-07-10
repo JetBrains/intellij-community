@@ -1650,7 +1650,6 @@ f:com.intellij.openapi.util.registry.Registry
 - sf:doubleValue(java.lang.String):D
 - sf:doubleValue(java.lang.String,D):D
 - sf:get(java.lang.String):com.intellij.openapi.util.registry.RegistryValue
-- f:getBundleValue(java.lang.String):java.lang.String
 - f:getBundleValueOrNull(java.lang.String):java.lang.String
 - sf:getColor(java.lang.String,java.awt.Color):java.awt.Color
 - sf:getInstance():com.intellij.openapi.util.registry.Registry
