@@ -13,6 +13,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
+import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.*
 import com.intellij.util.PlatformUtils
@@ -84,20 +85,22 @@ private class GeneralSettingsConfigurable :
         row {
           checkBox(myChkReopenLastProject)
         }
-        buttonsGroup {
-          row(IdeUICustomization.getInstance().projectMessage("label.open.project.in")) {
-            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"),
-                        GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
-            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"),
-                        GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
-            radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"),
-                        GeneralSettings.OPEN_PROJECT_ASK)
-            if (PlatformUtils.isDataSpell()) {
-              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"),
-                          GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
-            }
-          }.layout(RowLayout.INDEPENDENT)
-        }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
+        if (!ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow) {
+          buttonsGroup {
+            row(IdeUICustomization.getInstance().projectMessage("label.open.project.in")) {
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"),
+                          GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.same.window"),
+                          GeneralSettings.OPEN_PROJECT_SAME_WINDOW)
+              radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.confirm.window.to.open.project.in"),
+                          GeneralSettings.OPEN_PROJECT_ASK)
+              if (PlatformUtils.isDataSpell()) {
+                radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.attach"),
+                            GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
+              }
+            }.layout(RowLayout.INDEPENDENT)
+          }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
+        }
 
         row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
           textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()

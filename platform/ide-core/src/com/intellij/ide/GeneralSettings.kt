@@ -6,6 +6,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
+import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.channels.BufferOverflow
@@ -110,7 +111,12 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
    */
   @get:OpenNewProjectOption
   var confirmOpenNewProject: Int
-    get() = state.confirmOpenNewProject2 ?: defaultConfirmNewProject()
+    get() {
+      return if (ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow) {
+        OPEN_PROJECT_NEW_WINDOW
+      }
+      else state.confirmOpenNewProject2 ?: defaultConfirmNewProject()
+    }
     set(value) {
       state.confirmOpenNewProject2 = value
     }
