@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 final class ProcessBalloon {
   private final List<MyInlineProgressIndicator> myIndicators = new ArrayList<>();
@@ -77,16 +78,20 @@ final class ProcessBalloon {
 
         indicators.add(indicator);
       }
-      else if (!indicator.presentationModeBalloon.isDisposed()) {
-        indicators.add(indicator);
+      else {
+        Balloon balloon = indicator.presentationModeBalloon;
+        if (balloon != null) {
+          indicators.add(indicator);
+        }
       }
     }
 
     for (MyInlineProgressIndicator indicator : indicators) {
+      Balloon balloon = indicator.presentationModeBalloon;
       if (indicator.presentationModeShowBalloon) {
         indicator.presentationModeShowBalloon = false;
 
-        indicator.presentationModeBalloon.show(new PositionTracker<>(getAnchor(pane)) {
+        Objects.requireNonNull(balloon).show(new PositionTracker<>(getAnchor(pane)) {
           @Override
           public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             Component c = getAnchor(pane);
@@ -110,8 +115,8 @@ final class ProcessBalloon {
           }
         }, Balloon.Position.above);
       }
-      else {
-        indicator.presentationModeBalloon.revalidate();
+      else if (balloon != null) {
+        balloon.revalidate();
       }
     }
   }
