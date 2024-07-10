@@ -97,7 +97,7 @@ class EditorCellFoldingBar(
       g.create().use { g2 ->
         g2 as Graphics2D
         g2.color = color
-        RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_DEFAULT)
+        RectanglePainter2D.FILL.paint(g2, rect, arc, LinePainter2D.StrokeType.INSIDE, 1.0, RenderingHints.VALUE_ANTIALIAS_ON)
       }
     }
 
