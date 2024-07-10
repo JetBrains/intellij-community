@@ -9,3 +9,4 @@ interface <caret>Base {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention
+/* IGNORE_K2 */

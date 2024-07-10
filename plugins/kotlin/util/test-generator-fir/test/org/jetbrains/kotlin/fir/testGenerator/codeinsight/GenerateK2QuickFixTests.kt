@@ -120,7 +120,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/final", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/foldTryCatch", pattern = pattern)
             model("$idea/quickfix/functionWithLambdaExpressionBody", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/implement", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/implement", pattern = pattern)
             model("$idea/quickfix/importAlias", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/increaseVisibility", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/initializeWithConstructorParameter", pattern = pattern, isIgnored = true)

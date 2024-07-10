@@ -3,3 +3,4 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+SealedInterfaces
 sealed class <caret>Sealed
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention
+/* IGNORE_K2 */

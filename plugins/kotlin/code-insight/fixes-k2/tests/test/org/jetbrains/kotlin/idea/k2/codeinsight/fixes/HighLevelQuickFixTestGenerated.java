@@ -7954,7 +7954,214 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/implement")
+    public static class Implement extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("abstract.kt")
+        public void testAbstract() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/abstract.kt");
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/annotation.kt");
+        }
+
+        @TestMetadata("dataClass.kt")
+        public void testDataClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/dataClass.kt");
+        }
+
+        @TestMetadata("dataClass2.kt")
+        public void testDataClass2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/dataClass2.kt");
+        }
+
+        @TestMetadata("dataClass3.kt")
+        public void testDataClass3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/dataClass3.kt");
+        }
+
+        @TestMetadata("doNotAddExpectForVal.kt")
+        public void testDoNotAddExpectForVal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/doNotAddExpectForVal.kt");
+        }
+
+        @TestMetadata("doNotAddHeader.kt")
+        public void testDoNotAddHeader() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/doNotAddHeader.kt");
+        }
+
+        @TestMetadata("enum.kt")
+        public void testEnum() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/enum.kt");
+        }
+
+        @TestMetadata("finalClass.kt")
+        public void testFinalClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/finalClass.kt");
+        }
+
+        @TestMetadata("hasImplementedInPrimaryConstructor.kt")
+        public void testHasImplementedInPrimaryConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/hasImplementedInPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("hasImplementedInPrimaryConstructor2.kt")
+        public void testHasImplementedInPrimaryConstructor2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/hasImplementedInPrimaryConstructor2.kt");
+        }
+
+        @TestMetadata("hasImplementedInPrimaryConstructor3.kt")
+        public void testHasImplementedInPrimaryConstructor3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/hasImplementedInPrimaryConstructor3.kt");
+        }
+
+        @TestMetadata("inCompanion.kt")
+        public void testInCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/inCompanion.kt");
+        }
+
+        @TestMetadata("inInternalCompanion.kt")
+        public void testInInternalCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/inInternalCompanion.kt");
+        }
+
+        @TestMetadata("inPrivateCompanion.kt")
+        public void testInPrivateCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/inPrivateCompanion.kt");
+        }
+
+        @TestMetadata("inProtectedCompanion.kt")
+        public void testInProtectedCompanion() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/inProtectedCompanion.kt");
+        }
+
+        @TestMetadata("incorrectRange.kt")
+        public void testIncorrectRange() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/incorrectRange.kt");
+        }
+
+        @TestMetadata("inner.kt")
+        public void testInner() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/inner.kt");
+        }
+
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/interface.kt");
+        }
+
+        @TestMetadata("local.kt")
+        public void testLocal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/local.kt");
+        }
+
+        @TestMetadata("menyImplMemberNotImplemented.kt")
+        public void testMenyImplMemberNotImplemented() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/menyImplMemberNotImplemented.kt");
+        }
+
+        @TestMetadata("nested.kt")
+        public void testNested() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/nested.kt");
+        }
+
+        @TestMetadata("nestedPrivateInterface.kt")
+        public void testNestedPrivateInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/nestedPrivateInterface.kt");
+        }
+
+        @TestMetadata("noDefaultConstructor.kt")
+        public void testNoDefaultConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/noDefaultConstructor.kt");
+        }
+
+        @TestMetadata("private.kt")
+        public void testPrivate() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/private.kt");
+        }
+
+        @TestMetadata("privateConstructor.kt")
+        public void testPrivateConstructor() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/privateConstructor.kt");
+        }
+
+        @TestMetadata("privateNested.kt")
+        public void testPrivateNested() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/privateNested.kt");
+        }
+
+        @TestMetadata("privateNestedWithConflict.kt")
+        public void testPrivateNestedWithConflict() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/privateNestedWithConflict.kt");
+        }
+
+        @TestMetadata("protected.kt")
+        public void testProtected() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/protected.kt");
+        }
+
+        @TestMetadata("sealed.kt")
+        public void testSealed() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/sealed.kt");
+        }
+
+        @TestMetadata("sealedAfter15.kt")
+        public void testSealedAfter15() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/sealedAfter15.kt");
+        }
+
+        @TestMetadata("sealedEmpty.kt")
+        public void testSealedEmpty() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/sealedEmpty.kt");
+        }
+
+        @TestMetadata("sealedEmptyAfter15.kt")
+        public void testSealedEmptyAfter15() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/sealedEmptyAfter15.kt");
+        }
+
+        @TestMetadata("sealedWithConflict.kt")
+        public void testSealedWithConflict() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/sealedWithConflict.kt");
+        }
+
+        @TestMetadata("sealedWithConflictAfter15.kt")
+        public void testSealedWithConflictAfter15() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/sealedWithConflictAfter15.kt");
+        }
+
+        @TestMetadata("typeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/typeParameter.kt");
+        }
+
+        @TestMetadata("typeParameterOut.kt")
+        public void testTypeParameterOut() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/typeParameterOut.kt");
+        }
+
+        @TestMetadata("typeParameterWhere.kt")
+        public void testTypeParameterWhere() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/typeParameterWhere.kt");
+        }
+
+        @TestMetadata("typeParametersClass.kt")
+        public void testTypeParametersClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/typeParametersClass.kt");
+        }
+    }
 
 
 
