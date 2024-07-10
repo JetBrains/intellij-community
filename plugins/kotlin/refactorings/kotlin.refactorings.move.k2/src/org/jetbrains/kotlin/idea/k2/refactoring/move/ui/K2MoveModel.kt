@@ -143,6 +143,7 @@ sealed class K2MoveModel {
                 searchForText.state,
                 searchReferences,
                 searchInComments.state,
+                dirStructureMatchesPkg = true,
                 moveCallBack
             )
             return operationDescriptor
@@ -174,6 +175,7 @@ sealed class K2MoveModel {
                 searchForText.state,
                 searchReferences,
                 searchInComments.state,
+                dirStructureMatchesPkg = true,
                 moveCallBack
             )
         }

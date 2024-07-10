@@ -70,7 +70,7 @@ class K2MoveDeclarationsRefactoringProcessor(
         allowAnalysisOnEdt {
             operationDescriptor.moveDescriptors.forEach { moveDescriptor ->
                 val elementsToMove = moveDescriptor.source.elements
-                val targetFile = moveDescriptor.target.getOrCreateTarget()
+                val targetFile = moveDescriptor.target.getOrCreateTarget(operationDescriptor.dirStructureMatchesPkg)
                 val sourceFiles = elementsToMove.map { it.containingKtFile }.distinct()
                 val oldToNewMap = elementsToMove.moveInto(targetFile)
                 moveDescriptor.source.elements.forEach(PsiElement::deleteSingle)

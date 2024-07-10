@@ -16,6 +16,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
     val searchForText: Boolean,
     val searchInComments: Boolean,
     val searchReferences: Boolean,
+    val dirStructureMatchesPkg: Boolean,
     val moveCallBack: MoveCallback? = null
 ) {
     init {
@@ -32,6 +33,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchForText: Boolean,
         searchInComments: Boolean,
         searchReferences: Boolean,
+        dirStructureMatchesPkg: Boolean,
         moveCallBack: MoveCallback? = null
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Files>(
         project,
@@ -39,6 +41,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchForText,
         searchInComments,
         searchReferences,
+        dirStructureMatchesPkg,
         moveCallBack
     ) {
         override val sourceElements: List<PsiFileSystemItem> get() = moveDescriptors.flatMap { it.source.elements }
@@ -54,6 +57,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchForText: Boolean,
         searchInComments: Boolean,
         searchReferences: Boolean,
+        dirStructureMatchesPkg: Boolean,
         moveCallBack: MoveCallback? = null
     ) : K2MoveOperationDescriptor<K2MoveDescriptor.Declarations>(
         project,
@@ -61,6 +65,7 @@ sealed class K2MoveOperationDescriptor<T : K2MoveDescriptor>(
         searchForText,
         searchInComments,
         searchReferences,
+        dirStructureMatchesPkg,
         moveCallBack
     ) {
         override val sourceElements: List<KtNamedDeclaration> get() = moveDescriptors.flatMap { it.source.elements }

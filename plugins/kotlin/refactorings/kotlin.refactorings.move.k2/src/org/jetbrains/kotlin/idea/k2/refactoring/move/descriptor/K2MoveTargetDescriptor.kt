@@ -21,35 +21,19 @@ sealed interface K2MoveTargetDescriptor {
 
     val pkgName: FqName
 
+
     /**
-     * Gets or creates the target location, like a file or directory. It might be the case that the target directory or target file doesn't
-     * exist yet. In this case this method will create the file or directory based on the [baseDirectory] and [pkgName]. The creation of
-     * the target is thus package aware, example:
-     *  ```
-     *  src/
-     *      Foo.kt <--- root pkg
-     *      a/Bar.kt
-     *  ```
-     *  If we move `Bar.kt` to `src/b` and change the pkg to `b``the [baseDirectory] will be `src` but because the package is `b` we will
-     *  and `Foo.kt` is in the root package we will create `src/b`.
-     *
-     *  This also works when the project structure doesn't match the directory structure:
-     *  ```
-     *  src/
-     *      Foo.kt <--- package c.d
-     *      a/Bar.kt
-     *  ```
-     *  If we move `Bar.kt` to `src/b` and change the pkg to `c.d.b``the [baseDirectory] will be `src` but because the package is `c.d.b`
-     *  and `Foo.kt` has package c.d we won't create directory `src/c/d/b` but instead create src/d.
+     * Gets or creates the target
      */
     @RequiresWriteLock
-    fun getOrCreateTarget(): PsiFileSystemItem
+    fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): PsiFileSystemItem
 
     open class Directory(
         override val pkgName: FqName,
         override val baseDirectory: PsiDirectory
     ) : K2MoveTargetDescriptor {
-        override fun getOrCreateTarget(): PsiFileSystemItem {
+        override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): PsiFileSystemItem {
+            if (!dirStructureMatchesPkg) return baseDirectory
             val implicitPkgPrefix = baseDirectory.getFqNameWithImplicitPrefixOrRoot()
             val pkgSuffix = pkgName.asString().removePrefix(implicitPkgPrefix.asString()).removePrefix(".")
             val file = VfsUtilCore.findRelativeFile(pkgSuffix.replace('.', java.io.File.separatorChar), baseDirectory.virtualFile)
@@ -63,8 +47,8 @@ sealed interface K2MoveTargetDescriptor {
         pkgName: FqName,
         baseDirectory: PsiDirectory
     ) : Directory(pkgName, baseDirectory) {
-        override fun getOrCreateTarget(): KtFile {
-            val directory = super.getOrCreateTarget() as PsiDirectory
+        override fun getOrCreateTarget(dirStructureMatchesPkg: Boolean): KtFile {
+            val directory = super.getOrCreateTarget(dirStructureMatchesPkg) as PsiDirectory
             return getOrCreateKotlinFile(fileName, directory, pkgName.asString())
         }
     }

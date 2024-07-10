@@ -79,7 +79,8 @@ internal object K2MoveFileOrDirectoriesRefactoringAction : KotlinMoveRefactoring
                 listOf(moveDescriptor),
                 shouldUpdateReferences(config, sourceDescriptor.elements.first(), targetDescriptor.baseDirectory),
                 config.searchInComments(),
-                config.searchReferences()
+                config.searchReferences(),
+                dirStructureMatchesPkg = true
             )
             K2MoveFilesOrDirectoriesRefactoringProcessor(moveOperationDescriptor).run()
         }

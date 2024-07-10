@@ -193,7 +193,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         try {
             val targetDirectory = runWriteAction {
-                targetData.targetDirWrapper.getOrCreateTarget() as PsiDirectory
+                targetData.targetDirWrapper.getOrCreateTarget(dirStructureMatchesPkg = true) as PsiDirectory
             }
 
             val targetFileName =

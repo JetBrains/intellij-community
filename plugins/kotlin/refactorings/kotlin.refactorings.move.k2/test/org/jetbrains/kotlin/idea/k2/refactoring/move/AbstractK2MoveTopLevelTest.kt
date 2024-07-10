@@ -73,6 +73,7 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                 config.searchForText(),
                 config.searchInComments(),
                 config.searchReferences(),
+                dirStructureMatchesPkg = true
             )
             K2MoveDeclarationsRefactoringProcessor(moveOperationDescriptor).run()
         }

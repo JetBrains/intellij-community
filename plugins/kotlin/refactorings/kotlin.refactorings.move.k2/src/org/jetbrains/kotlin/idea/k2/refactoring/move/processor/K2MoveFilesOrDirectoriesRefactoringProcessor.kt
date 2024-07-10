@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.KtNamedDeclaration
 class K2MoveFilesOrDirectoriesRefactoringProcessor(descriptor: K2MoveOperationDescriptor.Files) : MoveFilesOrDirectoriesProcessor(
     descriptor.project,
     descriptor.sourceElements.toTypedArray(),
-    runWriteAction { descriptor.moveDescriptors.first().target.getOrCreateTarget() as PsiDirectory }, // TODO how to do multi target move?
+    runWriteAction { descriptor.moveDescriptors.first().target.getOrCreateTarget(descriptor.dirStructureMatchesPkg) as PsiDirectory }, // TODO how to do multi target move?
     descriptor.searchReferences,
     descriptor.searchInComments,
     descriptor.searchForText,
