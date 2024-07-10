@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ServiceContainerUtil")
 package com.intellij.testFramework
 
@@ -99,8 +99,7 @@ fun processAllServiceDescriptors(componentManager: ComponentManager, consumer: (
       else -> pluginDescriptor.moduleContainerDescriptor
     }
     containerDescriptor.services.forEach {
-      if ((componentManager as? ComponentManagerImpl)?.isServiceSuitable(it) != false &&
-          (it.os == null || componentManager.isSuitableForOs(it.os))) {
+      if ((componentManager as? ComponentManagerImpl)?.isServiceSuitable(it) != false && (it.os == null || it.os.isSuitableForOs())) {
         consumer(it)
       }
     }

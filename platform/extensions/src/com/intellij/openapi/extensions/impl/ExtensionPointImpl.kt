@@ -844,7 +844,7 @@ sealed class ExtensionPointImpl<T : Any>(@JvmField val name: String,
       newAdapters[index] = item
     }
     for (descriptor in descriptors) {
-      if (descriptor.os == null || componentManager.isSuitableForOs(descriptor.os)) {
+      if (descriptor.os == null || descriptor.os.isSuitableForOs()) {
         newAdapters[newSize++] = createAdapter(descriptor = descriptor, pluginDescriptor = pluginDescriptor, componentManager = componentManager)
       }
     }

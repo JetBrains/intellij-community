@@ -762,9 +762,11 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
 
     var name: String? = null
+    var os: ExtensionDescriptor.Os? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
+        "os" -> os = readOs(reader.getAttributeValue(i))
       }
     }
 
@@ -784,19 +786,18 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
     if (isEndElement) {
-      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null))
+      if (os == null || os.isSuitableForOs()) {
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null))
+      }
     }
     else {
-      val fromIndex = reader.textStart
-      val toIndex = fromIndex + reader.textLength
-      val length: Int = toIndex - fromIndex
-      val descriptorContent = if (length == 0) {
-        null
+      if (os == null || os.isSuitableForOs()) {
+        val fromIndex = reader.textStart
+        val toIndex = fromIndex + reader.textLength
+        val length = toIndex - fromIndex
+        val descriptorContent = if (length == 0) null else Arrays.copyOfRange(reader.textCharacters, fromIndex, toIndex)
+        descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent))
       }
-      else {
-        Arrays.copyOfRange(reader.textCharacters, fromIndex, toIndex)
-      }
-      descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = descriptorContent))
 
       var nesting = 1
       while (true) {

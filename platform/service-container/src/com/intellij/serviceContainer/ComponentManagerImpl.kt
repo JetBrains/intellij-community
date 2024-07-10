@@ -31,7 +31,6 @@ import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
@@ -336,7 +335,7 @@ abstract class ComponentManagerImpl(
               continue
             }
 
-            if (listener.os != null && !isSuitableForOs(listener.os)) {
+            if (listener.os != null && !listener.os.isSuitableForOs()) {
               continue
             }
 
@@ -437,7 +436,7 @@ abstract class ComponentManagerImpl(
     val registrationScope = if (pluginClassLoader is PluginAwareClassLoader) pluginClassLoader.pluginCoroutineScope else null
     val registrar = componentContainer.startRegistration(registrationScope)
     for (descriptor in components) {
-      if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+      if (descriptor.os != null && !descriptor.os.isSuitableForOs()) {
         continue
       }
       if (!isComponentSuitable(descriptor)) {
@@ -583,7 +582,7 @@ abstract class ComponentManagerImpl(
     val registrar = serviceContainer.startRegistration(registrationScope)
     val app = getApplication()!!
     for (descriptor in services) {
-      if (!isServiceSuitable(descriptor) || descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+      if (!isServiceSuitable(descriptor) || (descriptor.os != null && !descriptor.os.isSuitableForOs())) {
         continue
       }
 
@@ -1031,7 +1030,7 @@ abstract class ComponentManagerImpl(
     val asyncServices = mutableListOf<ServiceDescriptor>()
     for (plugin in modules) {
       for (service in getContainerDescriptor(plugin).services) {
-        if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
+        if (!isServiceSuitable(service) || (service.os != null && !service.os.isSuitableForOs())) {
           continue
         }
 
@@ -1362,17 +1361,6 @@ abstract class ComponentManagerImpl(
       ?: serviceContainer.getInstanceHolder(keyClass = componentKey)
     }
     return holder != null || parent?.hasComponent(componentKey) == true
-  }
-
-  final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {
-    return when (os) {
-      ExtensionDescriptor.Os.mac -> SystemInfoRt.isMac
-      ExtensionDescriptor.Os.linux -> SystemInfoRt.isLinux
-      ExtensionDescriptor.Os.windows -> SystemInfoRt.isWindows
-      ExtensionDescriptor.Os.unix -> SystemInfoRt.isUnix
-      ExtensionDescriptor.Os.freebsd -> SystemInfoRt.isFreeBSD
-      else -> throw IllegalArgumentException("Unknown OS '$os'")
-    }
   }
 
   fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {
