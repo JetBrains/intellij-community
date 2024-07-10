@@ -313,11 +313,13 @@ a:com.intellij.openapi.externalSystem.dependency.analyzer.ExternalSystemDependen
 - pf:getProjectFile(java.lang.String):com.intellij.openapi.vfs.VirtualFile
 - a:getSystemId():com.intellij.openapi.externalSystem.model.ProjectSystemId
 - pa:isProjectFile(com.intellij.openapi.vfs.VirtualFile):Z
+- p:linkProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - linkToExistingProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):V
 - f:linkToExistingProject(java.lang.String,com.intellij.openapi.project.Project):V
-- linkToExistingProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
+- f:linkToExistingProjectAsync(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - f:linkToExistingProjectAsync(java.lang.String,com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - openProject(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,kotlin.coroutines.Continuation):java.lang.Object
+- unlinkProject(com.intellij.openapi.project.Project,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider$Companion
 a:com.intellij.openapi.externalSystem.importing.ExternalProjectStructureCustomizer
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
