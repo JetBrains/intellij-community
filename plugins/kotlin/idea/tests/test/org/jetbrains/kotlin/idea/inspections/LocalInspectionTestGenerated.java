@@ -82,9 +82,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("blankSupertypes.kt")
+        public void testBlankSupertypes() throws Exception {
+            runTest("testData/inspectionsLocal/arrayInDataClass/blankSupertypes.kt");
+        }
+
+        @TestMetadata("changedParameterNameInParent.kt")
+        public void testChangedParameterNameInParent() throws Exception {
+            runTest("testData/inspectionsLocal/arrayInDataClass/changedParameterNameInParent.kt");
+        }
+
         @TestMetadata("genericArray.kt")
         public void testGenericArray() throws Exception {
             runTest("testData/inspectionsLocal/arrayInDataClass/genericArray.kt");
+        }
+
+        @TestMetadata("indirectOverride.kt")
+        public void testIndirectOverride() throws Exception {
+            runTest("testData/inspectionsLocal/arrayInDataClass/indirectOverride.kt");
         }
 
         @TestMetadata("intArray.kt")
