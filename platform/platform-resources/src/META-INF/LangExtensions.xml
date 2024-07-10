@@ -1357,8 +1357,6 @@
                     serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="notification.group.jdk.update.error"/>
-    <notificationGroup id="JDK Install Request" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
-                       key="notification.group.jdk.install.request"/>
     <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Batch quick fix" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.batch.quick.fix"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunContentManager"
