@@ -92,6 +92,9 @@ class SettingsSyncBridge(
     coroutineScope.launch {
       withProgressText(SettingsSyncBundle.message(initMode.messageKey)) {
         try {
+          // Always explicitly flush settings – if this is not done before sending sync events, then remotely synced settings
+          // might not contain the most up–to–date settings state (e.g. sync settings will be stale).
+          saveIdeSettings()
           settingsLog.initialize()
 
           // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks

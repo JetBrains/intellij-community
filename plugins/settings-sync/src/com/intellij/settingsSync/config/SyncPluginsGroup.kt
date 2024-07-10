@@ -18,6 +18,7 @@ internal class SyncPluginsGroup : SyncSubcategoryGroup {
     PluginManagerCore.plugins.forEach {
       if (!it.isBundled && SettingsSyncPluginCategoryFinder.getPluginCategory(it) == SettingsCategory.PLUGINS) {
         bundledPluginsDescriptor.isSubGroupEnd = true
+        // NOTE: the code in `com.intellij.settingsSync.SettingsSyncFilteringKt.getSubCategory` relies on the value being plugin ID
         descriptors.add(getOrCreateDescriptor(it.name, it.pluginId.idString))
       }
     }
