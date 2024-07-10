@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate
 
 import com.intellij.codeInsight.codeVision.CodeVisionHost
@@ -14,6 +14,7 @@ import com.intellij.openapi.components.Service.Level
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -89,6 +90,12 @@ internal class AnnotationsPreloader(private val project: Project) {
   }
 
   internal class AnnotationsPreloaderFileEditorManagerListener(private val project: Project) : FileEditorManagerListener {
+    init {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
     override fun selectionChanged(event: FileEditorManagerEvent) {
       if (!isEnabled()) return
       val file = event.newFile ?: return
@@ -102,10 +109,14 @@ internal class AnnotationsPreloader(private val project: Project) {
 
     // TODO: check cores number?
     internal fun isEnabled(): Boolean {
-      if (PowerSaveMode.isEnabled()) return false
+      if (PowerSaveMode.isEnabled()) {
+        return false
+      }
+
       val enabledInSettings = if (Registry.`is`("editor.codeVision.new")) {
         CodeVisionSettings.getInstance().isProviderEnabled(VcsCodeVisionProvider.id)
-      } else {
+      }
+      else {
         false
       }
       return enabledInSettings || AdvancedSettings.getBoolean("vcs.annotations.preload")
