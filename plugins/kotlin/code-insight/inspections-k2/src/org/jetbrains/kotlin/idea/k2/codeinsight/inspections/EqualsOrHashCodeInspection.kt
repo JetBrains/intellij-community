@@ -10,10 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.DeletePsiElementsFix
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.generateEqualsHeaderAndBodyTexts
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.generateHashCodeHeaderAndBodyTexts
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.matchesEqualsMethodSignature
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.matchesHashCodeMethodSignature
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.GenerateEqualsAndHashCodeUtils
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateEqualsFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.GenerateHashCodeFix
 import org.jetbrains.kotlin.psi.KtClass
@@ -32,11 +29,11 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                 Pair(
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.symbol as? KaNamedFunctionSymbol ?: return@singleOrNull false
-                        matchesEqualsMethodSignature(function)
+                        GenerateEqualsAndHashCodeUtils.matchesEqualsMethodSignature(function)
                     } as? KtNamedFunction,
                     classOrObjectMemberDeclarations.singleOrNull {
                         val function = it.symbol as? KaNamedFunctionSymbol ?: return@singleOrNull false
-                        matchesHashCodeMethodSignature(function)
+                        GenerateEqualsAndHashCodeUtils.matchesHashCodeMethodSignature(function)
                     } as? KtNamedFunction,
                 )
             }
@@ -63,10 +60,10 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
                     )
 
                     val fix = if (equalsDeclaration != null) {
-                        val (function, body) = generateHashCodeHeaderAndBodyTexts(classOrObject)
+                        val (function, body) = GenerateEqualsAndHashCodeUtils.generateHashCodeHeaderAndBodyTexts(classOrObject)
                         GenerateHashCodeFix(function, body)
                     } else {
-                        val (function, body) = generateEqualsHeaderAndBodyTexts(classOrObject)
+                        val (function, body) = GenerateEqualsAndHashCodeUtils.generateEqualsHeaderAndBodyTexts(classOrObject)
                         GenerateEqualsFix(function, body)
                     }
 

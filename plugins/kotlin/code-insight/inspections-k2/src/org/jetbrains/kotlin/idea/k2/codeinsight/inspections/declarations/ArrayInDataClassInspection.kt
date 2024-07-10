@@ -13,8 +13,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.isNullableAnyType
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.generateEqualsHeaderAndBodyTexts
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.generateHashCodeHeaderAndBodyTexts
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.GenerateEqualsAndHashCodeUtils
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
@@ -87,16 +86,16 @@ class ArrayInDataClassInspection : KotlinApplicableInspectionBase.Simple<KtParam
         return when (checkOverriddenEqualsAndHashCode(containingClass)) {
             EqualsHashCodeOverrides.HAS_EQUALS_AND_HASHCODE -> null
             EqualsHashCodeOverrides.HAS_EQUALS -> {
-                val (hashCodeHeader, hashCodeBody) = generateHashCodeHeaderAndBodyTexts(containingClass)
+                val (hashCodeHeader, hashCodeBody) = GenerateEqualsAndHashCodeUtils.generateHashCodeHeaderAndBodyTexts(containingClass)
                 Context(equalsHeader = null, equalsBody = null, hashCodeHeader, hashCodeBody)
             }
             EqualsHashCodeOverrides.HAS_HASHCODE -> {
-                val (equalsHeader, equalsBody) = generateEqualsHeaderAndBodyTexts(containingClass)
+                val (equalsHeader, equalsBody) = GenerateEqualsAndHashCodeUtils.generateEqualsHeaderAndBodyTexts(containingClass)
                 Context(equalsHeader, equalsBody, hashCodeHeader = null, hashCodeBody = null)
             }
             EqualsHashCodeOverrides.HAS_NONE -> {
-                val (equalsHeader, equalsBody) = generateEqualsHeaderAndBodyTexts(containingClass)
-                val (hashCodeHeader, hashCodeBody) = generateHashCodeHeaderAndBodyTexts(containingClass)
+                val (equalsHeader, equalsBody) = GenerateEqualsAndHashCodeUtils.generateEqualsHeaderAndBodyTexts(containingClass)
+                val (hashCodeHeader, hashCodeBody) = GenerateEqualsAndHashCodeUtils.generateHashCodeHeaderAndBodyTexts(containingClass)
                 Context(equalsHeader, equalsBody, hashCodeHeader, hashCodeBody)
             }
         }
