@@ -379,7 +379,17 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   override fun getActiveVisibleScheme(): EditorColorsScheme? {
     val scheme = schemeManager.activeScheme
     if (scheme is AbstractColorsScheme && !scheme.isReadOnly && !scheme.isVisible) {
-      return scheme.parentScheme
+      return when (val parentScheme = scheme.parentScheme) {
+        null -> {
+          LOG.error("Parent scheme for '${scheme.name}' is null!")
+          null
+        }
+        is DefaultColorsScheme -> getScheme(parentScheme.editableCopyName)
+        else -> {
+          LOG.error("Color scheme '${parentScheme.name}' is not a DefaultColorsScheme!")
+          null
+        }
+      }
     }
     return scheme?.let { getEditableCopy(it) } ?: scheme
   }
@@ -525,10 +535,12 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   private inner class EditorColorSchemeProcessor(
     private val additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
   ) : LazySchemeProcessor<EditorColorsScheme, EditorColorsSchemeImpl>(), SchemeExtensionProvider {
-    override fun createScheme(dataHolder: SchemeDataHolder<EditorColorsSchemeImpl>,
-                              name: String,
-                              attributeProvider: (String) -> String?,
-                              isBundled: Boolean): EditorColorsSchemeImpl {
+    override fun createScheme(
+      dataHolder: SchemeDataHolder<EditorColorsSchemeImpl>,
+      name: String,
+      attributeProvider: (String) -> String?,
+      isBundled: Boolean,
+    ): EditorColorsSchemeImpl {
       // do we have BundledEditorColorScheme here?
       val scheme = if (isBundled) BundledEditorColorScheme(name) else EditorColorsSchemeImpl(null)
       // todo be lazy
@@ -554,9 +566,11 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       return if (scheme.isReadOnly) SchemeState.NON_PERSISTENT else SchemeState.POSSIBLY_CHANGED
     }
 
-    override fun onCurrentSchemeSwitched(oldScheme: EditorColorsScheme?,
-                                         newScheme: EditorColorsScheme?,
-                                         processChangeSynchronously: Boolean) {
+    override fun onCurrentSchemeSwitched(
+      oldScheme: EditorColorsScheme?,
+      newScheme: EditorColorsScheme?,
+      processChangeSynchronously: Boolean,
+    ) {
       // the method receives the base scheme as the argument, but the actual scheme might be different
       val actualNewScheme = if (schemeManager.activeScheme == newScheme) {
         activeVisibleScheme
@@ -770,8 +784,10 @@ fun readEditorSchemeNameFromXml(parser: XMLStreamReader): String? {
 private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledColorScheme")
 
 @VisibleForTesting
-fun createLoadBundledSchemeRequests(additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
-                                    checkId: Boolean = false)
+fun createLoadBundledSchemeRequests(
+  additionalTextAttributes: MutableMap<String, MutableList<AdditionalTextAttributesEP>>,
+  checkId: Boolean = false,
+)
   : Sequence<SchemeManager.LoadBundleSchemeRequest<EditorColorsScheme>> {
   return sequence {
     for (item in BUNDLED_EP_NAME.filterableLazySequence()) {
