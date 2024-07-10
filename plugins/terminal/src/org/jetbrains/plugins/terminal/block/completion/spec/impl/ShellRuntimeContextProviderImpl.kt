@@ -3,10 +3,14 @@ package org.jetbrains.plugins.terminal.block.completion.spec.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCommandExecutor
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import com.intellij.util.PathUtil
+import org.jetbrains.plugins.terminal.block.completion.TerminalCommandSpecCompletionContributor
 import org.jetbrains.plugins.terminal.block.completion.spec.PROJECT_KEY
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
@@ -18,8 +22,13 @@ internal class ShellRuntimeContextProviderImpl(
   private val project: Project,
   private val session: BlockTerminalSession
 ) : ShellRuntimeContextProvider {
+
+  val tracer = TelemetryManager.getTracer(Scope(TerminalCommandSpecCompletionContributor.TERMINAL_COMPLETION_OTL_SCOPE))
+
   private val realGeneratorRunner: ShellCommandExecutor = ShellCommandExecutor { command ->
-    session.commandExecutionManager.runGeneratorAsync(command).await()
+    tracer.spanBuilder("terminal-completion-run-generator").useWithScope {
+      session.commandExecutionManager.runGeneratorAsync(command).await()
+    }
   }
 
   private val generatorCommandsRunner: ShellCachingGeneratorCommandsRunner = ShellCachingGeneratorCommandsRunner(realGeneratorRunner)

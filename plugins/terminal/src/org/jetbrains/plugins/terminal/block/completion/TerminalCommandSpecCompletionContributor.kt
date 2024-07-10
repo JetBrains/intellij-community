@@ -9,6 +9,10 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
 import com.intellij.terminal.completion.ShellRuntimeContextProvider
@@ -32,6 +36,9 @@ import java.io.File
  * Main entry point to the Block Terminal Completion.
  */
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
+
+  val tracer = TelemetryManager.getTracer(Scope(TERMINAL_COMPLETION_OTL_SCOPE))
+
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
     val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
@@ -65,12 +72,15 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
       return
     }
 
-    val suggestions = runBlockingCancellable {
-      val expandedTokens = expandAliases(context, allTokens)
-      computeSuggestions(expandedTokens, context)
+    tracer.spanBuilder("terminal-completion-all").use {
+      val suggestions = runBlockingCancellable {
+        val expandedTokens = expandAliases(context, allTokens)
+        computeSuggestions(expandedTokens, context)
+      }
+      tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
+        submitSuggestions(suggestions, allTokens, result, session.shellIntegration.shellType)
+      }
     }
-
-    submitSuggestions(suggestions, allTokens, result, session.shellIntegration.shellType)
   }
 
   private fun submitSuggestions(
@@ -102,7 +112,11 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val commandArguments = tokens.subList(1, tokens.size)
     val availableCommandsProvider = suspend { context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator()) }
     val fileProducer = suspend { context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator()) }
-    val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { completion.computeCompletionItems(it, commandArguments) }
+    val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
+      tracer.spanBuilder("terminal-completion-compute-completion-items").useWithScope {
+        completion.computeCompletionItems(commandName, commandArguments)
+      }
+    }
 
     if (commandArguments.isEmpty()) {
       return computeSuggestionsIfNoArguments(fileProducer, availableCommandsProvider)
@@ -267,5 +281,9 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   ) {
     val project: Project
       get() = parameters.editor.project!!
+  }
+
+  companion object {
+    const val TERMINAL_COMPLETION_OTL_SCOPE = "terminal-completion"
   }
 }
