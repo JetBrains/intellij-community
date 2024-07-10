@@ -4,7 +4,6 @@ package org.jetbrains.plugins.terminal.block.completion
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
 import com.intellij.terminal.completion.spec.ShellCommandParserOptions
 import com.intellij.terminal.completion.spec.ShellCommandResult
-import com.intellij.testFramework.UsefulTestCase.assertNotNull
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellCommandSpec
@@ -218,13 +217,19 @@ internal class ShellCommandSpecSuggestionsTest {
         option("-b")
         option("-c")
       }
+
+      subcommand("multipleDynamicOptionsCalls") {
+        dynamicOptions { option("-a") }
+        dynamicOptions { option("-b") }
+        option("-c")
+      }
     }
   }
 
   @Test
   fun `main command`() {
     assertSameElements(getSuggestions(emptyList()), listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cdWithSuggestions", "cd",
-                                                            "withTwoOptArgs", "withDynamicOptions", "-a", "--asd", "--bcde", "--argum", "abc"))
+                                                           "withTwoOptArgs", "withDynamicOptions", "multipleDynamicOptionsCalls", "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -355,6 +360,11 @@ internal class ShellCommandSpecSuggestionsTest {
   @Test
   fun `suggest both static and dynamic options`() {
     assertSameElements(getSuggestions(listOf("withDynamicOptions")), listOf("-a", "-b", "-c", "--bcde"))
+  }
+
+  @Test
+  fun `suggest dynamic options if they are defined in separate 'dynamicOptions' calls`() {
+    assertSameElements(getSuggestions(listOf("multipleDynamicOptionsCalls")), listOf("-a", "-b", "-c", "--bcde"))
   }
 
   private fun getSuggestions(arguments: List<String>): List<String> = getSuggestions(arguments, "")

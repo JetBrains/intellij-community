@@ -18,7 +18,7 @@ internal class ShellCommandContextImpl(
   override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
   private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
-  private var dynamicOptionsSupplier: (suspend (ShellRuntimeContext) -> List<ShellOptionSpec>)? = null
+  private var dynamicOptionSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellOptionSpec>> = mutableListOf()
   private var staticOptionSuppliers: MutableList<() -> List<ShellOptionSpec>> = mutableListOf()
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
@@ -34,11 +34,12 @@ internal class ShellCommandContextImpl(
   }
 
   override fun dynamicOptions(content: suspend ShellChildOptionsContext.(ShellRuntimeContext) -> Unit) {
-    dynamicOptionsSupplier = { shellContext ->
+    val supplier: suspend (ShellRuntimeContext) -> List<ShellOptionSpec> = { shellContext ->
       val context = ShellChildOptionsContextImpl(parentNamesWithSelf)
       content.invoke(context, shellContext)
       context.build()
     }
+    dynamicOptionSuppliers.add(supplier)
   }
 
   override fun option(vararg names: String, content: ShellOptionContext.() -> Unit) {
@@ -71,11 +72,18 @@ internal class ShellCommandContextImpl(
         requiresSubcommand = requiresSubcommand,
         parserOptions = parserOptions,
         subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
-        dynamicOptionsSupplier = dynamicOptionsSupplier,
+        dynamicOptionsSupplier = createSingleDynamicOptionsSupplier(),
         staticOptionsSupplier = { staticOptionSuppliers.flatMap { it() } },
         argumentsSupplier = { argumentSuppliers.map { it() } },
         parentNames = parentNames
       )
     }
+  }
+
+  private fun createSingleDynamicOptionsSupplier(): (suspend (ShellRuntimeContext) -> List<ShellOptionSpec>)? {
+    return if (dynamicOptionSuppliers.isNotEmpty()) {
+      { shellContext -> dynamicOptionSuppliers.flatMap { it(shellContext) } }
+    }
+    else null
   }
 }

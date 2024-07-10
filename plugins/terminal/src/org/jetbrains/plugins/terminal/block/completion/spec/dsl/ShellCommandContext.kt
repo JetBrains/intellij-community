@@ -41,7 +41,6 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
 
   /**
    * Allows specifying options that depend on the shell state. For example, on the command version.
-   * Must be called only once. The second call will override the result.
    *
    * Use ordinary [option] if you need to define the option that doesn't depend on the shell state.
    *
