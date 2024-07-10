@@ -190,7 +190,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     }
 
     if (!modifier) {
-      PyDataViewerCollector.slicingApplied.log()
+      PyDataViewerCollector.SLICING_APPLIED_EVENT.log()
     }
   }
 
