@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import javax.swing.*;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public abstract class ExternalSystemTreeAction extends ExternalSystemAction {
 
   @Override

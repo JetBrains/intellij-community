@@ -15,6 +15,7 @@ import com.intellij.openapi.externalSystem.view.ExternalSystemNode;
 import com.intellij.openapi.externalSystem.view.RunConfigurationNode;
 import com.intellij.openapi.externalSystem.view.TaskNode;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -25,6 +26,7 @@ import static com.intellij.openapi.externalSystem.service.project.manage.Externa
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public abstract class ToggleTaskActivationAction extends ExternalSystemToggleAction {
 
   @NotNull

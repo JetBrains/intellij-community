@@ -33,12 +33,14 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class RunExternalSystemTaskAction extends ExternalSystemNodeAction<TaskData> {
 
   private static final Logger LOG = Logger.getInstance(RunExternalSystemTaskAction.class);

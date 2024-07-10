@@ -16,10 +16,12 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ToggleAfterRebuildTasksAction extends ToggleTaskActivationAction {
   protected ToggleAfterRebuildTasksAction() {
     super(ExternalSystemTaskActivator.Phase.AFTER_REBUILD);

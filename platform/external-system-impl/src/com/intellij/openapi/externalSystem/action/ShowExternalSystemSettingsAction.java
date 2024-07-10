@@ -21,11 +21,13 @@ import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsColle
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ShowExternalSystemSettingsAction extends ExternalSystemAction {
 
   public ShowExternalSystemSettingsAction() {

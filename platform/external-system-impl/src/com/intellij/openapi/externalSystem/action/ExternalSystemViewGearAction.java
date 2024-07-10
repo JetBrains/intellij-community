@@ -20,12 +20,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public abstract class ExternalSystemViewGearAction extends ExternalSystemToggleAction {
 
   private ExternalProjectsViewImpl myView;

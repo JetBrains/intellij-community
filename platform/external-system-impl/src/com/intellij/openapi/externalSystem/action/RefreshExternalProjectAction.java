@@ -19,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.List;
  *
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class RefreshExternalProjectAction extends ExternalSystemNodeAction<AbstractExternalEntityData> implements DumbAware {
   public RefreshExternalProjectAction() {
     super(AbstractExternalEntityData.class);
