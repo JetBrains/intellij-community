@@ -7529,6 +7529,130 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/elvisToIfThen")
+    public static class ElvisToIfThen extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignmentAndBreak.kt")
+        public void testAssignmentAndBreak() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/assignmentAndBreak.kt");
+        }
+
+        @TestMetadata("assignmentAndContinue.kt")
+        public void testAssignmentAndContinue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/assignmentAndContinue.kt");
+        }
+
+        @TestMetadata("assignmentAndError.kt")
+        public void testAssignmentAndError() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/assignmentAndError.kt");
+        }
+
+        @TestMetadata("assignmentAndReturn.kt")
+        public void testAssignmentAndReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/assignmentAndReturn.kt");
+        }
+
+        @TestMetadata("assignmentAndThrow.kt")
+        public void testAssignmentAndThrow() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/assignmentAndThrow.kt");
+        }
+
+        @TestMetadata("callExpression.kt")
+        public void testCallExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/callExpression.kt");
+        }
+
+        @TestMetadata("callExpressionParens.kt")
+        public void testCallExpressionParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/callExpressionParens.kt");
+        }
+
+        @TestMetadata("elvisAsExpression.kt")
+        public void testElvisAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/elvisAsExpression.kt");
+        }
+
+        @TestMetadata("fakeSafeCast.kt")
+        public void testFakeSafeCast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/fakeSafeCast.kt");
+        }
+
+        @TestMetadata("localValLhs.kt")
+        public void testLocalValLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/localValLhs.kt");
+        }
+
+        @TestMetadata("localVarLhs.kt")
+        public void testLocalVarLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/localVarLhs.kt");
+        }
+
+        @TestMetadata("longSafeCast.kt")
+        public void testLongSafeCast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/longSafeCast.kt");
+        }
+
+        @TestMetadata("safeCast.kt")
+        public void testSafeCast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/safeCast.kt");
+        }
+
+        @TestMetadata("safeCastAndReturn.kt")
+        public void testSafeCastAndReturn() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/safeCastAndReturn.kt");
+        }
+
+        @TestMetadata("safeCastUnstable.kt")
+        public void testSafeCastUnstable() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/safeCastUnstable.kt");
+        }
+
+        @TestMetadata("simpleNameExpression.kt")
+        public void testSimpleNameExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/simpleNameExpression.kt");
+        }
+
+        @TestMetadata("simpleNameExpressionInParens.kt")
+        public void testSimpleNameExpressionInParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/simpleNameExpressionInParens.kt");
+        }
+
+        @TestMetadata("simpleSafeCast.kt")
+        public void testSimpleSafeCast() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/simpleSafeCast.kt");
+        }
+
+        @TestMetadata("topLevelVal.kt")
+        public void testTopLevelVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/topLevelVal.kt");
+        }
+
+        @TestMetadata("topLevelValCustomGetter.kt")
+        public void testTopLevelValCustomGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/topLevelValCustomGetter.kt");
+        }
+
+        @TestMetadata("topLevelVar.kt")
+        public void testTopLevelVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/topLevelVar.kt");
+        }
+
+        @TestMetadata("topLevelVarCustomGetter.kt")
+        public void testTopLevelVarCustomGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/elvisToIfThen/topLevelVarCustomGetter.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen")
     public static class IfToWhen extends AbstractK2IntentionTest {
         @java.lang.Override

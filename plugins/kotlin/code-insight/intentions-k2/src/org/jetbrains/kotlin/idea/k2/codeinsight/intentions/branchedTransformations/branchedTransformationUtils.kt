@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations
 
+import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
@@ -8,9 +9,11 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isFalseConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.isTrueConstant
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
 import org.jetbrains.kotlin.idea.k2.refactoring.introduce.K2SemanticMatcher.isSemanticMatch
+import org.jetbrains.kotlin.idea.k2.refactoring.introduce.introduceVariable.K2IntroduceVariableHandler
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
 /**
  * A function to generate a new [KtExpression] for the new condition with [subject].
@@ -239,4 +242,21 @@ fun KtExpression?.matches(right: KtExpression?): Boolean {
     }
 
     return false
+}
+
+fun KtIfExpression.introduceValueForCondition(occurrenceInThenClause: KtExpression, editor: Editor?) {
+    val occurrenceInConditional = when (val condition = condition) {
+        is KtBinaryExpression -> condition.left
+        is KtIsExpression -> condition.leftHandSide
+        else -> throw KotlinExceptionWithAttachments("Only binary / is expressions are supported here: ${condition?.let { it::class.java }}")
+            .withPsiAttachment("condition", condition)
+    }!!
+    K2IntroduceVariableHandler.collectCandidateTargetContainersAndDoRefactoring(
+        project = project,
+        editor = editor,
+        expressionToExtract = occurrenceInConditional,
+        isVar = false,
+        occurrencesToReplace = listOf(occurrenceInConditional, occurrenceInThenClause),
+        onNonInteractiveFinish = null,
+    )
 }
