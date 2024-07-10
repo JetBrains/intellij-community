@@ -274,8 +274,11 @@ def _set_pd_options():
     _jb_max_rows = pd.get_option('display.max_rows')
 
     pd.set_option('display.max_columns', max_cols)
-    pd.set_option('display.max_colwidth', max_colwidth)
     pd.set_option('display.max_rows', max_rows)
+    try:
+        pd.set_option('display.max_colwidth', max_colwidth)
+    except ValueError:
+        pd.set_option('display.max_colwidth', MAX_COLWIDTH_PYTHON_2)
 
     return _jb_max_cols, _jb_max_colwidth, _jb_max_rows
 

@@ -68,8 +68,11 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None):
     _jb_max_rows = pd.get_option('display.max_rows')
 
     pd.set_option('display.max_columns', max_cols)
-    pd.set_option('display.max_colwidth', max_colwidth)
     pd.set_option('display.max_rows', max_rows)
+    try:
+        pd.set_option('display.max_colwidth', max_colwidth)
+    except ValueError:
+        pd.set_option('display.max_colwidth', MAX_COLWIDTH_PYTHON_2)
 
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
