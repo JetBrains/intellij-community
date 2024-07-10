@@ -361,7 +361,7 @@ private class TabMouseListener(private val window: EditorWindow, private val edi
   private var actionClickCount = 0
 
   override fun mouseReleased(e: MouseEvent) {
-    if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
+    if (!UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED) || e.isConsumed) {
       return
     }
 
@@ -382,27 +382,31 @@ private class TabMouseListener(private val window: EditorWindow, private val edi
   }
 
   override fun mousePressed(e: MouseEvent) {
-    if (UIUtil.isActionClick(e)) {
-      if (e.clickCount == 1) {
-        actionClickCount = 0
-      }
-      // clicks on the close window button don't count in determining whether we have a double click on the tab (IDEA-70403)
-      val deepestComponent = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
-      if (deepestComponent !is InplaceButton) {
-        actionClickCount++
-      }
-      if (actionClickCount > 1 && actionClickCount % 2 == 0) {
-        doProcessDoubleClick(e = e, editorTabs = editorTabs, window = window)
-      }
+    if (!UIUtil.isActionClick(e) || e.isConsumed) {
+      return
+    }
+    if (e.clickCount == 1) {
+      actionClickCount = 0
+    }
+    // clicks on the close window button don't count in determining whether we have a double click on the tab (IDEA-70403)
+    val deepestComponent = SwingUtilities.getDeepestComponentAt(e.component, e.x, e.y)
+    if (deepestComponent !is InplaceButton) {
+      actionClickCount++
+    }
+    if (actionClickCount > 1 && actionClickCount % 2 == 0) {
+      doProcessDoubleClick(e = e, editorTabs = editorTabs, window = window)
     }
   }
 
   override fun mouseClicked(e: MouseEvent) {
-    if (UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) && (e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown)) {
-      val o = editorTabs.findInfo(e)?.`object`
-      if (o is VirtualFile) {
-        ShowFilePathAction.show((o as VirtualFile?)!!, e)
-      }
+    if (!UIUtil.isActionClick(e, MouseEvent.MOUSE_CLICKED) ||
+        !(e.isMetaDown || !SystemInfoRt.isMac && e.isControlDown) ||
+        e.isConsumed) {
+      return
+    }
+    val o = editorTabs.findInfo(e)?.`object`
+    if (o is VirtualFile) {
+      ShowFilePathAction.show((o as VirtualFile?)!!, e)
     }
   }
 }
