@@ -1062,8 +1062,9 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/mblode/vscode-twig-language-2")
       .mit("https://github.com/mblode/vscode-twig-language-2/blob/master/LICENSE.md"),
     LibraryLicense(name = "weberknecht", libraryName = "weberknecht-0.1.5.jar", version = "0.1.5",
-                   url = "https://github.com/pelotoncycle/weberknecht")
-      .apache("https://github.com/pelotoncycle/weberknecht/blob/master/src/de/roderick/weberknecht/WebSocket.java"),
+                   // originally https://github.com/pelotoncycle/weberknecht
+                   url = "https://github.com/pusher-community/titanium_pusher_android/blob/master/src/de/roderick/weberknecht/")
+      .apache("https://github.com/pusher-community/titanium_pusher_android/blob/master/src/de/roderick/weberknecht/WebSocket.java"),
     LibraryLicense(libraryName = "winp", url = "https://github.com/jenkinsci/winp")
       .mit("https://github.com/jenkinsci/winp/blob/master/LICENSE.txt")
       .suppliedByPersons("Kohsuke Kawaguchi"),
