@@ -2,10 +2,13 @@
 
 package org.jetbrains.kotlin.nj2k
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJavaFile
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 
@@ -16,9 +19,10 @@ import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
 object PreprocessorExtensionsRunner {
 
     private const val PHASE_NAME = "Custom Preprocessing"
+    val logger = Logger.getInstance(this::class.java)
 
-    fun runRegisteredPreprocessors(project: Project, javaFiles: List<PsiJavaFile>) {
-        val preprocessorExtensions = J2kPreprocessorExtension.EP_NAME.extensionList
+    fun runRegisteredPreprocessors(project: Project, javaFiles: List<PsiJavaFile>, preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList) {
+        logger.warn("runRegisteredPreprocessors start, thread = ${Thread.currentThread().name}")
         if (preprocessorExtensions.isEmpty()) return
 
         val preprocessorsCount = preprocessorExtensions.size
@@ -28,7 +32,12 @@ object PreprocessorExtensionsRunner {
             ProgressManager.checkCanceled()
             ProgressManager.progress(PHASE_NAME, "Running preprocessor $i/$preprocessorsCount")
             try {
-                preprocessor.processFiles(project, javaFiles)
+                logger.warn("just before runBlockingCancellable, thread = ${Thread.currentThread().name}")
+                runBlockingCancellable {
+                    logger.warn("just inside runBlockingCancellable, thread = ${Thread.currentThread().name} ${this.coroutineContext}")
+                    preprocessor.processFiles(project, javaFiles)
+                }
+                logger.warn("just after runBlockingCancellable but before commitAllDocuments, thread = ${Thread.currentThread().name}")
                 commitAllDocuments(javaFiles)
             } catch (e: ProcessCanceledException) {
                 throw e

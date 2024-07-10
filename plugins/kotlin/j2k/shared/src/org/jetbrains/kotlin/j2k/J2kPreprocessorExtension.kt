@@ -27,7 +27,7 @@ interface J2kPreprocessorExtension {
      * write actions must be wrapped in `runUndoTransparentActionInEdt(inWriteAction = true) { ... }`. As usual, read actions must be
      * wrapped in `runReadAction { ... }`, and analysis must be done outside write actions.
      */
-    fun processFiles(project: Project, files: List<PsiJavaFile>)
+    suspend fun processFiles(project: Project, files: List<PsiJavaFile>)
 
     companion object {
         val EP_NAME = ExtensionPointName<J2kPreprocessorExtension>("org.jetbrains.kotlin.j2kPreprocessorExtension")

@@ -286,6 +286,8 @@ object IgnoreTests {
 
         const val IGNORE_K1: String = "// IGNORE_K1"
 
+        const val INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS: String = "// INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS"
+
         fun of(mode: KotlinPluginMode): String = if (mode == KotlinPluginMode.K2) IGNORE_K2 else IGNORE_K1
     }
 

@@ -5880,6 +5880,25 @@ public abstract class K2JavaToKotlinConverterSingleFileTestGenerated extends Abs
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../shared/tests/testData/newJ2k/preAndPostprocessorExtensions")
+    public static class PreAndPostprocessorExtensions extends AbstractK2JavaToKotlinConverterSingleFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("classWithParamsAndProperties.java")
+        public void testClassWithParamsAndProperties() throws Exception {
+            runTest("../../shared/tests/testData/newJ2k/preAndPostprocessorExtensions/classWithParamsAndProperties.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../shared/tests/testData/newJ2k/prefixOperator")
     public static class PrefixOperator extends AbstractK2JavaToKotlinConverterSingleFileTest {
         @java.lang.Override

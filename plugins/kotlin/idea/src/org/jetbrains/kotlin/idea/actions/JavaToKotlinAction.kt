@@ -115,7 +115,7 @@ class JavaToKotlinAction : AnAction() {
             // "Global" means that you can undo it from any changed file: the converted files,
             // or the external files that were updated.
             project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
-                if (!runSynchronousProcess(project) { runRegisteredPreprocessors(project, javaFiles) }) return@executeCommand
+                if (!runSynchronousProcess(project, { runRegisteredPreprocessors(project, javaFiles) })) return@executeCommand
                 if (!runSynchronousProcess(project, ::convertWithStatistics)) return@executeCommand
 
                 val result = converterResult ?: return@executeCommand
