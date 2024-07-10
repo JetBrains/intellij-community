@@ -756,7 +756,7 @@ com.intellij.history.integration.ui.views.RevisionsList$SelectionListener
 f:com.intellij.history.integration.ui.views.SelectionHistoryDialog
 - com.intellij.history.integration.ui.views.FileHistoryDialog
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.openapi.vfs.VirtualFile,I,I):V
-c:com.intellij.history.integration.ui.views.SelectionHistoryDialogModel
+c:com.intellij.history.integration.ui.models.SelectionHistoryDialogModel
 - com.intellij.history.integration.ui.models.FileHistoryDialogModel
 - <init>(com.intellij.openapi.project.Project,com.intellij.history.integration.IdeaGateway,com.intellij.history.core.LocalHistoryFacade,com.intellij.openapi.vfs.VirtualFile,I,I):V
 - p:collectRevisionData():com.intellij.history.integration.ui.models.RevisionData
