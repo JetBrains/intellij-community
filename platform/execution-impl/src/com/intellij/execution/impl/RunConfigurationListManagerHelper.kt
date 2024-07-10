@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment")
 
 package com.intellij.execution.impl
@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.util.text.NaturalComparator
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jdom.Element
 
@@ -169,7 +170,7 @@ internal class RunConfigurationListManagerHelper(private val manager: RunManager
 
   private fun doCustomSort() {
     val list = idToSettings.values.toTypedArray()
-    val folderNames = getSortedFolderNames(idToSettings.values)
+    val folderNames = getCustomOrderedFolderNames(idToSettings.values, customOrder)
     // customOrder maybe outdated (order specified not all RC), so, base sort by type and folder is applied
     list.sortWith(compareByTypeAndFolderAndCustomComparator(folderNames) { o1, o2 ->
       val index1 = customOrder.getInt(o1.uniqueID)
@@ -240,6 +241,22 @@ private fun getSortedFolderNames(list: Collection<RunnerAndConfigurationSettings
   result.sortWith(NaturalComparator.INSTANCE)
   result.add(null)
   return result
+}
+
+private fun getCustomOrderedFolderNames(
+  list: Collection<RunnerAndConfigurationSettings>,
+  customOrder: Object2IntMap<String>,
+): List<String?> {
+  val folderNamesWithOrder = ArrayList<Pair<String, Int>>()
+  for (settings in list) {
+    val folderName = settings.folderName
+    if (folderName != null) {
+      val order = customOrder.getInt(settings.uniqueID)
+      folderNamesWithOrder.add(Pair(folderName, order))
+    }
+  }
+  folderNamesWithOrder.sortBy { it.second }
+  return folderNamesWithOrder.map { it.first }.distinct().plus(null)
 }
 
 internal fun Collection<RunnerAndConfigurationSettings>.managedOnly(): Sequence<RunnerAndConfigurationSettings> {
