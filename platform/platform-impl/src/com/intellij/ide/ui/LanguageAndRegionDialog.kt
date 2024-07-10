@@ -11,15 +11,14 @@ import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.util.ui.JBDimension
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBSwingUtilities
-import com.intellij.util.ui.JBUI
+import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.ui.*
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
@@ -34,8 +33,6 @@ private val localeMappings = mapOf(Locale.CHINA to listOf("zh-CN", "zh-Hans", "C
 
 private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : DialogWrapper(null, null, true, IdeModalityType.IDE, false) {
   private var region = getRegionForLocale(selectedLanguage)
-  private val TOP_BOTTOM_BORDERS = 4
-  private val LEFT_RIGHT_BORDERS = 16
   init {
     isResizable = false
     init()
@@ -90,12 +87,10 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
     val popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(regions)
       .setRequestFocus(true)
-      .setRenderer { _, value, _, _, _ ->
-        if (value == null) return@setRenderer JLabel()
-        val label = JBLabel(getRegionName(value), null, SwingConstants.LEFT)
-        label.border = JBUI.Borders.empty(TOP_BOTTOM_BORDERS, LEFT_RIGHT_BORDERS)
-        return@setRenderer label
+      .setRenderer { list, value, _, selected, _ ->
+        createRendererComponent(getRegionName(value), list, selected)
       }
+      .setSelectedValue(region, true)
       .setMinSize(Dimension(280, 100))
       .setResizable(false)
       .setCancelOnClickOutside(true)
@@ -112,12 +107,10 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
     val popup = JBPopupFactory.getInstance()
       .createPopupChooserBuilder(locales)
       .setRequestFocus(true)
-      .setRenderer { _, value, _, _, _ ->
-        if (value == null) return@setRenderer JLabel()
-        val label = JBLabel(getLocaleName(value), null, SwingConstants.LEFT)
-        label.border = JBUI.Borders.empty(TOP_BOTTOM_BORDERS, LEFT_RIGHT_BORDERS)
-        return@setRenderer label
+      .setRenderer { list, value, _, selected, _ ->
+        createRendererComponent(getLocaleName(value), list, selected)
       }
+      .setSelectedValue(selectedLanguage, true)
       .setMinSize(Dimension(280, 100))
       .setResizable(false)
       .setCancelOnClickOutside(true)
@@ -132,6 +125,16 @@ private class LanguageAndRegionDialog(private var selectedLanguage: Locale) : Di
       }
       .createPopup()
     popup.show(RelativePoint.getSouthWestOf(button))
+  }
+
+  private fun createRendererComponent(@Nls value: String, list: JComponent, selected: Boolean): JComponent {
+    val label = JBLabel(value, null, SwingConstants.LEFT)
+    val panel = SelectablePanel.wrap(label, list.background)
+    if (selected) {
+      panel.selectionColor = UIUtil.getListSelectionBackground(true)
+    }
+    PopupUtil.configListRendererFixedHeight(panel)
+    return panel
   }
 
   private fun getRegionForLocale(locale: Locale): Region {
