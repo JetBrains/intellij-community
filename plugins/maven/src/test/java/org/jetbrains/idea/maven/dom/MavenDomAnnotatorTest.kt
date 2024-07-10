@@ -31,9 +31,6 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testAnnotatePlugin2() = testAnnotatePlugin()
-
-  @Test
   fun testAnnotatePlugin() = runBlocking {
     val modulePomContent = """
 <parent>
