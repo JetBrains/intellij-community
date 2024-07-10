@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
@@ -14,10 +14,12 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.JComponent
 import javax.swing.border.Border
 
+@ApiStatus.Internal
 open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
                                            private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {

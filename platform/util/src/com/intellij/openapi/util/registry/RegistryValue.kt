@@ -1,333 +1,300 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.util.registry;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.ColorHexUtil;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.containers.ContainerUtil;
-import kotlin.Unit;
-import kotlinx.coroutines.CoroutineScope;
-import kotlinx.coroutines.Job;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.openapi.util.registry
 
-import java.awt.*;
-import java.util.List;
-import java.util.MissingResourceException;
-import java.util.Objects;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.ColorHexUtil
+import com.intellij.util.ArrayUtilRt
+import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
+import java.awt.Color
+import java.util.*
 
-/**
- * @author Kirill Kalishev
- * @author Konstantin Bulenkov
- */
-public class RegistryValue {
-  private static final Logger LOG = Logger.getInstance(RegistryValue.class);
+private val LOG = logger<RegistryValue>()
 
-  private final Registry registry;
-  private final String key;
-  private final @Nullable RegistryKeyDescriptor keyDescriptor;
+open class RegistryValue @Internal constructor(
+  private val registry: Registry,
+  val key: @NonNls String,
+  private val keyDescriptor: RegistryKeyDescriptor?
+) {
+  private val listeners: MutableList<RegistryValueListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  private final List<RegistryValueListener> listeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  var isChangedSinceAppStart: Boolean = false
+    private set
 
-  private boolean myChangedSinceStart;
+  private var stringCachedValue: String? = null
+  private var intCachedValue: Int? = null
+  private var doubleCachedValue = Double.NaN
+  private var booleanCachedValue: Boolean? = null
 
-  private String stringCachedValue;
-  private Integer intCachedValue;
-  private double doubleCachedValue = Double.NaN;
-  private Boolean booleanCachedValue;
-
-  RegistryValue(@NotNull Registry registry, @NonNls @NotNull String key, @Nullable RegistryKeyDescriptor keyDescriptor) {
-    this.registry = registry;
-    this.key = key;
-    this.keyDescriptor = keyDescriptor;
+  open fun asString(): @NlsSafe String {
+    return checkNotNull(get(key = key, defaultValue = null, isValue = true)) { key }
   }
 
-  public @NotNull @NlsSafe String getKey() {
-    return key;
-  }
-
-  public @NotNull @NlsSafe String asString() {
-    final String value = get(key, null, true);
-    assert value != null : key;
-    return value;
-  }
-
-  public boolean asBoolean() {
-    Boolean result = booleanCachedValue;
+  open fun asBoolean(): Boolean {
+    var result = booleanCachedValue
     if (result == null) {
-      result = Boolean.valueOf(get(key, "false", true));
-      booleanCachedValue = result;
+      result = get(key = key, defaultValue = "false", isValue = true).toBoolean()
+      booleanCachedValue = result
     }
-    return result.booleanValue();
+    return result
   }
 
-  public int asInteger() {
-    Integer result = intCachedValue;
+  fun asInteger(): Int {
+    var result = intCachedValue
     if (result == null) {
-      result = calcInt();
-      intCachedValue = result;
+      result = computeInt()
+      intCachedValue = result
     }
-    return result.intValue();
+    return result
   }
 
-  private @NotNull Integer calcInt() {
+  private fun computeInt(): Int {
     try {
-      return Integer.valueOf(get(key, "0", true));
+      return get(key = key, defaultValue = "0", isValue = true)!!.toInt()
     }
-    catch (NumberFormatException e) {
-      return Integer.valueOf(registry.getBundleValue(key));
-    }
-  }
-
-  public boolean isMultiValue() {
-    return getSelectedOption() != null;
-  }
-
-  public String[] getOptions() {
-    return getOptions(registry.getBundleValue(key));
-  }
-
-  private static String[] getOptions(String value) {
-    if (value != null && value.startsWith("[") && value.endsWith("]")) {
-      return value.substring(1, value.length() - 1).split("\\|");
-    }
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
-  }
-
-  public @Nullable @NlsSafe String getSelectedOption() {
-    // [opt1|opt2|selectedOpt*|opt4]
-    String value = asString();
-    int length = value.length();
-    if (length < 3 || value.charAt(0) != '[' || value.charAt(length - 1) != ']') return null;
-    int pos = 1;
-    while (pos < length) {
-      int end = value.indexOf('|', pos);
-      if (end == -1) {
-        end = length - 1;
-      }
-      if (value.charAt(end - 1) == '*') {
-        return value.substring(pos, end - 1);
-      }
-      pos = end + 1;
-    }
-    return null;
-  }
-
-  public boolean isOptionEnabled(@NotNull String option) {
-    return Objects.equals(getSelectedOption(), option);
-  }
-
-  public void setSelectedOption(String selected) {
-    String[] options = getOptions();
-    for (int i = 0; i < options.length; i++) {
-      options[i] = Strings.trimEnd(options[i], "*");
-      if (options[i].equals(selected)) {
-        options[i] += "*";
-      }
-    }
-    setValue("[" + String.join("|", options) + "]");
-  }
-
-  public double asDouble() {
-    double result = doubleCachedValue;
-    if (Double.isNaN(result)) {
-      result = calcDouble();
-      doubleCachedValue = result;
-    }
-    return result;
-  }
-
-  private double calcDouble() {
-    try {
-      return Double.parseDouble(get(key, "0.0", true));
-    }
-    catch (NumberFormatException e) {
-      return Double.parseDouble(registry.getBundleValue(key));
+    catch (e: NumberFormatException) {
+      return registry.getBundleValue(key).toInt()
     }
   }
 
-  Color asColor(Color defaultValue) {
-    final String s = get(key, null, true);
-    if (s != null) {
-      Color color = ColorHexUtil.fromHex(s, null);
-      if (color != null && (key.endsWith(".color") || key.endsWith(".color.dark") || key.endsWith(".color.light"))) {
-        return color;
-      }
-      final String[] rgb = s.split(",");
-      if (rgb.length == 3) {
-        try {
-          return new Color(Integer.parseInt(rgb[0]), Integer.parseInt(rgb[1]), Integer.parseInt(rgb[2]));
+  val isMultiValue: Boolean
+    get() = selectedOption != null
+
+  val options: Array<String>
+    get() = getOptions(registry.getBundleValue(key))
+
+  var selectedOption: @NlsSafe String?
+    get() {
+      // [opt1|opt2|selectedOpt*|opt4]
+      val value = asString()
+      val length = value.length
+      if (length < 3 || value[0] != '[' || value[length - 1] != ']') return null
+      var pos = 1
+      while (pos < length) {
+        var end = value.indexOf('|', pos)
+        if (end == -1) {
+          end = length - 1
         }
-        catch (Exception ignored) {
+        if (value[end - 1] == '*') {
+          return value.substring(pos, end - 1)
+        }
+        pos = end + 1
+      }
+      return null
+    }
+    set(selected) {
+      val options = options
+      for (i in options.indices) {
+        options[i] = options[i].trimEnd('*')
+        if (options[i] == selected) {
+          options[i] += "*"
         }
       }
+      setValue("[" + options.joinToString(separator = "|") + "]")
     }
-    return defaultValue;
-  }
 
-  public @NotNull @NlsSafe String getDescription() {
-    if (keyDescriptor != null) {
-      return keyDescriptor.getDescription();
+  fun isOptionEnabled(option: String): Boolean = selectedOption == option
+
+  fun asDouble(): Double {
+    var result = doubleCachedValue
+    if (result.isNaN()) {
+      result = calcDouble()
+      doubleCachedValue = result
     }
-    return get(key + ".description", "", false);
+    return result
   }
 
-  boolean isRestartRequired() {
-    if (keyDescriptor != null) {
-      return keyDescriptor.isRestartRequired();
+  private fun calcDouble(): Double {
+    try {
+      return get(key, "0.0", true)!!.toDouble()
     }
-    return Boolean.parseBoolean(get(key + ".restartRequired", "false", false));
+    catch (e: NumberFormatException) {
+      return registry.getBundleValue(key).toDouble()
+    }
   }
 
-  public boolean isChangedFromDefault() {
-    return isChangedFromDefault(asString(), registry);
+  fun asColor(defaultValue: Color?): Color? {
+    val s = get(key, null, true) ?: return defaultValue
+    val color = ColorHexUtil.fromHex(s, null)
+    if (color != null && (key.endsWith(".color") || key.endsWith(".color.dark") || key.endsWith(".color.light"))) {
+      return color
+    }
+    val rgb = s.split(",".toRegex()).dropLastWhile { it.isEmpty() }.toTypedArray()
+    if (rgb.size == 3) {
+      try {
+        return Color(rgb[0].toInt(), rgb[1].toInt(), rgb[2].toInt())
+      }
+      catch (ignored: Exception) {
+      }
+    }
+    return defaultValue
   }
 
-  public @Nullable String getPluginId() {
-    return keyDescriptor != null ? keyDescriptor.getPluginId() : null;
+  open val description: @NlsSafe String
+    get() {
+      if (keyDescriptor != null) {
+        return keyDescriptor.description
+      }
+      return get("$key.description", "", false)!!
+    }
+
+  open val isRestartRequired: Boolean
+    get() {
+      if (keyDescriptor != null) {
+        return keyDescriptor.isRestartRequired
+      }
+      return get("$key.restartRequired", "false", false).toBoolean()
+    }
+
+  open val isChangedFromDefault: Boolean
+    get() = isChangedFromDefault(asString(), registry)
+
+  val pluginId: String?
+    get() = keyDescriptor?.pluginId
+
+  fun isChangedFromDefault(newValue: String, registry: Registry): Boolean {
+    return newValue != registry.getBundleValueOrNull(key)
   }
 
-  final boolean isChangedFromDefault(@NotNull String newValue, @NotNull Registry registry) {
-    return !newValue.equals(registry.getBundleValueOrNull(key));
-  }
-
-  protected String get(@NonNls @NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
+  @Throws(MissingResourceException::class)
+  open fun get(key: @NonNls String, defaultValue: String?, isValue: Boolean): String? {
     if (isValue) {
       if (stringCachedValue == null) {
-        stringCachedValue = _get(key, defaultValue, true);
+        stringCachedValue = _get(key = key, defaultValue = defaultValue, mustExistInBundle = true)
       }
-      return stringCachedValue;
+      return stringCachedValue
     }
-    return _get(key, defaultValue, false);
+    return _get(key = key, defaultValue = defaultValue, mustExistInBundle = false)
   }
 
-  private @Nullable String _get(@NonNls @NotNull String key, @Nullable String defaultValue, boolean mustExistInBundle) throws MissingResourceException {
-    String userValue = registry.getUserProperties().get(key);
-    if (userValue != null) {
-      return userValue;
+  @Suppress("FunctionName")
+  @Throws(MissingResourceException::class)
+  private fun _get(key: @NonNls String, defaultValue: String?, mustExistInBundle: Boolean): String? {
+    registry.getUserProperties().get(key)?.let {
+      return it
     }
 
-    String systemProperty = System.getProperty(key);
-    if (systemProperty != null) {
-      return systemProperty;
+    System.getProperty(key)?.let {
+      return it
     }
 
-    if (!registry.isLoaded()) {
-      String message = "Attempt to load key '" + key + "' for not yet loaded registry";
+    if (!registry.isLoaded) {
+      val message = "Attempt to load key '$key' for not yet loaded registry"
       // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
       if (Disposer.isDebugMode()) {
-        LOG.error(message + ". Use system properties instead of registry values to configure behaviour at early startup stages.");
+        LOG.error("$message. Use system properties instead of registry values to configure behaviour at early startup stages.")
       }
       else {
-        LOG.warn(message);
+        LOG.warn(message)
       }
     }
 
     if (mustExistInBundle) {
-      return registry.getBundleValue(key);
+      return registry.getBundleValue(key)
     }
     else {
-      String bundleValue = registry.getBundleValueOrNull(key);
-      return bundleValue == null ? defaultValue : bundleValue;
+      return registry.getBundleValueOrNull(key) ?: defaultValue
     }
   }
 
-  public void setValue(boolean value) {
-    setValue(Boolean.toString(value));
+  fun setValue(value: Boolean) {
+    setValue(value.toString())
   }
 
-  public void setValue(int value) {
-    setValue(Integer.toString(value));
+  fun setValue(value: Int) {
+    setValue(value.toString())
   }
 
-  public void setValue(String value) {
-    RegistryValueListener globalValueChangeListener = registry.getValueChangeListener();
-    globalValueChangeListener.beforeValueChanged(this);
-    for (RegistryValueListener each : listeners) {
-      each.beforeValueChanged(this);
+  open fun setValue(value: String) {
+    val globalValueChangeListener = registry.valueChangeListener
+    globalValueChangeListener.beforeValueChanged(this)
+    for (each in listeners) {
+      each.beforeValueChanged(this)
     }
-    resetCache();
-    registry.getUserProperties().put(key, value);
-    LOG.info("Registry value '" + key + "' has changed to '" + value + '\'');
+    resetCache()
+    registry.getUserProperties().put(key, value)
+    LOG.info("Registry value '$key' has changed to '$value'")
 
-    globalValueChangeListener.afterValueChanged(this);
-    for (RegistryValueListener each : listeners) {
-      each.afterValueChanged(this);
-    }
-
-    if (!isChangedFromDefault() && !isRestartRequired()) {
-      registry.getUserProperties().remove(key);
+    globalValueChangeListener.afterValueChanged(this)
+    for (each in listeners) {
+      each.afterValueChanged(this)
     }
 
-    myChangedSinceStart = true;
+    if (!isChangedFromDefault && !isRestartRequired) {
+      registry.getUserProperties().remove(key)
+    }
+
+    isChangedSinceAppStart = true
   }
 
-  public void setValue(boolean value, @NotNull Disposable parentDisposable) {
-    final boolean prev = asBoolean();
-    setValue(value);
-    Disposer.register(parentDisposable, () -> setValue(prev));
+  fun setValue(value: Boolean, parentDisposable: Disposable) {
+    val prev = asBoolean()
+    setValue(value)
+    Disposer.register(parentDisposable) { setValue(prev) }
   }
 
-  public void setValue(int value, @NotNull Disposable parentDisposable) {
-    final int prev = asInteger();
-    setValue(value);
-    Disposer.register(parentDisposable, () -> setValue(prev));
+  fun setValue(value: Int, parentDisposable: Disposable) {
+    val prev = asInteger()
+    setValue(value)
+    Disposer.register(parentDisposable) { setValue(prev) }
   }
 
-  public void setValue(String value, @NotNull Disposable parentDisposable) {
-    final String prev = asString();
-    setValue(value);
-    Disposer.register(parentDisposable, () -> setValue(prev));
+  fun setValue(value: String, parentDisposable: Disposable) {
+    val prev = asString()
+    setValue(value)
+    Disposer.register(parentDisposable) { setValue(prev) }
   }
 
-  public boolean isChangedSinceAppStart() {
-    return myChangedSinceStart;
-  }
-
-  public void resetToDefault() {
-    String value = registry.getBundleValueOrNull(key);
+  fun resetToDefault() {
+    val value = registry.getBundleValueOrNull(key)
     if (value == null) {
-      registry.getUserProperties().remove(key);
-    } else {
-      setValue(value);
+      registry.getUserProperties().remove(key)
+    }
+    else {
+      setValue(value)
     }
   }
 
-  public void addListener(@NotNull RegistryValueListener listener, @NotNull Disposable parent) {
-    listeners.add(listener);
-    Disposer.register(parent, () -> listeners.remove(listener));
+  fun addListener(listener: RegistryValueListener, parent: Disposable) {
+    listeners.add(listener)
+    Disposer.register(parent) { listeners.remove(listener) }
   }
 
-  public void addListener(@NotNull RegistryValueListener listener, @NotNull CoroutineScope coroutineScope) {
-    listeners.add(listener);
-    Objects.requireNonNull(coroutineScope.getCoroutineContext().get(Job.Key)).invokeOnCompletion(__ -> {
-      listeners.remove(listener);
-      return Unit.INSTANCE;
-    });
+  fun addListener(listener: RegistryValueListener, coroutineScope: CoroutineScope) {
+    listeners.add(listener)
+    coroutineScope.coroutineContext.get(Job)!!.invokeOnCompletion {
+      listeners.remove(listener)
+    }
   }
 
-  @Override
-  public String toString() {
-    return key + "=" + asString();
+  override fun toString(): String = "$key=${asString()}"
+
+  fun resetCache() {
+    stringCachedValue = null
+    intCachedValue = null
+    doubleCachedValue = Double.NaN
+    booleanCachedValue = null
   }
 
-  void resetCache() {
-    stringCachedValue = null;
-    intCachedValue = null;
-    doubleCachedValue = Double.NaN;
-    booleanCachedValue = null;
-  }
+  open val isBoolean: Boolean
+    get() = isBoolean(asString())
+}
 
-  public boolean isBoolean() {
-    return isBoolean(asString());
+private fun getOptions(value: String?): Array<String> {
+  if (value != null && value.startsWith('[') && value.endsWith(']')) {
+    return value.substring(1, value.length - 1).split("\\|").dropLastWhile { it.isEmpty() }.toTypedArray()
   }
+  return ArrayUtilRt.EMPTY_STRING_ARRAY
+}
 
-  private static boolean isBoolean(String s) {
-    return "true".equalsIgnoreCase(s) || "false".equalsIgnoreCase(s);
-  }
+private fun isBoolean(s: String): Boolean {
+  return "true".equals(s, ignoreCase = true) || "false".equals(s, ignoreCase = true)
 }

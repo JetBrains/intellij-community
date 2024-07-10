@@ -12,21 +12,16 @@ import java.util.MissingResourceException;
  * @author Konstantin Bulenkov
  */
 final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
-  private final ExperimentalFeature myFeature;
+  private final ExperimentalFeature feature;
 
   ExperimentalFeatureRegistryValueWrapper(@NotNull ExperimentalFeature feature) {
     super(Registry.getInstance(), feature.id, null);
-    myFeature = feature;
-  }
 
-  @NotNull
-  @Override
-  public String getKey() {
-    return myFeature.id;
+    this.feature = feature;
   }
 
   @Override
-  protected String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
+  public String get(@NotNull String key, String defaultValue, boolean isValue) throws MissingResourceException {
     return asString();
   }
 
@@ -38,17 +33,17 @@ final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
 
   @Override
   public boolean asBoolean() {
-    return Experiments.getInstance().isFeatureEnabled(myFeature.id);
+    return Experiments.getInstance().isFeatureEnabled(feature.id);
   }
 
   @Override
-  boolean isRestartRequired() {
-    return myFeature.requireRestart;
+  public boolean isRestartRequired() {
+    return feature.requireRestart;
   }
 
   @Override
   public boolean isChangedFromDefault() {
-    return Experiments.getInstance().isChanged(myFeature.id);
+    return Experiments.getInstance().isChanged(feature.id);
   }
 
   @Override
@@ -57,14 +52,14 @@ final class ExperimentalFeatureRegistryValueWrapper extends RegistryValue {
   }
 
   @Override
-  public void setValue(String value) {
+  public void setValue(@NotNull String value) {
     boolean enable = Boolean.parseBoolean(value);
-    Experiments.getInstance().setFeatureEnabled(myFeature.id, enable);
+    Experiments.getInstance().setFeatureEnabled(feature.id, enable);
   }
 
   @NotNull
   @Override
   public String getDescription() {
-    return StringUtil.notNullize(myFeature.description);
+    return StringUtil.notNullize(feature.description);
   }
 }

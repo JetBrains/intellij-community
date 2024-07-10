@@ -2447,7 +2447,9 @@ com.intellij.execution.runToolbar.ExecutorRunToolbarAction
 - a:getProcess():com.intellij.execution.runToolbar.RunToolbarProcess
 - getRightSideType():com.intellij.execution.runToolbar.RTBarAction$Type
 c:com.intellij.execution.runToolbar.FixWidthSegmentedActionToolbarComponent
-- com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedActionToolbarComponent
+- com.intellij.openapi.actionSystem.ActionToolbar
+- com.intellij.ui.switcher.QuickActionProvider
+- javax.swing.JPanel
 - <init>(java.lang.String,com.intellij.openapi.actionSystem.ActionGroup):V
 - addNotify():V
 - pf:getProject():com.intellij.openapi.project.Project

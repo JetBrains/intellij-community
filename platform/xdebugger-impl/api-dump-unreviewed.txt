@@ -1588,17 +1588,7 @@ c:com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager
 - mouseMoved(com.intellij.openapi.editor.event.EditorMouseEvent):V
 - showHint(com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler,com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.event.EditorMouseEvent,com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType):V
 - startListening():V
-*a:com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerPopupPanel
-- pf:myContent:com.intellij.util.ui.components.BorderLayoutPanel
-- pf:myMainPanel:com.intellij.util.ui.components.BorderLayoutPanel
-- p:myToolbar:com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
-- <init>():V
-- pf:setAutoResizeUntilToolbarNotFull(java.lang.Runnable,com.intellij.openapi.Disposable):V
-- pf:setContent(javax.swing.JComponent,com.intellij.openapi.actionSystem.DefaultActionGroup,java.lang.String,java.awt.Component):V
-- p:shouldBeVisible(com.intellij.openapi.actionSystem.AnAction):Z
-- ps:updatePopupBounds(java.awt.Window,I,I):V
 *c:com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTextPopup
-- com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerPopupPanel
 - sf:ACTION_PLACE:java.lang.String
 - pf:myEditor:com.intellij.openapi.editor.Editor
 - pf:myEvaluator:com.intellij.xdebugger.frame.XFullValueEvaluator
@@ -1618,7 +1608,6 @@ c:com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager
 - show(java.lang.String):com.intellij.openapi.ui.popup.JBPopup
 - p:showTreePopup(java.lang.Runnable):V
 *c:com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerTreePopup
-- com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerPopupPanel
 - sf:ACTION_PLACE:java.lang.String
 - pf:myEditor:com.intellij.openapi.editor.Editor
 - pf:myHideRunnable:java.lang.Runnable

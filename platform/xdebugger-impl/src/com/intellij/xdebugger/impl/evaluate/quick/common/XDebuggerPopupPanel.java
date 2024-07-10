@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.ide.DataManager;
@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Locale;
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 public abstract class XDebuggerPopupPanel {
   protected final @NotNull BorderLayoutPanel myContent = JBUI.Panels.simplePanel();
   protected final @NotNull BorderLayoutPanel myMainPanel = JBUI.Panels.simplePanel();

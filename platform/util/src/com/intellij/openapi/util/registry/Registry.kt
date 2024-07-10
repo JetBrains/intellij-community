@@ -121,7 +121,7 @@ class Registry {
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun getColor(key: @NonNls String, defaultValue: Color?): Color = get(key).asColor(defaultValue)
+    fun getColor(key: @NonNls String, defaultValue: Color?): Color? = get(key).asColor(defaultValue)
 
     @Throws(IOException::class)
     private fun loadFromBundledConfig(): Map<String, String>? {
@@ -168,9 +168,9 @@ class Registry {
 
     private fun fromState(state: Element): Map<String, String> {
       val map = LinkedHashMap<String, String>()
-      for (eachEntry in state.getChildren("entry")) {
-        val key = eachEntry.getAttributeValue("key") ?: continue
-        val value = eachEntry.getAttributeValue("value") ?: continue
+      for (entry in state.getChildren("entry")) {
+        val key = entry.getAttributeValue("key") ?: continue
+        val value = entry.getAttributeValue("value") ?: continue
         map.put(key, value)
       }
       return map
@@ -294,7 +294,7 @@ class Registry {
         for ((key, value) in map) {
           val registryValue = registry.doGet(key)
           if (registryValue.isChangedFromDefault(value, registry)) {
-            userProperties[key] = value
+            userProperties.put(key, value)
             registryValue.resetCache()
           }
         }

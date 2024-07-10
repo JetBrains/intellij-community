@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("UndesirableClassUsage", "LiftReturnOrAssignment")
 
 package com.intellij.ui.scale
@@ -28,10 +28,10 @@ import javax.swing.JComponent
 import kotlin.io.path.inputStream
 import kotlin.math.ceil
 
-object TestScaleHelper {
+internal object TestScaleHelper {
   private const val STANDALONE_PROP = "intellij.test.standalone"
   private val originalSysProps = HashMap<String, String?>()
-  private val originalRegProps = HashMap<String, String?>()
+  private val originalRegProps = HashMap<String, String>()
   private var originalUserScale = 0f
   private var originalSysScale = 0f
   private var originalJreHiDPIEnabled = false
@@ -57,15 +57,13 @@ object TestScaleHelper {
   @JvmStatic
   fun setRegistryProperty(key: String, value: String) {
     val prop = Registry.get(key)
-    if (originalRegProps[key] == null) originalRegProps[key] = prop.asString()
+    originalRegProps.putIfAbsent(key, prop.asString())
     prop.setValue(value)
   }
 
   @JvmStatic
   fun setSystemProperty(name: String, value: String?) {
-    if (originalSysProps[name] == null) {
-      originalSysProps[name] = System.getProperty(name)
-    }
+    originalSysProps.putIfAbsent(name, System.getProperty(name))
     SystemProperties.setProperty(name, value)
   }
 
@@ -161,11 +159,7 @@ object TestScaleHelper {
 }
 
 private class MyGraphicsConfiguration(scale: Double) : GraphicsConfiguration() {
-  private val tx: AffineTransform
-
-  init {
-    tx = AffineTransform.getScaleInstance(scale, scale)
-  }
+  private val tx = AffineTransform.getScaleInstance(scale, scale)
 
   override fun getDevice(): GraphicsDevice? = null
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
+@ApiStatus.Internal
 public final class FindPopupDirectoryChooser extends JPanel {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
