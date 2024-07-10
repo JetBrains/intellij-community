@@ -12,15 +12,14 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.convertToIfNotNullExpression
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.convertToIfStatement
 import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.introduceValueForCondition
-import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isPropertyParameter
 
 class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
@@ -119,39 +118,4 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
             ifStatement.introduceValueForCondition(ifStatement.then!!, editor)
         }
     }
-
-    private fun KtExpression.isPure(): Boolean {
-        val expr = safeDeparenthesize()
-        if (expr is KtSimpleNameExpression) {
-            val target = expr.mainReference.resolve()
-            return when {
-                target is KtProperty && (target.isLocal || target.initializer != null && !target.isVar) -> {
-                    true
-                }
-
-                target is KtParameter && !target.isPropertyParameter() -> {
-                    true
-                }
-
-                else -> false
-            }
-        }
-        return false
-    }
-
-    private fun KtExpression.convertToIfNotNullExpression(
-        conditionLhs: KtExpression,
-        thenClause: KtExpression,
-        elseClause: KtExpression?
-    ): KtIfExpression {
-        val condition = KtPsiFactory(project).createExpressionByPattern("$0 != null", conditionLhs)
-        return convertToIfStatement(condition, thenClause, elseClause)
-    }
-
-    private fun KtExpression.convertToIfStatement(
-        condition: KtExpression,
-        thenClause: KtExpression,
-        elseClause: KtExpression? = null
-    ): KtIfExpression =
-        runWriteAction { replaced(KtPsiFactory(project).createIf(condition, thenClause, elseClause)) }
 }

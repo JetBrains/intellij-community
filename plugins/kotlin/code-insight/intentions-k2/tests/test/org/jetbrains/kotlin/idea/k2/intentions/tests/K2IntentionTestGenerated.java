@@ -7653,6 +7653,175 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen")
+    public static class SafeAccessToIfThen extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/assignment.kt");
+        }
+
+        @TestMetadata("assignment2.kt")
+        public void testAssignment2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/assignment2.kt");
+        }
+
+        @TestMetadata("assignment3.kt")
+        public void testAssignment3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/assignment3.kt");
+        }
+
+        @TestMetadata("binaryExpressionLhs.kt")
+        public void testBinaryExpressionLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/binaryExpressionLhs.kt");
+        }
+
+        @TestMetadata("callExpression.kt")
+        public void testCallExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/callExpression.kt");
+        }
+
+        @TestMetadata("callExpressionParens.kt")
+        public void testCallExpressionParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/callExpressionParens.kt");
+        }
+
+        @TestMetadata("customGetterAsReceiver.kt")
+        public void testCustomGetterAsReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/customGetterAsReceiver.kt");
+        }
+
+        @TestMetadata("equality.kt")
+        public void testEquality() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/equality.kt");
+        }
+
+        @TestMetadata("let.kt")
+        public void testLet() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/let.kt");
+        }
+
+        @TestMetadata("let2.kt")
+        public void testLet2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/let2.kt");
+        }
+
+        @TestMetadata("let3.kt")
+        public void testLet3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/let3.kt");
+        }
+
+        @TestMetadata("letNotRedundant.kt")
+        public void testLetNotRedundant() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/letNotRedundant.kt");
+        }
+
+        @TestMetadata("letTopLevelVar.kt")
+        public void testLetTopLevelVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/letTopLevelVar.kt");
+        }
+
+        @TestMetadata("localValAsReceiver.kt")
+        public void testLocalValAsReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/localValAsReceiver.kt");
+        }
+
+        @TestMetadata("localValLhs.kt")
+        public void testLocalValLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/localValLhs.kt");
+        }
+
+        @TestMetadata("localVarLhs.kt")
+        public void testLocalVarLhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/localVarLhs.kt");
+        }
+
+        @TestMetadata("resultAssignedToLocalVal.kt")
+        public void testResultAssignedToLocalVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/resultAssignedToLocalVal.kt");
+        }
+
+        @TestMetadata("safeAccessAsFunctionArgument.kt")
+        public void testSafeAccessAsFunctionArgument() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/safeAccessAsFunctionArgument.kt");
+        }
+
+        @TestMetadata("simpleNameExpression.kt")
+        public void testSimpleNameExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/simpleNameExpression.kt");
+        }
+
+        @TestMetadata("simpleNameExpressionInParens.kt")
+        public void testSimpleNameExpressionInParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/simpleNameExpressionInParens.kt");
+        }
+
+        @TestMetadata("simplePropertyAsReceiver.kt")
+        public void testSimplePropertyAsReceiver() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/simplePropertyAsReceiver.kt");
+        }
+
+        @TestMetadata("simplePropertyAsReceiver2.kt")
+        public void testSimplePropertyAsReceiver2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/simplePropertyAsReceiver2.kt");
+        }
+
+        @TestMetadata("simplePropertyAsReceiver3.kt")
+        public void testSimplePropertyAsReceiver3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/simplePropertyAsReceiver3.kt");
+        }
+
+        @TestMetadata("topLevelVal.kt")
+        public void testTopLevelVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/topLevelVal.kt");
+        }
+
+        @TestMetadata("topLevelValCustomGetter.kt")
+        public void testTopLevelValCustomGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/topLevelValCustomGetter.kt");
+        }
+
+        @TestMetadata("topLevelVar.kt")
+        public void testTopLevelVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/topLevelVar.kt");
+        }
+
+        @TestMetadata("topLevelVarCustomGetter.kt")
+        public void testTopLevelVarCustomGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/topLevelVarCustomGetter.kt");
+        }
+
+        @TestMetadata("usedAsFunctionRhs.kt")
+        public void testUsedAsFunctionRhs() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/usedAsFunctionRhs.kt");
+        }
+
+        @TestMetadata("usedAsResultOfCheckedIf.kt")
+        public void testUsedAsResultOfCheckedIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/usedAsResultOfCheckedIf.kt");
+        }
+
+        @TestMetadata("usedAsReturnValue.kt")
+        public void testUsedAsReturnValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/usedAsReturnValue.kt");
+        }
+
+        @TestMetadata("usedInUncheckedIfExpression.kt")
+        public void testUsedInUncheckedIfExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/safeAccessToIfThen/usedInUncheckedIfExpression.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/branched/ifWhen/ifToWhen")
     public static class IfToWhen extends AbstractK2IntentionTest {
         @java.lang.Override

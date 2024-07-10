@@ -39,6 +39,13 @@
 
     <intentionAction>
       <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SafeAccessToIfThenIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
       <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddPropertyAccessorsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
