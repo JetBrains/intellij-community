@@ -25,15 +25,14 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.KotlinMppGradleProjectResolverExtension.Result.Skip
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils
 import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationImpl
-import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
-import org.jetbrains.kotlin.idea.gradleTooling.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.wasm.WasmTarget
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceDirectorySet
 import org.jetbrains.plugins.gradle.model.DefaultExternalSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalProject
@@ -319,6 +318,18 @@ private fun KotlinMppGradleProjectResolver.Context.createMppGradleSourceSetDataN
             if (compilation.platform == KotlinPlatform.WASM) {
                 compilation.wasmExtensions?.wasmTarget?.let { wasmTarget ->
                     compilationData.wasmTargets = setOf(wasmTarget)
+                } ?: let {
+                    // In Kotlin 2.0.0 there is already information in klibs about wasm target
+                    // But there is no such information in Kotlin Compilation
+                    // That's why there is necessary to provide the information to import in other way
+                    // Before 2.0.0 this information is not needed because all wasm targets are imported as wasmJs
+                    val kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion
+                    if (kotlinGradlePluginVersion != null && kotlinGradlePluginVersion >= "2.0.0")
+                    compilationData.wasmTargets = when (target.presetName) {
+                        "wasmJs" -> setOf(WasmTarget.JS.alias)
+                        "wasmWasi" -> setOf(WasmTarget.WASI.alias)
+                        else -> emptySet()
+                    }
                 }
             }
 
