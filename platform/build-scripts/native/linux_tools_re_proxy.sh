@@ -45,7 +45,7 @@ declare -r re_client="${top}/prebuilts/remoteexecution-client/latest"
     ${re_client}/rewrapper  --labels=type=tool --exec_strategy=remote \
     --cfg=$cfg \
     --inputs=. \
-    --output_files=dist/fsnotifier,dist/wslhash,dist/ttyfix,dist/wslproxy \
+    --output_files=dist/fsnotifier,dist/wslhash,dist/ttyfix,dist/wslproxy,dist/restarter \
     -- ./linux_tools.sh out dist $build_number
   )
 )

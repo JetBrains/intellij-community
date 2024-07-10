@@ -66,4 +66,21 @@ function verify_statically_linked() {
     chmod +x $dist_dir/ttyfix
 )
 
+# Build Restarter
+(
+  mkdir $out_dir/restarter && cd $out_dir/restarter
+  cp -r $top/tools/idea/native/restarter/. ./
+
+  export PATH="/home/builder/.cargo/bin:$PATH"
+  export CARGO_HOME=/home/builder/.cargo
+  export RUSTUP_HOME=/home/builder/.rustup
+
+  cargo build -v -v --release --target x86_64-unknown-linux-musl --offline --target-dir "$out_dir"
+
+  verify_statically_linked  "$out_dir/x86_64-unknown-linux-musl/release/restarter"
+
+  cp "$out_dir/x86_64-unknown-linux-musl/release/restarter" $dist_dir/.
+  chmod +x $dist_dir/restarter
+)
+
 echo "Done Building IntelliJ Linux Tools!"

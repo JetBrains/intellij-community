@@ -53,6 +53,15 @@ if errorlevel 1 (
 @echo "Building runnerw.exe"
 call %SCRIPT_DIR%build-win-runnerw.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
 if errorlevel 1 (
+@rem TODO b/342419219
+@rem restarter windows build is WIP
+@rem  set /A EXITCODE=EXITCODE+1
+)
+@echo native_win.cmd time: %time%
+
+@echo "Building restarter.exe"
+call %SCRIPT_DIR%build-win-restarter.cmd %OUTDIR% %DISTDIR% %BUILDNUMBER%
+if errorlevel 1 (
   set /A EXITCODE=EXITCODE+1
 )
 @echo native_win.cmd time: %time%

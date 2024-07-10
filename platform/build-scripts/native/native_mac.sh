@@ -44,6 +44,10 @@ declare exit_code=0
   ${script_dir}/build-mac-xplat-launcher.sh -o ${out_dir}/xplat-launcher -d ${dist_dir} || ((exit_code++))
 )
 
+(
+  echo "Building restarter..."
+  ${script_dir}/build-mac-restarter.sh -o ${out_dir}/restarter -d ${dist_dir} || ((exit_code++))
+)
 
 ls -lha $dist_dir
 
