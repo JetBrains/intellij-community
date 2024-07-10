@@ -1,1 +1,0 @@
-com/intellij/remoteServer/impl/configuration/deployment/RemoteServerComboWithAutoDetect$AutoDetectedItem
