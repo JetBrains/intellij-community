@@ -442,13 +442,28 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     writeVersion(parentElement);
   }
 
+
+  /**
+   * Appends {@code version} attribute to the {@code JavaCodeStyleSettings} tag in {@link CodeStyleScheme}
+   * It might create a tag with empty body, in cases when custom options have
+   * default value and this value is different from common options
+   * @param parentElement root element in {@link CodeStyleScheme} xml file.
+   * @see JavaCodeStyleSettings#areMigratedCustomOptionsHaveDefaultValueDifferentFromCommonOptions
+   */
   private void writeVersion(@NotNull Element parentElement) {
+    if (myVersion != CURRENT_VERSION) return;
     Element settingsTag = parentElement.getChild(getTagName());
-    if (settingsTag == null) {
+    if (settingsTag == null && areMigratedCustomOptionsHaveDefaultValueDifferentFromCommonOptions()) {
       parentElement.addContent(new Element(getTagName()));
       settingsTag = parentElement.getChild(getTagName());
     }
     CustomCodeStyleSettingsUtils.writeVersion(settingsTag, myVersion);
+  }
+
+  private boolean areMigratedCustomOptionsHaveDefaultValueDifferentFromCommonOptions() {
+    CommonCodeStyleSettings commonSettings = getCommonSettings();
+    JavaCodeStyleSettings defaultCustomSettings = getDefaultCustomSettings();
+    return BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS == defaultCustomSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS && commonSettings.BLANK_LINES_AROUND_FIELD != BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
   }
 
   public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
@@ -476,6 +491,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  private static JavaCodeStyleSettings getDefaultCustomSettings() {
+    return CodeStyleSettings.getDefaults().getCustomSettings(JavaCodeStyleSettings.class);
+  }
+
   private CommonCodeStyleSettings getCommonSettings() {
     return getContainer().getCommonSettings(JavaLanguage.INSTANCE);
   }
@@ -498,6 +517,25 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  /**
+   * {@link JavaCodeStyleSettings} supports migration.
+   * It happens consequently and works in the following way:
+   * <p>
+   *   Case 1: all {@link JavaCodeStyleSettings} options have a default value, e.g.
+   *   there is no tag, corresponding to the custom settings in the {@link CodeStyleScheme} or some
+   *   {@link JavaCodeStyleSettings} options have a non-default value, e. g.
+   *   there is a tag in the {@link CodeStyleScheme}, but no attribute {@code version} specified.
+   *   Then it is supposed, that all needed options should be
+   *   migrated (current migration version is 0).
+   * </p>
+   * <p>
+   *   Case 2: some {@link JavaCodeStyleSettings} options have a non-default value, e. g.
+   *   there is a tag in the {@link CodeStyleScheme}, and it has attribute {@code version}.
+   *   Then only later versions will be migrated.
+   * </p>
+   * @see JavaCodeStyleSettings#writeVersion(Element)
+   * @see JavaCodeStyleSettings#migrateSettingsToVersion1
+   */
   @Override
   protected void afterLoaded() {
     migrateNonVersionedSettings();
