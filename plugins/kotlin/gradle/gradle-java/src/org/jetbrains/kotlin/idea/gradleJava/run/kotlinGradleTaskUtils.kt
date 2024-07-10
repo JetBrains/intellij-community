@@ -28,7 +28,7 @@ fun isInGradleKotlinScript(psiElement: PsiElement): Boolean {
     return file.name.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
 }
 
-internal fun isTaskNameLineMarkerCandidate(element: PsiElement): Boolean {
+internal fun isRunTaskInGutterCandidate(element: PsiElement): Boolean {
     if (element !is LeafPsiElement) return false
     return isOpenQuoteOfStringArgumentInCall(element)
             || isIdentifierInPropertyWithDelegate(element)
@@ -102,9 +102,11 @@ private fun getReceiverClassFqName(functionCall: KaCallableMemberCall<*, *>): Fq
     return type?.symbol?.classId?.asSingleFqName()
 }
 
+private val taskContainerMethods = setOf("register", "create", "named", "registering", "creating")
+
 private fun isMethodOfTaskContainer(methodName: String, fqClassName: FqName) =
     fqClassName == FqName(GRADLE_API_TASK_CONTAINER)
-            && methodName in setOf("register", "create", "named", "registering", "creating")
+            && methodName in taskContainerMethods
 
 private fun isMethodOfProject(methodName: String, fqClassName: FqName) =
     (methodName == "task") && (fqClassName == FqName(GRADLE_API_PROJECT)
