@@ -224,6 +224,10 @@ abstract class JdkInstallerBase {
    * @see [JdkInstallRequest.javaHome] for the actual java home, it may not match the [JdkInstallRequest.installDir]
    */
   protected open fun installJdkImpl(request: JdkInstallRequest, indicator: ProgressIndicator?, project: Project?) {
+    if (Registry.`is`("jdk.installer.logs", false)) {
+      LOG.info("Downloading JDK: ", Exception("JDK Download stacktrace:"))
+    }
+
     val item = request.item
     indicator?.text = ProjectBundle.message("progress.text.installing.jdk.1", item.fullPresentationText)
 
