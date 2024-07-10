@@ -51,8 +51,8 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
 
   public void testSimple() throws Exception {
     if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
-    assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
-    assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
+    assertTrue(new File(myTempDirectory, FIRST_FILE_NAME).createNewFile());
+    assertTrue(new File(myTempDirectory, SECOND_FILE_NAME).createNewFile());
 
     String path = myTempDirectory.getCanonicalPath();
     myFixture.configureByText("a.sh", path + "/<caret>");
@@ -62,9 +62,9 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
   public void testFolderCompletion() throws Exception {
     if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     File folder = new File(myTempDirectory, FOLDER_NAME);
-    assert folder.mkdir();
-    assert new File(folder, FIRST_FILE_NAME).createNewFile();
-    assert new File(folder, SECOND_FILE_NAME).createNewFile();
+    assertTrue(folder.mkdir());
+    assertTrue(new File(folder, FIRST_FILE_NAME).createNewFile());
+    assertTrue(new File(folder, SECOND_FILE_NAME).createNewFile());
 
     String path = myTempDirectory.getCanonicalPath();
     myFixture.configureByText("a.sh", path + "/<caret>");
@@ -77,7 +77,7 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
   public void testFileNameEncoding() throws Exception {
     if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
     String folderName = " '\"#$=,[]!<>|;{}()*?^&`";
-    assert new File(myTempDirectory, folderName).mkdir();
+    assertTrue(new File(myTempDirectory, folderName).mkdir());
 
     String path = myTempDirectory.getCanonicalPath();
     myFixture.configureByText("a.sh", path + "/<caret>");
@@ -123,8 +123,8 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
 
   public void testCompletionWithPrefixMatch() throws IOException {
     if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
-    assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
-    assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
+    assertTrue(new File(myTempDirectory, FIRST_FILE_NAME).createNewFile());
+    assertTrue(new File(myTempDirectory, SECOND_FILE_NAME).createNewFile());
 
     String path = myTempDirectory.getCanonicalPath();
     myFixture.configureByText("a.sh", path + "/<caret>");
@@ -142,9 +142,9 @@ public class ShFileCompletionTest extends BasePlatformTestCase {
 
   public void testReplacement() throws Exception {
     if (SystemInfo.isWindows) return; // "Tests shouldn't run on Windows OS",
-    assert new File(myTempDirectory, FOLDER_NAME).mkdir();
-    assert new File(myTempDirectory, FIRST_FILE_NAME).createNewFile();
-    assert new File(myTempDirectory, SECOND_FILE_NAME).createNewFile();
+    assertTrue(new File(myTempDirectory, FOLDER_NAME).mkdir());
+    assertTrue(new File(myTempDirectory, FIRST_FILE_NAME).createNewFile());
+    assertTrue(new File(myTempDirectory, SECOND_FILE_NAME).createNewFile());
 
     String path = myTempDirectory.getCanonicalPath();
     myFixture.configureByText("a.sh", path + "/<caret>");

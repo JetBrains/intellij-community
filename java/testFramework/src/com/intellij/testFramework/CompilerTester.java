@@ -58,6 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.configurationStore.StoreUtilKt.getPersistentStateComponentStorageLocation;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public final class CompilerTester {
   private static final Logger LOG = Logger.getInstance(CompilerTester.class);
@@ -142,7 +143,7 @@ public final class CompilerTester {
   @Nullable
   public File findClassFile(String className, Module module) {
     VirtualFile out = ModuleRootManager.getInstance(module).getModuleExtension(CompilerModuleExtension.class).getCompilerOutputPath();
-    assert out != null;
+    assertNotNull(out);
     File cls = new File(out.getPath(), className.replace('.', '/') + ".class");
     return cls.exists() ? cls : null;
   }
@@ -151,7 +152,7 @@ public final class CompilerTester {
     WriteAction.runAndWait(() -> {
       file.setBinaryContent(file.contentsToByteArray(), -1, file.getTimeStamp() + 1);
       File ioFile = VfsUtilCore.virtualToIoFile(file);
-      assert ioFile.setLastModified(ioFile.lastModified() - 100000);
+      assertTrue(ioFile.setLastModified(ioFile.lastModified() - 100000));
       file.refresh(false, false);
     });
   }
@@ -197,11 +198,11 @@ public final class CompilerTester {
     CompilerTestUtil.saveApplicationSettings();
     CompilerTests.saveWorkspaceModelCaches(getProject());
     EdtTestUtil.runInEdtAndWait(() -> {
-      // for now directory based project is used for external storage
+      // for now, a directory-based project is used for external storage
       if (!ProjectKt.isDirectoryBased(myProject)) {
         for (Module module : myModules) {
           Path ioFile = module.getModuleNioFile();
-          assert Files.exists(ioFile) : "File does not exist: " + ioFile;
+          assertTrue("File does not exist: " + ioFile, Files.exists(ioFile));
         }
       }
 
