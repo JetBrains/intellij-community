@@ -15,7 +15,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
-public class EditRunConfigurationsAction extends DumbAwareAction {
+public final class EditRunConfigurationsAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
