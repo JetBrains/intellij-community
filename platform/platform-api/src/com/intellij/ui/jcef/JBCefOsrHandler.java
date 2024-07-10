@@ -1,13 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
-import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.Gray;
-import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.cef.JCefAppConfig;
@@ -20,10 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.AncestorEvent;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.VolatileImage;
@@ -42,10 +37,8 @@ import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
  * @see JBCefOsrComponent
  */
 class JBCefOsrHandler implements CefRenderHandler {
-  protected final @NotNull JComponent myComponent;
-  private final @NotNull Function<? super JComponent, ? extends Rectangle> myScreenBoundsProvider;
-  private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   protected final @NotNull JBCefOsrComponent.MyScale myScale = new JBCefOsrComponent.MyScale();
+  private final @NotNull AtomicReference<Point> myLocationOnScreenRef = new AtomicReference<>(new Point());
   private final @NotNull JBCefFpsMeter myFpsMeter = JBCefFpsMeter.register(
     RegistryManager.getInstance().get("ide.browser.jcef.osr.measureFPS.id").asString());
 
@@ -61,47 +54,41 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   private volatile @Nullable JBCefCaretListener myCaretListener;
 
-  JBCefOsrHandler(@NotNull JBCefOsrComponent component, @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
-    myComponent = component;
-    component.setRenderHandler(this);
-    myScreenBoundsProvider = ObjectUtils.notNull(screenBoundsProvider, JBCefOSRHandlerFactory.getInstance().createScreenBoundsProvider());
-
-    myComponent.addAncestorListener(new AncestorListenerAdapter() {
-      @Override
-      public void ancestorAdded(AncestorEvent event) {
-        // track got visible event
-        if (myComponent.isShowing()) updateLocation();
-      }
-    });
-
-    myComponent.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        updateLocation();
-      }
-    });
-    myFpsMeter.registerComponent(myComponent);
-  }
-
   @Override
   public Rectangle getViewRect(CefBrowser browser) {
+    Component component = browser.getUIComponent();
     double scale = myScale.getIdeBiased();
-    return new Rectangle(0, 0, CEIL.round(myComponent.getWidth() / scale), CEIL.round(myComponent.getHeight() / scale));
+    return new Rectangle(0, 0, CEIL.round(component.getWidth() / scale), CEIL.round(component.getHeight() / scale));
   }
 
   @Override
   public boolean getScreenInfo(CefBrowser browser, CefScreenInfo screenInfo) {
-    Rectangle rect = myScreenBoundsProvider.fun(myComponent);
+    Rectangle rect = getScreenBoundaries(browser.getUIComponent());
     screenInfo.Set(getDeviceScaleFactor(browser), 32, 4, false, rect, rect);
     return true;
+  }
+
+  private static Rectangle getScreenBoundaries(Component component) {
+    if (component != null && !GraphicsEnvironment.isHeadless()) {
+      try {
+        return component.isShowing() ?
+               component.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds() :
+               GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+      }
+      catch (Exception e) {
+        Logger.getInstance(JBCefOsrHandler.class).error(e);
+      }
+    }
+
+    return new Rectangle(0, 0, 0, 0);
   }
 
   @Override
   public Point getScreenPoint(CefBrowser browser, Point viewPoint) {
     Point pt = viewPoint.getLocation();
-    Point loc = getLocation();
+    Point loc = myLocationOnScreenRef.get();
     if (SystemInfoRt.isMac) {
-      Rectangle rect = myScreenBoundsProvider.fun(myComponent);
+      Rectangle rect = getScreenBoundaries(browser.getUIComponent());
       pt.setLocation(loc.x + pt.x, rect.height - loc.y - pt.y);
     }
     else {
@@ -112,7 +99,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public double getDeviceScaleFactor(CefBrowser browser) {
-    return JCefAppConfig.getDeviceScaleFactor(myComponent);
+    return JCefAppConfig.getDeviceScaleFactor(browser.getUIComponent());
   }
 
   @Override
@@ -154,11 +141,12 @@ class JBCefOsrHandler implements CefRenderHandler {
 
     myContentOutdated = true;
     SwingUtilities.invokeLater(() -> {
-      if (!myComponent.isShowing()) return;
-      JRootPane root = myComponent.getRootPane();
+      if (!browser.getUIComponent().isShowing()) return;
+      Component component = browser.getUIComponent();
+      JRootPane root = SwingUtilities.getRootPane(component);
       RepaintManager rm = RepaintManager.currentManager(root);
-      Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
-      Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
+      Rectangle dirtySrc = new Rectangle(0, 0, component.getWidth(), component.getHeight());
+      Rectangle dirtyDst = SwingUtilities.convertRectangle(component, dirtySrc, root);
       int dx = 1;
       // NOTE: should mark area outside browser (otherwise background component won't be repainted)
       rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);
@@ -174,7 +162,7 @@ class JBCefOsrHandler implements CefRenderHandler {
 
   @Override
   public boolean onCursorChange(CefBrowser browser, int cursorType) {
-    SwingUtilities.invokeLater(() -> myComponent.setCursor(new Cursor(cursorType)));
+    SwingUtilities.invokeLater(() -> browser.getUIComponent().setCursor(new Cursor(cursorType)));
     return true;
   }
 
@@ -204,7 +192,8 @@ class JBCefOsrHandler implements CefRenderHandler {
   }
 
   public void paint(Graphics2D g) {
-    if (!myComponent.isShowing()) {
+    JBHiDPIScaledImage image = myImage;
+    if (image == null) {
       return;
     }
 
@@ -214,16 +203,16 @@ class JBCefOsrHandler implements CefRenderHandler {
     do {
       boolean contentOutdated = myContentOutdated;
       myContentOutdated = false;
-      if (vi == null || vi.getWidth() != myComponent.getWidth() || vi.getHeight() != myComponent.getHeight()) {
-        vi = createVolatileImage();
+      if (vi == null || vi.getWidth() != image.getWidth() || vi.getHeight() != image.getHeight()) {
+        vi = createVolatileImage(g, image.getWidth(), image.getHeight());
       }
       else if (contentOutdated) {
         drawVolatileImage(vi);
       }
 
-      switch (vi.validate(myComponent.getGraphicsConfiguration())) {
+      switch (vi.validate(g.getDeviceConfiguration())) {
         case VolatileImage.IMAGE_RESTORED -> drawVolatileImage(vi);
-        case VolatileImage.IMAGE_INCOMPATIBLE -> vi = createVolatileImage();
+        case VolatileImage.IMAGE_INCOMPATIBLE -> vi = createVolatileImage(g, image.getWidth(), image.getHeight());
       }
 
       g.drawImage(vi, 0, 0, null);
@@ -239,13 +228,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     myScale.update(scale);
   }
 
-  private void updateLocation() {
-    // getLocationOnScreen() is an expensive op, so do not request it on every mouse move, but cache
-    myLocationOnScreenRef.set(myComponent.getLocationOnScreen());
-  }
-
-  private @NotNull Point getLocation() {
-    return myLocationOnScreenRef.get().getLocation();
+  public void setLocationOnScreen(Point location) {
+    myLocationOnScreenRef.set(location);
   }
 
   private static @NotNull Dimension getRealImageSize(JBHiDPIScaledImage image) {
@@ -287,7 +271,7 @@ class JBCefOsrHandler implements CefRenderHandler {
     try {
       g.setBackground(Gray.TRANSPARENT);
       g.setComposite(AlphaComposite.Src);
-      g.clearRect(0, 0, myComponent.getWidth(), myComponent.getHeight());
+      g.clearRect(0, 0, vi.getWidth(), vi.getHeight());
 
       // Draw volatile image from BufferedImage
       if (image != null) {
@@ -308,9 +292,8 @@ class JBCefOsrHandler implements CefRenderHandler {
     }
   }
 
-  private VolatileImage createVolatileImage() {
-    VolatileImage image = myComponent.getGraphicsConfiguration()
-      .createCompatibleVolatileImage(myComponent.getWidth(), myComponent.getHeight(), Transparency.TRANSLUCENT);
+  private VolatileImage createVolatileImage(Graphics2D g, int width, int height) {
+    VolatileImage image = g.getDeviceConfiguration().createCompatibleVolatileImage(width, height, Transparency.TRANSLUCENT);
     drawVolatileImage(image);
     return image;
   }

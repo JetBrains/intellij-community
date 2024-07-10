@@ -1,15 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
-import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
 import com.jetbrains.cef.SharedMemory;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefNativeRenderHandler;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -32,11 +29,6 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
   private SharedMemory.WithRaster myCurrentFrame;
   private volatile boolean myIsDisposed = false;
-
-  JBCefNativeOsrHandler(@NotNull JBCefOsrComponent component,
-                        @Nullable Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
-    super(component, screenBoundsProvider);
-  }
 
   @Override
   synchronized public void disposeNativeResources() {
@@ -93,11 +85,11 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
     // TODO: calculate outerRect
     myContentOutdated = true;
     SwingUtilities.invokeLater(() -> {
-      if (!myComponent.isShowing()) return;
-      JRootPane root = myComponent.getRootPane();
+      if (!browser.getUIComponent().isShowing()) return;
+      JRootPane root = SwingUtilities.getRootPane(browser.getUIComponent());
       RepaintManager rm = RepaintManager.currentManager(root);
-      Rectangle dirtySrc = new Rectangle(0, 0, myComponent.getWidth(), myComponent.getHeight());
-      Rectangle dirtyDst = SwingUtilities.convertRectangle(myComponent, dirtySrc, root);
+      Rectangle dirtySrc = new Rectangle(0, 0, browser.getUIComponent().getWidth(), browser.getUIComponent().getHeight());
+      Rectangle dirtyDst = SwingUtilities.convertRectangle(browser.getUIComponent(), dirtySrc, root);
       int dx = 1;
       // NOTE: should mark area outside browser (otherwise background component won't be repainted)
       rm.addDirtyRegion(root, dirtyDst.x - dx, dirtyDst.y - dx, dirtyDst.width + dx * 2, dirtyDst.height + dx * 2);

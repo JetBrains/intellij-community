@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scroll.TouchScrollUtil;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Point2D;
@@ -85,7 +87,29 @@ class JBCefOsrComponent extends JPanel {
 
   public void setRenderHandler(@NotNull JBCefOsrHandler renderHandler) {
     myRenderHandler = renderHandler;
+
     myRenderHandler.addCaretListener(myInputMethodAdapter);
+
+    addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorAdded(AncestorEvent event) { myRenderHandler.setLocationOnScreen(getLocationOnScreen()); }
+
+      @Override
+      public void ancestorMoved(AncestorEvent event) { myRenderHandler.setLocationOnScreen(getLocationOnScreen()); }
+    });
+
+    try {
+      myRenderHandler.setLocationOnScreen(getLocationOnScreen());
+    } catch (IllegalComponentStateException t) {
+      // The component isn't shown
+    }
+
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mousePressed(MouseEvent e) {
+        myRenderHandler.setLocationOnScreen(getLocationOnScreen());
+      }
+    });
   }
 
   @Override
