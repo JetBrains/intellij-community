@@ -15,6 +15,8 @@ import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager
@@ -50,7 +52,9 @@ fun canLinkAndRefreshGradleProject(projectFilePath: String, project: Project, sh
 fun linkAndRefreshGradleProject(projectFilePath: String, project: Project) {
   if (ApplicationManager.getApplication().isDispatchThread) {
     runWithModalProgressBlocking(project, GradleBundle.message("gradle.linking.project")) {
-      GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
+      withContext(Dispatchers.Default) {
+        GradleOpenProjectProvider().linkToExistingProjectAsync(projectFilePath, project)
+      }
     }
   }
   else {
