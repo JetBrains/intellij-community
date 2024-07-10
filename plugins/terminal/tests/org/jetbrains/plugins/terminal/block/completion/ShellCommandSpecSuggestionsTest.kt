@@ -223,13 +223,19 @@ internal class ShellCommandSpecSuggestionsTest {
         dynamicOptions { option("-b") }
         option("-c")
       }
+
+      subcommand("withMultipleSubcommandsCalls") {
+        subcommands { subcommand("sub1") }
+        subcommands { subcommand("sub2") }
+      }
     }
   }
 
   @Test
   fun `main command`() {
     assertSameElements(getSuggestions(emptyList()), listOf("sub", "excl", "reqSub", "manyArgs", "optPrecedeArgs", "variadic", "variadic2", "cdWithSuggestions", "cd",
-                                                           "withTwoOptArgs", "withDynamicOptions", "multipleDynamicOptionsCalls", "-a", "--asd", "--bcde", "--argum", "abc"))
+                                                           "withTwoOptArgs", "withDynamicOptions", "multipleDynamicOptionsCalls", "withMultipleSubcommandsCalls",
+                                                           "-a", "--asd", "--bcde", "--argum", "abc"))
   }
 
   @Test
@@ -365,6 +371,11 @@ internal class ShellCommandSpecSuggestionsTest {
   @Test
   fun `suggest dynamic options if they are defined in separate 'dynamicOptions' calls`() {
     assertSameElements(getSuggestions(listOf("multipleDynamicOptionsCalls")), listOf("-a", "-b", "-c", "--bcde"))
+  }
+
+  @Test
+  fun `suggest subcommands if they are defined in separate 'subcommands' calls`() {
+    assertSameElements(getSuggestions(listOf("withMultipleSubcommandsCalls")), listOf("sub1", "sub2", "--bcde"))
   }
 
   private fun getSuggestions(arguments: List<String>): List<String> = getSuggestions(arguments, "")
