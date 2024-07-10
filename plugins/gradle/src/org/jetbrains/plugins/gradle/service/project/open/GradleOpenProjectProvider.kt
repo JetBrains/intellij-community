@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.service.project.open
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.externalSystem.action.DetachExternalProjectAction.detachProject
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -19,6 +21,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_FILE_EXTENSIONS
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
@@ -55,6 +59,13 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
           ExternalSystemUtil.refreshProject(externalProjectPath, importSpec)
         }
       }
+    }
+  }
+
+  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    val projectData = ExternalSystemApiUtil.findProjectNode(project, systemId, externalProjectPath)?.data ?: return
+    withContext(Dispatchers.EDT) {
+      detachProject(project, projectData.owner, projectData, null)
     }
   }
 
