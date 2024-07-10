@@ -17200,6 +17200,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_nestedLiteralsNoUseInside.kt");
         }
 
+        @TestMetadata("applicable_overloadResolutionUnambiguity.kt")
+        public void testApplicable_overloadResolutionUnambiguity() throws Exception {
+            runTest("testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_overloadResolutionUnambiguity.kt");
+        }
+
+        @TestMetadata("applicable_overloadResolutionUnambiguity2.kt")
+        public void testApplicable_overloadResolutionUnambiguity2() throws Exception {
+            runTest("testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_overloadResolutionUnambiguity2.kt");
+        }
+
         @TestMetadata("applicable_qualifiedExpression.kt")
         public void testApplicable_qualifiedExpression() throws Exception {
             runTest("testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_qualifiedExpression.kt");

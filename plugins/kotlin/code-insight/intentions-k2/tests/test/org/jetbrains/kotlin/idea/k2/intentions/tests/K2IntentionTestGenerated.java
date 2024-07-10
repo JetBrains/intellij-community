@@ -7076,7 +7076,149 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt")
+    public static class ReplaceExplicitFunctionLiteralParamWithIt extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("applicable_InIf.kt")
+        public void testApplicable_InIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_InIf.kt");
+        }
+
+        @TestMetadata("applicable_InIfElse.kt")
+        public void testApplicable_InIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_InIfElse.kt");
+        }
+
+        @TestMetadata("applicable_cursofOverParamInInnerLiteral.kt")
+        public void testApplicable_cursofOverParamInInnerLiteral() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_cursofOverParamInInnerLiteral.kt");
+        }
+
+        @TestMetadata("applicable_cursorOverParameterDeclaration.kt")
+        public void testApplicable_cursorOverParameterDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_cursorOverParameterDeclaration.kt");
+        }
+
+        @TestMetadata("applicable_cursorOverParameterUse.kt")
+        public void testApplicable_cursorOverParameterUse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_cursorOverParameterUse.kt");
+        }
+
+        @TestMetadata("applicable_formatsProperly.kt")
+        public void testApplicable_formatsProperly() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_formatsProperly.kt");
+        }
+
+        @TestMetadata("applicable_inPropertyInitializer.kt")
+        public void testApplicable_inPropertyInitializer() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_inPropertyInitializer.kt");
+        }
+
+        @TestMetadata("applicable_inWhenEntry.kt")
+        public void testApplicable_inWhenEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_inWhenEntry.kt");
+        }
+
+        @TestMetadata("applicable_nestedLiteralsNoUseInside.kt")
+        public void testApplicable_nestedLiteralsNoUseInside() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_nestedLiteralsNoUseInside.kt");
+        }
+
+        @TestMetadata("applicable_overloadResolutionUnambiguity.kt")
+        public void testApplicable_overloadResolutionUnambiguity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_overloadResolutionUnambiguity.kt");
+        }
+
+        @TestMetadata("applicable_overloadResolutionUnambiguity2.kt")
+        public void testApplicable_overloadResolutionUnambiguity2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_overloadResolutionUnambiguity2.kt");
+        }
+
+        @TestMetadata("applicable_qualifiedExpression.kt")
+        public void testApplicable_qualifiedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/applicable_qualifiedExpression.kt");
+        }
+
+        @TestMetadata("notApplicable_InIf.kt")
+        public void testNotApplicable_InIf() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_InIf.kt");
+        }
+
+        @TestMetadata("notApplicable_InIfElse.kt")
+        public void testNotApplicable_InIfElse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_InIfElse.kt");
+        }
+
+        @TestMetadata("notApplicable_alreadyUsesImplicitIt.kt")
+        public void testNotApplicable_alreadyUsesImplicitIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_alreadyUsesImplicitIt.kt");
+        }
+
+        @TestMetadata("notApplicable_hasDestructuringDeclaration.kt")
+        public void testNotApplicable_hasDestructuringDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_hasDestructuringDeclaration.kt");
+        }
+
+        @TestMetadata("notApplicable_hasMultipleParameters.kt")
+        public void testNotApplicable_hasMultipleParameters() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_hasMultipleParameters.kt");
+        }
+
+        @TestMetadata("notApplicable_inWhenEntry.kt")
+        public void testNotApplicable_inWhenEntry() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_inWhenEntry.kt");
+        }
+
+        @TestMetadata("notApplicable_itFromOuterLambda.kt")
+        public void testNotApplicable_itFromOuterLambda() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_itFromOuterLambda.kt");
+        }
+
+        @TestMetadata("notApplicable_nestedLiterals.kt")
+        public void testNotApplicable_nestedLiterals() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_nestedLiterals.kt");
+        }
+
+        @TestMetadata("notApplicable_nestedLiteralsNoIt.kt")
+        public void testNotApplicable_nestedLiteralsNoIt() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_nestedLiteralsNoIt.kt");
+        }
+
+        @TestMetadata("notApplicable_notFunctionLiteralParameter.kt")
+        public void testNotApplicable_notFunctionLiteralParameter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_notFunctionLiteralParameter.kt");
+        }
+
+        @TestMetadata("notApplicable_overloadResolutionAmbiguity.kt")
+        public void testNotApplicable_overloadResolutionAmbiguity() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_overloadResolutionAmbiguity.kt");
+        }
+
+        @TestMetadata("notApplicable_overloadResolutionAmbiguity2.kt")
+        public void testNotApplicable_overloadResolutionAmbiguity2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_overloadResolutionAmbiguity2.kt");
+        }
+
+        @TestMetadata("notApplicable_parameterHasExplicitType.kt")
+        public void testNotApplicable_parameterHasExplicitType() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_parameterHasExplicitType.kt");
+        }
+
+        @TestMetadata("notApplicable_wrongPosition.kt")
+        public void testNotApplicable_wrongPosition() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceExplicitFunctionLiteralParamWithIt/notApplicable_wrongPosition.kt");
+        }
+    }
 
 
 
