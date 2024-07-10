@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -142,7 +142,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    Update update = new Update(myFile) {
+    ExternalAnnotatorManager.getInstance().queue(new Update(myFile) {
       @Override
       public void setRejected() {
         super.setRejected();
@@ -156,6 +156,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
         if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
           return;
         }
+
         // have to instantiate new indicator because the old one (progress) might have already been canceled
         DaemonProgressIndicator indicator = new DaemonProgressIndicator();
         BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
@@ -170,8 +171,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
           });
         }, indicator);
       }
-    };
-    ExternalAnnotatorManager.getInstance().queue(update);
+    });
   }
 
   @Override

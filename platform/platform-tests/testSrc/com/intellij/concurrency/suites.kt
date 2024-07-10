@@ -38,7 +38,6 @@ import org.junit.platform.suite.api.Suite
   // propagation
   ThreadContextPropagationTest::class,
   CancellationPropagationTest::class,
-  AlarmContextPropagationTest::class,
   MergingUpdateQueuePropagationTest::class,
   DocumentManagerPropagationTest::class,
   DumbServicePropagationTest::class,

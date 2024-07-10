@@ -4,10 +4,8 @@
 
 package com.intellij.util
 
-import com.intellij.codeWithMe.ClientId.Companion.getCurrentValue
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
-import com.intellij.concurrency.ContextAwareRunnable
-import com.intellij.concurrency.installThreadContext
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
@@ -15,15 +13,11 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.ChildContext
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.installOn
 import kotlinx.coroutines.*
@@ -205,12 +199,10 @@ open class Alarm @Internal constructor(
   }
 
   internal fun doAddRequest(request: Runnable, delayMillis: Long, modalityState: ModalityState?) {
-    val childContext = if (request !is ContextAwareRunnable && AppExecutorUtil.propagateContext()) createChildContext() else null
     val requestToSchedule = Request(
       task = request,
       modalityState = modalityState,
       delayMillis = delayMillis,
-      childContext = childContext,
     )
     synchronized(LOCK) {
       LOG.assertTrue(!isDisposed, "Already disposed")
@@ -335,37 +327,40 @@ open class Alarm @Internal constructor(
     @JvmField var task: Runnable?,
     private val modalityState: ModalityState?,
     private val delayMillis: Long,
-    private val childContext: ChildContext?,
   ) {
     @JvmField
     var job: Job? = null // guarded by LOCK
-    private val clientId = getCurrentValue()
+    private val clientId = ClientId.currentOrNull
 
     @Async.Execute
     private fun runSafely(task: Runnable) {
-      withClientId(clientId).use { _ ->
-        if (childContext == null) {
-          doRunSafely(task)
-        }
-        else {
-          childContext.runAsCoroutine(completeOnFinish = true) {
-            installThreadContext(coroutineContext = childContext.context, replace = true).use { _ ->
-              doRunSafely(task)
-            }
-          }
-        }
+      try {
+        task.run()
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
       }
     }
 
     fun schedule(owner: Alarm) {
       assert(job == null)
-      job = owner.taskCoroutineScope.launch(modalityState?.asContextElement() ?: EmptyCoroutineContext) {
+
+      job = owner.taskCoroutineScope.launch {
         delay(delayMillis)
         val task = synchronized(owner.LOCK) {
           task?.also { task = null }
         } ?: return@launch
 
-        blockingContext {
+        var context = modalityState?.asContextElement() ?: EmptyCoroutineContext
+        if (clientId != null) {
+          context += clientId.asContextElement()
+        }
+
+        // historically, it was non-cancellable
+        withContext(NonCancellable + context) {
           runSafely(task)
         }
       }.also {
@@ -389,7 +384,6 @@ open class Alarm @Internal constructor(
         job = null
       }
 
-      childContext?.job?.cancel(null)
       return task?.let {
         task = null
         it
@@ -437,14 +431,3 @@ private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?
   }
 }
 
-private fun doRunSafely(run: Runnable) {
-  try {
-    run.run()
-  }
-  catch (e: CancellationException) {
-    throw e
-  }
-  catch (e: Throwable) {
-    LOG.error(e)
-  }
-}
