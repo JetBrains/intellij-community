@@ -20,7 +20,7 @@ internal object InitialScanningSkipReporter {
 
   private val sourceOfScanningField = EventFields.Enum("source", SourceOfScanning::class.java)
 
-  private val initialScanningSkipped = GROUP.registerEvent("initial_scanning_skipped", sourceOfScanningField)
+  private val initialScanningSkipped = GROUP.registerEvent("initial.scanning.skipped", sourceOfScanningField)
 
   internal enum class FullScanningReason(fieldName: String) {
     CodeCallerForbadeSkipping("code_caller_forbade_skipping"),
@@ -53,7 +53,7 @@ internal object InitialScanningSkipReporter {
     fields.add(notSeenIdsBasedFullScanningDecisionField)
     fields.add(sourceOfScanningField)
     fields.add(registeredIndexesWereCorruptedField)
-    initialScanningScheduled = GROUP.registerVarargEvent("initial_scanning_scheduled", *fields.toTypedArray())
+    initialScanningScheduled = GROUP.registerVarargEvent("initial.scanning.scheduled", *fields.toTypedArray())
   }
 
   fun reportInitialScanningSkipped(
