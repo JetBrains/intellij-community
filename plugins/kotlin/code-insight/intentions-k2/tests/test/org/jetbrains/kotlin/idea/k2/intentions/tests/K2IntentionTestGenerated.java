@@ -8095,6 +8095,75 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/when/eliminateSubject")
+    public static class EliminateSubject extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("lineBreaksAndComments.kt")
+        public void testLineBreaksAndComments() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/lineBreaksAndComments.kt");
+        }
+
+        @TestMetadata("whenWithEqualityTests.kt")
+        public void testWhenWithEqualityTests() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithEqualityTests.kt");
+        }
+
+        @TestMetadata("whenWithMultipleConditionTypes.kt")
+        public void testWhenWithMultipleConditionTypes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithMultipleConditionTypes.kt");
+        }
+
+        @TestMetadata("whenWithNegativePatterns.kt")
+        public void testWhenWithNegativePatterns() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithNegativePatterns.kt");
+        }
+
+        @TestMetadata("whenWithNegativeRangeTests.kt")
+        public void testWhenWithNegativeRangeTests() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithNegativeRangeTests.kt");
+        }
+
+        @TestMetadata("whenWithPatterns.kt")
+        public void testWhenWithPatterns() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithPatterns.kt");
+        }
+
+        @TestMetadata("whenWithRangeTests.kt")
+        public void testWhenWithRangeTests() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithRangeTests.kt");
+        }
+
+        @TestMetadata("whenWithRangeTestsAndMultiConditions.kt")
+        public void testWhenWithRangeTestsAndMultiConditions() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithRangeTestsAndMultiConditions.kt");
+        }
+
+        @TestMetadata("whenWithoutSubject.kt")
+        public void testWhenWithoutSubject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/whenWithoutSubject.kt");
+        }
+
+        @TestMetadata("withoutElse.kt")
+        public void testWithoutElse() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/withoutElse.kt");
+        }
+
+        @TestMetadata("withoutElseUsedAsExpression.kt")
+        public void testWithoutElseUsedAsExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/when/eliminateSubject/withoutElseUsedAsExpression.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/introduceVariable")
     public static class IntroduceVariable extends AbstractK2IntentionTest {
         @java.lang.Override
