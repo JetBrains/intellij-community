@@ -102,7 +102,7 @@ public class GitPushTarget implements PushTarget {
     List<String> specs = remote.getPushRefSpecs();
     if (specs.isEmpty()) return null;
 
-    String targetRef = GitPushSpecParser.getTargetRef(repository, sourceBranch.getName(), specs);
+    String targetRef = GitPushSpecParser.getTargetRef(repository, sourceBranch, specs);
     if (targetRef == null) return null;
 
     String remotePrefix = REFS_REMOTES_PREFIX + remote.getName() + "/";
