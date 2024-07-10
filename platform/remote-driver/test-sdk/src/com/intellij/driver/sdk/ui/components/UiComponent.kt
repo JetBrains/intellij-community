@@ -81,7 +81,7 @@ open class UiComponent(private val data: ComponentData) : Finder, WithKeyboard {
   }
 
   override fun toString(): String {
-    return this::class.simpleName + " xpath ${data.xpath}"
+    return this::class.simpleName + "[xpath=${data.xpath}]"
   }
 
   private var cachedComponent: Component? = null
