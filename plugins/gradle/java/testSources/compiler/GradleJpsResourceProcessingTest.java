@@ -345,12 +345,12 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertSources("project.integrationTest", path("src/integrationTest/java"));
+    assertResources("project.integrationTest", path("src/integrationTest/resources"));
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -391,12 +391,12 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertSources("project.integrationTest", path("src/integrationTest/java"));
+    assertResources("project.integrationTest", path("src/integrationTest/resources"));
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -439,12 +439,12 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertSources("project.integrationTest", "java");
-    assertResources("project.integrationTest", "resources");
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertSources("project.integrationTest", path("src/integrationTest/java"));
+    assertResources("project.integrationTest", path("src/integrationTest/resources"));
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
@@ -485,12 +485,13 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
         }"""
     );
     assertModules("project", "project.main", "project.test", "project.integrationTest");
-    assertSources("project.main", "java");
-    assertResources("project.main", "resources");
-    assertTestSources("project.test", "java");
-    assertTestResources("project.test", "resources");
-    assertTestSources("project.integrationTest", "java");
-    assertTestResources("project.integrationTest", "resources");
+
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertTestSources("project.integrationTest", path("src/integrationTest/java"));
+    assertTestResources("project.integrationTest", path("src/integrationTest/resources"));
 
     compileModules("project.main", "project.test", "project.integrationTest");
 
