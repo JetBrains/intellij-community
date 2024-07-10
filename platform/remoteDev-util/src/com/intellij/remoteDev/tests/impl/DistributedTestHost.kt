@@ -283,7 +283,13 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               LOG.error("Unexpected modality: " + ModalityState.current())
             }
             LaterInvocator.forceLeaveAllModals()
-            IdeEventQueue.getInstance().flushQueue()
+            repeat(10) {
+              if (ModalityState.current() == ModalityState.nonModal()) {
+                return@withContext
+              }
+              delay(1.seconds)
+            }
+            LOG.error("Failed to close modal dialog: " + ModalityState.current())
           }
         }
 
