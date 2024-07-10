@@ -8,7 +8,8 @@ import com.intellij.ide.RemoteDesktopService;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -31,7 +32,10 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -332,7 +336,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     });
   }
 
-  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, DataProvider {
+  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, UiDataProvider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
@@ -576,12 +580,9 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
 
     @Override
-    public Object getData(final @NotNull @NonNls String dataId) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
       DialogWrapper wrapper = myDialogWrapper.get();
-      if (wrapper instanceof DataProvider) {
-        return ((DataProvider)wrapper).getData(dataId);
-      }
-      return null;
+      DataSink.uiDataSnapshot(sink, wrapper);
     }
 
     @Override

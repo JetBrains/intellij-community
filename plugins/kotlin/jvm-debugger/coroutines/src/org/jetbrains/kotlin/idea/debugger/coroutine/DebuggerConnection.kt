@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.ui.RunnerLayoutUi
 import com.intellij.execution.ui.layout.PlaceInGrid
-import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -28,7 +27,6 @@ import com.intellij.xdebugger.XDebuggerManagerListener
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.coroutine.view.CoroutineView
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class DebuggerConnection(
     val project: Project,
@@ -76,10 +74,10 @@ class DebuggerConnection(
     }
 
     private fun coroutinePanelIsRegistered(session: XDebugSession): Boolean {
-        val ui = session.ui.safeAs<RunnerLayoutUiImpl>() ?: return false
-        val runnerContentUi = RunnerContentUi.KEY.getData(ui) ?: return false
+        val ui = session.ui as? RunnerLayoutUiImpl ?: return false
+        val contentUi = ui.contentUI
         val content = invokeAndWaitIfNeeded {
-            runnerContentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
+            contentUi.findContent(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
         }
         return content != null
     }

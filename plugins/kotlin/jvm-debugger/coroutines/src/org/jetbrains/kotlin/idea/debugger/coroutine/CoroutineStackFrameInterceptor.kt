@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.execution.ui.layout.impl.RunnerContentUi
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
@@ -71,10 +69,10 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     }
 
     private fun showCoroutinePanel(debugProcess: DebugProcessImpl) {
-        val ui = debugProcess.session.xDebugSession?.ui.safeAs<RunnerLayoutUiImpl>() ?: return
-        val runnerContentUi = RunnerContentUi.KEY.getData(ui) ?: return
+        val ui = debugProcess.session.xDebugSession?.ui as? RunnerLayoutUiImpl ?: return
+        val contentUi = ui.contentUI
         runInEdt {
-            runnerContentUi.findOrRestoreContentIfNeeded(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
+            contentUi.findOrRestoreContentIfNeeded(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
         }
     }
 

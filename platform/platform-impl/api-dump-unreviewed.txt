@@ -16499,7 +16499,7 @@ f:com.intellij.openapi.options.newEditor.PreferenceButton
 - getMinimumSize():java.awt.Dimension
 c:com.intellij.openapi.options.newEditor.SettingsDialog
 - com.intellij.openapi.ui.DialogWrapper
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:DIMENSION_KEY:java.lang.String
 - <init>(com.intellij.openapi.project.Project,java.awt.Component,java.util.List,com.intellij.openapi.options.Configurable,java.lang.String):V
 - <init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.options.Configurable,Z,Z):V
@@ -16511,7 +16511,6 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - p:createSouthAdditionalPanel():javax.swing.JPanel
 - doCancelAction(java.awt.AWTEvent):V
 - doOKAction():V
-- getData(java.lang.String):java.lang.Object
 - p:getDimensionServiceKey():java.lang.String
 - pf:getEditor():com.intellij.openapi.options.newEditor.AbstractEditor
 - p:getHelpId():java.lang.String
@@ -16520,6 +16519,7 @@ c:com.intellij.openapi.options.newEditor.SettingsDialog
 - p:setHelpTooltip(javax.swing.JButton):V
 - p:treeViewFactory(com.intellij.openapi.options.newEditor.SettingsFilter,java.util.List):com.intellij.openapi.options.newEditor.SettingsTreeView
 - p:tryAddOptionsListener(com.intellij.openapi.options.newEditor.OptionsEditorColleague):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.openapi.options.newEditor.SettingsDialogFactory
 - sf:Companion:com.intellij.openapi.options.newEditor.SettingsDialogFactory$Companion
 - <init>():V
@@ -23812,7 +23812,7 @@ f:com.intellij.ui.FilteringTree$SearchTreeModel
 a:com.intellij.ui.FinderRecursivePanel
 - com.intellij.ui.OnePixelSplitter
 - com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.util.UserDataHolder
 - p:myList:com.intellij.ui.components.JBList
 - pf:myListModel:com.intellij.ui.CollectionListModel
@@ -23829,7 +23829,6 @@ a:com.intellij.ui.FinderRecursivePanel
 - doLayout():V
 - p:getContainingFile(java.lang.Object):com.intellij.openapi.vfs.VirtualFile
 - p:getCustomListActions():com.intellij.openapi.actionSystem.AnAction[]
-- getData(java.lang.String):java.lang.Object
 - p:getFirstComponentPreferredSize():I
 - p:getGroupId():java.lang.String
 - p:getItemIcon(java.lang.Object):javax.swing.Icon
@@ -23854,6 +23853,7 @@ a:com.intellij.ui.FinderRecursivePanel
 - putUserData(com.intellij.openapi.util.Key,java.lang.Object):V
 - p:setMergeListItemsRunning(Z):V
 - p:setNonBlockingLoad(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - updatePanel():V
 - updateRightComponent(Z):V
 pf:com.intellij.ui.FinderRecursivePanel$DisposablePanel
@@ -24800,13 +24800,13 @@ c:com.intellij.ui.TabbedPaneWrapper$AsJTabbedPane
 - <init>(I):V
 f:com.intellij.ui.TabbedPaneWrapper$TabWrapper
 - javax.swing.JPanel
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - dispose():V
 - getComponent():javax.swing.JComponent
-- getData(java.lang.String):java.lang.Object
 - requestDefaultFocus():Z
 - requestFocus():V
 - requestFocusInWindow():Z
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.ui.TabbedPaneWrapper$TabbedPaneHolder
 - javax.swing.JPanel
 - p:<init>(com.intellij.ui.TabbedPaneWrapper):V
@@ -26302,6 +26302,7 @@ c:com.intellij.ui.content.impl.ContentManagerImpl
 - getContent(I):com.intellij.ui.content.Content
 - getContent(javax.swing.JComponent):com.intellij.ui.content.Content
 - getContentCount():I
+- s:getContentManager(java.awt.Component):com.intellij.ui.content.ContentManager
 - getContents():com.intellij.ui.content.Content[]
 - getContentsRecursively():java.util.List
 - getFactory():com.intellij.ui.content.ContentFactory

@@ -319,18 +319,19 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     tabs.addTabMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(@NotNull MouseEvent e) {
-        if (UIUtil.isCloseClick(e)) {
-          final TabInfo tabInfo = tabs.findInfo(e);
-          final GridImpl grid = tabInfo == null ? null : getGridFor(tabInfo);
-          final Content[] contents = grid != null ? CONTENT_KEY.getData(grid) : null;
-          if (contents == null) return;
-          // see GridCellImpl.closeOrMinimize as well
-          if (CloseViewAction.isEnabled(contents)) {
-            CloseViewAction.perform(RunnerContentUi.this, contents[0]);
-          }
-          else if (MinimizeViewAction.isEnabled(RunnerContentUi.this, contents, TAB_TOOLBAR_PLACE)) {
-            grid.getCellFor(contents[0]).minimize(contents[0]);
-          }
+        if (!UIUtil.isCloseClick(e) || !e.isConsumed()) {
+          return;
+        }
+        TabInfo tabInfo = tabs.findInfo(e);
+        GridImpl grid = tabInfo == null ? null : getGridFor(tabInfo);
+        Content[] contents = grid != null ? grid.getContents().toArray(new Content[0]) : null;
+        if (contents == null) return;
+        // see GridCellImpl.closeOrMinimize as well
+        if (CloseViewAction.isEnabled(contents)) {
+          CloseViewAction.perform(RunnerContentUi.this, contents[0]);
+        }
+        else if (MinimizeViewAction.isEnabled(RunnerContentUi.this, contents, TAB_TOOLBAR_PLACE)) {
+          grid.getCellFor(contents[0]).minimize(contents[0]);
         }
       }
     });
@@ -1652,7 +1653,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
   }
 
-  private final class MyComponent extends NonOpaquePanel implements DataProvider, QuickActionProvider {
+  private final class MyComponent extends NonOpaquePanel implements UiDataProvider, QuickActionProvider {
     private boolean myWasEverAdded;
 
     MyComponent() {
@@ -1673,27 +1674,21 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     }
 
     @Override
-    public @Nullable Object getData(@NotNull @NonNls String dataId) {
-      if (KEY.is(dataId)) {
-        return RunnerContentUi.this;
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(KEY, RunnerContentUi.this);
 
-      if (CloseAction.CloseTarget.KEY.is(dataId)) {
-        Content content = getContentManager().getSelectedContent();
-        if (content != null && content.isCloseable()) {
-          ContentManager contentManager = Objects.requireNonNull(content.getManager());
-          if (contentManager.canCloseContents()) {
-            return (CloseAction.CloseTarget)() -> contentManager.removeContent(content, true, true, true);
-          }
+      Content content = getContentManager().getSelectedContent();
+      if (content != null && content.isCloseable()) {
+        ContentManager contentManager = Objects.requireNonNull(content.getManager());
+        if (contentManager.canCloseContents()) {
+          sink.set(CloseAction.CloseTarget.KEY,
+                   () -> contentManager.removeContent(content, true, true, true));
         }
       }
 
       ContentManager originalContentManager = myOriginal == null ? null : myOriginal.getContentManager();
       JComponent originalContentComponent = originalContentManager == null ? null : originalContentManager.getComponent();
-      if (originalContentComponent instanceof DataProvider) {
-        return ((DataProvider)originalContentComponent).getData(dataId);
-      }
-      return null;
+      DataSink.uiDataSnapshot(sink, originalContentComponent);
     }
 
     @Override

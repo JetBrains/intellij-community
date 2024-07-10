@@ -6,7 +6,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -35,7 +36,10 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -48,7 +52,7 @@ import java.util.List;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class SettingsEditor extends AbstractEditor implements DataProvider, Place.Navigator {
+public final class SettingsEditor extends AbstractEditor implements UiDataProvider, Place.Navigator {
   private static final String SELECTED_CONFIGURABLE = "settings.editor.selected.configurable";
   private static final String SPLITTER_PROPORTION = "settings.editor.splitter.proportion";
   private static final float SPLITTER_PROPORTION_DEFAULT_VALUE = .2f;
@@ -388,11 +392,10 @@ public final class SettingsEditor extends AbstractEditor implements DataProvider
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    return History.KEY.is(dataId) ? myHistory :
-           Settings.KEY.is(dataId) ? mySettings :
-           SearchTextField.KEY.is(dataId) ? mySearch :
-           null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(History.KEY, myHistory);
+    sink.set(Settings.KEY, mySettings);
+    sink.set(SearchTextField.KEY, mySearch);
   }
 
   @Override

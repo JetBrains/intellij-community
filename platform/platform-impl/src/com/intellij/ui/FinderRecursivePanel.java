@@ -53,7 +53,9 @@ import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgro
 /**
  * @param <T> List item type. Must implement {@code equals()/hashCode()} correctly.
  */
-public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implements DataProvider, UserDataHolder, Disposable {
+public abstract class FinderRecursivePanel<T> extends OnePixelSplitter
+  implements UiCompatibleDataProvider, UserDataHolder, Disposable {
+
   private static final Logger LOG = Logger.getInstance(FinderRecursivePanel.class);
 
   private final @NotNull Project myProject;
@@ -380,33 +382,23 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
     Object selectedValue = getSelectedValue();
-    if (selectedValue == null) return null;
+    if (selectedValue == null) return;
 
-    if (PlatformCoreDataKeys.MODULE.is(dataId) && selectedValue instanceof Module) {
-      return selectedValue;
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+    if (selectedValue instanceof Module o) {
+      sink.set(PlatformCoreDataKeys.MODULE, o);
     }
-    if (selectedValue instanceof DataProvider && (!(selectedValue instanceof ValidateableNode) || ((ValidateableNode)selectedValue).isValid())) {
-      return ((DataProvider)selectedValue).getData(dataId);
+    if (!(selectedValue instanceof ValidateableNode o) || o.isValid()) {
+      DataSink.uiDataSnapshot(sink, selectedValue);
     }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyProvider;
+    if (selectedValue instanceof PsiElement o) {
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> o);
     }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId, selectedValue);
+    if (selectedValue instanceof Navigatable o) {
+      sink.lazy(CommonDataKeys.NAVIGATABLE, () -> o);
     }
-    return null;
-  }
-
-  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Object selectedValue) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId) && selectedValue instanceof PsiElement) {
-      return selectedValue;
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId) && selectedValue instanceof Navigatable) {
-      return selectedValue;
-    }
-    return null;
   }
 
   @Override

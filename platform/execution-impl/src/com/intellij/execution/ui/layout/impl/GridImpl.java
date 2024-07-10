@@ -3,7 +3,8 @@ package com.intellij.execution.ui.layout.impl;
 
 import com.intellij.execution.ui.layout.*;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.ui.NullableComponent;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
@@ -14,7 +15,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.*;
 
 @ApiStatus.Internal
-public final class GridImpl extends Wrapper implements Grid, Disposable, DataProvider {
+public final class GridImpl extends Wrapper implements Grid, Disposable, UiDataProvider {
   private final ThreeComponentsSplitter myTopSplit = new ThreeComponentsSplitter(false, true);
   private final Splitter mySplitter = new Splitter(true);
 
@@ -37,7 +37,7 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
 
   private final ViewContextEx myViewContext;
 
-  public GridImpl(ViewContextEx viewContext, String sessionName) {
+  public GridImpl(@NotNull ViewContextEx viewContext, String sessionName) {
     myViewContext = viewContext;
 
     Disposer.register(myViewContext, this);
@@ -369,12 +369,12 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
     myTopSplit.setLastSize((int)(proportion * (float)(componentSize - 2 * myTopSplit.getDividerWidth())));
   }
 
-  public List<Content> getAttachedContents() {
-    return new ArrayList<>(getContents());
+  public @NotNull ViewContextEx getViewContext() {
+    return myViewContext;
   }
 
   @Override
-  public List<Content> getContents() {
+  public @NotNull List<Content> getContents() {
     return myContents;
   }
 
@@ -388,14 +388,8 @@ public final class GridImpl extends Wrapper implements Grid, Disposable, DataPro
   }
 
   @Override
-  public @Nullable Object getData(final @NotNull @NonNls String dataId) {
-    if (ViewContext.CONTEXT_KEY.is(dataId)) {
-      return myViewContext;
-    }
-    else if (ViewContext.CONTENT_KEY.is(dataId)) {
-      List<Content> contents = getContents();
-      return contents.toArray(new Content[0]);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ViewContext.CONTEXT_KEY, myViewContext);
+    sink.set(ViewContext.CONTENT_KEY, myContents.toArray(new Content[0]));
   }
 }

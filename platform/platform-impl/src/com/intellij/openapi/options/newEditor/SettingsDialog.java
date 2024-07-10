@@ -7,8 +7,9 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.plugins.newui.EventHandler;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -36,7 +37,7 @@ import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
-public class SettingsDialog extends DialogWrapper implements DataProvider {
+public class SettingsDialog extends DialogWrapper implements UiCompatibleDataProvider {
   public static final String DIMENSION_KEY = "SettingsEditor";
 
   private final String myDimensionServiceKey;
@@ -130,11 +131,8 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (myEditor instanceof DataProvider provider) {
-      return provider.getData(dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, myEditor);
   }
 
   @Override

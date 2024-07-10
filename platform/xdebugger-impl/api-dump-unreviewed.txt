@@ -2453,7 +2453,6 @@ c:com.intellij.xdebugger.impl.ui.XDebugSessionTab
 - p:createWatchesContent(com.intellij.xdebugger.impl.XDebugSessionImpl,com.intellij.xdebugger.impl.frame.XWatchesViewImpl):com.intellij.ui.content.Content
 - detachFromSession():V
 - findOrRestoreContentIfNeeded(java.lang.String):com.intellij.ui.content.Content
-- getData(java.lang.String):java.lang.Object
 - p:getFramesContentId():java.lang.String
 - getRunContentDescriptor():com.intellij.execution.ui.RunContentDescriptor
 - getUi():com.intellij.execution.ui.RunnerLayoutUi

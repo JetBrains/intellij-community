@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +32,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArraySet;
 
-public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel implements ConsoleView,
-                                                                                                       ObservableConsoleView,
-                                                                                                       DataProvider {
+public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> extends JPanel
+  implements ConsoleView, ObservableConsoleView, UiCompatibleDataProvider {
+
   private final static String PRIMARY_CONSOLE_PANEL = "PRIMARY_CONSOLE_PANEL";
   private final static String SECONDARY_CONSOLE_PANEL = "SECONDARY_CONSOLE_PANEL";
 
@@ -256,16 +255,10 @@ public class DuplexConsoleView<S extends ConsoleView, T extends ConsoleView> ext
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    final ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
-    if (consoleView instanceof DataProvider) {
-      return ((DataProvider)consoleView).getData(dataId);
-    }
-    else {
-      return null;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    ConsoleView consoleView = getSubConsoleView(isPrimaryConsoleEnabled());
+    DataSink.uiDataSnapshot(sink, consoleView);
   }
 
   @NotNull

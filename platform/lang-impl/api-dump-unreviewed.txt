@@ -10793,7 +10793,7 @@ c:com.intellij.execution.console.DuplexConsoleView
 - javax.swing.JPanel
 - com.intellij.execution.ui.ConsoleView
 - com.intellij.execution.ui.ObservableConsoleView
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - <init>(com.intellij.execution.ui.ConsoleView,com.intellij.execution.ui.ConsoleView):V
 - <init>(com.intellij.execution.ui.ConsoleView,com.intellij.execution.ui.ConsoleView,java.lang.String):V
 - addChangeListener(com.intellij.execution.ui.ObservableConsoleView$ChangeListener,com.intellij.openapi.Disposable):V
@@ -10809,7 +10809,6 @@ c:com.intellij.execution.console.DuplexConsoleView
 - enableConsole(Z):V
 - getComponent():javax.swing.JComponent
 - getContentSize():I
-- getData(java.lang.String):java.lang.Object
 - getPreferredFocusableComponent():javax.swing.JComponent
 - getPrimaryConsoleView():com.intellij.execution.ui.ConsoleView
 - getSecondaryConsoleView():com.intellij.execution.ui.ConsoleView
@@ -10825,6 +10824,7 @@ c:com.intellij.execution.console.DuplexConsoleView
 - setDisableSwitchConsoleActionOnProcessEnd(Z):V
 - setHelpId(java.lang.String):V
 - setOutputPaused(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 c:com.intellij.execution.console.EditorMergedHorizontalScrollBarLayout
 - com.intellij.util.ui.AbstractLayoutManager
 - <init>(javax.swing.JScrollBar,com.intellij.openapi.editor.ex.EditorEx,com.intellij.openapi.editor.ex.EditorEx,Z,I):V

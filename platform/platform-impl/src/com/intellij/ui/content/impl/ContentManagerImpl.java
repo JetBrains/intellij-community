@@ -130,11 +130,19 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return busyObject != null ? busyObject.getReady(requestor) : ActionCallback.DONE;
   }
 
+  public static @Nullable ContentManager getContentManager(@Nullable Component component) {
+    return component instanceof MyNonOpaquePanel o ? o.getContentManager() : null;
+  }
+
   private final class MyNonOpaquePanel extends JBPanelWithEmptyText implements UiDataProvider {
     MyNonOpaquePanel() {
       super(new BorderLayout());
 
       setOpaque(false);
+    }
+
+    @NotNull ContentManager getContentManager() {
+      return ContentManagerImpl.this;
     }
 
     @Override

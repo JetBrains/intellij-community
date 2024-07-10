@@ -73,17 +73,18 @@ class XDebugTabLayoutSettings(
   }
 
   private fun enableTabIfNeeded() {
-    val contentUi = RunnerContentUi.KEY.getData(debugTab.ui as RunnerLayoutUiImpl)
-    if (contentUi != null && !threadsAndFramesOptions.isContentVisible()) {
+    val ui = debugTab.ui as? RunnerLayoutUiImpl ?: return
+    val contentUi = ui.contentUI
+    if (!threadsAndFramesOptions.isContentVisible()) {
       contentUi.restore(content)
       contentUi.select(content, true)
     }
   }
 
   private fun hideContent() {
-    val uiImpl = debugTab.ui as? RunnerLayoutUiImpl ?: return
-    val runnerContentUi = RunnerContentUi.KEY.getData(uiImpl) ?: return
-    runnerContentUi.minimize(content, null)
+    val ui = debugTab.ui as? RunnerLayoutUiImpl ?: return
+    val contentUi = ui.contentUI
+    contentUi.minimize(content, null)
   }
 
   inner class XDebugFramesAndThreadsLayoutOptions(
