@@ -1,8 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
-import com.intellij.openapi.util.Computable
-import com.intellij.util.Alarm
+import com.intellij.util.SingleAlarm
 import javax.swing.JScrollBar
 
 internal abstract class ScrollBarAnimationBehavior(@JvmField protected val trackAnimator: TwoWayAnimator,
@@ -22,10 +21,10 @@ internal abstract class ScrollBarAnimationBehavior(@JvmField protected val track
   abstract fun onReset()
 }
 
-internal open class DefaultScrollBarAnimationBehavior(trackAnimator: TwoWayAnimator,
-                                                      thumbAnimator: TwoWayAnimator) : ScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                  thumbAnimator) {
-
+internal open class DefaultScrollBarAnimationBehavior(
+  trackAnimator: TwoWayAnimator,
+  thumbAnimator: TwoWayAnimator,
+) : ScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   override fun onTrackHover(hovered: Boolean) {
     trackAnimator.start(hovered)
   }
@@ -47,17 +46,17 @@ internal open class DefaultScrollBarAnimationBehavior(trackAnimator: TwoWayAnima
   }
 }
 
-internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Computable<JScrollBar>,
-                                             trackAnimator: TwoWayAnimator,
-                                             thumbAnimator: TwoWayAnimator) : DefaultScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                thumbAnimator) {
-
+internal class MacScrollBarAnimationBehavior(
+  private val scrollBarComputable: () -> JScrollBar?,
+  trackAnimator: TwoWayAnimator,
+  thumbAnimator: TwoWayAnimator,
+) : DefaultScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isTrackHovered: Boolean = false
-  private val hideThumbAlarm = Alarm()
+  private val hideThumbAlarm = SingleAlarm(task = { thumbAnimator.start(forward = false) }, delay = 700)
 
   override fun onTrackHover(hovered: Boolean) {
     isTrackHovered = hovered
-    val scrollBar = scrollBarComputable.compute()
+    val scrollBar = scrollBarComputable()
     if (scrollBar != null && DefaultScrollBarUI.isOpaque(scrollBar)) {
       trackAnimator.start(hovered)
       thumbAnimator.start(hovered)
@@ -73,13 +72,13 @@ internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Co
   override fun onThumbHover(hovered: Boolean) {}
 
   override fun onThumbMove() {
-    val scrollBar = scrollBarComputable.compute()
+    val scrollBar = scrollBarComputable()
     if (scrollBar != null && scrollBar.isShowing() && !DefaultScrollBarUI.isOpaque(scrollBar)) {
       if (!isTrackHovered && thumbAnimator.value == 0f) trackAnimator.rewind(false)
       thumbAnimator.rewind(true)
       hideThumbAlarm.cancelAllRequests()
       if (!isTrackHovered) {
-        hideThumbAlarm.addRequest(Runnable { thumbAnimator.start(false) }, 700)
+        hideThumbAlarm.request()
       }
     }
   }
@@ -90,10 +89,11 @@ internal class MacScrollBarAnimationBehavior(private val scrollBarComputable: Co
   }
 }
 
-internal open class ToggleableScrollBarAnimationBehaviorDecorator(private val decoratedBehavior: ScrollBarAnimationBehavior,
-                                                                  trackAnimator: TwoWayAnimator,
-                                                                  thumbAnimator: TwoWayAnimator) : ScrollBarAnimationBehavior(trackAnimator,
-                                                                                                                              thumbAnimator) {
+internal open class ToggleableScrollBarAnimationBehaviorDecorator(
+  private val decoratedBehavior: ScrollBarAnimationBehavior,
+  trackAnimator: TwoWayAnimator,
+  thumbAnimator: TwoWayAnimator,
+) : ScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isOn: Boolean? = null
 
   override fun onToggle(isOn: Boolean?) {
