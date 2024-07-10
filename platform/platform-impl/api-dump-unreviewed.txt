@@ -4616,7 +4616,7 @@ f:com.intellij.ide.actions.HelpTopicsAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isAvailable():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.ImportSettingsFilenameFilter
 - java.io.Serializable
 - java.util.function.Predicate
@@ -4634,7 +4634,7 @@ f:com.intellij.ide.actions.JetBrainsTvAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isAvailable():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.JumpToLastEditAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -4728,7 +4728,7 @@ f:com.intellij.ide.actions.OnlineDocAction
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- isAvailable():Z
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.actions.OpenFileAction
 - com.intellij.ide.lightEdit.LightEditCompatible
 - com.intellij.openapi.actionSystem.AnAction
