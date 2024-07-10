@@ -156,8 +156,8 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   fun `test annotation processor output folders imported properly`() {
 
     // default location for processor output when building by IDEA
-    val ideaGeneratedDir = "generated"
-    createProjectSubFile("src/main/$ideaGeneratedDir/Generated.java",
+    val ideaGeneratedDir = "src/main/generated"
+    createProjectSubFile("$ideaGeneratedDir/Generated.java",
                          "public class Generated {}")
     // default location for processor output when building by Gradle
     val gradleGeneratedDir = "build/generated/sources/annotationProcessor/java/main"
@@ -172,29 +172,29 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
     // import with default settings: delegate build to gradle
     importProject()
-    assertSources("project.main", gradleGeneratedDir)
-    assertGeneratedSources("project.main", gradleGeneratedDir)
+    assertSources("project.main", path(gradleGeneratedDir))
+    assertGeneratedSources("project.main", path(gradleGeneratedDir))
 
     currentExternalProjectSettings.delegatedBuild = false
 
     // import with build by intellij idea
     importProject()
-    assertSources("project.main", ideaGeneratedDir)
-    assertGeneratedSources("project.main", ideaGeneratedDir)
+    assertSources("project.main", path(ideaGeneratedDir))
+    assertGeneratedSources("project.main", path(ideaGeneratedDir))
 
     // subscribe to build delegation changes in current project
     (ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID) as GradleManager).runActivity(myProject)
     // switch delegation to gradle
     currentExternalProjectSettings.delegatedBuild = true
     GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(true, projectPath)
-    assertSources("project.main", gradleGeneratedDir)
-    assertGeneratedSources("project.main", gradleGeneratedDir)
+    assertSources("project.main", path(gradleGeneratedDir))
+    assertGeneratedSources("project.main", path(gradleGeneratedDir))
 
     // switch delegation to idea
     currentExternalProjectSettings.delegatedBuild = false
     GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(false, projectPath)
-    assertSources("project.main", ideaGeneratedDir)
-    assertGeneratedSources("project.main", ideaGeneratedDir)
+    assertSources("project.main", path(ideaGeneratedDir))
+    assertGeneratedSources("project.main", path(ideaGeneratedDir))
   }
 
   @Test
