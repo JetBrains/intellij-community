@@ -50,11 +50,19 @@ class ArchivedCompilationOutputStorage(
       return path
     }
 
+    if (!Files.exists(path)) {
+      return path
+    }
+
     val archived = archive(path)
     return unarchivedToArchivedMap.putIfAbsent(path, archived) ?: archived
   }
 
   private suspend fun archive(path: Path): Path {
+    if (!Files.newDirectoryStream(path).use { stream -> stream.iterator().hasNext() }) {
+      // Empty dir, no need to archive
+      return path
+    }
     val name = classesOutputDirectory.relativize(path).toString()
 
     val archive = Files.createTempFile(paths.tempDir, name.replace(File.separator, "_"), ".jar")
