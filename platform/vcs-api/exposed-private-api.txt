@@ -1,1 +1,0 @@
-com/intellij/openapi/vcs/contentAnnotation/VcsContentAnnotationSettings$State

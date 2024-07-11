@@ -267,12 +267,10 @@ c:com.intellij.openapi.vcs.FilterDescendantVirtualFileConvertible
 f:com.intellij.openapi.vcs.FilterDescendantVirtualFiles
 - com.intellij.openapi.vcs.AbstractFilterChildren
 - s:filter(java.util.List):V
-c:com.intellij.openapi.vcs.FilterFilePathStrings
+f:com.intellij.openapi.vcs.FilterFilePathStrings
 - com.intellij.openapi.vcs.AbstractFilterChildren
 - <init>():V
 - s:getInstance():com.intellij.openapi.vcs.FilterFilePathStrings
-- p:isAncestor(java.lang.String,java.lang.String):Z
-- p:sortAscending(java.util.List):V
 f:com.intellij.openapi.vcs.Ignored
 - com.intellij.openapi.vcs.IgnoredCheckResult
 - <init>(java.io.File,java.lang.String):V
@@ -403,7 +401,7 @@ com.intellij.openapi.vcs.RepositoryLocation
 - onAfterBatch():V
 - onBeforeBatch():V
 - a:toPresentableString():java.lang.String
-c:com.intellij.openapi.vcs.RichTextItem
+f:com.intellij.openapi.vcs.RichTextItem
 - <init>(java.lang.String,com.intellij.ui.SimpleTextAttributes):V
 - getText():java.lang.String
 - getTextAttributes():com.intellij.ui.SimpleTextAttributes
@@ -1313,7 +1311,7 @@ c:com.intellij.openapi.vcs.changes.LocallyDeletedChange
 - getPath():com.intellij.openapi.vcs.FilePath
 - getPresentableUrl():java.lang.String
 - hashCode():I
-c:com.intellij.openapi.vcs.changes.LogicalLock
+f:com.intellij.openapi.vcs.changes.LogicalLock
 - <init>(Z,java.lang.String,java.lang.String,java.util.Date,java.util.Date):V
 - getComment():java.lang.String
 - getCreationDate():java.util.Date
@@ -1327,7 +1325,7 @@ f:com.intellij.openapi.vcs.changes.PseudoMap
 - consume(java.lang.Object,java.lang.Object):V
 - fun(java.lang.Object):java.lang.Object
 - f:getCommitContext():com.intellij.openapi.vcs.changes.CommitContext
-c:com.intellij.openapi.vcs.changes.TextRevisionNumber
+f:com.intellij.openapi.vcs.changes.TextRevisionNumber
 - com.intellij.openapi.vcs.history.ShortVcsRevisionNumber
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.String):V
@@ -1564,7 +1562,7 @@ a:com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
 - f:getKey():com.intellij.openapi.vcs.VcsKey
 f:com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-c:com.intellij.openapi.vcs.checkout.CheckoutFolderToTheSameFolder
+f:com.intellij.openapi.vcs.checkout.CheckoutFolderToTheSameFolder
 - com.intellij.openapi.vcs.checkout.CheckoutStrategy
 - <init>(java.io.File,java.io.File,Z):V
 - getCheckoutDirectory():java.io.File
@@ -1585,19 +1583,19 @@ a:com.intellij.openapi.vcs.checkout.CheckoutStrategy
 - getSelectedLocation():java.io.File
 - isForFile():Z
 - a:useAlternativeCheckoutLocation():Z
-c:com.intellij.openapi.vcs.checkout.CheckoutToTheDirectoryWithModuleName
+f:com.intellij.openapi.vcs.checkout.CheckoutToTheDirectoryWithModuleName
 - com.intellij.openapi.vcs.checkout.CheckoutStrategy
 - <init>(java.io.File,java.io.File,Z):V
 - getCheckoutDirectory():java.io.File
 - getResult():java.io.File
 - useAlternativeCheckoutLocation():Z
-c:com.intellij.openapi.vcs.checkout.CreateDirectoryForFolderStrategy
+f:com.intellij.openapi.vcs.checkout.CreateDirectoryForFolderStrategy
 - com.intellij.openapi.vcs.checkout.CheckoutStrategy
 - <init>(java.io.File,java.io.File,Z):V
 - getCheckoutDirectory():java.io.File
 - getResult():java.io.File
 - useAlternativeCheckoutLocation():Z
-c:com.intellij.openapi.vcs.checkout.SimpleCheckoutStrategy
+f:com.intellij.openapi.vcs.checkout.SimpleCheckoutStrategy
 - com.intellij.openapi.vcs.checkout.CheckoutStrategy
 - <init>(java.io.File,java.io.File,Z):V
 - getCheckoutDirectory():java.io.File
@@ -1623,18 +1621,6 @@ f:com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationImpl
 - fileRecentlyChanged(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.history.VcsRevisionNumber
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotation
 - intervalRecentlyChanged(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.TextRange,com.intellij.openapi.vcs.history.VcsRevisionNumber):Z
-c:com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings
-- com.intellij.openapi.components.PersistentStateComponent
-- sf:ourMaxDays:I
-- <init>():V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings
-- getLimit():J
-- getLimitDays():I
-- getState():com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings$State
-- isShow():Z
-- loadState(com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationSettings$State):V
-- setLimitDays(I):V
-- setShow(Z):V
 com.intellij.openapi.vcs.diff.DiffMixin
 - a:getCurrentRevisionDescription(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.history.VcsRevisionDescription
 com.intellij.openapi.vcs.diff.DiffProvider
@@ -1791,7 +1777,7 @@ com.intellij.openapi.vcs.history.VcsRevisionDescription
 - a:getCommitMessage():java.lang.String
 - a:getRevisionDate():java.util.Date
 - a:getRevisionNumber():com.intellij.openapi.vcs.history.VcsRevisionNumber
-c:com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl
+f:com.intellij.openapi.vcs.history.VcsRevisionDescriptionImpl
 - com.intellij.openapi.vcs.history.VcsRevisionDescription
 - <init>(com.intellij.openapi.vcs.history.VcsRevisionNumber):V
 - <init>(com.intellij.openapi.vcs.history.VcsRevisionNumber,java.util.Date,java.lang.String,java.lang.String):V
@@ -2197,7 +2183,7 @@ com.intellij.openapi.vcs.versionBrowser.VcsRevisionNumberAware
 com.intellij.util.AsynchConsumer
 - com.intellij.util.Consumer
 - a:finished():V
-c:com.intellij.util.FilePathByPathComparator
+f:com.intellij.util.FilePathByPathComparator
 - java.util.Comparator
 - <init>():V
 - compare(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath):I
@@ -2367,7 +2353,7 @@ f:com.intellij.vcsUtil.VcsUIUtil
 - f:showPopupAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component):V
 f:com.intellij.vcsUtil.VcsUIUtilKt
 - sf:showAbove(com.intellij.openapi.ui.popup.JBPopup,java.awt.Component):V
-Ff:com.intellij.vcsUtil.VcsUtil
+f:com.intellij.vcsUtil.VcsUtil
 - sf:MAX_VCS_LOADED_SIZE_KB:java.lang.String
 - <init>():V
 - s:addMapping(java.util.List,com.intellij.openapi.vcs.VcsDirectoryMapping):java.util.List
