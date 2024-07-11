@@ -47,8 +47,13 @@ class EditorCellFoldingBar(
     }
 
   fun dispose() {
-    panel?.let { editor.gutterComponentEx.remove(it) }
-    panel = null
+    panel?.let {
+      editor.gutterComponentEx.apply {
+        remove(it)
+        repaint()
+      }
+      panel = null
+    }
   }
 
   fun updateBounds() {
