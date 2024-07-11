@@ -1,2 +1,2 @@
-public final class A3 extends B {
+public non-sealed class A3 extends B {
 }
