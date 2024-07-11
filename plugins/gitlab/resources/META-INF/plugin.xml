@@ -1,4 +1,4 @@
-<idea-plugin package="org.jetbrains.plugins.gitlab" allow-bundled-update="true">
+<idea-plugin package="org.jetbrains.plugins.gitlab" allow-bundled-update="false"><!-- Android Studio (b/352557134): disallow updates. -->
   <name>GitLab</name>
   <id>org.jetbrains.plugins.gitlab</id>
   <vendor>JetBrains</vendor>
