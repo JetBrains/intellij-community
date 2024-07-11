@@ -13825,6 +13825,7 @@ a:com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor
 - p:myScopeDescriptor:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 - p:<init>(com.intellij.openapi.actionSystem.AnActionEvent):V
 - psf:applyPatternFilter(java.lang.String,java.util.regex.Pattern):java.lang.String
+- sf:createContext(com.intellij.openapi.project.Project,com.intellij.psi.SmartPsiElementPointer):com.intellij.openapi.actionSystem.DataContext
 - pa:createModel(com.intellij.openapi.project.Project):com.intellij.ide.util.gotoByName.FilteringGotoByModel
 - p:createScopes():java.util.List
 - pf:doGetActions(com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter,com.intellij.ide.util.ElementsChooser$StatisticsCollector,java.lang.Runnable):java.util.List
