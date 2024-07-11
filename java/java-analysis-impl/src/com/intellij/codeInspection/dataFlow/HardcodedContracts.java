@@ -259,6 +259,10 @@ public final class HardcodedContracts {
                 singleConditionContract(ContractValue.argument(0).specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(), returnTrue()),
                 trivialContract(returnFalse())
               ))
+    .register(instanceCall("java.util.concurrent.TimeUnit", "convert").parameterCount(2),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(1), returnParameter(0))
+              ))
     ;
 
   private static @NotNull ContractProvider getArraycopyContract() {

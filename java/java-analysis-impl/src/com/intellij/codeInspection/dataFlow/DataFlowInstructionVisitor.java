@@ -71,7 +71,8 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "min", "max").parameterCount(2),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "min", "max").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "replace").parameterCount(2),
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterTypes("T", "T")
+    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "requireNonNullElse").parameterTypes("T", "T"),
+    CallMatcher.instanceCall("java.util.concurrent.TimeUnit", "convert").parameterTypes("long", "java.util.concurrent.TimeUnit")
   );
 
   DataFlowInstructionVisitor(boolean strictMode) {
