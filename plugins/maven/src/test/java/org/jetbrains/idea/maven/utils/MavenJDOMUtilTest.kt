@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
 import java.io.IOException
 
@@ -40,6 +41,7 @@ class MavenJDOMUtilTest : MavenTestCase() {
 
   private suspend fun readValue(xml: String, valuePath: String): String? {
     val f = createProjectSubFile("foo.xml", xml)
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
 
     val el = MavenJDOMUtil.read(f, object : MavenJDOMUtil.ErrorHandler {
       override fun onReadError(e: IOException?) {
