@@ -3,11 +3,10 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.RunAll
 import com.intellij.util.io.ZipUtil
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
@@ -89,8 +88,9 @@ class MavenWrapperConfigurationTest : MavenImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+    val wrapperProperties = createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
                          "distributionUrl=${httpServerFixtureForWrapper.url()}/custom-maven.zip\n")
+    LocalFileSystem.getInstance().refreshFiles(listOf(settingsXml, wrapperProperties))
 
     MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
     removeFromLocalRepository("org/mytest/myartifact/")
