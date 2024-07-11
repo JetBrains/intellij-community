@@ -104,4 +104,8 @@ public class MavenWorkspaceMap implements Serializable {
       return outputFile == null || MavenConstants.POM_EXTENSION.equalsIgnoreCase(type) ? file : outputFile;
     }
   }
+
+  public static MavenWorkspaceMap empty() {
+    return new MavenWorkspaceMap();
+  }
 }
