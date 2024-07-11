@@ -8,9 +8,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
@@ -23,7 +23,6 @@ import org.junit.Test
 import java.io.File
 import java.util.*
 import java.util.function.Function
-
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
@@ -56,12 +55,13 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     assertEquals("1", projectsTree.rootProjects[0].name)
     MavenServerManager.getInstance().closeAllConnectorsAndWait()
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <name>2</name>
                     """.trimIndent())
+    updateAllProjects()
     assertModules("project")
     assertEquals("2", projectsTree.rootProjects[0].name)
   }
