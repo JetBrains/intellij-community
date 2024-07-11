@@ -8,10 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.intentions.AddMavenDependencyQuickFix
 import org.junit.Test
-import java.io.IOException
 
 class MavenAddDependencyIntentionTest : MavenDomTestCase() {
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -19,7 +18,6 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testAddDependencyVariableDeclaration() {
     doTest("""
              class A {
@@ -32,7 +30,6 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testAddDependencyWithQualifier() {
     doTest("""
              class A {
@@ -45,7 +42,6 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testAddDependencyNotAClass() {
     doTest("""
              class A {
@@ -58,7 +54,6 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testAddDependencyFromExtendsWithGeneric() {
     doTest("""
              class A extends Fo<caret>o<String> {
@@ -69,7 +64,6 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testAddDependencyFromClassInsideGeneric() {
     doTest("""
              class A extends List<Fo<caret>o> {
@@ -80,7 +74,6 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
   }
 
   @Test
-  @Throws(IOException::class)
   fun testAddDependencyFromClassInsideGenericWithExtends() {
     doTest("""
              class A extends List<? extends Fo<caret>o> {
@@ -90,11 +83,8 @@ class MavenAddDependencyIntentionTest : MavenDomTestCase() {
              """.trimIndent(), "Foo")
   }
 
-  @Throws(IOException::class)
   private fun doTest(classText: String, referenceText: String?) = runBlocking(Dispatchers.EDT) {
-    val file = createProjectSubFile("src/main/java/A.java", classText)
-
-    fixture.configureFromExistingVirtualFile(file)
+    fixture.configureByText("A.java", classText)
     val element = PsiTreeUtil.getParentOfType(fixture.getFile().findElementAt(fixture.getCaretOffset()),
                                               PsiJavaCodeReferenceElement::class.java)
 
