@@ -3,6 +3,7 @@ package com.intellij.driver.sdk
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
+import com.intellij.driver.model.RdTarget
 
 @Remote("com.intellij.openapi.project.ProjectManager")
 interface ProjectManager {
@@ -13,9 +14,9 @@ fun Driver.getOpenProjects(): List<Project> {
   return service<ProjectManager>().getOpenProjects().toList()
 }
 
-fun Driver.singleProject(): Project {
+fun Driver.singleProject(rdTarget: RdTarget = RdTarget.DEFAULT): Project {
   return withContext {
-    service<ProjectManager>().getOpenProjects().singleOrNull() ?: throw IllegalStateException("No projects are opened")
+    service<ProjectManager>(rdTarget).getOpenProjects().singleOrNull() ?: throw IllegalStateException("No projects are opened")
   }
 }
 
