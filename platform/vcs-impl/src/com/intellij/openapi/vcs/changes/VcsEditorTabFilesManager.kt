@@ -76,7 +76,7 @@ class VcsEditorTabFilesManager :
       file = file,
       window = null,
       options = FileEditorOpenOptions(
-        openMode = if (shouldOpenInNewWindow) FileEditorManagerImpl.OpenMode.NEW_WINDOW else FileEditorManagerImpl.OpenMode.NEW_WINDOW,
+        openMode = if (shouldOpenInNewWindow) FileEditorManagerImpl.OpenMode.NEW_WINDOW else FileEditorManagerImpl.OpenMode.DEFAULT,
         isSingletonEditorInWindow = true,
         reuseOpen = true,
         requestFocus = focusEditor,
