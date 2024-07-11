@@ -42,6 +42,7 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(pom))
     fixture.configureFromExistingVirtualFile(pom)
 
     val resolved = readAction { fixture.getElementAtCaret() }
@@ -76,7 +77,7 @@ $relativePathUnixSeparator<caret></relativePath>
 $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
-
+    LocalFileSystem.getInstance().refreshFiles(listOf(pom))
     fixture.configureFromExistingVirtualFile(pom)
 
     val resolved = readAction { fixture.getElementAtCaret() }
