@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -30,7 +30,9 @@ import org.jetbrains.jewel.ui.component.Typography
 import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.PROJECT)
-private class ProjectScopeProviderService(val scope: CoroutineScope)
+private class ProjectScopeProviderService(
+    val scope: CoroutineScope,
+)
 
 internal class JewelDemoAction : DumbAwareAction() {
     override fun actionPerformed(event: AnActionEvent) {
@@ -47,7 +49,9 @@ internal class JewelDemoAction : DumbAwareAction() {
     }
 }
 
-private class FirstPage(private val project: Project) : WizardPage {
+private class FirstPage(
+    private val project: Project,
+) : WizardPage {
     override val canGoBackwards: StateFlow<Boolean> = MutableStateFlow(true)
 
     private val checkboxChecked = MutableStateFlow(false)
@@ -65,10 +69,7 @@ private class FirstPage(private val project: Project) : WizardPage {
             Spacer(Modifier.height(16.dp))
 
             val checked by checkboxChecked.collectAsState()
-            CheckboxRow("Allow going to next step", checked, {
-                checkboxChecked.value = it
-                println("Checkbox value: ${checkboxChecked.value}")
-            })
+            CheckboxRow("Allow going to next step", checked, { checkboxChecked.value = it })
         }
     }
 }
@@ -84,7 +85,7 @@ private class SecondPage : WizardPage {
 
             Spacer(Modifier.height(16.dp))
 
-            var count by remember { mutableStateOf(0) }
+            var count by remember { mutableIntStateOf(0) }
             LaunchedEffect(Unit) {
                 launch {
                     while (true) {

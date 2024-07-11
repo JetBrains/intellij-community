@@ -880,3 +880,29 @@ public final class org/jetbrains/jewel/foundation/util/DebugKt {
 	public static final fun getInDebugMode ()Z
 }
 
+public abstract class org/jetbrains/jewel/foundation/util/JewelLogger {
+	public static final field $stable I
+	public static final field Companion Lorg/jetbrains/jewel/foundation/util/JewelLogger$Companion;
+	public fun <init> ()V
+	public final fun debug (Ljava/lang/String;)V
+	public abstract fun debug (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun debug (Ljava/lang/Throwable;)V
+	public final fun error (Ljava/lang/String;)V
+	public abstract fun error (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun error (Ljava/lang/Throwable;)V
+	public final fun info (Ljava/lang/String;)V
+	public abstract fun info (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun info (Ljava/lang/Throwable;)V
+	public final fun trace (Ljava/lang/String;)V
+	public abstract fun trace (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun trace (Ljava/lang/Throwable;)V
+	public final fun warn (Ljava/lang/String;)V
+	public abstract fun warn (Ljava/lang/String;Ljava/lang/Throwable;)V
+	public final fun warn (Ljava/lang/Throwable;)V
+}
+
+public final class org/jetbrains/jewel/foundation/util/JewelLogger$Companion {
+	public final fun getInstance (Ljava/lang/Class;)Lorg/jetbrains/jewel/foundation/util/JewelLogger;
+	public final fun getInstance (Ljava/lang/String;)Lorg/jetbrains/jewel/foundation/util/JewelLogger;
+}
+

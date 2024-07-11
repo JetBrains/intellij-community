@@ -33,6 +33,7 @@ import org.jetbrains.jewel.foundation.lazy.SelectionMode
 import org.jetbrains.jewel.foundation.lazy.rememberSelectableLazyListState
 import org.jetbrains.jewel.foundation.lazy.tree.buildTree
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.samples.standalone.viewmodel.View
 import org.jetbrains.jewel.ui.component.Chip
 import org.jetbrains.jewel.ui.component.CircularProgressIndicator
@@ -99,7 +100,8 @@ fun SelectableLazyColumnSample() {
                         Text(
                             text = listOfItems[index],
                             modifier =
-                                Modifier.fillMaxWidth()
+                                Modifier
+                                    .fillMaxWidth()
                                     .then(
                                         when {
                                             isSelected && isActive -> Modifier.background(Color.Blue)
@@ -107,7 +109,9 @@ fun SelectableLazyColumnSample() {
                                             else -> Modifier
                                         },
                                     ).clickable {
-                                        println("click on $index")
+                                        JewelLogger
+                                            .getInstance("ChipsAndTree")
+                                            .info("Click on $index")
                                     },
                         )
                     }

@@ -19,6 +19,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -124,7 +125,7 @@ private fun RowScope.ColumnOne() {
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            var clicks1 by remember { mutableStateOf(0) }
+            var clicks1 by remember { mutableIntStateOf(0) }
             OutlinedButton({ clicks1++ }) {
                 Text("Outlined: $clicks1")
             }
@@ -132,7 +133,7 @@ private fun RowScope.ColumnOne() {
                 Text("Outlined")
             }
 
-            var clicks2 by remember { mutableStateOf(0) }
+            var clicks2 by remember { mutableIntStateOf(0) }
             DefaultButton({ clicks2++ }) {
                 Text("Default: $clicks2")
             }
@@ -168,7 +169,7 @@ private fun RowScope.ColumnOne() {
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            var index by remember { mutableStateOf(0) }
+            var index by remember { mutableIntStateOf(0) }
             RadioButtonRow(
                 selected = index == 0,
                 onClick = { index = 0 },
@@ -217,7 +218,7 @@ private fun RowScope.ColumnOne() {
             }
         }
 
-        var sliderValue by remember { mutableStateOf(.15f) }
+        var sliderValue by remember { mutableFloatStateOf(.15f) }
         Slider(sliderValue, { sliderValue = it }, steps = 5)
     }
 }

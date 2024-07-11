@@ -7,6 +7,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.window.application
 import org.jetbrains.jewel.foundation.theme.JewelTheme
+import org.jetbrains.jewel.foundation.util.JewelLogger
 import org.jetbrains.jewel.intui.standalone.Inter
 import org.jetbrains.jewel.intui.standalone.JetBrainsMono
 import org.jetbrains.jewel.intui.standalone.theme.IntUiTheme
@@ -27,6 +28,10 @@ import org.jetbrains.jewel.window.styling.TitleBarStyle
 import java.io.InputStream
 
 fun main() {
+    JewelLogger
+        .getInstance("StandaloneSample")
+        .info("Starting Jewel Standalone sample")
+
     val icon = svgResource("icons/jewel-logo.svg")
 
     application {
@@ -75,7 +80,8 @@ private fun svgResource(
     resourcePath: String,
     loader: ResourceLoader = ResourceLoader.Default,
 ): Painter =
-    loader.load(resourcePath)
+    loader
+        .load(resourcePath)
         .use { stream: InputStream ->
             loadSvgPainter(stream, Density(1f))
         }
