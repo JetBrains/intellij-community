@@ -298,3 +298,8 @@ fun KtExpression.convertToIfStatement(
     elseClause: KtExpression? = null
 ): KtIfExpression =
     runWriteAction { replaced(KtPsiFactory(project).createIf(condition, thenClause, elseClause)) }
+
+fun KtExpression.convertToIfNullExpression(conditionLhs: KtExpression, thenClause: KtExpression): KtIfExpression {
+    val condition = KtPsiFactory(project).createExpressionByPattern("$0 == null", conditionLhs)
+    return this.convertToIfStatement(condition, thenClause)
+}

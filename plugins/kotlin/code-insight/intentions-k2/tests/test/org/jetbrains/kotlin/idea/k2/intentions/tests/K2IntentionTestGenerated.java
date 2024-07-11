@@ -8164,6 +8164,100 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen")
+    public static class DoubleBangToIfThen extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("callExpression.kt")
+        public void testCallExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/callExpression.kt");
+        }
+
+        @TestMetadata("callExpressionParens.kt")
+        public void testCallExpressionParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/callExpressionParens.kt");
+        }
+
+        @TestMetadata("exceptionTextEscapesQuotes.kt")
+        public void testExceptionTextEscapesQuotes() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/exceptionTextEscapesQuotes.kt");
+        }
+
+        @TestMetadata("exceptionTextHandlesMultiline.kt")
+        public void testExceptionTextHandlesMultiline() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/exceptionTextHandlesMultiline.kt");
+        }
+
+        @TestMetadata("localVal.kt")
+        public void testLocalVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/localVal.kt");
+        }
+
+        @TestMetadata("localVar.kt")
+        public void testLocalVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/localVar.kt");
+        }
+
+        @TestMetadata("replaceParentExpression.kt")
+        public void testReplaceParentExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/replaceParentExpression.kt");
+        }
+
+        @TestMetadata("replaceParentExpression2.kt")
+        public void testReplaceParentExpression2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/replaceParentExpression2.kt");
+        }
+
+        @TestMetadata("replaceParentExpression3.kt")
+        public void testReplaceParentExpression3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/replaceParentExpression3.kt");
+        }
+
+        @TestMetadata("simpleNameExpressionInParens.kt")
+        public void testSimpleNameExpressionInParens() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/simpleNameExpressionInParens.kt");
+        }
+
+        @TestMetadata("topLevelVal.kt")
+        public void testTopLevelVal() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelVal.kt");
+        }
+
+        @TestMetadata("topLevelValCustomGetter.kt")
+        public void testTopLevelValCustomGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelValCustomGetter.kt");
+        }
+
+        @TestMetadata("topLevelVar.kt")
+        public void testTopLevelVar() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelVar.kt");
+        }
+
+        @TestMetadata("topLevelVarCustomGetter.kt")
+        public void testTopLevelVarCustomGetter() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/topLevelVarCustomGetter.kt");
+        }
+
+        @TestMetadata("usedInAssignment.kt")
+        public void testUsedInAssignment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/usedInAssignment.kt");
+        }
+
+        @TestMetadata("withAnnotation.kt")
+        public void testWithAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/branched/doubleBangToIfThen/withAnnotation.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/introduceVariable")
     public static class IntroduceVariable extends AbstractK2IntentionTest {
         @java.lang.Override
