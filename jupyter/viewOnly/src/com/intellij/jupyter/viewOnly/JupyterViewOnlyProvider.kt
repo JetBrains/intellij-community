@@ -8,7 +8,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.jupyter.core.jupyter.JupyterFileType
+import com.intellij.notebooks.jupyter.core.jupyter.JupyterFileType
 
 internal class JupyterViewOnlyProvider : FileEditorProvider, DumbAware {
   override fun accept(project: Project, file: VirtualFile): Boolean = FileTypeRegistry.getInstance().isFileOfType(file, JupyterFileType)

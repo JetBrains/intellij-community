@@ -3,8 +3,8 @@ package com.intellij.jupyter.viewOnly
 
 
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.jupyter.core.jupyter.preview.JupyterCefHttpHandlerBase
-import com.intellij.jupyter.core.jupyter.preview.addPathSegment
+import com.intellij.notebooks.jupyter.core.jupyter.preview.JupyterCefHttpHandlerBase
+import com.intellij.notebooks.jupyter.core.jupyter.preview.addPathSegment
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
