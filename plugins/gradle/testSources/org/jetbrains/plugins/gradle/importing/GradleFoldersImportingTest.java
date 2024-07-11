@@ -867,60 +867,292 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   @TargetVersions("7.4+")
-  public void testJvmTestSuitesImported() throws Exception {
-    createDefaultDirs();
-    createProjectSubFile("src/integrationTest/java/A.java", "class A {}");
-    createProjectSubFile("src/integrationTest/resources/file.txt", "test data");
-    final GradleBuildScriptBuilder buildScript = createBuildScriptBuilder()
-      .withPlugin("java", null)
-      .withPlugin("jvm-test-suite", null)
-      .addPostfix(
-        "testing {",
-        "    suites { ",
-        "        test { ",
-        "            useJUnitJupiter() ",
-        "        }",
-        "        integrationTest(JvmTestSuite) { ",
-        "            dependencies {",
-        isGradleAtLeast("7.6")
-        ? "                implementation project() "
-        : "                implementation project ",
-        "            }",
-        "        }",
-        "    }",
-        "}"
-      );
+  public void testJvmTestSuitesImportedInDelegatedMode() throws Exception {
+    getCurrentExternalProjectSettings().setDelegatedBuild(true);
 
-    importProject(buildScript.generate());
+    createProjectSubDir("src/main/java");
+    createProjectSubDir("src/main/resources");
+    createProjectSubDir("src/test/java");
+    createProjectSubDir("src/test/resources");
+    createProjectSubDir("src/integrationTest/java");
+    createProjectSubDir("src/integrationTest/resources");
+
+    importProject(script(it -> it
+      .withJavaPlugin()
+      .withPlugin("jvm-test-suite")
+      .addPostfix(
+        """
+          testing {
+              suites {
+                  integrationTest(JvmTestSuite) {}
+              }
+          }
+          """
+      )
+    ));
 
     assertModules("project", "project.main", "project.test", "project.integrationTest");
 
-    assertDefaultGradleJavaProjectFolders();
+    assertExcludes("project", ".gradle", "build");
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
+
+    assertContentRoots("project.main", path("src/main"));
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
+    assertModuleOutput("project.main", path("build/classes/java/main"), "");
+    assertModuleOutputs("project.main", path("build/classes/java/main"), path("build/resources/main"));
+
+    assertContentRoots("project.test", path("src/test"));
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
+    assertModuleOutput("project.test", "", path("build/classes/java/test"));
+    assertModuleOutputs("project.test", path("build/classes/java/test"), path("build/resources/test"));
 
     assertContentRoots("project.integrationTest", path("src/integrationTest"));
+    assertSources("project.integrationTest");
+    assertResources("project.integrationTest");
     assertTestSources("project.integrationTest", path("src/integrationTest/java"));
     assertTestResources("project.integrationTest", path("src/integrationTest/resources"));
+    assertGeneratedSources("project.integrationTest");
+    assertGeneratedResources("project.integrationTest");
+    assertGeneratedTestSources("project.integrationTest");
+    assertGeneratedTestResources("project.integrationTest");
+    assertModuleOutput("project.integrationTest", "", path("build/classes/java/integrationTest"));
+    assertModuleOutputs("project.integrationTest", path("build/classes/java/integrationTest"), path("build/resources/integrationTest"));
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  public void testJvmTestSuitesImportedInNonDelegatedMode() throws Exception {
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
+
+    createProjectSubDir("src/main/java");
+    createProjectSubDir("src/main/resources");
+    createProjectSubDir("src/test/java");
+    createProjectSubDir("src/test/resources");
+    createProjectSubDir("src/integrationTest/java");
+    createProjectSubDir("src/integrationTest/resources");
+
+    importProject(script(it -> it
+      .withJavaPlugin()
+      .withPlugin("jvm-test-suite")
+      .addPostfix(
+        """
+          testing {
+              suites {
+                  integrationTest(JvmTestSuite) {}
+              }
+          }
+          """
+      )
+    ));
+
+    assertModules("project", "project.main", "project.test", "project.integrationTest");
+
+    assertExcludes("project", ".gradle", "build", "out");
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
+
+    assertContentRoots("project.main", path("src/main"));
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
+    assertModuleOutput("project.main", path("out/production/classes"), "");
+    assertModuleOutputs("project.main", path("out/production/classes"), path("out/production/resources"));
+
+    assertContentRoots("project.test", path("src/test"));
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
+    assertModuleOutput("project.test", "", path("out/test/classes"));
+    assertModuleOutputs("project.test", path("out/test/classes"), path("out/test/resources"));
+
+    assertContentRoots("project.integrationTest", path("src/integrationTest"));
+    assertSources("project.integrationTest");
+    assertResources("project.integrationTest");
+    assertTestSources("project.integrationTest", path("src/integrationTest/java"));
+    assertTestResources("project.integrationTest", path("src/integrationTest/resources"));
+    assertGeneratedSources("project.integrationTest");
+    assertGeneratedResources("project.integrationTest");
+    assertGeneratedTestSources("project.integrationTest");
+    assertGeneratedTestResources("project.integrationTest");
+    assertModuleOutput("project.integrationTest", "", path("out/integrationTest/classes"));
+    assertModuleOutputs("project.integrationTest", path("out/integrationTest/classes"), path("out/integrationTest/resources"));
   }
 
   @Test
   @TargetVersions("5.6+")
-  public void testJvmTestFixturesImported() throws Exception {
-    createDefaultDirs();
-    createProjectSubFile("src/testFixtures/java/A.java", "class A {}");
-    createProjectSubFile("src/testFixtures/resources/file.txt", "test data");
+  public void testJvmTestFixturesImportedInDelegatedMode() throws Exception {
+    getCurrentExternalProjectSettings().setDelegatedBuild(true);
+
+    createProjectSubDir("src/main/java");
+    createProjectSubDir("src/main/resources");
+    createProjectSubDir("src/test/java");
+    createProjectSubDir("src/test/resources");
+    createProjectSubDir("src/testFixtures/java");
+    createProjectSubDir("src/testFixtures/resources");
 
     importProject(script(it -> it
-      .withPlugin("java", null)
-      .withPlugin("java-test-fixtures", null)
+      .withJavaPlugin()
+      .withPlugin("java-test-fixtures")
     ));
 
     assertModules("project", "project.main", "project.test", "project.testFixtures");
 
-    assertDefaultGradleJavaProjectFolders();
+    assertExcludes("project", ".gradle", "build");
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
+
+    assertContentRoots("project.main", path("src/main"));
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
+    assertModuleOutput("project.main", path("build/classes/java/main"), "");
+    assertModuleOutputs("project.main", path("build/classes/java/main"), path("build/resources/main"));
+
+    assertContentRoots("project.test", path("src/test"));
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
+    assertModuleOutput("project.test", "", path("build/classes/java/test"));
+    assertModuleOutputs("project.test", path("build/classes/java/test"), path("build/resources/test"));
 
     assertContentRoots("project.testFixtures", path("src/testFixtures"));
+    assertSources("project.testFixtures");
+    assertResources("project.testFixtures");
     assertTestSources("project.testFixtures", path("src/testFixtures/java"));
     assertTestResources("project.testFixtures", path("src/testFixtures/resources"));
+    assertGeneratedSources("project.testFixtures");
+    assertGeneratedResources("project.testFixtures");
+    assertGeneratedTestSources("project.testFixtures");
+    assertGeneratedTestResources("project.testFixtures");
+    assertModuleOutput("project.testFixtures", "", path("build/classes/java/testFixtures"));
+    assertModuleOutputs("project.testFixtures", path("build/classes/java/testFixtures"), path("build/resources/testFixtures"));
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  public void testJvmTestFixturesImportedInNonDelegatedMode() throws Exception {
+    getCurrentExternalProjectSettings().setDelegatedBuild(false);
+
+    createProjectSubDir("src/main/java");
+    createProjectSubDir("src/main/resources");
+    createProjectSubDir("src/test/java");
+    createProjectSubDir("src/test/resources");
+    createProjectSubDir("src/testFixtures/java");
+    createProjectSubDir("src/testFixtures/resources");
+
+    importProject(script(it -> it
+      .withJavaPlugin()
+      .withPlugin("java-test-fixtures")
+    ));
+
+    assertModules("project", "project.main", "project.test", "project.testFixtures");
+
+    assertExcludes("project", ".gradle", "build", "out");
+
+    assertContentRoots("project", getProjectPath());
+    assertSources("project");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project");
+    assertGeneratedSources("project");
+    assertGeneratedResources("project");
+    assertGeneratedTestSources("project");
+    assertGeneratedTestResources("project");
+
+    assertContentRoots("project.main", path("src/main"));
+    assertSources("project.main", path("src/main/java"));
+    assertResources("project.main", path("src/main/resources"));
+    assertTestSources("project.main");
+    assertTestResources("project.main");
+    assertGeneratedSources("project.main");
+    assertGeneratedResources("project.main");
+    assertGeneratedTestSources("project.main");
+    assertGeneratedTestResources("project.main");
+    assertModuleOutput("project.main", path("out/production/classes"), "");
+    assertModuleOutputs("project.main", path("out/production/classes"), path("out/production/resources"));
+
+    assertContentRoots("project.test", path("src/test"));
+    assertSources("project.test");
+    assertResources("project.test");
+    assertTestSources("project.test", path("src/test/java"));
+    assertTestResources("project.test", path("src/test/resources"));
+    assertGeneratedSources("project.test");
+    assertGeneratedResources("project.test");
+    assertGeneratedTestSources("project.test");
+    assertGeneratedTestResources("project.test");
+    assertModuleOutput("project.test", "", path("out/test/classes"));
+    assertModuleOutputs("project.test", path("out/test/classes"), path("out/test/resources"));
+
+    assertContentRoots("project.testFixtures", path("src/testFixtures"));
+    assertSources("project.testFixtures");
+    assertResources("project.testFixtures");
+    assertTestSources("project.testFixtures", path("src/testFixtures/java"));
+    assertTestResources("project.testFixtures", path("src/testFixtures/resources"));
+    assertGeneratedSources("project.testFixtures");
+    assertGeneratedResources("project.testFixtures");
+    assertGeneratedTestSources("project.testFixtures");
+    assertGeneratedTestResources("project.testFixtures");
+    assertModuleOutput("project.testFixtures", "", path("out/testFixtures/classes"));
+    assertModuleOutputs("project.testFixtures", path("out/testFixtures/classes"), path("out/testFixtures/resources"));
   }
 
   protected void assertDefaultGradleJavaProjectFolders() {

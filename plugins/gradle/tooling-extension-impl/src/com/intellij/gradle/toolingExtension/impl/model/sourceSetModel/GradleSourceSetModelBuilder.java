@@ -623,9 +623,14 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
         sourceDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
         resourcesDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
       }
-      else {
+      else if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName()) || !resolveSourceSetDependencies) {
         sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/classes"));
         resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), "out/test/resources"));
+      }
+      else {
+        String outputName = StringUtils.toCamelCase(sourceSet.getName(), true);
+        sourceDirectorySet.setOutputDir(new File(project.getProjectDir(), String.format("out/%s/classes", outputName)));
+        resourcesDirectorySet.setOutputDir(new File(project.getProjectDir(), String.format("out/%s/resources", outputName)));
       }
       if (generatedSourceDirectorySet != null) {
         generatedSourceDirectorySet.setOutputDir(sourceDirectorySet.getOutputDir());
