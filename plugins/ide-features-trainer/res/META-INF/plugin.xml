@@ -100,13 +100,9 @@
     <action id="RestartLessonAction" class="training.actions.RestartLessonAction"
             icon="training.FeaturesTrainerIcons.ResetLesson"/>
 
-    <!-- Help -->
-    <group id="LearnGroup">
-      <separator/>
-      <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow"/>
-      <separator/>
-      <add-to-group group-id="HelpMenu" relative-to-action="HelpTopics" anchor="after"/>
-    </group>
+    <action id="ShowLearnPanel" class="training.actions.OpenLearnPanel" icon="training.FeaturesTrainerIcons.FeatureTrainerToolWindow">
+      <add-to-group group-id="LearnGroup"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
