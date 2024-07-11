@@ -45,11 +45,15 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 
 @ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
   private static final Logger LOG = Logger.getInstance(XLineBreakpointImpl.class);
+
+  private static final ExecutorService redrawInlaysExecutor =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
 
   @Nullable private RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
@@ -272,7 +276,6 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
     if (file == null) return;
-
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
 
     ReadAction.nonBlocking(() -> {
@@ -286,7 +289,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         return document;
       })
       .expireWith(getProject())
-      .submit(AppExecutorUtil.getAppExecutorService())
+      .submit(redrawInlaysExecutor)
       .onSuccess(document -> {
         if (document == null) return;
         InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
