@@ -409,9 +409,22 @@ abstract class MavenTestCase : UsefulTestCase() {
     return createPomFile(projectRoot, xml).also { myProjectPom = it }
   }
 
+  protected fun updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val pom = createProjectPom(xml)
+    LocalFileSystem.getInstance().refreshFiles(listOf(pom))
+    return pom
+  }
+
   protected fun createModulePom(relativePath: String,
                                 @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
     return createPomFile(createProjectSubDir(relativePath), xml)
+  }
+
+  protected fun updateModulePom(relativePath: String,
+                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val pom = createModulePom(relativePath, xml)
+    LocalFileSystem.getInstance().refreshFiles(listOf(pom))
+    return pom
   }
 
   protected fun createPomFile(dir: VirtualFile,
@@ -424,7 +437,11 @@ abstract class MavenTestCase : UsefulTestCase() {
     val pomName = fileName ?: "pom.xml"
     val filePath = Path.of(dir.path, pomName)
     setPomContent(filePath, xml)
-    val f = dir.findChild(pomName)!!
+    var f = dir.findChild(pomName)
+    if (null == f) {
+      LocalFileSystem.getInstance().refreshFiles(listOf(dir))
+      f = dir.findChild(pomName)!!
+    }
     myAllPoms.add(f)
     return f
   }
@@ -606,7 +623,12 @@ abstract class MavenTestCase : UsefulTestCase() {
     val fileName = "profiles.xml"
     val filePath = Path.of(dir.path, fileName)
     setFileContent(filePath, content)
-    val f = dir.findChild(fileName)!!
+    var f = dir.findChild(fileName)
+    if (null == f) {
+      LocalFileSystem.getInstance().refreshFiles(listOf(dir))
+      f = dir.findChild(fileName)!!
+    }
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     return f
   }
 

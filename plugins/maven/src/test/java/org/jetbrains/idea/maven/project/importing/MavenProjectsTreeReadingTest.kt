@@ -294,7 +294,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     var roots = tree.rootProjects
     assertEquals(1, roots.size)
     assertEquals(2, tree.getModules(roots[0]).size)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -333,7 +333,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     var roots = tree.rootProjects
     val parentNode = roots[0]
     val childNode = tree.getModules(roots[0])[0]
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project1</artifactId>
                        <version>1</version>
@@ -342,7 +342,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    createModulePom("m", """
+    updateModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -484,7 +484,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                       <version>1</version>
                                       """.trimIndent())
     updateAll(projectPom)
-    createModulePom("m", """
+    updateModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -517,7 +517,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           """.trimIndent())
     updateAll(projectPom, child)
     assertEquals("child", tree.findProject(child)!!.mavenId.artifactId)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -563,7 +563,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                              """.trimIndent())
     updateAll(projectPom, child, subChild)
     assertEquals("subChild", tree.findProject(subChild)!!.mavenId.artifactId)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -762,7 +762,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     assertEquals(projectPom, roots[0].file)
     assertEquals(1, tree.getModules(roots[0]).size)
     assertEquals(child, tree.getModules(roots[0])[0].file)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -807,7 +807,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           """.trimIndent())
     updateAll(parent1, parent2, child)
     assertEquals("child1", tree.findProject(child)!!.mavenId.artifactId)
-    createModulePom("child", """
+    updateModulePom("child", """
       <groupId>test</groupId>
       <artifactId>${'$'}{childName}</artifactId>
       <version>1</version>
@@ -844,7 +844,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                           """.trimIndent())
     updateAll(projectPom, child)
     assertEquals("child", tree.findProject(child)!!.mavenId.artifactId)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent2</artifactId>
                        <version>1</version>
@@ -1021,7 +1021,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     assertEquals(1, roots.size)
     assertEquals(projectPom, roots[0].file)
     assertEquals(0, tree.getModules(roots[0]).size)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1057,7 +1057,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                                       """.trimIndent())
     updateAll(projectPom)
     assertEquals("m", tree.findProject(m)!!.mavenId.artifactId)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1067,7 +1067,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    createModulePom("m", """
+    updateModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -1222,7 +1222,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     assertEquals(m, roots[1].file)
     assertEquals("m", roots[1].mavenId.artifactId)
     assertEquals(0, tree.getModules(roots[0]).size)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1260,7 +1260,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     var roots = tree.rootProjects
     assertEquals(1, roots.size)
     assertEquals(1, tree.getModules(roots[0]).size)
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -2033,7 +2033,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     update(projectPom)
     assertUnorderedElementsAreEqual(
       tree.explicitProfiles.enabledProfiles, "one")
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -2048,7 +2048,7 @@ class MavenProjectsTreeReadingTest : MavenProjectsTreeTestCase() {
     update(projectPom)
     assertUnorderedElementsAreEqual(
       tree.explicitProfiles.enabledProfiles, "two")
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
