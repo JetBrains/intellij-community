@@ -8,7 +8,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
-import com.intellij.psi.JavaTokenType
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import com.intellij.psi.util.startOffset as psiTreeUtilStartOffset
 
@@ -52,7 +52,7 @@ private fun PsiElement.isMeaningful(): Boolean {
     return false
   }
   val elType = elementType
-  if (elType == JavaTokenType.LBRACE || elType == JavaTokenType.RBRACE) {
+  if (elType == KtTokens.LBRACE || elType == KtTokens.RBRACE) {
     return false
   }
   return true
