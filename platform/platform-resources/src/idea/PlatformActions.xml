@@ -850,6 +850,9 @@
         <action id="GotoAction" class="com.intellij.ide.actions.GotoActionAction"/>
         <separator/>
         <action id="HelpTopics" class="com.intellij.ide.actions.HelpTopicsAction" icon="AllIcons.Actions.Help"/>
+        <separator/>
+        <group id="LearnGroup"/>
+        <separator/>
         <action id="WhatsNewAction" class="com.intellij.ide.actions.WhatsNewAction"/>
         <action id="MeetNewUIAction" class="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUIAction"/>
         <action id="OnlineDocAction" class="com.intellij.ide.actions.OnlineDocAction"/>
