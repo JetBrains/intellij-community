@@ -59,7 +59,7 @@ internal object ExpectedTypeWeigher {
             MatchesExpectedType.MATCHES
 
         symbol !is KaCallableSymbol -> MatchesExpectedType.NON_TYPABLE
-        expectedType.isUnit -> MatchesExpectedType.MATCHES
+        expectedType.isUnitType -> MatchesExpectedType.MATCHES
         else -> MatchesExpectedType.matches(symbol.returnType, expectedType)
     }
 

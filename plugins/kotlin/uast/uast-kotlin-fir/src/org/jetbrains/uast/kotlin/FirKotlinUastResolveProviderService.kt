@@ -619,7 +619,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             val ktType = ktExpression.expressionType ?: return null
             // Again, Analysis API returns [Unit] for statements, so we need to filter out
             // some cases that are not actually expression's return type.
-            if (ktType.isUnit) {
+            if (ktType.isUnitType) {
                 val parent = ktExpression.parent
                 // E.g., AnnotationTarget.FIELD, reference to enum class is resolved to the constructor call,
                 // and then returned as Unit expression type. Same for path segments in a fully qualified name

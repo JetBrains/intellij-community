@@ -75,7 +75,7 @@ internal class FirNamedArgumentCompletionContributor(basicContext: FirBasicCompl
 
                         // suggest default values only for types from parameters with matching positions to not clutter completion
                         val typesAtCurrentPosition = indexedTypes.filter { it.index == currentArgumentIndex }.map { it.value }
-                        if (typesAtCurrentPosition.any { it.isBoolean }) {
+                        if (typesAtCurrentPosition.any { it.isBooleanType }) {
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.TRUE_KEYWORD.value))
                             add(createNamedArgumentWithValueLookupElement(name, KtTokens.FALSE_KEYWORD.value))
                         }

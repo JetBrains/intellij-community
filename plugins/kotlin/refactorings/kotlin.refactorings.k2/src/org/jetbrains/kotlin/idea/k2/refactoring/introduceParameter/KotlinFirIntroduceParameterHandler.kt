@@ -165,7 +165,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
             val expressionType = expressionTypeEvaluator.invoke(this)
             message = if (expressionType == null) {
                 KotlinBundle.message("error.text.expression.has.no.type")
-            } else if (expressionType.isUnit || expressionType.isNothing) {
+            } else if (expressionType.isUnitType || expressionType.isNothingType) {
                 KotlinBundle.message(
                     "cannot.introduce.parameter.of.0.type",
                     expressionType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT),

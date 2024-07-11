@@ -77,7 +77,7 @@ object DemorgansLawUtils {
 
     context(KaSession)
     private val KtExpression?.isBoolean: Boolean
-        get() = this != null && this.expressionType?.isBoolean == true
+        get() = this != null && this.expressionType?.isBooleanType == true
 
     fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
         parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression

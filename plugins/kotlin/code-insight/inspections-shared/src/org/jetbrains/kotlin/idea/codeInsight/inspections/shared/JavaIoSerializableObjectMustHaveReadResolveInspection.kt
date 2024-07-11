@@ -66,7 +66,7 @@ private fun KtObjectDeclaration.doesImplementReadResolve(): Boolean = analyze(th
     fun KaScope.isAnyReadResolve(vararg visibilities: KaSymbolVisibility): Boolean =
         callables { it.asString() == JAVA_IO_SERIALIZATION_READ_RESOLVE }.any {
             val functionLikeSymbol = it as? KaFunctionSymbol ?: return@any false
-            it.visibility in visibilities && functionLikeSymbol.valueParameters.isEmpty() && it.returnType.isAny
+            it.visibility in visibilities && functionLikeSymbol.valueParameters.isEmpty() && it.returnType.isAnyType
         }
     classSymbol.declaredMemberScope.isAnyReadResolve(KaSymbolVisibility.PUBLIC, KaSymbolVisibility.PRIVATE, KaSymbolVisibility.PROTECTED) ||
             classSymbol.memberScope.isAnyReadResolve(KaSymbolVisibility.PUBLIC, KaSymbolVisibility.PROTECTED)

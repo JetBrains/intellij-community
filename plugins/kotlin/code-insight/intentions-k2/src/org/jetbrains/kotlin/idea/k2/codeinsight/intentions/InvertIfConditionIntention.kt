@@ -62,7 +62,7 @@ internal class InvertIfConditionIntention :
         val condition = element.condition!!
         val newCondition = (condition as? KtQualifiedExpression)?.invertSelectorFunction() ?: condition.negate()
 
-        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.returnType?.isUnit == true
+        val isParentFunUnit = element.getParentOfType<KtNamedFunction>(true)?.returnType?.isUnitType == true
 
         val demorgansLawContext = if (condition is KtBinaryExpression && areAllOperandsBoolean(condition)) {
             getBinaryExpression(newCondition)?.let(::splitBooleanSequence)?.let { operands ->

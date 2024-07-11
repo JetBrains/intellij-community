@@ -63,7 +63,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                     }
                 }
 
-                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAny == true
+                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAnyType == true
                 for (symbolToProcess in symbolsToProcess) {
                     val originalOverriddenSymbol = symbolToProcess.fakeOverrideOriginal
                     val containingSymbol = originalOverriddenSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol

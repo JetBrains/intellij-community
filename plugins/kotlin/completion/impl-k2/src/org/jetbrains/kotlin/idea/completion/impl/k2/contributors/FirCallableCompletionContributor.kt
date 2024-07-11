@@ -617,7 +617,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     private fun KaJavaFieldSymbol.hasPrimitiveOrStringReturnType(): Boolean =
-        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isString
+        (psi as? PsiField)?.type is PsiPrimitiveType || returnType.isStringType
 
     context(KaSession)
     private fun KaCallableSymbol.hasConstEvaluationAnnotation(): Boolean =

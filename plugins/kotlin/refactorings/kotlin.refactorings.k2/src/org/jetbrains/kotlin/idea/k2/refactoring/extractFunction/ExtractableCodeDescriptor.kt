@@ -47,7 +47,7 @@ data class ExtractableCodeDescriptor(
 
     override val duplicates: List<DuplicateInfo<KaType>> by lazy { findDuplicates() }
 
-    private val isUnitReturn: Boolean = analyze(context) { returnType.isUnit }
+    private val isUnitReturn: Boolean = analyze(context) { returnType.isUnitType }
 
     override fun isUnitReturnType(): Boolean = isUnitReturn
 

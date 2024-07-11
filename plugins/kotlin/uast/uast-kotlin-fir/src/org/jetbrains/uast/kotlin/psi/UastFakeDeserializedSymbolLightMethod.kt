@@ -54,7 +54,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
         _isUnit.getOrBuild {
             analyzeForUast(context) {
                 val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast false
-                functionSymbol.returnType.isUnit
+                functionSymbol.returnType.isUnitType
             }
         }
 

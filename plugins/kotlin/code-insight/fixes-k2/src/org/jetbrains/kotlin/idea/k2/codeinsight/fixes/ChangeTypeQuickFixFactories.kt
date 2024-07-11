@@ -113,7 +113,7 @@ object ChangeTypeQuickFixFactories {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
                 (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }
             })
-            if (!candidateType.isUnit) {
+            if (!candidateType.isUnitType) {
                 add(candidateType)
             }
         }.distinct()
@@ -337,7 +337,7 @@ context(KaSession)
 fun KaType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
 
 context(KaSession)
-fun KaType.isNumberType(): Boolean = isPrimitive && !isBoolean && !isChar
+fun KaType.isNumberType(): Boolean = isPrimitive && !isBooleanType && !isCharType
 
 context(KaSession)
-fun KaType.isUNumberType(): Boolean = isUByte || isUShort || isUInt || isULong
+fun KaType.isUNumberType(): Boolean = isUByteType || isUShortType || isUIntType || isULongType

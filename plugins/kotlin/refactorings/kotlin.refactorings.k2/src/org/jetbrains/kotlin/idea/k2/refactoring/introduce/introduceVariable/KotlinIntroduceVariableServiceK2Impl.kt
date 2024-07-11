@@ -87,7 +87,7 @@ internal class KotlinIntroduceVariableServiceK2Impl(private val project: Project
     override fun hasUnitType(element: KtExpression): Boolean {
         return analyzeInModalWindow(element, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             val expressionType = element.expressionType
-            expressionType == null || expressionType.isUnit
+            expressionType == null || expressionType.isUnitType
         }
     }
 }

@@ -285,14 +285,14 @@ class CodeInliner(
     @OptIn(KaExperimentalApi::class)
     private fun arrayOfFunctionName(elementType: KaType): String {
         return when {
-            elementType.isInt -> "kotlin.intArrayOf"
-            elementType.isLong -> "kotlin.longArrayOf"
-            elementType.isShort -> "kotlin.shortArrayOf"
-            elementType.isChar -> "kotlin.charArrayOf"
-            elementType.isBoolean -> "kotlin.booleanArrayOf"
-            elementType.isByte -> "kotlin.byteArrayOf"
-            elementType.isDouble -> "kotlin.doubleArrayOf"
-            elementType.isFloat -> "kotlin.floatArrayOf"
+            elementType.isIntType -> "kotlin.intArrayOf"
+            elementType.isLongType -> "kotlin.longArrayOf"
+            elementType.isShortType -> "kotlin.shortArrayOf"
+            elementType.isCharType -> "kotlin.charArrayOf"
+            elementType.isBooleanType -> "kotlin.booleanArrayOf"
+            elementType.isByteType -> "kotlin.byteArrayOf"
+            elementType.isDoubleType -> "kotlin.doubleArrayOf"
+            elementType.isFloatType -> "kotlin.floatArrayOf"
             elementType is KaErrorType -> "kotlin.arrayOf"
             else -> "kotlin.arrayOf<" + elementType.render(position = Variance.INVARIANT) + ">"
         }

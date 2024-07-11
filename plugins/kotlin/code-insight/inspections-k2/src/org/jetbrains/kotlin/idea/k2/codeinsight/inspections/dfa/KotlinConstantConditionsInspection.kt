@@ -323,7 +323,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val expression = entry.expression ?: return false
         return analyze(expression) {
             val missingCases = whenExpr.computeMissingCases()
-            missingCases.isEmpty() && expression.expressionType?.isNothing == true
+            missingCases.isEmpty() && expression.expressionType?.isNothingType == true
         }
     }
 
@@ -555,7 +555,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 // While inner "return" is redundant, the "always true" warning is confusing
                 // probably separate inspection could report extra "return"
                 val ktType = expression.left?.expressionType
-                if (ktType != null && ktType.isNothing && ktType.isMarkedNullable) {
+                if (ktType != null && ktType.isNothingType && ktType.isMarkedNullable) {
                     return true
                 }
             }
@@ -675,7 +675,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
             val type = expression.right?.expressionType
-            return type != null && type.isNothing
+            return type != null && type.isNothingType
         }
     }
 }

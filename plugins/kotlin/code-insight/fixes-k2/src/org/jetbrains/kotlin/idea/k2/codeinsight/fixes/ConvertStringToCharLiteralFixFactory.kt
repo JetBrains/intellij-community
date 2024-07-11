@@ -45,7 +45,7 @@ internal object ConvertStringToCharLiteralFixFactory {
     context(KaSession)
     private fun getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
         if (element !is KtStringTemplateExpression) return emptyList()
-        if (!expectedType.isChar) return emptyList()
+        if (!expectedType.isCharType) return emptyList()
 
         val charLiteral = ConvertStringToCharLiteralUtils.prepareCharLiteral(element) ?: return emptyList()
         if (charLiteral.evaluate() == null) return emptyList()

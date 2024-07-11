@@ -18,7 +18,7 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
     override fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
             return super.isApplicable(expression) && analyze(expression) {
-              expression.expressionType?.isBoolean == true
+              expression.expressionType?.isBooleanType == true
             }
         }
     }

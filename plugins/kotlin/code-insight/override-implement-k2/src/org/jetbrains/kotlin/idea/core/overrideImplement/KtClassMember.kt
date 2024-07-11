@@ -273,7 +273,7 @@ private fun generateFunction(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsUnit = returnType.isUnit
+    val returnsUnit = returnType.isUnitType
 
     val body = if (bodyType != BodyType.NoBody) {
         val delegation = generateUnsupportedOrSuperCall(project, symbol, bodyType, returnsUnit)
@@ -296,7 +296,7 @@ private fun generateProperty(
     bodyType: BodyType,
 ): KtCallableDeclaration {
     val returnType = symbol.returnType
-    val returnsNotUnit = !returnType.isUnit
+    val returnsNotUnit = !returnType.isUnitType
 
     val body = if (bodyType != BodyType.NoBody) {
         buildString {

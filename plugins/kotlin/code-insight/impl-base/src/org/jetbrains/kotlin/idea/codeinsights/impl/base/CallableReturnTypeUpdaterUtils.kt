@@ -210,7 +210,7 @@ object CallableReturnTypeUpdaterUtils {
             } != null
         ) {
             // Note that `isNothing` returns true for both `Nothing` and `Nothing?`
-            val targetType = allTypes.firstOrNull { !it.isNothing } ?: allTypes.first()
+            val targetType = allTypes.firstOrNull { !it.isNothingType } ?: allTypes.first()
             return createByKtTypes(targetType)
         }
         return null
@@ -234,7 +234,7 @@ object CallableReturnTypeUpdaterUtils {
             context(KaSession)
             @OptIn(KaExperimentalApi::class)
             private fun createTypeByKtType(ktType: KaType): Type = Type(
-                isUnit = ktType.isUnit,
+                isUnit = ktType.isUnitType,
                 isError = ktType is KaErrorType,
                 longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),

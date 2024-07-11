@@ -110,9 +110,9 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
     private fun fetchTypeParameterInfo(parameter: KaTypeParameterSymbol): TypeParameterInfo {
         val upperBounds = parameter.upperBounds.map {
             val isNullableAnyOrFlexibleAny = if (it is KaFlexibleType) {
-                it.lowerBound.isAny && !it.lowerBound.isMarkedNullable && it.upperBound.isAny && it.upperBound.isMarkedNullable
+                it.lowerBound.isAnyType && !it.lowerBound.isMarkedNullable && it.upperBound.isAnyType && it.upperBound.isMarkedNullable
             } else {
-                it.isAny && it.isMarkedNullable
+                it.isAnyType && it.isMarkedNullable
             }
             val renderedType = it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             UpperBoundInfo(isNullableAnyOrFlexibleAny, renderedType)

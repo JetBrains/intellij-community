@@ -500,7 +500,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
         }
         val isUnitReturnType = analyze(function) {
             val functionalType = function.functionType
-            (functionalType as? KaFunctionType)?.returnType?.isUnit == true
+            (functionalType as? KaFunctionType)?.returnType?.isUnitType == true
         }
         if (!isUnitReturnType) {
             // We always must specify return explicitly

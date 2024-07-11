@@ -205,13 +205,13 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
                 val setterIsExpressionForFunction = methodIsExpressionForFunction(qualifiedOrCall)
                 val setterIsExpressionForPropertyAccessor = methodIsExpressionForPropertyAccessor(qualifiedOrCall)
                 if (setterIsExpressionForFunction || setterIsExpressionForPropertyAccessor) {
-                    if (!returnType.isUnit) {
+                    if (!returnType.isUnitType) {
                         // Covered with the test "dontReplaceSetterForFunctionWithExpressionBody"
                         return
                     }
                     convertExpressionToBlockBodyData = ConvertExpressionToBlockBodyData(
-                        returnType.isUnit,
-                        returnType.isNothing,
+                        returnType.isUnitType,
+                        returnType.isNothingType,
                         returnType.isMarkedNullable,
                         returnType.render(position = Variance.OUT_VARIANCE)
                     )

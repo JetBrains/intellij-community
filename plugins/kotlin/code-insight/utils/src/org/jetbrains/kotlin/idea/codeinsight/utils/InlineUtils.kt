@@ -72,7 +72,7 @@ context(KaSession)
 private fun isArrayGeneratorConstructorCall(symbol: KaFunctionSymbol): Boolean {
     fun checkParameters(symbol: KaFunctionSymbol): Boolean {
         return symbol.valueParameters.size == 2
-                && symbol.valueParameters[0].returnType.isInt
+                && symbol.valueParameters[0].returnType.isIntType
                 && symbol.valueParameters[1].returnType.isFunctionType
     }
 

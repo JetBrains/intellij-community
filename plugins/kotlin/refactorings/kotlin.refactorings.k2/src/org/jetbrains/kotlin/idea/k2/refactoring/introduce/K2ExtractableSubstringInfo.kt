@@ -41,7 +41,7 @@ class K2ExtractableSubstringInfo(
         return expr.expressionType ?: stringType
     }
 
-    override val isString: Boolean = isStr ?: analyze(startEntry) { guessLiteralType().isString }
+    override val isString: Boolean = isStr ?: analyze(startEntry) { guessLiteralType().isStringType }
 
     override fun copy(
         newStartEntry: KtStringTemplateEntry,

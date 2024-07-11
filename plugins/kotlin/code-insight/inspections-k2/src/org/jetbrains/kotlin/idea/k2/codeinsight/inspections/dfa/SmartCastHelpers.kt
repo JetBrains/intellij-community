@@ -113,8 +113,8 @@ private fun getConditionScopes(expr: KtExpression, value: Boolean?): List<KtElem
                         val result = mutableListOf<KtExpression>()
                         if (thenExpression != null && value != false) result += thenExpression
                         if (elseExpression != null && value != true) result += elseExpression
-                        val nothingType = thenExpression?.getKotlinType()?.isNothing == true ||
-                                elseExpression?.getKotlinType()?.isNothing == true
+                        val nothingType = thenExpression?.getKotlinType()?.isNothingType == true ||
+                                elseExpression?.getKotlinType()?.isNothingType == true
                         if (nothingType) {
                             var next = gParent.nextSibling
                             while (next != null) {

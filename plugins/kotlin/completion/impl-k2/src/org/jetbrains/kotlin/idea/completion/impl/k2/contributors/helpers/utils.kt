@@ -124,7 +124,7 @@ internal fun collectNonExtensionsForType(
 
 context(KaSession)
 private val KaSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSymbol>
-    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
+    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnitType })
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)

@@ -53,7 +53,7 @@ fun isRedundantUnit(referenceExpression: KtReferenceExpression): Boolean {
             analyze(prev) {
                 val ktType = prev.expressionType
                 if (ktType != null) {
-                    return ktType.isUnit && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
+                    return ktType.isUnitType && !ktType.isMarkedNullable && prev.canBeUsedAsValue()
                 }
             }
 

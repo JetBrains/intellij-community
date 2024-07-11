@@ -226,11 +226,11 @@ object K2CreateClassFromUsageBuilder {
 
     context (KaSession)
     private fun getClassKindFilter(expectedType: KaType, containingDeclaration: PsiElement): (ClassKind) -> Boolean {
-        if (expectedType.isAny) {
+        if (expectedType.isAnyType) {
             return { _ -> true }
         }
 
-        val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.isUnit
+        val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.isUnitType
         val isEnum = expectedType is KaClassType && expectedType.isEnum()
 
         if (!(canHaveSubtypes || isEnum) || expectedType is KaTypeParameterType) return { _ -> false }

@@ -56,7 +56,7 @@ internal class RemoveExplicitTypeIntention :
     context(KaSession)
     override fun prepareContext(element: KtDeclaration): Unit? = when {
         element is KtParameter -> true
-        element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnit
+        element is KtNamedFunction && element.hasBlockBody() -> element.returnType.isUnitType
         element is KtCallableDeclaration && publicReturnTypeShouldBePresentInApiMode(element) -> false
         else -> !element.isExplicitTypeReferenceNeededForTypeInferenceByAnalyze()
     }.asUnit

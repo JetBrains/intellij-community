@@ -125,7 +125,7 @@ internal class RedundantElseInIfInspection : KotlinApplicableInspectionBase.Simp
     private fun KtExpression.isReturnOrNothing(): Boolean {
         val lastExpression = (this as? KtBlockExpression)?.statements?.lastOrNull() ?: this
         return analyze(lastExpression) {
-            lastExpression.expressionType?.isNothing == true
+            lastExpression.expressionType?.isNothingType == true
         }
     }
 }

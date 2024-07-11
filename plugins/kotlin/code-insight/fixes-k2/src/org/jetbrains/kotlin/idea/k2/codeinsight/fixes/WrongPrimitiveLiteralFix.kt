@@ -35,8 +35,8 @@ data class PrimitiveLiteralData(
 context(KaSession)
 fun preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiteralData {
     val typeName = type.expandedSymbol?.classId?.asSingleFqName()?.toUnsafe()
-    val expectedTypeIsFloat = type.isFloat
-    val expectedTypeIsDouble = type.isDouble
+    val expectedTypeIsFloat = type.isFloatType
+    val expectedTypeIsDouble = type.isDoubleType
     val expectedTypeIsUnsigned = type.isUNumberType()
 
     val constValue =
@@ -60,7 +60,7 @@ fun preparePrimitiveLiteral(element: KtExpression, type: KaType): PrimitiveLiter
                 append(element.text.trimEnd('l', 'L', 'u'))
             }
 
-            if (type.isLong) {
+            if (type.isLongType) {
                 append('L')
             }
         }

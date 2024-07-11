@@ -28,7 +28,7 @@ object NegatedBinaryExpressionSimplificationUtils {
             @OptIn(KaAllowAnalysisFromWriteAction::class)
             allowAnalysisFromWriteAction {
                 analyze(expression) {
-                    fun KaType?.isFloatingPoint() = this != null && (isFloat || isDouble)
+                    fun KaType?.isFloatingPoint() = this != null && (isFloatType || isDoubleType)
                     return !expression.left?.expressionType.isFloatingPoint() && !expression.right?.expressionType.isFloatingPoint()
                 }
             }

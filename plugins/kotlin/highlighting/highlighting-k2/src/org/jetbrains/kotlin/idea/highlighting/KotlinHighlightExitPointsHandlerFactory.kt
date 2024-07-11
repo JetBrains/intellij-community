@@ -36,7 +36,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
         allowAnalysisOnEdt {
             analyze(functionLiteral) {
                 val returnType = functionLiteral.symbol.returnType
-                !(returnType.isUnit || returnType.isNothing)
+                !(returnType.isUnitType || returnType.isNothingType)
             }
         }
 }

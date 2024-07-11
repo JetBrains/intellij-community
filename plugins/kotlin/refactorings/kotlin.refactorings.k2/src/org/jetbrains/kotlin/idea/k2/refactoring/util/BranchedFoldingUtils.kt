@@ -145,7 +145,7 @@ object BranchedFoldingUtils {
             }
 
             is KtCallExpression -> {
-                e.expressionType?.isNothing ?: false
+                e.expressionType?.isNothingType ?: false
             }
 
             is KtBreakExpression, is KtContinueExpression, is KtThrowExpression, is KtReturnExpression -> true
@@ -349,7 +349,7 @@ object BranchedFoldingUtils {
                 getFoldableReturnsFromBranches(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.expressionType?.isNothing == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
+            if (expression.expressionType?.isNothingType == true) FoldableReturns(emptyList(), true) else FoldableReturns.NotFoldable
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> FoldableReturns(emptyList(), true)
         else -> FoldableReturns.NotFoldable
@@ -402,7 +402,7 @@ object BranchedFoldingUtils {
                 getFoldableReturns(expression.tryBlockAndCatchBodies())
         }
         is KtCallExpression -> {
-            if (expression.expressionType?.isNothing == true) emptyList() else null
+            if (expression.expressionType?.isNothingType == true) emptyList() else null
         }
         is KtBreakExpression, is KtContinueExpression, is KtThrowExpression -> emptyList()
         else -> null

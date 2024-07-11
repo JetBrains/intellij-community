@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtIfExpression
 
 internal class RedundantIfInspection : RedundantIfInspectionBase() {
     override fun isBooleanExpression(expression: KtExpression): Boolean = analyze(expression) {
-      expression.expressionType?.isBoolean == true
+      expression.expressionType?.isBooleanType == true
     }
 
     @OptIn(KaAllowAnalysisOnEdt::class)
@@ -33,6 +33,6 @@ internal class RedundantIfInspection : RedundantIfInspectionBase() {
     context(KaSession)
     private fun KtExpression?.isFloatingPointType(): Boolean {
         val type = this?.expressionType ?: return false
-        return type.isFloat || type.isDouble
+        return type.isFloatType || type.isDoubleType
     }
 }
