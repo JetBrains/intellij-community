@@ -23,7 +23,6 @@ import org.apache.maven.bridge.MavenRepositorySystem;
 import org.apache.maven.cli.MavenCli;
 import org.apache.maven.cli.internal.extension.model.CoreExtension;
 import org.apache.maven.execution.*;
-import org.apache.maven.internal.impl.DefaultSession;
 import org.apache.maven.internal.impl.DefaultSessionFactory;
 import org.apache.maven.internal.impl.InternalMavenSession;
 import org.apache.maven.internal.impl.InternalSession;
@@ -589,11 +588,17 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
       new IdeaMavenSessionBuilderSupplier(repositorySystem, workspaceMap, indicator, request);
     try (RepositorySystemSession.CloseableSession repositorySystemSession = sessionBuilderSupplier.get().build()) {
       MavenSession mavenSession = new MavenSession(repositorySystemSession, request, result);
-      InternalSession session = factory.newSession(mavenSession);
-      mavenSession.setSession(session);
+      InternalSession internalSession = factory.newSession(mavenSession);
+
+      //noinspection SSBasedInspection
+      internalSession.withRemoteRepositories(request.getRemoteRepositories().stream().map(
+        r -> internalSession.getRemoteRepository(RepositoryUtils.toRepo(r))
+      ).collect(Collectors.toList()));
+      mavenSession.setSession(internalSession);
       sessionScope.seed(MavenSession.class, mavenSession);
       sessionScope.seed(Session.class, mavenSession.getSession());
       sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(mavenSession.getSession()));
+      sessionScope.seed(InternalSession.class, internalSession);
 
 
       legacySupport.setSession(mavenSession);
@@ -608,35 +613,6 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
     return result;
   }
 
-
-  @Deprecated
-  public void executeWithMavenSession(MavenExecutionRequest request, Runnable runnable) {
-    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-    SessionScope sessionScope = getComponent(SessionScope.class);
-    sessionScope.enter();
-
-    try {
-      MavenSession mavenSession = createMavenSession(request, maven);
-      sessionScope.seed(MavenSession.class, mavenSession);
-      sessionScope.seed(Session.class, mavenSession.getSession());
-      sessionScope.seed(InternalMavenSession.class, InternalMavenSession.from(mavenSession.getSession()));
-      LegacySupport legacySupport = getComponent(LegacySupport.class);
-      MavenSession oldSession = legacySupport.getSession();
-      legacySupport.setSession(mavenSession);
-
-      notifyAfterSessionStart(mavenSession);
-      // adapted from {@link DefaultMaven#doExecute(MavenExecutionRequest)}
-      try {
-        runnable.run();
-      }
-      finally {
-        legacySupport.setSession(oldSession);
-      }
-    }
-    finally {
-      sessionScope.exit();
-    }
-  }
 
   private void notifyAfterSessionStart(MavenSession mavenSession) {
     try {
@@ -1143,19 +1119,12 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
   private MavenArtifactResolveResult resolveArtifactsTransitively(
     @NotNull List<MavenArtifactInfo> artifacts,
     @NotNull List<MavenRemoteRepository> remoteRepositories) {
-    DefaultSessionFactory sessionFactory = getComponent(DefaultSessionFactory.class);
     MavenExecutionRequest request = createRequest(null, null, null);
-    request.setRemoteRepositories(convertRepositories(remoteRepositories));
-    DefaultMaven maven = (DefaultMaven)getComponent(Maven.class);
-    MavenSession mavenSession = createMavenSession(request, maven);
-    Session session = mavenSession.getSession();
 
     Map<org.apache.maven.api.Artifact, Path> resolvedArtifactMap = new HashMap<>();
-    SessionScope sessionScope = getComponent(SessionScope.class);
-    try {
-      sessionScope.enter();
-      sessionScope.seed(DefaultSession.class, (DefaultSession)session);
 
+    executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, mavenSession -> {
+      Session session = mavenSession.getSession();
       for (MavenArtifactInfo mavenArtifactInfo : artifacts) {
         ArtifactCoordinate coordinate = session.createArtifactCoordinate(
           mavenArtifactInfo.getGroupId(),
@@ -1182,10 +1151,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
 
         resolvedArtifactMap.putAll(resolvedChildren.getArtifacts());
       }
-    }
-    finally {
-      sessionScope.exit();
-    }
+    });
+
 
     File localRepositoryFile = getLocalRepositoryFile();
     List<MavenArtifact> resolvedArtifacts = new ArrayList<>();

@@ -22,6 +22,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.model.MavenWorkspaceMap;
 import org.jetbrains.idea.maven.server.security.ChecksumUtil;
 
 import java.io.*;
@@ -109,7 +110,7 @@ public final class Maven40EffectivePomDumper {
     try {
       final MavenExecutionRequest request = embedder.createRequest(file, activeProfiles, inactiveProfiles);
 
-      embedder.executeWithMavenSession(request, () -> {
+      embedder.executeWithMavenSession(request, MavenWorkspaceMap.empty(), null, session -> {
         try {
           // copied from DefaultMavenProjectBuilder.buildWithDependencies
           ProjectBuilder builder = embedder.getComponent(ProjectBuilder.class);
