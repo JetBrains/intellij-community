@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressManager
@@ -64,8 +65,10 @@ import java.nio.file.Paths
 import kotlin.io.path.div
 import kotlin.io.path.pathString
 
-private data class TargetAndPath(val target: TargetEnvironmentConfiguration?,
-                                 val path: FullPathOnTarget?)
+private data class TargetAndPath(
+  val target: TargetEnvironmentConfiguration?,
+  val path: FullPathOnTarget?,
+)
 
 
 val BASE_DIR: Key<Path> = Key.create("PYTHON_PROJECT_BASE_PATH")
@@ -98,9 +101,11 @@ fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
  * @param context used to get [BASE_DIR] in [com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.suggestLocalHomePaths]
  */
 @JvmOverloads
-fun detectSystemWideSdks(module: Module?,
-                         existingSdks: List<Sdk>,
-                         context: UserDataHolder = UserDataHolderBase()): List<PyDetectedSdk> {
+fun detectSystemWideSdks(
+  module: Module?,
+  existingSdks: List<Sdk>,
+  context: UserDataHolder = UserDataHolderBase(),
+): List<PyDetectedSdk> {
   if (module != null && module.isDisposed) return emptyList()
   val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
@@ -110,10 +115,12 @@ fun detectSystemWideSdks(module: Module?,
                                          { it.homePath }).reversed())
 }
 
-private fun PythonSdkFlavor<*>.detectSdks(module: Module?,
-                                          context: UserDataHolder,
-                                          targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
-                                          existingPaths: HashSet<TargetAndPath>): List<PyDetectedSdk> =
+private fun PythonSdkFlavor<*>.detectSdks(
+  module: Module?,
+  context: UserDataHolder,
+  targetModuleSitsOn: TargetConfigurationWithLocalFsAccess?,
+  existingPaths: HashSet<TargetAndPath>,
+): List<PyDetectedSdk> =
   suggestLocalHomePaths(module, context)
     .mapNotNull {
       // If module sits on target, this target maps its path.
@@ -140,11 +147,13 @@ fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
 fun detectAssociatedEnvironments(module: Module, existingSdks: List<Sdk>, context: UserDataHolder): List<PyDetectedSdk> =
   detectVirtualEnvs(module, existingSdks, context).filter { it.isAssociatedWithModule(module) }
 
-fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, ExecutionException>,
-                            existingSdks: List<Sdk>,
-                            baseSdk: Sdk?,
-                            associatedProjectPath: String?,
-                            suggestedSdkName: String?): Sdk? {
+fun createSdkByGenerateTask(
+  generateSdkHomePath: Task.WithResult<String, ExecutionException>,
+  existingSdks: List<Sdk>,
+  baseSdk: Sdk?,
+  associatedProjectPath: String?,
+  suggestedSdkName: String?,
+): Sdk? {
   val homeFile = try {
     val homePath = ProgressManager.getInstance().run(generateSdkHomePath)
     StandardFileSystems.local().refreshAndFindFileByPath(homePath) ?: throw ExecutionException(
@@ -234,6 +243,7 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 var Module.pythonSdk: Sdk?
   get() = PythonSdkUtil.findPythonSdk(this)
   set(value) {
+    thisLogger().info("Setting PythonSDK $value to module $this")
     ModuleRootModificationUtil.setModuleSdk(this, value)
     PyUiUtil.clearFileLevelInspectionResults(project)
   }
@@ -397,11 +407,13 @@ fun Sdk.getOrCreateAdditionalData(): PythonSdkAdditionalData {
 }
 
 
-private fun filterSuggestedPaths(flavor: PythonSdkFlavor<*>,
-                                 existingSdks: List<Sdk>,
-                                 module: Module?,
-                                 context: UserDataHolder,
-                                 mayContainCondaEnvs: Boolean = false): List<PyDetectedSdk> {
+private fun filterSuggestedPaths(
+  flavor: PythonSdkFlavor<*>,
+  existingSdks: List<Sdk>,
+  module: Module?,
+  context: UserDataHolder,
+  mayContainCondaEnvs: Boolean = false,
+): List<PyDetectedSdk> {
   val targetModuleSitsOn = module?.let { PythonInterpreterTargetEnvironmentFactory.getTargetModuleResidesOn(it) }
   val existingPaths = existingSdks.mapTo(HashSet()) { TargetAndPath(it.targetEnvConfiguration, it.homePath) }
   val baseDirFromContext = context.getUserData(BASE_DIR)

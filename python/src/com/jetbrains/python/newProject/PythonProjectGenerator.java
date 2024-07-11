@@ -183,9 +183,10 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
 
     // If we deal with remote project -- use remote manager to configure it
     final Sdk sdk = settings.getSdk();
-
+    LOGGER.info(String.format("Wizard created PythonSDK %s", sdk));
     if (sdk instanceof PyLazySdk) {
       final Sdk createdSdk = ((PyLazySdk)sdk).create();
+      LOGGER.info(String.format("Lazy PythonSDK generated sdk: %s", createdSdk));
       settings.setSdk(createdSdk);
       if (createdSdk != null && !useNewInterpreterCreationUi()) {
         SdkConfigurationUtil.addSdk(createdSdk);
