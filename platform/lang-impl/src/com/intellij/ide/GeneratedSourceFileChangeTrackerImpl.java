@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtilCore;
@@ -18,9 +18,9 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.EditorNotifications;
-import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -34,16 +34,16 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
   private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
 
   @SuppressWarnings("StaticNonFinalField")
-  // static non final by design
+  // static non-final by design
   public static boolean IN_TRACKER_TEST;
 
-  public GeneratedSourceFileChangeTrackerImpl(@NotNull Project project) {
+  public GeneratedSourceFileChangeTrackerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
-    myCheckingQueue = new SingleAlarm(this::checkFiles, 500, Alarm.ThreadToUse.POOLED_THREAD, project);
+    myCheckingQueue = SingleAlarm.singleAlarm(500, coroutineScope, this::checkFiles);
   }
 
   @TestOnly
-  void waitForAlarm(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
+  void waitForAlarm(long timeout, @NotNull TimeUnit timeUnit) {
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not wait for the alarm under write action");
     }
@@ -53,7 +53,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
   @TestOnly
   public void cancelAllAndWait(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
     myFilesToCheck.clear();
-    myCheckingQueue.cancelAllRequests();
+    myCheckingQueue.cancel();
     waitForAlarm(timeout, timeUnit);
   }
 
@@ -152,7 +152,7 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
     final int[] i = {0};
 
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
-      ReadAction.nonBlocking(() -> {
+    ReadAction.nonBlocking(() -> {
       if (myProject.isDisposed()) return;
       final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
       try {
@@ -168,7 +168,8 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
 
           i[0]++;
         }
-      } finally {
+      }
+      finally {
         // In case of canceled exception or (really) any other exception
         // some files could be already processed
         // let's not wait for the next available read lock slot
