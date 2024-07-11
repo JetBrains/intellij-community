@@ -73,7 +73,8 @@ internal class NewUsersOnboardingService(private val project: Project, private v
       "runWidget",
       "searchEverywhere",
       "toolWindowLayouts",
-      "moreToolWindows"
+      "moreToolWindows",
+      "learnToolWindow"
     )
   }
 
