@@ -334,7 +334,7 @@ fun registerRetargetJobOnPotentialCandidates(
             classOrObjectSymbol = declaration.getParentOfType<KtFunction>(true)?.symbol as? KaFunctionSymbol
             classOrObjectSymbol?.valueParameters?.filter { it.name.asString() == name }?.filter { filterCandidate(it) }?.forEach(retargetJob)
             block.statements.mapNotNull {
-                if (it.name != name) return@mapNotNull null
+                if (it == declaration || it.name != name) return@mapNotNull null
                 val isAccepted = when (declarationSymbol) {
                     is KaClassSymbol -> it is KtClassOrObject
                     is KaPropertySymbol, is KaJavaFieldSymbol, is KaLocalVariableSymbol -> it is KtProperty

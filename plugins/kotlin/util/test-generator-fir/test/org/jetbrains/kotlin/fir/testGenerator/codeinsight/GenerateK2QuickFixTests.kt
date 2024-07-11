@@ -178,7 +178,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/renameToRem", pattern = pattern)
             model("$idea/quickfix/renameToUnderscore", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/renameUnresolvedReference", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/reorderParameters", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/reorderParameters", pattern = pattern)
             model("$idea/quickfix/replaceJvmFieldWithConst", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/restrictedRetentionForExpressionAnnotation", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/simplifyComparison", pattern = pattern)
