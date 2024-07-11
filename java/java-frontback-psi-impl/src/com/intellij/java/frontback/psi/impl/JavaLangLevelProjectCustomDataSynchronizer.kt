@@ -38,3 +38,6 @@ class LanguageLevelHolder(val languageLevel: LanguageLevel)
 
 @Serializable
 class NullableLanguageLevelHolder(val languageLevel: LanguageLevel?)
+
+@Serializable
+class ClassFileInformation(val isClassFile: Boolean?)

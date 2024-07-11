@@ -2811,6 +2811,7 @@
     <postStartupActivity implementation="com.intellij.ide.FileNotInSourceRootChecker"/>
 
     <virtualFileCustomDataProvider implementation="com.intellij.openapi.roots.impl.JavaLangLevelVirtualFileCustomDataProvider"/>
+    <virtualFileCustomDataProvider implementation="com.intellij.openapi.roots.impl.JavaClassVirtualFileCustomDataProvider"/>
 
     <spellchecker.dictionary.checker implementation="com.intellij.java.frameworks.MavenDictionaryChecker"/>
 
