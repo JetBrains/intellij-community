@@ -80,7 +80,7 @@ class ProjectToolbarWidgetAction : ExpandableComboAction(), DumbAware {
     e.presentation.putClientProperty(projectKey, project)
     val customizer = ProjectWindowCustomizerService.getInstance()
     if (project != null && customizer.isAvailable()) {
-      e.presentation.putClientProperty(LEFT_ICONS_KEY, listOf(customizer.getProjectIcon(project)))
+      e.presentation.icon = customizer.getProjectIcon(project)
     }
   }
 

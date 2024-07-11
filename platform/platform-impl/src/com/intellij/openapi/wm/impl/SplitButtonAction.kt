@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -14,9 +15,12 @@ import javax.swing.JComponent
 
 abstract class SplitButtonAction : AnAction(), CustomComponentAction {
 
+  @Suppress("DuplicatedCode") // SplitButtonAction
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
-    model.addActionListener { actionEvent -> buttonPressed(actionEvent, actionEvent.source as JComponent, presentation, place) }
+    model.addActionListener { actionEvent ->
+      buttonPressed(actionEvent, actionEvent.source as JComponent, presentation, place)
+    }
     model.addExpandListener { actionEvent ->
       val combo = (actionEvent.source as? ToolbarSplitButton) ?: return@addExpandListener
       val dataContext = DataManager.getInstance().getDataContext(combo)
@@ -36,22 +40,17 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
     return ToolbarSplitButton(model)
   }
 
+  @Suppress("DuplicatedCode")
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    super.updateCustomComponent(component, presentation)
     component.isEnabled = presentation.isEnabled
-    (component as? AbstractToolbarCombo)?.let {
-      it.text = presentation.text
-      it.toolTipText = presentation.description
-      val pLeftIcons = presentation.getClientProperty(ExpandableComboAction.LEFT_ICONS_KEY)
-      val pRightIcons = presentation.getClientProperty(ExpandableComboAction.RIGHT_ICONS_KEY)
-      it.leftIcons = when {
-        pLeftIcons != null -> pLeftIcons
-        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon!!)
-        presentation.icon != null -> listOf(presentation.icon!!)
-        else -> emptyList()
-      }
-      if (pRightIcons != null) it.rightIcons = pRightIcons
-    }
+    if (component !is AbstractToolbarCombo) return
+    component.text = presentation.text
+    component.toolTipText = presentation.description
+    component.leftIcons = listOfNotNull(
+      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
+      else presentation.icon
+    )
+    component.rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
   }
 
   protected abstract fun createPopup(event: AnActionEvent): JBPopup?
@@ -69,5 +68,4 @@ abstract class SplitButtonAction : AnAction(), CustomComponentAction {
       return super.isExpandButtonSelected() || isPopupShown
     }
   }
-
 }

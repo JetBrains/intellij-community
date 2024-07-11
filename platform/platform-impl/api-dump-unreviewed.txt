@@ -19951,16 +19951,12 @@ f:com.intellij.openapi.wm.impl.DockToolWindowAction
 a:com.intellij.openapi.wm.impl.ExpandableComboAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
-- sf:Companion:com.intellij.openapi.wm.impl.ExpandableComboAction$Companion
-- sf:LEFT_ICONS_KEY:com.intellij.openapi.util.Key
-- sf:RIGHT_ICONS_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
 - a:createPopup(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.ui.popup.JBPopup
 - p:createToolbarComboButton(com.intellij.openapi.wm.impl.ToolbarComboButtonModel):com.intellij.openapi.wm.impl.ToolbarComboButton
 - updateCustomComponent(javax.swing.JComponent,com.intellij.openapi.actionSystem.Presentation):V
-f:com.intellij.openapi.wm.impl.ExpandableComboAction$Companion
 f:com.intellij.openapi.wm.impl.FocusManagerImpl
 - com.intellij.openapi.wm.IdeFocusManager
 - com.intellij.openapi.Disposable

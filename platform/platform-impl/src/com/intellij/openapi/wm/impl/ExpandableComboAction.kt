@@ -6,21 +6,15 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.Key
-import javax.swing.Icon
 import javax.swing.JComponent
 
 abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
-
-  companion object {
-    @JvmField val LEFT_ICONS_KEY = Key.create<List<Icon>>("leftIcons")
-    @JvmField val RIGHT_ICONS_KEY = Key.create<List<Icon>>("rightIcons")
-  }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
     val model = MyPopupModel()
@@ -45,22 +39,17 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
     return createToolbarComboButton(model)
   }
 
+  @Suppress("DuplicatedCode")
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    super.updateCustomComponent(component, presentation)
     component.isEnabled = presentation.isEnabled
-    (component as? AbstractToolbarCombo)?.let {
-      it.text = presentation.text
-      it.toolTipText = presentation.description
-      val pLeftIcons = presentation.getClientProperty(LEFT_ICONS_KEY)
-      val pRightIcons = presentation.getClientProperty(RIGHT_ICONS_KEY)
-      it.leftIcons = when {
-        pLeftIcons != null -> pLeftIcons
-        !presentation.isEnabled && presentation.disabledIcon != null -> listOf(presentation.disabledIcon!!)
-        presentation.icon != null -> listOf(presentation.icon!!)
-        else -> emptyList()
-      }
-      if (pRightIcons != null) it.rightIcons = pRightIcons
-    }
+    if (component !is AbstractToolbarCombo) return
+    component.text = presentation.text
+    component.toolTipText = presentation.description
+    component.leftIcons = listOfNotNull(
+      if (!presentation.isEnabled) presentation.disabledIcon ?: presentation.icon
+      else presentation.icon
+    )
+    component.rightIcons = listOfNotNull(presentation.getClientProperty(ActionUtil.SECONDARY_ICON))
   }
 
   protected open fun createToolbarComboButton(model: ToolbarComboButtonModel): ToolbarComboButton {

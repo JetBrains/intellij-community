@@ -11,6 +11,7 @@ import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.ide.ui.laf.darcula.ui.MainToolbarComboBoxButtonUI
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -24,10 +25,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.wm.impl.ExpandableComboAction.Companion.LEFT_ICONS_KEY
-import com.intellij.openapi.wm.impl.ExpandableComboAction.Companion.RIGHT_ICONS_KEY
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -321,27 +319,9 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
         presentation.selectedIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
         presentation.hoveredIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
         presentation.disabledIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
-
-        updateIconsIfNecessary(presentation, LEFT_ICONS_KEY)
-        updateIconsIfNecessary(presentation, RIGHT_ICONS_KEY)
-      }
-
-      private fun updateIconsIfNecessary(presentation: Presentation, key: Key<List<Icon>>) {
-        presentation.getClientProperty(key)
-          ?.let { getUpdatedIcons(it) }
-          ?.let { presentation.putClientProperty(key, it) }
-      }
-
-      private fun getUpdatedIcons(icons: List<Icon>): List<Icon>? {
-        val res = mutableListOf<Icon>()
-        var anyChanged = false
-        icons.forEach { src ->
-          val updated = iconUpdater.updateIcon(src)
-          res.add(updated)
-          if (updated != src) anyChanged = true
+        presentation.getClientProperty(ActionUtil.SECONDARY_ICON)?.let {
+          presentation.putClientProperty(ActionUtil.SECONDARY_ICON, iconUpdater.updateIcon(it))
         }
-
-        return if (anyChanged) res else null
       }
     }
   }

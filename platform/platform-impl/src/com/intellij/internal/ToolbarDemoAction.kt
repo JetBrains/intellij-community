@@ -8,10 +8,10 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.ExpandableComboAction.Companion.LEFT_ICONS_KEY
 import com.intellij.openapi.wm.impl.SplitButtonAction
 import com.intellij.openapi.wm.impl.headertoolbar.createDemoToolbar
 import com.intellij.ui.JBColor
+import com.intellij.ui.RowIcon
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import javax.swing.JComponent
@@ -67,12 +67,12 @@ private class TestSplitButtonAction: SplitButtonAction() {
     super.updateCustomComponent(component, presentation)
     (component as? ToolbarSplitButton)?.apply {
       text = "Split button"
-      presentation.getClientProperty(LEFT_ICONS_KEY)?.let { leftIcons = it }
+      presentation.icon?.let { leftIcons = listOf(it) }
     }
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.putClientProperty(LEFT_ICONS_KEY, listOf(AllIcons.General.Mouse, AllIcons.General.Layout))
+    e.presentation.icon = RowIcon(AllIcons.General.Mouse, AllIcons.General.Layout)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

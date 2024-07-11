@@ -8,6 +8,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.customization.groupContainsAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -17,8 +18,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.wm.impl.ExpandableComboAction
-import com.intellij.openapi.wm.impl.ToolbarComboButton
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.ui.RowIcon
 import com.intellij.ui.util.maximumWidth
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.GitVcs
@@ -35,7 +36,6 @@ import javax.swing.Icon
 import javax.swing.JComponent
 
 private val GIT_WIDGET_STATE_KEY = Key.create<GitWidgetState>("git-widget-state")
-private val SYNC_STATUS_KEY = Key.create<GitBranchSyncStatus>("git-widget-branch-sync-status")
 
 private val WIDGET_ICON: Icon = AllIcons.General.Vcs
 
@@ -88,29 +88,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
   }
 
   override fun updateCustomComponent(component: JComponent, presentation: Presentation) {
-    val widget = component as? ToolbarComboButton ?: return
-    widget.text = presentation.text
-    widget.toolTipText = presentation.description
-    widget.leftIcons = listOfNotNull(presentation.icon)
-    val schema = CustomActionsSchema.getInstance()
-
-    val rightIcons = mutableListOf<Icon>()
-
-    val syncStatus = presentation.getClientProperty(SYNC_STATUS_KEY)
-
-    val showIncoming = !actionsWithIncomingOutgoingEnabled
-                       || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.update.project", schema)
-    if (showIncoming && syncStatus?.incoming == true) {
-      rightIcons.add(DvcsImplIcons.Incoming)
-    }
-
-    val showOutgoing = !actionsWithIncomingOutgoingEnabled
-                       || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.push", schema)
-    if (showOutgoing && syncStatus?.outgoing == true) {
-      rightIcons.add(DvcsImplIcons.Outgoing)
-    }
-
-    widget.rightIcons = rightIcons
+    super.updateCustomComponent(component, presentation)
   }
 
   override fun update(e: AnActionEvent) {
@@ -128,6 +106,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
       }
     }
     e.presentation.putClientProperty(GIT_WIDGET_STATE_KEY, state)
+    var syncStatus: GitBranchSyncStatus? = null
 
     when (state) {
       GitWidgetState.NotActivated,
@@ -161,9 +140,25 @@ internal class GitToolbarWidgetAction : ExpandableComboAction(), DumbAware {
           icon = presentation.icon ?: WIDGET_ICON
           text = presentation.text.also { updatePlaceholder(project, it) }
           description = presentation.description
-          putClientProperty(SYNC_STATUS_KEY, presentation.syncStatus)
+          syncStatus = presentation.syncStatus
         }
       }
+    }
+    val schema = CustomActionsSchema.getInstance()
+
+    val rightIcons = mutableListOf<Icon>()
+    val showIncoming = !actionsWithIncomingOutgoingEnabled
+                       || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.update.project", schema)
+    if (showIncoming && syncStatus?.incoming == true) {
+      rightIcons.add(DvcsImplIcons.Incoming)
+    }
+    val showOutgoing = !actionsWithIncomingOutgoingEnabled
+                       || !groupContainsAction("MainToolbarNewUI", "main.toolbar.git.push", schema)
+    if (showOutgoing && syncStatus?.outgoing == true) {
+      rightIcons.add(DvcsImplIcons.Outgoing)
+    }
+    if (rightIcons.isNotEmpty()) {
+      e.presentation.putClientProperty(ActionUtil.SECONDARY_ICON, RowIcon(*rightIcons.toTypedArray()))
     }
   }
 
