@@ -125,8 +125,8 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     val page = WizardPluginsPage(this, pluginService, goBackAction = {
       goToSettingsPage(provider, product)
     },
-    goForwardAction = {
-      val importSettings = productService.importSettings(product.id, dataForSave)
+    goForwardAction = { featuredPluginIds ->
+      val importSettings = productService.importSettings(product.id, DataToApply(dataForSave, featuredPluginIds))
       goToProgressPage(importSettings)
     })
     ImportSettingsEventsCollector.featuredPluginsPageShown()

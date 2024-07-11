@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
@@ -216,8 +217,13 @@ interface BaseService {
   // import dialog progress looks differently, if it's importing from the same product
   fun baseProduct(id: String): Boolean = true
 
-  fun importSettings(productId: String, data: List<DataForSave>): DialogImportData
+  fun importSettings(productId: String, data: DataToApply): DialogImportData
 }
+
+class DataToApply(
+  val importSettings: List<DataForSave>,
+  val featuredPluginIds: List<String>
+)
 
 enum class IconProductSize(val int: Int) {
   SMALL(20),

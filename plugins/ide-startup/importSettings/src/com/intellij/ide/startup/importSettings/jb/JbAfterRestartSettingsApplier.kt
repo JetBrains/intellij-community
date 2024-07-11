@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.jb
 
 import com.intellij.ide.AppLifecycleListener
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.io.FileUtil
 import kotlinx.coroutines.*
@@ -28,7 +29,7 @@ private class JbAfterRestartSettingsApplier(private val cs: CoroutineScope) : Ap
     try {
       val configLines = configPathFile.readLines()
       if (!FileUtil.delete(configPathFile.toFile())) {
-        JbImportServiceImpl.LOG.warn("Couldn't delete $configPathFile, won't process config import")
+        logger.warn("Couldn't delete $configPathFile, won't process config import")
         return
       }
       val oldConfDir = Path.of(configLines[0])
@@ -50,7 +51,7 @@ private class JbAfterRestartSettingsApplier(private val cs: CoroutineScope) : Ap
       }
     }
     catch (e: Throwable) {
-      JbImportServiceImpl.LOG.warn("An exception occurred while importing $configPathFile", e)
+      logger.warn("An exception occurred while importing $configPathFile", e)
     }
   }
 }
@@ -62,3 +63,5 @@ internal fun storeImportConfig(configDir: Path,
 ) {
   configPathFile.writeText("$configDir\n${categories.joinToString()}\n${pluginIds?.joinToString() ?: ""}")
 }
+
+private val logger = logger<JbAfterRestartSettingsApplier>()

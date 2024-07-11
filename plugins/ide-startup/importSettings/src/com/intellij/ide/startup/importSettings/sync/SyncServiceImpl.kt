@@ -132,7 +132,7 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
     TODO("Not yet implemented")
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
     TODO("Not yet implemented")
   }
 
