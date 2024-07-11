@@ -2,10 +2,14 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -20,8 +24,12 @@ public interface XmlUnknownAttributeQuickFixProvider {
    *
    * @param tag tag with unknown attribute
    * @param name name of unknown attribute
-   * @param isFixRequired true if no check required, see {@link HtmlUnknownAttributeInspectionBase#checkAttribute(com.intellij.psi.xml.XmlAttribute, ProblemsHolder, boolean)}
+   * @param isFixRequired true if no check required, see {@link HtmlUnknownAttributeInspectionBase#checkAttribute(XmlAttribute, ProblemsHolder, boolean)}
    * @return collection of quick fixes for unknown attribute
    */
   @NotNull Collection<@NotNull LocalQuickFix> getOrRegisterAttributeFixes(@NotNull XmlTag tag, @NotNull String name, ProblemsHolder holder, boolean isFixRequired);
+
+  default @Nullable ProblemHighlightType getProblemHighlightType(@NotNull PsiElement element) {
+    return ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+  }
 }
