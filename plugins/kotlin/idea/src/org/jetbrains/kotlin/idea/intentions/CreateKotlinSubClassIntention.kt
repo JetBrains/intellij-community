@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDirectory
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.CreateKotlinSubClassIntentionBase
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
