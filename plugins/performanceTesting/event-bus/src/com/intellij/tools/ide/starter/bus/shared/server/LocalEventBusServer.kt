@@ -15,9 +15,7 @@ import java.util.concurrent.CompletableFuture
 private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServer::class.java)
 
 object LocalEventBusServer : EventBusServer {
-  private val portsPool: MutableList<Int> = generateSequence(45654) { it + 10 }
-    .takeWhile { it <= 45654 + 100 }
-    .toMutableList()
+  private val portsPool: List<Int> = (45654..45754 step 10).toList()
   private var currentPortIndex = 0
   private lateinit var eventsFlowService: EventsFlowService
   private val objectMapper = jacksonObjectMapper()
