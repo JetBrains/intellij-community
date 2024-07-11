@@ -11,8 +11,10 @@ import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
 import javax.swing.JFrame
 
+fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
-  x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
+  ideFrame().action()
 }
 
 fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
@@ -64,7 +66,7 @@ interface ProjectFrameHelper {
 }
 
 @Remote("com.intellij.openapi.wm.impl.IdeFrameImpl")
-interface IdeFrameImpl: Window {
+interface IdeFrameImpl : Window {
   fun isInFullScreen(): Boolean
   fun getExtendedState(): Int
   fun setExtendedState(state: Int)
