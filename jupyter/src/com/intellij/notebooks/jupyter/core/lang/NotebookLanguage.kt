@@ -1,4 +1,4 @@
-package com.intellij.jupyter.core.lang
+package com.intellij.notebooks.jupyter.core.lang
 
 import com.intellij.lang.Language
 
