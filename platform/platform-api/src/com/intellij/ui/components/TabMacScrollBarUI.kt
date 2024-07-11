@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.ui.MixedColorProducer
@@ -8,8 +8,11 @@ import java.awt.Graphics2D
 import java.awt.Insets
 import javax.swing.JComponent
 
-internal class TabMacScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin: Int) : ThinMacScrollBarUI(thickness, thicknessMax,
-                                                                                                            thicknessMin) {
+internal class TabMacScrollBarUI(
+  thickness: Int,
+  thicknessMax: Int,
+  thicknessMin: Int,
+) : ThinMacScrollBarUI(thickness, thicknessMax, thicknessMin) {
   private var isHovered: Boolean = false
   private val defaultColorProducer: MixedColorProducer = MixedColorProducer(
     ScrollBarPainter.getColor({ myScrollBar }, ScrollBarPainter.TABS_TRANSPARENT_THUMB_BACKGROUND),
@@ -39,7 +42,7 @@ internal class TabMacScrollBarUI(thickness: Int, thicknessMax: Int, thicknessMin
 
 
   override fun paintThumb(g: Graphics2D?, c: JComponent?) {
-    if (myAnimationBehavior.thumbFrame > 0) {
+    if (myAnimationBehavior != null && myAnimationBehavior!!.thumbFrame > 0) {
       paint(myThumb, g, c, !isHovered)
     }
   }

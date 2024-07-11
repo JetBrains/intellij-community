@@ -1,7 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.ui.components
 
-import com.intellij.util.SingleAlarm
+import com.intellij.openapi.application.EDT
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import javax.swing.JScrollBar
 
 internal abstract class ScrollBarAnimationBehavior(@JvmField protected val trackAnimator: TwoWayAnimator,
@@ -52,7 +59,23 @@ internal class MacScrollBarAnimationBehavior(
   thumbAnimator: TwoWayAnimator,
 ) : DefaultScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isTrackHovered: Boolean = false
-  private val hideThumbAlarm = SingleAlarm(task = { thumbAnimator.start(forward = false) }, delay = 700)
+  @Suppress("SSBasedInspection")
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
+  private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+  init {
+    coroutineScope.launch {
+      hideThumbRequests
+        .debounce(700)
+        .collectLatest { start ->
+          if (start) {
+            withContext(Dispatchers.EDT) {
+              thumbAnimator.start(forward = false)
+            }
+          }
+        }
+    }
+  }
 
   override fun onTrackHover(hovered: Boolean) {
     isTrackHovered = hovered
@@ -74,18 +97,12 @@ internal class MacScrollBarAnimationBehavior(
   override fun onThumbMove() {
     val scrollBar = scrollBarComputable()
     if (scrollBar != null && scrollBar.isShowing() && !DefaultScrollBarUI.isOpaque(scrollBar)) {
-      if (!isTrackHovered && thumbAnimator.value == 0f) trackAnimator.rewind(false)
-      thumbAnimator.rewind(true)
-      hideThumbAlarm.cancelAllRequests()
-      if (!isTrackHovered) {
-        hideThumbAlarm.request()
+      if (!isTrackHovered && thumbAnimator.value == 0f) {
+        trackAnimator.rewind(false)
       }
+      thumbAnimator.rewind(true)
+      check(hideThumbRequests.tryEmit(!isTrackHovered))
     }
-  }
-
-  override fun onUninstall() {
-    hideThumbAlarm.cancelAllRequests()
-    super.onUninstall()
   }
 }
 
