@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +11,7 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.util.messages.MessageBusConnection
 import javax.swing.JTree
 
-class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
+internal class TodoViewChangesSupportImpl : TodoViewChangesSupport() {
 
   override fun isContentVisible(project: Project): Boolean {
     return ProjectLevelVcsManager.getInstance(project).hasActiveVcss()

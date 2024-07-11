@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -172,8 +171,8 @@ internal class ExternallyAddedFilesProcessorImpl(project: Project,
   }
 
   @TestOnly
-  fun waitForEventsProcessedInTestMode() {
-    assert(ApplicationManager.getApplication().isUnitTestMode)
+  override fun waitForEventsProcessedInTestMode() {
+    super.waitForEventsProcessedInTestMode()
     queue.waitFor()
   }
 }

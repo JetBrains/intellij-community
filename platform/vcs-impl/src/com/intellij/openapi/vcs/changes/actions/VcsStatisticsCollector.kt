@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -11,7 +11,9 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object VcsStatisticsCollector : CounterUsagesCollector() {
   val GROUP = EventLogGroup("vcs", 15)
 
@@ -44,12 +46,14 @@ object VcsStatisticsCollector : CounterUsagesCollector() {
                                                       startEventAdditionalFields = arrayOf(VCS_FIELD, IS_FULL_REFRESH_FIELD))
 
   @JvmStatic
-  fun logRefreshActionPerformed(project: Project,
-                                changesBefore: Collection<Change>,
-                                changesAfter: Collection<Change>,
-                                unversionedBefore: Collection<FilePath>,
-                                unversionedAfter: Collection<FilePath>,
-                                wasUpdatingBefore: Boolean) {
+  fun logRefreshActionPerformed(
+    project: Project,
+    changesBefore: Collection<Change>,
+    changesAfter: Collection<Change>,
+    unversionedBefore: Collection<FilePath>,
+    unversionedAfter: Collection<FilePath>,
+    wasUpdatingBefore: Boolean,
+  ) {
     val changesDelta = computeDelta(changesBefore, changesAfter)
     val unversionedDelta = computeDelta(unversionedBefore, unversionedAfter)
 

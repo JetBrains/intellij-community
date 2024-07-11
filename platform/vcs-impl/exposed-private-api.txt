@@ -1,15 +1,1 @@
-com/intellij/codeInsight/codeVision/CodeVisionPlaceholderCollector
-com/intellij/ide/todo/TodoViewChangesSupport$Listener
-com/intellij/internal/statistic/IdeActivityDefinition
-com/intellij/internal/statistic/StructuredIdeActivity
-com/intellij/internal/statistic/eventLog/events/EventId
-com/intellij/internal/statistic/eventLog/events/EventId1
-com/intellij/openapi/vcs/ExternallyAddedFilesProcessorImpl
-com/intellij/openapi/vcs/actions/AnnotationPresentation
-com/intellij/openapi/vcs/changes/ChangeListScheduler
-com/intellij/openapi/vcs/changes/VcsInvalidated
-com/intellij/openapi/vcs/impl/VcsErrorViewPanel
-com/intellij/platform/diagnostic/telemetry/Scope
 com/intellij/vcs/commit/ChangesViewCommitWorkflowHandler
-com/intellij/vcs/commit/message/BodyLimitSettings
-com/intellij/vcs/ui/ProgressStripe$MyLoadingDecorator

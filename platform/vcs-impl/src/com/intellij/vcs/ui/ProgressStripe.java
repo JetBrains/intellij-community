@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.ui;
 
 import com.intellij.openapi.Disposable;
@@ -19,7 +19,7 @@ public class ProgressStripe extends JBPanel {
   private final int myStartDelayMs;
 
   private final @NotNull JBPanel myPanel;
-  protected MyLoadingDecorator myDecorator;
+  protected DisposableLoadingDecorator myDecorator;
 
   public ProgressStripe(@NotNull JComponent targetComponent, @NotNull Disposable parent, int startDelayMs) {
     super(new BorderLayout());
@@ -57,7 +57,7 @@ public class ProgressStripe extends JBPanel {
 
     Disposable disposable = Disposer.newDisposable();
     Disposer.register(myDisposable, disposable);
-    myDecorator = new MyLoadingDecorator(myTargetComponent, myPanel, disposable, myStartDelayMs);
+    myDecorator = new DisposableLoadingDecorator(myTargetComponent, myPanel, disposable, myStartDelayMs);
 
     add(myDecorator.getComponent(), BorderLayout.CENTER);
     myDecorator.setLoadingText("");
@@ -75,13 +75,13 @@ public class ProgressStripe extends JBPanel {
     myDecorator.stopLoading();
   }
 
-  private static class MyLoadingDecorator extends LoadingDecorator {
+  public static final class DisposableLoadingDecorator extends LoadingDecorator {
     private final @NotNull Disposable myDisposable;
 
-    MyLoadingDecorator(@NotNull JComponent component,
-                       @NotNull JPanel contentPanel,
-                       @NotNull Disposable disposable,
-                       int startDelayMs) {
+    DisposableLoadingDecorator(@NotNull JComponent component,
+                               @NotNull JPanel contentPanel,
+                               @NotNull Disposable disposable,
+                               int startDelayMs) {
       super(contentPanel, disposable, startDelayMs, false, ProgressStripeIcon.generateIcon(component));
       myDisposable = disposable;
     }

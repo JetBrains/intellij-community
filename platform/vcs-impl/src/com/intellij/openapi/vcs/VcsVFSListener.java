@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs;
 
@@ -35,6 +35,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -89,7 +90,7 @@ public abstract class VcsVFSListener implements Disposable {
   protected final VcsShowConfirmationOption myRemoveOption;
   protected final StateProcessor myProcessor = new StateProcessor();
   private final ProjectConfigurationFilesProcessorImpl myProjectConfigurationFilesProcessor;
-  protected final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
+  private final ExternallyAddedFilesProcessorImpl myExternalFilesProcessor;
   private final IgnoreFilesProcessorImpl myIgnoreFilesProcessor;
   private final List<VFileEvent> myEventsToProcess = new SmartList<>();
 
@@ -839,6 +840,13 @@ public abstract class VcsVFSListener implements Disposable {
         }
       }.queue();
     }
+  }
+
+  @TestOnly
+  protected final void waitForEventsProcessedInTestMode() {
+    myExternalFilesProcessor.waitForEventsProcessedInTestMode();
+    myProjectConfigurationFilesProcessor.waitForEventsProcessedInTestMode();
+    myIgnoreFilesProcessor.waitForEventsProcessedInTestMode();
   }
 }
 

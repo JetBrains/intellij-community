@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hints
 
@@ -38,10 +38,12 @@ import com.intellij.util.DocumentUtil
 import com.intellij.util.text.nullize
 import com.intellij.vcs.CacheableAnnotationProvider
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import java.lang.Integer.min
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class VcsCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     internal const val id: String = "vcs.code.vision"
