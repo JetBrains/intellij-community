@@ -156,7 +156,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
 
       @Override
       public void contentRemoved(@NotNull ContentManagerEvent event) {
-        if (window.isDisposed() || window.getToolWindowManager().getProject().isDisposed()) {
+        if (window.isDisposed() || window.toolWindowManager.getProject().isDisposed()) {
           return;
         }
 
@@ -183,7 +183,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
           else {
             return;
           }
-          window.getToolWindowManager()
+          window.toolWindowManager
             .hideToolWindow(window.getId(), /* hideSide = */ false, /* moveFocus = */ true, removeFromStripe, /* source = */ null);
         }
       }
@@ -268,7 +268,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       return false;
     }
 
-    ToolWindowManagerImpl manager = window.getToolWindowManager();
+    ToolWindowManagerImpl manager = window.toolWindowManager;
     for (String id : manager.getIdsOn(window.getAnchor())) {
       if (id.equals(window.getId())) {
         continue;
@@ -699,7 +699,7 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   public void uiDataSnapshot(@NotNull DataSink sink) {
     sink.set(PlatformDataKeys.TOOL_WINDOW, window);
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
-    sink.set(CommonDataKeys.PROJECT, window.getToolWindowManager().getProject());
+    sink.set(CommonDataKeys.PROJECT, window.toolWindowManager.getProject());
     sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget());
     if (getCurrentLayout() instanceof MorePopupAware o) {
       sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);

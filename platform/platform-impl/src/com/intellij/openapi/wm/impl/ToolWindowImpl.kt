@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -17,6 +19,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -44,12 +47,21 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.Color
@@ -62,16 +74,18 @@ import java.util.function.Supplier
 import javax.swing.*
 import kotlin.math.abs
 
-internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
-                              private val id: String,
-                              private val canCloseContent: Boolean,
-                              private val dumbAware: Boolean,
-                              component: JComponent?,
-                              private val parentDisposable: Disposable,
-                              windowInfo: WindowInfo,
-                              private var contentFactory: ToolWindowFactory?,
-                              private var isAvailable: Boolean = true,
-                              private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>) : ToolWindowEx {
+internal class ToolWindowImpl(
+  @JvmField val toolWindowManager: ToolWindowManagerImpl,
+  private val id: String,
+  private val canCloseContent: Boolean,
+  private val dumbAware: Boolean,
+  component: JComponent?,
+  private val parentDisposable: Disposable,
+  windowInfo: WindowInfo,
+  private var contentFactory: ToolWindowFactory?,
+  private var isAvailable: Boolean = true,
+  private var stripeTitleProvider: Supplier<@NlsContexts.TabTitle String>,
+) : ToolWindowEx {
   @JvmField
   var windowInfoDuringInit: WindowInfoImpl? = null
 
@@ -119,25 +133,12 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   private val contentManager = SynchronizedClearableLazy {
     val result = createContentManager()
     if (toolWindowManager.isNewUi) {
-      result.addContentManagerListener(UpdateBackgroundContentManager(decorator))
+      result.addContentManagerListener(UpdateBackgroundContentManager())
     }
     result
   }
 
-  private val moveOrResizeAlarm = SingleAlarm(
-    task = Runnable {
-      val decorator = decorator
-      if (decorator != null) {
-        toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
-        toolWindowManager.movedOrResized(decorator)
-      }
-      val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-      this@ToolWindowImpl.windowInfo = updatedWindowInfo
-      toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
-    },
-    delay = 100,
-    parentDisposable = disposable,
-  )
+  private val moveOrResizeRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
     if (component != null) {
@@ -146,9 +147,26 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       contentManager.addContent(content)
       contentManager.setSelectedContent(content, false)
     }
+
+    toolWindowManager.coroutineScope.launch {
+      moveOrResizeRequests
+        .debounce(100)
+        .collectLatest {
+          withContext(Dispatchers.EDT) {
+            val decorator = decorator
+            if (decorator != null) {
+              toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
+              toolWindowManager.movedOrResized(decorator)
+            }
+            val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+            this@ToolWindowImpl.windowInfo = updatedWindowInfo
+            toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
+          }
+        }
+    }.cancelOnDispose(disposable)
   }
 
-  private class UpdateBackgroundContentManager(private val decorator: InternalDecoratorImpl?) : ContentManagerListener {
+  private class UpdateBackgroundContentManager() : ContentManagerListener {
     override fun contentAdded(event: ContentManagerEvent) {
       InternalDecoratorImpl.setBackgroundRecursively(event.content.component, JBUI.CurrentTheme.ToolWindow.background())
     }
@@ -210,7 +228,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       override fun unprocessComponent(component: Component) = Unit
     }.register(decorator)
     if (ExperimentalUI.isNewUI()) {
-      scrollPaneTracker = ScrollPaneTracker(decorator, { true }) {
+      scrollPaneTracker = ScrollPaneTracker(container = decorator, filter = { true }) {
         updateScrolledState()
       }
     }
@@ -310,7 +328,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   }
 
   fun onMovedOrResized() {
-    moveOrResizeAlarm.cancelAndRequest()
+    check(moveOrResizeRequests.tryEmit(Unit))
   }
 
   internal fun setWindowInfoSilently(info: WindowInfo) {

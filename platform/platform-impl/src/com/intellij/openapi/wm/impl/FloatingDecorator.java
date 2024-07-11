@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -89,8 +89,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
         if (LOG.isDebugEnabled()) {
           LOG.debug("Updating floating window " + toolWindow.getId() + " bounds because it's closed: " + getBounds());
         }
-        toolWindow.getToolWindowManager().movedOrResized(decorator);
-        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
+        toolWindow.toolWindowManager.movedOrResized(decorator);
+        toolWindow.toolWindowManager.hideToolWindow(toolWindow.getId(), false);
       }
     });
     addComponentListener(new ComponentAdapter() {

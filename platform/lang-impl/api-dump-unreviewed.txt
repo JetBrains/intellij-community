@@ -12713,7 +12713,7 @@ a:com.intellij.ide.GeneratedSourceFileChangeTracker
 f:com.intellij.ide.GeneratedSourceFileChangeTrackerImpl
 - com.intellij.ide.GeneratedSourceFileChangeTracker
 - s:IN_TRACKER_TEST:Z
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - cancelAllAndWait(J,java.util.concurrent.TimeUnit):V
 - isEditedGeneratedFile(com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.ide.NativeIconProvider
