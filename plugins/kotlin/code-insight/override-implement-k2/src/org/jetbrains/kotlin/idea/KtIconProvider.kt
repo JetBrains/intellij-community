@@ -10,7 +10,6 @@ import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
@@ -56,7 +55,7 @@ object KtIconProvider {
 
     context(KaSession)
     fun getBaseIcon(symbol: KaSymbol): Icon? {
-        val isAbstract = (symbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT
+        val isAbstract = (symbol as? KaDeclarationSymbol)?.modality == KaSymbolModality.ABSTRACT
         return when (symbol) {
             is KaPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionSymbol -> {

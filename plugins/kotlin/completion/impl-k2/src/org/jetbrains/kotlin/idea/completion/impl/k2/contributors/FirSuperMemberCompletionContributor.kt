@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
@@ -84,7 +83,7 @@ internal class FirSuperMemberCompletionContributor(
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
-                if (symbol !is KaSymbolWithModality || symbol.modality == KaSymbolModality.ABSTRACT) continue
+                if (symbol.modality == KaSymbolModality.ABSTRACT) continue
 
                 // Unlike typical diamond cases, calls to method of `Any` always do not need extra qualification.
                 if (symbol.callableId?.classId == StandardClassIds.Any) {

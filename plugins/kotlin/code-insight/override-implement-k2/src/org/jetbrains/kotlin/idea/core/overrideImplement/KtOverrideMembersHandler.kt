@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -57,7 +55,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {
-                    val nonAbstractMembers = intersectionSymbols.filter { (it as? KaSymbolWithModality)?.modality != KaSymbolModality.ABSTRACT }
+                    val nonAbstractMembers = intersectionSymbols.filter { it.modality != KaSymbolModality.ABSTRACT }
                     // If there are non-abstract members, we only want to show override for these non-abstract members. Otherwise, show any
                     // abstract member to override.
                     nonAbstractMembers.ifEmpty {
@@ -88,7 +86,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                                 BodyType.Super
                             }
                         }
-                        (originalOverriddenSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT ->
+                        originalOverriddenSymbol.modality == KaSymbolModality.ABSTRACT ->
                             BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
                             BodyType.QualifiedSuper

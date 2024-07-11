@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.descriptors.Modality
@@ -113,8 +112,8 @@ class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
             }
             val allOverriddenSymbols = callableSymbol.allOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return
-            val implements = callableSymbol is KaSymbolWithModality && callableSymbol.modality != KaSymbolModality.ABSTRACT &&
-                    allOverriddenSymbols.all { it is KaSymbolWithModality && it.modality == KaSymbolModality.ABSTRACT }
+            val implements = callableSymbol.modality != KaSymbolModality.ABSTRACT &&
+                    allOverriddenSymbols.all { it.modality == KaSymbolModality.ABSTRACT }
             val gutter = if (implements) KotlinLineMarkerOptions.implementingOption else KotlinLineMarkerOptions.overridingOption
             if (!gutter.isEnabled) return
             val anchor = declaration.nameIdentifier ?: declaration
@@ -271,11 +270,11 @@ object SuperDeclarationMarkerTooltip : Function<PsiElement, String> {
             }
             val allOverriddenSymbols = callableSymbol.directlyOverriddenSymbols.toList()
             if (allOverriddenSymbols.isEmpty()) return ""
-            val isAbstract = callableSymbol is KaSymbolWithModality && callableSymbol.modality == KaSymbolModality.ABSTRACT
+            val isAbstract = callableSymbol.modality == KaSymbolModality.ABSTRACT
             val abstracts = hashSetOf<PsiElement>()
             val supers = allOverriddenSymbols.mapNotNull {
                 val superFunction = it.psi
-                if (superFunction != null && it is KaSymbolWithModality && it.modality == KaSymbolModality.ABSTRACT) {
+                if (superFunction != null && it.modality == KaSymbolModality.ABSTRACT) {
                     abstracts.add(superFunction)
                 }
                 superFunction

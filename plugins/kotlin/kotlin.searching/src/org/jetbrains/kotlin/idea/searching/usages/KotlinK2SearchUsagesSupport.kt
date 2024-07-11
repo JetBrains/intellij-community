@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -351,7 +350,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         if (declarationSymbol is KaValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }
-        val symbol = declarationSymbol as? KaSymbolWithModality ?: return@analyze false
+        val symbol = declarationSymbol as? KaDeclarationSymbol ?: return@analyze false
         when (symbol.modality) {
             KaSymbolModality.OPEN, KaSymbolModality.SEALED, KaSymbolModality.ABSTRACT -> true
             KaSymbolModality.FINAL -> false

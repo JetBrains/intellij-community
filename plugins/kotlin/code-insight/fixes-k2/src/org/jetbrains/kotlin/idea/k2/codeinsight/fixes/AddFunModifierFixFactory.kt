@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -77,7 +76,6 @@ private fun KaNamedClassSymbol.isSamInterface(): Boolean {
     if (classKind != KaClassKind.INTERFACE) return false
     val singleAbstractMember = memberScope
         .callables
-        .filterIsInstance<KaSymbolWithModality>()
         .filter { it.modality == KaSymbolModality.ABSTRACT }
         .singleOrNull() ?: return false
     return singleAbstractMember is KaNamedFunctionSymbol && singleAbstractMember.typeParameters.isEmpty()

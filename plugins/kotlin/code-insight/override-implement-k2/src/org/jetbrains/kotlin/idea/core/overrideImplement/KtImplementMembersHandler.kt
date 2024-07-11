@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtImplementMembersHandler.Companion.getUnimplementedMembers
@@ -63,7 +62,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
                             // `Foo` does not need to implement `foo` since it inherits the implementation from `B`. But in the dialog, we should
                             // allow user to choose `foo` to implement.
                             symbol.intersectionOverriddenSymbols
-                                .filter { (it as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT }
+                                .filter { it.modality == KaSymbolModality.ABSTRACT }
                                 .forEach { add(it) }
                         }
 

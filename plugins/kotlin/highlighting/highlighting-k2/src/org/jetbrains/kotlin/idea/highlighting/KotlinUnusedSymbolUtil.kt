@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -668,7 +667,7 @@ object KotlinUnusedSymbolUtil {
       val ownerClass = declaration.containingClassOrObject as? KtClass ?: return false
       if (!ownerClass.isInheritable()) return false
       val callableSymbol = symbol as? KaCallableSymbol ?: return false
-      if ((callableSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT) return false
+      if (callableSymbol.modality == KaSymbolModality.ABSTRACT) return false
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {

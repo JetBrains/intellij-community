@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.asJava.toLightClass
@@ -122,7 +121,7 @@ class KtClassDef(
         context(KaSession)
         fun KaClassSymbol.classDef(): KtClassDef = KtClassDef(
             useSiteModule, classId?.hashCode() ?: name.hashCode(), createPointer(),
-            classKind, (this as? KaSymbolWithModality)?.modality
+            classKind, modality
         )
 
         fun typeConstraintFactory(context: KtElement): TypeConstraints.TypeConstraintFactory {

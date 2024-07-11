@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
@@ -114,7 +113,7 @@ internal class OverrideKeywordHandler(
 
         val text = getSymbolTextForLookupElement(memberSymbol)
         val baseIcon = getBaseIcon(memberSymbol)
-        val isImplement = (memberSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT
+        val isImplement = memberSymbol.modality == KaSymbolModality.ABSTRACT
         val additionalIcon = if (isImplement) AllIcons.Gutter.ImplementingMethod else AllIcons.Gutter.OverridingMethod
         val icon = RowIcon(baseIcon, additionalIcon)
         val isSuspendFunction = (memberSymbol as? KaNamedFunctionSymbol)?.isSuspend == true

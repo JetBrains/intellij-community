@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callabl
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.superTypes.KaSuperTypesFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.refactoring.memberInfo.KotlinMemberInfoSupport
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 
@@ -29,7 +27,7 @@ class K2MemberInfoSupport : KotlinMemberInfoSupport {
     override fun getOverrides(member: KtNamedDeclaration): Boolean? {
         analyze(member) {
             val memberSymbol = (member.symbol as? KaCallableSymbol) ?: return null
-            val allOverriddenSymbols = memberSymbol.allOverriddenSymbols.filterIsInstance<KaSymbolWithModality>().toList()
+            val allOverriddenSymbols = memberSymbol.allOverriddenSymbols.toList()
             if (allOverriddenSymbols.isNotEmpty()) return allOverriddenSymbols.any { it.modality != KaSymbolModality.ABSTRACT }
             return null
         }
