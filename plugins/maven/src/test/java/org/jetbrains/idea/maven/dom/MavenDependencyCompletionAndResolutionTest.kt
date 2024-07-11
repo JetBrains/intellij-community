@@ -252,7 +252,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
                       """.trimIndent())
     importProjectAsync()
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -267,21 +267,21 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
     assertCompletionVariants(m1, LOOKUP_STRING, "test:project:1", "test:m1:1", "test:m2:1")
     assertCompletionVariants(m1, RENDERING_TEXT, "project", "m1", "m2")
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2_new</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
+    updateAllProjects()
 
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -322,7 +322,7 @@ class MavenDependencyCompletionAndResolutionTest : MavenDomWithIndicesTestCase()
 
     assertCompletionVariants(projectPom, RENDERING_TEXT, "m1")
 
-    createModulePom("m1", "")
+    updateModulePom("m1", "")
     importProjectsWithErrors(projectPom, m)
 
     configureProjectPom("""
@@ -467,7 +467,7 @@ $relativePathUnixSeparator<caret></relativePath>
     val repoPath = helper.getTestDataPath("local1")
     repositoryPath = repoPath
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -479,6 +479,7 @@ $relativePathUnixSeparator<caret></relativePath>
                       </dependency>
                     </dependencies>
                     """.trimIndent())
+    updateAllProjects()
 
     updateProjectPom("""
                        <groupId>test</groupId>
