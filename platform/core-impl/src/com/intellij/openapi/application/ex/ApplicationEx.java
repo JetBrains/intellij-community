@@ -75,7 +75,7 @@ public interface ApplicationEx extends Application {
 
   @Override
   default void exit() {
-    exit(SAVE);
+    exit(isSaveAllowed() ? SAVE : 0);
   }
 
   /**
