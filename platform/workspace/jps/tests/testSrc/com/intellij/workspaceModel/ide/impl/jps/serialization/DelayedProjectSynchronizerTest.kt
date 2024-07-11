@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
@@ -248,10 +249,11 @@ class DelayedProjectSynchronizerTest {
 
   private fun getSerializerForProjectData(projectData: LoadedProjectData): EntityStorageSerializer {
     val currentProject = PlatformTestUtil.loadAndOpenProject(projectData.projectDir.toPath(), disposableRule.disposable)
+    val relativizer = if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) createJpsProjectUrlRelativizer(currentProject) else null
     return EntityStorageSerializerImpl(
       WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
       virtualFileManager,
-      urlRelativizer = createJpsProjectUrlRelativizer(currentProject),
+      urlRelativizer = relativizer,
       ""
     )
   }

@@ -24,7 +24,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
 
   private val urlRelativizer =
-    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
       ApplicationLevelUrlRelativizer()
     } else {
       null

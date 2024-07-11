@@ -49,7 +49,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
 
   private val urlRelativizer =
-    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
       createJpsProjectUrlRelativizer(project)
     } else {
       null
