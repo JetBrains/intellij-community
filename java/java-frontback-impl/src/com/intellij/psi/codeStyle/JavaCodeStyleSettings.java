@@ -23,6 +23,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   private static final int CURRENT_VERSION = 1;
 
   private int myVersion = CURRENT_VERSION;
+  private int myOldVersion = 0;
 
   private boolean myIsInitialized = false;
 
@@ -430,7 +431,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     super.readExternal(parentElement);
     readExternalCollection(parentElement, myRepeatAnnotations, REPEAT_ANNOTATIONS, REPEAT_ANNOTATIONS_ITEM);
     readExternalCollection(parentElement, myDoNotImportInner, DO_NOT_IMPORT_INNER, DO_NOT_IMPORT_INNER_ITEM);
-    myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
+    myOldVersion = myVersion = CustomCodeStyleSettingsUtils.readVersion(parentElement.getChild(getTagName()));
     myIsInitialized = true;
   }
 
@@ -448,22 +449,31 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
    * It might create a tag with empty body, in cases when custom options have
    * default value and this value is different from common options
    * @param parentElement root element in {@link CodeStyleScheme} xml file.
-   * @see JavaCodeStyleSettings#areMigratedCustomOptionsHaveDefaultValueDifferentFromCommonOptions
+   * @see JavaCodeStyleSettings#shouldWriteVersion()
    */
   private void writeVersion(@NotNull Element parentElement) {
-    if (myVersion != CURRENT_VERSION) return;
+    if (!shouldWriteVersion()) return;
     Element settingsTag = parentElement.getChild(getTagName());
-    if (settingsTag == null && areMigratedCustomOptionsHaveDefaultValueDifferentFromCommonOptions()) {
+    if (settingsTag == null) {
       parentElement.addContent(new Element(getTagName()));
       settingsTag = parentElement.getChild(getTagName());
     }
     CustomCodeStyleSettingsUtils.writeVersion(settingsTag, myVersion);
+    myOldVersion = myVersion;
   }
 
-  private boolean areMigratedCustomOptionsHaveDefaultValueDifferentFromCommonOptions() {
+  private boolean shouldWriteVersion() {
+    if (myVersion != CURRENT_VERSION) return false;
+
+    if (myOldVersion == myVersion) return true;
+
+    if (myOldVersion == 0 && !isFirstMigrationPreserved()) return true;
+    return false;
+  }
+
+  private boolean isFirstMigrationPreserved() {
     CommonCodeStyleSettings commonSettings = getCommonSettings();
-    JavaCodeStyleSettings defaultCustomSettings = getDefaultCustomSettings();
-    return BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS == defaultCustomSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS && commonSettings.BLANK_LINES_AROUND_FIELD != BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
+    return commonSettings.BLANK_LINES_AROUND_FIELD == BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
   }
 
   public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
