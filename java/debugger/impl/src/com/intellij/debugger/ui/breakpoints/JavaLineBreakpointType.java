@@ -209,9 +209,10 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (file.getFileType().isBinary()) return null;
 
     Project project = file.getProject();
-    Document document = file.getViewProvider().getDocument();
-    if (document == null) return null;
-    return ReadAction.compute(() -> findSingleConditionalReturn(project, document, line));
+    return ReadAction.compute(() -> {
+      Document document = file.getViewProvider().getDocument();
+      return document != null ? findSingleConditionalReturn(project, document, line) : null;
+    });
   }
 
   protected static @Nullable PsiElement findSingleConditionalReturn(@NotNull Project project, @NotNull Document document, int line) {
