@@ -90,7 +90,7 @@ class KotlinFindFunctionUsagesDialog(
                 false
             )
         }
-        addDefaultOptions(optionsPanel)
+        super.addUsagesOptions(optionsPanel)
     }
 
     override fun calcFindUsagesOptions(options: JavaMethodFindUsagesOptions) {
