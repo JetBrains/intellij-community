@@ -44,7 +44,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
 
             // The function supports getting a `KaEnumEntrySymbol`'s initializer via the enum entry's "class ID". Despite not being 100%
             // semantically correct in FIR (enum entries aren't classes), it simplifies referring to the initializing object.
-            val declarationSymbol = parentSymbol.staticDeclaredMemberScope.getCallableSymbols(classId.shortClassName).first()
+            val declarationSymbol = parentSymbol.staticDeclaredMemberScope.callables(classId.shortClassName).first()
             return declarationSymbol.getSymbolContainingMemberDeclarations() ?:
                 error("Unexpected declaration symbol `$classId` of type `${declarationSymbol.javaClass.simpleName}`.")
         }
@@ -58,7 +58,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
                     ?.let { classId -> getContainingMemberSymbol(classId).memberScope }
                     ?: getPackageSymbolIfPackageExists(callableId.packageName)!!.packageScope
 
-                val callablesOfProperType = scope.getCallableSymbols(callableId.callableName)
+                val callablesOfProperType = scope.callables(callableId.callableName)
                     .mapNotNull {
                         when (target.type) {
                             KotlinTarget.CallableType.FUNCTION -> it as? KaNamedFunctionSymbol
@@ -72,7 +72,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
             is KotlinTarget.EnumEntry -> {
                 val callableId = target.callableId
                 val containingScope = getContainingMemberSymbol(callableId.classId!!).staticDeclaredMemberScope
-                containingScope.getCallableSymbols(callableId.callableName).singleOrNull()?.psi!!
+                containingScope.callables(callableId.callableName).singleOrNull()?.psi!!
             }
         }
     }

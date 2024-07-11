@@ -184,7 +184,7 @@ object WrapWithSafeLetCallFixFactories {
         val localScope = callExpression.containingKtFile.scopeContext(callSite).compositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
-        return localScope.getCallableSymbols(calleeName).any { symbol ->
+        return localScope.callables(calleeName).any { symbol ->
             symbol.psi?.let { it == functionalVariableSymbol.psi } == true
         }
     }

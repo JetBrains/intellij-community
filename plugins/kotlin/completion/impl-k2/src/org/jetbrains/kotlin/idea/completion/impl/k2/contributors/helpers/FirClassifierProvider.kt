@@ -21,7 +21,7 @@ internal object FirClassifierProvider {
         visibilityChecker: CompletionVisibilityChecker
     ): Sequence<KaClassifierSymbolWithContainingScopeKind> =
         originalKtFile.scopeContext(position).scopes.asSequence().flatMap { scopeWithKind ->
-            val classifiers = scopeWithKind.scope.getClassifierSymbols(scopeNameFilter)
+            val classifiers = scopeWithKind.scope.classifiers(scopeNameFilter)
                 .filter { visibilityChecker.isVisible(it) }
                 .map { KaClassifierSymbolWithContainingScopeKind(it, scopeWithKind.kind) }
             classifiers

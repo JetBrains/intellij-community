@@ -156,7 +156,7 @@ internal fun collectNonExtensionsFromScope(
     scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
-): Sequence<KaCallableSignature<*>> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
+): Sequence<KaCallableSignature<*>> = scope.callables(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
     .filterNonExtensions(visibilityChecker, symbolFilter)
     .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }

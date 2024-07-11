@@ -404,7 +404,7 @@ private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaEx
         else -> lambdaArgument.containingKtFile.scopeContext(lambdaArgument).compositeScope()
     }
 
-    val symbols = scope.getCallableSymbols(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
+    val symbols = scope.callables(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
 
     val function = psi ?: return symbols
     if (!function.isPhysical) {

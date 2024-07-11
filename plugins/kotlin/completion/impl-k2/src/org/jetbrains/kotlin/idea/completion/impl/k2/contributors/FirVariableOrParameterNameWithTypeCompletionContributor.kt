@@ -135,7 +135,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
     ) {
         for (scopeWithKind in scopeContext.scopes) {
             for ((nameFilter, userPrefix) in nameFiltersWithUserPrefixes) {
-                scopeWithKind.scope.getClassifierSymbols(nameFilter).filter { visibilityChecker.isVisible(it) }.forEach { classifier ->
+                scopeWithKind.scope.classifiers(nameFilter).filter { visibilityChecker.isVisible(it) }.forEach { classifier ->
                     val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
                     addSuggestions(variableOrParameter, classifier, userPrefix, lookupNamesAdded, weighingContext, symbolOrigin)
                 }
@@ -261,7 +261,7 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
     context(KaSession)
     private fun getAvailableTypeParameters(scopes: KaScope): Sequence<KaTypeParameterSymbol> =
-        scopes.getClassifierSymbols().filterIsInstance<KaTypeParameterSymbol>()
+        scopes.classifiers.filterIsInstance<KaTypeParameterSymbol>()
 
     private fun getDeclarationFromReceiverTypeReference(typeReference: KtTypeReference): KtCallableDeclaration? {
         return (typeReference.parent as? KtCallableDeclaration)?.takeIf { it.receiverTypeReference == typeReference }

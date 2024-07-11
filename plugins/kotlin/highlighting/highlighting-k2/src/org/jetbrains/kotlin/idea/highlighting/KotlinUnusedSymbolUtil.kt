@@ -673,7 +673,7 @@ object KotlinUnusedSymbolUtil {
           when (element) {
               is KtClassOrObject -> {
                   val overridingCallableSymbol = element.getClassOrObjectSymbol()?.memberScope
-                      ?.getCallableSymbols { name -> name == callableSymbol.callableId?.callableName }?.filter {
+                      ?.callables { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.fakeOverrideOriginal == callableSymbol
                       }?.singleOrNull() ?: return@any false
                   overridingCallableSymbol != callableSymbol && overridingCallableSymbol.intersectionOverriddenSymbols

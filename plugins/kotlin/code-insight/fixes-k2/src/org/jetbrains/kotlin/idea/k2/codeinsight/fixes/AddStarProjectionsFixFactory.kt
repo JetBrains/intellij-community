@@ -63,7 +63,7 @@ private fun getTargetClasses(
     val parentWithSelfClasses = classSymbol.parentsWithSelf.mapNotNull { it as? KaNamedClassSymbol }.toList()
 
     val scope = typeReference.containingKtFile.scopeContext(typeReference).compositeScope()
-    val classSymbols = scope.getClassifierSymbols().filterIsInstance<KaNamedClassSymbol>().toSet()
+    val classSymbols = scope.classifiers.filterIsInstance<KaNamedClassSymbol>().toSet()
 
     val targets = parentWithSelfClasses.takeWhile {
         it.isInner || !classSymbols.contains(it)

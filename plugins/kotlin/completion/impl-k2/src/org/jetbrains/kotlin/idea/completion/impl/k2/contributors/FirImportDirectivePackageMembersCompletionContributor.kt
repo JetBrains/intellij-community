@@ -32,11 +32,11 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
             val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
             val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
 
-            scopeWithKind.scope.getClassifierSymbols(scopeNameFilter)
+            scopeWithKind.scope.classifiers(scopeNameFilter)
                 .filter { visibilityChecker.isVisible(it) }
                 .forEach { addClassifierSymbolToCompletion(it, weighingContext, symbolOrigin, ImportStrategy.DoNothing) }
 
-            scopeWithKind.scope.getCallableSymbols(scopeNameFilter)
+            scopeWithKind.scope.callables(scopeNameFilter)
                 .filter { visibilityChecker.isVisible(it) }
                 .forEach {
                     addCallableSymbolToCompletion(

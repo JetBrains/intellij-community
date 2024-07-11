@@ -47,7 +47,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
         @OptIn(KaExperimentalApi::class)
         private fun getUnimplementedMemberSymbols(classWithUnimplementedMembers: KaClassSymbol): List<KaCallableSymbol> {
             return buildList {
-                classWithUnimplementedMembers.memberScope.getCallableSymbols().forEach { symbol ->
+                classWithUnimplementedMembers.memberScope.callables.forEach { symbol ->
                     if (!symbol.isVisibleInClass(classWithUnimplementedMembers)) return@forEach
                     when (symbol.getImplementationStatus(classWithUnimplementedMembers)) {
                         ImplementationStatus.NOT_IMPLEMENTED -> add(symbol)

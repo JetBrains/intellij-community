@@ -56,7 +56,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
                 (symbol.containingDeclaration as? KaClassSymbol)?.declaredMemberScope,
                 symbol.receiverParameter?.type?.expandedSymbol?.declaredMemberScope
             ).flatMapTo(result) { scope ->
-                scope.getCallableSymbols(name).mapNotNull {
+                scope.callables(name).mapNotNull {
                     it.psi as? KtNamedFunction
                 }
             }

@@ -169,7 +169,7 @@ sealed class K2MoveRenameUsageInfo(
                     }
                 }
                 if (containingSymbol is KaDeclarationContainerSymbol) {
-                    if (resolvedSymbol in containingSymbol.staticMemberScope.getAllSymbols()) return true
+                    if (resolvedSymbol in containingSymbol.staticMemberScope.declarations) return true
                 }
                 return false
             }

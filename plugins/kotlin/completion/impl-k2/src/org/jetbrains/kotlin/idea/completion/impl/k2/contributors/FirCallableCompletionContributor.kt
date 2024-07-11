@@ -290,7 +290,7 @@ internal open class FirCallableCompletionContributor(
         val packageScopeKind = KaScopeKinds.PackageMemberScope(CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX)
 
         return packageScope
-            .getCallableSymbols(scopeNameFilter)
+            .callables(scopeNameFilter)
             .filterNot { it.isExtension }
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it, sessionParameters) }
@@ -471,7 +471,7 @@ internal open class FirCallableCompletionContributor(
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
     ): Collection<ApplicableExtension> =
-        scope.getCallableSymbols(scopeNameFilter)
+        scope.callables(scopeNameFilter)
             .filter { it.canBeUsedAsExtension() }
             .filter { visibilityChecker.isVisible(it) }
             .filter { filter(it, sessionParameters) }
@@ -801,7 +801,7 @@ internal class FirKDocCallableCompletionContributor(
         }
 
         for (scopeWithKind in scopesWithKinds) {
-            scopeWithKind.scope.getCallableSymbols(scopeNameFilter)
+            scopeWithKind.scope.callables(scopeNameFilter)
                 .filter { it !is KaSyntheticJavaPropertySymbol }
                 .forEach { symbol ->
                     yield(

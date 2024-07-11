@@ -94,7 +94,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     context(KaSession)
     private fun collectEnumBranches(klass: KaNamedClassSymbol): List<CaseBranch> {
         val enumEntries = klass.staticDeclaredMemberScope
-            .getCallableSymbols()
+            .callables
             .filterIsInstance<KaEnumEntrySymbol>()
 
         return buildList {

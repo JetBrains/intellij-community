@@ -48,7 +48,7 @@ context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
         return buildList {
-            classOrObjectSymbol.memberScope.getCallableSymbols().forEach { symbol ->
+            classOrObjectSymbol.memberScope.callables.forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
                 val implementationStatus = symbol.getImplementationStatus(classOrObjectSymbol) ?: return@forEach
                 if (!implementationStatus.isOverridable) return@forEach

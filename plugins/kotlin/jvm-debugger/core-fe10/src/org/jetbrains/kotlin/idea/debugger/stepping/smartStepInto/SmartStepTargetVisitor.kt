@@ -237,7 +237,7 @@ class SmartStepTargetVisitor(
         return if (argumentSymbol.returnType.isFunctionalInterface) {
             val samClassSymbol = argumentSymbol.returnType.expandedSymbol ?: return null
             val scope = samClassSymbol.memberScope
-            val funMethodSymbol = scope.getCallableSymbols()
+            val funMethodSymbol = scope.callables
                 .filterIsInstance<KaNamedFunctionSymbol>()
                 .singleOrNull { it.modality == KaSymbolModality.ABSTRACT }
                 ?: return null

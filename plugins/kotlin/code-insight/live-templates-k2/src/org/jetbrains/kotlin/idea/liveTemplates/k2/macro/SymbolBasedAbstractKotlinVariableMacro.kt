@@ -74,7 +74,7 @@ abstract class SymbolBasedAbstractKotlinVariableMacro : KotlinMacro() {
                     }
 
                     val scope = file.scopeContext(contextElement).compositeScope { it !is KaScopeKind.ImportingScope }
-                    val variables = scope.getCallableSymbols()
+                    val variables = scope.callables
                       .filterIsInstance<KaVariableSymbol>()
                       .filter { !it.name.isSpecial && shouldDisplayVariable(it, file) }
                       .filter { matcher == null || matcher. match(it.returnType) }

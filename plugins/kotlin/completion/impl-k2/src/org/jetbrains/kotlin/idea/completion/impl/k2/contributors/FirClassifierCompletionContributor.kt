@@ -58,7 +58,7 @@ internal open class FirClassifierCompletionContributor(
         val reference = receiver.reference() ?: return
         getStaticScopes(reference).forEach { scopeWithKind ->
             scopeWithKind.scope
-                .getClassifierSymbols(scopeNameFilter)
+                .classifiers(scopeNameFilter)
                 .filter { filterClassifiers(it) }
                 .filter { visibilityChecker.isVisible(it) }
                 .forEach {
@@ -118,7 +118,7 @@ internal class FirAnnotationCompletionContributor(
             KaClassKind.ENUM_CLASS -> false
             KaClassKind.ANONYMOUS_OBJECT -> false
             KaClassKind.CLASS, KaClassKind.OBJECT, KaClassKind.COMPANION_OBJECT, KaClassKind.INTERFACE -> {
-                classifierSymbol.staticDeclaredMemberScope.getClassifierSymbols().any { filterClassifiers(it) }
+                classifierSymbol.staticDeclaredMemberScope.classifiers.any { filterClassifiers(it) }
             }
         }
 

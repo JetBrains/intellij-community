@@ -76,7 +76,7 @@ context(KaSession)
 private fun KaNamedClassSymbol.isSamInterface(): Boolean {
     if (classKind != KaClassKind.INTERFACE) return false
     val singleAbstractMember = memberScope
-        .getCallableSymbols()
+        .callables
         .filterIsInstance<KaSymbolWithModality>()
         .filter { it.modality == KaSymbolModality.ABSTRACT }
         .singleOrNull() ?: return false

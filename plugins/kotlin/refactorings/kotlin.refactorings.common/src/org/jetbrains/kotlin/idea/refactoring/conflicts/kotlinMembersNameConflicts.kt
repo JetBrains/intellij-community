@@ -56,12 +56,12 @@ fun KaScope.findSiblingsByName(
     if (symbol is KaConstructorSymbol) {
         return constructors.filter { symbol != it }
     }
-    val callables = getCallableSymbols(newName).filter { callable ->
+    val callables = callables(newName).filter { callable ->
         symbol != callable &&
                 ((callable as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PRIVATE || callable.containingDeclaration == containingSymbol)
     }
 
-    val classifierSymbols = getClassifierSymbols(newName)
+    val classifierSymbols = classifiers(newName)
     if (symbol is KaFunctionSymbol) {
         return (classifierSymbols.flatMap { (it as? KaClassSymbol)?.declaredMemberScope?.constructors ?: emptySequence() } + callables)
     }

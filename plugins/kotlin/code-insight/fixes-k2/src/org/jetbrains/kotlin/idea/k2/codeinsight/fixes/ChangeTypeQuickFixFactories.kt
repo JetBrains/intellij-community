@@ -231,7 +231,7 @@ object ChangeTypeQuickFixFactories {
 
                 val classSymbol = (diagnostic.psi.expressionType as? KaClassType)?.symbol as? KaDeclarationContainerSymbol ?: return@buildList
                 val componentFunction = classSymbol.memberScope
-                    .getCallableSymbols(diagnostic.componentFunctionName)
+                    .callables(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration
                     ?: return@buildList
                 add(UpdateTypeQuickFix(componentFunction, TargetType.CALLED_FUNCTION, createTypeInfo(diagnostic.expectedType)))

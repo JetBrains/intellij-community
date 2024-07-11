@@ -103,7 +103,7 @@ object AddExclExclCallFixFactories {
         // Adding `!!` will then surface the error that `operator` should be added (with corresponding fix).
         val typeScope = type.scope?.declarationScope
             ?: return@IntentionBased emptyList()
-        val hasValidIterator = typeScope.getCallableSymbols(OperatorNameConventions.ITERATOR)
+        val hasValidIterator = typeScope.callables(OperatorNameConventions.ITERATOR)
             .filter { it is KaNamedFunctionSymbol && it.valueParameters.isEmpty() }.singleOrNull() != null
         if (hasValidIterator) {
             listOfNotNull(expression.asAddExclExclCallFix())

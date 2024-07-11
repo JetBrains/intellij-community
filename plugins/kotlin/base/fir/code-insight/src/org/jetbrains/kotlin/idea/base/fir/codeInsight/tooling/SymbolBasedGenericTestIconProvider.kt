@@ -32,7 +32,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
             isIgnored(symbol) -> false
             (symbol as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PUBLIC -> false
             KotlinTestAvailabilityChecker.TEST_FQ_NAME in symbol.annotations -> true
-            symbol is KaClassSymbol -> symbol.declaredMemberScope.getCallableSymbols().any { isTestDeclaration(it) }
+            symbol is KaClassSymbol -> symbol.declaredMemberScope.callables.any { isTestDeclaration(it) }
             else -> false
         }
     }
