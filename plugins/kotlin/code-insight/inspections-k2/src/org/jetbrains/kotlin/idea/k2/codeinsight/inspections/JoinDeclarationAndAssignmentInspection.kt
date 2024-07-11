@@ -372,7 +372,7 @@ internal class JoinDeclarationAndAssignmentInspection :
     private fun equalNullableTypes(type1: KaType?, type2: KaType?): Boolean {
         if (type1 == null) return type2 == null
         if (type2 == null) return false
-        return type1.isEqualTo(type2)
+        return type1.semanticallyEquals(type2)
     }
 
     private fun ModPsiUpdater.update(newProperty: KtProperty, canOmitDeclaredType: Boolean) {

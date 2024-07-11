@@ -1874,8 +1874,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         leftType.isNothingType && leftType.isMarkedNullable -> rightType.withNullability(KaTypeNullability.NULLABLE)
         rightType.isNothingType && rightType.isMarkedNullable -> leftType.withNullability(KaTypeNullability.NULLABLE)
         !forceEqualityByContent -> balanceType(leftType, rightType)
-        leftType.isSubTypeOf(rightType) -> rightType
-        rightType.isSubTypeOf(leftType) -> leftType
+        leftType.isSubtypeOf(rightType) -> rightType
+        rightType.isSubtypeOf(leftType) -> leftType
         else -> null
     }
 

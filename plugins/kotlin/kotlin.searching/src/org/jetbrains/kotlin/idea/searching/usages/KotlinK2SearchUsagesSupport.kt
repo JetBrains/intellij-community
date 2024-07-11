@@ -150,7 +150,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val receiverType = declarationSymbol.receiverType
 
                 //do not treat callable with different receivers as overloads
-                if (receiverType != null && candidateReceiverType != null && !receiverType.isEqualTo(candidateReceiverType)) {
+                if (receiverType != null && candidateReceiverType != null && !receiverType.semanticallyEquals(candidateReceiverType)) {
                     return@any false
                 }
 

@@ -220,7 +220,7 @@ object K2SemanticMatcher {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
-                        if (!targetSymbol.returnType.isSubTypeOf(patternSymbol.returnType)) return false
+                        if (!targetSymbol.returnType.isSubtypeOf(patternSymbol.returnType)) return false
                     }
                     val expression =
                         KtPsiFactory(patternElement.project).createExpression((targetSymbol as KaNamedSymbol).name.asString())
@@ -241,7 +241,7 @@ object K2SemanticMatcher {
         fun areTypesEqualOrAssociated(targetType: KaType?, patternType: KaType?): Boolean {
             if (targetType == null || patternType == null) return targetType == null && patternType == null
 
-            return targetType.isEqualTo(patternType) ||
+            return targetType.semanticallyEquals(patternType) ||
                     targetType is KaTypeParameterType &&
                     patternType is KaTypeParameterType &&
                     symbols[targetType.symbol] == patternType.symbol

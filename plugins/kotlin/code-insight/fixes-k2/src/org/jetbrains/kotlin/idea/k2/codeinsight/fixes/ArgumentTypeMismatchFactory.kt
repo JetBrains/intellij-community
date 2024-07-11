@@ -52,7 +52,7 @@ internal object ArgumentTypeMismatchFactory {
         if (PsiTreeUtil.getParentOfType(diagnostic.psi, KtAnnotationEntry::class.java) == null) return false
         val expectedType = diagnostic.expectedType
         val arrayElementType = expectedType.arrayElementType
-        return expectedType.isPrimitiveArray || (arrayElementType != null && diagnostic.actualType.isSubTypeOf(arrayElementType))
+        return expectedType.isPrimitiveArray || (arrayElementType != null && diagnostic.actualType.isSubtypeOf(arrayElementType))
     }
 
     context(KaSession)

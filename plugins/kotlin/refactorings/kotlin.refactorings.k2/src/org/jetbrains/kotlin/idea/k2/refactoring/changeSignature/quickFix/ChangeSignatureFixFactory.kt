@@ -194,7 +194,7 @@ object ChangeSignatureFixFactory {
                         usedNames.add(parameters[i].name!!)
                         val argumentType = getKtType(expression)
                         val parameterType = parameters[i].returnType
-                        if (argumentType != null && !argumentType.isSubTypeOf(parameterType)) {
+                        if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
                             changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)
                             )
@@ -322,7 +322,7 @@ object ChangeSignatureFixFactory {
         val valueArguments = callElement.valueArguments
         val idx = valueArguments.indexOf(valueArgument)
         val hasTypeMismatch = idx > 0 && valueArguments.take(idx).zip(ktCallableSymbol.valueParameters).any { (arg, s) ->
-            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubTypeOf(s.returnType) != true
+            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubtypeOf(s.returnType) != true
         }
 
         val input = Input(

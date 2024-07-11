@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.types.Variance
 class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<KaType> {
     override fun KaType.isMeaningful(): Boolean =
         analyze(data.commonParent) {
-            !this@isMeaningful.isEqualTo(builtinTypes.unit) && !this@isMeaningful.isEqualTo(builtinTypes.nothing)
+            !this@isMeaningful.semanticallyEquals(builtinTypes.unit) && !this@isMeaningful.semanticallyEquals(builtinTypes.nothing)
         }
 
     override fun KaType.isError(): Boolean {

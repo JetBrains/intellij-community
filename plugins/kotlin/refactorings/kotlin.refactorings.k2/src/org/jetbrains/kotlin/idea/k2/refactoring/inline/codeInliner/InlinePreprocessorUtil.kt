@@ -255,16 +255,16 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                 val originalSymbolReceiverType = originalSymbol?.receiverType
                 val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
                 if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
-                    getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.isEqualTo(originalSymbolReceiverType) ||
-                                                originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
+                    getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
+                                                originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType))
                 } else {
                     val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KaFunctionType
                     val receiverType = functionalType?.receiverType
                     if (receiverType == null) {
                         null to true
                     } else {
-                        val isSame = originalSymbolReceiverType != null && receiverType.isEqualTo(originalSymbolReceiverType) ||
-                                originalSymbolDispatchType != null && receiverType.isEqualTo(originalSymbolDispatchType)
+                        val isSame = originalSymbolReceiverType != null && receiverType.semanticallyEquals(originalSymbolReceiverType) ||
+                                originalSymbolDispatchType != null && receiverType.semanticallyEquals(originalSymbolDispatchType)
                         "this".takeIf { isSame } to isSame
                     }
                 }

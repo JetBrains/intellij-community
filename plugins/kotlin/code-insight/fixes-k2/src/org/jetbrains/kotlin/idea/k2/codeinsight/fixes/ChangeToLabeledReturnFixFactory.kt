@@ -70,7 +70,7 @@ internal object ChangeToLabeledReturnFixFactory {
         val lambda = returnExpression.getStrictParentOfType<KtLambdaExpression>() ?: return null
         val lambdaReturnType = lambda.functionLiteral.returnType
         val returnType = returnExpression.returnedExpression?.expressionType ?: return null
-        if (!returnType.isSubTypeOf(lambdaReturnType)) return null
+        if (!returnType.isSubtypeOf(lambdaReturnType)) return null
         return returnExpression
     }
 }

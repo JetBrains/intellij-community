@@ -336,7 +336,7 @@ private class FunctionLikeSimplifiedSignature(
 
         with(analysisSession) {
             for (i in types1.indices) {
-                if (!types1[i].isEqualTo(types2[i])) return false
+                if (!types1[i].semanticallyEquals(types2[i])) return false
             }
             return true
         }

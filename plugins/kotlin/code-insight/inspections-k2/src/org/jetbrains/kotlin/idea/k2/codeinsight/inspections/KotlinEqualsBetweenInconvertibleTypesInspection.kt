@@ -27,7 +27,7 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
             analyze(call) {
                 val receiverType = receiver.getTypeIfComparable() ?: return
                 val argumentType = argument.getTypeIfComparable() ?: return
-                if (!receiverType.isEqualTo(argumentType)) {
+                if (!receiverType.semanticallyEquals(argumentType)) {
                     holder.registerProblem(callee, KotlinBundle.message("equals.between.objects.of.inconvertible.types"))
                 }
             }

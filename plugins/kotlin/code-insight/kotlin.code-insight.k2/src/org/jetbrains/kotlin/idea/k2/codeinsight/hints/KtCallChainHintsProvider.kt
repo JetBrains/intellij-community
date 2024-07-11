@@ -47,7 +47,7 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
                             // Show type for expression in call chain on the first line only if it's dot qualified
                             expressionWithType.expression.skipParenthesesAndPostfixOperatorsDown() is KtQualifiedExpression
                         } else {
-                            !expressionWithType.type.isEqualTo(prevExpressionWithType.type) ||
+                            !expressionWithType.type.semanticallyEquals(prevExpressionWithType.type) ||
                                     prevExpressionWithType.expression.skipParenthesesAndPostfixOperatorsDown() !is KtQualifiedExpression
                         }
                     }

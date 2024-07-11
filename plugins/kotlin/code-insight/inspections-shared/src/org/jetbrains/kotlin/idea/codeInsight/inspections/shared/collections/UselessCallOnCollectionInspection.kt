@@ -85,7 +85,7 @@ class UselessCallOnCollectionInspection : AbstractUselessCallInspection() {
             @OptIn(KaExperimentalApi::class)
             val typeParameterDescriptor = resolvedCall.symbol.typeParameters.singleOrNull() ?: return
             val argumentType = resolvedCall.typeArgumentsMapping[typeParameterDescriptor] ?: return
-            if (receiverTypeArgumentType is KaFlexibleType || !receiverTypeArgumentType.isSubTypeOf(argumentType)) return
+            if (receiverTypeArgumentType is KaFlexibleType || !receiverTypeArgumentType.isSubtypeOf(argumentType)) return
         } else {
             // xxxNotNull
             if (receiverTypeArgumentType.canBeNull) return

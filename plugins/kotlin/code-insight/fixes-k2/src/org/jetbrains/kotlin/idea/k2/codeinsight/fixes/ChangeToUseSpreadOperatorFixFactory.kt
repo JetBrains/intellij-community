@@ -34,7 +34,7 @@ internal object ChangeToUseSpreadOperatorFixFactory {
         }
 
         val buildType = substituteTypeParameterTypesWithStarTypeProjections(diagnostic.expectedType) ?: return@ModCommandBased emptyList()
-        if (!arrayElementType.isSubTypeOf(buildType)) return@ModCommandBased emptyList()
+        if (!arrayElementType.isSubtypeOf(buildType)) return@ModCommandBased emptyList()
 
         listOf(
             ChangeToUseSpreadOperatorFix(element)

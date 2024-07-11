@@ -100,9 +100,9 @@ internal class RemoveExplicitTypeIntention :
 
         val initializerType = initializer.expressionType ?: return true
         val typeCanBeRemoved = if (isVar) {
-            initializerType.isEqualTo(explicitType)
+            initializerType.semanticallyEquals(explicitType)
         } else {
-            initializerType.isSubTypeOf(explicitType)
+            initializerType.isSubtypeOf(explicitType)
         }
         return !typeCanBeRemoved
     }
@@ -123,7 +123,7 @@ internal class RemoveExplicitTypeIntention :
             val classId = initializer.getClassId()
             val let = classId?.let { buildClassType(it) }
             val superType = typeReference.type
-            val subTypeOf = let?.isSubTypeOf(superType)
+            val subTypeOf = let?.isSubtypeOf(superType)
             subTypeOf == true
         }
         is KtCallExpression -> initializer.typeArgumentList != null || !returnTypeOfCallDependsOnTypeParameters(initializer)

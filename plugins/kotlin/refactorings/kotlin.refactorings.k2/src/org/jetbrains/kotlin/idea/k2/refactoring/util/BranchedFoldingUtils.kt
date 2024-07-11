@@ -221,8 +221,8 @@ object BranchedFoldingUtils {
         val rightTypeOfSecond = second.right?.expressionType ?: return false
         if (!leftType.canBeNull && rightTypeOfSecond.canBeNull) return false
         val nonNullableRightTypeOfSecond = rightTypeOfSecond.withNullability(KaTypeNullability.NON_NULLABLE)
-        return nonNullableRightTypeOfFirst.isEqualTo(nonNullableRightTypeOfSecond) ||
-                (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond.isSubTypeOf(leftType))
+        return nonNullableRightTypeOfFirst.semanticallyEquals(nonNullableRightTypeOfSecond) ||
+                (first.operationToken == KtTokens.EQ && nonNullableRightTypeOfSecond.isSubtypeOf(leftType))
     }
 
     /**

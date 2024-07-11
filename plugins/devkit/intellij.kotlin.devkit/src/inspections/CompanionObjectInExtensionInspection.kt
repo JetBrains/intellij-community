@@ -112,7 +112,7 @@ private val KtProperty.isLoggerInstance: Boolean
 
       if (propertyReturnType !is KaClassType || loggerType !is KaClassType) return false
 
-      propertyReturnType.isSubTypeOf(loggerType)
+      propertyReturnType.isSubtypeOf(loggerType)
     }
   }
 

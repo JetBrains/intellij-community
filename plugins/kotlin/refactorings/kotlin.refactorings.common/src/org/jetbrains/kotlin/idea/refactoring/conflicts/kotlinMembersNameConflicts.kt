@@ -243,14 +243,14 @@ fun areSameSignatures(
 ): Boolean {
   return areTypesTheSame(receiverType1, receiverType2) &&
           parameterTypes1.size == parameterTypes2.size && parameterTypes1.zip(parameterTypes2).all { (p1, p2) -> areTypesTheSame(p1, p2) } &&
-          c1.size == c2.size && c1.zip(c2).all { (c1, c2) -> c1.type.isEqualTo(c2.type) }
+          c1.size == c2.size && c1.zip(c2).all { (c1, c2) -> c1.type.semanticallyEquals(c2.type) }
 }
 
 context(KaSession)
 private fun areTypesTheSame(t1: KaType?, t2: KaType?): Boolean {
   if (t1 === t2) return true
   if (t2 == null) return false
-  return t1?.isEqualTo(t2) == true
+  return t1?.semanticallyEquals(t2) == true
 }
 
 fun PsiElement.representativeContainer(): PsiNamedElement? = when (this) {

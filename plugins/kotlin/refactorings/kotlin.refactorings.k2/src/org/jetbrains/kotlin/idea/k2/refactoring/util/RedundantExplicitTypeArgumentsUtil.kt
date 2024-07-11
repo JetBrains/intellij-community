@@ -65,7 +65,7 @@ private fun collectTypesInferredFromArguments(resolvedCall: KaFunctionCall<*>): 
             return null
         }
         val argumentType = argumentExpression.expressionType ?: continue
-        if (!argumentType.isSubTypeOf(sig.returnType)) return null
+        if (!argumentType.isSubtypeOf(sig.returnType)) return null
         if (isApplicableType(argumentType, sig.returnType)) {
             val collectTypeParameterTypes = if (argumentExpression is KtCallExpression && argumentExpression.typeArgumentList == null) {
                 val resolvedArgumentCall = argumentExpression.resolveToCall()?.singleFunctionCallOrNull() ?: continue
@@ -118,8 +118,8 @@ private fun buildType(type: KaType, typeArgumentsMapping: Map<KaTypeParameterSym
 
 context(KaSession)
 private fun isApplicableType(type: KaType, expectedType: KaType): Boolean {
-    return type.isEqualTo(expectedType) ||
-            (expectedType.isMarkedNullable && type.withNullability(KaTypeNullability.NULLABLE).isEqualTo(expectedType))
+    return type.semanticallyEquals(expectedType) ||
+            (expectedType.isMarkedNullable && type.withNullability(KaTypeNullability.NULLABLE).semanticallyEquals(expectedType))
 }
 
 context(KaSession)

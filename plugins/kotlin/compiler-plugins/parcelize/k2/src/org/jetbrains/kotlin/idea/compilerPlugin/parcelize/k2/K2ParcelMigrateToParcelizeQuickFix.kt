@@ -77,7 +77,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
         context(KaSession)
         private fun KaType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
             val superClassSymbol = findClass(superTypeClassId) ?: return false
-            return isSubTypeOf(superClassSymbol.buildStarProjectedType())
+            return isSubtypeOf(superClassSymbol.buildStarProjectedType())
         }
 
         context(KaSession)

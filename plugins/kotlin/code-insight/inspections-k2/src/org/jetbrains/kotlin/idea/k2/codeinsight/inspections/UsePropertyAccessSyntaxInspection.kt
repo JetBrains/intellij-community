@@ -475,7 +475,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         }
 
         val syntheticPropertyReturnType = syntheticProperty.returnType.lowerBoundIfFlexible()
-        return syntheticPropertyReturnType.isEqualTo(propertyExpectedType)
+        return syntheticPropertyReturnType.semanticallyEquals(propertyExpectedType)
     }
 
     context(KaSession)
@@ -550,7 +550,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         val replacementReceiverType =
             resolvedCall.successfulVariableAccessCall()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
                 ?: return false
-        return replacementReceiverType.isEqualTo(expectedReceiverType)
+        return replacementReceiverType.semanticallyEquals(expectedReceiverType)
     }
 
     private fun functionNameIsInNotPropertiesList(symbol: KaCallableSymbol, callExpression: KtExpression): Boolean {

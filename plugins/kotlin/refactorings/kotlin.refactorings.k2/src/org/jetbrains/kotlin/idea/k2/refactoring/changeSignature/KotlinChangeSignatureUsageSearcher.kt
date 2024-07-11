@@ -82,7 +82,7 @@ internal object KotlinChangeSignatureUsageSearcher {
                         //deleted or changed receiver, must be preserved as simple parameter
                         val parentExpression = expression.parent
                         if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
-                            parentExpression.expressionType?.let { originalReceiverType.isEqualTo(it) } == true) {
+                            parentExpression.expressionType?.let { originalReceiverType.semanticallyEquals(it) } == true) {
                             result.add(
                                 KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
                             )
@@ -101,10 +101,10 @@ internal object KotlinChangeSignatureUsageSearcher {
                                 ?: ((receiverValue as? KaSmartCastedReceiverValue)?.original as? KaExplicitReceiverValue)?.expression
                                 ?: expression
                             if (originalReceiverType != null) {
-                                if (receiverValue.type.isSubTypeOf(originalReceiverType)) {
+                                if (receiverValue.type.isSubtypeOf(originalReceiverType)) {
                                     if (receiverExpression is KtThisExpression) {
                                         val targetLabel = receiverExpression.getTargetLabel()
-                                        if (targetLabel == null || targetLabel.expressionType?.let { originalReceiverType.isEqualTo(it) } == true) {
+                                        if (targetLabel == null || targetLabel.expressionType?.let { originalReceiverType.semanticallyEquals(it) } == true) {
                                             result.add(KotlinParameterUsage(receiverExpression, originalReceiverInfo!!))
                                         }
                                     }

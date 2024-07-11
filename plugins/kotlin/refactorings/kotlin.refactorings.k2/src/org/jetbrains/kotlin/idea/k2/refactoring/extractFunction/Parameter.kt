@@ -26,17 +26,17 @@ internal sealed class TypePredicate {
 
 internal class SubTypePredicate(private val type: KaType) : TypePredicate() {
     context(KaSession)
-    override fun isApplicable(ktType: KaType): Boolean = ktType.isSubTypeOf(type)
+    override fun isApplicable(ktType: KaType): Boolean = ktType.isSubtypeOf(type)
 }
 
 internal class SuperTypePredicate(private val type: KaType) : TypePredicate() {
     context(KaSession)
-    override fun isApplicable(ktType: KaType): Boolean = ktType.isSubTypeOf(type)
+    override fun isApplicable(ktType: KaType): Boolean = ktType.isSubtypeOf(type)
 }
 
 internal class ExactTypePredicate(private val type: KaType) : TypePredicate() {
     context(KaSession)
-    override fun isApplicable(ktType: KaType): Boolean = ktType.isEqualTo(type)
+    override fun isApplicable(ktType: KaType): Boolean = ktType.semanticallyEquals(type)
 }
 
 internal class AndPredicate(val predicates: Set<TypePredicate>) : TypePredicate() {

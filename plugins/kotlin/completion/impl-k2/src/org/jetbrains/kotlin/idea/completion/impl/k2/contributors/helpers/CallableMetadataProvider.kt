@@ -287,13 +287,13 @@ internal object CallableMetadataProvider {
         actualReceiverType: KaType,
         expectedReceiverType: KaType,
     ): CallableKind? = when {
-        actualReceiverType.isEqualTo(expectedReceiverType) -> when {
+        actualReceiverType.semanticallyEquals(expectedReceiverType) -> when {
             isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TYPE_PARAMETER_EXTENSION
             symbol.isExtension -> CallableKind.THIS_TYPE_EXTENSION
             else -> CallableKind.THIS_CLASS_MEMBER
         }
 
-        actualReceiverType.isSubTypeOf(expectedReceiverType) -> when {
+        actualReceiverType.isSubtypeOf(expectedReceiverType) -> when {
             symbol.isExtension -> CallableKind.BASE_TYPE_EXTENSION
             else -> CallableKind.BASE_CLASS_MEMBER
         }
