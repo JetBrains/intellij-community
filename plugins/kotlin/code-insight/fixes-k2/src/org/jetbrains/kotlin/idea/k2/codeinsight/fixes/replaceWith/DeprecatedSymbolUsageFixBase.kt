@@ -204,13 +204,13 @@ fun fetchReplaceWithPattern(
 ): ReplaceWithData? {
     val annotation = symbol.annotations.find { it.classId?.asSingleFqName() == StandardNames.FqNames.deprecated } ?: return null
     val replaceWithValue =
-      (annotation.arguments.find { it.name.asString() == "replaceWith" }?.expression as? KaAnnotationValue.NestedAnnotationValue)?.annotationValue
+      (annotation.arguments.find { it.name.asString() == "replaceWith" }?.expression as? KaAnnotationValue.NestedAnnotationValue)?.annotation
             ?: return null
     val pattern =
-        ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaConstantAnnotationValue)?.value as? KaConstantValue.StringValue)?.value
+        ((replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value
             ?: return null
     val imports =
-        (replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaArrayAnnotationValue)?.values?.mapNotNull { ((it as? KaConstantAnnotationValue)?.value as? KaConstantValue.StringValue)?.value }
+        (replaceWithValue.arguments.find { it.name.asString() == "expression" }?.expression as? KaAnnotationValue.ArrayValue)?.values?.mapNotNull { ((it as? KaAnnotationValue.ConstantValue)?.value as? KaConstantValue.StringValue)?.value }
             ?: emptyList()
 
     return ReplaceWithData(pattern, imports, true)

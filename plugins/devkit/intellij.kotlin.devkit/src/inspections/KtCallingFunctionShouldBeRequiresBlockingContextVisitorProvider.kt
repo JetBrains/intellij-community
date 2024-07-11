@@ -12,7 +12,6 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection
 import org.jetbrains.idea.devkit.util.QuickFixWithReferenceToElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
@@ -43,7 +42,7 @@ internal class KtCallingFunctionShouldBeRequiresBlockingContextVisitorProvider :
         val calledSymbol = functionCall?.partiallyAppliedSymbol?.symbol
 
         if (calledSymbol !is KaNamedSymbol) return
-        val hasAnnotation = calledSymbol.hasAnnotation(RequiresBlockingContextAnnotationId)
+        val hasAnnotation = RequiresBlockingContextAnnotationId in calledSymbol.annotations
 
         if (!hasAnnotation) {
           if (calledSymbol is KaNamedFunctionSymbol && calledSymbol.isInline) {

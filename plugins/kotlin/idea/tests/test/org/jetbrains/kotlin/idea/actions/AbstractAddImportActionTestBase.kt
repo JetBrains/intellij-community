@@ -7,7 +7,6 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -110,9 +109,9 @@ private class MockAutoImportCallableWeigher : KotlinAutoImportCallableWeigher {
         symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int {
-        val symbolAnnotated = symbolToBeImported.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+        val symbolAnnotated = TEST_ANNOTATION_CLASS_ID in symbolToBeImported.annotations
         val receiverAnnotated =
-            unresolvedReferenceExpression.parentOfType<KtFunction>()?.symbol?.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+            unresolvedReferenceExpression.parentOfType<KtFunction>()?.symbol?.annotations?.contains(TEST_ANNOTATION_CLASS_ID)
         return if (symbolAnnotated && receiverAnnotated == true) 1 else 0
     }
 

@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElementVisitor.EMPTY_VISITOR
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.idea.base.facet.implementedModules
 import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.facet.isMultiPlatformModule

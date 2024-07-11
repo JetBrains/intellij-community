@@ -564,7 +564,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
     private fun functionOriginateNotFromJava(allOverriddenSymbols: List<KaCallableSymbol>): Boolean {
         for (overriddenSymbol in allOverriddenSymbols) {
             if (overriddenSymbol.origin.isJavaSourceOrLibrary()) {
-                val symbolAnnotations = overriddenSymbol.annotationsList.annotations
+                val symbolAnnotations = overriddenSymbol.annotations
                 if (symbolAnnotations.any { it.classId?.asFqNameString()?.equals(JAVA_LANG_OVERRIDE) == true }) {
                     // This is Java's @Override, continue searching for Java method but not overridden
                     continue

@@ -808,7 +808,7 @@ internal class KotlinIdeDeclarationRenderer(
     }
 
     private fun PrettyPrinter.renderAnnotationConstantValue(application: KaAnnotationValue.NestedAnnotationValue) {
-        renderAnnotationApplication(application.annotationValue)
+        renderAnnotationApplication(application.annotation)
     }
 
     private fun PrettyPrinter.renderAnnotationApplication(value: KaAnnotation) {

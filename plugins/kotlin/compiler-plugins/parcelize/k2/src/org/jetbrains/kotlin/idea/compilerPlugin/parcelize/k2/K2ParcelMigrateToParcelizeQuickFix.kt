@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -61,7 +60,8 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
         override val KtProperty.isJvmField: Boolean
             get() {
                 val symbol = getVariableSymbol() as? KaPropertySymbol ?: return false
-                return symbol.hasBackingField && (symbol.backingFieldSymbol?.hasAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
+                return symbol.hasBackingField
+                        && (symbol.backingFieldSymbol?.annotations?.contains(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 
         context(KaSession)

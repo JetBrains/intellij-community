@@ -433,7 +433,7 @@ object KotlinUnusedSymbolUtil {
           kotlinOptions = searchOptions
       )
       val originalDeclaration = (symbol as? KaTypeAliasSymbol)?.expandedType?.expandedSymbol?.psi as? KtNamedDeclaration
-      if (symbol !is KaNamedFunctionSymbol || !symbol.annotationsList.hasAnnotation(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
+      if (symbol !is KaNamedFunctionSymbol || !symbol.annotations.contains(ClassId.topLevel(FqName("kotlin.jvm.JvmName")))) {
           if (declaration is KtSecondaryConstructor &&
               declarationContainingClass != null &&
               // when too many occurrences of this class, consider it used

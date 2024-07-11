@@ -10,7 +10,6 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
@@ -179,7 +178,8 @@ class KtVariableDescriptor(
         private fun isTrackableProperty(target: KaVariableSymbol?) =
             target is KaPropertySymbol && target.getter?.isDefault != false && target.setter?.isDefault != false
                     && !target.isDelegatedProperty && target.modality == KaSymbolModality.FINAL
-                    && !target.isExtension && target.backingFieldSymbol?.hasAnnotation(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
+                    && !target.isExtension
+                    && target.backingFieldSymbol?.annotations?.contains(JvmStandardClassIds.VOLATILE_ANNOTATION_CLASS_ID) == false
     }
 }
 
