@@ -114,7 +114,7 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
 
     GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, localBranch);
     if (trackInfo != null) {
-      return new GitPushTarget(trackInfo.getRemoteBranch(), false);
+      return new GitPushTarget(trackInfo.getRemoteBranch(), false, GitPushTargetType.TRACKING_BRANCH);
     }
     return null;
   }
@@ -124,9 +124,9 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
                                                                @NotNull String branchName) {
     GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, branchName);
     if (existingRemoteBranch != null) {
-      return new GitPushTarget(existingRemoteBranch, false);
+      return new GitPushTarget(existingRemoteBranch, false, GitPushTargetType.TRACKING_BRANCH);
     }
-    return new GitPushTarget(new GitStandardRemoteBranch(remote, branchName), true);
+    return new GitPushTarget(new GitStandardRemoteBranch(remote, branchName), true, GitPushTargetType.TRACKING_BRANCH);
   }
 
   @Override

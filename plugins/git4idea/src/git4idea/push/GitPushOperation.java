@@ -276,6 +276,7 @@ public class GitPushOperation {
       GitPushRepoResult repoResult = null;
 
       StructuredIdeActivity pushActivity = GitOperationsCollector.startLogPush(repository.getProject());
+      GitPushTargetType targetType = getPushTargetType(repository, spec);
       try {
         resultWithOutput = doPush(repository, spec);
         LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
@@ -300,7 +301,7 @@ public class GitPushOperation {
         }
       }
       finally {
-        GitOperationsCollector.endLogPush(pushActivity, resultWithOutput != null ? resultWithOutput.resultOutput : null, repoResult);
+        GitOperationsCollector.endLogPush(pushActivity, resultWithOutput != null ? resultWithOutput.resultOutput : null, repoResult, targetType);
       }
 
       LOG.debug("Converted result: " + repoResult);
@@ -315,6 +316,26 @@ public class GitPushOperation {
       }
     }
     return results;
+  }
+
+  private @Nullable GitPushTargetType getPushTargetType(GitRepository repository, PushSpec<GitPushSource, GitPushTarget> spec) {
+    GitPushSource pushSource = spec.getSource();
+    GitPushTarget target = spec.getTarget();
+
+    GitPushTargetType targetType = spec.getTarget().getTargetType();
+    // Effective target branch can still be a tracking branch or a branch from spec
+    // E.g., user changed branch to custom in a push dialog and then reverted it to default
+    if (targetType == GitPushTargetType.CUSTOM) {
+      GitLocalBranch sourceBranch = pushSource.getBranch();
+      if (sourceBranch != null) {
+        GitPushTarget defaultTarget = myPushSupport.getDefaultTarget(repository, pushSource);
+        if (defaultTarget != null && defaultTarget.getBranch().equals(target.getBranch())) {
+          targetType = defaultTarget.getTargetType();
+        }
+      }
+    }
+
+    return targetType;
   }
 
   private static @Nullable GitPushNativeResult getPushedBranchOrCommit(@NotNull List<? extends GitPushNativeResult> results) {
