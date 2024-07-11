@@ -8067,9 +8067,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/implement/local.kt");
         }
 
-        @TestMetadata("menyImplMemberNotImplemented.kt")
-        public void testMenyImplMemberNotImplemented() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/implement/menyImplMemberNotImplemented.kt");
+        @TestMetadata("manyImplMemberNotImplemented.kt")
+        public void testManyImplMemberNotImplemented() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/implement/manyImplMemberNotImplemented.kt");
         }
 
         @TestMetadata("nested.kt")
