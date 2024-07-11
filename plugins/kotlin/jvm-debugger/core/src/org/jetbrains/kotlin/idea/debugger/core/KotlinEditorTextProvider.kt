@@ -160,7 +160,7 @@ private object AnalysisApiBasedKotlinEditorTextProvider : KotlinEditorTextProvid
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
                     is KaCompoundVariableAccessCall -> {
-                        val functionSymbol = call.compoundAccess.operationPartiallyAppliedSymbol.symbol
+                        val functionSymbol = call.compoundOperation.operationPartiallyAppliedSymbol.symbol
                         isSymbolAllowed(functionSymbol, allowMethodCalls)
                     }
                     else -> false

@@ -197,20 +197,20 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                         }
 
                         is KaCompoundVariableAccessCall -> {
-                            val variableSymbol = candidate.partiallyAppliedSymbol.symbol
+                            val variableSymbol = candidate.variablePartiallyAppliedSymbol.symbol
                             if (variableSymbol is KaSyntheticJavaPropertySymbol) {
                                 add(variableSymbol.getter)
                                 addIfNotNull(variableSymbol.setter)
                             } else {
                                 add(variableSymbol)
                             }
-                            add(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol)
+                            add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
                         }
 
                         is KaCompoundArrayAccessCall -> {
                             add(candidate.getPartiallyAppliedSymbol.symbol)
                             add(candidate.setPartiallyAppliedSymbol.symbol)
-                            add(candidate.compoundAccess.operationPartiallyAppliedSymbol.symbol)
+                            add(candidate.compoundOperation.operationPartiallyAppliedSymbol.symbol)
                         }
 
                         else -> {}
@@ -253,7 +253,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 is KtPrefixExpression,
                 is KtPostfixExpression -> {
                     ktCallInfo.singleCallOrNull<KaCompoundVariableAccessCall>()
-                        ?.compoundAccess
+                        ?.compoundOperation
                         ?.operationPartiallyAppliedSymbol
                         ?.signature
                         ?.symbol

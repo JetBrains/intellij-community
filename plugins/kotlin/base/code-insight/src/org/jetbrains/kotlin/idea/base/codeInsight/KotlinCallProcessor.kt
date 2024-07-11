@@ -236,8 +236,8 @@ object KotlinCallProcessor {
                         is KaDelegatedConstructorCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
                         is KaSimpleFunctionCall -> processCallTarget(FunctionCallTarget(element, call, call.partiallyAppliedSymbol))
                         is KaCompoundVariableAccessCall -> {
-                            processCallTarget(VariableCallTarget(element, call, call.partiallyAppliedSymbol))
-                            processCallTarget(FunctionCallTarget(element, call, call.compoundAccess.operationPartiallyAppliedSymbol))
+                            processCallTarget(VariableCallTarget(element, call, call.variablePartiallyAppliedSymbol))
+                            processCallTarget(FunctionCallTarget(element, call, call.compoundOperation.operationPartiallyAppliedSymbol))
                         }
 
                         is KaSimpleVariableAccessCall -> {
