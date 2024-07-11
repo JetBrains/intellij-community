@@ -73,8 +73,8 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
     LOG.info("Full scanning on startup will be skipped for project ${project.name}")
-    InitialScanningSkipReporter.reportInitialScanningSkipped(project, sourceOfScanning)
-    scheduleDirtyFilesScanning(project, notSeenIds as AllNotSeenDirtyFileIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
+    InitialScanningSkipReporter.reportInitialScanningSkipped(project, sourceOfScanning, (notSeenIds as AllNotSeenDirtyFileIds).result.size)
+    scheduleDirtyFilesScanning(project, notSeenIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
                                coroutineScope, indexingReason, partialScanningType)
   }
   else {
