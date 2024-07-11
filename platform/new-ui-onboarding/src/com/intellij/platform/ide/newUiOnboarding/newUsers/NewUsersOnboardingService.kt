@@ -5,6 +5,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
+import com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 
@@ -12,12 +13,15 @@ import kotlinx.coroutines.CoroutineScope
 internal class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
   fun showOnboardingDialog() {
     val dialog = NewUsersOnboardingDialog(project)
+    NewUsersOnboardingStatistics.logDialogShown(project)
     val startTour = dialog.showAndGet()
     if (startTour) {
       startOnboarding()
+      NewUsersOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.DIALOG)
     }
     else {
       // TODO: show notification
+      NewUsersOnboardingStatistics.logDialogSkipPressed(project)
     }
   }
 

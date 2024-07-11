@@ -4,9 +4,12 @@ package com.intellij.platform.ide.newUiOnboarding.newUsers
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
+import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.OnboardingStopReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -20,14 +23,25 @@ internal class NewUsersOnboardingExecutor(
   parentDisposable: Disposable,
 ) {
   private val disposable = Disposer.newDisposable()
+  private val tourStartMillis = System.currentTimeMillis()
 
   private var curStepId: String? = null
+  private var curStepStartMillis: Long? = null
 
   init {
     Disposer.register(parentDisposable, disposable)
     Disposer.register(disposable) {
       coroutineScope.cancel()
     }
+
+    // log if user aborted the onboarding by closing the project
+    project.messageBus.connect(disposable).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosing(project: Project) {
+        val stepId = curStepId ?: return
+        val stepStartMillis = curStepStartMillis ?: return
+        NewUsersOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.PROJECT_CLOSED, tourStartMillis, stepStartMillis)
+      }
+    })
   }
 
   fun start() {
@@ -45,7 +59,10 @@ internal class NewUsersOnboardingExecutor(
     val stepDisposable = Disposer.newCheckedDisposable()
     Disposer.register(disposable, stepDisposable)
 
+    val stepStartMillis = System.currentTimeMillis()
     curStepId = stepId
+    curStepStartMillis = stepStartMillis
+    NewUsersOnboardingStatistics.logStepStarted(project, stepId)
 
     val gotItData = step.performStep(project, stepDisposable)
     if (gotItData == null) {
@@ -58,19 +75,23 @@ internal class NewUsersOnboardingExecutor(
     builder.withStepNumber("${ind + 1}/${steps.size}")
       .onEscapePressed {
         finishOnboarding()
+        NewUsersOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.ESCAPE_PRESSED, tourStartMillis, stepStartMillis)
       }
+      .onLinkClick { NewUsersOnboardingStatistics.logLinkClicked(project, stepId) }
       .requestFocus(true)
 
     if (ind < steps.lastIndex) {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.next"))
         .onButtonClick {
           Disposer.dispose(stepDisposable)
+          NewUsersOnboardingStatistics.logStepFinished(project, stepId, stepStartMillis)
           coroutineScope.launch(Dispatchers.EDT) {
             runStep(ind + 1)
           }
         }
         .withSecondaryButton(NewUiOnboardingBundle.message("gotIt.button.skipAll")) {
           finishOnboarding()
+          NewUsersOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.SKIP_ALL, tourStartMillis, stepStartMillis)
         }
     }
     else {
@@ -78,6 +99,8 @@ internal class NewUsersOnboardingExecutor(
         .withContrastButton(true)
         .onButtonClick {
           finishOnboarding()
+          NewUsersOnboardingStatistics.logStepFinished(project, stepId, stepStartMillis)
+          NewUsersOnboardingStatistics.logOnboardingFinished(project, tourStartMillis)
         }
     }
 
