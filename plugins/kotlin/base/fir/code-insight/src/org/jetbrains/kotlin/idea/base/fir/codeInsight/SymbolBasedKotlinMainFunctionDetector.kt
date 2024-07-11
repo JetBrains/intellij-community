@@ -55,7 +55,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                         }
                     }
 
-                    val functionSymbol = function.getFunctionLikeSymbol()
+                    val functionSymbol = function.symbol
                     if (functionSymbol !is KaNamedFunctionSymbol) {
                         return false
                     }

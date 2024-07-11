@@ -187,7 +187,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
             val loopParameter = forExpression.loopParameter
 
             val elementType = when {
-                loopParameter != null && loopParameter.typeReference != null -> loopParameter.getParameterSymbol().returnType
+                loopParameter != null && loopParameter.typeReference != null -> loopParameter.symbol.returnType
                 else -> buildClassType(DefaultTypeClassIds.ANY)
             }
 

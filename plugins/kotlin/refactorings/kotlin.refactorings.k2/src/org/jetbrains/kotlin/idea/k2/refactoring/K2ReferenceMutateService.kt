@@ -225,8 +225,8 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     private fun KtOperationReferenceExpression.replaceWith(fqName: FqName, targetElement: KtNamedFunction): ReplaceResult {
         val psiFactory = KtPsiFactory(project)
         val shortName = fqName.quoteIfNeeded().shortName().asString()
-        val isInfix = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaNamedFunctionSymbol)?.isInfix == true }
-        val isOperator = analyze(targetElement) { (targetElement.getFunctionLikeSymbol() as? KaNamedFunctionSymbol)?.isOperator == true }
+        val isInfix = analyze(targetElement) { (targetElement.symbol as? KaNamedFunctionSymbol)?.isInfix == true }
+        val isOperator = analyze(targetElement) { (targetElement.symbol as? KaNamedFunctionSymbol)?.isOperator == true }
         val replacedExpr = if (isOperator) {
             val identifier = Name.identifier(shortName)
             val isUnary = OperatorNameConventions.UNARY_OPERATION_NAMES.contains(identifier)

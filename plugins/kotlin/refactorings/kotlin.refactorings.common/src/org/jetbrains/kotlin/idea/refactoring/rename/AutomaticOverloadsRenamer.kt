@@ -52,7 +52,7 @@ private fun KtNamedFunction.getOverloads(): Collection<KtNamedFunction> {
             if (symbol.isActual && symbol.getExpectsForActual().isNotEmpty()) return emptyList()
             val result = LinkedHashSet<KtNamedFunction>()
             listOfNotNull(
-                getPackageSymbolIfPackageExists(containingKtFile.packageFqName)?.packageScope,
+                findPackage(containingKtFile.packageFqName)?.packageScope,
                 (symbol.containingDeclaration as? KaClassSymbol)?.declaredMemberScope,
                 symbol.receiverParameter?.type?.expandedSymbol?.declaredMemberScope
             ).flatMapTo(result) { scope ->

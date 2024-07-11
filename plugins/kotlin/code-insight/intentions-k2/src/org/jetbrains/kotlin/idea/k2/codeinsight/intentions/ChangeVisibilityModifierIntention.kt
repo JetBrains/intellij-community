@@ -9,8 +9,6 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
-import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfTypeSafe
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
@@ -92,11 +90,11 @@ sealed class ChangeVisibilityModifierIntention(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun prepareContext(element: KtDeclaration): Unit? {
-        val symbol = element.getSymbolOfTypeSafe<KaSymbolWithVisibility>()
+        val symbol = element.symbol
 
         @OptIn(KaExperimentalApi::class)
         val targetVisibility = modifier.toVisibility()
-        if (symbol?.compilerVisibility == targetVisibility) return null
+        if (symbol.compilerVisibility == targetVisibility) return null
         val modifierList = element.modifierList
 
         if (modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
@@ -113,7 +111,7 @@ sealed class ChangeVisibilityModifierIntention(
             if (targetVisibility == Visibilities.Public) {
                 if (element.modifierList?.visibilityModifierType()?.value == null) return null
             } else {
-                val propVisibility = element.property.getSymbolOfType<KaSymbolWithVisibility>().compilerVisibility
+                val propVisibility = element.property.symbol.compilerVisibility
                 if (propVisibility == targetVisibility) return null
                 val compare = targetVisibility.compareTo(propVisibility)
                 if (compare == null || compare > 0) return null

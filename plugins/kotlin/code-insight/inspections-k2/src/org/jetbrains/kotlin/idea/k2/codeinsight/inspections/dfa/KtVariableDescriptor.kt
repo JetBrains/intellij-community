@@ -74,7 +74,7 @@ class KtVariableDescriptor(
     companion object {
         context(KaSession)
         fun getSingleLambdaParameter(factory: DfaValueFactory, lambda: KtLambdaExpression): DfaVariableValue? {
-            val parameterSymbol = lambda.functionLiteral.getAnonymousFunctionSymbol().valueParameters.singleOrNull() ?: return null
+            val parameterSymbol = lambda.functionLiteral.symbol.valueParameters.singleOrNull() ?: return null
             if ((parameterSymbol.psi as? KtParameter)?.destructuringDeclaration != null) return null
             return factory.varFactory.createVariableValue(parameterSymbol.variableDescriptor())
         }
@@ -123,7 +123,7 @@ class KtVariableDescriptor(
                             break
                         }
                         if (parentScope != null && PsiTreeUtil.isAncestor(scope, parentScope, true)) {
-                            result.add(target.getVariableSymbol().variableDescriptor())
+                            result.add(target.symbol.variableDescriptor())
                         }
                         return@processElements true
                     }

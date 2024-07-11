@@ -56,7 +56,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         // will NOT return a KaCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
-        val fileSymbol = callElement.containingKtFile.getFileSymbol()
+        val fileSymbol = callElement.containingKtFile.symbol
         val symbols = callElement.resolveToCallCandidates()
             .mapNotNull { (it.candidate as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KaFunctionSignature<*>>()

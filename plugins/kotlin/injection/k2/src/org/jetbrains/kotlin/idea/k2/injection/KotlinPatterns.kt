@@ -67,8 +67,8 @@ internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
 @Suppress("unused")
 internal class KtParameterPattern : KtParameterPatternBase() {
     override fun KtParameter.hasAnnotation(fqName: String): Boolean = analyze(this) {
-        val paramSymbol = getParameterSymbol()
-        paramSymbol is KaValueParameterSymbol && paramSymbol.annotations.any { annotation ->
+        val symbol = symbol
+        symbol is KaValueParameterSymbol && symbol.annotations.any { annotation ->
             annotation.classId?.asFqNameString() == fqName
         }
     }

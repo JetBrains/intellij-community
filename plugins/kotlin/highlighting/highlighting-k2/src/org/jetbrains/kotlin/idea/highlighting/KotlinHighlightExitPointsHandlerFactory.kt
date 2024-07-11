@@ -35,7 +35,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
     override fun hasNonUnitReturnType(functionLiteral: KtFunctionLiteral): Boolean =
         allowAnalysisOnEdt {
             analyze(functionLiteral) {
-                val returnType = functionLiteral.getAnonymousFunctionSymbol().returnType
+                val returnType = functionLiteral.symbol.returnType
                 !(returnType.isUnit || returnType.isNothing)
             }
         }

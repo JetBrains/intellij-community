@@ -198,7 +198,7 @@ private fun PsiNamedElement.isVisibleTo(usage: PsiElement): Boolean {
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun KtNamedDeclaration.isVisibleTo(usage: PsiElement): Boolean {
-    val file = (usage.containingFile as? KtFile)?.getFileSymbol() ?: return false
+    val file = (usage.containingFile as? KtFile)?.symbol ?: return false
     val symbol = symbol
     if (symbol !is KaSymbolWithVisibility) return false
     return isVisible(symbol, file, position = usage)

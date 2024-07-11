@@ -178,7 +178,7 @@ internal class FirSuperMemberCompletionContributor(
             .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile) }
             .flatMap { containingFunction ->
                 containingFunction
-                    .getFunctionLikeSymbol()
+                    .symbol
                     .allOverriddenSymbols
                     .map { superFunctionSymbol ->
                         superFunctionSymbol to containingFunction

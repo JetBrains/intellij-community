@@ -264,7 +264,7 @@ private fun IExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     fun KaAnnotation.isExperimentalMarker(): Boolean {
         val id = classId
         if (id == null) return false
-        val annotations = getClassOrObjectSymbolByClassId(id)?.annotations ?: return false
+        val annotations = findClass(id)?.annotations ?: return false
         return annotations.any { isRequiresOptInFqName(it.classId?.asSingleFqName()) }
     }
 

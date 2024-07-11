@@ -242,7 +242,7 @@ fun generateMember(
 context(KaSession)
 private fun keepAnnotation(annotation: KaAnnotation, file: KtFile?): Boolean {
     val classId = annotation.classId ?: return false
-    val symbol = getClassOrObjectSymbolByClassId(classId)
+    val symbol = findClass(classId)
 
     if (symbol != null && symbol.hasRequiresOptInAnnotation()) return true
 

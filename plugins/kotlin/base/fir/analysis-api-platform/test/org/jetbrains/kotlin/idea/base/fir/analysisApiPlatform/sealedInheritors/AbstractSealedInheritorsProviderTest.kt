@@ -45,7 +45,7 @@ abstract class AbstractSealedInheritorsProviderTest : AbstractProjectStructureTe
             assertTrue("Expected the target type `${targetClass.classIdIfNonLocal}` to be sealed.", targetClass.isSealed())
 
             analyze(targetClass) {
-                val classSymbol = targetClass.getNamedClassOrObjectSymbol()
+                val classSymbol = targetClass.namedClassSymbol
                     ?: error("Expected the target class `${targetClass.classIdIfNonLocal}` to have a class or object symbol.")
 
                 classSymbol.sealedClassInheritors.map { it.classId ?: error("Sealed class inheritors should not be local.") }

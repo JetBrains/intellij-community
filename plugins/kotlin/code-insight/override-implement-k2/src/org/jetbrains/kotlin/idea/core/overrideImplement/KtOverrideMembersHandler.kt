@@ -28,7 +28,7 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
-        classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
+        classOrObject.classSymbol?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
             @NlsSafe
             val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
             KtClassMember(

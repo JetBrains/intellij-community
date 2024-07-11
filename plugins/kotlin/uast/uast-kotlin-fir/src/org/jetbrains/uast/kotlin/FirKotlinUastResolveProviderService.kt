@@ -133,7 +133,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         includeExplicitParameters: Boolean
     ): List<KotlinUParameter> {
         analyzeForUast(ktLambdaExpression) {
-            val anonymousFunctionSymbol = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol()
+            val anonymousFunctionSymbol = ktLambdaExpression.functionLiteral.symbol
             val parameters = mutableListOf<KotlinUParameter>()
             if (includeExplicitParameters && anonymousFunctionSymbol.receiverParameter != null) {
                 val lambdaImplicitReceiverType = anonymousFunctionSymbol.receiverParameter!!.type.asPsiType(
@@ -440,13 +440,13 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
                 val ktType = when (classOrObject) {
                     is KtEnumEntry -> {
-                        classOrObject.getEnumEntrySymbol().callableId?.classId?.let(::buildClassType)
+                        classOrObject.symbol.callableId?.classId?.let(::buildClassType)
                     }
                     else -> {
                         // NB: Avoid symbol creation/retrieval
                         classOrObject.getClassId()?.let(::buildClassType)
                         // Fallback option for local class
-                            ?: classOrObject.getClassOrObjectSymbol()?.let(::buildClassType)
+                            ?: classOrObject.classSymbol?.let(::buildClassType)
                     }
                 } ?: return null
                 val psiClass = toPsiClass(ktType, source = null, classOrObject, classOrObject.typeOwnerKind)
@@ -468,7 +468,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 }
 
                 is KtTypeAlias -> {
-                    val ktType = resolvedTargetElement.getTypeAliasSymbol().expandedType
+                    val ktType = resolvedTargetElement.symbol.expandedType
                     toPsiClass(
                         ktType,
                         source = null,
@@ -478,7 +478,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
                 }
 
                 is KtTypeParameter -> {
-                    val ktType = buildTypeParameterType(resolvedTargetElement.getTypeParameterSymbol())
+                    val ktType = buildTypeParameterType(resolvedTargetElement.symbol)
                     toPsiClass(
                         ktType,
                         ktExpression.toUElement(),

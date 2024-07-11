@@ -607,7 +607,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         }
         (other.parent as? KtClassOrObject)?.let { klass ->
             analyze(klass) {
-                val superTypes = klass.getClassOrObjectSymbol()?.superTypes ?: return
+                val superTypes = klass.classSymbol?.superTypes ?: return
                 withinHierarchyEntries.forEach { entry ->
                     val typeReference = entry.typeReference
                     if (!matchTextOrVariable(typeReference, klass.nameIdentifier) && typeReference != null && superTypes.none {
@@ -639,7 +639,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             if (checkHierarchyDown) {
                 // Check hierarchy down (down of pattern element = supertypes of code element)
                 matchNameIdentifiers = analyze(other) {
-                    other.getClassOrObjectSymbol()?.superTypes?.any { type ->
+                    other.classSymbol?.superTypes?.any { type ->
                         type.renderNames().any { renderedType ->
                             matchTypeAgainstElement(renderedType, identifier, otherIdentifier)
                         }

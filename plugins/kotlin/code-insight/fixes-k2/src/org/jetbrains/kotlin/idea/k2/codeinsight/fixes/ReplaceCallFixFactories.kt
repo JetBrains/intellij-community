@@ -114,7 +114,7 @@ object ReplaceCallFixFactories {
     private fun KaType.isMap(): Boolean {
         val symbol = this.expandedSymbol ?: return false
         if (symbol.name?.asString()?.endsWith("Map") != true) return false
-        val mapSymbol = getClassOrObjectSymbolByClassId(StandardClassIds.Map) ?: return false
+        val mapSymbol = findClass(StandardClassIds.Map) ?: return false
         return symbol.isSubClassOf(mapSymbol)
     }
 }

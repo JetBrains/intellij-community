@@ -56,7 +56,7 @@ internal abstract class AbstractAddAccessorIntention(
     context(KaSession)
     override fun prepareContext(element: KtProperty): Unit? {
         if (element.annotationEntries.isEmpty()) return Unit
-        val symbol = element.getVariableSymbol() as? KaPropertySymbol ?: return null
+        val symbol = element.symbol as? KaPropertySymbol ?: return null
 
         val isApplicable = symbol.backingFieldSymbol?.annotations?.contains(JVM_FIELD_CLASS_ID) != true
         return isApplicable.asUnit

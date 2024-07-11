@@ -63,8 +63,8 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         analyze(data.commonParent) {
             val boxingClass = when (outputValues.size) {
                 1 -> return outputValues.first().valueType
-                2 -> getClassOrObjectSymbolByClassId(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Pair")))!!
-                3 -> getClassOrObjectSymbolByClassId(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Triple")))!!
+                2 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Pair")))!!
+                3 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Triple")))!!
                 else -> return builtinTypes.UNIT
             }
             return buildClassType(boxingClass) {
@@ -154,7 +154,7 @@ fun isResolvableInScope(typeToCheck: KaType, scope: PsiElement, typeParameters: 
         }
 
         if (classSymbol is KaSymbolWithVisibility) {
-            val fileSymbol = (scope.containingFile as KtFile).getFileSymbol()
+            val fileSymbol = (scope.containingFile as KtFile).symbol
             if (!isVisible(classSymbol, fileSymbol, null, scope)) {
                 return false
             }

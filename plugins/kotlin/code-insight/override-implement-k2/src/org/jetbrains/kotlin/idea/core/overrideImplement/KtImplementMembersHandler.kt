@@ -40,7 +40,7 @@ open class KtImplementMembersHandler : KtGenerateMembersHandler(true) {
     companion object {
         context(KaSession)
         fun getUnimplementedMembers(classWithUnimplementedMembers: KtClassOrObject): List<KtClassMemberInfo> =
-            classWithUnimplementedMembers.getClassOrObjectSymbol()?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
+            classWithUnimplementedMembers.classSymbol?.let { getUnimplementedMemberSymbols(it) }.orEmpty()
                 .mapToKtClassMemberInfo()
 
         context(KaSession)

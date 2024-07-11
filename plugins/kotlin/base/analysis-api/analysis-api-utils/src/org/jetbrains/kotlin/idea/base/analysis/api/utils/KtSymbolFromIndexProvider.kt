@@ -80,10 +80,10 @@ class KtSymbolFromIndexProvider private constructor(
         declarationsFromExtension: Sequence<KaClassLikeSymbol>
     ): Sequence<KaClassLikeSymbol> = sequence {
         for (ktClassOrObject in classDeclarations) {
-            yieldIfNotNull(ktClassOrObject.getNamedClassOrObjectSymbol())
+            yieldIfNotNull(ktClassOrObject.namedClassSymbol)
         }
         for (typeAlias in typeAliasDeclarations) {
-            yield(typeAlias.getTypeAliasSymbol())
+            yield(typeAlias.symbol)
         }
         yieldAll(declarationsFromExtension)
     }

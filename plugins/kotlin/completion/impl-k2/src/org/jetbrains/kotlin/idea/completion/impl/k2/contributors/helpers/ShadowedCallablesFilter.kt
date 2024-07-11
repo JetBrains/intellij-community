@@ -286,7 +286,7 @@ private sealed class SimplifiedSignature {
                 KaSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
                 KaSymbolKind.CLASS_MEMBER -> {
                     val classId = callableId.classId ?: return null
-                    val classKind = getClassOrObjectSymbolByClassId(classId)?.classKind
+                    val classKind = findClass(classId)?.classKind
 
                     classId.asSingleFqName().takeIf { classKind?.isObject == true }
                 }

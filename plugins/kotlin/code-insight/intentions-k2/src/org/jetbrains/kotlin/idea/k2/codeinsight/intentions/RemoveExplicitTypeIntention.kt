@@ -161,7 +161,7 @@ internal class RemoveExplicitTypeIntention :
         val resolved = callableReferenceExpression.callableReference.references.firstNotNullOfOrNull { it.resolve() } ?: return false
         if (resolved !is KtNamedFunction) return true
 
-        val symbol = resolved.getFunctionLikeSymbol()
+        val symbol = resolved.symbol
 
         @OptIn(KaExperimentalApi::class)
         val typeParameters = symbol.typeParameters

@@ -30,7 +30,7 @@ internal class FirPackageCompletionContributor(
         sessionParameters: FirCompletionSessionParameters,
     ) {
         val rootSymbol = if (positionContext !is KotlinNameReferencePositionContext || positionContext.explicitReceiver == null) {
-            ROOT_PACKAGE_SYMBOL
+            rootPackageSymbol
         } else {
             positionContext.explicitReceiver?.reference()?.resolveToSymbols()?.filterIsInstance<KaPackageSymbol>()?.singleOrNull()
         } ?: return

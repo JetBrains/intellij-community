@@ -755,7 +755,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         val varsToFlush = PsiTreeUtil.findChildrenOfType(
             blockToFlush,
             KtProperty::class.java
-        ).map { property -> property.getVariableSymbol().variableDescriptor() }
+        ).map { property -> property.symbol.variableDescriptor() }
         return KotlinTransferTarget(resultValue, flow.getEndOffset(exitedStatement), exitBlock, varsToFlush)
     }
 
@@ -883,7 +883,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val subjectVariable = expr.subjectVariable
             if (subjectVariable != null) {
                 kotlinType = subjectVariable.returnType
-                dfVar = factory.varFactory.createVariableValue(subjectVariable.getVariableSymbol().variableDescriptor())
+                dfVar = factory.varFactory.createVariableValue(subjectVariable.symbol.variableDescriptor())
             } else {
                 kotlinType = subjectExpression.getKotlinType()
                 dfVar = flow.createTempVariable(kotlinType.toDfType())
@@ -997,7 +997,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     data class KotlinCatchClauseDescriptor(val clause: KtCatchClause) : CatchClauseDescriptor {
         override fun parameter(): VariableDescriptor? {
             val parameter = clause.catchParameter ?: return null
-            return analyze(clause) { parameter.getParameterSymbol().variableDescriptor() }
+            return analyze(clause) { parameter.symbol.variableDescriptor() }
         }
 
         override fun constraints(): MutableList<TypeConstraint> {
@@ -1013,7 +1013,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(
                 FlushVariableInstruction(
                     factory.varFactory.createVariableValue(
-                        entry.getDestructuringDeclarationEntrySymbol().variableDescriptor()
+                        entry.symbol.variableDescriptor()
                     )
                 )
             )
@@ -1086,7 +1086,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 broken = true
                 return@inlinedBlock
             }
-            val parameterVar = factory.varFactory.createVariableValue(parameter.getParameterSymbol().variableDescriptor())
+            val parameterVar = factory.varFactory.createVariableValue(parameter.symbol.variableDescriptor())
             val parameterType = parameter.returnType
             val pushLoopCondition = processForRange(expr, parameterVar, parameterType)
             val startOffset = ControlFlow.FixedOffset(flow.instructionCount)
@@ -1112,7 +1112,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
                 addInstruction(
                     FlushVariableInstruction(
                         factory.varFactory.createVariableValue(
-                            entry.getDestructuringDeclarationEntrySymbol().variableDescriptor()
+                            entry.symbol.variableDescriptor()
                         )
                     )
                 )
@@ -1121,7 +1121,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(
                 FlushVariableInstruction(
                     factory.varFactory.createVariableValue(
-                        parameter.getParameterSymbol().variableDescriptor()
+                        parameter.symbol.variableDescriptor()
                     )
                 )
             )
@@ -1315,7 +1315,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             pushUnknown()
             return
         }
-        val dfaVariable = factory.varFactory.createVariableValue(variable.getVariableSymbol().variableDescriptor())
+        val dfaVariable = factory.varFactory.createVariableValue(variable.symbol.variableDescriptor())
         if (variable.isLocal && !variable.isVar && variable.returnType.isBoolean) {
             // Boolean true/false constant: do not track; might be used as a feature knob or explanatory variable
             if (initializer.node?.elementType == KtNodeTypes.BOOLEAN_CONSTANT) {

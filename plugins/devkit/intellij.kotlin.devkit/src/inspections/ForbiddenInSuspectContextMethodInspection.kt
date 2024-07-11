@@ -347,7 +347,7 @@ private fun isImported(name: FqName, file: KtFile): Boolean {
 private fun isSuspensionRestricted(function: KtNamedFunction): Boolean {
   analyze(function) {
     val declaringClass = function.containingClass()
-    val declaringClassSymbol = declaringClass?.getClassOrObjectSymbol()
+    val declaringClassSymbol = declaringClass?.classSymbol
     if (declaringClassSymbol != null && restrictsSuspension(declaringClassSymbol)) {
       return true
     }

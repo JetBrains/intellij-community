@@ -52,7 +52,7 @@ fun KtClass.getDslStyleId(): Int? {
         return null
     }
     analyze(this) {
-        val classSymbol = getNamedClassOrObjectSymbol()?.takeIf {
+        val classSymbol = namedClassSymbol?.takeIf {
             it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
         } ?: return null
         val className = classSymbol.classId?.asSingleFqName() ?: return null
@@ -75,7 +75,7 @@ private fun getDslAnnotation(type: KaType): ClassId? {
         }
     }
     val dslAnnotation = allAnnotationsWithSuperTypes.find { annotationClassId ->
-        getClassOrObjectSymbolByClassId(annotationClassId)?.isDslHighlightingMarker() ?: false
+        findClass(annotationClassId)?.isDslHighlightingMarker() ?: false
     }
     return dslAnnotation
 }

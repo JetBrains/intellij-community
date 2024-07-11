@@ -22,7 +22,7 @@ internal object FirSuperEntriesProvider {
     context(KaSession)
     fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KaNamedClassSymbol> {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
-        val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
+        val containingClassSymbol = containingClass.classSymbol ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
             val classType = superType as? KaClassType ?: return@mapNotNull null
             classType.symbol as? KaNamedClassSymbol

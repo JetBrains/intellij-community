@@ -70,7 +70,7 @@ internal class SelfAssignmentInspection : KotlinApplicableInspectionBase.Simple<
         if (!rightDeclaration.isVar) return null
         if (rightDeclaration is KtProperty) {
             if (rightDeclaration.isOverridable()) return null
-            if (rightDeclaration.accessors.any { !it.getPropertyAccessorSymbol().isDefault }) return null
+            if (rightDeclaration.accessors.any { !it.symbol.isDefault }) return null
         }
 
         if (left.receiver(leftCallee) != right.receiver(rightCallee)) return null

@@ -57,7 +57,7 @@ internal abstract class ImportCandidatesProvider(
     }
 
     context(KaSession)
-    protected fun getFileSymbol(): KaFileSymbol = positionContext.nameExpression.containingKtFile.getFileSymbol()
+    protected fun getFileSymbol(): KaFileSymbol = positionContext.nameExpression.containingKtFile.symbol
 
     private val KtClassLikeDeclaration.isInner: Boolean get() = hasModifier(KtTokens.INNER_KEYWORD)
 

@@ -111,7 +111,7 @@ internal class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
       val property = this
 
       analyze(property) {
-        val propertySymbol = property.getVariableSymbol() as? KaPropertySymbol ?: return false
+        val propertySymbol = property.symbol as? KaPropertySymbol ?: return false
         return propertySymbol.hasBackingField
       }
     }

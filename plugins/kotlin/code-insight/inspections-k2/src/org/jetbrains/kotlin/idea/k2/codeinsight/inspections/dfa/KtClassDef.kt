@@ -136,7 +136,7 @@ class KtClassDef(
                     if (classId != null) {
                         val correctedClassId = JavaToKotlinClassMap.mapJavaToKotlin(classId.asSingleFqName())
                         if (correctedClassId != null) {
-                            val correctedSymbol = getClassOrObjectSymbolByClassId(correctedClassId)
+                            val correctedSymbol = findClass(correctedClassId)
                             if (correctedSymbol != null) {
                                 correctedDef = correctedSymbol.classDef()
                                 symbol = correctedSymbol
@@ -157,7 +157,7 @@ class KtClassDef(
                     }
                     val name = fqName.toUnsafe()
                     return analyze(context) {
-                        val symbol = getClassOrObjectSymbolByClassId(ClassId.topLevel(name.toSafe()))
+                        val symbol = findClass(ClassId.topLevel(name.toSafe()))
                         when {
                             symbol == null -> TypeConstraints.unresolved(name.asString())
                             symbol.classKind == KaClassKind.OBJECT -> TypeConstraints.singleton(symbol.classDef())

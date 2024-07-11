@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -149,7 +148,7 @@ internal class WeighingContext private constructor(
             return element
                 .parentsOfType<KtCallableDeclaration>()
                 .filter { it !is KtParameter }
-                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KaCallableSymbol>() }
+                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).symbol as KaCallableSymbol }
                 .filter { it is KaNamedSymbol }
                 .groupBy { (it as KaNamedSymbol).name }
                 .let { ContextualSymbolsCache(it) }

@@ -18,7 +18,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     override fun isKotlinTestDeclaration(declaration: KtNamedDeclaration): Boolean {
         return analyze(declaration) {
             val symbol = when (declaration) {
-                is KtClassOrObject -> declaration.getClassOrObjectSymbol()
+                is KtClassOrObject -> declaration.classSymbol
                 is KtNamedFunction -> declaration.symbol
                 else -> null
             } ?: return false

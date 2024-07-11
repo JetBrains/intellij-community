@@ -200,7 +200,7 @@ private fun KtDotQualifiedExpression.deleteFirstReceiver(): KtExpression {
 
 context(KaSession)
 private fun KtFunctionLiteral.valueParameterReferences(callExpression: KtCallExpression): List<KtNameReferenceExpression> {
-    val valueParameterSymbol = getAnonymousFunctionSymbol().valueParameters.singleOrNull() ?: return emptyList()
+    val valueParameterSymbol = symbol.valueParameters.singleOrNull() ?: return emptyList()
 
     val variableSymbolByName: Map<Name, KaSymbol> =
         valueParameters.singleOrNull()?.destructuringDeclaration?.entries?.asSequence()?.map { it.symbol }

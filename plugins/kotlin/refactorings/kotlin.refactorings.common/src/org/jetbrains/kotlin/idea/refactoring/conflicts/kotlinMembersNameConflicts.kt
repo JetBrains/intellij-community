@@ -103,7 +103,7 @@ fun checkDeclarationNewNameConflicts(
     filterCandidate: (KaDeclarationSymbol) -> Boolean
 ) {
     fun getPotentialConflictCandidates(symbol: KaDeclarationSymbol, declaration: KtNamedDeclaration, newName: Name): Sequence<KaDeclarationSymbol> {
-        val containingSymbol = symbol.containingDeclaration ?: getPackageSymbolIfPackageExists(declaration.containingKtFile.packageFqName)
+        val containingSymbol = symbol.containingDeclaration ?: findPackage(declaration.containingKtFile.packageFqName)
 
         if (symbol is KaValueParameterSymbol) {
             val functionLikeSymbol = containingSymbol as KaFunctionSymbol
@@ -197,7 +197,7 @@ fun checkNewPropertyConflicts(
     result: MutableList<UsageInfo>,
 ) {
     analyze(containingClass) {
-        val containingSymbol = containingClass.getNamedClassOrObjectSymbol() ?: return
+        val containingSymbol = containingClass.namedClassSymbol ?: return
         var potentialCandidates = containingSymbol
             .combinedMemberScope
             .findSiblingsByName(containingSymbol, Name.identifier(newName), containingSymbol)
@@ -356,7 +356,7 @@ fun registerRetargetJobOnPotentialCandidates(
         }
 
         val file = declaration.containingKtFile
-        getPackageSymbolIfPackageExists(file.packageFqName)?.packageScope?.processScope(null)
+        findPackage(file.packageFqName)?.packageScope?.processScope(null)
         file.importingScopeContext.compositeScope().processScope(null)
     }
 }

@@ -108,7 +108,7 @@ private val KtProperty.isLoggerInstance: Boolean
       val propertyReturnType = property.returnType.withNullability(KaTypeNullability.NON_NULLABLE)
 
       // FIXME: buildClassType(LOGGER_CLASS_ID) should also work, does not work in tests for some reason
-      val loggerType = getClassOrObjectSymbolByClassId(LOGGER_CLASS_ID)?.let(::buildClassType)
+      val loggerType = findClass(LOGGER_CLASS_ID)?.let(::buildClassType)
 
       if (propertyReturnType !is KaClassType || loggerType !is KaClassType) return false
 

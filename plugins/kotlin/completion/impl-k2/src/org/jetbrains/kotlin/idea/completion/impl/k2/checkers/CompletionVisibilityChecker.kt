@@ -54,7 +54,7 @@ internal fun interface CompletionVisibilityChecker {
 
                 return isVisible(
                     symbol,
-                    basicContext.originalKtFile.getFileSymbol(),
+                    basicContext.originalKtFile.symbol,
                     (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
                     positionContext.position
                 )

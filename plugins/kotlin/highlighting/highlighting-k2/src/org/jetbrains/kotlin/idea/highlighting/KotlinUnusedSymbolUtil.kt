@@ -672,7 +672,7 @@ object KotlinUnusedSymbolUtil {
       return ownerClass.findAllInheritors(useScope).any { element: PsiElement ->
           when (element) {
               is KtClassOrObject -> {
-                  val overridingCallableSymbol = element.getClassOrObjectSymbol()?.memberScope
+                  val overridingCallableSymbol = element.classSymbol?.memberScope
                       ?.callables { name -> name == callableSymbol.callableId?.callableName }?.filter {
                           it.fakeOverrideOriginal == callableSymbol
                       }?.singleOrNull() ?: return@any false

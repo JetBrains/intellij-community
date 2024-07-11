@@ -59,7 +59,7 @@ fun KtModifierListOwner.setVisibility(visibilityModifier: KtModifierKeywordToken
         val defaultVisibilityKeyword = implicitVisibility()
         if (visibilityModifier == defaultVisibilityKeyword) {
             val explicitVisibilityRequired = languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED
-                    && analyze(this) { explicitVisibilityRequired(getSymbolOfType<KaSymbolWithVisibility>()) }
+                    && analyze(this) { explicitVisibilityRequired(symbol) }
             if (!explicitVisibilityRequired) {
                 visibilityModifierType()?.let { removeModifier(it) }
                 return
@@ -75,7 +75,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
         this is KtPropertyAccessor && isSetter && property.hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
             analyze(property) {
                 property
-                    .getSymbolOfType<KaPropertySymbol>()
+                    .symbol
                     .allOverriddenSymbols
                     .forEach { overriddenSymbol ->
                         val visibility = (overriddenSymbol as? KaPropertySymbol)?.setter?.compilerVisibility?.toKeywordToken()
@@ -101,7 +101,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
 
         hasModifier(KtTokens.OVERRIDE_KEYWORD) -> {
             analyze(this) {
-                getSymbolOfType<KaCallableSymbol>()
+                (symbol as KaCallableSymbol)
                     .allOverriddenSymbols
                     .mapNotNull { (it as? KaSymbolWithVisibility)?.compilerVisibility }
                     .maxWithOrNull { v1, v2 -> Visibilities.compare(v1, v2) ?: -1 }
