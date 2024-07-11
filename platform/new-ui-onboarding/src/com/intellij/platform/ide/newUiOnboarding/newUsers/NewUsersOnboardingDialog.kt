@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.newUiOnboarding.newUi
+package com.intellij.platform.ide.newUiOnboarding.newUsers
 
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IconLoader
@@ -25,11 +23,10 @@ import java.awt.Font
 import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.border.Border
-import javax.swing.event.HyperlinkEvent
 
-
-internal class NewUiOnboardingDialog(private val project: Project)
-  : DialogWrapper(project, null, false, IdeModalityType.IDE, false) {
+internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
+  project, null, false, IdeModalityType.IDE, false
+) {
   private val backgroundColor: Color
     get() = JBColor.namedColor("NewUiOnboarding.Dialog.background", UIUtil.getPanelBackground())
 
@@ -43,15 +40,14 @@ internal class NewUiOnboardingDialog(private val project: Project)
 
   override fun createCenterPanel(): JComponent {
     val contentGaps = UnscaledGaps(28, 32, 22, 32)
-    val popupImage = IconLoader.getIcon(POPUP_IMAGE_PATH, NewUiOnboardingDialog::class.java.classLoader)
+    val popupImage = IconLoader.getIcon(IMAGE_PATH, NewUsersOnboardingDialog::class.java.classLoader)
     val panel = panel {
       row {
-        icon(popupImage)
-          .customize(UnscaledGaps.EMPTY)
+        icon(popupImage).customize(UnscaledGaps.EMPTY)
       }
       panel {
         row {
-          label(NewUiOnboardingBundle.message("newUiOnboarding.dialog.title"))
+          label(NewUiOnboardingBundle.message("newUsersOnboarding.dialog.title", ApplicationNamesInfo.getInstance().fullProductName))
             .customize(UnscaledGaps.EMPTY)
             .applyToComponent {
               font = JBFont.label().deriveFont(Font.BOLD, JBUIScale.scale(20f))
@@ -61,13 +57,8 @@ internal class NewUiOnboardingDialog(private val project: Project)
           val maxWidth = popupImage.iconWidth - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
-          text(NewUiOnboardingBundle.message("newUiOnboarding.dialog.text", ApplicationNamesInfo.getInstance().fullProductName), maxLineLength) { event ->
-            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-              ShowSettingsUtil.getInstance().showSettingsDialog(project, PluginManagerConfigurable::class.java) { c ->
-                c.openMarketplaceTab("Classic UI")
-              }
-            }
-          }.customize(UnscaledGaps(top = 8))
+          text(NewUiOnboardingBundle.message("newUsersOnboarding.dialog.text"), maxLineLength)
+            .customize(UnscaledGaps(top = 8))
         }
         row {
           button(NewUiOnboardingBundle.message("start.tour")) { close(0) }
@@ -77,7 +68,7 @@ internal class NewUiOnboardingDialog(private val project: Project)
               putClientProperty("gotItButton", true)
               ClientProperty.put(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
               // register Enter key binding
-              this@NewUiOnboardingDialog.rootPane.defaultButton = this
+              this@NewUsersOnboardingDialog.rootPane.defaultButton = this
             }
 
           link(NewUiOnboardingBundle.message("dialog.skip")) { close(1) }
@@ -95,6 +86,6 @@ internal class NewUiOnboardingDialog(private val project: Project)
   override fun createContentPaneBorder(): Border? = null
 
   companion object {
-    private const val POPUP_IMAGE_PATH: String = "newUiOnboarding/newUIOnboardingPopup.png"
+    private const val IMAGE_PATH: String = "newUiOnboarding/newUIOnboardingPopup.png"
   }
 }
