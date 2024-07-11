@@ -182,7 +182,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     else {
       return JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, ActionSelectionAid.MNEMONICS, true);
+        null, group, context, ActionSelectionAid.MNEMONICS, true, ActionPlaces.getPopupPlace("SettingsEntryPoint"));
     }
   }
 
