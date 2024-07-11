@@ -270,7 +270,7 @@ class ImportQuickFix(
             if (symbol is KaNamedClassSymbol) {
                 append("class $fqName")
             } else {
-                renderer.renderDeclaration(analysisSession, symbol, printer = this)
+                renderer.renderDeclaration(useSiteSession, symbol, printer = this)
             }
 
             when (symbol) {

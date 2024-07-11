@@ -67,7 +67,7 @@ internal class KotlinIdeDeclarationRenderer(
     internal fun renderFunctionTypeParameter(parameter: KtParameter): String? = prettyPrint {
         parameter.nameAsName?.let { name -> withSuffix(highlight(": ") { asColon }) { append(highlight(name.renderName()) { asParameter }) } }
         parameter.typeReference?.type?.let { type ->
-            renderer.typeRenderer.renderType(analysisSession, type, this)
+            renderer.typeRenderer.renderType(useSiteSession, type, this)
         }
 
     }

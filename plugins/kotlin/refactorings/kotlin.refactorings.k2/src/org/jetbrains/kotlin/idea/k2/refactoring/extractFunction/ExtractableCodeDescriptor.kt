@@ -70,7 +70,7 @@ data class ExtractableCodeDescriptor(
 
                 }
                 val printer = PrettyPrinter()
-                filteredRenderer.renderAnnotations(analysisSession, container.symbol, printer)
+                filteredRenderer.renderAnnotations(useSiteSession, container.symbol, printer)
                 printer.toString() + "\n"
             }
         }
