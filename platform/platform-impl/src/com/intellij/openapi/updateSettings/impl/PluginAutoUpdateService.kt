@@ -24,6 +24,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -52,7 +53,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
       if (isAutoUpdateEnabled()) {
         if (downloadManagerJob?.isActive != true) {
           LOG.debug { "setting up download manager" }
-          downloadManagerJob = cs.launch(CoroutineName("Download manager")) { downloadManager() }
+          downloadManagerJob = cs.launchDownloadManager()
         }
       } else {
         downloadManagerJob?.cancel()
@@ -63,37 +64,38 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     }
   }
 
-  private suspend fun CoroutineScope.downloadManager() {
-    for (downloaders in pendingDownloads) {
-      ensureActive()
-      LOG.debug { "new pluging updates: ${downloaders.joinToString { it.pluginName }}" }
-      val activeProject = ProjectUtil.getActiveProject()
-      val downloadedList = if (activeProject != null) {
-        withBackgroundProgress(activeProject, IdeBundle.message("update.downloading.plugins.progress"), true) {
-          LOG.debug { "downloading with background progress in project $activeProject" }
+  private fun CoroutineScope.launchDownloadManager(): Job {
+    return launch(CoroutineName("Download manager")) {
+      for (downloaders in pendingDownloads) {
+        ensureActive()
+        LOG.debug { "new plugin updates: ${downloaders.joinToString { it.pluginName }}" }
+        val activeProject = ProjectUtil.getActiveProject()
+        val downloadedList = if (activeProject != null) {
+          withBackgroundProgress(activeProject, IdeBundle.message("update.downloading.plugins.progress"), true) {
+            LOG.debug { "downloading with background progress in project $activeProject" }
+            downloadUpdates(downloaders)
+          }
+        } else {
+          LOG.debug { "downloading without background progress" }
           downloadUpdates(downloaders)
         }
-      } else {
-        LOG.debug { "downloading without background progress" }
-        downloadUpdates(downloaders)
-      }
-
-      if (downloadedList.isNotEmpty()) {
-        LOG.debug { "adding downloaded updates to the repository: ${downloadedList.joinToString { it.pluginName }}" }
-        withContext(Dispatchers.IO) {
-          PluginAutoUpdateRepository.addUpdates(updatesState.mapValues {
-            PluginAutoUpdateRepository.PluginUpdateInfo(
-              pluginPath = PluginManagerCore.getPlugin(it.key)!!.pluginPath.absolutePathString(),
-              updateFilename = it.value.updatePath.name
-            )
-          })
+        if (downloadedList.isNotEmpty()) {
+          LOG.debug { "adding downloaded updates to the repository: ${downloadedList.joinToString { it.pluginName }}" }
+          withContext(Dispatchers.IO) {
+            PluginAutoUpdateRepository.addUpdates(updatesState.mapValues {
+              PluginAutoUpdateRepository.PluginUpdateInfo(
+                pluginPath = PluginManagerCore.getPlugin(it.key)!!.pluginPath.absolutePathString(),
+                updateFilename = it.value.updatePath.name
+              )
+            })
+          }
+          notifyUpdatesDownloaded(downloadedList)
         }
-        notifyUpdatesDownloaded(downloadedList)
       }
     }
   }
 
-  private suspend fun CoroutineScope.downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
+  private suspend fun downloadUpdates(downloaders: List<PluginDownloader>): List<PluginDownloader> {
     val downloadedList = mutableListOf<PluginDownloader>()
     val enabledModules = PluginManagerCore.getPluginSet().moduleGraph.nodes.flatMap { listOf(it.pluginId) + it.pluginAliases }.toSet()
     val downloaders = downloaders.filter { downloader ->
@@ -121,7 +123,7 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
     }
     reportProgress(downloaders.size) { reporter ->
       for (downloader in downloaders) {
-        ensureActive()
+        currentCoroutineContext().ensureActive()
         if (!isAutoUpdateEnabled()) {
           throw CancellationException("auto-update disabled")
         }
@@ -129,10 +131,12 @@ internal class PluginAutoUpdateService(private val cs: CoroutineScope) {
           LOG.debug { "downloading ${downloader.pluginName}" }
           val plugin = PluginManagerCore.getPlugin(downloader.id)
                        ?: return@itemStep
-          if (!plugin.isBundled) downloader.setOldFile(plugin.pluginPath)
+          if (!plugin.isBundled) {
+            downloader.setOldFile(plugin.pluginPath)
+          }
           val updatePathInAutoUpdateDir = withContext(Dispatchers.IO) {
             val updateFile = coroutineToIndicator {
-              downloader.tryDownloadPlugin(ProgressManager.getGlobalProgressIndicator())
+              downloader.tryDownloadPlugin(ProgressManager.getInstanceOrNull()?.progressIndicator)
             }
             val updatePath = updateFile.toPath()
             val autoUpdateDir = PluginAutoUpdateRepository.getAutoUpdateDirPath()
