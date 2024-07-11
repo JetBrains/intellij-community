@@ -244,20 +244,22 @@ internal class FirWhenWithSubjectConditionContributor(
             val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KaEnumEntrySymbol
             resolvesTo?.name
         }
-        val allEnumEntrySymbols = classSymbol.enumEntries
-        allEnumEntrySymbols
-            .filter { it.name !in handledCasesNames }
-            .filter { visibilityChecker.isVisible(it) }
-            .forEach { entry ->
-                addLookupElement(
-                    context,
-                    "${classSymbol.name.asString()}.${entry.name.asString()}",
-                    entry,
-                    CompletionSymbolOrigin.Index,
-                    entry.callableId?.asSingleFqName(),
-                    isSingleCondition,
-                )
-            }
+            classSymbol
+                .staticDeclaredMemberScope
+                .callables
+                .filterIsInstance<KaEnumEntrySymbol>()
+                .filter { it.name !in handledCasesNames }
+                .filter { visibilityChecker.isVisible(it) }
+                .forEach { entry ->
+                    addLookupElement(
+                        context,
+                        "${classSymbol.name.asString()}.${entry.name.asString()}",
+                        entry,
+                        CompletionSymbolOrigin.Index,
+                        entry.callableId?.asSingleFqName(),
+                        isSingleCondition,
+                    )
+                }
     }
 
     private fun KtWhenCondition.isSingleConditionInEntry(): Boolean {

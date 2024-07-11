@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -70,7 +71,7 @@ internal class SymbolBasedKotlinMainFunctionDetector : KotlinMainFunctionDetecto
                     }
 
                     if (!isTopLevel) {
-                        val containingClass = functionSymbol.originalContainingClassForOverride ?: return false
+                        val containingClass = functionSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol ?: return false
                         val annotationJvmStatic = JvmStandardClassIds.Annotations.JvmStatic
                         return containingClass.classKind.isObject
                                 && (!configuration.checkJvmStaticAnnotation || annotationJvmStatic in functionSymbol.annotations)

@@ -155,7 +155,7 @@ context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun List<KaCallableSymbol>.mapToKtClassMemberInfo(): List<KtClassMemberInfo> {
     return map { unimplementedMemberSymbol ->
-        val containingSymbol = unimplementedMemberSymbol.originalContainingClassForOverride
+        val containingSymbol = unimplementedMemberSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
 
         @NlsSafe
         val fqName = (containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString())

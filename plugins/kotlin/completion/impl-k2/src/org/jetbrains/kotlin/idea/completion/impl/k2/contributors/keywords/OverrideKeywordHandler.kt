@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnn
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
@@ -118,7 +119,7 @@ internal class OverrideKeywordHandler(
         val icon = RowIcon(baseIcon, additionalIcon)
         val isSuspendFunction = (memberSymbol as? KaNamedFunctionSymbol)?.isSuspend == true
 
-        val containingSymbol = memberSymbol.fakeOverrideOriginal.originalContainingClassForOverride
+        val containingSymbol = memberSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
         val baseClassName = containingSymbol?.name?.asString()
         val baseClassIcon = member.memberInfo.containingSymbolIcon
 

@@ -334,7 +334,7 @@ private fun <T> KaSession.generateUnsupportedOrSuperCall(
             } else {
                 append("super")
                 if (bodyType == BodyType.QualifiedSuper) {
-                    val superClassFqName = symbol.originalContainingClassForOverride?.name?.render()
+                    val superClassFqName = (symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.name?.render()
                     superClassFqName?.let {
                         append("<").append(superClassFqName).append(">")
                     }
