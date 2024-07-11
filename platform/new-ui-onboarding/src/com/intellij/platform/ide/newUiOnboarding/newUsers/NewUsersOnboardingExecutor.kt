@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
-import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.OnboardingStopReason
+import com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStatistics.OnboardingStopReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -21,6 +21,7 @@ internal class NewUsersOnboardingExecutor(
   private val steps: List<Pair<String, NewUiOnboardingStep>>,
   private val coroutineScope: CoroutineScope,
   parentDisposable: Disposable,
+  private val finishListener: () -> Unit = {},
 ) {
   private val disposable = Disposer.newDisposable()
   private val tourStartMillis = System.currentTimeMillis()
@@ -74,8 +75,7 @@ internal class NewUsersOnboardingExecutor(
     val builder = gotItData.builder
     builder.withStepNumber("${ind + 1}/${steps.size}")
       .onEscapePressed {
-        finishOnboarding()
-        NewUsersOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.ESCAPE_PRESSED, tourStartMillis, stepStartMillis)
+        finishOnboarding(OnboardingStopReason.ESCAPE_PRESSED)
       }
       .onLinkClick { NewUsersOnboardingStatistics.logLinkClicked(project, stepId) }
       .requestFocus(true)
@@ -90,17 +90,15 @@ internal class NewUsersOnboardingExecutor(
           }
         }
         .withSecondaryButton(NewUiOnboardingBundle.message("gotIt.button.skipAll")) {
-          finishOnboarding()
-          NewUsersOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.SKIP_ALL, tourStartMillis, stepStartMillis)
+          finishOnboarding(OnboardingStopReason.SKIP_ALL)
         }
     }
     else {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.finishTour"))
         .withContrastButton(true)
         .onButtonClick {
-          finishOnboarding()
           NewUsersOnboardingStatistics.logStepFinished(project, stepId, stepStartMillis)
-          NewUsersOnboardingStatistics.logOnboardingFinished(project, tourStartMillis)
+          finishOnboarding(reason = null)
         }
     }
 
@@ -117,7 +115,24 @@ internal class NewUsersOnboardingExecutor(
     }
   }
 
-  private fun finishOnboarding() {
+  /**
+   * @param reason used for statistics reporting.
+   * If reason is null, then we consider that onboarding is fully completed and report it correspondingly.
+   */
+  fun finishOnboarding(reason: OnboardingStopReason?) {
     Disposer.dispose(disposable)
+    finishListener()
+
+    if (reason != null) {
+      val stepId = curStepId
+      val stepStartMillis = curStepStartMillis
+      if (stepId != null && stepStartMillis != null) {
+        NewUsersOnboardingStatistics.logOnboardingStopped(project, stepId, reason, tourStartMillis, stepStartMillis)
+      }
+      else error("finishOnboarding called before the first step was started")
+    }
+    else {
+      NewUsersOnboardingStatistics.logOnboardingFinished(project, tourStartMillis)
+    }
   }
 }

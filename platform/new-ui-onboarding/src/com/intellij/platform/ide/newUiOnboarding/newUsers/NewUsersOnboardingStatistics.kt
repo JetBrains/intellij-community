@@ -5,12 +5,10 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.OnboardingStopReason
 import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.durationField
 import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.getDuration
 import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.lastStepDurationField
 import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.stepIdField
-import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.stopReasonField
 
 internal object NewUsersOnboardingStatistics : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -21,7 +19,12 @@ internal object NewUsersOnboardingStatistics : CounterUsagesCollector() {
     DIALOG, ACTION
   }
 
+  enum class OnboardingStopReason {
+    SKIP_ALL, ESCAPE_PRESSED, PROJECT_CLOSED, INTERRUPTED
+  }
+
   private val startingPlaceField = EventFields.Enum<OnboardingStartingPlace>("starting_place")
+  private val stopReasonField = EventFields.Enum<OnboardingStopReason>("reason")
 
   private val dialogShownEvent = GROUP.registerEvent("dialog.shown")
   private val dialogSkipEvent = GROUP.registerEvent("dialog.skip.clicked")

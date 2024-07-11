@@ -12,6 +12,9 @@ import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
 internal class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
+  // Should be accessed only in EDT
+  private var currentExecutor: NewUsersOnboardingExecutor? = null
+
   fun showOnboardingDialog() {
     val dialog = NewUsersOnboardingDialog(project)
     NewUsersOnboardingStatistics.logDialogShown(project)
@@ -27,9 +30,15 @@ internal class NewUsersOnboardingService(private val project: Project, private v
   }
 
   fun startOnboarding() {
+    // Interrupt the running tour if any
+    currentExecutor?.finishOnboarding(NewUsersOnboardingStatistics.OnboardingStopReason.INTERRUPTED)
+
     val steps = getSteps()
     val childScope = coroutineScope.childScope("onboarding executor")
-    val executor = NewUsersOnboardingExecutor(project, steps, childScope, project)
+    val executor = NewUsersOnboardingExecutor(project, steps, childScope, project) {
+      currentExecutor = null
+    }
+    currentExecutor = executor
     executor.start()
   }
 
