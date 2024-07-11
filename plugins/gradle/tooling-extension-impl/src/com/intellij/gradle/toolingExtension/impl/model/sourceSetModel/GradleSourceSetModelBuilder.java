@@ -618,11 +618,7 @@ public class GradleSourceSetModelBuilder extends AbstractModelBuilderService {
       generatedSourceDirectorySet.setCompilerOutputPathInherited(sourceDirectorySet.isCompilerOutputPathInherited());
     }
 
-    boolean isIdeaTestSourceSet = sourceSetResolutionContext.ideaTestSourceDirs.containsAll(sourceDirectorySet.getSrcDirs());
-    boolean isKnownTestSourceSet = sourceSetResolutionContext.testSourceSets.contains(sourceSet);
-    boolean isCustomTestSourceSet = (isIdeaTestSourceSet || isKnownTestSourceSet) &&
-                                    !SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName());
-    if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName()) || resolveSourceSetDependencies && isCustomTestSourceSet) {
+    if (sourceSetResolutionContext.isJavaTestSourceSet(sourceSet)) {
       if (!sourceSetResolutionContext.isIdeaInheritOutputDirs && sourceSetResolutionContext.ideaTestOutputDir != null) {
         sourceDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);
         resourcesDirectorySet.setOutputDir(sourceSetResolutionContext.ideaTestOutputDir);

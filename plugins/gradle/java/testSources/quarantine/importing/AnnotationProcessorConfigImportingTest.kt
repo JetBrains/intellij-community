@@ -25,6 +25,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
   @TargetVersions("4.6+")
   fun `test annotation processor config imported in module per project mode`() {
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
+
     importProject {
       withJavaPlugin()
       withMavenCentral()
@@ -46,7 +47,6 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
       then(moduleNames).containsExactly("project")
     }
 
-    currentExternalProjectSettings.isResolveModulePerSourceSet = false
     importProject()
 
     val moduleProcessorProfilesAfterReImport = config.moduleProcessorProfiles
@@ -57,8 +57,9 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
   @Test
   @TargetVersions("4.6+")
-  fun `test annotation processor modification`() {
+  fun `test annotation processor modification in module per project mode`() {
     currentExternalProjectSettings.isResolveModulePerSourceSet = false
+
     importProject {
       withJavaPlugin()
       withMavenCentral()
@@ -376,5 +377,68 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
     then(annotationProcessingConfiguration.name)
       .isEqualTo("other")
+  }
+
+  @Test
+  @TargetVersions("5.6+")
+  fun `test annotation processor generated sources`() {
+    val annotationProcessor = "build/generated/sources/annotationProcessor"
+
+    createProjectSubDir("src/main/java")
+    createProjectSubDir("src/main/resources")
+    createProjectSubDir("src/test/java")
+    createProjectSubDir("src/test/resources")
+    createProjectSubDir("src/testFixtures/java")
+    createProjectSubDir("src/testFixtures/resources")
+    createProjectSubDir("$annotationProcessor/java/main")
+    createProjectSubDir("$annotationProcessor/java/test")
+    createProjectSubDir("$annotationProcessor/java/testFixtures")
+
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      withPlugin("java-test-fixtures")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      addDependency("testAnnotationProcessor", "org.projectlombok:lombok:1.18.8")
+      addDependency("testFixturesAnnotationProcessor", "org.projectlombok:lombok:1.18.8")
+    }
+
+    assertModules("project", "project.main", "project.test", "project.testFixtures")
+
+    assertContentRoots("project", projectPath)
+    assertSources("project")
+    assertResources("project")
+    assertTestSources("project")
+    assertTestResources("project")
+
+    assertContentRoots("project.main", path("src/main"), path("$annotationProcessor/java/main"))
+    assertSources("project.main", path("src/main/java"), path("$annotationProcessor/java/main"))
+    assertGeneratedSources("project.main", path("$annotationProcessor/java/main"))
+    assertResources("project.main", path("src/main/resources"))
+    assertGeneratedResources("project.main")
+    assertTestSources("project.main")
+    assertGeneratedTestSources("project.main")
+    assertTestResources("project.main")
+    assertGeneratedTestResources("project.main")
+
+    assertContentRoots("project.test", path("src/test"), path("$annotationProcessor/java/test"))
+    assertSources("project.test")
+    assertGeneratedSources("project.test")
+    assertResources("project.test")
+    assertGeneratedResources("project.test")
+    assertTestSources("project.test", path("src/test/java"), path("$annotationProcessor/java/test"))
+    assertGeneratedTestSources("project.test", path("$annotationProcessor/java/test"))
+    assertTestResources("project.test", path("src/test/resources"))
+    assertGeneratedTestResources("project.test")
+
+    assertContentRoots("project.testFixtures", path("src/testFixtures"), path("$annotationProcessor/java/testFixtures"))
+    assertSources("project.testFixtures")
+    assertGeneratedSources("project.testFixtures")
+    assertResources("project.testFixtures")
+    assertGeneratedResources("project.testFixtures")
+    assertTestSources("project.testFixtures", path("src/testFixtures/java"), path("$annotationProcessor/java/testFixtures"))
+    assertGeneratedTestSources("project.testFixtures", path("$annotationProcessor/java/testFixtures"))
+    assertTestResources("project.testFixtures", path("src/testFixtures/resources"))
+    assertGeneratedTestResources("project.testFixtures")
   }
 }

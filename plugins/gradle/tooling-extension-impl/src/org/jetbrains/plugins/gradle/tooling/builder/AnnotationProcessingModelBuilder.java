@@ -1,8 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
+import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetResolutionContext;
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.Messages;
-import com.intellij.gradle.toolingExtension.impl.util.GradleIdeaPluginUtil;
 import com.intellij.gradle.toolingExtension.impl.util.javaPluginUtil.JavaPluginUtil;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import org.gradle.api.Project;
@@ -12,8 +12,6 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.CompileOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
-import org.gradle.plugins.ide.idea.IdeaPlugin;
-import org.gradle.plugins.ide.idea.model.IdeaModule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
@@ -42,13 +40,9 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
       return null;
     }
 
-    Map<String, AnnotationProcessingConfig> sourceSetConfigs = new HashMap<>();
+    GradleSourceSetResolutionContext sourceSetResolutionContext = new GradleSourceSetResolutionContext(project, context);
 
-    IdeaModule ideaModule = null;
-    IdeaPlugin plugin = project.getPlugins().findPlugin(IdeaPlugin.class);
-    if (plugin != null) {
-      ideaModule = plugin.getModel().getModule();
-    }
+    Map<String, AnnotationProcessingConfig> sourceSetConfigs = new HashMap<>();
 
     for (final SourceSet sourceSet : container) {
       String compileTaskName = sourceSet.getCompileJavaTaskName();
@@ -69,7 +63,9 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
 
             File generatedSourcesDirectory = getAnnotationProcessorGeneratedSourcesDirectory(options);
             String output = generatedSourcesDirectory != null ? generatedSourcesDirectory.getAbsolutePath() : null;
-            sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(files, annotationProcessorArgs, output, isTestSourceSet(sourceSet, ideaModule)));
+            boolean isTestSourceSet = sourceSetResolutionContext.isJavaTestSourceSet(sourceSet);
+            AnnotationProcessingConfigImpl config = new AnnotationProcessingConfigImpl(files, annotationProcessorArgs, output, isTestSourceSet);
+            sourceSetConfigs.put(sourceSet.getName(), config);
           }
         }
       }
@@ -88,18 +84,6 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
     }
     //noinspection deprecation
     return options.getAnnotationProcessorGeneratedSourcesDirectory();
-  }
-
-  private static boolean isTestSourceSet(@NotNull SourceSet sourceSet, @Nullable IdeaModule module) {
-    if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName())) {
-      return true;
-    }
-    if (module != null) {
-      Set<File> testSourceDirectories = GradleIdeaPluginUtil.getTestSourceDirectories(module);
-      Set<File> sourceDirectories = sourceSet.getAllJava().getSrcDirs();
-      return testSourceDirectories.containsAll(sourceDirectories);
-    }
-    return false;
   }
 
   @Override
