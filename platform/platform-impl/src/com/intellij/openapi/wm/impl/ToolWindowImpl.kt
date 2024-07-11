@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -124,16 +124,20 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     result
   }
 
-  private val moveOrResizeAlarm = SingleAlarm(Runnable {
-    val decorator = decorator
-    if (decorator != null) {
-      toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
-      toolWindowManager.movedOrResized(decorator)
-    }
-    val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
-    this@ToolWindowImpl.windowInfo = updatedWindowInfo
-    toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
-  }, 100, disposable)
+  private val moveOrResizeAlarm = SingleAlarm(
+    task = Runnable {
+      val decorator = decorator
+      if (decorator != null) {
+        toolWindowManager.log().debug { "Invoking scheduled tool window $id bounds update" }
+        toolWindowManager.movedOrResized(decorator)
+      }
+      val updatedWindowInfo = toolWindowManager.getLayout().getInfo(getId()) as WindowInfo
+      this@ToolWindowImpl.windowInfo = updatedWindowInfo
+      toolWindowManager.log().debug { "Updated window info: $updatedWindowInfo" }
+    },
+    delay = 100,
+    parentDisposable = disposable,
+  )
 
   init {
     if (component != null) {

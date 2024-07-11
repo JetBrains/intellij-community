@@ -44,7 +44,6 @@ import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Splitter
@@ -97,7 +96,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   val project: Project,
   @field:JvmField internal val isNewUi: Boolean,
   private val isEdtRequired: Boolean,
-  internal @JvmField val coroutineScope: CoroutineScope,
+  @JvmField internal val coroutineScope: CoroutineScope,
 ) : ToolWindowManagerEx(), Disposable {
   private val dispatcher = EventDispatcher.create(ToolWindowManagerListener::class.java)
 
@@ -150,7 +149,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
           }
         },
         delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 300),
-        parentDisposable = (project as ProjectEx).earlyDisposable
+        parentDisposable = null,
+        coroutineScope = coroutineScope,
       )
       if (state.noStateLoaded) {
         loadDefault()
