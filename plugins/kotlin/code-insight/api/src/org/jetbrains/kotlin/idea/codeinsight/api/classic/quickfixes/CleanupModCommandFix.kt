@@ -5,6 +5,10 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.modcommand.ModCommandAction
 
+/**
+ * Marker interface for mod command quickfixes that can be used as part of the "Cleanup Code" action. The diagnostics
+ * that produce these quickfixes need to be added to KotlinCleanupInspection.cleanupDiagnosticsFactories.
+ */
 interface CleanupModCommandFix : ModCommandAction {
     override fun asIntention(): IntentionAction = object : IntentionWrapper(super.asIntention()), CleanupFix { }
 }
