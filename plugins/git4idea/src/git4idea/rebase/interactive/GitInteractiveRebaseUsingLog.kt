@@ -11,6 +11,7 @@ import com.intellij.vcs.log.VcsShortCommitDetails
 import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.DialogManager
+import git4idea.GitOperationsCollector
 import git4idea.branch.GitRebaseParams
 import git4idea.history.GitHistoryTraverser
 import git4idea.history.GitHistoryTraverserImpl
@@ -102,7 +103,7 @@ internal fun startInteractiveRebase(
 }
 
 private class GitInteractiveRebaseUsingLogEditorHandler(
-  repository: GitRepository,
+  private val repository: GitRepository,
   private val entriesGeneratedUsingLog: List<GitRebaseEntryGeneratedUsingLog>,
   private val rebaseTodoModel: GitRebaseTodoModel<GitRebaseEntryGeneratedUsingLog>
 ) : GitInteractiveRebaseEditorHandler(repository.project, repository.root) {
@@ -118,6 +119,9 @@ private class GitInteractiveRebaseUsingLogEditorHandler(
     } else {
       myRebaseEditorShown = false
       rebaseFailed = true
+      GitOperationsCollector.rebaseViaLogInvalidEntries(repository.project,
+                                                        expectedCommitsNumber = entries.size,
+                                                        actualCommitsNumber = entriesGeneratedUsingLog.size)
       LOG.warn("Incorrect git-rebase-todo file was generated.\n" +
                "Actual - ${entriesGeneratedUsingLog.toLog()}\n" +
                "Expected - ${entries.toLog()}")
