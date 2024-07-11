@@ -18,6 +18,7 @@
     <step key="toolWindowLayouts" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowLayoutsStep"/>
     <step key="moreToolWindows" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MoreToolWindowsStep"/>
     <step key="navigationBar" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep"/>
+    <step key="searchEverywhere" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.SearchEverywhereStep"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">

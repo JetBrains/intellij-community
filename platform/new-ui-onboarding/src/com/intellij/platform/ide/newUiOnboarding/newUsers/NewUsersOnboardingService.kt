@@ -71,6 +71,7 @@ internal class NewUsersOnboardingService(private val project: Project, private v
       "projectWidget",
       "gitWidget",
       "runWidget",
+      "searchEverywhere",
       "toolWindowLayouts",
       "moreToolWindows"
     )
