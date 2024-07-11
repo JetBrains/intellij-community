@@ -89,7 +89,7 @@ object K2CreateFunctionFromUsageUtil {
                     val ktType = variable.returnType
                     val symbol = variable.symbol as? KaCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.symbol
-                        .containingDeclaration as? KaNamedClassOrObjectSymbol)?.defaultType ?: builtinTypes.nullableAny
+                        .containingDeclaration as? KaNamedClassSymbol)?.defaultType ?: builtinTypes.nullableAny
                     buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
                         argument(parameterType)
                         argument(ktType)

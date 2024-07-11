@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -33,7 +33,7 @@ private fun getParameterNames(type: KaClassType): List<String>? {
     if (type.nullability != KaTypeNullability.NON_NULLABLE) return null
     val classSymbol = type.expandedSymbol
 
-    return if (classSymbol is KaNamedClassOrObjectSymbol && classSymbol.isData) {
+    return if (classSymbol is KaNamedClassSymbol && classSymbol.isData) {
         val constructorSymbol = classSymbol.declaredMemberScope
             .constructors
             .find { it.isPrimary }

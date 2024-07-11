@@ -27,7 +27,7 @@ internal fun getStaticScopes(reference: KtReference): List<KaScopeWithKind> {
     return reference.resolveToSymbols().mapNotNull { symbol ->
         when (symbol) {
             is KaSymbolWithMembers -> {
-                val scope = if (symbol is KaNamedClassOrObjectSymbol && symbol.classKind.isObject) {
+                val scope = if (symbol is KaNamedClassSymbol && symbol.classKind.isObject) {
                     symbol.memberScope
                 } else {
                     symbol.staticMemberScope
@@ -36,7 +36,7 @@ internal fun getStaticScopes(reference: KtReference): List<KaScopeWithKind> {
                 KaScopeWithKindImpl(scope, KaScopeKinds.StaticMemberScope(scopeIndex))
             }
 
-            is KtPackageSymbol -> KaScopeWithKindImpl(symbol.packageScope, KaScopeKinds.PackageMemberScope(scopeIndex))
+            is KaPackageSymbol -> KaScopeWithKindImpl(symbol.packageScope, KaScopeKinds.PackageMemberScope(scopeIndex))
             else -> null
         }
     }

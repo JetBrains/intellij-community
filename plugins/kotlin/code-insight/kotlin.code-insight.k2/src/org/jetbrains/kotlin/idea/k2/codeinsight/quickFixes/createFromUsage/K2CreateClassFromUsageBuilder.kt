@@ -9,9 +9,9 @@ import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
@@ -205,14 +205,14 @@ object K2CreateClassFromUsageBuilder {
     private fun getTargetParentsByQualifier(
         element: KtElement,
         isQualified: Boolean,
-        qualifierDescriptor: KtSymbol?
+        qualifierDescriptor: KaSymbol?
     ): List<PsiElement> {
         val file = element.containingKtFile
         val project = file.project
         val targetParents: List<PsiElement> = when {
             !isQualified ->
                 element.parents.filterIsInstance<KtClassOrObject>().toList() + file
-            qualifierDescriptor is KaClassOrObjectSymbol ->
+            qualifierDescriptor is KaClassSymbol ->
                 listOfNotNull(qualifierDescriptor.psi)
             qualifierDescriptor is KaPackageSymbol ->
                 if (qualifierDescriptor.fqName != file.packageFqName) {
@@ -249,7 +249,7 @@ object K2CreateClassFromUsageBuilder {
     private fun KtType.isInterface(): Boolean {
         if (this !is KtNonErrorClassType) return false
         val classSymbol = classSymbol
-        return classSymbol is KaClassOrObjectSymbol && classSymbol.classKind == KaClassKind.INTERFACE
+        return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.INTERFACE
     }
 
     context(KaSession)

@@ -164,7 +164,7 @@ internal object CallableMetadataProvider {
     context(KaSession)
     private fun getExpectedNonExtensionReceiver(symbol: KaCallableSymbol): KaClassSymbol? {
         val containingClass = symbol.originalContainingClassForOverride
-        return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassOrObjectSymbol)?.isInner == true) {
+        return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassSymbol)?.isInner == true) {
             containingClass.containingDeclaration as? KaClassSymbol
         } else {
             containingClass
@@ -186,8 +186,8 @@ internal object CallableMetadataProvider {
             .map { it.flatten() }
     }
 
-    private val KaClassLikeSymbol.companionObject: KaNamedClassOrObjectSymbol?
-        get() = (this as? KaNamedClassOrObjectSymbol)?.companionObject
+    private val KaClassLikeSymbol.companionObject: KaNamedClassSymbol?
+        get() = (this as? KaNamedClassSymbol)?.companionObject
 
     context(KaSession)
     private fun KaType.flatten(): List<KaType> = when (this) {

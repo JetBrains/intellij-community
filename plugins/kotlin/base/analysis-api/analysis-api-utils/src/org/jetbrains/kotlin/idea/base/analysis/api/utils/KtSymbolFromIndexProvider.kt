@@ -92,7 +92,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getJavaClassesByNameFilter(
         nameFilter: (Name) -> Boolean,
         psiFilter: (PsiClass) -> Boolean = { true }
-    ): Sequence<KaNamedClassOrObjectSymbol> {
+    ): Sequence<KaNamedClassSymbol> {
         val names = buildSet {
             forEachNonKotlinCache { cache ->
                 cache.processAllClassNames({ nameString ->
@@ -116,7 +116,7 @@ class KtSymbolFromIndexProvider private constructor(
     fun getJavaClassesByName(
         name: Name,
         psiFilter: (PsiClass) -> Boolean = { true }
-    ): Sequence<KaNamedClassOrObjectSymbol> {
+    ): Sequence<KaNamedClassSymbol> {
         val nameString = name.asString()
 
         return sequence {

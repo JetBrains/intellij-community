@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -77,7 +77,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
                     val type = element.expressionType
                     if (type is KaClassType) {
                         val klass = type.symbol
-                        if (klass is KaNamedClassOrObjectSymbol) {
+                        if (klass is KaNamedClassSymbol) {
                             return when (klass.classKind) {
                                 KaClassKind.ENUM_CLASS -> collectEnumBranches(klass)
                                 else -> collectSealedClassInheritors(klass)
@@ -92,7 +92,7 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     }
 
     context(KaSession)
-    private fun collectEnumBranches(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
+    private fun collectEnumBranches(klass: KaNamedClassSymbol): List<CaseBranch> {
         val enumEntries = klass.staticDeclaredMemberScope
             .getCallableSymbols()
             .filterIsInstance<KaEnumEntrySymbol>()
@@ -106,12 +106,12 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
     }
 
     context(KaSession)
-    private fun collectSealedClassInheritors(klass: KaNamedClassOrObjectSymbol): List<CaseBranch> {
+    private fun collectSealedClassInheritors(klass: KaNamedClassSymbol): List<CaseBranch> {
         return mutableListOf<CaseBranch>().also { processSealedClassInheritor(klass, it) }
     }
 
     context(KaSession)
-    private fun processSealedClassInheritor(klass: KaNamedClassOrObjectSymbol, consumer: MutableList<CaseBranch>): Boolean {
+    private fun processSealedClassInheritor(klass: KaNamedClassSymbol, consumer: MutableList<CaseBranch>): Boolean {
         val classId = klass.classId ?: return false
 
         if (klass.classKind == KaClassKind.OBJECT) {
@@ -147,7 +147,7 @@ private sealed class CaseBranch {
 private fun isSealedType(type: KaType): Boolean {
     if (type is KaClassType) {
         val symbol = type.symbol
-        if (symbol is KaNamedClassOrObjectSymbol) {
+        if (symbol is KaNamedClassSymbol) {
             return symbol.classKind == KaClassKind.ENUM_CLASS || symbol.modality == KaSymbolModality.SEALED
         }
     }

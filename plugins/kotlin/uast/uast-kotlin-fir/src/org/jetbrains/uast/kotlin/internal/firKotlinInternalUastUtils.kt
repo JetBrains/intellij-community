@@ -349,7 +349,7 @@ internal fun receiverType(
 context(KaSession)
 internal val KaType.typeForValueClass: Boolean
     get() {
-        val symbol = expandedSymbol as? KaNamedClassOrObjectSymbol ?: return false
+        val symbol = expandedSymbol as? KaNamedClassSymbol ?: return false
         return symbol.isInline
     }
 

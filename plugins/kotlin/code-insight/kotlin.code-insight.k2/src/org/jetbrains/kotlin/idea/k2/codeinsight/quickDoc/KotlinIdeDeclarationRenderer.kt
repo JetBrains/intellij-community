@@ -250,7 +250,7 @@ internal class KotlinIdeDeclarationRenderer(
             }
         }
 
-        fun KaDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassOrObjectSymbol && isInline
+        fun KaDeclarationSymbol.isInlineClassOrObject(): Boolean = this is KaNamedClassSymbol && isInline
 
         val valueModifierRenderer = object : KaRendererOtherModifiersProvider {
             override fun getOtherModifiers(analysisSession: KaSession, symbol: KaDeclarationSymbol): List<KtModifierKeywordToken> {
@@ -691,7 +691,7 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 })
 
-                if (symbol is KaNamedClassOrObjectSymbol && symbol.isData) {
+                if (symbol is KaNamedClassSymbol && symbol.isData) {
                     val primaryConstructor = symbol.declaredMemberScope.constructors.firstOrNull { it.isPrimary }
                     if (primaryConstructor != null) {
                         declarationRenderer.valueParametersRenderer.renderValueParameters(

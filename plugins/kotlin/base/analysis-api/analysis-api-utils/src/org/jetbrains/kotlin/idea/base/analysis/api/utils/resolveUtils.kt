@@ -117,7 +117,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
         if (receiverSymbol == null || receiverSymbol is KaPackageSymbol) return emptyList()
 
-        if (receiverSymbol is KaNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
+        if (receiverSymbol is KaNamedClassSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
             val receiverSymbolType = receiverSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(explicitReceiver)
             return listOfNotNull(receiverSymbolType, receiverSymbol.companionObject?.defaultType)
         }
@@ -136,7 +136,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
+private fun KaNamedClassSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
             val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.type }

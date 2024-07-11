@@ -28,14 +28,14 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         return when (val ktType = typeReference.type) {
-            is KaClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassOrObjectSymbol)
+            is KaClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassSymbol)
             is KaClassErrorType -> {
                 ktType.candidateSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KaClassSymbol -> candidateSymbol
                         is KaTypeAliasSymbol -> candidateSymbol.expandedType.expandedSymbol
                         else -> null
-                    } as? KaNamedClassOrObjectSymbol
+                    } as? KaNamedClassSymbol
                 }
             }
             else -> return null

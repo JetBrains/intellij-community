@@ -349,7 +349,7 @@ fun registerRetargetJobOnPotentialCandidates(
         while (classOrObjectSymbol != null) {
             (classOrObjectSymbol as? KaClassSymbol)?.memberScope?.processScope(classOrObjectSymbol)
 
-            val companionObject = (classOrObjectSymbol as? KaNamedClassOrObjectSymbol)?.companionObject
+            val companionObject = (classOrObjectSymbol as? KaNamedClassSymbol)?.companionObject
             companionObject?.memberScope?.processScope(companionObject)
 
             classOrObjectSymbol = classOrObjectSymbol.containingDeclaration

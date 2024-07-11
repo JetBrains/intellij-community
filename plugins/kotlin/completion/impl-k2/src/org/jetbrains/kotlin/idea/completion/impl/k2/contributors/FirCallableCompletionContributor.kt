@@ -253,11 +253,11 @@ internal open class FirCallableCompletionContributor(
             symbol is KaPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, visibilityChecker, sessionParameters)
 
             else -> sequence {
-                if (symbol is KaNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope) {
+                if (symbol is KaNamedClassSymbol && symbol.hasImportantStaticMemberScope) {
                     yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
                 }
 
-                if (symbol !is KaNamedClassOrObjectSymbol || symbol.canBeUsedAsReceiver) {
+                if (symbol !is KaNamedClassSymbol || symbol.canBeUsedAsReceiver) {
                     yieldAll(
                         collectDotCompletionForCallableReceiver(
                             scopeContext,
@@ -272,11 +272,11 @@ internal open class FirCallableCompletionContributor(
         }
     }
 
-    protected val KaNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
+    protected val KaNamedClassSymbol.hasImportantStaticMemberScope: Boolean
         get() = classKind == KaClassKind.ENUM_CLASS ||
                 origin.isJavaSourceOrLibrary()
 
-    private val KaNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean
+    private val KaNamedClassSymbol.canBeUsedAsReceiver: Boolean
         get() = classKind.isObject || companionObject != null
 
     context(KaSession)
@@ -405,7 +405,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     protected fun collectDotCompletionFromStaticScope(
-        symbol: KaNamedClassOrObjectSymbol,
+        symbol: KaNamedClassSymbol,
         withCompanionScope: Boolean,
         visibilityChecker: CompletionVisibilityChecker,
         sessionParameters: FirCompletionSessionParameters,
@@ -625,7 +625,7 @@ internal open class FirCallableCompletionContributor(
         annotations.any { it.classId == StandardClassIds.Annotations.IntrinsicConstEvaluation }
 
     context(KaSession)
-    protected fun KaNamedClassOrObjectSymbol.staticScope(withCompanionScope: Boolean = true): KaScope = buildList {
+    protected fun KaNamedClassSymbol.staticScope(withCompanionScope: Boolean = true): KaScope = buildList {
         if (withCompanionScope) {
             addIfNotNull(companionObject?.memberScope)
         }
@@ -686,7 +686,7 @@ internal class FirCallableReferenceCompletionContributor(
 
         return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
             is KaPackageSymbol -> emptySequence()
-            is KaNamedClassOrObjectSymbol -> sequence {
+            is KaNamedClassSymbol -> sequence {
                 if (symbol.hasImportantStaticMemberScope) {
                     yieldAll(collectDotCompletionFromStaticScope(symbol, withCompanionScope = false, visibilityChecker, sessionParameters))
                 }
@@ -784,7 +784,7 @@ internal class FirKDocCallableCompletionContributor(
                     listOf(KaScopeWithKindImpl(parentSymbol.packageScope, packageScopeKind))
                 }
 
-                is KaNamedClassOrObjectSymbol -> buildList {
+                is KaNamedClassSymbol -> buildList {
                     val type = parentSymbol.defaultType
 
                     type.scope?.declarationScope?.let { typeScope ->

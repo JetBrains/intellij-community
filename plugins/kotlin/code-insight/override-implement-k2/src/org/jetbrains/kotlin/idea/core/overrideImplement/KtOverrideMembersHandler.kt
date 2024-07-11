@@ -80,7 +80,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                                 BodyType.NoBody
                             }
                         }
-                        (classOrObjectSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true &&
+                        (classOrObjectSymbol as? KaNamedClassSymbol)?.isInline == true &&
                                 containingSymbol?.classId == StandardClassIds.Any -> {
                             if ((symbolToProcess as? KaNamedFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue

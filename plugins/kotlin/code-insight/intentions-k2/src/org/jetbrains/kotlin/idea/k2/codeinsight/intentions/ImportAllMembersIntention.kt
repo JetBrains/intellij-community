@@ -59,7 +59,7 @@ internal class ImportAllMembersIntention :
     context(KaSession)
     override fun prepareContext(element: KtExpression): Context? {
         val actualReference = element.actualReference
-        val target = actualReference?.resolveToSymbol() as? KaNamedClassOrObjectSymbol ?: return null
+        val target = actualReference?.resolveToSymbol() as? KaNamedClassSymbol ?: return null
         val classId = target.classId ?: return null
         if (!target.origin.isJavaSourceOrLibrary() &&
             (target.classKind == KaClassKind.OBJECT ||
@@ -163,10 +163,10 @@ private fun isReferenceToObjectMemberOrUnresolved(qualifiedAccess: KtExpression)
 
 private fun KaDeclarationSymbol.isEnum(): Boolean = safeAs<KaClassSymbol>()?.classKind == KaClassKind.ENUM_CLASS
 
-private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
+private fun KaCallableSymbol.isEnumSyntheticMethodCall(target: KaNamedClassSymbol): Boolean =
     target.isEnum() && origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED && callableId?.callableName in ENUM_STATIC_METHOD_NAMES_WITH_ENTRIES
 
-private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassOrObjectSymbol): Boolean =
+private fun KtQualifiedExpression.isEnumSyntheticMethodCall(target: KaNamedClassSymbol): Boolean =
     target.isEnum() && canBeReferenceToBuiltInEnumFunction()
 
 context(KaSession)

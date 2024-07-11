@@ -413,7 +413,7 @@ internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
-            if ((constructorSymbol.containingDeclaration as? KaNamedClassOrObjectSymbol)?.isInline == true) {
+            if ((constructorSymbol.containingDeclaration as? KaNamedClassSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassId?.shortClassName
         }

@@ -1866,7 +1866,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     context(KaSession)
     private fun KaType?.isInlineClass() =
-        ((this as? KaClassType)?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true
+        ((this as? KaClassType)?.expandedSymbol as? KaNamedClassSymbol)?.isInline == true
 
     context(KaSession)
     private fun balanceType(leftType: KaType?, rightType: KaType?, forceEqualityByContent: Boolean): KaType? = when {

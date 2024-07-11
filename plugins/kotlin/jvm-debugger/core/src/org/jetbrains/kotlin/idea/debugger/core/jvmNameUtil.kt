@@ -33,7 +33,7 @@ fun KaNamedFunctionSymbol.getByteCodeMethodName(): String {
 
 context(KaSession)
 @ApiStatus.Internal
-fun KaDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassOrObjectSymbol && this.isInline
+fun KaDeclarationSymbol.isInlineClass(): Boolean = this is KaNamedClassSymbol && this.isInline
 
 @ApiStatus.Internal
 @RequiresReadLock

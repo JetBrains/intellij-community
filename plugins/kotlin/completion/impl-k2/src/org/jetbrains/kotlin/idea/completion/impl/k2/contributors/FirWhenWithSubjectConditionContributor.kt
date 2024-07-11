@@ -86,9 +86,9 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
     context(KaSession)
-    private fun getClassSymbol(subjectType: KaType): KaNamedClassOrObjectSymbol? {
+    private fun getClassSymbol(subjectType: KaType): KaNamedClassSymbol? {
         val classType = subjectType as? KaClassType
-        return classType?.symbol as? KaNamedClassOrObjectSymbol
+        return classType?.symbol as? KaNamedClassSymbol
     }
 
 
@@ -119,7 +119,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     classifier.name.asString(),
                     classifier,
                     CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
-                    (classifier as? KaNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
+                    (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition,
                 )
             }
@@ -134,7 +134,7 @@ internal class FirWhenWithSubjectConditionContributor(
                         classifier.name.asString(),
                         classifier,
                         CompletionSymbolOrigin.Index,
-                        (classifier as? KaNamedClassOrObjectSymbol)?.classId?.asSingleFqName(),
+                        (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                         isSingleCondition,
                     )
                 }
@@ -145,7 +145,7 @@ internal class FirWhenWithSubjectConditionContributor(
     private fun isPrefixNeeded(symbol: KaNamedSymbol): Boolean {
         return when (symbol) {
             is KaAnonymousObjectSymbol -> return false
-            is KaNamedClassOrObjectSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
+            is KaNamedClassSymbol -> onTypingIsKeyword || !symbol.classKind.isObject
             is KaTypeAliasSymbol -> {
                 (symbol.expandedType as? KaClassType)?.symbol?.let { it is KaNamedSymbol && isPrefixNeeded(it) } == true
             }
@@ -158,7 +158,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KaSession)
     private fun completeSubClassesOfSealedClass(
         context: WeighingContext,
-        classSymbol: KaNamedClassOrObjectSymbol,
+        classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
         whenCondition: KtWhenCondition,
         visibilityChecker: CompletionVisibilityChecker,
@@ -197,16 +197,16 @@ internal class FirWhenWithSubjectConditionContributor(
                 is KtWhenConditionIsPattern -> (condition.typeReference?.typeElement as? KtUserType)?.referenceExpression?.reference()
                 else -> null
             }
-            val resolvesTo = reference?.resolveToExpandedSymbol() as? KaNamedClassOrObjectSymbol
+            val resolvesTo = reference?.resolveToExpandedSymbol() as? KaNamedClassSymbol
             resolvesTo?.classId
         }
 
     context(KaSession)
-    private fun getAllSealedInheritors(classSymbol: KaNamedClassOrObjectSymbol): Collection<KaNamedClassOrObjectSymbol> {
+    private fun getAllSealedInheritors(classSymbol: KaNamedClassSymbol): Collection<KaNamedClassSymbol> {
 
         fun getAllSealedInheritorsTo(
-            classSymbol: KaNamedClassOrObjectSymbol,
-            destination: MutableSet<KaNamedClassOrObjectSymbol>
+            classSymbol: KaNamedClassSymbol,
+            destination: MutableSet<KaNamedClassSymbol>
         ) {
             classSymbol.sealedClassInheritors.forEach { inheritor ->
                 destination += inheritor
@@ -233,7 +233,7 @@ internal class FirWhenWithSubjectConditionContributor(
     context(KaSession)
     private fun completeEnumEntries(
         context: WeighingContext,
-        classSymbol: KaNamedClassOrObjectSymbol,
+        classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
         visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
@@ -344,10 +344,10 @@ private fun getIsPrefix(prefixNeeded: Boolean): String {
 }
 
 @Suppress("AnalysisApiMissingLifetimeControlOnCallable")
-private object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassOrObjectSymbol> {
-    override fun equals(p0: KaNamedClassOrObjectSymbol?, p1: KaNamedClassOrObjectSymbol?): Boolean {
+private object KaNamedClassOrObjectSymbolTObjectHashingStrategy : Hash.Strategy<KaNamedClassSymbol> {
+    override fun equals(p0: KaNamedClassSymbol?, p1: KaNamedClassSymbol?): Boolean {
         return p0?.classId == p1?.classId
     }
 
-    override fun hashCode(p0: KaNamedClassOrObjectSymbol?): Int = p0?.classId?.hashCode() ?: 0
+    override fun hashCode(p0: KaNamedClassSymbol?): Int = p0?.classId?.hashCode() ?: 0
 }

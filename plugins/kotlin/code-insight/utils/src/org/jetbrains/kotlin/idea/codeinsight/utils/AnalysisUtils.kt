@@ -89,7 +89,7 @@ fun KtCallExpression.isImplicitInvokeCall(): Boolean? {
  * ```
  */
 context(KaSession)
-fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassOrObjectSymbol? {
+fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): KaNamedClassSymbol? {
     if (this !is KtSimpleNameReference) return null
 
     val symbol = this.resolveToSymbol()
@@ -98,7 +98,7 @@ fun KtReference.resolveCompanionObjectShortReferenceToContainingClassSymbol(): K
     // class name reference resolves to companion
     if (expression.name == symbol.name?.asString()) return null
 
-    val containingSymbol = symbol.containingDeclaration as? KaNamedClassOrObjectSymbol
+    val containingSymbol = symbol.containingDeclaration as? KaNamedClassSymbol
     return containingSymbol?.takeIf { it.companionObject == symbol }
 }
 
