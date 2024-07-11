@@ -6,7 +6,7 @@ import com.intellij.ide.PowerSaveMode
 import com.intellij.ide.RemoteDesktopService
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.registry.Registry
 import java.awt.Component
 import java.awt.Container
 import java.awt.Window
@@ -28,49 +28,42 @@ internal object ScrollSettings {
     return settings != null && settings.smoothScrolling
   }
 
-  @JvmStatic
-  val isHighPrecisionEnabled: Boolean
-    get() = `is`("idea.true.smooth.scrolling.high.precision", true)
+  @JvmField
+  val isHighPrecisionEnabled = Registry.booleanValueHotSupplier("idea.true.smooth.scrolling.high.precision", true)
 
-  @JvmStatic
-  val isPixelPerfectEnabled: Boolean
-    get() = `is`("idea.true.smooth.scrolling.pixel.perfect", true)
+  @JvmField
+  val isPixelPerfectEnabled = Registry.booleanValueHotSupplier("idea.true.smooth.scrolling.pixel.perfect", true)
 
-  @JvmStatic
-  val isDebugEnabled: Boolean
-    get() = `is`("idea.true.smooth.scrolling.debug", false)
+  @JvmField
+  val isDebugEnabled = Registry.booleanValueHotSupplier("idea.true.smooth.scrolling.debug", false)
 
-  @JvmStatic
-  val isBackgroundFromView: Boolean
-    get() = `is`("ide.scroll.background.auto", true)
+  @JvmField
+  val isBackgroundFromView = Registry.booleanValueHotSupplier("ide.scroll.background.auto", true)
+
+  private val scrollHeaderOverCornerEnabled = Registry.booleanValueHotSupplier("ide.scroll.layout.header.over.corner", true)
 
   @JvmStatic
   fun isHeaderOverCorner(viewport: JViewport?): Boolean {
-    val view = viewport?.view
-    return !isNotSupportedYet(view) && `is`("ide.scroll.layout.header.over.corner", true)
+    return !isNotSupportedYet(viewport?.view) && scrollHeaderOverCornerEnabled()
   }
 
   @JvmStatic
   fun isNotSupportedYet(view: Component?): Boolean = view is JTable
 
-  @JvmStatic
-  val isGapNeededForAnyComponent: Boolean
-    get() = `is`("ide.scroll.align.component", true)
+  @JvmField
+  val isGapNeededForAnyComponent = Registry.booleanValueHotSupplier("ide.scroll.align.component", true)
 
-  @JvmStatic
-  val isHorizontalGapNeededOnMac: Boolean
-    get() = `is`("mac.scroll.horizontal.gap", false)
+  @JvmField
+  val isHorizontalGapNeededOnMac = Registry.booleanValueHotSupplier("mac.scroll.horizontal.gap", false)
 
-  @JvmStatic
-  val isThumbSmallIfOpaque: Boolean
-    get() = `is`("ide.scroll.thumb.small.if.opaque", false)
+  @JvmField
+  val isThumbSmallIfOpaque = Registry.booleanValueHotSupplier("ide.scroll.thumb.small.if.opaque", false)
 
   /* A heuristic that disables scrolling interpolation in diff / merge windows.
   We need to make scrolling synchronization compatible with the interpolation first.
 
   NOTE: The implementation is a temporary, ad-hoc heuristic that is needed solely to
         facilitate testing of the experimental "true smooth scrolling" feature. */
-  @JvmStatic
   fun isInterpolationEligibleFor(scrollbar: JScrollBar): Boolean {
     val window = scrollbar.topLevelAncestor as Window?
     if (window is JDialog && window.title == "Commit Changes") {

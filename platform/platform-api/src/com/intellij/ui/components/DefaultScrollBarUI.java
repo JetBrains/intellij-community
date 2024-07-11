@@ -42,7 +42,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   protected @Nullable ScrollBarAnimationBehavior myAnimationBehavior = null;
 
   DefaultScrollBarUI() {
-    this(ScrollSettings.isThumbSmallIfOpaque() ? 13 : 10, 14, 10);
+    this(ScrollSettings.isThumbSmallIfOpaque.invoke() ? 13 : 10, 14, 10);
   }
 
   DefaultScrollBarUI(int thickness, int thicknessMax, int thicknessMin) {
@@ -111,7 +111,7 @@ class DefaultScrollBarUI extends ScrollBarUI {
   }
 
   void paintThumb(Graphics2D g, JComponent c) {
-    paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque() && isOpaque(c));
+    paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque.invoke() && isOpaque(c));
   }
 
   void paint(ScrollBarPainter p, Graphics2D g, JComponent c, boolean small) {

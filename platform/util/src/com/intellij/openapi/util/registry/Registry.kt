@@ -7,6 +7,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.util.NlsSafe
 import kotlinx.coroutines.future.asDeferred
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -56,6 +57,23 @@ class Registry {
 
     @JvmStatic
     fun get(key: @NonNls String): RegistryValue = getInstance().resolveValue(key)
+
+    @Experimental
+    @Internal
+    fun booleanValueHotSupplier(key: @NonNls String, defaultValue: Boolean = false): () -> Boolean {
+      val valueHandle by lazy(mode = LazyThreadSafetyMode.NONE) {
+        // no check for LoadingState - do not use `getInstance()` here
+        registry.resolveValue(key)
+      }
+      return {
+        try {
+          valueHandle.asBoolean()
+        }
+        catch (e: MissingResourceException) {
+          defaultValue
+        }
+      }
+    }
 
     @Suppress("FunctionName")
     @Internal
@@ -349,6 +367,7 @@ class Registry {
     return getBundleValueOrNull(key) ?: throw MissingResourceException("Registry key $key is not defined", REGISTRY_BUNDLE, key)
   }
 
+  @Internal
   fun getState(): Element {
     val state = Element("registry")
     for ((key, value) in userProperties) {
@@ -366,6 +385,7 @@ class Registry {
   @Internal
   fun getUserProperties(): MutableMap<String, String> = userProperties
 
+  @Internal
   fun restoreDefaults() {
     val old = LinkedHashMap(userProperties)
     val registry = getInstance()

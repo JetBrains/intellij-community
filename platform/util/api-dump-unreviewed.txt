@@ -1653,7 +1653,6 @@ f:com.intellij.openapi.util.registry.Registry
 - f:getBundleValueOrNull(java.lang.String):java.lang.String
 - sf:getColor(java.lang.String,java.awt.Color):java.awt.Color
 - sf:getInstance():com.intellij.openapi.util.registry.Registry
-- f:getState():org.jdom.Element
 - f:getValueChangeListener():com.intellij.openapi.util.registry.RegistryValueListener
 - sf:intValue(java.lang.String):I
 - sf:intValue(java.lang.String,I):I
@@ -1664,7 +1663,6 @@ f:com.intellij.openapi.util.registry.Registry
 - f:isLoaded():Z
 - f:isRestartNeeded():Z
 - f:reset():V
-- f:restoreDefaults():V
 - sf:stringValue(java.lang.String):java.lang.String
 f:com.intellij.openapi.util.registry.Registry$Companion
 - f:doubleValue(java.lang.String):D
@@ -1699,7 +1697,6 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - f:isMultiValue():Z
 - f:isOptionEnabled(java.lang.String):Z
 - isRestartRequired():Z
-- f:resetCache():V
 - f:resetToDefault():V
 - f:setSelectedOption(java.lang.String):V
 - f:setValue(I):V

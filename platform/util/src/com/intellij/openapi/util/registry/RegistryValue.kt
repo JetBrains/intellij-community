@@ -41,7 +41,7 @@ open class RegistryValue @Internal constructor(
   open fun asBoolean(): Boolean {
     var result = booleanCachedValue
     if (result == null) {
-      result = _get(key = key, defaultValue = "false", mustExistInBundle = true).toBoolean()
+      result = resolveRequiredValue(key = key).toBoolean()
       booleanCachedValue = result
     }
     return result
@@ -51,7 +51,7 @@ open class RegistryValue @Internal constructor(
     var result = intCachedValue
     if (result == null) {
       result = try {
-        _get(key = key, defaultValue = "0", mustExistInBundle = true)!!.toInt()
+        resolveRequiredValue(key = key).toInt()
       }
       catch (e: NumberFormatException) {
         registry.getBundleValue(key).toInt()
@@ -102,13 +102,13 @@ open class RegistryValue @Internal constructor(
   fun asDouble(): Double {
     var result = doubleCachedValue
     if (result.isNaN()) {
-      result = calcDouble()
+      result = computeDouble()
       doubleCachedValue = result
     }
     return result
   }
 
-  private fun calcDouble(): Double {
+  private fun computeDouble(): Double {
     try {
       return get(key = key, defaultValue = "0.0", isValue = true)!!.toDouble()
     }
@@ -147,7 +147,7 @@ open class RegistryValue @Internal constructor(
       if (keyDescriptor != null) {
         return keyDescriptor.isRestartRequired
       }
-      return get("$key.restartRequired", "false", false).toBoolean()
+      return get(key = "$key.restartRequired", defaultValue = "false", isValue = false).toBoolean()
     }
 
   open val isChangedFromDefault: Boolean
@@ -164,16 +164,15 @@ open class RegistryValue @Internal constructor(
   open fun get(key: @NonNls String, defaultValue: String?, isValue: Boolean): String? {
     if (isValue) {
       if (stringCachedValue == null) {
-        stringCachedValue = _get(key = key, defaultValue = defaultValue, mustExistInBundle = true)
+        stringCachedValue = resolveRequiredValue(key = key)
       }
       return stringCachedValue
     }
-    return _get(key = key, defaultValue = defaultValue, mustExistInBundle = false)
+    return resolveNotRequiredValue(key = key, defaultValue = defaultValue)
   }
 
-  @Suppress("FunctionName")
   @Throws(MissingResourceException::class)
-  private fun _get(key: @NonNls String, defaultValue: String?, mustExistInBundle: Boolean): String? {
+  private fun resolveNotRequiredValue(key: @NonNls String, defaultValue: String?): String? {
     registry.getUserProperties().get(key)?.let {
       return it
     }
@@ -182,22 +181,36 @@ open class RegistryValue @Internal constructor(
       return it
     }
 
-    if (!registry.isLoaded) {
-      val message = "Attempt to load key '$key' for not yet loaded registry"
-      // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
-      if (Disposer.isDebugMode()) {
-        LOG.error("$message. Use system properties instead of registry values to configure behaviour at early startup stages.")
-      }
-      else {
-        LOG.warn(message)
-      }
+    checkIsLoaded(key)
+    return registry.getBundleValueOrNull(key) ?: defaultValue
+  }
+
+  @Throws(MissingResourceException::class)
+  private fun resolveRequiredValue(key: @NonNls String): String {
+    registry.getUserProperties().get(key)?.let {
+      return it
     }
 
-    if (mustExistInBundle) {
-      return registry.getBundleValue(key)
+    System.getProperty(key)?.let {
+      return it
+    }
+
+    checkIsLoaded(key)
+    return registry.getBundleValue(key)
+  }
+
+  private fun checkIsLoaded(key: @NonNls String) {
+    if (registry.isLoaded) {
+      return
+    }
+
+    val message = "Attempt to load key '$key' for not yet loaded registry"
+    // use Disposer.isDebugMode as "we are in internal mode or inside test" flag
+    if (Disposer.isDebugMode()) {
+      LOG.error("$message. Use system properties instead of registry values to configure behaviour at early startup stages.")
     }
     else {
-      return registry.getBundleValueOrNull(key) ?: defaultValue
+      LOG.warn(message)
     }
   }
 
@@ -271,9 +284,7 @@ open class RegistryValue @Internal constructor(
     }
   }
 
-  override fun toString(): String = "$key=${asString()}"
-
-  fun resetCache() {
+  internal fun resetCache() {
     stringCachedValue = null
     intCachedValue = null
     doubleCachedValue = Double.NaN
@@ -282,6 +293,8 @@ open class RegistryValue @Internal constructor(
 
   open val isBoolean: Boolean
     get() = isBoolean(asString())
+
+  override fun toString(): String = "$key=${asString()}"
 }
 
 private fun getOptions(value: String?): Array<String> {

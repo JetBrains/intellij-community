@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.util.ui.JBUI;
@@ -32,9 +32,9 @@ public class ThinScrollBarUI extends DefaultScrollBarUI {
   @Override
   void paintThumb(Graphics2D g, JComponent c) {
     if (isOpaque(c)) {
-      paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque());
+      paint(myThumb, g, c, ScrollSettings.isThumbSmallIfOpaque.invoke());
     }
-    else if (myAnimationBehavior.getThumbFrame() > 0) {
+    else if (myAnimationBehavior != null && myAnimationBehavior.getThumbFrame() > 0) {
       paint(myThumb, g, c, false);
     }
   }
