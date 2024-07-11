@@ -96,7 +96,7 @@ internal class ConvertToForEachFunctionCallIntention :
     private fun KaType.isLoopRangeType(): Boolean {
         fun KaType.fqNameMatches() = (this as? KaUsualClassType)?.classId?.asSingleFqName() in loopRangeTypeFqNames
 
-        return fqNameMatches() || getAllSuperTypes().any { it.fqNameMatches() }
+        return fqNameMatches() || allSupertypes.any { it.fqNameMatches() }
     }
 
     private fun createForEachExpression(element: KtForExpression, psiFactory: KtPsiFactory): KtExpression? {

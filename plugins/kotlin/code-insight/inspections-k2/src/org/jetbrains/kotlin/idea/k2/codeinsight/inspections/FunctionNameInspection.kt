@@ -14,7 +14,7 @@ class FunctionNameInspection : AbstractFunctionNameInspection() {
         val returnType = returnType
 
         return returnType.hasShortName(functionName)
-                || returnType.getAllSuperTypes().any { it.hasShortName(functionName) }
+                || returnType.allSupertypes.any { it.hasShortName(functionName) }
     }
 
     context(KaSession)

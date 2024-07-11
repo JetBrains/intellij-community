@@ -437,7 +437,7 @@ private fun createOriginalType(
         .getContentElement()?.type
 } else {
     parameterExpression?.expressionType ?: receiverToExtract?.type
-}) ?: builtinTypes.NULLABLE_ANY
+}) ?: builtinTypes.nullableAny
 
 
 @OptIn(KaExperimentalApi::class)

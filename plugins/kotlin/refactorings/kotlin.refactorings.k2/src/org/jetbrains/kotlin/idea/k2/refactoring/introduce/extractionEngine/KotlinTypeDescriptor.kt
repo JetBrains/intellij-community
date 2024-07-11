@@ -36,23 +36,24 @@ import org.jetbrains.kotlin.types.Variance
 class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<KaType> {
     override fun KaType.isMeaningful(): Boolean =
         analyze(data.commonParent) {
-            !this@isMeaningful.isEqualTo(builtinTypes.UNIT) && !this@isMeaningful.isEqualTo(builtinTypes.NOTHING)
+            !this@isMeaningful.isEqualTo(builtinTypes.unit) && !this@isMeaningful.isEqualTo(builtinTypes.nothing)
         }
 
     override fun KaType.isError(): Boolean {
         return this is KaErrorType
     }
 
-    override val booleanType: KaType = analyze(data.commonParent) { builtinTypes.BOOLEAN }
+    override val booleanType: KaType = analyze(data.commonParent) { builtinTypes.boolean }
 
-    override val unitType: KaType = analyze(data.commonParent) { builtinTypes.UNIT }
-    override val nothingType: KaType = analyze(data.commonParent) { builtinTypes.NOTHING }
-    override val nullableAnyType: KaType = analyze(data.commonParent) { builtinTypes.NULLABLE_ANY }
+    override val unitType: KaType = analyze(data.commonParent) { builtinTypes.unit }
+    override val nothingType: KaType = analyze(data.commonParent) { builtinTypes.nothing }
+    override val nullableAnyType: KaType = analyze(data.commonParent) { builtinTypes.nullableAny }
 
     override fun createListType(argTypes: List<KaType>): KaType {
         return analyze(data.commonParent) {
             buildClassType(StandardClassIds.List) {
-                argument(commonSuperType(argTypes) ?: builtinTypes.NULLABLE_ANY)
+                val commonSupertype = if (argTypes.isNotEmpty()) argTypes.commonSupertype else builtinTypes.nullableAny
+                argument(commonSupertype)
             }
         }
     }
@@ -64,7 +65,7 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
                 1 -> return outputValues.first().valueType
                 2 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Pair")))!!
                 3 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Triple")))!!
-                else -> return builtinTypes.UNIT
+                else -> return builtinTypes.unit
             }
             return buildClassType(boxingClass) {
                 boxingClass.typeParameters.forEachIndexed { idx, s ->
@@ -180,7 +181,7 @@ fun approximateWithResolvableType(type: KaType?, scope: PsiElement): KaType? {
     if (!(type is KaClassType && type.symbol is KaAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())
     ) return type
-    return type.getAllSuperTypes().firstOrNull {
+    return type.allSupertypes.firstOrNull {
         isResolvableInScope(it, scope, mutableSetOf())
     }
 }

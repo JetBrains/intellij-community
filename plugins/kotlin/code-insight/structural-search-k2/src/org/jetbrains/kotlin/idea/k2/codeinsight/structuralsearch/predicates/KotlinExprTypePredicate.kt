@@ -35,7 +35,7 @@ class KotlinExprTypePredicate(
                     // possible.
                     val symbol = node.mainReference?.resolveToSymbol()
                     if (symbol is KaNamedClassSymbol) {
-                        symbol.buildSelfClassType()
+                        symbol.defaultType
                     } else {
                         node.expressionType
                     }
@@ -54,7 +54,7 @@ class KotlinExprTypePredicate(
     context(KaSession)
     fun match(type: KaType): Boolean {
         val typesToTest = mutableListOf(type)
-        if (withinHierarchy) typesToTest.addAll(type.getAllSuperTypes())
+        if (withinHierarchy) typesToTest.addAll(type.allSupertypes)
         if (regex) {
             val delegate = RegExpPredicate(search, !ignoreCase, baseName, false, target)
             return typesToTest.any { type.renderNames().any { delegate.match(it) } }

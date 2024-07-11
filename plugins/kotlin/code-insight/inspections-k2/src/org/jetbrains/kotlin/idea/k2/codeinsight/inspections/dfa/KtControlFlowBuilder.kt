@@ -153,12 +153,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (constantValue is KaConstantValue.ErrorValue) return false
         val value = constantValue.value
         val ktType = when(value) {
-            is Boolean -> builtinTypes.BOOLEAN
-            is Int -> builtinTypes.INT
-            is Long -> builtinTypes.LONG
-            is Float -> builtinTypes.FLOAT
-            is Double -> builtinTypes.DOUBLE
-            is String -> builtinTypes.STRING
+            is Boolean -> builtinTypes.boolean
+            is Int -> builtinTypes.int
+            is Long -> builtinTypes.long
+            is Float -> builtinTypes.float
+            is Double -> builtinTypes.double
+            is String -> builtinTypes.string
             // Unsigned type handling is not supported yet
             else -> return false
         }
@@ -676,7 +676,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     context(KaSession)
     private fun KaType?.isSubTypeOf(wantedType: ClassId) =
         this is KaClassType && classId == wantedType ||
-        this != null && getAllSuperTypes().any { type -> type is KaClassType && type.classId == wantedType }
+        this != null && allSupertypes.any { type -> type is KaClassType && type.classId == wantedType }
 
     context(KaSession)
     private fun processMathExpression(expr: KtBinaryExpression, mathOp: LongRangeBinOp) {

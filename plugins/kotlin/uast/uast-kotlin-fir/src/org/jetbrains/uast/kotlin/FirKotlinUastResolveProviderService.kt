@@ -580,7 +580,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun getDoubleColonReceiverType(ktDoubleColonExpression: KtDoubleColonExpression, source: UElement): PsiType? {
         analyzeForUast(ktDoubleColonExpression) {
-            val receiverKtType = ktDoubleColonExpression.getReceiverKtType() ?: return null
+            val receiverKtType = ktDoubleColonExpression.receiverType ?: return null
             return toPsiType(
                 receiverKtType,
                 source,
@@ -595,7 +595,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         analyzeForUast(ktElement) {
             val leftType = left.expressionType ?: return null
             val rightType = right.expressionType ?: return null
-            val commonSuperType = commonSuperType(listOf(leftType, rightType)) ?: return null
+            val commonSuperType = listOf(leftType, rightType).commonSupertype
             return toPsiType(
                 commonSuperType,
                 uExpression,

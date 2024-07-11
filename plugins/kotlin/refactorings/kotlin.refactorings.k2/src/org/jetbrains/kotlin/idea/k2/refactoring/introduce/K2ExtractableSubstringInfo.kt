@@ -22,7 +22,7 @@ class K2ExtractableSubstringInfo(
 
     context(KaSession)
     fun guessLiteralType(): KaType {
-        val stringType = builtinTypes.STRING
+        val stringType = builtinTypes.string
 
         if (startEntry != endEntry || startEntry !is KtLiteralStringTemplateEntry) return stringType
 

@@ -595,7 +595,7 @@ private fun getIterableElementType(type: KaType): KaType? {
         return type.typeArguments.singleOrNull()?.type
     }
 
-    for (supertype in type.getAllSuperTypes()) {
+    for (supertype in type.allSupertypes) {
         if (supertype is KaClassType) {
             if (supertype.classId in ITERABLE_LIKE_CLASS_IDS) {
                 return supertype.typeArguments.singleOrNull()?.type

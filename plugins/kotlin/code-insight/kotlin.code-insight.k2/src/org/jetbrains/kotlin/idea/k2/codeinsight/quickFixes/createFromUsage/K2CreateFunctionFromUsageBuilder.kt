@@ -217,8 +217,8 @@ object K2CreateFunctionFromUsageBuilder {
 
     context (KaSession)
     private fun KaType.getAbstractSuperType(): KaType? {
-        fun List<KaType>.firstAbstractEditableType() = firstOrNull { it.hasAbstractDeclaration() && it.canRefactor() }
-        return getDirectSuperTypes().firstAbstractEditableType() ?: getAllSuperTypes().firstAbstractEditableType()
+        fun Sequence<KaType>.firstAbstractEditableType() = firstOrNull { it.hasAbstractDeclaration() && it.canRefactor() }
+        return directSupertypes.firstAbstractEditableType() ?: allSupertypes.firstAbstractEditableType()
     }
 
     /**
@@ -228,7 +228,7 @@ object K2CreateFunctionFromUsageBuilder {
     private fun KtExpression.getTypeOfAbstractSuperClass(): KaType? {
         val type = expressionType ?: return null
         if (type.hasAbstractDeclaration()) return type
-        return type.getAllSuperTypes().firstOrNull { it.hasAbstractDeclaration() }
+        return type.allSupertypes.firstOrNull { it.hasAbstractDeclaration() }
     }
 
     /**
@@ -256,7 +256,7 @@ object K2CreateFunctionFromUsageBuilder {
 
             var type: KaType? = implicitReceiver.type
             if (type is KaTypeParameterType) {
-                type = type.getDirectSuperTypes().firstOrNull()
+                type = type.directSupertypes.firstOrNull()
             }
             return type
         }

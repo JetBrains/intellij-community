@@ -79,7 +79,7 @@ internal class MutableParameter(
         val addNullableTypes = originalType is KaFlexibleType &&
                 originalType.lowerBound.nullability != originalType.upperBound.nullability &&
                 typeSet.size > 1
-        val superTypes = originalType.getAllSuperTypes().filter {
+        val superTypes = originalType.allSupertypes.filter {
             andPredicate.isApplicable(it)
         }
 

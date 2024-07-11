@@ -102,7 +102,7 @@ object K2CreateParameterFromUsageBuilder {
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.returnType
-                return if (type is KaErrorType) builtinTypes.ANY else type
+                return if (type is KaErrorType) builtinTypes.any else type
             }
             val physicalExpression = expression.substringContextOrThis
             val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
@@ -111,7 +111,7 @@ object K2CreateParameterFromUsageBuilder {
                 (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
             }
             val approximatedType = approximateWithResolvableType(type, physicalExpression)
-            if (approximatedType != null && approximatedType != builtinTypes.UNIT) { return approximatedType }
+            if (approximatedType != null && approximatedType != builtinTypes.unit) { return approximatedType }
 
             expression.expectedType?.let { return it }
             val binaryExpression = expression.getAssignmentByLHS()
@@ -119,7 +119,7 @@ object K2CreateParameterFromUsageBuilder {
             right?.expressionType?.let { return it }
             right?.expectedType?.let { return it }
             (expression.parent as? KtDeclaration)?.returnType?.let { return it }
-            return builtinTypes.ANY
+            return builtinTypes.any
         }
 
         private fun runChangeSignature(

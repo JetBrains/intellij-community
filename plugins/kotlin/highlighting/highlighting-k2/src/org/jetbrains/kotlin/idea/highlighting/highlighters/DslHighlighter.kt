@@ -70,7 +70,7 @@ private fun getDslAnnotation(type: KaType): ClassId? {
         yieldAll(type.annotations.classIds)
         val symbol = type.expandedSymbol ?: return@sequence
         yieldAll(symbol.annotations.classIds)
-        for (superType in type.getAllSuperTypes()) {
+        for (superType in type.allSupertypes) {
             superType.expandedSymbol?.let { yieldAll(it.annotations.classIds) }
         }
     }

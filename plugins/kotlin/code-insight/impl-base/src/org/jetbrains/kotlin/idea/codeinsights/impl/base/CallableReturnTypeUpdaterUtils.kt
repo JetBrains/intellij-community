@@ -153,7 +153,7 @@ object CallableReturnTypeUpdaterUtils {
             // `getAllSuperTypes` does not work because it would BFS traverse each starting point and put the result together, in which
             // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
             // multiple super types.
-            .bfs { it.getDirectSuperTypes(shouldApproximate = true).iterator() }
+            .bfs { it.directSupertypes(shouldApproximate = true).iterator() }
             .map { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) }
             .distinct()
             .let { types ->

@@ -120,7 +120,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             val receiverType =
                 callableReferenceExpression.resolveToCall()
                     ?.successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.dispatchReceiver?.type?.lowerBoundIfFlexible()
-                    ?: callableReferenceExpression.getReceiverKtType()?.lowerBoundIfFlexible() ?: return
+                    ?: callableReferenceExpression.receiverType?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
 

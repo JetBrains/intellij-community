@@ -101,7 +101,7 @@ object CreateKotlinCallableActionTextBuilder {
     context (KaSession)
     private fun KaType.selfOrSuperTypeWithAbstractMatch(isAbstract: Boolean): KaType? {
         if (this.hasAbstractDeclaration() == isAbstract || this is KaClassType && (symbol as? KaClassSymbol)?.classKind == KaClassKind.INTERFACE) return this
-        return getDirectSuperTypes().firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
+        return directSupertypes.firstNotNullOfOrNull { it.selfOrSuperTypeWithAbstractMatch(isAbstract) }
     }
 
     // We must use short names of types for create-from-usage quick-fix (or IntentionAction) text.
@@ -131,7 +131,7 @@ object CreateKotlinCallableActionTextBuilder {
     @OptIn(KaExperimentalApi::class)
     fun renderTypeName(expectedType: ExpectedType, container: KtElement): String? {
         val ktType = if (expectedType is ExpectedKotlinType) expectedType.ktType else expectedType.toKtTypeWithNullability(container)
-        if (ktType == null || ktType == builtinTypes.UNIT) return null
+        if (ktType == null || ktType == builtinTypes.unit) return null
         return ktType.render(renderer = K2CreateFunctionFromUsageUtil.WITH_TYPE_NAMES_FOR_CREATE_ELEMENTS, position = Variance.INVARIANT)
     }
 

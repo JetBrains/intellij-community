@@ -117,7 +117,7 @@ object ChangeTypeQuickFixFactories {
                 add(candidateType)
             }
         }.distinct()
-        return commonSuperType(returnTypes) ?: candidateType
+        return if (returnTypes.isNotEmpty()) returnTypes.commonSupertype else candidateType
     }
 
     context(KaSession)

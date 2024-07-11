@@ -101,7 +101,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
                     val extensionReceiverType = symbol.receiverType ?: return true
-                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
+                    collectImplicitReceiverTypes(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
                 }
             }
             is KaClassSymbol -> when {

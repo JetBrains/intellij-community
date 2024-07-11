@@ -286,7 +286,7 @@ class KotlinFirIntroduceParameterHandler(private val helper: KotlinIntroducePara
         val types = analyzeInModalWindow(physicalExpression, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
             buildList {
                 add(replacementType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT))
-                replacementType.getAllSuperTypes(true).mapTo(this) {
+                replacementType.allSupertypes(shouldApproximate = true).mapTo(this) {
                     it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
                 }
             }

@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
  */
 context(KaSession)
 infix fun KaType.isPossiblySubTypeOf(superType: KaType): Boolean {
-    if (this is KaTypeParameterType) return this.hasCommonSubTypeWith(superType)
+    if (this is KaTypeParameterType) return this.hasCommonSubtypeWith(superType)
 
     if (superType is KaTypeParameterType) return superType.symbol.upperBounds.all { this isPossiblySubTypeOf it }
 

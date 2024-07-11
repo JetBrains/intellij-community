@@ -158,7 +158,7 @@ internal fun canBeIterated(type: KaType, checkNullability: Boolean = true): Bool
         is KaTypeParameterType -> type.symbol.upperBounds.any { canBeIterated(it) }
         is KaClassType -> {
             (!checkNullability || !type.isMarkedNullable)
-                    && (type.classId in ITERABLE_CLASS_IDS || type.getAllSuperTypes(true).any { canBeIterated(it) })
+                    && (type.classId in ITERABLE_CLASS_IDS || type.allSupertypes(shouldApproximate = true).any { canBeIterated(it) })
         }
         else -> false
     }

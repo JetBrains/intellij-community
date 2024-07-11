@@ -198,13 +198,13 @@ internal class ForbiddenInSuspectContextMethodInspection : LocalInspectionTool()
       return buildList<LocalQuickFix> {
         add(ReplaceInvokeLaterWithWithContextQuickFix(callExpression))
 
-        val implicitReceiverTypesAtPosition = getImplicitReceiverTypesAtPosition(callExpression)
+        val implicitReceiverTypesAtPosition = collectImplicitReceiverTypes(callExpression)
         val coroutineScopeClass = ClassId.topLevel(FqName(COROUTINE_SCOPE))
         val hasCoroutineScope = implicitReceiverTypesAtPosition.any { type ->
           type is KaUsualClassType &&
           (
             type.classId == coroutineScopeClass ||
-            type.getAllSuperTypes().any { superType -> superType is KaUsualClassType && superType.classId == coroutineScopeClass }
+            type.allSupertypes.any { superType -> superType is KaUsualClassType && superType.classId == coroutineScopeClass }
           )
         }
         if (hasCoroutineScope) {

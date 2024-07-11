@@ -41,7 +41,7 @@ object ConvertReferenceToLambdaUtil {
         val matchingParameterIsExtension = matchingParameterType is KaFunctionType && matchingParameterType.receiverType != null
 
         val receiverExpression = element.receiverExpression
-        val receiverType = element.getReceiverKtType()
+        val receiverType = element.receiverType
 
         val symbol = element.callableReference.mainReference.resolveToSymbol() ?: return null
 

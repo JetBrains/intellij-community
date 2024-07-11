@@ -162,7 +162,7 @@ internal class ShadowedCallablesFilter {
             val indexInClassHierarchy = mutableMapOf<ReceiverId, Int>()
 
             for ((receiverFromContextIndex, receiverFromContextType) in receiversFromContext.withIndex()) {
-                val selfWithSuperTypes = listOf(receiverFromContextType) + receiverFromContextType.getAllSuperTypes()
+                val selfWithSuperTypes = listOf(receiverFromContextType) + receiverFromContextType.allSupertypes
                 for ((superTypeIndex, superType) in selfWithSuperTypes.withIndex()) {
                     val receiverId = ReceiverId.create(superType) ?: continue
 

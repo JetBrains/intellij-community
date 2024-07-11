@@ -57,7 +57,7 @@ private class ImplementReadResolveQuickFix : LocalQuickFix {
 private fun KtObjectDeclaration.doesImplementSerializable(): Boolean = analyze(this) {
     true == (this@doesImplementSerializable.symbol as? KaClassSymbol)
         ?.let(::buildClassType)
-        ?.getAllSuperTypes()
+        ?.allSupertypes
         ?.any { it.isClassType(ClassId.fromString(JAVA_IO_SERIALIZABLE_CLASS_ID)) }
 }
 
