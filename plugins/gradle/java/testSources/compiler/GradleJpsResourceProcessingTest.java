@@ -499,8 +499,8 @@ public class GradleJpsResourceProcessingTest extends GradleJpsCompilingTestCase 
     assertCopied("out/production/resources/dir/file.properties");
     assertCopied("out/test/resources/dir/file-test.properties");
     assertCopied("out/test/classes/Test.class");
-    assertCopied("out/test/resources/dir/file-integrationTest.properties");
-    assertCopied("out/test/classes/IntegrationTest.class");
+    assertCopied("out/integrationTest/resources/dir/file-integrationTest.properties");
+    assertCopied("out/integrationTest/classes/IntegrationTest.class");
   }
 
   private void createFilesForIncludesAndExcludesTest() throws IOException {
