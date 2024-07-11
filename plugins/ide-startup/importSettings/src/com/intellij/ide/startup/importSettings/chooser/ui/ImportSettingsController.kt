@@ -99,22 +99,19 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     dataForSave: List<DataForSave>,
     productService: SettingTransferProductService
   ): Boolean {
-    val installPlugins = dataForSave.any { it.id == TransferableSetting.PLUGINS_ID }
-    if (!installPlugins){
-      logger.info("Plugin installation is not requested, not going to show the featured plugins page.")
-      return false
-    }
-
     val pluginService = StartupWizardService.getInstance()?.getPluginService() ?: run {
       logger.info("No wizard service registered, not going to show the featured plugins page.")
       return false
     }
-    val pluginIdsMarkedForInstallation = productService.getPlugins(productId)
+    val installPlugins = dataForSave.any { it.id == TransferableSetting.PLUGINS_ID }
+    val pluginIdsMarkedForInstallation = if (installPlugins) productService.getPlugins(productId) else emptyList()
+    logger.info("${pluginIdsMarkedForInstallation.size} plugins marked for installation so far.")
     if (!pluginService.shouldShowPage(pluginIdsMarkedForInstallation)) {
       logger.info("Plugin service reported that showing the featured plugin page is unnecessary.")
       return false
     }
 
+    logger.info("Going to show the featured plugin installation page.")
     return true
   }
 
