@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.copyPaste
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaSymbolBasedReference
@@ -38,7 +37,6 @@ internal object KotlinReferenceRestoringHelper {
             // delta between the source text offset and the offset in the text to be pasted
             val deltaBetweenStartOffsets = currentStartOffsetInPastedText - startOffset
 
-            @OptIn(KaAnalysisApiInternals::class)
             val elements = sourceFile.collectElementsOfTypeInRange<KtElement>(startOffset, endOffset)
                 .filterNot { it is KtSimpleNameExpression && !it.canBeUsedInImport() }
                 .filter { it.mainReference is KaSymbolBasedReference }
