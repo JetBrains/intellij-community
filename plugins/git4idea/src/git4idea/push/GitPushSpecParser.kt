@@ -3,6 +3,7 @@
 package git4idea.push
 
 import com.intellij.openapi.diagnostic.thisLogger
+import git4idea.GitBranch
 import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.repo.GitRepository
@@ -43,9 +44,10 @@ internal object GitPushSpecParser {
 
     val strippedSpecSource = GitBranchUtil.stripRefsPrefix(specSource)
     val strippedSourceBranch = GitBranchUtil.stripRefsPrefix(sourceBranch)
+    val fullSourceBranch = GitBranch.REFS_HEADS_PREFIX + strippedSourceBranch
 
     if (strippedSpecSource == GitUtil.HEAD ||
-        specSource == sourceBranch ||
+        specSource == fullSourceBranch ||
         specSource == strippedSourceBranch
     ) {
       return specTarget
@@ -53,8 +55,8 @@ internal object GitPushSpecParser {
 
     if (specSource.endsWith("*")) {
       val sourceWoStar = specSource.substring(0, specSource.length - 1)
-      if (sourceBranch.startsWith(sourceWoStar)) {
-        val starMeaning = sourceBranch.substring(sourceWoStar.length)
+      if (fullSourceBranch.startsWith(sourceWoStar)) {
+        val starMeaning = fullSourceBranch.substring(sourceWoStar.length)
         return specTarget.replace("*", starMeaning)
       }
     }
