@@ -115,7 +115,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/declaringJavaClass", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/decreaseVisibility", pattern = pattern)
             model("$idea/quickfix/deprecatedJavaAnnotation", pattern = pattern, isIgnored = true)
-            model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false, excludedDirectories = listOf("classUsages", "publishedApi", "wholeProject"))
+            model("$idea/quickfix/deprecatedSymbolUsage", pattern = pattern, isIgnored = false, excludedDirectories = listOf("publishedApi", "wholeProject"))
             model("$idea/quickfix/equalityNotApplicable", pattern = pattern)
             model("$idea/quickfix/final", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/foldTryCatch", pattern = pattern)

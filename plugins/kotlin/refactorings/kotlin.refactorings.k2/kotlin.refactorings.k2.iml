@@ -56,5 +56,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" />
+    <orderEntry type="module" module-name="kotlin.base.indices" />
   </component>
 </module>

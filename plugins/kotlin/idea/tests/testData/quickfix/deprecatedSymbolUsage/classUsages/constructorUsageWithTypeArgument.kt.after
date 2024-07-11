@@ -1,4 +1,5 @@
 // "Replace with 'NewClass<Int>'" "true"
+// K2_ACTION: "Replace with 'NewClass<T>'" "true"
 package ppp
 
 @Deprecated("renamed", ReplaceWith("NewClass<T>"))
@@ -11,3 +12,4 @@ fun foo() {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

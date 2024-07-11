@@ -7048,6 +7048,235 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages")
+        public static class ClassUsages extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("annotation1.kt")
+            public void testAnnotation1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotation1.kt");
+            }
+
+            @TestMetadata("annotation2.kt")
+            public void testAnnotation2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotation2.kt");
+            }
+
+            @TestMetadata("annotation3.kt")
+            public void testAnnotation3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotation3.kt");
+            }
+
+            @TestMetadata("annotation4.kt")
+            public void testAnnotation4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotation4.kt");
+            }
+
+            @TestMetadata("annotationKeepNamedArgs.kt")
+            public void testAnnotationKeepNamedArgs() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationKeepNamedArgs.kt");
+            }
+
+            @TestMetadata("annotationWithFileUseSiteTarget1.kt")
+            public void testAnnotationWithFileUseSiteTarget1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationWithFileUseSiteTarget1.kt");
+            }
+
+            @TestMetadata("annotationWithFileUseSiteTarget2.kt")
+            public void testAnnotationWithFileUseSiteTarget2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationWithFileUseSiteTarget2.kt");
+            }
+
+            @TestMetadata("annotationWithFileUseSiteTarget3.kt")
+            public void testAnnotationWithFileUseSiteTarget3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationWithFileUseSiteTarget3.kt");
+            }
+
+            @TestMetadata("annotationWithGetUseSiteTarget1.kt")
+            public void testAnnotationWithGetUseSiteTarget1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationWithGetUseSiteTarget1.kt");
+            }
+
+            @TestMetadata("annotationWithGetUseSiteTarget2.kt")
+            public void testAnnotationWithGetUseSiteTarget2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationWithGetUseSiteTarget2.kt");
+            }
+
+            @TestMetadata("annotationWithGetUseSiteTarget3.kt")
+            public void testAnnotationWithGetUseSiteTarget3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/annotationWithGetUseSiteTarget3.kt");
+            }
+
+            @TestMetadata("constructorUsage1.kt")
+            public void testConstructorUsage1() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage1.kt");
+            }
+
+            @TestMetadata("constructorUsage2.kt")
+            public void testConstructorUsage2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage2.kt");
+            }
+
+            @TestMetadata("constructorUsage3.kt")
+            public void testConstructorUsage3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage3.kt");
+            }
+
+            @TestMetadata("constructorUsage4.kt")
+            public void testConstructorUsage4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage4.kt");
+            }
+
+            @TestMetadata("constructorUsage5.kt")
+            public void testConstructorUsage5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage5.kt");
+            }
+
+            @TestMetadata("constructorUsage6.kt")
+            public void testConstructorUsage6() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage6.kt");
+            }
+
+            @TestMetadata("constructorUsage7.kt")
+            public void testConstructorUsage7() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsage7.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument.kt")
+            public void testConstructorUsageWithTypeArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument2.kt")
+            public void testConstructorUsageWithTypeArgument2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument2.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument3.kt")
+            public void testConstructorUsageWithTypeArgument3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument3.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument4.kt")
+            public void testConstructorUsageWithTypeArgument4() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument4.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument5.kt")
+            public void testConstructorUsageWithTypeArgument5() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument5.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument6.kt")
+            public void testConstructorUsageWithTypeArgument6() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument6.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgument7.kt")
+            public void testConstructorUsageWithTypeArgument7() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgument7.kt");
+            }
+
+            @TestMetadata("constructorUsageWithTypeArgumentWithoutSpecifyType.kt")
+            public void testConstructorUsageWithTypeArgumentWithoutSpecifyType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/constructorUsageWithTypeArgumentWithoutSpecifyType.kt");
+            }
+
+            @TestMetadata("imports.kt")
+            public void testImports() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/imports.kt");
+            }
+
+            @TestMetadata("inAliasSimple.kt")
+            public void testInAliasSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inAliasSimple.kt");
+            }
+
+            @TestMetadata("inAliasWithOwnReplaceForConstructorForAliasArguments.kt")
+            public void testInAliasWithOwnReplaceForConstructorForAliasArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inAliasWithOwnReplaceForConstructorForAliasArguments.kt");
+            }
+
+            @TestMetadata("inAliasWithOwnReplaceForConstructorUnused.kt")
+            public void testInAliasWithOwnReplaceForConstructorUnused() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inAliasWithOwnReplaceForConstructorUnused.kt");
+            }
+
+            @TestMetadata("inAliasWithOwnReplaceForConstructorUsed.kt")
+            public void testInAliasWithOwnReplaceForConstructorUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inAliasWithOwnReplaceForConstructorUsed.kt");
+            }
+
+            @TestMetadata("inAliasWithOwnReplaceForSecondaryConstructorUnused.kt")
+            public void testInAliasWithOwnReplaceForSecondaryConstructorUnused() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inAliasWithOwnReplaceForSecondaryConstructorUnused.kt");
+            }
+
+            @TestMetadata("inAliasWithOwnReplaceForSecondaryConstructorUsed.kt")
+            public void testInAliasWithOwnReplaceForSecondaryConstructorUsed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inAliasWithOwnReplaceForSecondaryConstructorUsed.kt");
+            }
+
+            @TestMetadata("inTypeArgument.kt")
+            public void testInTypeArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/inTypeArgument.kt");
+            }
+
+            @TestMetadata("innerType.kt")
+            public void testInnerType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/innerType.kt");
+            }
+
+            @TestMetadata("nestedClassToNestedClass.kt")
+            public void testNestedClassToNestedClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/nestedClassToNestedClass.kt");
+            }
+
+            @TestMetadata("noAnnotationConstructorUsage.kt")
+            public void testNoAnnotationConstructorUsage() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/noAnnotationConstructorUsage.kt");
+            }
+
+            @TestMetadata("noMatchTypeArgument.kt")
+            public void testNoMatchTypeArgument() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/noMatchTypeArgument.kt");
+            }
+
+            @TestMetadata("noMatchTypeArgument2.kt")
+            public void testNoMatchTypeArgument2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/noMatchTypeArgument2.kt");
+            }
+
+            @TestMetadata("qualifiedClassName.kt")
+            public void testQualifiedClassName() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/qualifiedClassName.kt");
+            }
+
+            @TestMetadata("qualifiedClassNameInPattern.kt")
+            public void testQualifiedClassNameInPattern() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/qualifiedClassNameInPattern.kt");
+            }
+
+            @TestMetadata("secondaryConstructor.kt")
+            public void testSecondaryConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/secondaryConstructor.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/classUsages/simple.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/deprecatedSymbolUsage/functionLiteralArguments")
         public static class FunctionLiteralArguments extends AbstractHighLevelQuickFixTest {
             @java.lang.Override

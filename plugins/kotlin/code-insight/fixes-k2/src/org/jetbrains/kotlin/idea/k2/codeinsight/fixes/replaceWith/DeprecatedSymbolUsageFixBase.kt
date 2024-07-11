@@ -4,9 +4,11 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.*
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
@@ -19,9 +21,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFi
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CallableUsageReplacementStrategy
+import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.ClassUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.CodeToInlineBuilder
-import org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner.TypeAliasUsageReplacementStrategy
 import org.jetbrains.kotlin.idea.quickfix.replaceWith.ReplaceWithData
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.UsageReplacementStrategy
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.buildCodeToInline
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -30,14 +33,17 @@ import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtClassLikeDeclaration
 import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtTypeAlias
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.KtValVarKeywordOwner
@@ -65,23 +71,30 @@ object DeprecationFixFactory {
     }
 
     context(KaSession)
+    @OptIn(KaExperimentalApi::class)
     private fun createDeprecation(
         kaSymbol: KaDeclarationSymbol,
         psi: PsiElement
     ): List<IntentionAction> {
+        val deprecatedSymbol = kaSymbol.takeIf { it.deprecationStatus != null }
+            ?: (kaSymbol.containingSymbol as? KaDeclarationSymbol)?.takeIf { it.deprecationStatus != null }
+            ?: return emptyList()
         val referenceExpression = when (val psiElement = psi) {
             is KtArrayAccessExpression -> psiElement
             is KtSimpleNameExpression -> psiElement
-            is KtTypeReference -> (psiElement.typeElement as? KtUserType)?.referenceExpression
+            is KtTypeReference -> {
+                val typeElement = psiElement.typeElement
+                (((typeElement as? KtNullableType)?.innerType ?: typeElement) as? KtUserType)?.referenceExpression
+            }
             is KtConstructorCalleeExpression -> psiElement.constructorReferenceExpression
             is KtBinaryExpression -> psiElement.operationReference
             else -> null
         } ?: return emptyList()
         val expression = (referenceExpression.parent as? KtCallExpression)?.takeIf {
-            (kaSymbol as? KaNamedFunctionSymbol)?.isOperator == true && referenceExpression.mainReference.resolve() is KtValVarKeywordOwner
+            (deprecatedSymbol as? KaNamedFunctionSymbol)?.isOperator == true && referenceExpression.mainReference.resolve() is KtValVarKeywordOwner
         } ?: referenceExpression
-        val replaceWithData =
-            fetchReplaceWithPattern(kaSymbol) ?: return emptyList()
+
+        val replaceWithData = fetchReplaceWithPattern(deprecatedSymbol) ?: return emptyList()
 
         return listOf(DeprecatedSymbolUsageFix(expression, replaceWithData))
     }
@@ -118,8 +131,7 @@ abstract class DeprecatedSymbolUsageFixBase(
             "${javaClass.name} should not be created on EDT"
         }
         isAvailable = buildUsageReplacementStrategy(
-            element,
-            replaceWith
+            element, replaceWith
         )?.let { it.createReplacer(element) != null } == true
     }
 
@@ -142,27 +154,46 @@ abstract class DeprecatedSymbolUsageFixBase(
 
             val target = element.mainReference.resolve()
             when (target) {
-                is KtCallableDeclaration -> {
-                    val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
-                    ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
-                        ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
-                        ?: target
+                is KtPrimaryConstructor, is KtClassLikeDeclaration -> {
                     val psiFactory = KtPsiFactory(element.project)
-                    val expression =
-                        psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
+                    val typeReference = try {
+                        psiFactory.createType(replaceWith.pattern)
+                    } catch (e: Exception) {
+                        if (e is ControlFlowException) throw e
+                        val replacement = createReplacement(target as KtDeclaration, element, replaceWith) ?: return null
 
-                    val replacement = buildCodeToInline(
-                        target, expression, false, null, CodeToInlineBuilder(
-                            original = target
-                        )
-                    ) ?: return null
+                        return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
+                    }
+
+                    val typeElement = typeReference.typeElement as? KtUserType ?: return null
+
+                    return ClassUsageReplacementStrategy(typeElement, null, element.project)
+                }
+
+                is KtCallableDeclaration -> {
+                    val replacement = createReplacement(target, element, replaceWith) ?: return null
+
                     return CallableUsageReplacementStrategy(replacement, inlineSetter = false)
                 }
-                is KtTypeAlias -> {
-                    return TypeAliasUsageReplacementStrategy(target)
-                }
+
                 else -> return null
             }
+        }
+
+        private fun createReplacement(
+            target: KtDeclaration,
+            element: KtReferenceExpression,
+            replaceWith: ReplaceWithData
+        ): CodeToInline? {
+            val context = (if (target is KtFunction) (target.bodyBlockExpression ?: target.bodyExpression
+            ?: target.valueParameterList?.parameters?.lastOrNull()) else null)
+                ?: (target as? KtProperty)?.getter ?: (target as? KtProperty)?.setter ?: (target as? KtProperty)?.initializer
+                ?: target
+            val psiFactory = KtPsiFactory(element.project)
+            val expression =
+                psiFactory.createExpressionCodeFragment(replaceWith.pattern, context).getContentElement() ?: return null
+
+            return buildCodeToInline(target, expression, false, null, CodeToInlineBuilder(original = target))
         }
     }
 }

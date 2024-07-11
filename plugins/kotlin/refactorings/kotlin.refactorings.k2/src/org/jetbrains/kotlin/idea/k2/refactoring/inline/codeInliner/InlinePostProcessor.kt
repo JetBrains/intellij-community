@@ -231,6 +231,7 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
             }
         }
 
+        val replacementMap = mutableMapOf<KtValueArgument, KtValueArgument>()
         analyze(element) {
             for (callExpression in callsToProcess) {
                 val resolvedCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
@@ -248,9 +249,10 @@ object InlinePostProcessor: AbstractInlinePostProcessor() {
                         newArgument.putCopyableUserData(DEFAULT_PARAMETER_VALUE_KEY, Unit)
                     }
 
-                    argument.replace(newArgument)
+                    replacementMap.put(argument, newArgument)
                 }
             }
         }
+        replacementMap.forEach { (argument, replacement) -> argument.replace(replacement) }
     }
 }

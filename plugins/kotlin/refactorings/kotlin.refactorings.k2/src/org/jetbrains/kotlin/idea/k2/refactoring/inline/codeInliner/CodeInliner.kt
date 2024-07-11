@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.search.LocalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -26,6 +25,7 @@ import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelp
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.k2.refactoring.util.LambdaToAnonymousFunctionUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeInliner
+import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AnnotationEntryReplacementPerformer
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CommentHolder
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.ExpressionReplacementPerformer
@@ -52,7 +52,15 @@ class CodeInliner(
     codeToInline: CodeToInline
 ) : AbstractCodeInliner<KtElement, KtParameter, KaType, KtDeclaration>(call, codeToInline) {
     private val mapping: Map<KtExpression, Name>? = analyze(call) {
-        call.resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+        treeUpToCall().resolveToCall()?.singleFunctionCallOrNull()?.argumentMapping?.mapValues { e -> e.value.name }
+    }
+
+    private fun treeUpToCall(): KtElement {
+        val userType = call.parent as? KtUserType ?: return call
+        val typeReference = userType.parent as? KtTypeReference ?: return call
+        val constructorCalleeExpression = typeReference.parent as? KtConstructorCalleeExpression ?: return call
+        val gParent = constructorCalleeExpression.parent
+        return gParent as? KtSuperTypeCallEntry ?: gParent as? KtAnnotationEntry ?: call
     }
 
     @OptIn(KaExperimentalApi::class)
@@ -60,16 +68,14 @@ class CodeInliner(
         val qualifiedElement = if (call is KtExpression) {
             call.getQualifiedExpressionForSelector()
                 ?: call.callableReferenceExpressionForReference()
-                ?: call.parent as? KtSuperTypeCallEntry
-                ?: call
+                ?: treeUpToCall()
         } else call
         val assignment = (qualifiedElement as? KtExpression)
             ?.getAssignmentByLHS()
             ?.takeIf { it.operationToken == KtTokens.EQ }
         val originalDeclaration = analyze(call) {
             (call.parent as? KtCallableReferenceExpression
-                ?: PsiTreeUtil.getParentOfType(call, KtSuperTypeCallEntry::class.java)
-                ?: call)
+                ?: treeUpToCall())
                 .resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.symbol?.psi as? KtDeclaration
         } ?: return null
         val callableForParameters = (if (assignment != null && originalDeclaration is KtProperty)
@@ -157,7 +163,7 @@ class CodeInliner(
 
         processTypeParameterUsages(
             callElement = call as? KtCallElement,
-            typeParameters = (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
+            typeParameters = (originalDeclaration as? KtConstructor<*>)?.containingClass()?.typeParameters ?: (originalDeclaration as? KtCallableDeclaration)?.typeParameters ?: emptyList(),
             namer = { it.nameAsSafeName },
             typeRetriever = {
                 analyze(callableForParameters) {
@@ -208,6 +214,7 @@ class CodeInliner(
         findAndMarkNewDeclarations()
         val performer = when (elementToBeReplaced) {
             is KtExpression -> ExpressionReplacementPerformer(codeToInline, elementToBeReplaced)
+            is KtAnnotationEntry -> AnnotationEntryReplacementPerformer(codeToInline, elementToBeReplaced)
             is KtSuperTypeCallEntry -> SuperTypeCallEntryReplacementPerformer(codeToInline, elementToBeReplaced)
             else -> error("Unsupported element: $elementToBeReplaced")
         }
