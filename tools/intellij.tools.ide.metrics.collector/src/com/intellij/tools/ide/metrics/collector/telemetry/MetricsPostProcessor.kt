@@ -22,7 +22,7 @@ class CombinedMetricsPostProcessor : MetricsPostProcessor {
       }
       else {
         var counter = 1
-        val mediumAttributes = mutableMapOf<String, MutableList<Long>>()
+        val mediumAttributes = mutableMapOf<String, MutableList<Int>>()
         for (metric in entry.value) {
           val value = metric.metric.value
           val spanUpdatedName = entry.key + "_$counter"
@@ -45,12 +45,12 @@ class CombinedMetricsPostProcessor : MetricsPostProcessor {
             continue
           }
           if (attr.key.endsWith("#mean_value")) {
-            result.add(Metric.newDuration(attr.key, attr.value.average().toLong()))
+            result.add(Metric.newDuration(attr.key, attr.value.average().toInt()))
             continue
           }
 
-          result.add(Metric.newCounter(attr.key + "#count", attr.value.size.toLong()))
-          result.add(Metric.newDuration(attr.key + "#mean_value", attr.value.average().toLong()))
+          result.add(Metric.newCounter(attr.key + "#count", attr.value.size))
+          result.add(Metric.newDuration(attr.key + "#mean_value", attr.value.average().toInt()))
           result.add(Metric.newDuration(attr.key + "#standard_deviation", attr.value.standardDeviation()))
         }
         val sum = entry.value.sumOf { it.metric.value }
@@ -58,7 +58,7 @@ class CombinedMetricsPostProcessor : MetricsPostProcessor {
         val mean = sum / count
         val standardDeviation = entry.value.map { it.metric.value }.standardDeviation()
         result.add(Metric.newDuration(entry.key, sum))
-        result.add(Metric.newCounter(entry.key + "#count", count.toLong()))
+        result.add(Metric.newCounter(entry.key + "#count", count))
         result.add(Metric.newDuration(entry.key + "#mean_value", mean))
         result.add(Metric.newDuration(entry.key + "#standard_deviation", standardDeviation))
       }

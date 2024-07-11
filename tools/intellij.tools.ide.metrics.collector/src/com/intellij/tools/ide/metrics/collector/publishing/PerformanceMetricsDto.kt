@@ -11,7 +11,7 @@ import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 
 
-typealias PerformanceMetricsDto = IJPerfMetricsDto<Long>
+typealias PerformanceMetricsDto = IJPerfMetricsDto<Int>
 /**
  * A JSON schema used to report indexing performance metrics to display on https://ij-perf.jetbrains.com [IDEA-251676].
  * The generated .json files will be collected by https://github.com/JetBrains/ij-perf-report-aggregator.

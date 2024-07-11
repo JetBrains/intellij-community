@@ -24,15 +24,15 @@ class BenchmarksSpanMetricsCollector(val spanName: String, private val telemetry
   ) { "Unable to extract metrics for '$spanName' from $telemetryJsonFile" }
 
   private fun getAttemptsSpansStatisticalMetrics(attempts: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
-    val attemptMeanMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mean.ms", attempts.map { it.value }.average().toLong())
+    val attemptMeanMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.mean.ms", attempts.map { it.value }.average().toInt())
     val attemptMedianMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.median.ms", attempts.medianValue())
 
     // Why minimum matters? Its distribution is better than mean or median.
     // See https://blog.kevmod.com/2016/06/10/benchmarking-minimum-vs-average/
-    val attemptMinMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.min.ms", attempts.minOfOrNull { it.value }!!.toLong())
+    val attemptMinMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.min.ms", attempts.minOfOrNull { it.value }!!.toInt())
     val attemptRangeMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.range.ms", attempts.rangeValue())
     val attemptSumMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.sum.ms", attempts.sumOf { it.value })
-    val attemptCountMetric = PerformanceMetrics.newCounter("${metricsPrefix}attempt.count", attempts.size.toLong())
+    val attemptCountMetric = PerformanceMetrics.newCounter("${metricsPrefix}attempt.count", attempts.size)
     val attemptStandardDeviationMetric = PerformanceMetrics.newDuration("${metricsPrefix}attempt.standard.deviation",
                                                                         attempts.standardDeviationValue())
     // "... the MAD is a robust statistic, being more resilient to outliers in data set than the standard deviation."
@@ -49,14 +49,14 @@ class BenchmarksSpanMetricsCollector(val spanName: String, private val telemetry
   private fun getAggregatedCustomSpansMetricsReportedFromTests(customMetrics: List<PerformanceMetrics.Metric>, metricsPrefix: String): List<PerformanceMetrics.Metric> {
     return customMetrics.groupBy { it.id.name }
       .map { group ->
-        PerformanceMetrics.newDuration("${metricsPrefix}${group.key}", group.value.map { it.value }.average().toLong())
+        PerformanceMetrics.newDuration("${metricsPrefix}${group.key}", group.value.map { it.value }.average().toInt())
       }
   }
 
   private fun extractOpenTelemetrySpanMetrics(spanName: String, forWarmup: Boolean): List<PerformanceMetrics.Metric> {
     val originalMetrics = OpentelemetrySpanJsonParser(SpanFilter.any())
       .getSpanElements(telemetryJsonFile, spanElementFilter = { it.name == spanName && it.isWarmup == forWarmup })
-      .map { PerformanceMetrics.newDuration(it.name, it.duration.inWholeMilliseconds) }
+      .map { PerformanceMetrics.newDuration(it.name, it.duration.inWholeMilliseconds.toInt()) }
       .toList()
 
     val attemptSuffix = "Attempt"
@@ -72,7 +72,7 @@ class BenchmarksSpanMetricsCollector(val spanName: String, private val telemetry
 
     val attemptsStatisticalMetrics: List<PerformanceMetrics.Metric> = getAttemptsSpansStatisticalMetrics(attempts, metricsPrefix)
 
-    val mainMetricValue: Long = originalMetrics.single { it.id.name == spanName }.value
+    val mainMetricValue = originalMetrics.single { it.id.name == spanName }.value
     val totalTestDurationMetric = PerformanceMetrics.newDuration("${metricsPrefix}total.test.duration.ms", mainMetricValue)
 
     val customMetrics = originalMetrics.filterNot { it.id.name.startsWith(attemptSuffix, ignoreCase = true) || it.id.name == spanName }

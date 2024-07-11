@@ -30,14 +30,14 @@ data class PerformanceMetrics(
 
   data class Metric private constructor(
     @JvmField val id: MetricId,
-    @JvmField val value: Long,
+    @JvmField val value: Int,
   ) {
     companion object {
       /**
        * Creates instance of the Counter metric type.
        * @see com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter
        */
-      fun newCounter(name: String, value: Long): Metric {
+      fun newCounter(name: String, value: Int): Metric {
         return Metric(id = MetricId.Counter(name), value = value)
       }
 
@@ -45,7 +45,7 @@ data class PerformanceMetrics(
        * Creates instance of the Duration metric type.
        * @see com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration
        */
-      fun newDuration(name: String, durationMillis: Long): Metric {
+      fun newDuration(name: String, durationMillis: Int): Metric {
         return Metric(id = MetricId.Duration(name), value = durationMillis)
       }
     }
@@ -55,13 +55,13 @@ data class PerformanceMetrics(
     /**
      * Shortcut for [com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Counter]
      */
-    fun newCounter(name: String, value: Long): Metric =
+    fun newCounter(name: String, value: Int): Metric =
       Metric.newCounter(name, value)
 
     /**
      * Shortcut for [com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics.MetricId.Duration]
      */
-    fun newDuration(name: String, durationMillis: Long): Metric =
+    fun newDuration(name: String, durationMillis: Int): Metric =
       Metric.newDuration(name, durationMillis)
   }
 }

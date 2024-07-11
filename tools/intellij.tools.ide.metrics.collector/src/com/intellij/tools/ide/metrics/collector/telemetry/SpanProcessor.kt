@@ -18,7 +18,7 @@ interface SpanProcessor<T> {
 class MetricSpanProcessor(val ignoreWarmupSpan: Boolean = true) : SpanProcessor<MetricWithAttributes> {
   override fun process(span: SpanElement): MetricWithAttributes? {
     if (span.isWarmup != ignoreWarmupSpan && (span.duration > Duration.ZERO || !shouldAvoidIfZero(span))) {
-      val metrics = MetricWithAttributes(PerformanceMetrics.newDuration(span.name, span.duration.inWholeMilliseconds))
+      val metrics = MetricWithAttributes(PerformanceMetrics.newDuration(span.name, span.duration.inWholeMilliseconds.toInt()))
       populateAttributes(metrics, span)
       return metrics
     }
@@ -42,7 +42,7 @@ fun populateAttributes(metric: MetricWithAttributes, span: SpanElement) {
   span.tags.forEach { tag ->
     val attributeName = tag.first
     tag.second.runCatching { toInt() }.onSuccess {
-      metric.attributes.add(PerformanceMetrics.newCounter((attributeName), it.toLong()))
+      metric.attributes.add(PerformanceMetrics.newCounter((attributeName), it))
     }
   }
 }

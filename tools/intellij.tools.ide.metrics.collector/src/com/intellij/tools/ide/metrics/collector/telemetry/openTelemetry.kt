@@ -81,7 +81,7 @@ fun getMetricsBasedOnDiffBetweenSpans(name: String, file: Path, fromSpanName: St
         "Current span $fromSpanName with spanId ${currentToSpan.spanId} have ${currentToSpan.parentSpanId}, but expected ${currentFromSpan.spanId}")
     }
     val duration = java.time.Duration.between(currentFromSpan.startTimestamp, currentToSpan.startTimestamp).plusNanos(currentToSpan.duration.inWholeNanoseconds)
-    val metric = MetricWithAttributes(Metric.newDuration(name, duration.toMillis()))
+    val metric = MetricWithAttributes(Metric.newDuration(name, duration.toMillis().toInt()))
     metrics.add(metric)
   }
   return CombinedMetricsPostProcessor().process(mapOf(name to metrics))
@@ -123,9 +123,9 @@ fun getMetricsForStartup(file: Path): List<Metric> {
   val spanToMetricMap = spansWithoutDuplicatedNames.mapNotNull { metricSpanProcessor.process(it) }.groupBy { it.metric.id.name }
 
   val spanElementsWithoutRoots = spansWithoutDuplicatedNames.filterNot { it.name in spansToPublish }
-  val startMetrics = spanElementsWithoutRoots.map { span -> Metric.newDuration(span.name + ".start", java.time.Duration.between(startTime, span.startTimestamp).toMillis()) }
+  val startMetrics = spanElementsWithoutRoots.map { span -> Metric.newDuration(span.name + ".start", java.time.Duration.between(startTime, span.startTimestamp).toMillis().toInt()) }
   val endMetrics = spanElementsWithoutRoots.map { span ->
-    Metric.newDuration(span.name + ".end", java.time.Duration.between(startTime, span.startTimestamp).plusNanos(span.duration.inWholeNanoseconds).toMillis())
+    Metric.newDuration(span.name + ".end", java.time.Duration.between(startTime, span.startTimestamp).plusNanos(span.duration.inWholeNanoseconds).toMillis().toInt())
   }
   return CombinedMetricsPostProcessor().process(spanToMetricMap) + startMetrics + endMetrics
 }

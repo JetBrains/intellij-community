@@ -25,7 +25,7 @@ open class OpenTelemetryCsvMeterCollector(val metricsSelectionStrategy: MetricsS
   }
 
   private fun convertLongPointDataToIJPerfMetric(metricName: String, metricData: LongPointData): PerformanceMetrics.Metric {
-    return PerformanceMetrics.newDuration(metricName, metricData.value)
+    return PerformanceMetrics.newDuration(metricName, metricData.value.toInt())
   }
 
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {

@@ -10,98 +10,98 @@ class PercentileCalculationTest {
   @Test
   fun `percentile of empty collection throws IllegalArgumentException`() {
     shouldThrow<IllegalArgumentException> {
-      emptyList<Long>().percentile(50)
+      emptyList<Int>().percentile(50)
     }
   }
 
   @Test
   fun `percentile of single-element collection is the element`() {
     assertSoftly {
-      listOf(15L).percentile(50) shouldBe 15L
-      listOf(15L).percentile(0) shouldBe 15L
-      listOf(15L).percentile(100) shouldBe 15L
+      listOf(15).percentile(50) shouldBe 15
+      listOf(15).percentile(0) shouldBe 15
+      listOf(15).percentile(100) shouldBe 15
     }
   }
 
   @Test
   fun `percentile out of bounds throws IllegalArgumentException`() {
     shouldThrow<IllegalArgumentException> {
-      listOf(1L, 2L, 3L).percentile(-1)
+      listOf(1, 2, 3).percentile(-1)
     }
 
     shouldThrow<IllegalArgumentException> {
-      listOf(1L, 2L, 3L).percentile(101)
+      listOf(1, 2, 3).percentile(101)
     }
   }
 
   @Test
   fun `percentile calculation for multi-element collection`() {
-    val data = listOf(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L)
+    val data = listOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
 
     assertSoftly {
-      data.percentile(0) shouldBe 1L
-      data.percentile(10) shouldBe 2L
-      data.percentile(25) shouldBe 3L
-      data.percentile(50) shouldBe 6L
-      data.percentile(75) shouldBe 8L
-      data.percentile(90) shouldBe 9L
-      data.percentile(100) shouldBe 10L
+      data.percentile(0) shouldBe 1
+      data.percentile(10) shouldBe 2
+      data.percentile(25) shouldBe 3
+      data.percentile(50) shouldBe 6
+      data.percentile(75) shouldBe 8
+      data.percentile(90) shouldBe 9
+      data.percentile(100) shouldBe 10
     }
   }
 
   @Test
   fun `percentile calculation for collection with repeated elements`() {
-    val data = listOf(1L, 1L, 1L, 1L, 1L, 6L, 7L, 8L, 9L, 10L)
+    val data = listOf(1, 1, 1, 1, 1, 6, 7, 8, 9, 10)
 
     assertSoftly {
-      data.percentile(0) shouldBe 1L
-      data.percentile(50) shouldBe 6L
-      data.percentile(60) shouldBe 6L
-      data.percentile(70) shouldBe 7L
-      data.percentile(100) shouldBe 10L
+      data.percentile(0) shouldBe 1
+      data.percentile(50) shouldBe 6
+      data.percentile(60) shouldBe 6
+      data.percentile(70) shouldBe 7
+      data.percentile(100) shouldBe 10
     }
   }
 
   @Test
   fun `percentile of 2-element collection`() {
-    val data = listOf(5L, 10L)
+    val data = listOf(5, 10)
 
     assertSoftly {
-      data.percentile(0) shouldBe 5L
-      data.percentile(25) shouldBe 5L
-      data.percentile(50) shouldBe 10L
-      data.percentile(75) shouldBe 10L
-      data.percentile(100) shouldBe 10L
+      data.percentile(0) shouldBe 5
+      data.percentile(25) shouldBe 5
+      data.percentile(50) shouldBe 10
+      data.percentile(75) shouldBe 10
+      data.percentile(100) shouldBe 10
     }
   }
 
   @Test
   fun `percentile of 4-element collection`() {
-    val data = listOf(1L, 3L, 5L, 7L)
+    val data = listOf(1, 3, 5, 7)
 
     assertSoftly {
-      data.percentile(0) shouldBe 1L
-      data.percentile(25) shouldBe 3L
-      data.percentile(50) shouldBe 5L
-      data.percentile(75) shouldBe 5L
-      data.percentile(100) shouldBe 7L
+      data.percentile(0) shouldBe 1
+      data.percentile(25) shouldBe 3
+      data.percentile(50) shouldBe 5
+      data.percentile(75) shouldBe 5
+      data.percentile(100) shouldBe 7
     }
   }
 
   @Test
   fun `percentile with negative numbers is correct`() {
-    val data = listOf(-5L, -3L, -1L, 2L, 4L)
+    val data = listOf(-5, -3, -1, 2, 4)
 
     assertSoftly {
-      data.percentile(25) shouldBe -3L
-      data.percentile(50) shouldBe -1L
-      data.percentile(75) shouldBe 2L
+      data.percentile(25) shouldBe -3
+      data.percentile(50) shouldBe -1
+      data.percentile(75) shouldBe 2
     }
   }
 
   @Test
   fun `percentile outside valid range throws exception`() {
-    val data = listOf(1L, 2L, 3L)
+    val data = listOf(1, 2, 3)
     shouldThrow<IllegalArgumentException> {
       data.percentile(-1)
     }

@@ -96,7 +96,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     meters.assertMeterIsExported("custom.histogram.range.someUnit", 10000)
   }
 
-  private fun List<PerformanceMetrics.Metric>.assertMeterIsExported(meterName: String, expectedValue: Long) {
+  private fun List<PerformanceMetrics.Metric>.assertMeterIsExported(meterName: String, expectedValue: Int) {
     Assertions.assertEquals(this.single { it.id.name == meterName }.value, expectedValue,
                             "$meterName meter should be present in .json meters file")
   }

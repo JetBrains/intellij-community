@@ -5,6 +5,6 @@ import io.opentelemetry.sdk.metrics.data.MetricData
 
 class DoubleCounterToMetricConverter : MeterToMetricConverter {
   override fun convert(metricData: MetricData): List<PerformanceMetrics.Metric> {
-    return listOf(PerformanceMetrics.newDuration(metricData.name, metricData.doubleSumData.points.first().value.toLong()))
+    return listOf(PerformanceMetrics.newDuration(metricData.name, metricData.doubleSumData.points.first().value.toInt()))
   }
 }

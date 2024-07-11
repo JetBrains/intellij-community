@@ -5,6 +5,6 @@ import io.opentelemetry.sdk.metrics.data.MetricData
 
 class LongGaugeToMetricConverter : MeterToMetricConverter {
   override fun convert(metricData: MetricData): List<PerformanceMetrics.Metric> {
-    return listOf(PerformanceMetrics.newDuration(metricData.name, metricData.longGaugeData.points.first().value))
+    return listOf(PerformanceMetrics.newDuration(metricData.name, metricData.longGaugeData.points.first().value.toInt()))
   }
 }
