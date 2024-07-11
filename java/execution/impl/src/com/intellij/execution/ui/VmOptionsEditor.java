@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -36,6 +36,7 @@ public class VmOptionsEditor extends JPanel implements FragmentWrapper, Expandab
       protected @NotNull EditorTextField createPopupEditor(@NotNull EditorTextField field, @NotNull String text) {
         LanguageTextField popupEditor = new LanguageTextField(FileTypes.PLAIN_TEXT.getLanguage(), settings.getProject(), text);
         setupEditor(popupEditor, settings);
+        popupEditor.setCaretPosition(0);
         myPopupEditor = popupEditor;
         return popupEditor;
       }
