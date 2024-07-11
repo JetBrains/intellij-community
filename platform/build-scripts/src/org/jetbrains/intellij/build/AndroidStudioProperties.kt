@@ -136,8 +136,7 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       layout.withProjectLibrary("cloud-config-client") // Settings Sync.
       layout.withProjectLibrary("commons-text") // Grazie.
 
-      // TODO(b/330399456): error-prone-annotations and grpc are used by ASwB only; these libs should be moved outside the platform.
-      layout.withProjectLibrary("error-prone-annotations")
+      // TODO(b/330399456): grpc is used by ASwB only; it should be moved outside the platform.
       layout.withProjectLibrary("grpc-core")
       layout.withProjectLibrary("grpc-kotlin-stub")
       layout.withProjectLibrary("grpc-netty-shaded")
