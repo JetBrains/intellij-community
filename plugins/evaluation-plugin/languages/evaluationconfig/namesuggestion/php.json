@@ -4,7 +4,8 @@
   "outputDir": "ml-eval-name-suggestion-php-output",
   "strategy": {
     "placeholderName": "DUMMY",
-    "suggestionsProvider": "LLM-Rename"
+    "suggestionsProvider": "LLM-Rename",
+    "collectContextOnly": false
   },
   "actions": {
     "evaluationRoots": [
