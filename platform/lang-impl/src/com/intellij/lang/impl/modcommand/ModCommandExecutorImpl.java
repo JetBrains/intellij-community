@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -30,6 +30,7 @@ import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -396,8 +397,12 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
   private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
     record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull Presentation presentation) {}
-    List<ActionAndPresentation> actions = StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
-      .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
+    List<ActionAndPresentation> actions = ActionUtil.underModalProgress(
+      context.project(),
+      LangBundle.message("progress.building.chooser"),
+      () -> StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
+        .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList()
+    );
     if (actions.isEmpty()) return true;
     
     String name = chooser.title();
