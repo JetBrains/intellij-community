@@ -14,6 +14,7 @@ import java.rmi.ServerException
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.withLock
+import kotlin.time.Duration
 
 private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServerClient::class.java)
 
@@ -70,14 +71,14 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     return post("postAndWaitProcessing", objectMapper.writeValueAsString(sharedEventDto)).toBoolean()
   }
 
-  override fun newSubscriber(eventClass: Class<out Event>) {
+  override fun newSubscriber(eventClass: Class<out Event>, timeout: Duration) {
     val simpleName = eventClass.simpleName
     eventClassesLock.writeLock().withLock {
       eventClasses[simpleName] = eventClass.name
     }
 
     LOG.info("New subscriber $simpleName")
-    post("newSubscriber", objectMapper.writeValueAsString(SubscriberDto(simpleName, PROCESS_ID))).toBoolean()
+    post("newSubscriber", objectMapper.writeValueAsString(SubscriberDto(simpleName, PROCESS_ID, timeout.inWholeMilliseconds))).toBoolean()
   }
 
   override fun getEvents(): Map<String, List<Pair<String, Event>>?> {

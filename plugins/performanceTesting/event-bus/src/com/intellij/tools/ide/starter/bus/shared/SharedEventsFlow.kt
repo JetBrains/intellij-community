@@ -35,7 +35,7 @@ class SharedEventsFlow(private val client: EventBusServerClient,
                                              timeout: Duration,
                                              callback: suspend (event: EventType) -> Unit): Boolean {
     return localEventsFlow.subscribe(eventClass, subscriber, timeout, callback).also {
-      if (it) client.newSubscriber(eventClass)
+      if (it) client.newSubscriber(eventClass, timeout)
     }
   }
 
