@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker.Conversion
 import org.jetbrains.kotlin.idea.inspections.collections.SimplifyCallChainFix
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.psi.qualifiedExpressionVisitor
 
@@ -36,8 +37,8 @@ class RedundantRunCatchingInspection : AbstractCallChainChecker() {
 
 private val conversions: List<Conversion> = listOf(
     Conversion(
-        "kotlin.runCatching", // FQNs are hardcoded instead of specifying their names via reflection because
-        "kotlin.getOrThrow",  // referencing function which has generics isn't yet supported in Kotlin KT-12140
+        FqName("kotlin.runCatching"), // FQNs are hardcoded instead of specifying their names via reflection because
+        FqName("kotlin.getOrThrow"),  // referencing function which has generics isn't yet supported in Kotlin KT-12140
         "run"
     )
 )

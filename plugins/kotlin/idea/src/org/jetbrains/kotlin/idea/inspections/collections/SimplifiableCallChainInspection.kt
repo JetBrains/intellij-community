@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversionInsp
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -191,46 +192,46 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
 }
 
 object CallChainConversionInspectionStringNames {
-    const val KOTLIN_COLLECTIONS_ANY = "kotlin.collections.any"
-    const val KOTLIN_COLLECTIONS_COUNT = "kotlin.collections.count"
-    const val KOTLIN_COLLECTIONS_FILTER = "kotlin.collections.filter"
-    const val KOTLIN_COLLECTIONS_FILTER_NOT_NULL = "kotlin.collections.filterNotNull"
-    const val KOTLIN_COLLECTIONS_FIRST = "kotlin.collections.first"
-    const val KOTLIN_COLLECTIONS_FIRST_OR_NULL = "kotlin.collections.firstOrNull"
-    const val KOTLIN_COLLECTIONS_IS_NOT_EMPTY = "kotlin.collections.isNotEmpty"
-    const val KOTLIN_COLLECTIONS_JOIN_TO = "kotlin.collections.joinTo"
-    const val KOTLIN_COLLECTIONS_JOIN_TO_STRING = "kotlin.collections.joinToString"
-    const val KOTLIN_COLLECTIONS_LAST = "kotlin.collections.last"
-    const val KOTLIN_COLLECTIONS_LAST_OR_NULL = "kotlin.collections.lastOrNull"
-    const val KOTLIN_COLLECTIONS_LIST_IS_EMPTY = "kotlin.collections.List.isEmpty"
-    const val KOTLIN_COLLECTIONS_LIST_OF = "kotlin.collections.listOf"
-    const val KOTLIN_COLLECTIONS_MAP = "kotlin.collections.map"
-    const val KOTLIN_COLLECTIONS_MAP_NOT_NULL = "kotlin.collections.mapNotNull"
-    const val KOTLIN_COLLECTIONS_MAX = "kotlin.collections.max"
-    const val KOTLIN_COLLECTIONS_MAX_OR_NULL = "kotlin.collections.maxOrNull"
-    const val KOTLIN_COLLECTIONS_MIN = "kotlin.collections.min"
-    const val KOTLIN_COLLECTIONS_MIN_OR_NULL = "kotlin.collections.minOrNull"
-    const val KOTLIN_COLLECTIONS_NONE = "kotlin.collections.none"
-    const val KOTLIN_COLLECTIONS_SINGLE = "kotlin.collections.single"
-    const val KOTLIN_COLLECTIONS_SINGLE_OR_NULL = "kotlin.collections.singleOrNull"
-    const val KOTLIN_COLLECTIONS_SORTED = "kotlin.collections.sorted"
-    const val KOTLIN_COLLECTIONS_SORTED_BY = "kotlin.collections.sortedBy"
-    const val KOTLIN_COLLECTIONS_SORTED_BY_DESCENDING = "kotlin.collections.sortedByDescending"
-    const val KOTLIN_COLLECTIONS_SORTED_DESCENDING = "kotlin.collections.sortedDescending"
-    const val KOTLIN_COLLECTIONS_SUM = "kotlin.collections.sum"
-    const val KOTLIN_COLLECTIONS_TO_MAP = "kotlin.collections.toMap"
-    const val KOTLIN_TEXT_ANY = "kotlin.text.any"
-    const val KOTLIN_TEXT_COUNT = "kotlin.text.count"
-    const val KOTLIN_TEXT_FILTER = "kotlin.text.filter"
-    const val KOTLIN_TEXT_FIRST = "kotlin.text.first"
-    const val KOTLIN_TEXT_FIRST_OR_NULL = "kotlin.text.firstOrNull"
-    const val KOTLIN_TEXT_IS_EMPTY = "kotlin.text.isEmpty"
-    const val KOTLIN_TEXT_IS_NOT_EMPTY = "kotlin.text.isNotEmpty"
-    const val KOTLIN_TEXT_LAST = "kotlin.text.last"
-    const val KOTLIN_TEXT_LAST_OR_NULL = "kotlin.text.lastOrNull"
-    const val KOTLIN_TEXT_NONE = "kotlin.text.none"
-    const val KOTLIN_TEXT_SINGLE = "kotlin.text.single"
-    const val KOTLIN_TEXT_SINGLE_OR_NULL = "kotlin.text.singleOrNull"
+    val KOTLIN_COLLECTIONS_ANY = FqName("kotlin.collections.any")
+    val KOTLIN_COLLECTIONS_COUNT = FqName("kotlin.collections.count")
+    val KOTLIN_COLLECTIONS_FILTER = FqName("kotlin.collections.filter")
+    val KOTLIN_COLLECTIONS_FILTER_NOT_NULL = FqName("kotlin.collections.filterNotNull")
+    val KOTLIN_COLLECTIONS_FIRST = FqName("kotlin.collections.first")
+    val KOTLIN_COLLECTIONS_FIRST_OR_NULL = FqName("kotlin.collections.firstOrNull")
+    val KOTLIN_COLLECTIONS_IS_NOT_EMPTY = FqName("kotlin.collections.isNotEmpty")
+    val KOTLIN_COLLECTIONS_JOIN_TO = FqName("kotlin.collections.joinTo")
+    val KOTLIN_COLLECTIONS_JOIN_TO_STRING = FqName("kotlin.collections.joinToString")
+    val KOTLIN_COLLECTIONS_LAST = FqName("kotlin.collections.last")
+    val KOTLIN_COLLECTIONS_LAST_OR_NULL = FqName("kotlin.collections.lastOrNull")
+    val KOTLIN_COLLECTIONS_LIST_IS_EMPTY = FqName("kotlin.collections.List.isEmpty")
+    val KOTLIN_COLLECTIONS_LIST_OF = FqName("kotlin.collections.listOf")
+    val KOTLIN_COLLECTIONS_MAP = FqName("kotlin.collections.map")
+    val KOTLIN_COLLECTIONS_MAP_NOT_NULL = FqName("kotlin.collections.mapNotNull")
+    val KOTLIN_COLLECTIONS_MAX = FqName("kotlin.collections.max")
+    val KOTLIN_COLLECTIONS_MAX_OR_NULL = FqName("kotlin.collections.maxOrNull")
+    val KOTLIN_COLLECTIONS_MIN = FqName("kotlin.collections.min")
+    val KOTLIN_COLLECTIONS_MIN_OR_NULL = FqName("kotlin.collections.minOrNull")
+    val KOTLIN_COLLECTIONS_NONE = FqName("kotlin.collections.none")
+    val KOTLIN_COLLECTIONS_SINGLE = FqName("kotlin.collections.single")
+    val KOTLIN_COLLECTIONS_SINGLE_OR_NULL = FqName("kotlin.collections.singleOrNull")
+    val KOTLIN_COLLECTIONS_SORTED = FqName("kotlin.collections.sorted")
+    val KOTLIN_COLLECTIONS_SORTED_BY = FqName("kotlin.collections.sortedBy")
+    val KOTLIN_COLLECTIONS_SORTED_BY_DESCENDING = FqName("kotlin.collections.sortedByDescending")
+    val KOTLIN_COLLECTIONS_SORTED_DESCENDING = FqName("kotlin.collections.sortedDescending")
+    val KOTLIN_COLLECTIONS_SUM = FqName("kotlin.collections.sum")
+    val KOTLIN_COLLECTIONS_TO_MAP = FqName("kotlin.collections.toMap")
+    val KOTLIN_TEXT_ANY = FqName("kotlin.text.any")
+    val KOTLIN_TEXT_COUNT = FqName("kotlin.text.count")
+    val KOTLIN_TEXT_FILTER = FqName("kotlin.text.filter")
+    val KOTLIN_TEXT_FIRST = FqName("kotlin.text.first")
+    val KOTLIN_TEXT_FIRST_OR_NULL = FqName("kotlin.text.firstOrNull")
+    val KOTLIN_TEXT_IS_EMPTY = FqName("kotlin.text.isEmpty")
+    val KOTLIN_TEXT_IS_NOT_EMPTY = FqName("kotlin.text.isNotEmpty")
+    val KOTLIN_TEXT_LAST = FqName("kotlin.text.last")
+    val KOTLIN_TEXT_LAST_OR_NULL = FqName("kotlin.text.lastOrNull")
+    val KOTLIN_TEXT_NONE = FqName("kotlin.text.none")
+    val KOTLIN_TEXT_SINGLE = FqName("kotlin.text.single")
+    val KOTLIN_TEXT_SINGLE_OR_NULL = FqName("kotlin.text.singleOrNull")
 
     // replacements
     const val FIRST = "first"

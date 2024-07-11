@@ -41,14 +41,14 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         val firstResolvedCall = firstExpression.getResolvedCall(context) ?: return null
         val secondResolvedCall = expression.getResolvedCall(context) ?: return null
         val conversion = actualConversions.firstOrNull {
-            firstResolvedCall.isCalling(FqName(it.firstFqName)) && additionalCallCheck(it, firstResolvedCall, secondResolvedCall, context)
+            firstResolvedCall.isCalling(it.firstFqName) && additionalCallCheck(it, firstResolvedCall, secondResolvedCall, context)
         } ?: return null
 
         // Do not apply for lambdas with return inside
         val lambdaArgument = firstCallExpression.lambdaArguments.firstOrNull()
         if (lambdaArgument?.anyDescendantOfType<KtReturnExpression>() == true) return null
 
-        if (!secondResolvedCall.isCalling(FqName(conversion.secondFqName))) return null
+        if (!secondResolvedCall.isCalling(conversion.secondFqName)) return null
         if (secondResolvedCall.valueArguments.any { (parameter, resolvedArgument) ->
                 parameter.type.isFunctionOfAnyKind() &&
                         resolvedArgument !is DefaultValueArgument
@@ -66,8 +66,8 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
     }
 
     data class Conversion(
-        @NonNls val firstFqName: String,
-        @NonNls val secondFqName: String,
+        val firstFqName: FqName,
+        val secondFqName: FqName,
         @NonNls val replacement: String,
         @NonNls val additionalArgument: String? = null,
         val addNotNullAssertion: Boolean = false,
@@ -75,13 +75,10 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         val removeNotNullAssertion: Boolean = false,
         val replaceableApiVersion: ApiVersion? = null,
     ) {
-        private fun String.convertToShort() = takeLastWhile { it != '.' }
-
         val id: ConversionId get() = ConversionId(firstName, secondName)
 
-        val firstName = firstFqName.convertToShort()
-
-        val secondName = secondFqName.convertToShort()
+        val firstName = firstFqName.shortName().asString()
+        val secondName = secondFqName.shortName().asString()
 
         fun withArgument(argument: String) = Conversion(firstFqName, secondFqName, replacement, argument)
     }
