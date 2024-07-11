@@ -139,7 +139,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final ActionGroup myActionGroup;
   private final @NotNull String myPlace;
   private List<? extends AnAction> myVisibleActions;
-  private final PresentationFactory myPresentationFactory = new ActionToolbarPresentationFactory();
+  private final PresentationFactory myPresentationFactory = createPresentationFactory();
+
   private final boolean myDecorateButtons;
 
   private final ToolbarUpdater myUpdater;
@@ -249,6 +250,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     installPopupHandler(customizable, null, null);
     UiInspectorUtil.registerProvider(this, () -> UiInspectorUtil.collectActionGroupInfo(
       "Toolbar", myActionGroup, myPlace, myPresentationFactory));
+  }
+
+  protected @NotNull PresentationFactory createPresentationFactory() {
+    return new ActionToolbarPresentationFactory();
   }
 
   protected void installPopupHandler(boolean customizable,

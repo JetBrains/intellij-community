@@ -1753,10 +1753,6 @@ c:com.intellij.openapi.actionSystem.DefaultCompactActionGroup
 - <init>():V
 - <init>(java.lang.String,Z):V
 - <init>(com.intellij.openapi.actionSystem.AnAction[]):V
-f:com.intellij.openapi.actionSystem.DefaultPresentationIconUpdater
-- com.intellij.openapi.actionSystem.PresentationIconUpdater
-- <init>():V
-- performUpdate(com.intellij.openapi.actionSystem.Presentation,java.util.function.Function):V
 f:com.intellij.openapi.actionSystem.EmptyAction
 - com.intellij.openapi.actionSystem.AnAction
 - <init>():V
@@ -1844,13 +1840,6 @@ c:com.intellij.openapi.actionSystem.PlatformDataKeys
 - sf:UI_DISPOSABLE:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
 com.intellij.openapi.actionSystem.PopupAction
-com.intellij.openapi.actionSystem.PresentationIconUpdater
-- sf:DEFAULT:com.intellij.openapi.actionSystem.PresentationIconUpdater
-- sf:UPDATER_KEY:com.intellij.openapi.util.Key
-- andThen(com.intellij.openapi.actionSystem.PresentationIconUpdater):com.intellij.openapi.actionSystem.PresentationIconUpdater
-- a:performUpdate(com.intellij.openapi.actionSystem.Presentation,java.util.function.Function):V
-- registerToPresentation(com.intellij.openapi.actionSystem.Presentation):V
-- s:updateIcons(com.intellij.openapi.actionSystem.Presentation,java.util.function.Function):V
 c:com.intellij.openapi.actionSystem.PressureShortcut
 - com.intellij.openapi.actionSystem.MouseShortcut
 - <init>(D):V

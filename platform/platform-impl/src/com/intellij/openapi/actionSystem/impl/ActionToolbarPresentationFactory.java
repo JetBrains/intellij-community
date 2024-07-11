@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @ApiStatus.Internal
-public final class ActionToolbarPresentationFactory extends PresentationFactory {
+public class ActionToolbarPresentationFactory extends PresentationFactory {
   public static final Key<Integer> ID_KEY = Key.create("internal.ActionToolbarPresentationFactory.id");
 
   private static final AtomicInteger ourIdCounter = new AtomicInteger();

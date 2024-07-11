@@ -11865,6 +11865,7 @@ c:com.intellij.openapi.actionSystem.impl.PresentationFactory
 - s:clearPresentationCaches():V
 - f:getPresentation(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.Presentation
 - isNeedRebuild():Z
+- postProcessPresentation(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation):V
 - p:processPresentation(com.intellij.openapi.actionSystem.Presentation):V
 - p:processPresentation(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.AnAction):V
 - reset():V
@@ -19905,10 +19906,6 @@ c:com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 - windowClosing(com.intellij.openapi.project.Project):V
 f:com.intellij.openapi.wm.impl.CloseProjectWindowHelper$Companion
 - f:getSHOW_WELCOME_FRAME_FOR_PROJECT():com.intellij.openapi.util.Key
-f:com.intellij.openapi.wm.impl.ComboIconsUpdater
-- com.intellij.openapi.actionSystem.PresentationIconUpdater
-- <init>():V
-- performUpdate(com.intellij.openapi.actionSystem.Presentation,java.util.function.Function):V
 f:com.intellij.openapi.wm.impl.DefaultCutStrategy
 - com.intellij.openapi.wm.impl.TextCutStrategy
 - <init>():V

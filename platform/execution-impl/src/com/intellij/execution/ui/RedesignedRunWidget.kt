@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.HeaderToolbarButtonLook
-import com.intellij.openapi.wm.impl.headertoolbar.adjustIconForHeader
 import com.intellij.ui.*
 import com.intellij.ui.icons.IconReplacer
 import com.intellij.ui.icons.TextHoledIcon
@@ -458,9 +457,6 @@ open class RedesignedRunConfigurationSelector : TogglePopupAction(), CustomCompo
 
     val delegate = e.actionManager.getAction("RunConfiguration") as? RunConfigurationsComboBoxAction ?: return
     delegate.update(e)
-    e.presentation.icon?.let {
-      e.presentation.icon = adjustIconForHeader(it)
-    }
     val configurationName = e.project?.let { RunManager.getInstanceIfCreated(it) }?.selectedConfiguration?.name
     if (configurationName?.length?.let { it > CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH } == true) {
       e.presentation.setDescription(ExecutionBundle.messagePointer("choose.run.configuration.action.new.ui.button.description.long",

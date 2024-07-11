@@ -73,8 +73,6 @@ private class TestSplitButtonAction: SplitButtonAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.putClientProperty(LEFT_ICONS_KEY, listOf(AllIcons.General.Mouse, AllIcons.General.Layout))
-    val iconUpdater = DefaultPresentationIconUpdater().andThen(ComboIconsUpdater())
-    iconUpdater.registerToPresentation(e.presentation)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

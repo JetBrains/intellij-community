@@ -62,6 +62,11 @@ public class PresentationFactory {
     processPresentation(presentation);
   }
 
+  public void postProcessPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
+  }
+
+  /** @deprecated Override {@link #postProcessPresentation(AnAction, Presentation)} instead */
+  @Deprecated(forRemoval = true)
   protected void processPresentation(@NotNull Presentation presentation) {
   }
 

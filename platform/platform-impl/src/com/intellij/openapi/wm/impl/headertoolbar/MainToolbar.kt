@@ -16,13 +16,18 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction.ComboBoxButton
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
+import com.intellij.openapi.actionSystem.impl.ActionToolbarPresentationFactory
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.toolbarLayout.CompressingLayoutStrategy
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.openapi.wm.impl.ExpandableComboAction.Companion.LEFT_ICONS_KEY
+import com.intellij.openapi.wm.impl.ExpandableComboAction.Companion.RIGHT_ICONS_KEY
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -307,6 +312,40 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
     installPopupHandler(true, customizationGroup, MAIN_TOOLBAR_ID)
   }
 
+  override fun createPresentationFactory(): PresentationFactory {
+    return object : ActionToolbarPresentationFactory() {
+      override fun postProcessPresentation(action: AnAction, presentation: Presentation) {
+        super.postProcessPresentation(action, presentation)
+
+        presentation.icon = presentation.icon?.let { iconUpdater.updateIcon(it) }
+        presentation.selectedIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
+        presentation.hoveredIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
+        presentation.disabledIcon = presentation.icon?.let { iconUpdater.updateIcon(it) }
+
+        updateIconsIfNecessary(presentation, LEFT_ICONS_KEY)
+        updateIconsIfNecessary(presentation, RIGHT_ICONS_KEY)
+      }
+
+      private fun updateIconsIfNecessary(presentation: Presentation, key: Key<List<Icon>>) {
+        presentation.getClientProperty(key)
+          ?.let { getUpdatedIcons(it) }
+          ?.let { presentation.putClientProperty(key, it) }
+      }
+
+      private fun getUpdatedIcons(icons: List<Icon>): List<Icon>? {
+        val res = mutableListOf<Icon>()
+        var anyChanged = false
+        icons.forEach { src ->
+          val updated = iconUpdater.updateIcon(src)
+          res.add(updated)
+          if (updated != src) anyChanged = true
+        }
+
+        return if (anyChanged) res else null
+      }
+    }
+  }
+
   override fun updateActionsOnAdd() {
     // do nothing - called explicitly
   }
@@ -331,9 +370,6 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
       @Suppress("UnregisteredNamedColor")
       component.foreground = JBColor.namedColor("MainToolbar.foreground", component.foreground)
     }
-
-    adjustIcons(presentation)
-
     (component as? ActionButton)?.setMinimumButtonSize(ActionToolbar.experimentalToolbarMinimumButtonSize())
 
     if (action is ComboBoxAction) {
@@ -348,12 +384,6 @@ internal class MyActionToolbarImpl(group: ActionGroup, customizationGroup: Actio
       }
     }
     return component
-  }
-
-  private fun adjustIcons(presentation: Presentation) {
-    PresentationIconUpdater.updateIcons(presentation) { icon ->
-      iconUpdater.updateIcon(icon)
-    }
   }
 
   override fun getSeparatorColor(): Color {
@@ -455,8 +485,8 @@ internal fun isDarkHeader(): Boolean = ColorUtil.isDark(JBColor.namedColor("Main
 fun adjustIconForHeader(icon: Icon): Icon = if (isDarkHeader()) IconLoader.getDarkIcon(icon = icon, dark = true) else icon
 
 private class HeaderIconUpdater {
-  private val iconCache = WeakHashMap<Icon, WeakReference<Icon>>()
-  private val alreadyUpdated = ContainerUtil.createWeakSet<Icon>()
+  val iconCache = WeakHashMap<Icon, WeakReference<Icon>>()
+  val alreadyUpdated = ContainerUtil.createWeakSet<Icon>()
 
   fun updateIcon(sourceIcon: Icon): Icon {
     if (sourceIcon in alreadyUpdated) return sourceIcon

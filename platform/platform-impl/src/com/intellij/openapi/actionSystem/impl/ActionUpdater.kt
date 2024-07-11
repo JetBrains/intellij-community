@@ -126,6 +126,7 @@ internal class ActionUpdater @JvmOverloads constructor(
         // 2. presentation factory may be just reset, do not reuse component from a copy
         customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY)
       }
+      presentationFactory.postProcessPresentation(action, copy)
       orig.copyFrom(copy, customComponent, true)
       if (customComponent != null && orig.isVisible) {
         (action as CustomComponentAction).updateCustomComponent(customComponent, orig)
