@@ -17,6 +17,7 @@ import java.lang.ref.SoftReference
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Function
 import kotlin.concurrent.Volatile
 
 /**
@@ -54,16 +55,16 @@ class Registry {
     private val registry = Registry()
 
     @JvmStatic
-    fun get(key: @NonNls String): RegistryValue = getInstance().doGet(key)
+    fun get(key: @NonNls String): RegistryValue = getInstance().resolveValue(key)
 
     @Suppress("FunctionName")
     @Internal
     @JvmStatic
-    fun _getWithoutStateCheck(key: @NonNls String): RegistryValue = registry.doGet(key)
+    fun _getWithoutStateCheck(key: @NonNls String): RegistryValue = registry.resolveValue(key)
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun `is`(key: @NonNls String): Boolean = getInstance().doGet(key).asBoolean()
+    fun `is`(key: @NonNls String): Boolean = getInstance().resolveValue(key).asBoolean()
 
     @JvmStatic
     fun `is`(key: @NonNls String, defaultValue: Boolean): Boolean {
@@ -72,16 +73,16 @@ class Registry {
       }
 
       try {
-        return registry.doGet(key).asBoolean()
+        return registry.resolveValue(key).asBoolean()
       }
-      catch (ignore: MissingResourceException) {
+      catch (_: MissingResourceException) {
         return defaultValue
       }
     }
 
     @Throws(MissingResourceException::class)
     @JvmStatic
-    fun intValue(key: @NonNls String): Int = getInstance().doGet(key).asInteger()
+    fun intValue(key: @NonNls String): Int = getInstance().resolveValue(key).asInteger()
 
     @JvmStatic
     fun intValue(key: @NonNls String, defaultValue: Int): Int {
@@ -91,9 +92,9 @@ class Registry {
       }
 
       try {
-        return registry.doGet(key).asInteger()
+        return registry.resolveValue(key).asInteger()
       }
-      catch (ignore: MissingResourceException) {
+      catch (_: MissingResourceException) {
         return defaultValue
       }
     }
@@ -106,7 +107,7 @@ class Registry {
       }
 
       try {
-        return registry.doGet(key).asDouble()
+        return registry.resolveValue(key).asDouble()
       }
       catch (ignore: MissingResourceException) {
         return defaultValue
@@ -188,7 +189,7 @@ class Registry {
       val map = fromState(state)
       val keysToProcess = HashSet(userProperties.keys)
       for ((key, value) in map) {
-        val registryValue = registry.doGet(key)
+        val registryValue = registry.resolveValue(key)
         val currentValue = registryValue.get(key, null, false)
         // currentValue == null means value is not in the bundle. Ignore it
         if (currentValue != null && currentValue != value) {
@@ -199,7 +200,7 @@ class Registry {
 
       // keys that are not in the state; we need to reset them to default value
       for (key in keysToProcess) {
-        registry.doGet(key).resetToDefault()
+        registry.resolveValue(key).resetToDefault()
       }
 
       return userProperties
@@ -246,11 +247,11 @@ class Registry {
         if (key.endsWith(".description") || key.endsWith(".restartRequired") || contributedKeys.containsKey(key)) {
           continue
         }
-        result.add(instance.doGet(key))
+        result.add(instance.resolveValue(key))
       }
 
       for (key in contributedKeys.keys) {
-        result.add(instance.doGet(key))
+        result.add(instance.resolveValue(key))
       }
 
       return result
@@ -259,7 +260,7 @@ class Registry {
     private fun isRestartNeeded(map: Map<String, String>): Boolean {
       val instance = getInstance()
       for (s in map.keys) {
-        val eachValue = instance.doGet(s)
+        val eachValue = instance.resolveValue(s)
         if (eachValue.isRestartRequired && eachValue.isChangedSinceAppStart) {
           return true
         }
@@ -297,7 +298,7 @@ class Registry {
       if (state != null) {
         val map = fromState(state)
         for ((key, value) in map) {
-          val registryValue = registry.doGet(key)
+          val registryValue = registry.resolveValue(key)
           if (registryValue.isChangedFromDefault(value, registry)) {
             userProperties.put(key, value)
             registryValue.resetCache()
@@ -315,11 +316,12 @@ class Registry {
     }
   }
 
-  private fun doGet(key: @NonNls String): RegistryValue {
-    return values.computeIfAbsent(key) {
-      RegistryValue(registry = this, key = it, keyDescriptor = contributedKeys.get(it))
-    }
+  // https://youtrack.jetbrains.com/issue/IJPL-158097/Investigate-allocation-performance-of-Registry.is
+  private val valueProducer: Function<String, RegistryValue> = Function {
+    RegistryValue(registry = this, key = it, keyDescriptor = contributedKeys.get(it))
   }
+
+  private fun resolveValue(key: @NonNls String): RegistryValue = values.computeIfAbsent(key, valueProducer)
 
   @TestOnly
   fun reset() {
@@ -350,7 +352,7 @@ class Registry {
   fun getState(): Element {
     val state = Element("registry")
     for ((key, value) in userProperties) {
-      val registryValue = getInstance().doGet(key)
+      val registryValue = getInstance().resolveValue(key)
       if (registryValue.isChangedFromDefault) {
         val entryElement = Element("entry")
         entryElement.setAttribute("key", key)
