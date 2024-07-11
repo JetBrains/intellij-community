@@ -190,15 +190,7 @@ open class Alarm @Internal constructor(
     doAddRequest(request = request, delayMillis = delayMillis, modalityState = modalityState)
   }
 
-  internal fun cancelAllAndAddRequest(request: Runnable, delayMillis: Int, modalityState: ModalityState?) {
-    synchronized(LOCK) {
-      cancelAllRequests(requests)
-      cancelAllRequests(pendingRequests)
-      doAddRequest(request = request, delayMillis = delayMillis.toLong(), modalityState = modalityState)
-    }
-  }
-
-  internal fun doAddRequest(request: Runnable, delayMillis: Long, modalityState: ModalityState?) {
+  private fun doAddRequest(request: Runnable, delayMillis: Long, modalityState: ModalityState?) {
     val requestToSchedule = Request(
       task = request,
       modalityState = modalityState,
@@ -332,19 +324,6 @@ open class Alarm @Internal constructor(
     var job: Job? = null // guarded by LOCK
     private val clientId = ClientId.currentOrNull
 
-    @Async.Execute
-    private fun runSafely(task: Runnable) {
-      try {
-        task.run()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
-
     fun schedule(owner: Alarm) {
       assert(job == null)
 
@@ -394,7 +373,6 @@ open class Alarm @Internal constructor(
   }
 }
 
-// todo next step - support passing coroutine scope
 private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?): CoroutineScope {
   val app = ApplicationManager.getApplication()
   @Suppress("SSBasedInspection")
@@ -404,7 +382,7 @@ private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?
     if (edtDispatcher == null) {
       assert(coroutineScope == null)
       // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
-      logger<Alarm>().warn("Do not use an alarm in an early executing code")
+      LOG.warn("Do not use an alarm in an early executing code")
       return CoroutineScope(object : CoroutineDispatcher() {
         override fun dispatch(context: CoroutineContext, block: Runnable) {
           EventQueue.invokeLater(block)
@@ -421,7 +399,7 @@ private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?
   else {
     val dispatcher = Dispatchers.Default.limitedParallelism(1)
     if (app == null) {
-      logger<Alarm>().error("Do not use an alarm in an early executing code")
+      LOG.error("Do not use an alarm in an early executing code")
       return CoroutineScope(SupervisorJob() + dispatcher)
     }
     else {
@@ -431,3 +409,15 @@ private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?
   }
 }
 
+@Async.Execute
+private fun runSafely(task: Runnable) {
+  try {
+    task.run()
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.error(e)
+  }
+}

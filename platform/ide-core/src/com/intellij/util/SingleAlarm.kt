@@ -1,12 +1,30 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.util
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.Alarm.ThreadToUse
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+
+private val LOG: Logger = logger<SingleAlarm>()
 
 /**
  * Use a [kotlinx.coroutines.flow.Flow] with [kotlinx.coroutines.flow.debounce] and [kotlinx.coroutines.flow.sample] instead.
@@ -21,9 +39,18 @@ class SingleAlarm @JvmOverloads constructor(
   private val delay: Int,
   parentDisposable: Disposable?,
   threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
-  private val modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null
+  modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
+  coroutineScope: CoroutineScope? = null,
 ) : Disposable {
-  private val impl = Alarm(threadToUse = threadToUse, parentDisposable = parentDisposable)
+  // it is a supervisor coroutine scope
+  private val taskCoroutineScope: CoroutineScope
+
+  private val LOCK = Any()
+
+  // guarded by LOCK
+  private var currentJob: Job? = null
+
+  private val inEdt: Boolean = threadToUse == ThreadToUse.SWING_THREAD
 
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
     : this(
@@ -43,47 +70,115 @@ class SingleAlarm @JvmOverloads constructor(
   )
 
   init {
-    if (threadToUse == ThreadToUse.SWING_THREAD && modalityState == null) {
+    if (inEdt && modalityState == null) {
       throw IllegalArgumentException("modalityState must be not null if threadToUse == ThreadToUse.SWING_THREAD")
+    }
+
+    var context = modalityState?.asContextElement() ?: EmptyCoroutineContext
+    ClientId.currentOrNull?.let {
+      context += it.asContextElement()
+    }
+
+    val coroutineContext = Dispatchers.Default.limitedParallelism(1) + context
+    if (coroutineScope == null) {
+      val app = ApplicationManager.getApplication()
+      if (app == null) {
+        LOG.error("Do not use an alarm in an early executing code")
+        @Suppress("SSBasedInspection")
+        taskCoroutineScope = CoroutineScope(SupervisorJob() + coroutineContext)
+      }
+      else {
+        @Suppress("UsagesOfObsoleteApi")
+        taskCoroutineScope = (app as ComponentManagerEx).getCoroutineScope().childScope("SingleAlarm (task=$task)", coroutineContext)
+      }
+
+      parentDisposable?.let {
+        Disposer.register(it, this)
+      }
+    }
+    else {
+      taskCoroutineScope = coroutineScope.childScope("SingleAlarm (task=$task)", coroutineContext)
     }
   }
 
   companion object {
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
       return SingleAlarm(
-        task = Runnable(task),
+        task = task,
         delay = delay,
         threadToUse = ThreadToUse.POOLED_THREAD,
         parentDisposable = parentDisposable,
       )
     }
+
+    @JvmStatic
+    fun singleAlarm(delay: Int, coroutineScope: CoroutineScope, task: Runnable): SingleAlarm {
+      return SingleAlarm(
+        task = task,
+        delay = delay,
+        parentDisposable = null,
+        threadToUse = ThreadToUse.POOLED_THREAD,
+        coroutineScope = coroutineScope,
+      )
+    }
   }
 
   override fun dispose() {
-    Disposer.dispose(impl)
+    cancel()
+    taskCoroutineScope.cancel()
   }
 
   val isDisposed: Boolean
-    get() = impl.isDisposed
+    get() = !taskCoroutineScope.isActive
 
   val isEmpty: Boolean
-    get() = impl.isEmpty
+    get() = synchronized(LOCK) { currentJob == null }
 
   @TestOnly
-  fun waitForAllExecuted(timeout: Long, unit: TimeUnit) {
-    impl.waitForAllExecuted(timeout, unit)
+  fun waitForAllExecuted(timeout: Long, timeUnit: TimeUnit) {
+    assert(ApplicationManager.getApplication().isUnitTestMode)
+
+    val currentJob = currentJob ?: return
+    @Suppress("RAW_RUN_BLOCKING")
+    runBlocking {
+      try {
+        withTimeout(timeUnit.toMillis(timeout)) {
+          currentJob.join()
+        }
+      }
+      catch (e: TimeoutCancellationException) {
+        // compatibility - throw TimeoutException as before
+        throw TimeoutException(e.message)
+      }
+    }
   }
 
   @JvmOverloads
   fun request(forceRun: Boolean = false, delay: Int = this@SingleAlarm.delay) {
-    if (impl.isEmpty) {
-      impl.doAddRequest(request = task, delayMillis = if (forceRun) 0 else delay.toLong(), modalityState = modalityState)
-    }
-  }
+    val effectiveDelay = if (forceRun) 0 else delay.toLong()
+    synchronized(LOCK) {
+      if (currentJob != null) {
+        return
+      }
 
-  fun request(modalityState: ModalityState) {
-    if (impl.isEmpty) {
-      impl.doAddRequest(request = task, delayMillis = delay.toLong(), modalityState = modalityState)
+      currentJob = taskCoroutineScope.launch {
+        delay(effectiveDelay)
+        var taskContext: CoroutineContext = NonCancellable
+        if (inEdt) {
+          taskContext += Dispatchers.EDT
+        }
+        withContext(taskContext) {
+          try {
+            task.run()
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+        }
+      }
     }
   }
 
@@ -91,7 +186,11 @@ class SingleAlarm @JvmOverloads constructor(
    * Cancel doesn't interrupt already running task.
    */
   fun cancel() {
-    impl.cancelAllRequests()
+    synchronized(LOCK) {
+      currentJob?.also {
+        currentJob = null
+      }
+    }?.cancel()
   }
 
   /**
@@ -99,10 +198,18 @@ class SingleAlarm @JvmOverloads constructor(
    */
   @JvmOverloads
   fun cancelAndRequest(forceRun: Boolean = false) {
-    if (!impl.isDisposed) {
-      impl.cancelAllAndAddRequest(request = task, delayMillis = if (forceRun) 0 else delay, modalityState = modalityState)
-    }
+    cancel()
+    request(forceRun = forceRun)
   }
 
-  fun cancelAllRequests(): Int = impl.cancelAllRequests()
+  @Deprecated("Use cancel")
+  fun cancelAllRequests(): Int {
+    val currentJob = synchronized(LOCK) {
+      currentJob?.also {
+        currentJob = null
+      }
+    } ?: return 0
+    currentJob.cancel()
+    return 1
+  }
 }
