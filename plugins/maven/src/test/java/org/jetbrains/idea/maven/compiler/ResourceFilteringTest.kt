@@ -549,7 +549,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=1")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -562,7 +562,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                          </resources>
                        </build>
                        """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     compileModules("project")
 
     assertResult("target/classes/file.properties", "value=\${project.version}")
@@ -623,7 +623,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -639,6 +639,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
+    updateAllProjects()
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val2")
   }
@@ -684,7 +685,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -698,6 +699,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
+    updateAllProjects()
     val modelMap2 = mavenProjectsManager.findProject(
       moduleManager.findModuleByName("project")!!)!!.modelMap
     val config2 = newMavenModuleResourceConfiguration(modelMap2)
