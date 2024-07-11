@@ -217,7 +217,8 @@ function addCommonFeatures(sessionDiv, popup, lookup) {
   }
   addRelevanceModelBlock(popup, lookup, "trigger")
   addRelevanceModelBlock(popup, lookup, "filter")
-  addAssistantContextBlock(popup, lookup)
+  addAiaDiagnosticsBlock("Response", "aia_response", popup, lookup)
+  addAiaDiagnosticsBlock("Context", "aia_context", popup, lookup)
   addDiagnosticsBlock("RAW SUGGESTIONS", "raw_proposals", popup, lookup)
   addDiagnosticsBlock("RAW FILTERED", "raw_filtered", popup, lookup)
   addDiagnosticsBlock("ANALYZED SUGGESTIONS", "analyzed_proposals", popup, lookup)
@@ -297,13 +298,12 @@ function addRelevanceModelBlock(popup, lookup, relevanceMode) {
   popup.appendChild(relevanceModelResults)
 }
 
-function addAssistantContextBlock(popup, lookup) {
-  if (!("aia_context" in lookup["additionalInfo"])) return
-  let addInfo = lookup["additionalInfo"]
+function addAiaDiagnosticsBlock(description, field, popup, lookup) {
+  if (!(field in lookup["additionalInfo"])) return
   let contextBlock = document.createElement("DIV")
   contextBlock.style.whiteSpace = "inherit"
   let code = document.createElement("code")
-  code.innerHTML = addInfo["aia_context"]
+  code.innerHTML = `${description}:\n\n${lookup["additionalInfo"][field]}`
   contextBlock.appendChild(code)
   code.style.whiteSpace = "inherit"
   popup.appendChild(contextBlock)
