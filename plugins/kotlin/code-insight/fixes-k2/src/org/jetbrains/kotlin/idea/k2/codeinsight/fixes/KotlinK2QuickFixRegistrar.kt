@@ -122,6 +122,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(LiftAssignmentOutOfTryFixFactory.liftAssignmentOutOfTryFix)
         registerFactory(RenameModToRemFixFactory.deprecatedBinaryModFactory)
         registerFactory(RenameModToRemFixFactory.forbiddenBinaryModFactory)
+        registerFactory(AddEmptyArgumentListFixFactory.addEmptyArgumentListFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {
