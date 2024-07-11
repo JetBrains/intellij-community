@@ -15,10 +15,10 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -108,6 +108,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       MavenLog.LOG.warn("MavenDomTestCase configTest skipped")
       return
     }
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
     myConfigTimestamps[f] = f.timeStamp
     MavenLog.LOG.warn("MavenDomTestCase configTest performed")
