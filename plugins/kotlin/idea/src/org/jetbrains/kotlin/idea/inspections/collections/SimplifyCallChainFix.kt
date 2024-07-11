@@ -20,10 +20,10 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
-    @SafeFieldForPreview private val conversion: AbstractCallChainChecker.Conversion,
-    private val removeReceiverOfFirstCall: Boolean = false,
-    private val runOptimizeImports: Boolean = false,
-    @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
+  @SafeFieldForPreview private val conversion: CallChainConversion,
+  private val removeReceiverOfFirstCall: Boolean = false,
+  private val runOptimizeImports: Boolean = false,
+  @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : LocalQuickFix {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 

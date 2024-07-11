@@ -2,12 +2,9 @@
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
-import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -22,9 +19,9 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
 
     protected fun findQualifiedConversion(
         expression: KtQualifiedExpression,
-        conversionGroups: Map<ConversionId, List<Conversion>>,
-        additionalCallCheck: (Conversion, ResolvedCall<*>, ResolvedCall<*>, BindingContext) -> Boolean
-    ): Conversion? {
+        conversionGroups: Map<ConversionId, List<CallChainConversion>>,
+        additionalCallCheck: (CallChainConversion, ResolvedCall<*>, ResolvedCall<*>, BindingContext) -> Boolean
+    ): CallChainConversion? {
         val firstExpression = expression.receiverExpression
         val firstCallExpression = getCallExpression(firstExpression) ?: return null
         val firstCalleeExpression = firstCallExpression.calleeExpression ?: return null
@@ -58,30 +55,8 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         return conversion
     }
 
-    protected fun List<Conversion>.group(): Map<ConversionId, List<Conversion>> =
+    protected fun List<CallChainConversion>.group(): Map<ConversionId, List<CallChainConversion>> =
         groupBy { conversion -> conversion.id }
-
-    data class ConversionId(val firstFqName: String, val secondFqName: String) {
-        constructor(first: KtExpression, second: KtExpression) : this(first.text, second.text)
-    }
-
-    data class Conversion(
-        val firstFqName: FqName,
-        val secondFqName: FqName,
-        @NonNls val replacement: String,
-        @NonNls val additionalArgument: String? = null,
-        val addNotNullAssertion: Boolean = false,
-        val enableSuspendFunctionCall: Boolean = true,
-        val removeNotNullAssertion: Boolean = false,
-        val replaceableApiVersion: ApiVersion? = null,
-    ) {
-        val id: ConversionId get() = ConversionId(firstName, secondName)
-
-        val firstName = firstFqName.shortName().asString()
-        val secondName = secondFqName.shortName().asString()
-
-        fun withArgument(argument: String) = Conversion(firstFqName, secondFqName, replacement, argument)
-    }
 
     companion object {
         fun KtQualifiedExpression.firstCalleeExpression(): KtExpression? {

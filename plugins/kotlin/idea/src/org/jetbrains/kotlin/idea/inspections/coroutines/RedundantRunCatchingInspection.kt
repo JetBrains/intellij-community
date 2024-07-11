@@ -6,7 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker
-import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker.Conversion
+import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversion
 import org.jetbrains.kotlin.idea.inspections.collections.SimplifyCallChainFix
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
@@ -35,8 +35,8 @@ class RedundantRunCatchingInspection : AbstractCallChainChecker() {
     private val conversionGroups = conversions.group()
 }
 
-private val conversions: List<Conversion> = listOf(
-    Conversion(
+private val conversions: List<CallChainConversion> = listOf(
+    CallChainConversion(
         FqName("kotlin.runCatching"), // FQNs are hardcoded instead of specifying their names via reflection because
         FqName("kotlin.getOrThrow"),  // referencing function which has generics isn't yet supported in Kotlin KT-12140
         "run"
