@@ -21,9 +21,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
-import org.jetbrains.kotlin.idea.core.ShortenReferences
-import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
-import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -212,21 +209,3 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
     }
 }
 
-internal class CreateKotlinSubClassIntention : CreateKotlinSubClassIntentionBase() {
-    override fun chooseAndImplementMethods(
-        project: Project,
-        targetClass: KtClass,
-        editor: Editor,
-    ) {
-        editor.caretModel.moveToOffset(targetClass.textRange.startOffset)
-        ImplementMembersHandler().invoke(project, editor, targetClass.containingFile)
-    }
-
-    override fun shortenReferences(klass: KtClass) {
-        ShortenReferences.DEFAULT.process(klass)
-    }
-
-    override fun getOrCreateKtFile(fileName: String, targetDir: PsiDirectory): KtFile {
-        return getOrCreateKotlinFile(fileName, targetDir)
-    }
-}
