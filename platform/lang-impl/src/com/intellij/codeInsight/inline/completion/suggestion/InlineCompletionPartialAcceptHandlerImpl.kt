@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
@@ -129,14 +130,8 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
     elements: List<InlineCompletionElement>
   ): List<InlineCompletionElement> {
     val textWithCompletion = editorWithCompletion.document.text
-    var prefixLength = 0
-    for (sym in completion) {
-      prefixLength++
-      if (sym == '\n') {
-        prefixLength += completion.countWhilePredicate(start = prefixLength) { it.isWhitespace() }
-        break
-      }
-    }
+    val prefixLength = findOffsetDeltaForInsertNextLine(completion)
+
     val skipOffsetsAfterInsertion = mutableListOf<Int>()
     var iterator = editorWithCompletion.highlighter.createIterator(offset)
     val fileType = originalFile.fileType
@@ -199,6 +194,24 @@ private class InlineCompletionPartialAcceptHandlerImpl : InlineCompletionPartial
       }
     }
     return doInsert(originalEditor, originalFile.project, offset, completion, prefixLength, skipOffsetsAfterInsertion, elements)
+  }
+
+  private fun findOffsetDeltaForInsertNextLine(completion: String): Int {
+    val insertLeadingWhitespaces = Registry.`is`("inline.completion.insert.line.with.leading.whitespaces")
+    var prefixLength = 0
+    for (sym in completion) {
+      if (sym == '\n') {
+        if (insertLeadingWhitespaces) {
+          prefixLength += completion.countWhilePredicate(start = prefixLength) { it.isWhitespace() }
+          break
+        }
+        if (prefixLength > 0) { // Otherwise, completion starts from the '\n' and we need to insert the next line
+          break
+        }
+      }
+      prefixLength++
+    }
+    return prefixLength
   }
 
   private fun HighlighterIterator.checkForOpenBraceAndReturnPair(

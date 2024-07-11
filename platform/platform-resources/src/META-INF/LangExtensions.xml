@@ -1572,6 +1572,9 @@
     <inline.completion.partial.accept.handler
       implementation="com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionPartialAcceptHandlerImpl"
       order="first"/>
+    <registryKey key="inline.completion.insert.line.with.leading.whitespaces"
+                 description="Action 'Insert Inline Completion Proposal Line' will also insert leading whitespaces of the next line"
+                 defaultValue="true"/>
     <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElementManipulator"
       order="last"/>
