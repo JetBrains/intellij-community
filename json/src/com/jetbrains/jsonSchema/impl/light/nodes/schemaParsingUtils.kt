@@ -38,7 +38,7 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
     if (!node.isObject) return null
     return getChild(node, *relativeChildPath)
       .takeIf { it !is MissingNode }
-      ?.asText()
+      ?.toPrettyString()
   }
 
   override fun readTextNodeValue(node: JsonNode, vararg relativeChildPath: String): String? {
