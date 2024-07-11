@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.packaging.impl.artifacts.ArtifactUtil
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
@@ -455,7 +456,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
 
             // reimport
-            importProjectAsync(
+            createProjectPom(
                 """
             <groupId>test</groupId>
             <artifactId>project</artifactId>
@@ -510,6 +511,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             </build>
             """
             )
+            LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+            updateAllProjects()
 
             assertSources("project", "src/main/kotlin")
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -584,7 +587,7 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
 
             // reimport
-            importProjectAsync(
+            createProjectPom(
                 """
             <groupId>test</groupId>
             <artifactId>project</artifactId>
@@ -640,6 +643,8 @@ abstract class AbstractKotlinMavenImporterTest(private val createStdProjectFolde
             </build>
             """
             )
+            LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+            updateAllProjects()
 
             assertSources("project", "src/main/kotlin", "src/main/kotlin.jvm")
             assertTestSources("project", "src/test/java", "src/test/kotlin", "src/test/kotlin.jvm")
