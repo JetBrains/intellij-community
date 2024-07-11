@@ -216,7 +216,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       <version>1</version>
                       """.trimIndent())
     updateAllProjects()
-    createModulePom("m1",
+    updateModulePom("m1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
