@@ -323,6 +323,14 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
       boolean result = super.cancel(mayInterruptIfRunning);
+      // There are two ways to appear in this method:
+      // 1. As a result of external disposal (for example, when this NBRA is bound to a toolwindow, and the window is ready to close),
+      // 2. And during `setResult` -> `cleanupIfNeeded` -> `myExpirationDisposables.dispose` -> `AsyncPromise.cancel`
+      // We need to abort the job only in the first case, but not in the second one.
+      // Because in the case of `setResult` there can be a UI callback, and we need to cancel Job strictly after the callback finishes.
+      if (!isSucceeded()) {
+        cancelJob(new CancellationException());
+      }
       cleanupIfNeeded();
       return result;
     }
