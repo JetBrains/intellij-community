@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding.newUsers
 
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
@@ -24,7 +27,14 @@ internal class NewUsersOnboardingService(private val project: Project, private v
       NewUsersOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.DIALOG)
     }
     else {
-      // TODO: show notification
+      // It triggers on the notification text, while it is expected to have capitalized words because it is the terms.
+      @Suppress("DialogTitleCapitalization")
+      Notification(
+        "newUsersOnboarding",
+        NewUiOnboardingBundle.message("newUsersOnboarding.notification.text"),
+        NotificationType.INFORMATION
+      ).notify(project)
+
       NewUsersOnboardingStatistics.logDialogSkipPressed(project)
     }
   }
