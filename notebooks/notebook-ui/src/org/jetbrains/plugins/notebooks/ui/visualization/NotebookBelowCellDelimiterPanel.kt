@@ -21,6 +21,7 @@ class NotebookBelowCellDelimiterPanel(
   private val isExecutable: Boolean,
   private val cellTags: List<String>,
   val cellNum: Int,
+  isRenderedMarkdown: Boolean,
 ) : JPanel(BorderLayout()) {
   private val notebookAppearance = editor.notebookAppearance
   private val plusTagButtonSize = JBUI.scale(18)
@@ -39,7 +40,7 @@ class NotebookBelowCellDelimiterPanel(
     updateBackgroundColor()
     border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
 
-    val addingTagsRow = (cellTags.isNotEmpty() && Registry.`is`("jupyter.cell.metadata.tags", false))
+    val addingTagsRow = (cellTags.isNotEmpty() && !isRenderedMarkdown && Registry.`is`("jupyter.cell.metadata.tags", false))
 
     if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // PY-72712
   }
