@@ -359,15 +359,22 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   private Object getFileSetObject(Value value) {
     if (myInputIdMapping == null) return null;
 
-    value = wrapValue(value);
+    if (value == null) {
+      if (myInputIdMapping == ObjectUtils.NULL) {
+        return myInputIdMappingValue;
+      }
 
-    if (myInputIdMapping == value || // myNullValue is Object
-        myInputIdMapping.equals(value)) {
-      return myInputIdMappingValue;
+      Map<Value, Object> mapping = asMapping();
+      return mapping == null ? null : mapping.get(ObjectUtils.NULL);
     }
+    else {
+      if (myInputIdMapping == value || myInputIdMapping.equals(value)) {
+        return myInputIdMappingValue;
+      }
 
-    Map<Value, Object> mapping = asMapping();
-    return mapping == null ? null : mapping.get(value);
+      Map<Value, Object> mapping = asMapping();
+      return mapping == null ? null : mapping.get(value);
+    }
   }
 
   @Override
