@@ -23,6 +23,7 @@ import com.intellij.psi.PsiNameIdentifierOwner
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.util.progress.sleepCancellable
 import java.io.File
 
 class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
@@ -92,6 +93,11 @@ class CommonActionsInvoker(private val project: Project) : ActionsInvoker {
     val endOffset = editor.offsetToLogicalPosition(end)
     editor.caretModel.setCaretsAndSelections(listOf(CaretState(startOffset, startOffset, endOffset)))
     editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
+  }
+
+  override fun delay(seconds: Int) {
+    LOG.info("Delay for $seconds seconds")
+    sleepCancellable(seconds * 1000L)
   }
 
   override fun openFile(file: String): String = readActionInSmartMode(project) {

@@ -11,7 +11,7 @@ sealed interface Action {
   val sessionId: UUID
 
   enum class ActionType {
-    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME
+    MOVE_CARET, CALL_FEATURE, PRINT_TEXT, DELETE_RANGE, SELECT_RANGE, RENAME, DELAY
   }
 
   object JsonAdapter : JsonDeserializer<Action>, JsonSerializer<Action> {
@@ -23,6 +23,7 @@ sealed interface Action {
         ActionType.DELETE_RANGE -> context.deserialize(json, DeleteRange::class.java)
         ActionType.SELECT_RANGE -> context.deserialize(json, SelectRange::class.java)
         ActionType.RENAME -> context.deserialize(json, Rename::class.java)
+        ActionType.DELAY -> context.deserialize(json, Delay::class.java)
       }
     }
 
@@ -58,6 +59,10 @@ data class SelectRange internal constructor(override val sessionId: UUID, val be
   override val type: Action.ActionType = Action.ActionType.SELECT_RANGE
 }
 
+data class Delay internal constructor(override val sessionId: UUID, val seconds: Int) : Action {
+  override val type: Action.ActionType = Action.ActionType.DELAY
+}
+
 data class TextRange(val start: Int, val end: Int)
 
 
@@ -82,5 +87,6 @@ class ActionsBuilder {
     fun printText(text: String) = actions.add(PrintText(sessionId, text))
     fun deleteRange(begin: Int, end: Int) = actions.add(DeleteRange(sessionId, begin, end))
     fun selectRange(begin: Int, end: Int) = actions.add(SelectRange(sessionId, begin, end))
+    fun delay(seconds: Int) = actions.add(Delay(sessionId, seconds))
   }
 }

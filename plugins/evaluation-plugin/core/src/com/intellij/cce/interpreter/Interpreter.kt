@@ -47,6 +47,7 @@ class Interpreter(private val invokersFactory: InvokersFactory,
         is PrintText -> actionsInvoker.printText(action.text)
         is DeleteRange -> actionsInvoker.deleteRange(action.begin, action.end)
         is SelectRange -> actionsInvoker.selectRange(action.begin, action.end)
+        is Delay -> actionsInvoker.delay(action.seconds)
       }
       if (isCanceled) break
     }
