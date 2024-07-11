@@ -1,102 +1,104 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ui.components;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.components
 
-import com.intellij.diagnostic.LoadingState;
-import com.intellij.ide.PowerSaveMode;
-import com.intellij.ide.RemoteDesktopService;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.diagnostic.LoadingState
+import com.intellij.ide.PowerSaveMode
+import com.intellij.ide.RemoteDesktopService
+import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import java.awt.Component
+import java.awt.Container
+import java.awt.Window
+import javax.swing.*
 
-import javax.swing.*;
-import java.awt.*;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-
-final class ScrollSettings {
-  static boolean isEligibleFor(Component component) {
-    if (component == null || !component.isShowing() || !LoadingState.COMPONENTS_REGISTERED.isOccurred()) {
-      return false;
+internal object ScrollSettings {
+  @JvmStatic
+  fun isEligibleFor(component: Component?): Boolean {
+    if (component == null || !component.isShowing || !LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+      return false
     }
 
-    Application application = getApplication();
-    if (application == null || PowerSaveMode.isEnabled() || RemoteDesktopService.isRemoteSession()) {
-      return false;
+    val app = ApplicationManager.getApplication()
+    if (app == null || PowerSaveMode.isEnabled() || RemoteDesktopService.isRemoteSession()) {
+      return false
     }
 
-    UISettings settings = UISettings.getInstanceOrNull();
-    return settings != null && settings.getSmoothScrolling();
+    val settings = UISettings.instanceOrNull
+    return settings != null && settings.smoothScrolling
   }
 
-  static boolean isHighPrecisionEnabled() {
-    return Registry.is("idea.true.smooth.scrolling.high.precision", true);
+  @JvmStatic
+  val isHighPrecisionEnabled: Boolean
+    get() = `is`("idea.true.smooth.scrolling.high.precision", true)
+
+  @JvmStatic
+  val isPixelPerfectEnabled: Boolean
+    get() = `is`("idea.true.smooth.scrolling.pixel.perfect", true)
+
+  @JvmStatic
+  val isDebugEnabled: Boolean
+    get() = `is`("idea.true.smooth.scrolling.debug", false)
+
+  @JvmStatic
+  val isBackgroundFromView: Boolean
+    get() = `is`("ide.scroll.background.auto", true)
+
+  @JvmStatic
+  fun isHeaderOverCorner(viewport: JViewport?): Boolean {
+    val view = viewport?.view
+    return !isNotSupportedYet(view) && `is`("ide.scroll.layout.header.over.corner", true)
   }
 
-  static boolean isPixelPerfectEnabled() {
-    return Registry.is("idea.true.smooth.scrolling.pixel.perfect", true);
-  }
+  @JvmStatic
+  fun isNotSupportedYet(view: Component?): Boolean = view is JTable
 
-  static boolean isDebugEnabled() {
-    return Registry.is("idea.true.smooth.scrolling.debug", false);
-  }
+  @JvmStatic
+  val isGapNeededForAnyComponent: Boolean
+    get() = `is`("ide.scroll.align.component", true)
 
-  static boolean isBackgroundFromView() {
-    return Registry.is("ide.scroll.background.auto", true);
-  }
+  @JvmStatic
+  val isHorizontalGapNeededOnMac: Boolean
+    get() = `is`("mac.scroll.horizontal.gap", false)
 
-  static boolean isHeaderOverCorner(JViewport viewport) {
-    Component view = viewport == null ? null : viewport.getView();
-    return !isNotSupportedYet(view) && Registry.is("ide.scroll.layout.header.over.corner", true);
-  }
+  @JvmStatic
+  val isThumbSmallIfOpaque: Boolean
+    get() = `is`("ide.scroll.thumb.small.if.opaque", false)
 
-  static boolean isNotSupportedYet(Component view) {
-    return view instanceof JTable;
-  }
+  /* A heuristic that disables scrolling interpolation in diff / merge windows.
+  We need to make scrolling synchronization compatible with the interpolation first.
 
-  static boolean isGapNeededForAnyComponent() {
-    return Registry.is("ide.scroll.align.component", true);
-  }
-
-  static boolean isHorizontalGapNeededOnMac() {
-    return Registry.is("mac.scroll.horizontal.gap", false);
-  }
-
-  static boolean isThumbSmallIfOpaque() {
-    return Registry.is("ide.scroll.thumb.small.if.opaque", false);
-  }
-
-  /* A heuristics that disables scrolling interpolation in diff / merge windows.
-     We need to make scrolling synchronization compatible with the interpolation first.
-
-     NOTE: The implementation is a temporary, ad-hoc heuristics that is needed solely to
-           facilitate testing of the experimental "true smooth scrolling" feature. */
-  static boolean isInterpolationEligibleFor(JScrollBar scrollbar) {
-    Window window = (Window)scrollbar.getTopLevelAncestor();
-
-    if (window instanceof JDialog && "Commit Changes".equals(((JDialog)window).getTitle())) {
-      return false;
+  NOTE: The implementation is a temporary, ad-hoc heuristic that is needed solely to
+        facilitate testing of the experimental "true smooth scrolling" feature. */
+  @JvmStatic
+  fun isInterpolationEligibleFor(scrollbar: JScrollBar): Boolean {
+    val window = scrollbar.topLevelAncestor as Window?
+    if (window is JDialog && window.title == "Commit Changes") {
+      return false
     }
 
-    if (!(window instanceof RootPaneContainer)) {
-      return true;
+    if (window !is RootPaneContainer) {
+      return true
     }
 
-    Component[] components = ((RootPaneContainer)window).getContentPane().getComponents();
-
-    if (components.length == 1 && components[0].getClass().getName().contains("DiffWindow")) {
-      return false;
+    val components = window.contentPane.components
+    if (components.size == 1 && components[0].javaClass.name.contains("DiffWindow")) {
+      return false
     }
 
-    if (components.length == 2 && components[0] instanceof Container) {
-      Component[] subComponents = ((Container)components[0]).getComponents();
-      if (subComponents.length == 1) {
-        String name = subComponents[0].getClass().getName();
-        if (name.contains("DiffWindow") || name.contains("MergeWindow")) {
-          return false;
+    if (components.size == 2) {
+      val firstComponent = components[0]
+      if (firstComponent is Container) {
+        val subComponents = firstComponent.components
+        if (subComponents.size == 1) {
+          val name = subComponents[0].javaClass.name
+          if (name.contains("DiffWindow") || name.contains("MergeWindow")) {
+            return false
+          }
         }
       }
     }
 
-    return true;
+    return true
   }
 }

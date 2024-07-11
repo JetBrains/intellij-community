@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -37,7 +37,6 @@ import java.lang.reflect.Field;
 import java.util.function.Supplier;
 
 public class JBScrollPane extends JScrollPane {
-
   /**
    * Supposed to be used as a client property key for scrollbar and indicates if this scrollbar should be ignored
    * when insets for {@code JScrollPane's} content are being calculated.
