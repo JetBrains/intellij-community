@@ -206,7 +206,7 @@ private fun toPsiMethodForDeserialized(
                     }
                 }
                 val id = jvmName
-                    ?: functionSymbol.callableIdIfNonLocal?.callableName?.identifierOrNullIfSpecial
+                    ?: functionSymbol.callableId?.callableName?.identifierOrNullIfSpecial
                     ?: psi?.name
                 methods.filter { it.name == id }
             }
