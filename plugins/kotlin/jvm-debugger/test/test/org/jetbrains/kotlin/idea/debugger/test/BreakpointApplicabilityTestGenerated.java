@@ -50,6 +50,11 @@ public class BreakpointApplicabilityTestGenerated extends AbstractBreakpointAppl
         runTest("testData/breakpointApplicability/inlineOnly.kt");
     }
 
+    @TestMetadata("lambdaProperty.kt")
+    public void testLambdaProperty() throws Exception {
+        runTest("testData/breakpointApplicability/lambdaProperty.kt");
+    }
+
     @TestMetadata("locals.kt")
     public void testLocals() throws Exception {
         runTest("testData/breakpointApplicability/locals.kt");

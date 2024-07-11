@@ -1303,6 +1303,11 @@ public abstract class K2IdeK1CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/breakpointsInOneLineLambdas.kt");
         }
 
+        @TestMetadata("breakpointsLambdaProperties.kt")
+        public void testBreakpointsLambdaProperties() throws Exception {
+            runTest("../testData/stepping/custom/breakpointsLambdaProperties.kt");
+        }
+
         @TestMetadata("constantConditions.kt")
         public void testConstantConditions() throws Exception {
             runTest("../testData/stepping/custom/constantConditions.kt");
