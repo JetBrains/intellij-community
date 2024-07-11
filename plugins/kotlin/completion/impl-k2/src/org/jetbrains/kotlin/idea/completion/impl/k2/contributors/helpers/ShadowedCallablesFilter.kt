@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -281,10 +281,10 @@ private sealed class SimplifiedSignature {
         context(KaSession)
         private fun KaCallableSymbol.getContainerFqName(): FqName? {
             val callableId = callableId ?: return null
-            return when (symbolKind) {
+            return when (location) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
-                KaSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
-                KaSymbolKind.CLASS_MEMBER -> {
+                KaSymbolLocation.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
+                KaSymbolLocation.CLASS -> {
                     val classId = callableId.classId ?: return null
                     val classKind = findClass(classId)?.classKind
 

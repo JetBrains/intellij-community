@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.psi.UserDataProperty
 
@@ -25,7 +25,7 @@ internal object ClassifierWeigher {
 fun addWeight(lookupElement: LookupElement, symbol: KaSymbol, symbolOrigin: CompletionSymbolOrigin) {
         if (symbol !is KaClassifierSymbol) return
 
-        val isLocal = (symbol as? KaClassLikeSymbol)?.symbolKind == KaSymbolKind.LOCAL
+        val isLocal = (symbol as? KaClassLikeSymbol)?.location == KaSymbolLocation.LOCAL
         val weight = if (isLocal) Weight.LOCAL else Weight.NON_LOCAL
 
         val priority = when (symbolOrigin) {

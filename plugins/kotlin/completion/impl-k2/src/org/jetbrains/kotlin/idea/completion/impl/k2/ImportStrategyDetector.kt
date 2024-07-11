@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -30,7 +30,7 @@ class ImportStrategyDetector(originalKtFile: KtFile, project: Project) {
     context(KaSession)
     fun detectImportStrategyForCallableSymbol(symbol: KaCallableSymbol, isFunctionalVariableCall: Boolean = false): ImportStrategy {
         val containingClassIsObject = (symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol)?.classKind?.isObject == true
-        if (symbol.symbolKind == KaSymbolKind.CLASS_MEMBER && !containingClassIsObject) return ImportStrategy.DoNothing
+        if (symbol.location == KaSymbolLocation.CLASS && !containingClassIsObject) return ImportStrategy.DoNothing
 
         val callableId = symbol.callableId?.asSingleFqName() ?: return ImportStrategy.DoNothing
 
