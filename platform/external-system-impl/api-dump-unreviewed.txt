@@ -1947,11 +1947,6 @@ com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress
 - a:execute(com.intellij.openapi.progress.ProgressIndicator):V
 - s:executeTaskUnderProgress(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode,com.intellij.openapi.externalSystem.util.ExternalSystemTaskUnderProgress):V
 - getId():java.lang.Object
-f:com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
-- <init>():V
-- s:computeWithSpan(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,java.util.function.Function):java.lang.Object
-- s:getTracer(com.intellij.openapi.externalSystem.model.ProjectSystemId):io.opentelemetry.api.trace.Tracer
-- s:runWithSpan(com.intellij.openapi.externalSystem.model.ProjectSystemId,java.lang.String,java.util.function.Consumer):V
 f:com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil
 - sf:INSETS:I
 - s:disposeUi(java.lang.Object):V

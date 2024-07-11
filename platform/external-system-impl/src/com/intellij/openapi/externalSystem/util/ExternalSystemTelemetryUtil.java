@@ -7,12 +7,14 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class ExternalSystemTelemetryUtil {
 
   public static @NotNull Tracer getTracer(@Nullable ProjectSystemId id) {
