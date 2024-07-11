@@ -48,7 +48,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
     assertCompletionVariantsInclude(projectPom, RENDERING_TEXT, "junit")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -59,7 +59,7 @@ class MavenParentCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
                        """.trimIndent())
     assertCompletionVariants(projectPom, RENDERING_TEXT, "junit")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
