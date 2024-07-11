@@ -18,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 private const val DEFAULT_LOCALE = "en"
 
 @Internal
-@State(name = "LocalizationStateService", category = SettingsCategory.SYSTEM, storages = [Storage(GeneralSettings.IDE_GENERAL_XML)])
+@State(name = "LocalizationStateService", reloadable = false, category = SettingsCategory.SYSTEM, storages = [Storage(GeneralSettings.IDE_GENERAL_XML)])
 internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
 
   private var localizationState = LocalizationState()
