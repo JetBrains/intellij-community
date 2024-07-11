@@ -14,15 +14,25 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 internal object InitialScanningSkipReporter {
 
-  val GROUP = EventLogGroup("indexing.initial.scanning.skip", 1)
+  val GROUP = EventLogGroup("indexing.initial.scanning.skip", 2)
 
   internal enum class SourceOfScanning { OnProjectOpen, IndexTumblerOn }
 
   private val sourceOfScanningField = EventFields.Enum("source", SourceOfScanning::class.java)
-  private val numberOfDirtyFilesField = EventFields.Int("number_of_dirty_files")
+  private val projectDirtyFilesCountField = EventFields.Int("project_dirty_files_count",
+                                                            "Number of dirty files from project queue (files that were changed before project " +
+                                                            "was closed but there was no time to index them). " +
+                                                            "On project startup it's checked if these files need to be indexed")
+  private val orphanDirtyFilesCountField = EventFields.Int("orphan_dirty_files_count",
+                                                           "Number of dirty files from orphan queue (queue for files which were changed when " +
+                                                           "corresponding projects were closed). " +
+                                                           "On project startup it's checked if these files belong to project and if they need " +
+                                                           "to be indexed.")
 
   private val partialInitialScanningScheduled = GROUP.registerEvent("partial.initial.scanning.scheduled",
-                                                                    sourceOfScanningField, numberOfDirtyFilesField)
+                                                                    sourceOfScanningField,
+                                                                    projectDirtyFilesCountField,
+                                                                    orphanDirtyFilesCountField)
 
   internal enum class FullScanningReason(fieldName: String) {
     CodeCallerForbadeSkipping("code_caller_forbade_skipping"),
@@ -55,15 +65,18 @@ internal object InitialScanningSkipReporter {
     fields.add(notSeenIdsBasedFullScanningDecisionField)
     fields.add(sourceOfScanningField)
     fields.add(registeredIndexesWereCorruptedField)
+    fields.add(projectDirtyFilesCountField)
+    fields.add(orphanDirtyFilesCountField)
     fullInitialScanningScheduled = GROUP.registerVarargEvent("full.initial.scanning.scheduled", *fields.toTypedArray())
   }
 
   fun reportPartialInitialScanningScheduled(
     project: Project,
     sourceOfScanning: SourceOfScanning,
-    numberOfDirtyFiles: Int
+    projectDirtyFilesQueue: ProjectDirtyFilesQueue,
+    orphanDirtyFilesCount: Int,
   ) {
-    partialInitialScanningScheduled.log(project, sourceOfScanning, numberOfDirtyFiles)
+    partialInitialScanningScheduled.log(project, sourceOfScanning, projectDirtyFilesQueue.fileIds.size, orphanDirtyFilesCount)
   }
 
   fun reportFullInitialScanningScheduled(
@@ -72,6 +85,8 @@ internal object InitialScanningSkipReporter {
     registeredIndexesWereCorrupted: Boolean,
     reasons: List<FullScanningReason>,
     notSeenIdsBasedFullScanningDecision: NotSeenIdsBasedFullScanningDecision,
+    projectDirtyFilesQueue: ProjectDirtyFilesQueue,
+    orphanDirtyFilesCount: Int,
   ) {
     fullInitialScanningScheduled.log(project) {
       for (reason in FullScanningReason.entries) {
@@ -80,6 +95,8 @@ internal object InitialScanningSkipReporter {
       add(EventPair(notSeenIdsBasedFullScanningDecisionField, notSeenIdsBasedFullScanningDecision))
       add(EventPair(sourceOfScanningField, sourceOfScanning))
       add(EventPair(registeredIndexesWereCorruptedField, registeredIndexesWereCorrupted))
+      add(EventPair(projectDirtyFilesCountField, projectDirtyFilesQueue.fileIds.size))
+      add(EventPair(orphanDirtyFilesCountField, orphanDirtyFilesCount))
     }
   }
 }
