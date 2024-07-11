@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -126,7 +125,7 @@ object KotlinUnusedSymbolUtil {
   fun getPsiToReportProblem(declaration: KtNamedDeclaration, isJavaEntryPointInspection: UnusedDeclarationInspectionBase): PsiElement? {
       val symbol = declaration.symbol
       if (declaration.languageVersionSettings.getFlag(
-          AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && (symbol as? KaSymbolWithVisibility)?.compilerVisibility?.isPublicAPI == true) {
+          AnalysisFlags.explicitApiMode) != ExplicitApiMode.DISABLED && symbol.compilerVisibility.isPublicAPI) {
           return null
       }
       if (symbol is KaNamedFunctionSymbol && symbol.isOperator) return null

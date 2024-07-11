@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
@@ -101,7 +100,7 @@ sealed class ChangeVisibilityModifierIntention(
             val callableDescriptor = symbol as? KaCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
             if (callableDescriptor.allOverriddenSymbols
-                    .map { (it as? KaSymbolWithVisibility)?.compilerVisibility?.compareTo(targetVisibility) }
+                    .map { it.compilerVisibility?.compareTo(targetVisibility) }
                     .any { it == null || it > 0 }
             ) return null
         }

@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
@@ -18,16 +18,16 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal fun interface CompletionVisibilityChecker {
     context(KaSession)
-    fun isVisible(symbol: KaSymbolWithVisibility): Boolean
+    fun isVisible(symbol: KaDeclarationSymbol): Boolean
 
     context(KaSession)
     fun isVisible(symbol: KaCallableSymbol): Boolean {
-        return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
+        return isVisible(symbol as KaDeclarationSymbol)
     }
 
     context(KaSession)
     fun isVisible(symbol: KaClassifierSymbol): Boolean {
-        return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
+        return isVisible(symbol as KaDeclarationSymbol)
     }
 
     companion object {
@@ -37,7 +37,7 @@ internal fun interface CompletionVisibilityChecker {
             positionContext: KotlinRawPositionContext
         ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
             context(KaSession)
-            override fun isVisible(symbol: KaSymbolWithVisibility): Boolean {
+            override fun isVisible(symbol: KaDeclarationSymbol): Boolean {
                 if (positionContext is KDocNameReferencePositionContext) return true
 
                 // Don't offer any deprecated items that could lead to compile errors.

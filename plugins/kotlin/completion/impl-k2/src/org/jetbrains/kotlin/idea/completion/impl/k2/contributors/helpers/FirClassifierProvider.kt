@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.name.Name
@@ -39,6 +38,6 @@ internal object FirClassifierProvider {
         )
         val javaDeclarations = symbolProvider.getJavaClassesByNameFilter(scopeNameFilter)
         return (kotlinDeclarations + javaDeclarations)
-            .filter { visibilityChecker.isVisible(it as KaSymbolWithVisibility) }
+            .filter { visibilityChecker.isVisible(it) }
     }
 }

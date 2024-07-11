@@ -13,9 +13,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -102,7 +99,7 @@ private fun retainNonOverridableMembers(
 
 private val KaCallableSymbol.isOverridable: Boolean
     get() = modality != KaSymbolModality.FINAL &&
-            (this as? KaSymbolWithVisibility)?.visibility !=  KaSymbolVisibility.PRIVATE &&
+            visibility != KaSymbolVisibility.PRIVATE &&
             (this.getSymbolContainingMemberDeclarations() as? KaNamedClassSymbol)?.isFinalClass != true
 
 private val KaNamedClassSymbol.isFinalClass: Boolean

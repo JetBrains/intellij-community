@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -92,7 +91,7 @@ fun filterCandidateByReceiverTypeAndVisibility(
     if (candidateReceiverType != null && receiverTypes.none { it.isSubTypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
 
     // Filter out candidates not visible from call site
-    if (candidateSymbol is KaSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
+    if (!isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
 
     return true
 }

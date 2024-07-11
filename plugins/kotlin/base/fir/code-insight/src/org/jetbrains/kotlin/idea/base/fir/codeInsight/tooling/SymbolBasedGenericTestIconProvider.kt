@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -30,7 +30,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     private fun isTestDeclaration(symbol: KaAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
-            (symbol as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PUBLIC -> false
+            (symbol as? KaDeclarationSymbol)?.visibility != KaSymbolVisibility.PUBLIC -> false
             KotlinTestAvailabilityChecker.TEST_FQ_NAME in symbol.annotations -> true
             symbol is KaClassSymbol -> symbol.declaredMemberScope.callables.any { isTestDeclaration(it) }
             else -> false

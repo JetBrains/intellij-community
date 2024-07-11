@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFileSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.util.positionContext.KDocLinkNamePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
@@ -35,7 +34,7 @@ internal abstract class ImportCandidatesProvider(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun KaSymbol.isVisible(fileSymbol: KaFileSymbol): Boolean =
-        this is KaSymbolWithVisibility && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
+        this is KaDeclarationSymbol && isVisible(this, fileSymbol, receiverExpression = null, positionContext.position)
 
     protected fun PsiMember.canBeImported(): Boolean {
         return when (this) {

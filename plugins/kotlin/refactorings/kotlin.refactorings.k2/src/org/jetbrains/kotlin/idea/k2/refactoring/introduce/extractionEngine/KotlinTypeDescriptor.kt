@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -153,12 +152,11 @@ fun isResolvableInScope(typeToCheck: KaType, scope: PsiElement, typeParameters: 
             return false
         }
 
-        if (classSymbol is KaSymbolWithVisibility) {
-            val fileSymbol = (scope.containingFile as KtFile).symbol
-            if (!isVisible(classSymbol, fileSymbol, null, scope)) {
-                return false
-            }
+        val fileSymbol = (scope.containingFile as KtFile).symbol
+        if (!isVisible(classSymbol, fileSymbol, null, scope)) {
+            return false
         }
+
         typeToCheck.typeArguments.mapNotNull { it.type }.forEach {
             if (!isResolvableInScope(it, scope, typeParameters)) return false
         }

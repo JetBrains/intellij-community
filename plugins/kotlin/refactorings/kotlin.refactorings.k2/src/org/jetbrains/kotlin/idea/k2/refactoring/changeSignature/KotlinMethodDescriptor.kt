@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -116,7 +115,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
     @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
-            (callable.symbol as? KaSymbolWithVisibility)?.compilerVisibility ?: Visibilities.Public
+            callable.symbol.compilerVisibility
         }
     }
 

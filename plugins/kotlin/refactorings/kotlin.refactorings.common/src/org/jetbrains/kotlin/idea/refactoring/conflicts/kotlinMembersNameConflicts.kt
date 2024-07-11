@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.base.KaContextReceiver
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.asJava.accessorNameByPropertyName
@@ -56,7 +55,7 @@ fun KaScope.findSiblingsByName(
     }
     val callables = callables(newName).filter { callable ->
         symbol != callable &&
-                ((callable as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PRIVATE || callable.containingDeclaration == containingSymbol)
+                (callable.visibility != KaSymbolVisibility.PRIVATE || callable.containingDeclaration == containingSymbol)
     }
 
     val classifierSymbols = classifiers(newName)
@@ -140,7 +139,7 @@ fun checkDeclarationNewNameConflicts(
             }
 
             is KaPackageSymbol -> {
-                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = (this as? KaSymbolWithVisibility)?.visibility == KaSymbolVisibility.PRIVATE && this.location == KaSymbolLocation.TOP_LEVEL
+                fun KaDeclarationSymbol.isTopLevelPrivate(): Boolean = this.visibility == KaSymbolVisibility.PRIVATE && this.location == KaSymbolLocation.TOP_LEVEL
 
                 fun isInSameFile(s1: KaDeclarationSymbol, s2: KaDeclarationSymbol): Boolean = s1.psi?.containingFile == s2.psi?.containingFile
 

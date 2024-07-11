@@ -13,9 +13,9 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.projectView.getStructureDeclarations
 import org.jetbrains.kotlin.idea.structureView.AbstractKotlinStructureViewElement
@@ -138,7 +138,7 @@ class KotlinFirStructureViewElement(
     }
 
     class Visibility(symbol: KaSymbol?) {
-        private val visibility: KaSymbolVisibility? = (symbol as? KaSymbolWithVisibility)?.visibility
+        private val visibility: KaSymbolVisibility? = (symbol as? KaDeclarationSymbol)?.visibility
 
         val isPublic: Boolean
             get() = visibility == KaSymbolVisibility.PUBLIC

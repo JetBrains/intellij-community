@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
@@ -455,7 +454,7 @@ internal class KotlinIdeDeclarationRenderer(
                             }
                         },
                         {
-                            if (callableSymbol is KaSymbolWithVisibility && callableSymbol.visibility == KaSymbolVisibility.LOCAL) {
+                            if (callableSymbol.visibility == KaSymbolVisibility.LOCAL) {
                                 printer.append(highlight("local") { asKeyword })
                             }
                         },
