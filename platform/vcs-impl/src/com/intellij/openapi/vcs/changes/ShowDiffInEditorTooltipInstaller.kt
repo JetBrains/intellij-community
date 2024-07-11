@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.DiffContext
@@ -20,7 +20,7 @@ import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import javax.swing.JComponent
 
-class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
+internal class ShowDiffInEditorTooltipInstaller : DiffRequestProcessorEditorCustomizer {
 
   override fun customize(file: VirtualFile, editor: FileEditor, context: DiffContext) {
     context.getUserData(DiffUserDataKeysEx.LEFT_TOOLBAR)?.let { toolbar -> ShowDiffInEditorTabTooltipHolder(editor, toolbar) }

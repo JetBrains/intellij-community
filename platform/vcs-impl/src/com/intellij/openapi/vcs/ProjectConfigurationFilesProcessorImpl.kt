@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
 import com.intellij.ide.highlighter.ModuleFileType
@@ -32,11 +32,12 @@ internal const val ASKED_SHARE_PROJECT_CONFIGURATION_FILES_PROPERTY = "ASKED_SHA
  *
  * Overrides behavior of [VcsConfiguration.StandardConfirmation.ADD] flag for project configuration files (ex: .idea/misc.xml).
  */
-class ProjectConfigurationFilesProcessorImpl(project: Project,
-                                             private val parentDisposable: Disposable,
-                                             private val vcs: AbstractVcs,
-                                             private val addChosenFiles: (Collection<VirtualFile>) -> Unit)
-  : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
+internal class ProjectConfigurationFilesProcessorImpl(
+  project: Project,
+  private val parentDisposable: Disposable,
+  private val vcs: AbstractVcs,
+  private val addChosenFiles: (Collection<VirtualFile>) -> Unit,
+) : FilesProcessorWithNotificationImpl(project, parentDisposable), ChangeListListener {
 
   private val foundProjectConfigurationFiles = AtomicBoolean()
 

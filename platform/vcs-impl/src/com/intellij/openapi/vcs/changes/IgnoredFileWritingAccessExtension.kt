@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension
@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.changes.ignore.lang.IgnoreFileType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsUtil
 
-class IgnoredFileWritingAccessExtension(private val project: Project) : NonProjectFileWritingAccessExtension {
+internal class IgnoredFileWritingAccessExtension(private val project: Project) : NonProjectFileWritingAccessExtension {
   override fun isWritable(file: VirtualFile) =
     IgnoredFileContentProvider.IGNORE_FILE_CONTENT_PROVIDER
       .getExtensionList(project)

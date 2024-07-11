@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight
 
 import com.intellij.codeInsight.daemon.HighlightingPassesCache
@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 
-class ChangesToolwindowPassCache : ProjectActivity {
+internal class ChangesToolwindowPassCache : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (!Registry.`is`("highlighting.passes.cache")) return
 

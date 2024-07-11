@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.actions
 
@@ -10,7 +10,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor
 
-class CreatePatchAction : AbstractCommitChangesAction() {
+internal class CreatePatchAction : AbstractCommitChangesAction() {
   override fun getExecutor(project: Project): CommitExecutor = CreatePatchCommitExecutor(project)
 
   override fun isActionEnabled(manager: ChangeListManager, it: Change): Boolean {

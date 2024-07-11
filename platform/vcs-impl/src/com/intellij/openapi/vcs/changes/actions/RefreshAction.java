@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -16,8 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-
-public class RefreshAction extends AnAction implements DumbAware {
+public final class RefreshAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();

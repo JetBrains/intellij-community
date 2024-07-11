@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
@@ -27,6 +27,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ import java.util.Objects;
 
 import static com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector.ANNOTATE_ACTIVITY;
 
-public class AnnotateLocalFileAction {
+@ApiStatus.Internal
+public final class AnnotateLocalFileAction {
   private static final Logger LOG = Logger.getInstance(AnnotateLocalFileAction.class);
 
   private static boolean isEnabled(@NotNull AnActionEvent e) {
@@ -167,7 +169,8 @@ public class AnnotateLocalFileAction {
     ProgressManager.getInstance().run(annotateTask);
   }
 
-  public static class Provider implements AnnotateToggleAction.Provider {
+  @ApiStatus.Internal
+  public static final class Provider implements AnnotateToggleAction.Provider {
     @Override
     public boolean isEnabled(AnActionEvent e) {
       return AnnotateLocalFileAction.isEnabled(e);

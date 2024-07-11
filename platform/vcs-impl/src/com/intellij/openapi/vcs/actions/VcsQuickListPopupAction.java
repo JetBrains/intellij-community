@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +23,7 @@ import java.util.List;
  * <p>
  * Can be customized using {@link VcsQuickListContentProvider} extension point.
  */
-public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
+public final class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements DumbAware {
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
   }
@@ -59,7 +60,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     return ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
   }
 
-  public static class Providers extends ActionGroup implements DumbAware {
+  @ApiStatus.Internal
+  public final static class Providers extends ActionGroup implements DumbAware {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
       if (e == null) return EMPTY_ARRAY;
@@ -94,6 +96,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     }
   }
 
+  @ApiStatus.Internal
   public final static class VcsNameSeparator extends ActionGroup implements DumbAware {
     @Override
     public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
@@ -114,7 +117,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     }
   }
 
-  public static class VcsAware extends DefaultActionGroup implements DumbAware {
+  @ApiStatus.Internal
+  public final static class VcsAware extends DefaultActionGroup implements DumbAware {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
@@ -138,7 +142,8 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
     }
   }
 
-  public static class NonVcsAware extends DefaultActionGroup implements DumbAware {
+  @ApiStatus.Internal
+  public final static class NonVcsAware extends DefaultActionGroup implements DumbAware {
     @Override
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();

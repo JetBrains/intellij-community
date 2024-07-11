@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.progress.ProgressManager
@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vfs.VirtualFile
 
-class FilePathHolderImpl(private val project: Project) : FilePathHolder {
+internal class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   private val files = hashSetOf<FilePath>()
 
   override fun values(): Collection<FilePath> = files

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.idea.ActionsBundle.message
@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
 
-class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
+internal class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
   override fun isActive(e: AnActionEvent): Boolean {
     val project = e.project
 

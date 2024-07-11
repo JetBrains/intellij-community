@@ -32,9 +32,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-public class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEntry> {
+@ApiStatus.Internal
+public final class IgnoreEntryManipulator extends AbstractElementManipulator<IgnoreEntry> {
   /**
    * Changes the element's text to a new value
    *

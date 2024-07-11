@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.annotate;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import static java.util.Collections.singletonList;
 
-public class DefaultLineModificationDetailsProvider implements FileAnnotation.LineModificationDetailsProvider {
+public final class DefaultLineModificationDetailsProvider implements FileAnnotation.LineModificationDetailsProvider {
   @NotNull private final FileAnnotation myAnnotation;
   @NotNull private final FilePath myFilePath;
   @NotNull private final FileAnnotation.CurrentFileRevisionProvider myCurrentRevisionProvider;

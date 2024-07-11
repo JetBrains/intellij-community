@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vfs
 
 import com.intellij.openapi.Disposable
@@ -13,10 +13,12 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 private val LOG = logger<AsyncVfsEventsPostProcessorImpl>()
 
+@ApiStatus.Internal
 class AsyncVfsEventsPostProcessorImpl : AsyncVfsEventsPostProcessor, Disposable {
   private val queue = QueueProcessor(::processEvents)
   private val messageBus = ApplicationManager.getApplication().messageBus

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.application.runReadAction
@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vfs.VirtualFileManager
 
-class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
+internal class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
 
   override fun isIgnoredFile(project: Project, filePath: FilePath) =
     VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED &&

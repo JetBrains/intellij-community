@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.editor.DiffEditorTabFilesManager
@@ -16,7 +16,7 @@ import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.history.VcsDiffUtil
 
-class ShowCombinedDiffAction : DumbAwareAction() {
+internal class ShowCombinedDiffAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     val changes = e.getData(VcsDataKeys.CHANGES)
     val project = e.project

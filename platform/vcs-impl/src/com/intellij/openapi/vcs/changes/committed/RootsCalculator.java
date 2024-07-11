@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,7 +24,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.vcsUtil.VcsUtil.getFilePath;
 import static java.util.function.Function.identity;
 
-public class RootsCalculator {
+public final class RootsCalculator {
   private final static Logger LOG = Logger.getInstance(RootsCalculator.class);
 
   @NotNull private final Project myProject;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.project.Project
@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.changes.ChangesViewModifier
 import com.intellij.openapi.vcs.changes.ChangesViewWorkflowManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 
-class EditedCommitChangesViewModifier(private val project: Project) : ChangesViewModifier {
+internal class EditedCommitChangesViewModifier(private val project: Project) : ChangesViewModifier {
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
     val workflowHandler = ChangesViewWorkflowManager.getInstance(project).commitWorkflowHandler ?: return
     val editedCommit = workflowHandler.ui.editedCommit ?: return

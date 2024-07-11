@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -68,7 +68,7 @@ private fun cdChangelistShowNonCurrent(project: Project): CheckboxDescriptor =  
 private fun cdNonModalCommit(project: Project): CheckboxDescriptor =                CheckboxDescriptor(VcsBundle.message("settings.commit.without.dialog"), { VcsApplicationSettings.getInstance().COMMIT_FROM_LOCAL_CHANGES }, { setCommitFromLocalChanges(project, it) }, groupName = commitOptionGroupName)
 // @formatter:on
 
-class VcsOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
+internal class VcsOptionsTopHitProvider : VcsOptionsTopHitProviderBase() {
   override fun getId(): String {
     return "vcs"
   }

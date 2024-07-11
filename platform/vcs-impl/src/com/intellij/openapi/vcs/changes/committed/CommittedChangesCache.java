@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.concurrency.JobScheduler;
@@ -26,10 +26,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.vcs.ProgressManagerQueue;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,6 +113,7 @@ public final class CommittedChangesCache extends SimplePersistentStateComponent<
     myExternallyLoadedChangeLists = new ConcurrentHashMap<>();
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull CommittedChangesCacheState state) {
     super.loadState(state);
