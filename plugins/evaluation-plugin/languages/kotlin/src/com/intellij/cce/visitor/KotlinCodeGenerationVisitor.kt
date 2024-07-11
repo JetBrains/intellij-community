@@ -9,8 +9,8 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import com.intellij.psi.JavaTokenType
+import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import com.intellij.psi.util.startOffset as psiTreeUtilStartOffset
-
 
 class KotlinCodeGenerationVisitor : CodeGenerationVisitorBase(Language.KOTLIN) {
   override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {
@@ -23,7 +23,7 @@ class KotlinCodeGenerationPsiVisitor(private val codeFragment: CodeFragment): Kt
     codeFragment?.addChild(
       CodeToken(function.text, function.psiTreeUtilStartOffset, SimpleTokenProperties.create(TypeProperty.METHOD, SymbolLocation.PROJECT) {})
     )
-    val body = function.bodyExpression?.children?.toList()
+    val body = function.bodyExpression?.getChildrenOfType<PsiElement>()?.toList()
     if (body != null) {
       val meaningfulBodyChildren = body.trim()
       if (meaningfulBodyChildren.any()) {
