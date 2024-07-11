@@ -1,11 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modules
 
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.LibraryScope
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
@@ -348,6 +351,44 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         assertKaModuleType<KaSourceModule>("Main.kt")
         assertKaModuleType<KaSourceModule>("Test.kt")
+    }
+
+    fun `test different jdks attached to project modules`() {
+        val mockJdkA = IdeaTestUtil.getMockJdk17("module A JDK")
+        val mockJdkB = IdeaTestUtil.getMockJdk17("module B JDK")
+
+        runWriteAction {
+            ProjectJdkTable.getInstance().addJdk(mockJdkA, testRootDisposable)
+            ProjectJdkTable.getInstance().addJdk(mockJdkB, testRootDisposable)
+        }
+
+        val moduleA = createModule(moduleName = "a", srcContentSpec = directoryContent {})
+        ModuleRootModificationUtil.modifyModel(moduleA) {
+            it.sdk = mockJdkA
+            true
+        }
+
+        val moduleB = createModule(moduleName = "b", srcContentSpec = directoryContent {})
+        ModuleRootModificationUtil.modifyModel(moduleB) {
+            it.sdk = mockJdkB
+            true
+        }
+
+        //a class from "jdk" which belongs to 2 order entries
+        val stringClass = JavaPsiFacade.getInstance(project).findClass("java.lang.String", GlobalSearchScope.allScope(project))!!
+
+        val infoProvider = ModuleInfoProvider.getInstance(project)
+        val contextualModuleBInfo = moduleB.productionSourceInfo!!
+        val info1 = infoProvider
+            .firstOrNull(stringClass, ModuleInfoProvider.Configuration(contextualModuleInfo = contextualModuleBInfo))
+        assertNotNull("IdeaModuleInfo not found for module B", info1)
+
+        val contextualModuleAInfo = moduleA.productionSourceInfo!!
+        val info2 = infoProvider
+            .firstOrNull(stringClass, ModuleInfoProvider.Configuration(contextualModuleInfo = contextualModuleAInfo))
+        assertNotNull("IdeaModuleInfo not found for module A", info2)
+
+        assertNotSame("Different jdks are attached to modules, but one jdk is found by search", info1!!.sdk(), info2!!.sdk())
     }
 
     fun `test that buildSrc sources belong to KaSourceModule`() {

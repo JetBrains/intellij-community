@@ -360,6 +360,11 @@ class ModuleInfoProvider(private val project: Project) {
         if (orderEntry is JdkOrderEntry) {
             val sdk = orderEntry.jdk
             if (sdk != null) {
+                val contextSdk = config.contextualModuleInfo?.sdk()
+                if (contextSdk != null && contextSdk != sdk) {
+                    // don't yield sdk which is absent in the dependencies
+                    return null
+                }
                 return collectBySdk(sdk, visited)
             }
         }
