@@ -217,7 +217,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
     finally {
@@ -235,7 +235,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -290,7 +290,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -310,7 +310,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
