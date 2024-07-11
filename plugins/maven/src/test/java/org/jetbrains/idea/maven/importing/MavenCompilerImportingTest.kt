@@ -704,7 +704,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
-    createProjectPom(javacPom)
+    updateProjectPom(javacPom)
     importProjectAsync()
 
     TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
@@ -733,7 +733,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     importProjectAsync()
     TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
 
-    createProjectPom(eclipsePom)
+    updateProjectPom(eclipsePom)
     importProjectAsync()
 
     TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
