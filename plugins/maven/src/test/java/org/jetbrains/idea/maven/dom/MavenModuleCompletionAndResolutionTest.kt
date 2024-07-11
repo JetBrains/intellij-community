@@ -184,7 +184,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -200,7 +200,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       assertResolved(projectPom, psiFile1, "m1")
     }
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -216,7 +216,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       assertResolved(projectPom, psiFile2, "m2")
     }
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -250,7 +250,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -265,7 +265,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       assertResolved(projectPom, psiFile1, "./m")
     }
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -305,7 +305,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
 
     importProjectAsync()
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -323,7 +323,7 @@ class MavenModuleCompletionAndResolutionTest : MavenDomWithIndicesTestCase() {
       assertResolved(projectPom, psiFile, "subDir/m")
     }
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
