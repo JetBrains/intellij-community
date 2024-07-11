@@ -392,8 +392,8 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation")
-    public static class AddThrowAnnotation extends AbstractHighLevelQuickFixMultiModuleTest {
+    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation")
+    public static class AddThrowsAnnotation extends AbstractHighLevelQuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -406,17 +406,17 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
 
         @TestMetadata("common")
         public void testCommon() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/common/");
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation/common/");
         }
 
         @TestMetadata("js")
         public void testJs() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/js/");
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation/js/");
         }
 
         @TestMetadata("jvm")
         public void testJvm() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm/");
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation/jvm/");
         }
     }
 

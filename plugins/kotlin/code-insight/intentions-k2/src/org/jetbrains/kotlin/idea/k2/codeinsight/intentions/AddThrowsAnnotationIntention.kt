@@ -7,6 +7,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility.LOCAL
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
-import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -27,9 +28,9 @@ import org.jetbrains.kotlin.platform.isJs
 import org.jetbrains.kotlin.platform.wasm.isWasm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
-import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.annotations.JVM_THROWS_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.annotations.KOTLIN_THROWS_ANNOTATION_FQ_NAME
+import org.jetbrains.kotlin.types.Variance.INVARIANT
 
 private val KOTLIN_ARRAY_OF_FQ_NAME = FqName("kotlin.arrayOf")
 private val KOTLIN_THROWS_ANNOTATION_CLASS_ID = ClassId.topLevel(KOTLIN_THROWS_ANNOTATION_FQ_NAME)
@@ -39,13 +40,15 @@ private val JVM_THROWS_ANNOTATION_CLASS_ID = ClassId.topLevel(JVM_THROWS_ANNOTAT
  * Creates a `@Throws` annotation entry for an exception at the caret,
  * or adds this exception to the existing annotation entry of the containing declaration.
  *
- * Tests: [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.AddThrowsAnnotation]
+ * Tests:
+ *   - [org.jetbrains.kotlin.idea.k2.intentions.tests.K2IntentionTestGenerated.AddThrowsAnnotation]
+ *   - [org.jetbrains.kotlin.idea.k2.codeinsight.fixes.HighLevelQuickFixMultiModuleTestGenerated.AddThrowsAnnotation]
  */
 internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<KtThrowExpression, Context>(KtThrowExpression::class) {
     class Context(
         val annotationArgumentText: String,
-        val throwsAnnotation: SmartPsiElementPointer<KtAnnotationEntry>?,
-        val containingDeclaration: SmartPsiElementPointer<KtDeclaration>
+        val containingDeclaration: SmartPsiElementPointer<KtDeclaration>,
+        val throwsAnnotation: SmartPsiElementPointer<KtAnnotationEntry>?
     )
 
     override fun getFamilyName(): @IntentionFamilyName String =
@@ -65,13 +68,13 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
             return null
         }
 
-        val annotationArgumentText = type.asAnnotationArgumentText() ?: return null
+        val annotationArgumentText = type.asAnnotationArgumentText()
         val containingDeclaration = element.containingDeclaration() ?: return null
         val throwsAnnotation = containingDeclaration.findExistingThrowsAnnotation()
         val context = Context(
             annotationArgumentText,
-            throwsAnnotation?.createSmartPointer(),
-            containingDeclaration.createSmartPointer()
+            containingDeclaration.createSmartPointer(),
+            throwsAnnotation?.createSmartPointer()
         )
 
         if (throwsAnnotation == null) {
@@ -98,13 +101,14 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
     }
 
     override fun invoke(actionContext: ActionContext, element: KtThrowExpression, elementContext: Context, updater: ModPsiUpdater) {
+        val annotationArgumentText = elementContext.annotationArgumentText
         val containingDeclaration = elementContext.containingDeclaration.element ?: return
         val throwsAnnotation = elementContext.throwsAnnotation?.element
 
         if (throwsAnnotation == null || throwsAnnotation.valueArguments.isEmpty()) {
-            createNewAnnotation(throwsAnnotation, containingDeclaration, elementContext.annotationArgumentText)
+            createNewAnnotation(throwsAnnotation, containingDeclaration, annotationArgumentText)
         } else {
-            addToExistingAnnotation(throwsAnnotation, elementContext.annotationArgumentText)
+            addToExistingAnnotation(throwsAnnotation, annotationArgumentText)
         }
     }
 
@@ -115,8 +119,8 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
 
     private fun addToExistingAnnotation(throwsAnnotation: KtAnnotationEntry, argumentText: String) {
         val psiFactory = KtPsiFactory(throwsAnnotation.project)
-        val firstValueArgument = throwsAnnotation.valueArguments.first()
-        val expression = firstValueArgument.getArgumentExpression()
+        val firstValueArgument = throwsAnnotation.valueArguments.firstOrNull()
+        val expression = firstValueArgument?.getArgumentExpression()
 
         val addedArgument = when {
             // @Throws(FooException::class, BarException::class)
@@ -147,16 +151,17 @@ internal class AddThrowsAnnotationIntention : KotlinApplicableModCommandAction<K
         }
 
         if (addedArgument != null) {
-            ShortenReferencesFacility.getInstance().shorten(addedArgument)
+            shortenReferences(addedArgument)
         }
     }
 }
 
 context(KaSession)
-private fun KaType.asAnnotationArgumentText(): String? {
+@OptIn(KaExperimentalApi::class)
+private fun KaType.asAnnotationArgumentText(): String {
     // Account for typealiases: we want to render `RuntimeException` instead of `java.lang.RuntimeException`
     val typeToRender = this.abbreviation ?: this
-    val escapedFqName = typeToRender.symbol?.classId?.asSingleFqName()?.render() ?: return null
+    val escapedFqName = typeToRender.render(position = INVARIANT)
     return "$escapedFqName::class"
 }
 
