@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.inspections.collections
 
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.ConversionId
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -31,7 +33,8 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         val secondCalleeExpression = secondCallExpression.calleeExpression ?: return null
         val apiVersion by lazy { expression.languageVersionSettings.apiVersion }
         val actualConversions = conversionGroups[ConversionId(firstCalleeExpression, secondCalleeExpression)]?.filter {
-            it.replaceableApiVersion == null || apiVersion >= it.replaceableApiVersion
+            val replaceableApiVersion = it.replaceableApiVersion
+            replaceableApiVersion == null || apiVersion >= replaceableApiVersion
         }?.sortedByDescending { it.removeNotNullAssertion } ?: return null
 
         val context = expression.analyze()
@@ -54,9 +57,6 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
 
         return conversion
     }
-
-    protected fun List<CallChainConversion>.group(): Map<ConversionId, List<CallChainConversion>> =
-        groupBy { conversion -> conversion.id }
 
     companion object {
         fun KtQualifiedExpression.firstCalleeExpression(): KtExpression? {

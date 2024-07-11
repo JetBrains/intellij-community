@@ -5,8 +5,9 @@ package org.jetbrains.kotlin.idea.inspections.coroutines
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.group
 import org.jetbrains.kotlin.idea.inspections.collections.AbstractCallChainChecker
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversion
 import org.jetbrains.kotlin.idea.inspections.collections.SimplifyCallChainFix
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.psiUtil.startOffset

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.callExpression
@@ -20,10 +21,10 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
-  @SafeFieldForPreview private val conversion: CallChainConversion,
-  private val removeReceiverOfFirstCall: Boolean = false,
-  private val runOptimizeImports: Boolean = false,
-  @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
+    @SafeFieldForPreview private val conversion: CallChainConversion,
+    private val removeReceiverOfFirstCall: Boolean = false,
+    private val runOptimizeImports: Boolean = false,
+    @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : LocalQuickFix {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 

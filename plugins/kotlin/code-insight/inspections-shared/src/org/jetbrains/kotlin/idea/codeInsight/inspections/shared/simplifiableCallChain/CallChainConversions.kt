@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.inspections.collections
+package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
@@ -105,7 +105,7 @@ object CallChainConversions {
     const val MAP = "map"
     const val SUM = "sum"
 
-    val conversionsList: List<CallChainConversion> = with(CallChainConversions) {
+    val conversionsList: List<CallChainConversion> by lazy {
         listOf(
             CallChainConversion(KOTLIN_COLLECTIONS_FILTER, KOTLIN_COLLECTIONS_FIRST, FIRST),
             CallChainConversion(KOTLIN_COLLECTIONS_FILTER, KOTLIN_COLLECTIONS_FIRST_OR_NULL, FIRST_OR_NULL),
@@ -215,5 +215,12 @@ object CallChainConversions {
                 else -> listOf(it)
             }
         }.flatten()
+    }
+
+    fun List<CallChainConversion>.group(): Map<ConversionId, List<CallChainConversion>> =
+        groupBy { conversion -> conversion.id }
+
+    val conversionGroups: Map<ConversionId, List<CallChainConversion>> by lazy {
+        conversionsList.group()
     }
 }

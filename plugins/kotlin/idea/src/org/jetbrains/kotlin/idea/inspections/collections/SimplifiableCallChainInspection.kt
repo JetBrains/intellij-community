@@ -7,24 +7,27 @@ import com.intellij.codeInspection.ProblemsHolder
 import org.jetbrains.kotlin.backend.common.descriptors.isSuspend
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.ASSOCIATE
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.ASSOCIATE_TO
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.JOIN_TO
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MAP
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MAP_NOT_NULL
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MAX
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MAX_BY
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MAX_BY_OR_NULL
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MAX_OR_NULL
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MIN
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MIN_BY
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MIN_BY_OR_NULL
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MIN_OR_NULL
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.SUM
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.SUM_OF
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.group
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.ASSOCIATE
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.ASSOCIATE_TO
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.JOIN_TO
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MAP
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MAP_NOT_NULL
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MAX
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MAX_BY
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MAX_BY_OR_NULL
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MAX_OR_NULL
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MIN
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MIN_BY
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MIN_BY_OR_NULL
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.MIN_OR_NULL
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.SUM
-import org.jetbrains.kotlin.idea.inspections.collections.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.js.resolve.JsPlatformAnalyzerServices
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -45,7 +48,10 @@ import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 class SimplifiableCallChainInspection : AbstractCallChainChecker() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitorVoid {
         return qualifiedExpressionVisitor(fun(expression) {
-            var conversion = findQualifiedConversion(expression, conversionGroups) check@{ conversion, firstResolvedCall, _, context ->
+            var conversion = findQualifiedConversion(
+                expression,
+                CallChainConversions.conversionGroups
+            ) check@{ conversion, firstResolvedCall, _, context ->
                 // Do not apply on maps due to lack of relevant stdlib functions
                 val firstReceiverType = firstResolvedCall.resultingDescriptor?.extensionReceiverParameter?.type
                 if (firstReceiverType != null) {
@@ -184,6 +190,4 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
         if (associateFunction != AssociateFunction.ASSOCIATE_WITH && associateFunction != AssociateFunction.ASSOCIATE_BY) return null
         return associateFunction to associateFunction.name(isAssociateTo)
     }
-
-    private val conversionGroups = CallChainConversions.conversionsList.group()
 }
