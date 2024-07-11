@@ -108,7 +108,7 @@ class SettingTransferProductService(
     }
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
     try {
       val info = loadProductInfos()[productId] ?: error(ImportSettingsBundle.message("transfer.error.product-not-found", productId))
       val product = info.product
@@ -139,8 +139,8 @@ class SettingTransferProductService(
     }
   }
 
-  private fun applyPreferences(product: IdeVersion, toApply: List<DataForSave>) {
-    val selectedIds = toApply.asSequence().map { it.id }.toSet()
+  private fun applyPreferences(product: IdeVersion, toApply: DataToApply) {
+    val selectedIds = toApply.importSettings.asSequence().map { it.id }.toSet()
     val settings = product.settingsCache
     val preferences = settings.preferences
     preferences[SettingsPreferencesKind.Laf] = selectedIds.contains(TransferableSetting.UI_ID)
@@ -148,6 +148,9 @@ class SettingTransferProductService(
     preferences[SettingsPreferencesKind.Keymap] = selectedIds.contains(TransferableSetting.KEYMAP_ID)
     preferences[SettingsPreferencesKind.Plugins] = selectedIds.contains(TransferableSetting.PLUGINS_ID)
     preferences[SettingsPreferencesKind.RecentProjects] = selectedIds.contains(TransferableSetting.RECENT_PROJECTS_ID)
+
+    val featuredPluginsToAdd = toApply.featuredPluginIds.asSequence().map { it to PluginFeature(null, it, it) }
+    settings.plugins.putAll(featuredPluginsToAdd)
 
     val featuresToRemove = settings.plugins.asSequence().filter { (_, feature) ->
       when (feature) {

@@ -4,12 +4,14 @@ package com.intellij.ide.startup.importSettings.jb
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.chooser.ui.SettingsImportOrigin
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.startup.importSettings.transfer.TransferSettingsProgress
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
@@ -18,12 +20,20 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.ProgressPipe
+import com.intellij.platform.util.progress.RawProgressReporter
+import com.intellij.platform.util.progress.createProgressPipe
+import com.intellij.platform.util.progress.reportRawProgress
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -86,18 +96,18 @@ internal data class JbProductInfo(
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun prefetchPluginDescriptors(coroutineScope: CoroutineScope, context: DescriptorListLoadingContext) {
-    JbImportServiceImpl.LOG.debug("Prefetching plugin descriptors from $pluginDir")
+    logger.debug("Prefetching plugin descriptors from $pluginDir")
     val descriptorDeferreds = loadCustomDescriptorsFromDirForImportSettings(scope = coroutineScope, dir = pluginDir, context = context)
     descriptors2ProcessCnt.set(descriptorDeferreds.size)
-    JbImportServiceImpl.LOG.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
+    logger.debug { "There are ${descriptorDeferreds.size} plugins in $pluginDir" }
     val disabledPluginsFile: Path = configDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)
-    val disabledPlugins = if (Files.exists(disabledPluginsFile)) tryReadPluginIdsFromFile(disabledPluginsFile, JbImportServiceImpl.LOG) else setOf()
+    val disabledPlugins = if (Files.exists(disabledPluginsFile)) tryReadPluginIdsFromFile(disabledPluginsFile, logger) else setOf()
     for (def in descriptorDeferreds) {
       def.invokeOnCompletion {
         val descr = def.getCompleted()
         if (descr != null) {
           if (disabledPlugins.contains(descr.pluginId)) {
-            JbImportServiceImpl.LOG.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
+            logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
           }
           else {
             descriptorsMap[descr.pluginId] = descr
@@ -117,14 +127,14 @@ internal data class JbProductInfo(
 
   private fun isCompatible(descriptor: IdeaPluginDescriptorImpl): Boolean {
     if (PluginManagerCore.getPluginSet().isPluginEnabled(descriptor.pluginId)) {
-      JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" is already present in \"${IDEData.getSelf()?.fullName}\"")
+      logger.info("Plugin \"${descriptor.name}\" from \"$name\" is already present in \"${IDEData.getSelf()?.fullName}\"")
       return false
     }
 
     // check for incompatibilities
     for (ic in descriptor.incompatibilities) {
       if (PluginManagerCore.getPluginSet().isPluginEnabled(ic)) {
-        JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
+        logger.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
                                      "because it is incompatible with ${ic}")
         return false
       }
@@ -135,7 +145,7 @@ internal data class JbProductInfo(
       if (dependency.isOptional)
         continue
       if (!(PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId) || descriptorsMap.containsKey(dependency.pluginId))) {
-        JbImportServiceImpl.LOG.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
+        logger.info("Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\", " +
                                      "because of the missing required dependency: ${dependency.pluginId}")
         return false
       }
@@ -145,7 +155,7 @@ internal data class JbProductInfo(
 
   fun getPluginsDescriptors(): ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl> {
     if (descriptors2ProcessCnt.get() != 0) {
-      JbImportServiceImpl.LOG.warn("There are $descriptors2ProcessCnt custom plugins that are not yet processed!")
+      logger.warn("There are $descriptors2ProcessCnt custom plugins that are not yet processed!")
     }
     return descriptorsMap
   }
@@ -194,7 +204,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       return hasDataProcessed.await()
     }
     finally {
-      LOG.info("Checking for JB IDE data to import took ${System.currentTimeMillis() - startTime}ms.")
+      logger.info("Checking for JB IDE data to import took ${System.currentTimeMillis() - startTime}ms.")
     }
   }
 
@@ -210,7 +220,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     coroutineScope.async(modalityState.asContextElement()) {
       val importer = JbSettingsImporter(folderPath, folderPath, null)
       importer.importRaw()
-      LOG.info("Performing raw import from '$folderPath'")
+      logger.info("Performing raw import from '$folderPath'")
       withContext(Dispatchers.EDT) {
         ApplicationManager.getApplication().invokeLater({
                                                           ApplicationManagerEx.getApplicationEx().restart(true)
@@ -228,7 +238,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         }
       }
       catch (tce: TimeoutCancellationException) {
-        LOG.info("Timeout waiting for products warmUp. Will show what we have now: ${tce.message}")
+        logger.info("Timeout waiting for products warmUp. Will show what we have now: ${tce.message}")
       }
       filterProducts(old = false).also {
         ImportSettingsEventsCollector.actualJbIdes(it.map(
@@ -277,7 +287,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         .sortedByDescending { it.getLastModifiedTime() }
       for (confDir in configDirectoriesCandidates) {
         if (PathManager.getConfigDir() == confDir) continue
-        LOG.info("Found ${confDir.name} under ${parentDir.pathString}")
+        logger.info("Found ${confDir.name} under ${parentDir.pathString}")
         val jbProductInfo: JbProductInfo = toJbProductInfo(confDir) ?: continue
         jbProductInfo.prefetchData(coroutineScope, context)
         products[confDir.name] = jbProductInfo
@@ -296,17 +306,17 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                             .filter { confDir.name.startsWith(it) }
                             .sortedByDescending { it.length }
                             .firstOrNull() ?: run {
-      LOG.info("$confDir is not prefixed with with any known IDE name. Skipping it")
+      logger.info("$confDir is not prefixed with with any known IDE name. Skipping it")
       return null
     }
     val ideVersion = confDir.name.substring(ideName.length)
     if (ideVersion.isEmpty()) {
-      LOG.info("$confDir doesn't contain any version info. Skipping it")
+      logger.info("$confDir doesn't contain any version info. Skipping it")
       return null
     }
     val optionsDir = confDir / PathManager.OPTIONS_DIRECTORY
     if (!optionsDir.isDirectory()) {
-      LOG.info("${confDir.name} doesn't contain options directory, skipping it")
+      logger.info("${confDir.name} doesn't contain options directory, skipping it")
       return null
     }
     var lastModified: FileTime? = null
@@ -319,11 +329,11 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
     }
     if (lastModified == null) {
-      LOG.info("${confDir.name}/options has no xml files, skipping it")
+      logger.info("${confDir.name}/options has no xml files, skipping it")
       return null
     }
 
-    LOG.info("${optionsDir}' newest file is dated $lastModified")
+    logger.info("${optionsDir}' newest file is dated $lastModified")
     val fullName = NameMappings.getFullName(ideName)
     if (fullName == null) {
       return null
@@ -336,7 +346,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   override fun getSettings(itemId: String): List<JbSettingsCategory> {
-    LOG.info("User has selected $itemId")
+    logger.info("User has selected $itemId")
     val productInfo = products[itemId] ?: error("Can't find product")
     val plugins = arrayListOf<ChildSetting>()
     val pluginNames = arrayListOf<String>()
@@ -344,7 +354,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       plugins.add(JbChildSetting(entry.key.idString, entry.value.name))
       pluginNames.add(entry.value.name)
     }
-    LOG.info("Found ${pluginNames.size} custom plugins: ${pluginNames.joinToString()}")
+    logger.info("Found ${pluginNames.size} custom plugins: ${pluginNames.joinToString()}")
     val pluginsCategory = JbSettingsCategoryConfigurable(SettingsCategory.PLUGINS, StartupImportIcons.Icons.Plugin,
                                                          ImportSettingsBundle.message("settings.category.plugins.name"),
                                                          ImportSettingsBundle.message("settings.category.plugins.description"),
@@ -377,12 +387,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     return NameMappings.getIcon(productInfo.codeName, size)
   }
 
-  override fun importSettings(productId: String, saveDataList: List<DataForSave>): DialogImportData {
+  override fun importSettings(productId: String, dataToApply: DataToApply): DialogImportData {
     val productInfo = products[productId] ?: error("Can't find product")
     val filteredCategories = mutableSetOf<SettingsCategory>()
     var plugins2import: Map<PluginId, IdeaPluginDescriptorImpl>? = null
     var unselectedPlugins: List<String>? = null
-    for (data in saveDataList) {
+    for (data in dataToApply.importSettings) {
       if (data.id == SettingsCategory.PLUGINS.name) {
         // plugins category must be added as well, some PSC's use it, for instance KotlinNotebookApplicationOptionsProvider
         filteredCategories.add(SettingsCategory.PLUGINS)
@@ -390,7 +400,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
           data.selectedChildIds?.contains(it.key.idString) ?: false
         }
         unselectedPlugins = data.unselectedChildIds
-        LOG.info("Will import ${data.selectedChildIds?.size} custom plugins: ${data.selectedChildIds?.joinToString()}\n" +
+        logger.info("Will import ${data.selectedChildIds?.size} custom plugins: ${data.selectedChildIds?.joinToString()}\n" +
                  "${data.unselectedChildIds?.size} plugins will be skipped: ${data.unselectedChildIds?.joinToString()}")
       }
       else {
@@ -398,7 +408,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         filteredCategories.add(category)
       }
     }
-    LOG.info("Will import the following categories: ${filteredCategories.joinToString()}")
+    logger.info("Will import the following categories: ${filteredCategories.joinToString()}")
 
     val allRoamableCategories = DEFAULT_SETTINGS_CATEGORIES.values
     val importEverything = filteredCategories.containsAll(allRoamableCategories)
@@ -416,7 +426,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       progressIndicator.cancel()
       importStartedDeferred?.apply {
         runWithModalProgressBlocking(ModalTaskOwner.guess(), ImportSettingsBundle.message("progress.title.cancelling")) {
-          LOG.info("Cancelling import. Waiting for the current task to be finished")
+          logger.info("Cancelling import. Waiting for the current task to be finished")
           join()
         }
       }
@@ -426,17 +436,18 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     importStartedDeferred = coroutineScope.async(modalityState.asContextElement()) {
       suspend fun performImport(): Boolean {
         if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
-          LOG.info("Started importing all...")
+          logger.info("Started importing all...")
           progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
           //TODO support plugin list customization for raw import
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
           ImportSettingsEventsCollector.jbRawSelected(productInfo.codeName)
           importer.importRaw()
+          installPlugins(plugins2import?.keys.orEmpty(), dataToApply.featuredPluginIds, progressIndicator)
           return true
         }
         else {
           try {
-            LOG.info("Starting migration...")
+            logger.info("Starting migration...")
             var restartRequired = false
             ImportSettingsEventsCollector.jbImportStarted(
               productInfo.codeName,
@@ -446,17 +457,17 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
             )
             try {
               if (!plugins2import.isNullOrEmpty()) {
-                LOG.info("Started importing plugins...")
+                logger.info("Started importing plugins...")
                 restartRequired = true
                 val pluginsStartTime = System.currentTimeMillis()
                 importer.installPlugins(coroutineScope, progressIndicator, plugins2import)
                 (System.currentTimeMillis() - pluginsStartTime).let {
-                  LOG.info("Plugins migrated in $it ms.")
+                  logger.info("Plugins migrated in $it ms.")
                   ImportSettingsEventsCollector.jbPluginsImportTimeSpent(it)
                 }
               }
               if (progressIndicator.isCanceled()) {
-                LOG.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
+                logger.info("Import cancelled after importing the plugins. ${if (restartRequired) "Will now restart." else ""}")
                 return restartRequired
               }
               progressIndicator.text = ImportSettingsBundle.message("progress.text.migrating.options")
@@ -465,31 +476,34 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
                 restartRequired = true
               }
               (System.currentTimeMillis() - optionsStartTime).let {
-                LOG.info("Options migrated in $it ms.")
+                logger.info("Options migrated in $it ms.")
                 ImportSettingsEventsCollector.jbOptionsImportTimeSpent(it)
+              }
+              if (installPlugins(plugins2import?.keys.orEmpty(), dataToApply.featuredPluginIds, progressIndicator)) {
+                restartRequired = true
               }
             }
             catch (pce: ProcessCanceledException) {
-              LOG.info("Import cancelled")
+              logger.info("Import cancelled")
               return restartRequired
             }
             progressIndicator.fraction = 0.99
             storeImportConfig(productInfo.configDir, filteredCategories, plugins2import?.keys?.map { it.idString })
             (System.currentTimeMillis() - startTime).let {
-              LOG.info("Imported finished in $it ms.")
+              logger.info("Imported finished in $it ms.")
               ImportSettingsEventsCollector.jbTotalImportTimeSpent(it)
             }
             return restartRequired
           }
           catch (th: Throwable) {
-            LOG.warn("An exception occurred during settings import", th)
+            logger.warn("An exception occurred during settings import", th)
             return true
           }
         }
       }
 
       fun restartIde() {
-        LOG.info("Calling restart...")
+        logger.info("Calling restart...")
         ApplicationManager.getApplication().invokeLater({
                                                           ImportSettingsEventsCollector.importFinished()
                                                           ApplicationManagerEx.getApplicationEx().restart(true)
@@ -497,7 +511,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
       }
 
       fun closeImportDialog() {
-        LOG.info("Proceeding to the normal IDE startup")
+        logger.info("Proceeding to the normal IDE startup")
         SettingsService.getInstance().doClose.fire(Unit)
       }
 
@@ -506,13 +520,13 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         shouldRestart = performImport()
       } catch (e: Throwable) {
         if (e is CancellationException || e is ProcessCanceledException) {
-          LOG.info("Import cancellation detected. Proceeding normally without restart.")
+          logger.info("Import cancellation detected. Proceeding normally without restart.")
         } else {
-          LOG.error("Import error. Proceeding normally without restart.", e)
+          logger.error("Import error. Proceeding normally without restart.", e)
         }
       }
 
-      LOG.info("Finishing the import process, shouldRestart=$shouldRestart")
+      logger.info("Finishing the import process, shouldRestart=$shouldRestart")
       withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         if (shouldRestart) {
           restartIde()
@@ -526,7 +540,6 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   }
 
   companion object {
-    internal val LOG = logger<JbImportServiceImpl>()
     internal val IDE_NAME_PATTERN = Pattern.compile("""([a-zA-Z]+)(20\d\d\.\d)""")
     private val DEFAULT_SETTINGS_FILES = setOf(
       GeneralSettings.IDE_GENERAL_XML,
@@ -560,3 +573,100 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
 
 }
+
+private suspend fun installPlugins(
+  alreadyInstalled: Set<PluginId>,
+  toInstall: List<String>,
+  progressIndicator: ProgressIndicator
+): Boolean {
+  if (progressIndicator.isCanceled || toInstall.isEmpty()) return false
+
+  logger.info("Requested plugin installation for ${toInstall.size} featured plugins: ${toInstall.joinToString()}.")
+  var shouldRestart = false
+  coroutineScope {
+    val pipe = createProgressPipe()
+    connect(pipe, progressIndicator)
+
+    val pluginsToInstall = logger.runAndLogException { calculatePluginsToInstall(alreadyInstalled, toInstall) } ?: return@coroutineScope
+    logger.info("Installing ${pluginsToInstall.size} plugins: ${pluginsToInstall.joinToString()}.")
+
+    for (plugin in pluginsToInstall) {
+      if (progressIndicator.isCanceled) return@coroutineScope
+      val restartAfterPlugin = logger.runAndLogException { installPlugin(plugin) } ?: false
+      if (restartAfterPlugin) {
+        logger.info("Plugin ${plugin.pluginId} requested restart after import.")
+      }
+      shouldRestart = shouldRestart || restartAfterPlugin
+    }
+  }
+  return shouldRestart
+}
+
+private fun CoroutineScope.connect(pipe: ProgressPipe, indicator: ProgressIndicator) {
+  launch {
+    pipe.progressUpdates().collect { update ->
+      indicator.text = update.text
+      indicator.text2 = update.details
+      indicator.fraction = update.fraction ?: 0.0
+      indicator.isIndeterminate = update.fraction == 0.0
+    }
+  }
+}
+
+private suspend fun calculatePluginsToInstall(alreadyInstalled: Set<PluginId>, toInstall: List<String>): List<PluginNode> {
+  reportRawProgress { reporter ->
+    val pluginsToAttemptInstallation = (toInstall.map(PluginId::getId) - alreadyInstalled)
+      .filter { !PluginManagerCore.isPluginInstalled(it) }
+    if (pluginsToAttemptInstallation.isEmpty()) return emptyList()
+
+    reporter.text(ImportSettingsBundle.message("plugin-installation.progress.determining-plugins-to-download"))
+    val loadedPlugins = withContext(Dispatchers.IO) {
+      MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginsToAttemptInstallation.toSet(), null, true)
+    }
+
+    return loadedPlugins
+  }
+}
+
+private suspend fun installPlugin(plugin: IdeaPluginDescriptor): Boolean {
+  val downloader = PluginDownloader.createDownloader(plugin).withErrorsConsumer { problem ->
+    logger.warn("Error while downloading plugin ${plugin.pluginId}: $problem")
+  }
+  return reportRawProgress { reporter ->
+    withContext(Dispatchers.IO) {
+      downloader.prepareToInstall(reporter.toBridgeIndicator())
+    }
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      downloader.installDynamically(null)
+    }
+  }
+}
+
+@Suppress("UsagesOfObsoleteApi")
+private fun RawProgressReporter.toBridgeIndicator(): ProgressIndicator {
+  val reporter = this
+  return object : AbstractProgressIndicatorExBase() {
+    override fun setText(text: String?) {
+      super.setText(text)
+      reporter.text(text)
+    }
+
+    override fun setText2(text: String?) {
+      super.setText2(text)
+      reporter.details(text)
+    }
+
+    override fun setIndeterminate(indeterminate: Boolean) {
+      super.setIndeterminate(indeterminate)
+      if (indeterminate)
+        reporter.fraction(null)
+    }
+
+    override fun setFraction(fraction: Double) {
+      super.setFraction(fraction)
+      reporter.fraction(fraction)
+    }
+  }
+}
+
+private val logger = logger<JbImportServiceImpl>()

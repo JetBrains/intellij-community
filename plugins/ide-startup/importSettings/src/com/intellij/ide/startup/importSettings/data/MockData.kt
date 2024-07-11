@@ -219,8 +219,8 @@ class TestJbService private constructor(): JbService {
     TODO("Not yet implemented")
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
     return importFromProduct
   }
 
@@ -286,8 +286,8 @@ class TestExternalProductService : ExternalProductService {
     return TestJbService.settings
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
     return TestJbService.simpleImport
   }
 }
@@ -334,8 +334,8 @@ class TestSyncService : SyncService {
     return TestJbService.importFromProduct
   }
 
-  override fun importSettings(productId: String, data: List<DataForSave>): DialogImportData {
-    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.size}")
+  override fun importSettings(productId: String, data: DataToApply): DialogImportData {
+    LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
     return TestJbService.importFromProduct
   }
 
