@@ -123,6 +123,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(RenameModToRemFixFactory.deprecatedBinaryModFactory)
         registerFactory(RenameModToRemFixFactory.forbiddenBinaryModFactory)
         registerFactory(AddEmptyArgumentListFixFactory.addEmptyArgumentListFixFactory)
+        registerFactory(KaFirDiagnostic.UnresolvedLabel::class, CreateLabelFixFactory.createLabelFixFactory)
     }
 
     private val addAbstract = KtQuickFixesListBuilder.registerPsiQuickFix {

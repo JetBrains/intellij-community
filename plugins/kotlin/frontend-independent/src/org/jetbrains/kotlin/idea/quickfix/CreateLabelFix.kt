@@ -1,11 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
@@ -67,30 +65,17 @@ sealed class CreateLabelFix(
         }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
-        private fun KtLabelReferenceExpression.getContainingLoops(): Sequence<KtLoopExpression> {
+    companion object {
+        fun KtLabelReferenceExpression.getContainingLoops(): Sequence<KtLoopExpression> {
             return parents
                 .takeWhile { !(it is KtDeclarationWithBody || it is KtClassBody || it is KtFile) }
                 .filterIsInstance<KtLoopExpression>()
         }
 
-        private fun KtLabelReferenceExpression.getContainingLambdas(): Sequence<KtLambdaExpression> {
+        fun KtLabelReferenceExpression.getContainingLambdas(): Sequence<KtLambdaExpression> {
             return parents
                 .takeWhile { !(it is KtDeclarationWithBody && it !is KtFunctionLiteral || it is KtClassBody || it is KtFile) }
                 .filterIsInstance<KtLambdaExpression>()
-        }
-
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val labelReferenceExpression = diagnostic.psiElement as? KtLabelReferenceExpression ?: return null
-            return when ((labelReferenceExpression.parent as? KtContainerNode)?.parent) {
-                is KtBreakExpression, is KtContinueExpression -> {
-                    if (labelReferenceExpression.getContainingLoops().any()) ForLoop(labelReferenceExpression) else null
-                }
-                is KtReturnExpression -> {
-                    if (labelReferenceExpression.getContainingLambdas().any()) ForLambda(labelReferenceExpression) else null
-                }
-                else -> null
-            }
         }
     }
 }

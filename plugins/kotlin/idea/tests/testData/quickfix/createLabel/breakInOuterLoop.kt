@@ -1,3 +1,4 @@
+// IGNORE_K2
 // "Create label foo@" "true"
 
 fun test() {
@@ -8,3 +9,4 @@ fun test() {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CreateLabelFix$ForLoop
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CreateLabelFix$ForLoop

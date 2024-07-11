@@ -639,7 +639,7 @@ class QuickFixRegistrar : QuickFixContributor {
         UNRESOLVED_REFERENCE.registerFactory(AddSuspendModifierFix.UnresolvedReferenceFactory)
         UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(AddSuspendModifierFix.UnresolvedReferenceFactory)
 
-        UNRESOLVED_REFERENCE.registerFactory(CreateLabelFix)
+        UNRESOLVED_REFERENCE.registerFactory(CreateLabelFixFactory)
         YIELD_IS_RESERVED.registerFactory(UnsupportedYieldFix)
         INVALID_TYPE_OF_ANNOTATION_MEMBER.registerFactory(TypeOfAnnotationMemberFixFactory)
 

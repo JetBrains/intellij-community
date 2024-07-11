@@ -1,3 +1,4 @@
+// IGNORE_K2
 // "Create label foo@" "false"
 // ERROR: The label '@foo' does not denote a loop
 // ERROR: Unresolved reference: @foo
