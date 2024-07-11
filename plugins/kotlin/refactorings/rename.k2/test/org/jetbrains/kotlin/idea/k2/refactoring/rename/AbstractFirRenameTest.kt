@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.refactoring.rename.AbstractRenameTest
@@ -38,7 +38,7 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
     override fun checkForUnexpectedErrors(ktFile: KtFile) {}
 
     override fun findPsiDeclarationToRename(contextFile: KtFile, target: KotlinTarget): PsiElement = analyze(contextFile) {
-        fun getContainingMemberSymbol(classId: ClassId): KaSymbolWithMembers {
+        fun getContainingMemberSymbol(classId: ClassId): KaDeclarationContainerSymbol {
             getClassOrObjectSymbolByClassId(classId)?.let { return it }
             val parentSymbol = getClassOrObjectSymbolByClassId(classId.parentClassId!!)!!
 

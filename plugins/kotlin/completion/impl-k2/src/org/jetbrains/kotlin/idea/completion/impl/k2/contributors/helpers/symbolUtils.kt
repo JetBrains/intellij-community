@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.idea.references.KtReference
 
 /**
@@ -26,7 +26,7 @@ internal fun getStaticScopes(reference: KtReference): List<KaScopeWithKind> {
 
     return reference.resolveToSymbols().mapNotNull { symbol ->
         when (symbol) {
-            is KaSymbolWithMembers -> {
+            is KaDeclarationContainerSymbol -> {
                 val scope = if (symbol is KaNamedClassSymbol && symbol.classKind.isObject) {
                     symbol.memberScope
                 } else {

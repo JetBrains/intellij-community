@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
@@ -168,7 +168,7 @@ sealed class K2MoveRenameUsageInfo(
                         else -> {}
                     }
                 }
-                if (containingSymbol is KaSymbolWithMembers) {
+                if (containingSymbol is KaDeclarationContainerSymbol) {
                     if (resolvedSymbol in containingSymbol.staticMemberScope.getAllSymbols()) return true
                 }
                 return false
