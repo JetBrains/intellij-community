@@ -62,6 +62,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
   private static final Interner<String> ourEDTWarnsInterner = Interner.createStringInterner();
+  private static boolean ourIsCapturingSnapshot;
 
   private final ComponentRef myComponentRef;
   private final AtomicReference<KeyFMap> myUserData;
@@ -69,6 +70,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
   private final DataManagerImpl myDataManager;
   private final int myDataKeysCount;
 
+  /** @noinspection AssignmentToStaticFieldFromInstanceMethod*/
   PreCachedDataContext(@Nullable Component component) {
     myComponentRef = new ComponentRef(component);
     myUserData = new AtomicReference<>(KeyFMap.EMPTY_MAP);
@@ -106,6 +108,7 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
         int keyCount;
         FList<ProviderData> cachedData;
         MySink sink = new MySink();
+        ourIsCapturingSnapshot = true;
         try (AccessToken ignore = SlowOperations.startSection(SlowOperations.FORCE_ASSERT)) {
           while (true) {
             sink.keys = null;
@@ -115,6 +118,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
             // retry if providers add new keys
             if (keyCount == DataKey.allKeysCount()) break;
           }
+        }
+        finally {
+          ourIsCapturingSnapshot = false;
         }
         myDataKeysCount = keyCount;
         myCachedData = cachedData;
@@ -183,6 +189,9 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
     if (myCachedData.isEmpty()) return null;
 
     boolean isEDT = EDT.isCurrentThreadEdt();
+    if (isEDT && ourIsCapturingSnapshot) {
+      reportGetDataInsideCapturingSnapshot();
+    }
     boolean noRulesSection = isEDT && ActionUpdater.Companion.isNoRulesInEDTSection();
     boolean rulesSuppressed = isEDT && LoadingState.COMPONENTS_LOADED.isOccurred() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     boolean rulesAllowed = !CommonDataKeys.PROJECT.is(dataId) && !rulesSuppressed && !noRulesSection;
@@ -260,6 +269,10 @@ class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnAction
       }
     }
     return answer;
+  }
+
+  private static void reportGetDataInsideCapturingSnapshot() {
+    LOG.error("DataContext must not be queried during another DataContext creation");
   }
 
   private static void reportValueProvidedByRulesUsage(@NotNull String dataId, boolean error) {
