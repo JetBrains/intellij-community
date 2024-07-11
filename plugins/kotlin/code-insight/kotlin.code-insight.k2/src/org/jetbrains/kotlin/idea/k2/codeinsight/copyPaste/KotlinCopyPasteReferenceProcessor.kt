@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports.reviewAddedImports
@@ -117,7 +117,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 withBackgroundProgress(project, KotlinBundle.message("copy.paste.resolve.pasted.references"), cancellable = true) {
                     // Step 2. Resolve references in source file.
                     val resolvedSourceReferences = readAction {
-                        analyzeCopy(sourceFileCopy, DanglingFileResolutionMode.PREFER_SELF) {
+                        analyzeCopy(sourceFileCopy, KaDanglingFileResolutionMode.PREFER_SELF) {
                             Helper.getResolvedSourceReferencesThatMightRequireRestoring(sourceFileCopy, sourceReferenceInfos, sourceRanges)
                         }
                     }
