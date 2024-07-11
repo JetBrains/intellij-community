@@ -11,7 +11,7 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
-import com.intellij.platform.ide.newUiOnboarding.OnboardingStatisticsUtil.OnboardingStopReason
+import com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics.OnboardingStopReason
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
