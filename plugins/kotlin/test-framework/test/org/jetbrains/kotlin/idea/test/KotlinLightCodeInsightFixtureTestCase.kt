@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.facet.hasKotlinFacet
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -567,7 +568,7 @@ private fun configureLanguageAndApiVersion(
             this.apiVersion = null
         }
 
-        facet.configureFacet(compilerVersion, null, modelsProvider)
+        facet.configureFacet(compilerVersion, module.platform, modelsProvider)
         if (apiVersion != null) {
             facet.configuration.settings.apiLevel = LanguageVersion.fromVersionString(apiVersion.versionString)
         }
