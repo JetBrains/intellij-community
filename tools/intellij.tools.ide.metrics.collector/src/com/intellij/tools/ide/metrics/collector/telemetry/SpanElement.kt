@@ -3,9 +3,10 @@
 package com.intellij.tools.ide.metrics.collector.telemetry
 
 import kotlinx.serialization.Contextual
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 import java.time.Instant
-import kotlin.math.roundToLong
 import kotlin.time.Duration
 
 /**
@@ -37,20 +38,28 @@ internal fun toSpanElement(span: SpanData): SpanElement {
   return SpanElement(
     isWarmup = isWarmup(tags),
     name = span.operationName,
-    duration = span.duration,
-    startTimestamp = span.startTime,
+    duration = span.durationNano,
+    startTimestamp = span.startTimeNano,
     spanId = span.spanID,
     parentSpanId = span.getParentSpanId(),
     tags = tags,
   )
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class SpanData(
   @JvmField val spanID: String,
   @JvmField val operationName: String,
-  @Contextual val duration: Duration,
-  @Contextual val startTime: Instant,
+
+  // see com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter.export
+  //@Serializable(with = DurationSerializer::class)
+  @JsonNames("duration")
+  @Contextual val durationNano: Duration,
+  //@Serializable(with = InstantSerializer::class)
+  @JsonNames("startTime")
+  @Contextual val startTimeNano: Instant,
+
   @JvmField val references: List<SpanRef> = emptyList(),
   @JvmField val tags: List<SpanTag> = emptyList(),
 )

@@ -31,7 +31,7 @@ class JaegerJsonSpanExporter(
   serviceVersion: String? = null,
   serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
-  override val exporterVersion: Int = 1
+  override val exporterVersion: Int = 2
 
   private val fileChannel: FileChannel
   private val writer: JsonGenerator
@@ -67,8 +67,11 @@ class JaegerJsonSpanExporter(
         writer.writeStringField("spanID", span.spanId)
         writer.writeStringField("operationName", span.name)
         writer.writeStringField("processID", "p1")
-        writer.writeNumberField("startTime", span.startEpochNanos) // in nanoseconds
-        writer.writeNumberField("duration", span.endEpochNanos - span.startEpochNanos) // in nanoseconds
+        writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startEpochNanos)) // in microseconds (Jaeger format)
+        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endEpochNanos - span.startEpochNanos)) // // in microseconds (Jaeger format)
+        writer.writeNumberField("startTimeNano", span.startEpochNanos) // in nanoseconds
+        writer.writeNumberField("durationNano", span.endEpochNanos - span.startEpochNanos) // in nanoseconds
+
         val parentContext = span.parentSpanContext
         val hasError = span.status.statusCode == StatusData.error().statusCode
 

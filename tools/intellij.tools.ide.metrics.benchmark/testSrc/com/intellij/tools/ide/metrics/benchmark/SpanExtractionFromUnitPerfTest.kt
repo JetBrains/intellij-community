@@ -107,7 +107,8 @@ class SpanExtractionFromUnitPerfTest {
     jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
   }
 
-  fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) = runBlocking {
+  @Test
+  fun `unit perf test metrics extraction - nanosecond precision`(testInfo: TestInfo) = runBlocking {
     val mainMetricName = "simple perf test"
 
     val extractedMetrics = BenchmarksSpanMetricsCollector(spanName = mainMetricName,

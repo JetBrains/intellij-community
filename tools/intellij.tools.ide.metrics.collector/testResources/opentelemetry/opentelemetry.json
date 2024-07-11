@@ -31,8 +31,8 @@
           "spanID": "89e4fa71b78af51f",
           "operationName": "execute projectOpened handlers",
           "processID": "p1",
-          "startTime": 1655221509433874,
-          "duration": 144856000,
+          "startTimeNano": 1655221509433874,
+          "durationNano": 144856000,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -46,8 +46,8 @@
           "spanID": "a5ab76406db6eb6c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221509579476,
-          "duration": 7000,
+          "startTimeNano": 1655221509579476,
+          "durationNano": 7000,
           "tags": [
             {
               "key": "class",
@@ -73,8 +73,8 @@
           "spanID": "d2d0639d63a96e48",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221509581103,
-          "duration": 233000,
+          "startTimeNano": 1655221509581103,
+          "durationNano": 233000,
           "tags": [
             {
               "key": "class",
@@ -100,8 +100,8 @@
           "spanID": "ad6a6c2574234454",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221509581853,
-          "duration": 428000,
+          "startTimeNano": 1655221509581853,
+          "durationNano": 428000,
           "tags": [
             {
               "key": "class",
@@ -127,8 +127,8 @@
           "spanID": "143d5aabcb825c3b",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221509582718,
-          "duration": 3491000,
+          "startTimeNano": 1655221509582718,
+          "durationNano": 3491000,
           "tags": [
             {
               "key": "class",
@@ -154,8 +154,8 @@
           "spanID": "6a102bf3274fa0b5",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221509590321,
-          "duration": 2820000,
+          "startTimeNano": 1655221509590321,
+          "durationNano": 2820000,
           "tags": [
             {
               "key": "class",
@@ -181,8 +181,8 @@
           "spanID": "dae5b11e3e61ee78",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221509593591,
-          "duration": 1326521000,
+          "startTimeNano": 1655221509593591,
+          "durationNano": 1326521000,
           "tags": [
             {
               "key": "class",
@@ -208,8 +208,8 @@
           "spanID": "fb22cf114d5f9ebb",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221510923267,
-          "duration": 509000,
+          "startTimeNano": 1655221510923267,
+          "durationNano": 509000,
           "tags": [
             {
               "key": "class",
@@ -235,8 +235,8 @@
           "spanID": "a0a5d3df06677f7e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221510924402,
-          "duration": 599000,
+          "startTimeNano": 1655221510924402,
+          "durationNano": 599000,
           "tags": [
             {
               "key": "class",
@@ -262,8 +262,8 @@
           "spanID": "21d68323367356bc",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221510925056,
-          "duration": 2077000,
+          "startTimeNano": 1655221510925056,
+          "durationNano": 2077000,
           "tags": [
             {
               "key": "class",
@@ -289,8 +289,8 @@
           "spanID": "7eaf76723cc6cbb6",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221510927472,
-          "duration": 28557000,
+          "startTimeNano": 1655221510927472,
+          "durationNano": 28557000,
           "tags": [
             {
               "key": "class",
@@ -316,8 +316,8 @@
           "spanID": "c7ad6aa8aedcf7f2",
           "operationName": "run startup activities",
           "processID": "p1",
-          "startTime": 1655221509579418,
-          "duration": 1376642000,
+          "startTimeNano": 1655221509579418,
+          "durationNano": 1376642000,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -331,8 +331,8 @@
           "spanID": "fe9449fc5b6d7b92",
           "operationName": "StartupManager.projectOpened",
           "processID": "p1",
-          "startTime": 1655221509579312,
-          "duration": 1379883000,
+          "startTimeNano": 1655221509579312,
+          "durationNano": 1379883000,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -346,8 +346,8 @@
           "spanID": "94e2560d623255ab",
           "operationName": "open project",
           "processID": "p1",
-          "startTime": 1655221509230000,
-          "duration": 1730759000,
+          "startTimeNano": 1655221509230000,
+          "durationNano": 1730759000,
           "tags": [
             {
               "key": "project",
@@ -361,8 +361,8 @@
           "spanID": "a9d1665bca50009a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511008661,
-          "duration": 262000,
+          "startTimeNano": 1655221511008661,
+          "durationNano": 262000,
           "tags": [
             {
               "key": "class",
@@ -388,8 +388,8 @@
           "spanID": "d13c3e5d2b675184",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511010560,
-          "duration": 811000,
+          "startTimeNano": 1655221511010560,
+          "durationNano": 811000,
           "tags": [
             {
               "key": "class",
@@ -415,8 +415,8 @@
           "spanID": "80f20d5d3856bdba",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511026233,
-          "duration": 339000,
+          "startTimeNano": 1655221511026233,
+          "durationNano": 339000,
           "tags": [
             {
               "key": "class",
@@ -442,8 +442,8 @@
           "spanID": "a2d8e8a92536a19d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511030984,
-          "duration": 11000,
+          "startTimeNano": 1655221511030984,
+          "durationNano": 11000,
           "tags": [
             {
               "key": "class",
@@ -469,8 +469,8 @@
           "spanID": "ca76da1f4c7d178e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511034225,
-          "duration": 1705000,
+          "startTimeNano": 1655221511034225,
+          "durationNano": 1705000,
           "tags": [
             {
               "key": "class",
@@ -496,8 +496,8 @@
           "spanID": "ea7f9e63a08ddd43",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511036248,
-          "duration": 8000,
+          "startTimeNano": 1655221511036248,
+          "durationNano": 8000,
           "tags": [
             {
               "key": "class",
@@ -523,8 +523,8 @@
           "spanID": "cb3ec2673ac4125a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511037110,
-          "duration": 1652000,
+          "startTimeNano": 1655221511037110,
+          "durationNano": 1652000,
           "tags": [
             {
               "key": "class",
@@ -550,8 +550,8 @@
           "spanID": "671dfdf6e7d25d57",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511039305,
-          "duration": 47000,
+          "startTimeNano": 1655221511039305,
+          "durationNano": 47000,
           "tags": [
             {
               "key": "class",
@@ -577,8 +577,8 @@
           "spanID": "0d4eee6d01a839c1",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511039963,
-          "duration": 28000,
+          "startTimeNano": 1655221511039963,
+          "durationNano": 28000,
           "tags": [
             {
               "key": "class",
@@ -604,8 +604,8 @@
           "spanID": "8690f11bc9b198d8",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511040323,
-          "duration": 368000,
+          "startTimeNano": 1655221511040323,
+          "durationNano": 368000,
           "tags": [
             {
               "key": "class",
@@ -631,8 +631,8 @@
           "spanID": "1b3a2c7bbbdb6827",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511041507,
-          "duration": 11000,
+          "startTimeNano": 1655221511041507,
+          "durationNano": 11000,
           "tags": [
             {
               "key": "class",
@@ -658,8 +658,8 @@
           "spanID": "ae97c4db9c301993",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511042181,
-          "duration": 3421000,
+          "startTimeNano": 1655221511042181,
+          "durationNano": 3421000,
           "tags": [
             {
               "key": "class",
@@ -685,8 +685,8 @@
           "spanID": "c68f2eb2bc7e482f",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511046415,
-          "duration": 23665000,
+          "startTimeNano": 1655221511046415,
+          "durationNano": 23665000,
           "tags": [
             {
               "key": "class",
@@ -712,8 +712,8 @@
           "spanID": "55fa4a0582763dbc",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511074019,
-          "duration": 7281000,
+          "startTimeNano": 1655221511074019,
+          "durationNano": 7281000,
           "tags": [
             {
               "key": "class",
@@ -739,8 +739,8 @@
           "spanID": "f46ea8e053ff5a39",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511082880,
-          "duration": 8491000,
+          "startTimeNano": 1655221511082880,
+          "durationNano": 8491000,
           "tags": [
             {
               "key": "class",
@@ -766,8 +766,8 @@
           "spanID": "937a37f9e3d17e0e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511092942,
-          "duration": 4337000,
+          "startTimeNano": 1655221511092942,
+          "durationNano": 4337000,
           "tags": [
             {
               "key": "class",
@@ -793,8 +793,8 @@
           "spanID": "ffe51156111d779b",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511099110,
-          "duration": 8638000,
+          "startTimeNano": 1655221511099110,
+          "durationNano": 8638000,
           "tags": [
             {
               "key": "class",
@@ -820,8 +820,8 @@
           "spanID": "c1460322a9f497a5",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511109274,
-          "duration": 6032000,
+          "startTimeNano": 1655221511109274,
+          "durationNano": 6032000,
           "tags": [
             {
               "key": "class",
@@ -847,8 +847,8 @@
           "spanID": "9fa2d00af6b245bf",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511117151,
-          "duration": 294000,
+          "startTimeNano": 1655221511117151,
+          "durationNano": 294000,
           "tags": [
             {
               "key": "class",
@@ -874,8 +874,8 @@
           "spanID": "267d423ad027daf8",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511119122,
-          "duration": 1722000,
+          "startTimeNano": 1655221511119122,
+          "durationNano": 1722000,
           "tags": [
             {
               "key": "class",
@@ -901,8 +901,8 @@
           "spanID": "e48d6db2d6418ca0",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511122830,
-          "duration": 13422000,
+          "startTimeNano": 1655221511122830,
+          "durationNano": 13422000,
           "tags": [
             {
               "key": "class",
@@ -928,8 +928,8 @@
           "spanID": "da9e88af25d9e65a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511138172,
-          "duration": 28504000,
+          "startTimeNano": 1655221511138172,
+          "durationNano": 28504000,
           "tags": [
             {
               "key": "class",
@@ -955,8 +955,8 @@
           "spanID": "7743d0ab63a17334",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511168651,
-          "duration": 3431000,
+          "startTimeNano": 1655221511168651,
+          "durationNano": 3431000,
           "tags": [
             {
               "key": "class",
@@ -982,8 +982,8 @@
           "spanID": "b243ad2f4d3859c0",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511173947,
-          "duration": 37730000,
+          "startTimeNano": 1655221511173947,
+          "durationNano": 37730000,
           "tags": [
             {
               "key": "class",
@@ -1009,8 +1009,8 @@
           "spanID": "e653f2992004b223",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511213403,
-          "duration": 3393000,
+          "startTimeNano": 1655221511213403,
+          "durationNano": 3393000,
           "tags": [
             {
               "key": "class",
@@ -1036,8 +1036,8 @@
           "spanID": "583995a97be3e67b",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511218559,
-          "duration": 7545000,
+          "startTimeNano": 1655221511218559,
+          "durationNano": 7545000,
           "tags": [
             {
               "key": "class",
@@ -1063,8 +1063,8 @@
           "spanID": "93c3c685b7b476fd",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511227904,
-          "duration": 228000,
+          "startTimeNano": 1655221511227904,
+          "durationNano": 228000,
           "tags": [
             {
               "key": "class",
@@ -1090,8 +1090,8 @@
           "spanID": "746734a730acf48c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511230088,
-          "duration": 9078000,
+          "startTimeNano": 1655221511230088,
+          "durationNano": 9078000,
           "tags": [
             {
               "key": "class",
@@ -1117,8 +1117,8 @@
           "spanID": "c60a0818d59deb71",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511240798,
-          "duration": 31000,
+          "startTimeNano": 1655221511240798,
+          "durationNano": 31000,
           "tags": [
             {
               "key": "class",
@@ -1144,8 +1144,8 @@
           "spanID": "76b7314cd3c80f40",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511242568,
-          "duration": 52553000,
+          "startTimeNano": 1655221511242568,
+          "durationNano": 52553000,
           "tags": [
             {
               "key": "class",
@@ -1171,8 +1171,8 @@
           "spanID": "e7d98764c6724eb9",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511297654,
-          "duration": 872000,
+          "startTimeNano": 1655221511297654,
+          "durationNano": 872000,
           "tags": [
             {
               "key": "class",
@@ -1198,8 +1198,8 @@
           "spanID": "9dd64b0cf16e456d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511300198,
-          "duration": 16759000,
+          "startTimeNano": 1655221511300198,
+          "durationNano": 16759000,
           "tags": [
             {
               "key": "class",
@@ -1225,8 +1225,8 @@
           "spanID": "226ad056d6c16706",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511319072,
-          "duration": 22407000,
+          "startTimeNano": 1655221511319072,
+          "durationNano": 22407000,
           "tags": [
             {
               "key": "class",
@@ -1252,8 +1252,8 @@
           "spanID": "367dd09732709a3a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511347006,
-          "duration": 2478000,
+          "startTimeNano": 1655221511347006,
+          "durationNano": 2478000,
           "tags": [
             {
               "key": "class",
@@ -1279,8 +1279,8 @@
           "spanID": "bf750cb4fd0c16bc",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511351173,
-          "duration": 281000,
+          "startTimeNano": 1655221511351173,
+          "durationNano": 281000,
           "tags": [
             {
               "key": "class",
@@ -1306,8 +1306,8 @@
           "spanID": "8e1863ac34ab5653",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511353009,
-          "duration": 3231000,
+          "startTimeNano": 1655221511353009,
+          "durationNano": 3231000,
           "tags": [
             {
               "key": "class",
@@ -1333,8 +1333,8 @@
           "spanID": "0495aea547fe09f4",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511359846,
-          "duration": 16000,
+          "startTimeNano": 1655221511359846,
+          "durationNano": 16000,
           "tags": [
             {
               "key": "class",
@@ -1360,8 +1360,8 @@
           "spanID": "99065034b4459032",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511365973,
-          "duration": 41069000,
+          "startTimeNano": 1655221511365973,
+          "durationNano": 41069000,
           "tags": [
             {
               "key": "class",
@@ -1387,8 +1387,8 @@
           "spanID": "ea118e88483cdd5c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511408881,
-          "duration": 69711000,
+          "startTimeNano": 1655221511408881,
+          "durationNano": 69711000,
           "tags": [
             {
               "key": "class",
@@ -1414,8 +1414,8 @@
           "spanID": "b42bfa257d95699f",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511480425,
-          "duration": 4195000,
+          "startTimeNano": 1655221511480425,
+          "durationNano": 4195000,
           "tags": [
             {
               "key": "class",
@@ -1441,8 +1441,8 @@
           "spanID": "65b430285e05a60f",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511486351,
-          "duration": 4009000,
+          "startTimeNano": 1655221511486351,
+          "durationNano": 4009000,
           "tags": [
             {
               "key": "class",
@@ -1468,8 +1468,8 @@
           "spanID": "2225519deef1b04a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511492065,
-          "duration": 15540000,
+          "startTimeNano": 1655221511492065,
+          "durationNano": 15540000,
           "tags": [
             {
               "key": "class",
@@ -1495,8 +1495,8 @@
           "spanID": "bc841a65e36e2f25",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511509004,
-          "duration": 1239000,
+          "startTimeNano": 1655221511509004,
+          "durationNano": 1239000,
           "tags": [
             {
               "key": "class",
@@ -1522,8 +1522,8 @@
           "spanID": "9036cd6a6fe38754",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511510519,
-          "duration": 1137000,
+          "startTimeNano": 1655221511510519,
+          "durationNano": 1137000,
           "tags": [
             {
               "key": "class",
@@ -1549,8 +1549,8 @@
           "spanID": "4e6d620a9d09a7e8",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511512273,
-          "duration": 379000,
+          "startTimeNano": 1655221511512273,
+          "durationNano": 379000,
           "tags": [
             {
               "key": "class",
@@ -1576,8 +1576,8 @@
           "spanID": "00a6f01d0c2ef34c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511513548,
-          "duration": 2734000,
+          "startTimeNano": 1655221511513548,
+          "durationNano": 2734000,
           "tags": [
             {
               "key": "class",
@@ -1603,8 +1603,8 @@
           "spanID": "01da2402bd38afe1",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511516355,
-          "duration": 25537000,
+          "startTimeNano": 1655221511516355,
+          "durationNano": 25537000,
           "tags": [
             {
               "key": "class",
@@ -1630,8 +1630,8 @@
           "spanID": "688d00af63bf617e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511542523,
-          "duration": 263000,
+          "startTimeNano": 1655221511542523,
+          "durationNano": 263000,
           "tags": [
             {
               "key": "class",
@@ -1657,8 +1657,8 @@
           "spanID": "573a5efcbc3154ac",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511543285,
-          "duration": 278000,
+          "startTimeNano": 1655221511543285,
+          "durationNano": 278000,
           "tags": [
             {
               "key": "class",
@@ -1684,8 +1684,8 @@
           "spanID": "ca6411b28616ab16",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511543901,
-          "duration": 5516000,
+          "startTimeNano": 1655221511543901,
+          "durationNano": 5516000,
           "tags": [
             {
               "key": "class",
@@ -1711,8 +1711,8 @@
           "spanID": "f872666997e3d519",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511551230,
-          "duration": 2880000,
+          "startTimeNano": 1655221511551230,
+          "durationNano": 2880000,
           "tags": [
             {
               "key": "class",
@@ -1738,8 +1738,8 @@
           "spanID": "8859e0809a77d9f7",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511556228,
-          "duration": 4784000,
+          "startTimeNano": 1655221511556228,
+          "durationNano": 4784000,
           "tags": [
             {
               "key": "class",
@@ -1765,8 +1765,8 @@
           "spanID": "a12422fd8ba1c76a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511562367,
-          "duration": 237000,
+          "startTimeNano": 1655221511562367,
+          "durationNano": 237000,
           "tags": [
             {
               "key": "class",
@@ -1792,8 +1792,8 @@
           "spanID": "fc0c3bb66f62df2d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511564084,
-          "duration": 1671000,
+          "startTimeNano": 1655221511564084,
+          "durationNano": 1671000,
           "tags": [
             {
               "key": "class",
@@ -1819,8 +1819,8 @@
           "spanID": "84c41e3868a28dba",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511567180,
-          "duration": 44000,
+          "startTimeNano": 1655221511567180,
+          "durationNano": 44000,
           "tags": [
             {
               "key": "class",
@@ -1846,8 +1846,8 @@
           "spanID": "020ff89210c15363",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511568617,
-          "duration": 32000,
+          "startTimeNano": 1655221511568617,
+          "durationNano": 32000,
           "tags": [
             {
               "key": "class",
@@ -1873,8 +1873,8 @@
           "spanID": "0643d0a6d28d9411",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511569945,
-          "duration": 11000,
+          "startTimeNano": 1655221511569945,
+          "durationNano": 11000,
           "tags": [
             {
               "key": "class",
@@ -1900,8 +1900,8 @@
           "spanID": "6ce66af9ee490c18",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511571257,
-          "duration": 279000,
+          "startTimeNano": 1655221511571257,
+          "durationNano": 279000,
           "tags": [
             {
               "key": "class",
@@ -1927,8 +1927,8 @@
           "spanID": "dcd3f9e1d1e60384",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511572828,
-          "duration": 11000,
+          "startTimeNano": 1655221511572828,
+          "durationNano": 11000,
           "tags": [
             {
               "key": "class",
@@ -1954,8 +1954,8 @@
           "spanID": "531bf7b341a3f663",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511574132,
-          "duration": 12000,
+          "startTimeNano": 1655221511574132,
+          "durationNano": 12000,
           "tags": [
             {
               "key": "class",
@@ -1981,8 +1981,8 @@
           "spanID": "598db7d9aad23ad0",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511575453,
-          "duration": 10000,
+          "startTimeNano": 1655221511575453,
+          "durationNano": 10000,
           "tags": [
             {
               "key": "class",
@@ -2008,8 +2008,8 @@
           "spanID": "062f4b1e934510e3",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511576706,
-          "duration": 20000,
+          "startTimeNano": 1655221511576706,
+          "durationNano": 20000,
           "tags": [
             {
               "key": "class",
@@ -2035,8 +2035,8 @@
           "spanID": "d423fbc2f4fa4582",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511577767,
-          "duration": 15000,
+          "startTimeNano": 1655221511577767,
+          "durationNano": 15000,
           "tags": [
             {
               "key": "class",
@@ -2062,8 +2062,8 @@
           "spanID": "53d0e5b1b4d11d68",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511579067,
-          "duration": 13000,
+          "startTimeNano": 1655221511579067,
+          "durationNano": 13000,
           "tags": [
             {
               "key": "class",
@@ -2089,8 +2089,8 @@
           "spanID": "1ecba0461b140601",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511580384,
-          "duration": 19000,
+          "startTimeNano": 1655221511580384,
+          "durationNano": 19000,
           "tags": [
             {
               "key": "class",
@@ -2116,8 +2116,8 @@
           "spanID": "7b8f704278ddf740",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511581723,
-          "duration": 12741000,
+          "startTimeNano": 1655221511581723,
+          "durationNano": 12741000,
           "tags": [
             {
               "key": "class",
@@ -2143,8 +2143,8 @@
           "spanID": "b2fdb1bce5fee41c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511595788,
-          "duration": 18000,
+          "startTimeNano": 1655221511595788,
+          "durationNano": 18000,
           "tags": [
             {
               "key": "class",
@@ -2170,8 +2170,8 @@
           "spanID": "2944ad5830a69ff5",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511597106,
-          "duration": 20000,
+          "startTimeNano": 1655221511597106,
+          "durationNano": 20000,
           "tags": [
             {
               "key": "class",
@@ -2197,8 +2197,8 @@
           "spanID": "8935346b8150c873",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511598478,
-          "duration": 28000,
+          "startTimeNano": 1655221511598478,
+          "durationNano": 28000,
           "tags": [
             {
               "key": "class",
@@ -2224,8 +2224,8 @@
           "spanID": "fd27adaeb46f884a",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511599958,
-          "duration": 67000,
+          "startTimeNano": 1655221511599958,
+          "durationNano": 67000,
           "tags": [
             {
               "key": "class",
@@ -2251,8 +2251,8 @@
           "spanID": "40ab405fec11da6c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511601347,
-          "duration": 12000,
+          "startTimeNano": 1655221511601347,
+          "durationNano": 12000,
           "tags": [
             {
               "key": "class",
@@ -2278,8 +2278,8 @@
           "spanID": "852d2f27ce7c8e54",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511602751,
-          "duration": 87000,
+          "startTimeNano": 1655221511602751,
+          "durationNano": 87000,
           "tags": [
             {
               "key": "class",
@@ -2305,8 +2305,8 @@
           "spanID": "b975e92633c70a7e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511604145,
-          "duration": 21000,
+          "startTimeNano": 1655221511604145,
+          "durationNano": 21000,
           "tags": [
             {
               "key": "class",
@@ -2332,8 +2332,8 @@
           "spanID": "056d603b1529b963",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511605579,
-          "duration": 22000,
+          "startTimeNano": 1655221511605579,
+          "durationNano": 22000,
           "tags": [
             {
               "key": "class",
@@ -2359,8 +2359,8 @@
           "spanID": "34d257da3e40a402",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511606937,
-          "duration": 17000,
+          "startTimeNano": 1655221511606937,
+          "durationNano": 17000,
           "tags": [
             {
               "key": "class",
@@ -2386,8 +2386,8 @@
           "spanID": "71c197c895be3768",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511608262,
-          "duration": 31000,
+          "startTimeNano": 1655221511608262,
+          "durationNano": 31000,
           "tags": [
             {
               "key": "class",
@@ -2413,8 +2413,8 @@
           "spanID": "2c6a9c57df5835b7",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221511608326,
-          "duration": 56000,
+          "startTimeNano": 1655221511608326,
+          "durationNano": 56000,
           "tags": [
             {
               "key": "class",
@@ -2440,8 +2440,8 @@
           "spanID": "fc0fd76eb96a091c",
           "operationName": "run post-startup dynamically registered activities",
           "processID": "p1",
-          "startTime": 1655221511561066,
-          "duration": 47331000,
+          "startTimeNano": 1655221511561066,
+          "durationNano": 47331000,
           "references": [
             {
               "refType": "CHILD_OF",
@@ -2455,8 +2455,8 @@
           "spanID": "2fa46c3b49c6db15",
           "operationName": "run post-startup activities",
           "processID": "p1",
-          "startTime": 1655221511004408,
-          "duration": 653361000,
+          "startTimeNano": 1655221511004408,
+          "durationNano": 653361000,
           "tags": [
             {
               "key": "thread.name",
@@ -2482,8 +2482,8 @@
           "spanID": "a78dfe1fe81d21ef",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513484050,
-          "duration": 2777000,
+          "startTimeNano": 1655221513484050,
+          "durationNano": 2777000,
           "tags": [
             {
               "key": "class",
@@ -2509,8 +2509,8 @@
           "spanID": "257e471a4da5d275",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513487060,
-          "duration": 1706000,
+          "startTimeNano": 1655221513487060,
+          "durationNano": 1706000,
           "tags": [
             {
               "key": "class",
@@ -2536,8 +2536,8 @@
           "spanID": "8bee7ccd56bab753",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513488797,
-          "duration": 12000,
+          "startTimeNano": 1655221513488797,
+          "durationNano": 12000,
           "tags": [
             {
               "key": "class",
@@ -2563,8 +2563,8 @@
           "spanID": "9f08b88738889e39",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513488820,
-          "duration": 1420000,
+          "startTimeNano": 1655221513488820,
+          "durationNano": 1420000,
           "tags": [
             {
               "key": "class",
@@ -2590,8 +2590,8 @@
           "spanID": "66a1536c7f1a3adc",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513490277,
-          "duration": 314000,
+          "startTimeNano": 1655221513490277,
+          "durationNano": 314000,
           "tags": [
             {
               "key": "class",
@@ -2617,8 +2617,8 @@
           "spanID": "ed8b4e0c180cd35e",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513490609,
-          "duration": 35000,
+          "startTimeNano": 1655221513490609,
+          "durationNano": 35000,
           "tags": [
             {
               "key": "class",
@@ -2644,8 +2644,8 @@
           "spanID": "8c9b7ee169971e02",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513490654,
-          "duration": 1724000,
+          "startTimeNano": 1655221513490654,
+          "durationNano": 1724000,
           "tags": [
             {
               "key": "class",
@@ -2671,8 +2671,8 @@
           "spanID": "556b7974cf44767c",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513492410,
-          "duration": 1220000,
+          "startTimeNano": 1655221513492410,
+          "durationNano": 1220000,
           "tags": [
             {
               "key": "class",
@@ -2698,8 +2698,8 @@
           "spanID": "7649c9e2da5a0ac9",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513493656,
-          "duration": 17000,
+          "startTimeNano": 1655221513493656,
+          "durationNano": 17000,
           "tags": [
             {
               "key": "class",
@@ -2725,8 +2725,8 @@
           "spanID": "c033e90f143c65b0",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513493685,
-          "duration": 814000,
+          "startTimeNano": 1655221513493685,
+          "durationNano": 814000,
           "tags": [
             {
               "key": "class",
@@ -2752,8 +2752,8 @@
           "spanID": "f52367c926d6e4e4",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513494522,
-          "duration": 306000,
+          "startTimeNano": 1655221513494522,
+          "durationNano": 306000,
           "tags": [
             {
               "key": "class",
@@ -2779,8 +2779,8 @@
           "spanID": "00cedfecc163a7cd",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513494848,
-          "duration": 13000,
+          "startTimeNano": 1655221513494848,
+          "durationNano": 13000,
           "tags": [
             {
               "key": "class",
@@ -2806,8 +2806,8 @@
           "spanID": "a8bcf2f0938306ee",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513494872,
-          "duration": 28346000,
+          "startTimeNano": 1655221513494872,
+          "durationNano": 28346000,
           "tags": [
             {
               "key": "class",
@@ -2833,8 +2833,8 @@
           "spanID": "32582eba10bcf71d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513523264,
-          "duration": 2833000,
+          "startTimeNano": 1655221513523264,
+          "durationNano": 2833000,
           "tags": [
             {
               "key": "class",
@@ -2860,8 +2860,8 @@
           "spanID": "6f376a03eea60af2",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513526139,
-          "duration": 490000,
+          "startTimeNano": 1655221513526139,
+          "durationNano": 490000,
           "tags": [
             {
               "key": "class",
@@ -2887,8 +2887,8 @@
           "spanID": "711a604b833b668d",
           "operationName": "run activity",
           "processID": "p1",
-          "startTime": 1655221513526655,
-          "duration": 8138000,
+          "startTimeNano": 1655221513526655,
+          "durationNano": 8138000,
           "tags": [
             {
               "key": "class",
@@ -2914,8 +2914,8 @@
           "spanID": "bb1aa3035374ce73",
           "operationName": "run post-startup dynamically registered dumb-unaware activities",
           "processID": "p1",
-          "startTime": 1655221513546367,
-          "duration": 44000,
+          "startTimeNano": 1655221513546367,
+          "durationNano": 44000,
           "tags": [
             {
               "key": "count",
@@ -2936,8 +2936,8 @@
           "spanID": "04037549bf43a0a8",
           "operationName": "FindUsagesManager.startProcessUsages",
           "processID": "p1",
-          "startTime": 1655221523211812,
-          "duration": 509932000,
+          "startTimeNano": 1655221523211812,
+          "durationNano": 509932000,
           "tags": [
             {
               "key": "number_of_found_usages",
@@ -2958,8 +2958,8 @@
           "spanID": "e4d5b7ad6de1761d",
           "operationName": "Timer [default]",
           "processID": "p1",
-          "startTime": 1655221523212000,
-          "duration": 509981000,
+          "startTimeNano": 1655221523212000,
+          "durationNano": 509981000,
           "tags": [
             {
               "key": "Maximum Responsiveness",
@@ -2978,8 +2978,8 @@
           "spanID": "5981974ab8e36c32",
           "operationName": "%findUsages",
           "processID": "p1",
-          "startTime": 1655221523191000,
-          "duration": 530859000,
+          "startTimeNano": 1655221523191000,
+          "durationNano": 530859000,
           "logs": [
             {
               "timestamp": 1655221523208891,
@@ -3008,8 +3008,8 @@
           "spanID": "d05240c3d44a0cfe",
           "operationName": "Timer [default]",
           "processID": "p1",
-          "startTime": 1655221523170000,
-          "duration": 563145000,
+          "startTimeNano": 1655221523170000,
+          "durationNano": 563145000,
           "tags": [
             {
               "key": "Maximum Responsiveness",
@@ -3028,8 +3028,8 @@
           "spanID": "fedb3eb57d81f0bd",
           "operationName": "FindUsagesManager.startProcessUsages",
           "processID": "p1",
-          "startTime": 1655221532800069,
-          "duration": 4106886000,
+          "startTimeNano": 1655221532800069,
+          "durationNano": 4106886000,
           "tags": [
             {
               "key": "number_of_found_usages",
@@ -3050,8 +3050,8 @@
           "spanID": "6e3142307ce53e99",
           "operationName": "Timer [default]",
           "processID": "p1",
-          "startTime": 1655221532800000,
-          "duration": 4106915000,
+          "startTimeNano": 1655221532800000,
+          "durationNano": 4106915000,
           "tags": [
             {
               "key": "Maximum Responsiveness",
@@ -3070,8 +3070,8 @@
           "spanID": "72f0e6024c31a2d4",
           "operationName": "%findUsages",
           "processID": "p1",
-          "startTime": 1655221532797000,
-          "duration": 4109994000,
+          "startTimeNano": 1655221532797000,
+          "durationNano": 4109994000,
           "logs": [
             {
               "timestamp": 1655221532797146,
@@ -3100,8 +3100,8 @@
           "spanID": "c8fa686d367b3a5e",
           "operationName": "Timer [default]",
           "processID": "p1",
-          "startTime": 1655221532775000,
-          "duration": 4215311000,
+          "startTimeNano": 1655221532775000,
+          "durationNano": 4215311000,
           "tags": [
             {
               "key": "Maximum Responsiveness",
@@ -3120,8 +3120,8 @@
           "spanID": "29531026a2158f47",
           "operationName": "FindUsagesManager.startProcessUsages",
           "processID": "p1",
-          "startTime": 1655221548571870,
-          "duration": 3088487000,
+          "startTimeNano": 1655221548571870,
+          "durationNano": 3088487000,
           "tags": [
             {
               "key": "number_of_found_usages",
@@ -3142,8 +3142,8 @@
           "spanID": "b9268faa22a96509",
           "operationName": "Timer [default]",
           "processID": "p1",
-          "startTime": 1655221548572000,
-          "duration": 3088512000,
+          "startTimeNano": 1655221548572000,
+          "durationNano": 3088512000,
           "tags": [
             {
               "key": "Maximum Responsiveness",
@@ -3162,8 +3162,8 @@
           "spanID": "6ee572f62e2401f9",
           "operationName": "%findUsages",
           "processID": "p1",
-          "startTime": 1655221548570000,
-          "duration": 3090393000,
+          "startTimeNano": 1655221548570000,
+          "durationNano": 3090393000,
           "logs": [
             {
               "timestamp": 1655221548570116,
@@ -3192,8 +3192,8 @@
           "spanID": "cffb1214754e5f58",
           "operationName": "Timer [default]",
           "processID": "p1",
-          "startTime": 1655221548552000,
-          "duration": 3249409000,
+          "startTimeNano": 1655221548552000,
+          "durationNano": 3249409000,
           "tags": [
             {
               "key": "Maximum Responsiveness",
