@@ -156,7 +156,7 @@ class ConfigurableSettingChooserPage<T : BaseService>(
         && controller.shouldShowFeaturedPluginsPage(product.id, dataForSaves, productService)) {
       controller.goToFeaturedPluginsPage(provider, productService, product, dataForSaves)
     } else {
-      val importSettings = productService.importSettings(product.id, dataForSaves)
+      val importSettings = productService.importSettings(product.id, DataToApply(dataForSaves, emptyList()))
       controller.goToProgressPage(importSettings)
     }
   }
