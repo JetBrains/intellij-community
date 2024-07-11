@@ -57,7 +57,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
     assertModuleLibDeps("m1", "Maven: somegroup:artifact:1.0")
 
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>jar</packaging>
@@ -66,7 +66,7 @@ class InvalidProjectImportingTest : MavenMultiVersionImportingTestCase() {
                          <module>m1</module>
                        </modules>
                        """.trimIndent())
-    createModulePom("m1", """
+    updateModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
