@@ -375,6 +375,21 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(ChangeVisibilityFixFactories.noExplicitVisibilityInApiModeWarning)
         registerFactory(UseInheritedVisibilityFixFactories.cannotChangeAccessPrivilege)
         registerFactory(UseInheritedVisibilityFixFactories.cannotWeakenAccessPrivilege)
+        registerFactory(ChangeVisibilityFixFactories.exposedTypealiasExpandedType)
+        registerFactory(ChangeVisibilityFixFactories.exposedFunctionReturnType)
+        registerFactory(ChangeVisibilityFixFactories.exposedReceiverType)
+        registerFactory(ChangeVisibilityFixFactories.exposedPropertyType)
+        registerFactory(ChangeVisibilityFixFactories.exposedPropertyTypeInConstructorError)
+        registerFactory(ChangeVisibilityFixFactories.exposedPropertyTypeInConstructorWarning)
+        registerFactory(ChangeVisibilityFixFactories.exposedParameterType)
+        registerFactory(ChangeVisibilityFixFactories.exposedSuperInterface)
+        registerFactory(ChangeVisibilityFixFactories.exposedSuperClass)
+        registerFactory(ChangeVisibilityFixFactories.exposedTypeParameterBound)
+        registerFactory(ChangeVisibilityFixFactories.invisibleReference)
+        registerFactory(ChangeVisibilityFixFactories.invisibleSetter)
+        registerFactory(ChangeVisibilityFixFactories.superCallFromPublicInline)
+        registerFactory(ChangeVisibilityFixFactories.protectedCallFromPublicInlineError)
+        registerFactory(ChangeVisibilityFixFactories.nonPublicCallFromPublicInline)
     }
 
     private val other = KtQuickFixesListBuilder.registerPsiQuickFix {

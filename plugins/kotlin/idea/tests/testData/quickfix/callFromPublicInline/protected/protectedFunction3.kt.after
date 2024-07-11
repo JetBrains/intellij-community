@@ -10,3 +10,5 @@ open class Foo {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveModifierFixBase
+// TODO: KTIJ-30589
+/* IGNORE_K2 */

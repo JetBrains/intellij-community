@@ -6448,7 +6448,131 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/callFromPublicInline")
+    public abstract static class CallFromPublicInline extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic")
+        public static class NonPublic extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("internalFunction.kt")
+            public void testInternalFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/internalFunction.kt");
+            }
+
+            @TestMetadata("internalFunction2.kt")
+            public void testInternalFunction2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/internalFunction2.kt");
+            }
+
+            @TestMetadata("internalFunction3.kt")
+            public void testInternalFunction3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/internalFunction3.kt");
+            }
+
+            @TestMetadata("privateProperty.kt")
+            public void testPrivateProperty() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/privateProperty.kt");
+            }
+
+            @TestMetadata("privateProperty2.kt")
+            public void testPrivateProperty2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/privateProperty2.kt");
+            }
+
+            @TestMetadata("privateProperty3.kt")
+            public void testPrivateProperty3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/privateProperty3.kt");
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/nonPublic/reifiedTypeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/callFromPublicInline/protected")
+        public static class Protected extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/protected/infix.kt");
+            }
+
+            @TestMetadata("protectedFunction.kt")
+            public void testProtectedFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/protected/protectedFunction.kt");
+            }
+
+            @TestMetadata("protectedFunction2.kt")
+            public void testProtectedFunction2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/protected/protectedFunction2.kt");
+            }
+
+            @TestMetadata("protectedFunction3.kt")
+            public void testProtectedFunction3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/protected/protectedFunction3.kt");
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/protected/reifiedTypeParameter.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/callFromPublicInline/super")
+        public static class Super extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("reifiedTypeParameter.kt")
+            public void testReifiedTypeParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/super/reifiedTypeParameter.kt");
+            }
+
+            @TestMetadata("superFunction.kt")
+            public void testSuperFunction() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/super/superFunction.kt");
+            }
+
+            @TestMetadata("superFunction2.kt")
+            public void testSuperFunction2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/super/superFunction2.kt");
+            }
+
+            @TestMetadata("superFunction3.kt")
+            public void testSuperFunction3() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/callFromPublicInline/super/superFunction3.kt");
+            }
+        }
+    }
 
 
 
@@ -6720,7 +6844,89 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/decreaseVisibility")
+    public static class DecreaseVisibility extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("exposedParameterType.kt")
+        public void testExposedParameterType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedParameterType.kt");
+        }
+
+        @TestMetadata("exposedPropertyType.kt")
+        public void testExposedPropertyType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedPropertyType.kt");
+        }
+
+        @TestMetadata("exposedReceiverType.kt")
+        public void testExposedReceiverType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedReceiverType.kt");
+        }
+
+        @TestMetadata("exposedReceiverTypeInternal.kt")
+        public void testExposedReceiverTypeInternal() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedReceiverTypeInternal.kt");
+        }
+
+        @TestMetadata("exposedReceiverTypePrivate.kt")
+        public void testExposedReceiverTypePrivate() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedReceiverTypePrivate.kt");
+        }
+
+        @TestMetadata("exposedReturnType.kt")
+        public void testExposedReturnType() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedReturnType.kt");
+        }
+
+        @TestMetadata("exposedSuperClass.kt")
+        public void testExposedSuperClass() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedSuperClass.kt");
+        }
+
+        @TestMetadata("exposedSuperClassProtectedBase.kt")
+        public void testExposedSuperClassProtectedBase() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedSuperClassProtectedBase.kt");
+        }
+
+        @TestMetadata("exposedSuperClassProtectedInAnother.kt")
+        public void testExposedSuperClassProtectedInAnother() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedSuperClassProtectedInAnother.kt");
+        }
+
+        @TestMetadata("exposedSuperInterface.kt")
+        public void testExposedSuperInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedSuperInterface.kt");
+        }
+
+        @TestMetadata("exposedSuperInterfacePrivate.kt")
+        public void testExposedSuperInterfacePrivate() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedSuperInterfacePrivate.kt");
+        }
+
+        @TestMetadata("exposedTypeInAnnotation.kt")
+        public void testExposedTypeInAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedTypeInAnnotation.kt");
+        }
+
+        @TestMetadata("exposedTypeParameterBound.kt")
+        public void testExposedTypeParameterBound() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedTypeParameterBound.kt");
+        }
+
+        @TestMetadata("exposedTypeParameterBoundNested.kt")
+        public void testExposedTypeParameterBoundNested() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/decreaseVisibility/exposedTypeParameterBoundNested.kt");
+        }
+    }
 
 
 
@@ -8182,7 +8388,202 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
 
 
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/increaseVisibility")
+    public abstract static class IncreaseVisibility extends AbstractHighLevelQuickFixTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake")
+        public static class InvisibleFake extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
 
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("methodToInternal.kt")
+            public void testMethodToInternal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/methodToInternal.kt");
+            }
+
+            @TestMetadata("methodToNotProtected.kt")
+            public void testMethodToNotProtected() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/methodToNotProtected.kt");
+            }
+
+            @TestMetadata("methodToProtected.kt")
+            public void testMethodToProtected() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/methodToProtected.kt");
+            }
+
+            @TestMetadata("methodToProtected2.kt")
+            public void testMethodToProtected2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/methodToProtected2.kt");
+            }
+
+            @TestMetadata("methodToPublic.kt")
+            public void testMethodToPublic() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/methodToPublic.kt");
+            }
+
+            @TestMetadata("propertyToInternal.kt")
+            public void testPropertyToInternal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/propertyToInternal.kt");
+            }
+
+            @TestMetadata("propertyToNotProtected.kt")
+            public void testPropertyToNotProtected() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/propertyToNotProtected.kt");
+            }
+
+            @TestMetadata("propertyToProtected.kt")
+            public void testPropertyToProtected() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/propertyToProtected.kt");
+            }
+
+            @TestMetadata("propertyToProtected2.kt")
+            public void testPropertyToProtected2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/propertyToProtected2.kt");
+            }
+
+            @TestMetadata("propertyToPublic.kt")
+            public void testPropertyToPublic() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invisibleFake/propertyToPublic.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/increaseVisibility")
+        public static class Uncategorized extends AbstractHighLevelQuickFixTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("exposedParameterType.kt")
+            public void testExposedParameterType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedParameterType.kt");
+            }
+
+            @TestMetadata("exposedParameterTypePublic.kt")
+            public void testExposedParameterTypePublic() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedParameterTypePublic.kt");
+            }
+
+            @TestMetadata("exposedPropertyType.kt")
+            public void testExposedPropertyType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedPropertyType.kt");
+            }
+
+            @TestMetadata("exposedReceiverType.kt")
+            public void testExposedReceiverType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedReceiverType.kt");
+            }
+
+            @TestMetadata("exposedReturnType.kt")
+            public void testExposedReturnType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedReturnType.kt");
+            }
+
+            @TestMetadata("exposedSuperClass.kt")
+            public void testExposedSuperClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedSuperClass.kt");
+            }
+
+            @TestMetadata("exposedSuperClassProtectedBase.kt")
+            public void testExposedSuperClassProtectedBase() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedSuperClassProtectedBase.kt");
+            }
+
+            @TestMetadata("exposedSuperClassProtectedInAnother.kt")
+            public void testExposedSuperClassProtectedInAnother() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedSuperClassProtectedInAnother.kt");
+            }
+
+            @TestMetadata("exposedSuperClassProtectedInAnotherFromPrivate.kt")
+            public void testExposedSuperClassProtectedInAnotherFromPrivate() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedSuperClassProtectedInAnotherFromPrivate.kt");
+            }
+
+            @TestMetadata("exposedSuperInterface.kt")
+            public void testExposedSuperInterface() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedSuperInterface.kt");
+            }
+
+            @TestMetadata("exposedTypeParameterBound.kt")
+            public void testExposedTypeParameterBound() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedTypeParameterBound.kt");
+            }
+
+            @TestMetadata("exposedTypeParameterBoundNested.kt")
+            public void testExposedTypeParameterBoundNested() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/exposedTypeParameterBoundNested.kt");
+            }
+
+            @TestMetadata("invalidSealedClassInheritance.kt")
+            public void testInvalidSealedClassInheritance() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/invalidSealedClassInheritance.kt");
+            }
+
+            @TestMetadata("overriddenProtectedMemberToPublicSingleFile.kt")
+            public void testOverriddenProtectedMemberToPublicSingleFile() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/overriddenProtectedMemberToPublicSingleFile.kt");
+            }
+
+            @TestMetadata("privateEmptyPrimaryConstructorToPublic.kt")
+            public void testPrivateEmptyPrimaryConstructorToPublic() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateEmptyPrimaryConstructorToPublic.kt");
+            }
+
+            @TestMetadata("privateInFileExposesPrivateInFile.kt")
+            public void testPrivateInFileExposesPrivateInFile() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateInFileExposesPrivateInFile.kt");
+            }
+
+            @TestMetadata("privateMemberToInternalSingleFile.kt")
+            public void testPrivateMemberToInternalSingleFile() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateMemberToInternalSingleFile.kt");
+            }
+
+            @TestMetadata("privateMemberToInternalWithExposed.kt")
+            public void testPrivateMemberToInternalWithExposed() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateMemberToInternalWithExposed.kt");
+            }
+
+            @TestMetadata("privateMemberToPublicSingleFile.kt")
+            public void testPrivateMemberToPublicSingleFile() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateMemberToPublicSingleFile.kt");
+            }
+
+            @TestMetadata("privateSealedClassInheritance.kt")
+            public void testPrivateSealedClassInheritance() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateSealedClassInheritance.kt");
+            }
+
+            @TestMetadata("privateSetterToInternal.kt")
+            public void testPrivateSetterToInternal() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateSetterToInternal.kt");
+            }
+
+            @TestMetadata("privateSetterToPublic.kt")
+            public void testPrivateSetterToPublic() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/privateSetterToPublic.kt");
+            }
+
+            @TestMetadata("protectedMemberToPublicSingleFile.kt")
+            public void testProtectedMemberToPublicSingleFile() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/increaseVisibility/protectedMemberToPublicSingleFile.kt");
+            }
+        }
+    }
 
 
 
