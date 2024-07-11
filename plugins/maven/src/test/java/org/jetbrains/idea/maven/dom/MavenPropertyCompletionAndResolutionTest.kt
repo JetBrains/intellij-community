@@ -7,6 +7,7 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
@@ -762,7 +763,9 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(profiles))
     fixture.configureFromExistingVirtualFile(profiles)
+
     fixture.complete(CompletionType.BASIC)
     val strings = fixture.getLookupElementStrings()!!
 
@@ -784,7 +787,9 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(profiles))
     fixture.configureFromExistingVirtualFile(profiles)
+
     readAction {
       val elementAtCaret = fixture.getElementAtCaret()
       assert(elementAtCaret is XmlTag)
