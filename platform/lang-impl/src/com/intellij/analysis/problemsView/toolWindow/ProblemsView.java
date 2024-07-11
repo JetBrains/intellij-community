@@ -103,14 +103,14 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   }
 
   private static void selectionChanged(boolean selected, @NotNull Content content) {
-    var problemsViewTab = get(ProblemsViewTab.class, content);
+    ProblemsViewTab problemsViewTab = get(ProblemsViewTab.class, content);
     if (problemsViewTab != null) {
       problemsViewTab.selectionChangedTo(selected);
     }
   }
 
   private static void visibilityChanged(boolean visible, @NotNull Content content) {
-    var problemsViewTab = get(ProblemsViewTab.class, content);
+    ProblemsViewTab problemsViewTab = get(ProblemsViewTab.class, content);
     if (problemsViewTab != null) {
       problemsViewTab.visibilityChangedTo(visible);
     }
@@ -122,7 +122,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return type.isInstance(component) ? (T)component : null;
   }
 
-  public static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
+  /**
+   * Add a new panel to the Problems View tool window using the given provider.
+   * @param provider the provider to create the panel
+   */
+  static void addPanel(@NotNull Project project, @NotNull ProblemsViewPanelProvider provider) {
     ToolWindow window = getToolWindow(project);
     assert window != null;
     ContentManager manager = window.getContentManager();
@@ -133,7 +137,11 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     createContent(manager, panel);
   }
 
-  public static void removePanel(Project project, String id) {
+  /**
+   * Remove the panel with the given id from the Problems View tool window.
+   * @param id the id of the panel to remove
+   */
+  static void removePanel(Project project, String id) {
     Content content = ProblemsViewToolWindowUtils.INSTANCE.getContentById(project, id);
     ToolWindow toolWindow = ProblemsViewToolWindowUtils.INSTANCE.getToolWindow(project);
     if (content == null || toolWindow == null) {
@@ -204,7 +212,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
         boolean vertical = !window.getAnchor().isHorizontal();
         if (vertical != orientation.getAndSet(vertical)) {
           for (Content content : window.getContentManager().getContents()) {
-            var problemsViewTab = get(ProblemsViewTab.class, content);
+            ProblemsViewTab problemsViewTab = get(ProblemsViewTab.class, content);
             if (problemsViewTab != null) problemsViewTab.orientationChangedTo(vertical);
           }
         }
