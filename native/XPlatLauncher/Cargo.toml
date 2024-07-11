@@ -1,14 +1,14 @@
 [package]
-build = "build.rs"
 name = "xplat-launcher"
 version = "1.0.0"
 edition = "2021"
-rust-version = "1.70.0"
+rust-version = "1.70"
 publish = false
+build = "build.rs"
 
 [profile.release]
 strip = "debuginfo"
-opt-level = "z"  # optimize for size
+opt-level = "z"
 lto = true
 codegen-units = 1
 
