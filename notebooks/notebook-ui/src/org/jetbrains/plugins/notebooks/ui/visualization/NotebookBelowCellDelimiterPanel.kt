@@ -39,7 +39,7 @@ class NotebookBelowCellDelimiterPanel(
     updateBackgroundColor()
     border = BorderFactory.createEmptyBorder(delimiterHeight, 0, delimiterHeight, 0)
 
-    val addingTagsRow = (cellTags.isNotEmpty() && isExecutable && Registry.`is`("jupyter.cell.metadata.tags", false))
+    val addingTagsRow = (cellTags.isNotEmpty() && Registry.`is`("jupyter.cell.metadata.tags", false))
 
     if (addingTagsRow) add(createTagsRow(), BorderLayout.EAST)  // PY-72712
   }
