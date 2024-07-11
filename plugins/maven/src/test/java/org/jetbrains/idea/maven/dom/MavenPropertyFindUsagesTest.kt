@@ -22,7 +22,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindModelPropertyFromReference() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -39,7 +39,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -56,7 +56,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindUsagesFromTag() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <<caret>version>1</version>
@@ -73,7 +73,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindUsagesFromTagValue() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1<caret>1</version>
@@ -87,7 +87,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindUsagesFromProperty() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
@@ -104,7 +104,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindUsagesForEnvProperty() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
   <groupId>test</groupId>
   <artifactId>module1</artifactId>
   <version>11</version>
@@ -119,7 +119,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindUsagesForSystemProperty() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
@@ -136,7 +136,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
@@ -150,6 +150,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
+    updateAllProjects()
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${user<caret>.home}abc")
@@ -162,7 +163,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testHighlightingFromTag() = runBlocking {
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version><caret>1</version>
