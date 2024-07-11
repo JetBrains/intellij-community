@@ -9,6 +9,7 @@ import com.intellij.l10n.LocalizationStateService
 import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 private const val DEFAULT_LOCALE = "en"
 
 @Internal
-@State(name = "LocalizationStateService", storages = [Storage(GeneralSettings.IDE_GENERAL_XML)])
+@State(name = "LocalizationStateService", category = SettingsCategory.SYSTEM, storages = [Storage(GeneralSettings.IDE_GENERAL_XML)])
 internal class LocalizationStateServiceImpl : LocalizationStateService, PersistentStateComponent<LocalizationState> {
 
   private var localizationState = LocalizationState()
