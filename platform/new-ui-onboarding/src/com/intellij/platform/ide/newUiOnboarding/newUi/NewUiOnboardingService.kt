@@ -38,13 +38,9 @@ internal class NewUiOnboardingService(private val project: Project, private val 
 
   private fun getSteps(): List<Pair<String, NewUiOnboardingStep>> {
     val stepIds = getStepOrder()
-    val stepExtensions = NewUiOnboardingStep.EP_NAME.extensionList
     return stepIds.mapNotNull { id ->
-      val step = stepExtensions.find { it.key == id }?.instance
-      if (step?.isAvailable() == true) {
-        id to step
-      }
-      else null
+      val step = NewUiOnboardingStep.getIfAvailable(id)
+      if (step != null) id to step else null
     }
   }
 

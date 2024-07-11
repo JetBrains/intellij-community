@@ -4,6 +4,8 @@ package com.intellij.platform.ide.newUiOnboarding.newUsers
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
+import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
@@ -20,10 +22,32 @@ internal class NewUsersOnboardingService(private val project: Project, private v
   }
 
   fun startOnboarding() {
-    // TODO: start onboarding
+    val steps = getSteps()
+    val childScope = coroutineScope.childScope("onboarding executor")
+    val executor = NewUsersOnboardingExecutor(project, steps, childScope, project)
+    executor.start()
+  }
+
+  private fun getSteps(): List<Pair<String, NewUiOnboardingStep>> {
+    val stepIds = getStepsOrder()
+    return stepIds.mapNotNull { id ->
+      val step = NewUiOnboardingStep.getIfAvailable(id)
+      if (step != null) id to step else null
+    }
+  }
+
+  private fun getStepsOrder(): List<String> {
+    return listOf(
+      "mainMenu",
+      "projectWidget",
+      "gitWidget",
+      "runWidget",
+      "toolWindowLayouts",
+      "moreToolWindows"
+    )
   }
 
   companion object {
-    fun getInstance(project: Project): NewUsersOnboardingService = project.service<NewUsersOnboardingService>()
+    fun getInstance(project: Project): NewUsersOnboardingService = project.service()
   }
 }
