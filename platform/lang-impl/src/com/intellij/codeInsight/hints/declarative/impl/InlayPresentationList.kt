@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LightweightHint
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.containers.enumMapOf
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.withTranslated
 import org.jetbrains.annotations.TestOnly
@@ -37,8 +38,10 @@ class InlayPresentationList(
 ) {
   companion object {
     private val NOT_COMPUTED = DeclarativeHintWidth(-1, -1, -1)
-    private const val HORIZONTAL_PADDING = 6
-    private const val HORIZONTAL_MARGIN = 2
+    private val MARGIN_PADDING_BY_FORMAT = enumMapOf<HintMarginPadding, Pair<Int, Int>>().apply {
+      put(HintMarginPadding.OnlyPadding, 0 to 7)
+      put(HintMarginPadding.MarginAndSmallerPadding, 2 to 6)
+    }
     private const val ARC_WIDTH = 8
     private const val ARC_HEIGHT = 8
     private const val BACKGROUND_ALPHA: Float = 0.55f
@@ -153,7 +156,8 @@ class InlayPresentationList(
       size = metrics.font.size2D
       fontName = metrics.font.family
       val textWidth = entries.sumOf { it.computeWidth(metrics) }
-      computedWidth = DeclarativeHintWidth(HORIZONTAL_MARGIN, HORIZONTAL_PADDING, textWidth)
+      val (margin, padding) = MARGIN_PADDING_BY_FORMAT[hintFormat.horizontalMarginPadding]!!
+      computedWidth = DeclarativeHintWidth(margin, padding, textWidth)
       return computedWidth
     }
     return computedWidth
