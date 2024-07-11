@@ -96,6 +96,7 @@ class MPSProperties : JetBrainsProductProperties() {
             layout.withProjectLibrary("JUnit4", LibraryPackMode.STANDALONE_MERGED)
             layout.withProjectLibrary("http-client", LibraryPackMode.MERGED)
             layout.withProjectLibrary("pty4j", LibraryPackMode.STANDALONE_MERGED) // for terminal plugin
+            layout.withProjectLibrary("jackson-jr-objects", LibraryPackMode.MERGED) // for Marketplace plugin (needed by Settings Sync)
             layout.withoutProjectLibrary("Ant")
             layout.withoutProjectLibrary("Gradle")
         }
