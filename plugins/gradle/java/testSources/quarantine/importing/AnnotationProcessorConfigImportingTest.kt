@@ -381,7 +381,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
   @Test
   @TargetVersions("5.6+")
-  fun `test annotation processor generated sources`() {
+  fun `test annotation processor generated sources for java-test-fixtures`() {
     val annotationProcessor = "build/generated/sources/annotationProcessor"
 
     createProjectSubDir("src/main/java")
@@ -440,5 +440,78 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     assertGeneratedTestSources("project.testFixtures", path("$annotationProcessor/java/testFixtures"))
     assertTestResources("project.testFixtures", path("src/testFixtures/resources"))
     assertGeneratedTestResources("project.testFixtures")
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  fun `test annotation processor generated sources for jvm-test-suite`() {
+    val annotationProcessor = "build/generated/sources/annotationProcessor"
+
+    createProjectSubDir("src/main/java")
+    createProjectSubDir("src/main/resources")
+    createProjectSubDir("src/test/java")
+    createProjectSubDir("src/test/resources")
+    createProjectSubDir("src/integrationTest/java")
+    createProjectSubDir("src/integrationTest/resources")
+    createProjectSubDir("$annotationProcessor/java/main")
+    createProjectSubDir("$annotationProcessor/java/test")
+    createProjectSubDir("$annotationProcessor/java/integrationTest")
+
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      withPlugin("jvm-test-suite")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      addDependency("testAnnotationProcessor", "org.projectlombok:lombok:1.18.8")
+      withPostfix {
+        call("testing") {
+          call("suites") {
+            call("integrationTest", code("JvmTestSuite")) {
+              call("dependencies") {
+                call("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+              }
+            }
+          }
+        }
+      }
+    }
+
+    assertModules("project", "project.main", "project.test", "project.integrationTest")
+
+    assertContentRoots("project", projectPath)
+    assertSources("project")
+    assertResources("project")
+    assertTestSources("project")
+    assertTestResources("project")
+
+    assertContentRoots("project.main", path("src/main"), path("$annotationProcessor/java/main"))
+    assertSources("project.main", path("src/main/java"), path("$annotationProcessor/java/main"))
+    assertGeneratedSources("project.main", path("$annotationProcessor/java/main"))
+    assertResources("project.main", path("src/main/resources"))
+    assertGeneratedResources("project.main")
+    assertTestSources("project.main")
+    assertGeneratedTestSources("project.main")
+    assertTestResources("project.main")
+    assertGeneratedTestResources("project.main")
+
+    assertContentRoots("project.test", path("src/test"), path("$annotationProcessor/java/test"))
+    assertSources("project.test")
+    assertGeneratedSources("project.test")
+    assertResources("project.test")
+    assertGeneratedResources("project.test")
+    assertTestSources("project.test", path("src/test/java"), path("$annotationProcessor/java/test"))
+    assertGeneratedTestSources("project.test", path("$annotationProcessor/java/test"))
+    assertTestResources("project.test", path("src/test/resources"))
+    assertGeneratedTestResources("project.test")
+
+    assertContentRoots("project.integrationTest", path("src/integrationTest"), path("$annotationProcessor/java/integrationTest"))
+    assertSources("project.integrationTest")
+    assertGeneratedSources("project.integrationTest")
+    assertResources("project.integrationTest")
+    assertGeneratedResources("project.integrationTest")
+    assertTestSources("project.integrationTest", path("src/integrationTest/java"), path("$annotationProcessor/java/integrationTest"))
+    assertGeneratedTestSources("project.integrationTest", path("$annotationProcessor/java/integrationTest"))
+    assertTestResources("project.integrationTest", path("src/integrationTest/resources"))
+    assertGeneratedTestResources("project.integrationTest")
   }
 }
