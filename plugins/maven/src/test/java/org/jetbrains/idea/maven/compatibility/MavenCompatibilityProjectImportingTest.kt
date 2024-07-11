@@ -5,6 +5,7 @@ import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.MavenWrapperTestFixture
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.runBlocking
@@ -272,9 +273,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
     assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0")
 
-    /*myWrapperTestFixture.tearDown();
-      myWrapperTestFixture.setUp();*/
-    createModulePom("module1", """
+    val module1 = createModulePom("module1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -290,6 +289,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       </dependencies>
       """.trimIndent()
     )
+    LocalFileSystem.getInstance().refreshFiles(listOf(module1))
 
     importProjectAsync("""
                     <groupId>test</groupId>
