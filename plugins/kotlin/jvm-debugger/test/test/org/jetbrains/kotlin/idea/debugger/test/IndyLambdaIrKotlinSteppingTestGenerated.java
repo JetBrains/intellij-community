@@ -285,6 +285,11 @@ public abstract class IndyLambdaIrKotlinSteppingTestGenerated extends AbstractIn
             runTest("testData/stepping/stepInto/interfaces.kt");
         }
 
+        @TestMetadata("localFun.kt")
+        public void testLocalFun() throws Exception {
+            runTest("testData/stepping/stepInto/localFun.kt");
+        }
+
         @TestMetadata("oneLineSuspendFunWithInline.kt")
         public void testOneLineSuspendFunWithInline() throws Exception {
             runTest("testData/stepping/stepInto/oneLineSuspendFunWithInline.kt");
