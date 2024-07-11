@@ -11,6 +11,8 @@ import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
@@ -131,7 +133,7 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
 
 context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    type.classId.let { printClassId(it, shortName(it)) }
+    type.classId.let { printClassId(it, truncatedName(type)) }
 
     val ownTypeArguments = type.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
@@ -226,9 +228,14 @@ private fun isSimilarTypes(
 ): Boolean = lower.typeArguments.zip(upper.typeArguments)
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
-private fun shortName(classId: ClassId): String {
-    val names = classId.relativeClassName.pathSegments()
-        .filter { it != SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT }
+private fun truncatedName(classType: KaClassType): String {
+    val names = classType.qualifiers
+        .mapNotNull {
+            it.symbol.takeUnless {
+                (it as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
+                        it.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
+            }?.name
+        }
 
     names.joinToString(".", transform = Name::asString)
         .takeIf { names.size <= 1 || it.length < PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH }
