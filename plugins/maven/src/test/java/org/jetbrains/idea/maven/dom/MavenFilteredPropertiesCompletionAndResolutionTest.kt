@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -518,6 +519,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
   @Test
   fun testRenamingFilteredProperty() = runBlocking {
     val filter = createProjectSubFile("filters/filter.properties", "xxx=1")
+    LocalFileSystem.getInstance().refreshFiles(listOf(filter))
     createProjectSubDir("res")
 
     importProjectAsync("""
@@ -539,10 +541,13 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${x<caret>xx}abc")
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
 
     withContext(Dispatchers.EDT) {
       assertResolved(f, findPropertyPsiElement(filter, "xxx")!!)
+
       fixture.configureFromExistingVirtualFile(filter)
+
       doInlineRename(f, "bar")
 
       assertEquals("foo=abc\${bar}abc", findPsiFile(f).getText())
@@ -708,6 +713,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest : MavenDomWithIndicesTe
                                            </root>
                                            """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val added = AtomicReference(false)
