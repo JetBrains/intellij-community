@@ -111,6 +111,7 @@ abstract class AbstractGotoSEContributor protected constructor(event: AnActionEv
     get() = myProject
 
   companion object {
+    @JvmStatic
     fun createContext(project: Project?, psiContext: SmartPsiElementPointer<PsiElement?>?): DataContext {
       val parentContext = if (project == null) null else SimpleDataContext.getProjectContext(project)
       val context = psiContext?.element
