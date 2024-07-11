@@ -19,8 +19,10 @@ internal object InitialScanningSkipReporter {
   internal enum class SourceOfScanning { OnProjectOpen, IndexTumblerOn }
 
   private val sourceOfScanningField = EventFields.Enum("source", SourceOfScanning::class.java)
+  private val numberOfDirtyFilesField = EventFields.Int("number_of_dirty_files")
 
-  private val initialScanningSkipped = GROUP.registerEvent("partial.initial.scanning.scheduled", sourceOfScanningField)
+  private val initialScanningSkipped = GROUP.registerEvent("partial.initial.scanning.scheduled",
+                                                           sourceOfScanningField, numberOfDirtyFilesField)
 
   internal enum class FullScanningReason(fieldName: String) {
     CodeCallerForbadeSkipping("code_caller_forbade_skipping"),
@@ -59,8 +61,9 @@ internal object InitialScanningSkipReporter {
   fun reportInitialScanningSkipped(
     project: Project,
     sourceOfScanning: SourceOfScanning,
+    numberOfDirtyFiles: Int
   ) {
-    initialScanningSkipped.log(project, sourceOfScanning)
+    initialScanningSkipped.log(project, sourceOfScanning, numberOfDirtyFiles)
   }
 
   fun reportInitialScanningScheduled(
