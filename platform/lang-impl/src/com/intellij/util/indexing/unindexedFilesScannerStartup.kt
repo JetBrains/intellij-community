@@ -73,7 +73,7 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
   val skippingScanningUnsatisfiedConditions = SkippingFullScanningCondition.entries.filter { !it.canSkipFullScanning(scanningCheckState) }
   return if (skippingScanningUnsatisfiedConditions.isEmpty()) {
     LOG.info("Full scanning on startup will be skipped for project ${project.name}")
-    InitialScanningSkipReporter.reportInitialScanningSkipped(project, sourceOfScanning, (notSeenIds as AllNotSeenDirtyFileIds).result.size)
+    InitialScanningSkipReporter.reportPartialInitialScanningScheduled(project, sourceOfScanning, (notSeenIds as AllNotSeenDirtyFileIds).result.size)
     scheduleDirtyFilesScanning(project, notSeenIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
                                coroutineScope, indexingReason, partialScanningType)
   }
@@ -81,11 +81,11 @@ internal fun scanAndIndexProjectAfterOpen(project: Project,
     LOG.info("Full scanning on startup will NOT be skipped for project ${project.name} because of following unsatisfied conditions:\n" +
              skippingScanningUnsatisfiedConditions.joinToString("\n") { "${it.name}: ${it.explain(scanningCheckState)}" })
     val reasonsForFullScanning = skippingScanningUnsatisfiedConditions.flatMap { it.getFullScanningReasons(scanningCheckState) }
-    InitialScanningSkipReporter.reportInitialScanningScheduled(project,
-                                                               sourceOfScanning,
-                                                               registeredIndexesWereCorrupted,
-                                                               reasonsForFullScanning,
-                                                               scanningCheckState.notSeenIds.getFullScanningDecision())
+    InitialScanningSkipReporter.reportFullInitialScanningScheduled(project,
+                                                                   sourceOfScanning,
+                                                                   registeredIndexesWereCorrupted,
+                                                                   reasonsForFullScanning,
+                                                                   scanningCheckState.notSeenIds.getFullScanningDecision())
     scheduleFullScanning(project, notSeenIds, additionalOrphanDirtyFiles, projectDirtyFilesQueue,
                          filterUpToDateUnsatisfiedConditions.isEmpty(), coroutineScope, indexingReason, fullScanningType)
   }

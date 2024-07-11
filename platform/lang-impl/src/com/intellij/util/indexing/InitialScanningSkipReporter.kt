@@ -21,8 +21,8 @@ internal object InitialScanningSkipReporter {
   private val sourceOfScanningField = EventFields.Enum("source", SourceOfScanning::class.java)
   private val numberOfDirtyFilesField = EventFields.Int("number_of_dirty_files")
 
-  private val initialScanningSkipped = GROUP.registerEvent("partial.initial.scanning.scheduled",
-                                                           sourceOfScanningField, numberOfDirtyFilesField)
+  private val partialInitialScanningScheduled = GROUP.registerEvent("partial.initial.scanning.scheduled",
+                                                                    sourceOfScanningField, numberOfDirtyFilesField)
 
   internal enum class FullScanningReason(fieldName: String) {
     CodeCallerForbadeSkipping("code_caller_forbade_skipping"),
@@ -48,32 +48,32 @@ internal object InitialScanningSkipReporter {
 
   private val registeredIndexesWereCorruptedField = EventFields.Boolean("registered_indexes_corrupted")
 
-  private val initialScanningScheduled: VarargEventId
+  private val fullInitialScanningScheduled: VarargEventId
 
   init {
     val fields: MutableList<EventField<*>> = FullScanningReason.entries.map { it.field }.toMutableList()
     fields.add(notSeenIdsBasedFullScanningDecisionField)
     fields.add(sourceOfScanningField)
     fields.add(registeredIndexesWereCorruptedField)
-    initialScanningScheduled = GROUP.registerVarargEvent("full.initial.scanning.scheduled", *fields.toTypedArray())
+    fullInitialScanningScheduled = GROUP.registerVarargEvent("full.initial.scanning.scheduled", *fields.toTypedArray())
   }
 
-  fun reportInitialScanningSkipped(
+  fun reportPartialInitialScanningScheduled(
     project: Project,
     sourceOfScanning: SourceOfScanning,
     numberOfDirtyFiles: Int
   ) {
-    initialScanningSkipped.log(project, sourceOfScanning, numberOfDirtyFiles)
+    partialInitialScanningScheduled.log(project, sourceOfScanning, numberOfDirtyFiles)
   }
 
-  fun reportInitialScanningScheduled(
+  fun reportFullInitialScanningScheduled(
     project: Project,
     sourceOfScanning: SourceOfScanning,
     registeredIndexesWereCorrupted: Boolean,
     reasons: List<FullScanningReason>,
     notSeenIdsBasedFullScanningDecision: NotSeenIdsBasedFullScanningDecision,
   ) {
-    initialScanningScheduled.log(project) {
+    fullInitialScanningScheduled.log(project) {
       for (reason in FullScanningReason.entries) {
         add(EventPair(reason.field, reasons.contains(reason)))
       }
