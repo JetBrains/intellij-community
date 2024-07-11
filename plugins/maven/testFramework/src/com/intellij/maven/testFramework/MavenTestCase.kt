@@ -379,6 +379,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     ioFile.createNewFile()
     val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
     setFileContent(f, content)
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     mavenGeneralSettings.setUserSettingsFile(f.path)
     return f
   }
@@ -502,6 +503,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
     setFileContent(file, content)
+    LocalFileSystem.getInstance().refreshFiles(listOf(file))
     return file
   }
 
@@ -670,7 +672,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private fun setFileContent(file: Path, content: String) {
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
-    LocalFileSystem.getInstance().refreshNioFiles(listOf(file))
   }
 
   protected fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {
