@@ -48,7 +48,10 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
   private volatile boolean myIsEvaluating = false;
 
   // This counter can go negative value if the engine stops the whole JVM, but resumed this particular thread
-  public int myModelSuspendCount = 0;
+  private int myModelSuspendCount = 0;
+
+  // This counter can go negative value if the engine stops the whole JVM, but resumed this particular thread
+  private boolean myIsIgnoreModelSuspendCount = false;
 
   public static final Comparator<ThreadReferenceProxyImpl> ourComparator = (th1, th2) -> {
     int res = Boolean.compare(th2.isSuspended(), th1.isSuspended());
@@ -506,6 +509,16 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     else {
       threadWasSuspended();
     }
+  }
+
+  @ApiStatus.Internal
+  public boolean isIgnoreModelSuspendCount() {
+    return myIsIgnoreModelSuspendCount;
+  }
+
+  @ApiStatus.Internal
+  public void setIgnoreModelSuspendCount(boolean ignoreModelSuspendCount) {
+    myIsIgnoreModelSuspendCount = ignoreModelSuspendCount;
   }
 
   public interface ThreadListener extends EventListener{

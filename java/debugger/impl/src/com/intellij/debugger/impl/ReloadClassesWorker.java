@@ -98,7 +98,10 @@ class ReloadClassesWorker {
       virtualMachineProxy.allThreads().stream()
         .filter(ThreadReferenceProxyImpl::isResumeOnHotSwap)
         .filter(ThreadReferenceProxyImpl::isSuspended)
-        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> {
+          t.setIgnoreModelSuspendCount(true);
+          t.resume();
+        }));
     }
 
     try {

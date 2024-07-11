@@ -61,6 +61,9 @@ object DebuggerDiagnosticsUtil {
     val problems = mutableListOf<String>()
 
     for (threadProxy in allThreads) {
+      if (threadProxy.isIgnoreModelSuspendCount) {
+        continue
+      }
       val suspendingContexts = SuspendManagerUtil.getSuspendingContexts(suspendManager, threadProxy)
       val resumedByWatching = if (invocationWatching != null && suspendingContexts.contains(invocationWatching.mySuspendAllContext)) 1
       else 0
