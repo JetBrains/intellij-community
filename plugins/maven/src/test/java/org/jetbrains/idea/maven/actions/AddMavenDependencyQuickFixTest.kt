@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.actions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -59,6 +60,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -96,6 +98,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -159,6 +162,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     </dependencies>
                     """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -207,6 +211,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    LocalFileSystem.getInstance().refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
