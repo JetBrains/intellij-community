@@ -58,7 +58,7 @@ public final class PySdkTools {
     final Ref<Sdk> ref = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       // sdkHome guarantees SDK name uniqueness. SdkUtil can't do that since no current SDK are provided.
-      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), true, null, sdkHome.getPath());
+      final Sdk sdk = SdkConfigurationUtil.setupSdk(NO_SDK, sdkHome, PythonSdkType.getInstance(), null, sdkHome.getPath());
       Assert.assertNotNull("Failed to create SDK on " + sdkHome, sdk);
 
       // Env might be conda, so we look for conda binary and configure it as conda

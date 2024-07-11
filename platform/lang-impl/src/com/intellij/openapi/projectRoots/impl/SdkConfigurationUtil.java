@@ -26,6 +26,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -43,6 +44,7 @@ import java.util.stream.Collectors;
 
 public final class SdkConfigurationUtil {
   private static final Logger LOG = Logger.getInstance(SdkConfigurationUtil.class);
+
   private SdkConfigurationUtil() { }
 
   public static void createSdk(@Nullable final Project project,
@@ -108,7 +110,8 @@ public final class SdkConfigurationUtil {
             }
           }
         }
-        String key = files.length > 0 && files[0].isDirectory() ? "sdk.configure.home.invalid.error" : "sdk.configure.home.file.invalid.error";
+        String key =
+          files.length > 0 && files[0].isDirectory() ? "sdk.configure.home.invalid.error" : "sdk.configure.home.file.invalid.error";
         throw new Exception(ProjectBundle.message(key, sdkTypes[0].getPresentableName()));
       }
     };
@@ -122,6 +125,26 @@ public final class SdkConfigurationUtil {
     ApplicationManager.getApplication().runWriteAction(() -> ProjectJdkTable.getInstance().removeJdk(sdk));
   }
 
+  /**
+   * Same as {@link #setupSdk(Sdk[], VirtualFile, SdkType, boolean, SdkAdditionalData, String)}
+   * but doesn't catch exceptions
+   */
+  @NotNull
+  @ApiStatus.Internal
+  public static Sdk setupSdk(@NotNull Sdk @NotNull []allSdks,
+                             @NotNull VirtualFile homeDir,
+                             @NotNull SdkType sdkType,
+                             @Nullable final SdkAdditionalData additionalData,
+                             @Nullable final String customSdkSuggestedName) {
+    Sdk sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
+    sdkType.setupSdkPaths(sdk);
+    return sdk;
+  }
+
+  /**
+   * Creates SDK, catches any error, logs it, and shows error if not `silent`.
+   * @see #setupSdk(Sdk[], VirtualFile, SdkType, SdkAdditionalData, String)
+   */
   @Nullable
   public static Sdk setupSdk(Sdk @NotNull [] allSdks,
                              @NotNull VirtualFile homeDir,
@@ -131,9 +154,7 @@ public final class SdkConfigurationUtil {
                              @Nullable final String customSdkSuggestedName) {
     Sdk sdk = null;
     try {
-      sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
-
-      sdkType.setupSdkPaths(sdk);
+      sdk = setupSdk(allSdks, homeDir, sdkType, additionalData, customSdkSuggestedName);
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -164,19 +185,19 @@ public final class SdkConfigurationUtil {
 
   @NotNull
   public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
-                                         @NotNull VirtualFile homeDir,
-                                         @NotNull SdkType sdkType,
-                                         @Nullable SdkAdditionalData additionalData,
-                                         @Nullable String customSdkSuggestedName) {
+                              @NotNull VirtualFile homeDir,
+                              @NotNull SdkType sdkType,
+                              @Nullable SdkAdditionalData additionalData,
+                              @Nullable String customSdkSuggestedName) {
     return createSdk(allSdks, sdkType.sdkPath(homeDir), sdkType, additionalData, customSdkSuggestedName);
   }
 
   @NotNull
   public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
-                                         @NotNull String homePath,
-                                         @NotNull SdkType sdkType,
-                                         @Nullable SdkAdditionalData additionalData,
-                                         @Nullable String customSdkSuggestedName) {
+                              @NotNull String homePath,
+                              @NotNull SdkType sdkType,
+                              @Nullable SdkAdditionalData additionalData,
+                              @Nullable String customSdkSuggestedName) {
     final String sdkName = customSdkSuggestedName == null
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
@@ -198,7 +219,8 @@ public final class SdkConfigurationUtil {
     Runnable runnable = () -> sdkModificator.commitChanges();
     if (application.isDispatchThread()) {
       application.runWriteAction(runnable);
-    } else {
+    }
+    else {
       application.invokeAndWait(() -> application.runWriteAction(runnable));
     }
     return sdk;
@@ -245,7 +267,7 @@ public final class SdkConfigurationUtil {
       }
     }
     for (SdkType sdkType : sdkTypes) {
-      for(String suggestedHomePath : sdkType.suggestHomePaths()) {
+      for (String suggestedHomePath : sdkType.suggestHomePaths()) {
         if (sdkType.isValidSdkHome(suggestedHomePath)) {
           Sdk an_sdk = createAndAddSDK(suggestedHomePath, sdkType);
           if (an_sdk != null) return an_sdk;
@@ -260,7 +282,7 @@ public final class SdkConfigurationUtil {
    * <p>
    * Must be called from the EDT (because it uses {@link WriteAction#compute} under the hood).
    *
-   * @param path    identifies the SDK
+   * @param path identifies the SDK
    * @return newly created SDK, or null.
    */
   @Nullable
@@ -285,7 +307,7 @@ public final class SdkConfigurationUtil {
 
   @NotNull
   public static String createUniqueSdkName(@NotNull String suggestedName, @NotNull Collection<? extends Sdk> sdks) {
-    Set<String> nameList = sdks.stream().map( jdk -> jdk.getName()).collect(Collectors.toSet());
+    Set<String> nameList = sdks.stream().map(jdk -> jdk.getName()).collect(Collectors.toSet());
 
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !nameList.contains(o));
   }
@@ -316,7 +338,8 @@ public final class SdkConfigurationUtil {
     try {
       suggestedSdkRoot = sdkRootFuture.get(200, TimeUnit.MILLISECONDS);
     }
-    catch (InterruptedException | ExecutionException | TimeoutException ignored) {}
+    catch (InterruptedException | ExecutionException | TimeoutException ignored) {
+    }
 
     // passing project instance here seems to be the right idea, but it would make the dialog
     // selecting the last opened project path, instead of the suggested detected JDK home (one of many).

@@ -167,7 +167,7 @@ fun createSdkByGenerateTask(
   val suggestedName = suggestedSdkName ?: suggestAssociatedSdkName(homeFile.path, associatedProjectPath)
   return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeFile,
                                        PythonSdkType.getInstance(),
-                                       false, null, suggestedName)
+                                       null, suggestedName)
 }
 
 fun showSdkExecutionException(sdk: Sdk?, e: ExecutionException, @NlsContexts.DialogTitle title: String) {
@@ -214,7 +214,7 @@ fun Sdk.adminPermissionsNeeded(): Boolean {
 
 fun PyDetectedSdk.setup(existingSdks: List<Sdk>): Sdk? {
   val homeDir = homeDirectory ?: return null
-  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), false, null, null)
+  return SdkConfigurationUtil.setupSdk(existingSdks.toTypedArray(), homeDir, PythonSdkType.getInstance(), null, null)
 }
 
 
