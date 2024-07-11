@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
@@ -30,6 +31,11 @@ internal class NewUsersOnboardingService(private val project: Project, private v
     val childScope = coroutineScope.childScope("onboarding executor")
     val executor = NewUsersOnboardingExecutor(project, steps, childScope, project)
     executor.start()
+  }
+
+  fun isOnboardingEnabled(): Boolean {
+    // Enable New Users Onboarding only in IDEA for the time of experiment
+    return PlatformUtils.isIntelliJ()
   }
 
   private fun getSteps(): List<Pair<String, NewUiOnboardingStep>> {

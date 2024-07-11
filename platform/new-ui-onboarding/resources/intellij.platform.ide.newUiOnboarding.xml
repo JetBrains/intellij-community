@@ -37,6 +37,10 @@
   </applicationListeners>
 
   <actions resource-bundle="messages.NewUiOnboardingBundle">
+    <action id="StartNewUsersOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUsers.StartNewUsersOnboardingAction">
+      <add-to-group group-id="LearnGroup" relative-to-action="ShowLearnPanel" anchor="after"/>
+    </action>
+
     <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUi.StartNewUiOnboardingAction"/>
     <action internal="true" id="ShowNewUsersOnboardingDialog"
             class="com.intellij.platform.ide.newUiOnboarding.newUsers.ShowNewUsersOnboardingDialogAction"/>
