@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -229,7 +230,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     assertMavenizedModule("m1")
     assertNotMavenizedModule("userModule")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -938,8 +939,8 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
-    createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
-    createProjectSubFile(".mvn/custom-settings.xml",
+    val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
+    val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
                          """
                            <settings>
                                <profiles>
@@ -959,6 +960,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
                        """.trimIndent())
+    LocalFileSystem.getInstance().refreshFiles(listOf(configFile, settingsFile))
 
     val settings = mavenGeneralSettings
     settings.setUserSettingsFile("")
