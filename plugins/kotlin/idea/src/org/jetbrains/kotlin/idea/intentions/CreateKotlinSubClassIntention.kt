@@ -10,15 +10,17 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.JavaDirectoryService
+import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
-import org.jetbrains.kotlin.descriptors.DescriptorVisibility
+import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
 import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.overrideImplement.ImplementMembersHandler
 import org.jetbrains.kotlin.idea.refactoring.getOrCreateKotlinFile
@@ -28,14 +30,17 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.ClassHeaderBuilder
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.ModifiersChecker
 
 private const val IMPL_SUFFIX = "Impl"
 
-class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
+abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<KtClass>(
     KtClass::class.java,
     KotlinBundle.lazyMessage("create.kotlin.subclass")
 ) {
+
+    abstract fun chooseAndImplementMethods(project: Project, targetClass: KtClass, editor: Editor)
+    abstract fun getOrCreateKtFile(fileName: String, targetDir: PsiDirectory): KtFile
+    abstract fun shortenReferences(klass: KtClass)
 
     override fun applicabilityRange(element: KtClass): TextRange? {
         if (element.name == null || element.getParentOfType<KtFunction>(true) != null) {
@@ -112,7 +117,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
     private fun createExternalSubclass(baseClass: KtClass, baseName: String, editor: Editor) {
         var container: KtClassOrObject = baseClass
         var name = baseName
-        var visibility = ModifiersChecker.resolveVisibilityFromModifiers(baseClass, DescriptorVisibilities.PUBLIC)
+        var visibility = baseClass.visibilityModifierTypeOrDefault().toVisibility()
         while (!container.isPrivate() && !container.isProtected() && !(container is KtClass && container.isInner())) {
             val parent = container.containingClassOrObject
             if (parent != null) {
@@ -120,8 +125,8 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
                 if (parentName != null) {
                     container = parent
                     name = "$parentName.$name"
-                    val parentVisibility = ModifiersChecker.resolveVisibilityFromModifiers(parent, visibility)
-                    if ((DescriptorVisibilities.compare(parentVisibility, visibility) ?: 0) < 0) {
+                    val parentVisibility = parent.visibilityModifierTypeOrDefault().toVisibility()
+                    if (parentVisibility.compareTo(visibility)!! < 0) {
                         visibility = parentVisibility
                     }
                 }
@@ -136,11 +141,11 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
             val dlg = chooseSubclassToCreate(baseClass, baseName) ?: return
             val targetName = dlg.className
             val (file, klass) = runWriteAction {
-                val file = getOrCreateKotlinFile("$targetName.kt", dlg.targetDirectory!!)!!
+                val file = getOrCreateKtFile("$targetName.kt", dlg.targetDirectory!!)
                 val builder = buildClassHeader(targetName, baseClass, baseClass.fqName!!.asString())
                 file.add(factory.createClass(builder.asString()))
                 val klass = file.getChildOfType<KtClass>()!!
-                ShortenReferences.DEFAULT.process(klass)
+                shortenReferences(klass)
                 file to klass
             }
             chooseAndImplementMethods(project, klass, CodeInsightUtil.positionCursor(project, file, klass) ?: editor)
@@ -187,11 +192,11 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
         targetName: String,
         baseClass: KtClass,
         baseName: String,
-        defaultVisibility: DescriptorVisibility = ModifiersChecker.resolveVisibilityFromModifiers(baseClass, DescriptorVisibilities.PUBLIC)
+        defaultVisibility: Visibility = baseClass.visibilityModifierTypeOrDefault().toVisibility(),
     ): ClassHeaderBuilder {
         return ClassHeaderBuilder().apply {
             if (!baseClass.isInterface()) {
-                if (defaultVisibility != DescriptorVisibilities.PUBLIC) {
+                if (defaultVisibility != Visibilities.Public) {
                     modifier(defaultVisibility.name)
                 }
                 if (baseClass.isInner()) {
@@ -205,9 +210,23 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
             typeConstraints(baseClass.typeConstraintList?.constraints?.map { it.text }.orEmpty())
         }
     }
+}
 
-    private fun chooseAndImplementMethods(project: Project, targetClass: KtClass, editor: Editor) {
+internal class CreateKotlinSubClassIntention : CreateKotlinSubClassIntentionBase() {
+    override fun chooseAndImplementMethods(
+        project: Project,
+        targetClass: KtClass,
+        editor: Editor,
+    ) {
         editor.caretModel.moveToOffset(targetClass.textRange.startOffset)
         ImplementMembersHandler().invoke(project, editor, targetClass.containingFile)
+    }
+
+    override fun shortenReferences(klass: KtClass) {
+        ShortenReferences.DEFAULT.process(klass)
+    }
+
+    override fun getOrCreateKtFile(fileName: String, targetDir: PsiDirectory): KtFile {
+        return getOrCreateKotlinFile(fileName, targetDir)
     }
 }
