@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.abbreviatedTypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.psi.*
 
@@ -70,7 +70,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         analyze(this) {
             val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-            val targetSymbol = type.upperBoundIfFlexible().abbreviatedTypeOrSelf.symbol ?: return PsiElement.EMPTY_ARRAY
+            val targetSymbol = type.upperBoundIfFlexible().abbreviationOrSelf.symbol ?: return PsiElement.EMPTY_ARRAY
             targetSymbol.psi?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY

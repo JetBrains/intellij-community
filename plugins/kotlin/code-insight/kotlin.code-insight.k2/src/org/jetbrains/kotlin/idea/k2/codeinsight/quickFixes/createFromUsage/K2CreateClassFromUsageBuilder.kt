@@ -225,13 +225,13 @@ object K2CreateClassFromUsageBuilder {
     }
 
     context (KaSession)
-    private fun getClassKindFilter(expectedType: KtType, containingDeclaration: PsiElement): (ClassKind) -> Boolean {
+    private fun getClassKindFilter(expectedType: KaType, containingDeclaration: PsiElement): (ClassKind) -> Boolean {
         if (expectedType.isAny) {
             return { _ -> true }
         }
 
         val canHaveSubtypes = isInheritable(expectedType) || !(expectedType.containsStarProjections()) || expectedType.isUnit
-        val isEnum = expectedType is KaNonErrorClassType && expectedType.isEnum()
+        val isEnum = expectedType is KaClassType && expectedType.isEnum()
 
         if (!(canHaveSubtypes || isEnum) || expectedType is KaTypeParameterType) return { _ -> false }
 
@@ -239,23 +239,23 @@ object K2CreateClassFromUsageBuilder {
             when (classKind) {
                 ClassKind.ENUM_ENTRY -> isEnum && containingDeclaration == expectedType.convertToClass()
                 ClassKind.INTERFACE -> containingDeclaration !is PsiClass
-                        || (expectedType is KtNonErrorClassType && expectedType.isInterface())
+                        || (expectedType is KaClassType && expectedType.isInterface())
                 else -> canHaveSubtypes
             }
         }
     }
 
     context(KaSession)
-    private fun KtType.isInterface(): Boolean {
-        if (this !is KtNonErrorClassType) return false
-        val classSymbol = classSymbol
+    private fun KaType.isInterface(): Boolean {
+        if (this !is KaClassType) return false
+        val classSymbol = symbol
         return classSymbol is KaClassSymbol && classSymbol.classKind == KaClassKind.INTERFACE
     }
 
     context(KaSession)
-    private fun isInheritable(type: KtType): Boolean {
+    private fun isInheritable(type: KaType): Boolean {
         return type.convertToClass()?.isInheritable() == true
     }
 
-    private fun KtType.containsStarProjections(): Boolean = this is KaNonErrorClassType && ownTypeArguments.any { it is KaStarTypeProjection || it.type?.containsStarProjections() == true}
+    private fun KaType.containsStarProjections(): Boolean = this is KaClassType && typeArguments.any { it is KaStarTypeProjection || it.type?.containsStarProjections() == true}
 }
