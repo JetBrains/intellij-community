@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -259,7 +259,7 @@ public class XValueHint extends AbstractValueHint {
             }
 
             // On presentation change we update our shown popup and resize if needed
-            if (myShown) {
+            if (mySimpleColoredComponent != null) {
               if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
                 ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).stopLoading();
               }
