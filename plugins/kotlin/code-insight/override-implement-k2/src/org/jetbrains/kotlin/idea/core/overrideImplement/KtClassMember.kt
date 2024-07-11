@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.rendere
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossibleMultiplatformSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.base.util.names.FqNames.OptInFqNames.isRequiresOptInFqName
 import org.jetbrains.kotlin.idea.core.TemplateKind
@@ -140,7 +139,7 @@ fun generateMember(
                     analysisSession: KaSession,
                     s: KaDeclarationSymbol
                 ): List<KtModifierKeywordToken> = buildList {
-                    if (mode == MemberGenerateMode.OVERRIDE && s is KaPossibleMultiplatformSymbol && containingSymbol?.isActual == true) {
+                    if (mode == MemberGenerateMode.OVERRIDE && containingSymbol?.isActual == true) {
                         //include actual modifier explicitly when containing class has modifier
                         if (s.isActual) add(KtTokens.ACTUAL_KEYWORD)
                     }
