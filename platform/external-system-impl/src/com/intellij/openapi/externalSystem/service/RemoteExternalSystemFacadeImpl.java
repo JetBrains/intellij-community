@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
@@ -24,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ApiStatus.Internal
 public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends AbstractExternalSystemFacadeImpl<S> {
   private static final long DEFAULT_REMOTE_PROCESS_TTL_IN_MS = TimeUnit.MINUTES.toMillis(3);
 

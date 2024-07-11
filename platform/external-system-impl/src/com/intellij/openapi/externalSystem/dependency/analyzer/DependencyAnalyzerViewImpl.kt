@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware.Companion.isNotificationVisibleProperty
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
@@ -15,11 +14,11 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.DependencyGroup.Companion.hasWarnings
-import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.operation.core.AtomicOperationTrace
 import com.intellij.openapi.observable.operation.core.getOperationInProgressProperty
 import com.intellij.openapi.observable.operation.core.isOperationInProgress
@@ -36,13 +35,15 @@ import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
-import java.util.Locale
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
+@ApiStatus.Internal
 class DependencyAnalyzerViewImpl(
   private val project: Project,
   private val systemId: ProjectSystemId,

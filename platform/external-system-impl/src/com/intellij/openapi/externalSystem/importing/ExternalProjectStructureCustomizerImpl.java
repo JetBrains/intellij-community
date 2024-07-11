@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.util.Couple;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.util.Set;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ExternalProjectStructureCustomizerImpl extends ExternalProjectStructureCustomizer {
 
   @NotNull

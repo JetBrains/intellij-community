@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.List;
  * @see ExternalSystemProjectTracker#scheduleChangeProcessing
  * @deprecated use {@link ExternalSystemProjectTracker} instead
  */
+@ApiStatus.Internal
 @SuppressWarnings("DeprecatedIsStillUsed")
 @Deprecated
 public class ExternalSystemProjectsWatcherImpl implements ExternalSystemProjectsWatcher {

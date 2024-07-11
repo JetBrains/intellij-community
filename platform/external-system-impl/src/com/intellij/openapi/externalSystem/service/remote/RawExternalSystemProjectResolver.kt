@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 import java.rmi.RemoteException
@@ -53,6 +54,7 @@ interface RawExternalSystemProjectResolver<S : ExternalSystemExecutionSettings>
  * Wrapper that allows caller to manually deserialize call result (potentially remote) of
  * RemoteExternalSystemProjectResolver.resolveProjectInfo
  */
+@ApiStatus.Internal
 class RawExternalSystemProjectResolverImpl<S: ExternalSystemExecutionSettings>(
   private val resolverDelegate: RemoteExternalSystemProjectResolver<S>
 )
