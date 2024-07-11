@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,7 +18,7 @@ public class ActionToolbarPresentationFactory extends PresentationFactory {
   private final int myId = ourIdCounter.incrementAndGet();
 
   @Override
-  protected void processPresentation(@NotNull Presentation presentation) {
+  protected void processPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
     presentation.putClientProperty(ID_KEY, myId);
   }
 

@@ -238,11 +238,11 @@ public class SplitButtonAction extends ActionGroupWrapper implements CustomCompo
     @Override
     protected void showActionGroupPopup(@NotNull ActionGroup actionGroup, @NotNull AnActionEvent event) {
       if (myPopupState.isRecentlyHidden()) return; // do not show new popup
-      ActionManagerImpl am = (ActionManagerImpl) ActionManager.getInstance();
-      ActionPopupMenu popupMenu = am.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
+      ActionManagerImpl actionManager = (ActionManagerImpl)event.getActionManager();
+      ActionPopupMenu popupMenu = actionManager.createActionPopupMenu(event.getPlace(), actionGroup, new MenuItemPresentationFactory() {
         @Override
-        protected void processPresentation(@NotNull Presentation presentation) {
-          super.processPresentation(presentation);
+        protected void processPresentation(@NotNull AnAction action, @NotNull Presentation presentation) {
+          super.processPresentation(action, presentation);
           if (StringUtil.defaultIfEmpty(presentation.getText(), "").equals(myPresentation.getText()) &&
               StringUtil.defaultIfEmpty(presentation.getDescription(), "").equals(myPresentation.getDescription())) {
             presentation.setEnabled(selectedActionEnabled());

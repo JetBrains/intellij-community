@@ -11842,6 +11842,7 @@ c:com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory
 - sf:HIDE_ICON:com.intellij.openapi.util.Key
 - <init>():V
 - <init>(Z):V
+- p:processPresentation(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation):V
 - p:processPresentation(com.intellij.openapi.actionSystem.Presentation):V
 c:com.intellij.openapi.actionSystem.impl.MoreActionGroup
 - com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -11866,8 +11867,8 @@ c:com.intellij.openapi.actionSystem.impl.PresentationFactory
 - f:getPresentation(com.intellij.openapi.actionSystem.AnAction):com.intellij.openapi.actionSystem.Presentation
 - isNeedRebuild():Z
 - postProcessPresentation(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation):V
+- p:processPresentation(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.Presentation):V
 - p:processPresentation(com.intellij.openapi.actionSystem.Presentation):V
-- p:processPresentation(com.intellij.openapi.actionSystem.Presentation,com.intellij.openapi.actionSystem.AnAction):V
 - reset():V
 - resetNeedRebuild():V
 - s:updatePresentation(com.intellij.openapi.actionSystem.AnAction):V
