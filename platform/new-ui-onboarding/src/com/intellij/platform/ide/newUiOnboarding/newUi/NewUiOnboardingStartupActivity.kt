@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.newUiOnboarding
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.ide.newUiOnboarding.newUi
 
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.util.PropertiesComponent
@@ -11,6 +11,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil.NEW_UI_ON_FIRST_STARTUP
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil.ONBOARDING_PROPOSED_VERSION
 import com.intellij.ui.ExperimentalUI
