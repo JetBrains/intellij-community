@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil
 import training.lang.LangSupport
 import training.learn.LearnBundle
+import training.learn.NewUsersOnboardingExperimentAccessor
 import training.statistic.FeedbackEntryPlace
 import training.statistic.FeedbackLikenessAnswer
 import training.statistic.StatisticBase
@@ -70,6 +71,9 @@ fun getFeedbackProposedPropertyName(langSupport: LangSupport): String {
 }
 
 fun shouldCollectFeedbackResults(): Boolean {
+  if (NewUsersOnboardingExperimentAccessor.isExperimentEnabled()) {
+    return false
+  }
   val buildDate = ApplicationInfo.getInstance().buildDate
   val buildToCurrentPeriod = buildDate.toInstant().toKotlinInstant().periodUntil(Clock.System.now(), TimeZone.currentSystemDefault())
   return buildToCurrentPeriod.days <= TIME_SCOPE_FOR_RESULT_COLLECTION_IN_DAYS
