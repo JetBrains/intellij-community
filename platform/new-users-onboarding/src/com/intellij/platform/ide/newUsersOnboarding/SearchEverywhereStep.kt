@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.CheckedDisposable
-import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepData
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingUtil
@@ -27,9 +26,9 @@ internal class SearchEverywhereStep : NewUiOnboardingStep {
 
     val builder = GotItComponentBuilder {
       val shiftShortcut = shortcut(KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0))
-      NewUiOnboardingBundle.message("search.everywhere.step.text", shiftShortcut)
+      NewUsersOnboardingBundle.message("search.everywhere.step.text", shiftShortcut)
     }
-    builder.withHeader(NewUiOnboardingBundle.message("search.everywhere.step.header"))
+    builder.withHeader(NewUsersOnboardingBundle.message("search.everywhere.step.header"))
 
     val lottiePageData = withContext(Dispatchers.IO) {
       NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, SearchEverywhereStep::class.java.classLoader)

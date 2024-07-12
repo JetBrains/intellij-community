@@ -100,7 +100,7 @@ internal class NewUsersOnboardingExecutor(
         }
     }
     else {
-      builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.finishTour"))
+      builder.withButtonLabel(NewUsersOnboardingBundle.message("gotIt.button.finishTour"))
         .withContrastButton(true)
         .onButtonClick {
           NewUsersOnboardingStatistics.logStepFinished(project, stepId, stepStartMillis)

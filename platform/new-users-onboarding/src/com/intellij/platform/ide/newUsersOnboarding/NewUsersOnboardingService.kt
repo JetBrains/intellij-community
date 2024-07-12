@@ -6,7 +6,6 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
@@ -30,7 +29,7 @@ internal class NewUsersOnboardingService(private val project: Project, private v
       @Suppress("DialogTitleCapitalization")
       Notification(
         "newUsersOnboarding",
-        NewUiOnboardingBundle.message("newUsersOnboarding.notification.text"),
+        NewUsersOnboardingBundle.message("notification.text"),
         NotificationType.INFORMATION
       ).notify(project)
 
