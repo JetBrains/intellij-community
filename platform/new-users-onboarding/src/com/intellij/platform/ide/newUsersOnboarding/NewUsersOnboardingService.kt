@@ -6,15 +6,26 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
 internal class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
   // Should be accessed only in EDT
   private var currentExecutor: NewUsersOnboardingExecutor? = null
+
+  /**
+   * It determines the state by using machine ID, that is calculated each time now.
+   * Since it is not changed during IDE session, better to calculate it once.
+   */
+  private val isExperimentEnabled: Boolean by lazy {
+    getABExperimentInstance().isExperimentOptionEnabled(NewUsersOnboardingExperimentOption::class.java)
+  }
 
   fun showOnboardingDialog() {
     val dialog = NewUsersOnboardingDialog(project)
@@ -50,8 +61,14 @@ internal class NewUsersOnboardingService(private val project: Project, private v
     executor.start()
   }
 
+  /**
+   * Should not be executed on EDT or with read lock because it can run the external process to calculate the machine ID.
+   * Machine ID is needed to determine the experiment group.
+   */
+  @RequiresBackgroundThread
+  @RequiresReadLockAbsence
   fun isOnboardingEnabled(): Boolean {
-    return true
+    return isExperimentEnabled
   }
 
   private fun getSteps(): List<Pair<String, NewUiOnboardingStep>> {
