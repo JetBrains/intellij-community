@@ -37,8 +37,7 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
       setupScrollPaneListener()
     }
 
-    // TODO This position keeper conflicts with editor position keeper and produces invalid positioning on fold.
-    setupScrollingPositionKeeper()
+    setupEditorComponentWrapper()
 
     manager.onInvalidate {
       component.revalidate()
@@ -71,10 +70,11 @@ private class DecoratedEditor(private val original: TextEditor, private val mana
     return original.structureViewBuilder
   }
 
-  private fun setupScrollingPositionKeeper() {
+  private fun setupEditorComponentWrapper() {
     val editorEx = original.editor as EditorEx
     val scrollPane = editorEx.scrollPane
     val view = scrollPane.viewport.view
+    scrollPane.viewport.isOpaque = false
     scrollPane.viewport.view = EditorComponentWrapper(editorEx, view as EditorComponentImpl, manager)
   }
 
@@ -162,6 +162,7 @@ class EditorComponentWrapper(
   private val manager: NotebookCellInlayManager,
 ) : JComponent() {
   init {
+    isOpaque = false
     layout = BorderLayout()
     add(editorComponent, BorderLayout.CENTER)
   }
