@@ -89,7 +89,7 @@ public interface JBAccountInfoService {
       List<ClientAppSession> controllerSessions = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER);
       if (controllerSessions.size() != 1) {
         Logger log = Logger.getInstance(JBAccountInfoService.class);
-        log.warn("No controller session");
+        log.debug("No controller session");
         return null;
       }
       ClientAppSession controllerSession = controllerSessions.get(0);
