@@ -9,6 +9,7 @@ import com.intellij.ide.startup.importSettings.StartupImportIcons
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
 import com.intellij.ide.startup.importSettings.transfer.TransferSettingsProgress
+import com.intellij.l10n.LocalizationStateService
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
@@ -463,6 +464,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               val optionsStartTime = System.currentTimeMillis()
               if (importer.importOptions(progressIndicator, filteredCategories)) {
                 restartRequired = true
+              }
+              else if (!restartRequired) {
+                val localizationService = LocalizationStateService.getInstance()
+                if (localizationService != null && localizationService.getLastSelectedLocale() != localizationService.getSelectedLocale()) {
+                  restartRequired = true
+                }
               }
               (System.currentTimeMillis() - optionsStartTime).let {
                 LOG.info("Options migrated in $it ms.")
