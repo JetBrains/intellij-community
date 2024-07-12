@@ -178,7 +178,7 @@ internal class ClassLoaderConfiguratorTest {
   }
 }
 
-private fun loadDescriptors(dir: Path): PluginLoadingResult {
+internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   val result = PluginLoadingResult()
   val context = DescriptorListLoadingContext(customDisabledPlugins = emptySet(),
                                              customBrokenPluginVersions = emptyMap(),
