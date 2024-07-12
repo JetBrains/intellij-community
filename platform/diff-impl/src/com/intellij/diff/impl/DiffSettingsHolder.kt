@@ -22,7 +22,7 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
 
   data class SharedSettings(
     var GO_TO_NEXT_FILE_ON_NEXT_DIFFERENCE: Boolean = true,
-    var IS_INCLUDED_IN_NAVIGATION_HISTORY: IncludeInNavigationHistory = IncludeInNavigationHistory.Always
+    var IS_INCLUDED_IN_NAVIGATION_HISTORY: IncludeInNavigationHistory = IncludeInNavigationHistory.OnlyIfOpen
   )
 
   data class PlaceSettings(
