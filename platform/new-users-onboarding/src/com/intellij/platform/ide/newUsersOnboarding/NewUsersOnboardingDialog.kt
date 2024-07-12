@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.ide.newUiOnboarding.newUsers
+package com.intellij.platform.ide.newUsersOnboarding
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.application.ApplicationNamesInfo

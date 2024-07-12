@@ -18,12 +18,10 @@
     <step key="toolWindowLayouts" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.ToolWindowLayoutsStep"/>
     <step key="moreToolWindows" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.MoreToolWindowsStep"/>
     <step key="navigationBar" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.NavigationBarStep"/>
-    <step key="searchEverywhere" implementationClass="com.intellij.platform.ide.newUiOnboarding.steps.SearchEverywhereStep"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStartupActivity"/>
-    <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStartupActivity"/>
     <meetNewUiCustomization implementation="com.intellij.platform.ide.newUiOnboarding.newUi.MeetNewUiOnboardingCustomization"/>
     <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
                  description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
@@ -32,7 +30,6 @@
                        key="newUsersOnboarding.notification.group"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics"/>
-    <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStatistics"/>
     <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
   </extensions>
 
@@ -42,12 +39,6 @@
   </applicationListeners>
 
   <actions resource-bundle="messages.NewUiOnboardingBundle">
-    <action id="StartNewUsersOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUsers.StartNewUsersOnboardingAction">
-      <add-to-group group-id="LearnGroup" relative-to-action="ShowLearnPanel" anchor="after"/>
-    </action>
-
     <action internal="true" id="StartNewUiOnboarding" class="com.intellij.platform.ide.newUiOnboarding.newUi.StartNewUiOnboardingAction"/>
-    <action internal="true" id="ShowNewUsersOnboardingDialog"
-            class="com.intellij.platform.ide.newUiOnboarding.newUsers.ShowNewUsersOnboardingDialogAction"/>
   </actions>
 </idea-plugin>
