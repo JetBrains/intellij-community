@@ -2,9 +2,12 @@
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class NormalImplicitClassCompletionTest extends NormalCompletionTestCase {
   @NotNull
@@ -31,6 +34,24 @@ public class NormalImplicitClassCompletionTest extends NormalCompletionTestCase 
     myFixture.checkResult("""
                             void main(){
                               println(<caret>);
+                            }""");
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testImplicitModuleImport() {
+    myFixture.configureByText("a.java", """
+      void main(){
+        List<String> a = new ArrayLis<caret>
+      }""");
+    myFixture.complete(CompletionType.BASIC, 0);
+    assertEquals(List.of("ArrayList", "CopyOnWriteArrayList"), myFixture.getLookupElementStrings());
+    LookupElement[] elements = myFixture.getLookupElements();
+    assertNotNull(elements);
+    myFixture.getLookup().setCurrentItem(elements[0]);
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            void main(){
+                              List<String> a = new ArrayList<>(<caret>)
                             }""");
   }
 }

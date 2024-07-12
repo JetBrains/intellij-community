@@ -45,6 +45,7 @@ import java.util.*;
 public final class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance(PsiImplUtil.class);
   private static final String JAVA_IO_IO = "java.io.IO";
+  private static final String JAVA_BASE = "java.base";
 
   private PsiImplUtil() { }
 
@@ -870,5 +871,26 @@ public final class PsiImplUtil {
     }
 
     return staticImports.toArray(ImplicitlyImportedStaticMember.EMPTY_ARRAY);
+  }
+
+  /**
+   * Retrieves the implicit static imports for the given file.
+   *
+   * @param file the file for which to retrieve implicit static imports
+   * @return an array of static members representing the implicit static imports
+   */
+  @ApiStatus.Experimental
+  public static @NotNull ImplicitlyImportedModule @NotNull[] getImplicitlyImportedModules(@NotNull PsiFile file) {
+    List<ImplicitlyImportedModule> modules = new ArrayList<>();
+
+    // import module java.base; for implicit classes
+    if (PsiUtil.isAvailable(JavaFeature.IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES, file) && file instanceof PsiJavaFile) {
+      PsiClass[] classes = ((PsiJavaFile)file).getClasses();
+      if (classes.length == 1 && classes[0] instanceof PsiImplicitClass) {
+        modules.add(ImplicitlyImportedModule.create(JAVA_BASE));
+      }
+    }
+
+    return modules.toArray(ImplicitlyImportedModule.EMPTY_ARRAY);
   }
 }

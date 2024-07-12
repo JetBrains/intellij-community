@@ -427,6 +427,12 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @NotNull PsiImportStaticStatement createImportStaticStatementFromText(@NotNull String classFullyQualifiedName, @NotNull String memberName) throws IncorrectOperationException;
 
   /**
+   * Creates an {@code import static} statement for importing the specified member
+   * from the specified class.
+   */
+  @NotNull PsiImportModuleStatement createImportModuleStatementFromText(@NotNull String moduleName) throws IncorrectOperationException;
+
+  /**
    * Creates a parameter list from the specified parameter names and types.
    *
    * @throws IncorrectOperationException if any of the parameter names or types are invalid.
