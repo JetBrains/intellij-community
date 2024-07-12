@@ -507,7 +507,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun refreshFiles(files: List<VirtualFile>) {
-    MavenLog.LOG.warn("Refreshing files: $files")
+    val relativePaths = files.map { dir.toPath().relativize(Path.of(it.path)) }
+    MavenLog.LOG.warn("Refreshing files: $relativePaths")
     LocalFileSystem.getInstance().refreshFiles(files)
   }
 
@@ -667,7 +668,8 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setFileContent(file: Path, content: String) {
-    MavenLog.LOG.warn("Writing content to $file")
+    val relativePath = dir.toPath().relativize(file)
+    MavenLog.LOG.warn("Writing content to $relativePath")
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
   }
 
