@@ -19,10 +19,9 @@ internal class NewUsersOnboardingStartupActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    val newUsersOnboardingService = project.serviceAsync<NewUsersOnboardingService>()
-    if (newUsersOnboardingService.isOnboardingEnabled() && ConfigImportHelper.isNewUser()) {
+    if (serviceAsync<NewUsersOnboardingExperiment>().isEnabled() && ConfigImportHelper.isNewUser()) {
       withContext(Dispatchers.EDT) {
-        newUsersOnboardingService.showOnboardingDialog()
+        project.serviceAsync<NewUsersOnboardingService>().showOnboardingDialog()
       }
     }
   }
