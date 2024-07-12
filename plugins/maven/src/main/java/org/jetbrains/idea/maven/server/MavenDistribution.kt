@@ -2,9 +2,7 @@
 package org.jetbrains.idea.maven.server
 
 import com.intellij.execution.wsl.WSLDistribution
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -33,9 +31,11 @@ class LocalMavenDistribution(override val mavenHome: Path, override val name: St
   }
 }
 
-internal class WslMavenDistribution(private val wslDistribution: WSLDistribution,
-                                    private val pathToMaven: String,
-                                    override val name: String) : MavenDistribution {
+internal class WslMavenDistribution(
+  private val wslDistribution: WSLDistribution,
+  private val pathToMaven: String,
+  override val name: String,
+) : MavenDistribution {
   override val version: String? by lazy {
     MavenUtil.getMavenVersion(wslDistribution.getWindowsPath(pathToMaven))
   }
@@ -52,4 +52,9 @@ internal class WslMavenDistribution(private val wslDistribution: WSLDistribution
   override fun toString(): String {
     return "$name($mavenHome) v $version"
   }
+}
+
+fun MavenDistribution.isMaven4(): Boolean {
+  val v = this.version
+  return v != null && v.startsWith("4.")
 }

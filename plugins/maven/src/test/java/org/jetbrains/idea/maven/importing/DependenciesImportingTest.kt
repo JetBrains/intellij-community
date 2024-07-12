@@ -19,7 +19,7 @@ import org.junit.Test
 import java.util.*
 
 class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
-  
+
   override fun setUp() {
     super.setUp()
     projectsManager.initForTests()
@@ -482,6 +482,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
 
     assertModuleModuleDeps("m1", mn("project", "m2"))
   }
+
 
   @Test
   fun testInterModuleDependenciesIfThereArePropertiesInArtifactHeader() = runBlocking {
@@ -1603,7 +1604,7 @@ class DependenciesImportingTest : MavenMultiVersionImportingTestCase() {
         </dependency>
       </dependencies>
       """)
-          createModulePom("m2", """<groupId>test</groupId>
+    createModulePom("m2", """<groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       <dependencies>

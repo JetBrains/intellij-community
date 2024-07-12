@@ -11,7 +11,8 @@ public final class MavenConstants {
   public static final String[] POM_NAMES = new String[]{POM_XML, "pom.scala", "pom.groovy", "pom.atom", "pom.rb", "pom.yml", "pom.clj"};
   public static final String[] POM_EXTENSIONS = {"pom", "xml", "scala", "groovy", "atom", "rb", "yml", "clj"};
 
-  public static final String SUPER_POM_XML = "pom-4.0.0.xml";
+  public static final String SUPER_POM_4_0_XML = "pom-4.0.0.xml";
+  public static final String SUPER_POM_4_1_XML = "pom-4.1.0.xml";
   public static final String PROFILES_XML = "profiles.xml";
   public static final String SETTINGS_XML = "settings.xml";
 
@@ -38,7 +39,8 @@ public final class MavenConstants {
     Arrays.asList("clean", "validate", "generate-sources", "process-sources", "generate-resources",
                   "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources",
                   "generate-test-resources",
-                  "process-test-resources", "test-compile", "process-test-classes", "test", "prepare-package", "package", "pre-integration-test",
+                  "process-test-resources", "test-compile", "process-test-classes", "test", "prepare-package", "package",
+                  "pre-integration-test",
                   "integration-test",
                   "post-integration-test",
                   "verify", "install", "site", "deploy");
