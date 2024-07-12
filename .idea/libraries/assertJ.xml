@@ -1,23 +1,23 @@
 <component name="libraryTable">
   <library name="assertJ" type="repository">
-    <properties maven-id="org.assertj:assertj-core:3.25.3">
+    <properties maven-id="org.assertj:assertj-core:3.26.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.25.3/assertj-core-3.25.3.jar">
-          <sha256sum>7fbdffa1996d43cc08e2576e01008b07e57bbad2b4741aa6c3ab73ce8511130e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.26.3/assertj-core-3.26.3.jar">
+          <sha256sum>4c2f86418ff47ee6b67fbc6adb194e80219b793281b3bda28799d4425bc9a0bd</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.11/byte-buddy-1.14.11.jar">
-          <sha256sum>62ae28187ed2b062813da6a9d567bfee733c341582699b62dd980230729a0313</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.18/byte-buddy-1.14.18.jar">
+          <sha256sum>52117af1696a53aa77c131353074ada25ccbdf2df511f2af33fad6704fa95104</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.25.3/assertj-core-3.25.3.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.11/byte-buddy-1.14.11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.26.3/assertj-core-3.26.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.18/byte-buddy-1.14.18.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.25.3/assertj-core-3.25.3-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.11/byte-buddy-1.14.11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/assertj/assertj-core/3.26.3/assertj-core-3.26.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.18/byte-buddy-1.14.18-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
