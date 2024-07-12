@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -960,7 +959,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    LocalFileSystem.getInstance().refreshFiles(listOf(configFile, settingsFile))
+    refreshFiles(listOf(configFile, settingsFile))
 
     val settings = mavenGeneralSettings
     settings.setUserSettingsFile("")

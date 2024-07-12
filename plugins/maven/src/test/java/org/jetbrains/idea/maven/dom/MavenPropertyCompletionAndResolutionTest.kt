@@ -7,7 +7,6 @@ import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
@@ -715,7 +714,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    setPomContentAsync(projectPom, """
+    setPomContent(projectPom, """
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -764,7 +763,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(profiles))
+    refreshFiles(listOf(profiles))
     fixture.configureFromExistingVirtualFile(profiles)
 
     fixture.complete(CompletionType.BASIC)
@@ -788,7 +787,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                                                </profiles>
                                                """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(profiles))
+    refreshFiles(listOf(profiles))
     fixture.configureFromExistingVirtualFile(profiles)
 
     readAction {

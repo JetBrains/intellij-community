@@ -5,7 +5,6 @@ import com.intellij.maven.testFramework.MavenImportingTestCase
 import com.intellij.maven.testFramework.MavenWrapperTestFixture
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.runBlocking
@@ -289,7 +288,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       </dependencies>
       """.trimIndent()
     )
-    LocalFileSystem.getInstance().refreshFiles(listOf(module1))
+    refreshFiles(listOf(module1))
 
     importProjectAsync("""
                     <groupId>test</groupId>

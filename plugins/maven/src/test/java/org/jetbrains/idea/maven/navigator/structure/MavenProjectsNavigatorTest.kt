@@ -5,7 +5,6 @@ import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -99,7 +98,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    LocalFileSystem.getInstance().refreshFiles(listOf(m))
+    refreshFiles(listOf(m))
     readFiles(m)
 
     assertEquals(1, rootNodes.size)
@@ -153,7 +152,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
-    LocalFileSystem.getInstance().refreshFiles(listOf(m))
+    refreshFiles(listOf(m))
     readFiles(projectPom, m)
 
     assertEquals(2, rootNodes.size)

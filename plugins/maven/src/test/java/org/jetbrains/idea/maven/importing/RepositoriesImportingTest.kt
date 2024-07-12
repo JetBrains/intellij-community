@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -25,7 +24,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
-      LocalFileSystem.getInstance().refreshFiles(listOf(settingsXml))
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -58,7 +57,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
-      LocalFileSystem.getInstance().refreshFiles(listOf(settingsXml))
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -91,7 +90,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
-      LocalFileSystem.getInstance().refreshFiles(listOf(settingsXml))
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""

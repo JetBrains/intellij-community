@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
@@ -30,7 +29,7 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
                            "    <version>1.0</version>" +
                            "  </dependency>" +
                            "</dependencies>")
-      LocalFileSystem.getInstance().refreshFiles(listOf(p1Pom, p2Pom))
+      refreshFiles(listOf(p1Pom, p2Pom))
       importProjectAsync(p1Pom)
       importProjectAsync(p2Pom)
       assertModules("p1", "p2")

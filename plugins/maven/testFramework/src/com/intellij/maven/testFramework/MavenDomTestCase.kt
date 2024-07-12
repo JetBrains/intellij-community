@@ -18,7 +18,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Comparing
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -108,7 +107,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
       MavenLog.LOG.warn("MavenDomTestCase configTest skipped")
       return
     }
-    LocalFileSystem.getInstance().refreshFiles(listOf(f))
+    refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
     myConfigTimestamps[f] = f.timeStamp
     MavenLog.LOG.warn("MavenDomTestCase configTest performed")
@@ -568,7 +567,7 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun checkHighlighting(file: VirtualFile, vararg expectedHighlights: Highlight) {
     withContext(Dispatchers.EDT) {
-      LocalFileSystem.getInstance().refreshFiles(listOf(file))
+      refreshFiles(listOf(file))
       val content = String(file.contentsToByteArray())
       MavenLog.LOG.warn("Checking highlighting in file $file:\n$content")
       fixture.openFileInEditor(file)

@@ -379,7 +379,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     ioFile.createNewFile()
     val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
     setFileContent(f, content)
-    LocalFileSystem.getInstance().refreshFiles(listOf(f))
+    refreshFiles(listOf(f))
     mavenGeneralSettings.setUserSettingsFile(f.path)
     return f
   }
@@ -412,36 +412,35 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     val pom = createProjectPom(xml)
-    LocalFileSystem.getInstance().refreshFiles(listOf(pom))
+    refreshFiles(listOf(pom))
     return pom
   }
 
   protected fun createModulePom(relativePath: String,
-                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
+                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     return createPomFile(createProjectSubDir(relativePath), xml)
   }
 
   protected fun updateModulePom(relativePath: String,
                                 @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     val pom = createModulePom(relativePath, xml)
-    LocalFileSystem.getInstance().refreshFiles(listOf(pom))
+    refreshFiles(listOf(pom))
     return pom
   }
 
   protected fun createPomFile(dir: VirtualFile,
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
+                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     return createPomFile(dir, "pom.xml", xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile, fileName: String? = "pom.xml",
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
-    val pomName = fileName ?: "pom.xml"
-    val filePath = Path.of(dir.path, pomName)
+  protected fun createPomFile(dir: VirtualFile, fileName: String = "pom.xml",
+                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val filePath = Path.of(dir.path, fileName)
     setPomContent(filePath, xml)
-    var f = dir.findChild(pomName)
+    var f = dir.findChild(fileName)
     if (null == f) {
-      LocalFileSystem.getInstance().refreshFiles(listOf(dir))
-      f = dir.findChild(pomName)!!
+      refreshFiles(listOf(dir))
+      f = dir.findChild(fileName)!!
     }
     myAllPoms.add(f)
     return f
@@ -503,8 +502,13 @@ abstract class MavenTestCase : UsefulTestCase() {
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
     setFileContent(file, content)
-    LocalFileSystem.getInstance().refreshFiles(listOf(file))
+    refreshFiles(listOf(file))
     return file
+  }
+
+  protected fun refreshFiles(files: List<VirtualFile>) {
+    MavenLog.LOG.warn("Refreshing files: $files")
+    LocalFileSystem.getInstance().refreshFiles(files)
   }
 
   protected fun ignore(): Boolean {
@@ -627,10 +631,10 @@ abstract class MavenTestCase : UsefulTestCase() {
     setFileContent(filePath, content)
     var f = dir.findChild(fileName)
     if (null == f) {
-      LocalFileSystem.getInstance().refreshFiles(listOf(dir))
+      refreshFiles(listOf(dir))
       f = dir.findChild(fileName)!!
     }
-    LocalFileSystem.getInstance().refreshFiles(listOf(f))
+    refreshFiles(listOf(f))
     return f
   }
 
@@ -654,16 +658,8 @@ abstract class MavenTestCase : UsefulTestCase() {
     setFileContent(file, createPomXml(xml))
   }
 
-  protected fun setPomContent(file: Path, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
+  private fun setPomContent(file: Path, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
     setFileContent(file, createPomXml(xml))
-  }
-
-  protected suspend fun setPomContentAsync(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
-    setFileContentAsync(file, createPomXml(xml))
-  }
-
-  private suspend fun setFileContentAsync(file: VirtualFile, content: String) {
-    setFileContent(file, content)
   }
 
   private fun setFileContent(file: VirtualFile, content: String) {
@@ -671,6 +667,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   private fun setFileContent(file: Path, content: String) {
+    MavenLog.LOG.warn("Writing content to $file")
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
   }
 

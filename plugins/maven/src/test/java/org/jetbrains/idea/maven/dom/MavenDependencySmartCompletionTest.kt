@@ -1,7 +1,6 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
@@ -185,7 +184,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     var elements = fixture.completeBasic()
@@ -226,7 +225,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.completeBasic()
@@ -263,7 +262,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
     val elements = fixture.completeBasic()
     UsefulTestCase.assertSize(1, elements)
@@ -287,7 +286,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencyManagement>
                        """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.completeBasic()
@@ -337,7 +336,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     var elements = fixture.completeBasic()
@@ -393,7 +392,7 @@ class MavenDependencySmartCompletionTest : MavenDomWithIndicesTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    LocalFileSystem.getInstance().refreshFiles(listOf(projectPom))
+    refreshFiles(listOf(projectPom))
     fixture.configureFromExistingVirtualFile(projectPom)
 
     val elements = fixture.complete(CompletionType.BASIC)

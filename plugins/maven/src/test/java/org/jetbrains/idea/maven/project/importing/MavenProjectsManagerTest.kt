@@ -17,7 +17,6 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.FileContentUtil
@@ -581,7 +580,7 @@ class MavenProjectsManagerTest : MavenMultiVersionImportingTestCase() {
           <artifactId>child1</artifactId>
       </project>
       """.trimIndent())
-    LocalFileSystem.getInstance().refreshFiles(listOf(mavenParentPom, child1Pom))
+    refreshFiles(listOf(mavenParentPom, child1Pom))
     writeAction { ModuleManager.getInstance(project).newModule("non-maven", JAVA_MODULE_ENTITY_TYPE_ID_NAME) }
     importProjectAsync(mavenParentPom)
     assertEquals(3, ModuleManager.getInstance(project).modules.size)
