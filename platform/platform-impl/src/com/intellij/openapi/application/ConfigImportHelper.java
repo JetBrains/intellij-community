@@ -34,6 +34,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.text.NaturalComparator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -925,6 +926,15 @@ public final class ConfigImportHelper {
 
     updateVMOptions(newConfigDir, log);
   }
+  
+  public static Boolean isVersionNewerThan242(Path oldConfigDir) {
+    String version = parseVersionFromConfig(oldConfigDir);
+    return version == null || StringUtil.compareVersionNumbers(version, "2024.2") != -1;
+  }
+
+  public static Set<String> getBundledLocalizationPluginsIds242() {
+    return Set.of("com.intellij.ja", "com.intellij.ko", "com.intellij.zh");
+  }
 
   private static List<ActionCommand> loadStartupActionScript(Path oldConfigDir, @Nullable Path oldIdeHome, Path oldPluginsDir) throws IOException {
     if (Files.isDirectory(oldPluginsDir)) {
@@ -980,6 +990,10 @@ public final class ConfigImportHelper {
     Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
     Set<PluginId> disabledPlugins =
       Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
+    if (isVersionNewerThan242(oldConfigDir)) {
+      pluginsToMigrate.removeIf(descriptor -> getBundledLocalizationPluginsIds242().contains(descriptor.getPluginId().getIdString()));
+      pluginsToDownload.removeIf(descriptor -> getBundledLocalizationPluginsIds242().contains(descriptor.getPluginId().getIdString()));
+    }
     for (IdeaPluginDescriptor pluginToMigrate : pluginsToMigrate) {
       if (disabledPlugins.contains(pluginToMigrate.getPluginId())) {
         pluginToMigrate.setEnabled(false);
