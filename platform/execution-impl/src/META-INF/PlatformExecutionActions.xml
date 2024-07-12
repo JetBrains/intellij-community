@@ -90,5 +90,7 @@
   <projectListeners>
     <listener class="com.intellij.execution.runToolbar.RunToolbarComponentService$MyExecutionListener"
               topic="com.intellij.execution.ExecutionListener"/>
+    <listener class="com.intellij.execution.ui.RunPopupVoidExecutionListener"
+              topic="com.intellij.execution.ExecutionListener"/>
   </projectListeners>
 </idea-plugin>

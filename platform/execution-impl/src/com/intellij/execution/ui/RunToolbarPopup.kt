@@ -211,6 +211,16 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
   }
 }
 
+@ApiStatus.Internal
+class RunPopupVoidExecutionListener(private val project: Project) : ExecutionListener by createExecutionListener(
+  { _, _, _ -> project.messageBus.syncPublisher(VOID_EXECUTION_TOPIC).run() }
+) {
+  companion object {
+    @Topic.ProjectLevel
+    val VOID_EXECUTION_TOPIC = Topic("any execution event", Runnable::class.java)
+  }
+}
+
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
                                                  dataContext: DataContext,
                                                  disposeCallback: (() -> Unit)?) :
@@ -244,13 +254,13 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     }
     listModel.syncModel()
 
-    project.messageBus.connect(this).subscribe(ExecutionManager.EXECUTION_TOPIC, createExecutionListener { executorId, env, reason ->
+    project.messageBus.connect(this).subscribe(RunPopupVoidExecutionListener.VOID_EXECUTION_TOPIC, Runnable {
       ApplicationManager.getApplication().invokeLater {
         if (list.isShowing) {
           (myStep as ActionPopupStep).updateStepItems(list)
           val focused = StackingPopupDispatcher.getInstance().focusedPopup
           if (focused != this@RunConfigurationsActionGroupPopup &&
-            focused is ListPopupImpl) {
+              focused is ListPopupImpl) {
             (focused.step as ActionPopupStep).updateStepItems(focused.list)
           }
         }
