@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="jackson-jr-objects" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.17.0">
+    <properties include-transitive-deps="false" maven-id="com.fasterxml.jackson.jr:jackson-jr-objects:2.17.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.0/jackson-jr-objects-2.17.0.jar">
-          <sha256sum>4e99ab2f064979d6b0b1543ce2291dc291b0003c27d8847f8605e211f49a0bc7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar">
+          <sha256sum>0eced92de681033d7186751d05de213771d347feadcf633f106ebfd58a3308cd</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.0/jackson-jr-objects-2.17.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.0/jackson-jr-objects-2.17.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/jr/jackson-jr-objects/2.17.2/jackson-jr-objects-2.17.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

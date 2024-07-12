@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="jackson-datatype-joda" type="repository">
-    <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.17.0">
+    <properties maven-id="com.fasterxml.jackson.datatype:jackson-datatype-joda:2.17.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.17.0/jackson-datatype-joda-2.17.0.jar">
-          <sha256sum>c5612111c05a963242cc0471b1f46848dc4834d6e0fcf987381bf6b2e525fff7</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.17.2/jackson-datatype-joda-2.17.2.jar">
+          <sha256sum>41fb59ad334ec6376b5761c0748118f1faddf6dd524322eb7309be5a67fa74b9</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.14/joda-time-2.10.14.jar">
           <sha256sum>d65b4f127d36cf52b9b7b439552db22f3de92b892014512870cb3c98a3cf505e</sha256sum>
@@ -16,12 +16,12 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.17.0/jackson-datatype-joda-2.17.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.17.2/jackson-datatype-joda-2.17.2.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.14/joda-time-2.10.14.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.17.0/jackson-datatype-joda-2.17.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/jackson/datatype/jackson-datatype-joda/2.17.2/jackson-datatype-joda-2.17.2-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/joda-time/joda-time/2.10.14/joda-time-2.10.14-sources.jar!/" />
     </SOURCES>
   </library>
