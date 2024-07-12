@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
-import com.intellij.codeInsight.actions.OptimizeImportsProcessor
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
@@ -22,8 +21,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
     @SafeFieldForPreview private val conversion: CallChainConversion,
-    private val removeReceiverOfFirstCall: Boolean = false,
-    private val runOptimizeImports: Boolean = false,
     @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
 ) : LocalQuickFix {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
@@ -36,14 +33,13 @@ class SimplifyCallChainFix(
         val psiFactory = KtPsiFactory(qualifiedExpression.project)
         val firstExpression = qualifiedExpression.receiverExpression
 
-        val operationSign = if (removeReceiverOfFirstCall) "" else when (firstExpression) {
+        val operationSign = when (firstExpression) {
             is KtSafeQualifiedExpression -> "?."
             is KtQualifiedExpression -> "."
             else -> ""
         }
 
-        val receiverExpressionOrEmptyString =
-            if (!removeReceiverOfFirstCall && firstExpression is KtQualifiedExpression) firstExpression.receiverExpression.text else ""
+        val receiverExpressionOrEmptyString = if (firstExpression is KtQualifiedExpression) firstExpression.receiverExpression.text else ""
 
         val firstCallExpression = AbstractCallChainChecker.getCallExpression(firstExpression) ?: return
         psiFactory.modifyArguments(firstCallExpression)
@@ -75,8 +71,6 @@ class SimplifyCallChainFix(
             "$receiverExpressionOrEmptyString$operationSign$newCallText($argumentsText)"
         )
 
-        val project = qualifiedExpression.project
-        val file = qualifiedExpression.containingKtFile
         var result = qualifiedExpression.replaced(newQualifiedOrCallExpression)
 
         if (lambdaExpression != null || additionalArgument != null) {
@@ -103,9 +97,6 @@ class SimplifyCallChainFix(
 
         result.containingKtFile.commitAndUnblockDocument()
         if (result.isValid) ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
-        if (runOptimizeImports) {
-            OptimizeImportsProcessor(project, file).run()
-        }
     }
 
     override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
