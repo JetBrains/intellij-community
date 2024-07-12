@@ -26,9 +26,6 @@
     <registryKey key="ide.experimental.ui.onboarding" defaultValue="true"
                  description="Show the dialog on startup after New UI switch with a proposal to start the onboarding."/>
 
-    <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUiOnboardingBundle"
-                       key="newUsersOnboarding.notification.group"/>
-
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUiOnboarding.newUi.NewUiOnboardingStatistics"/>
     <statistics.validation.customValidationRule implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStepIdRule"/>
   </extensions>

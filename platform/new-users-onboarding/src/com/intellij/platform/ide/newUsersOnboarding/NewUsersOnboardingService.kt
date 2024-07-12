@@ -10,7 +10,6 @@ import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.CoroutineScope
 
 @Service(Service.Level.PROJECT)
@@ -53,8 +52,7 @@ internal class NewUsersOnboardingService(private val project: Project, private v
   }
 
   fun isOnboardingEnabled(): Boolean {
-    // Enable New Users Onboarding only in IDEA for the time of experiment
-    return PlatformUtils.isIntelliJ()
+    return true
   }
 
   private fun getSteps(): List<Pair<String, NewUiOnboardingStep>> {
