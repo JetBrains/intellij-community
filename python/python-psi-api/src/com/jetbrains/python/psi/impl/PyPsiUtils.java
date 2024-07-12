@@ -288,7 +288,7 @@ public final class PyPsiUtils {
   public static boolean isMethodContext(final PsiElement element) {
     final PsiNamedElement parent = PsiTreeUtil.getParentOfType(element, PyFile.class, PyFunction.class, PyClass.class);
     // In case if element is inside method which is inside class
-    if (parent instanceof PyFunction && PsiTreeUtil.getParentOfType(parent, PyFile.class, PyClass.class) instanceof PyClass) {
+    if (parent instanceof PyFunction && PsiTreeUtil.getParentOfType(parent, PyFile.class, PyFunction.class, PyClass.class) instanceof PyClass) {
       return true;
     }
     return false;
