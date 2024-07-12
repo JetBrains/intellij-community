@@ -111,21 +111,40 @@ private fun getDaemonRequestContext(): Any {
     throw IllegalStateException("NativeServicesMode is expected to be a Enum. Gradle version: ${GradleVersion.current()}")
   }
   val daemonJvmCriteriaClass = Class.forName("org.gradle.launcher.daemon.toolchain.DaemonJvmCriteria")
-  val requestContextConstructor = requestContextClass.getDeclaredConstructor(
-    JavaInfo::class.java,
-    daemonJvmCriteriaClass,
-    Collection::class.java,
-    Boolean::class.java,
-    nativeServicesModeClass,
-    DaemonParameters.Priority::class.java
-  )
   val nativeServiceModeValue = nativeServicesModeClass.enumConstants[2]
-  return requestContextConstructor.newInstance(
-    /*JavaInfo*/ null,
-    /*DaemonJvmCriteria*/ null,
-    /*daemonOpts*/ emptyList<String>(),
-    /*applyInstrumentationAgent*/ false,
-    /*nativeServicesMode*/ nativeServiceModeValue,
-    /*priority*/ DaemonParameters.Priority.NORMAL
-  )
+  val isGradle88 = GradleVersionUtil.isCurrentGradleAtLeast("8.8") && GradleVersionUtil.isCurrentGradleOlderThan("8.9")
+  if (isGradle88) {
+    val requestContextConstructor = requestContextClass.getDeclaredConstructor(
+      JavaInfo::class.java,
+      daemonJvmCriteriaClass,
+      Collection::class.java,
+      Boolean::class.java,
+      nativeServicesModeClass,
+      DaemonParameters.Priority::class.java
+    )
+    return requestContextConstructor.newInstance(
+      /*JavaInfo*/ null,
+      /*DaemonJvmCriteria*/ null,
+      /*daemonOpts*/ emptyList<String>(),
+      /*applyInstrumentationAgent*/ false,
+      /*nativeServicesMode*/ nativeServiceModeValue,
+      /*priority*/ DaemonParameters.Priority.NORMAL
+    )
+  }
+  else {
+    val requestContextConstructor = requestContextClass.getDeclaredConstructor(
+      daemonJvmCriteriaClass,
+      Collection::class.java,
+      Boolean::class.java,
+      nativeServicesModeClass,
+      DaemonParameters.Priority::class.java
+    )
+    return requestContextConstructor.newInstance(
+      /*DaemonJvmCriteria*/ null,
+      /*daemonOpts*/ emptyList<String>(),
+      /*applyInstrumentationAgent*/ false,
+      /*nativeServicesMode*/ nativeServiceModeValue,
+      /*priority*/ DaemonParameters.Priority.NORMAL
+    )
+  }
 }
