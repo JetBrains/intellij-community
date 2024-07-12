@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -18,7 +19,7 @@ class PathInfo(val ioFile: Path?, file: VirtualFile?, val root: VirtualFile, mod
     private set
 
   var moduleName: String? = moduleName
-    set
+    @ApiStatus.Internal set
 
   /**
    * URL path.

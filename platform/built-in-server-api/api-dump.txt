@@ -15,17 +15,7 @@ f:org.jetbrains.builtInWebServer.PathInfo
 - f:isLibrary():Z
 - f:isRootNameOptionalInPath():Z
 - f:isValid():Z
-- f:setModuleName(java.lang.String):V
 f:org.jetbrains.builtInWebServer.PathQuery
-- <init>():V
-- <init>(Z,Z,Z,Z):V
-- b:<init>(Z,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
-- f:component1():Z
-- f:component2():Z
-- f:component3():Z
-- f:component4():Z
-- f:copy(Z,Z,Z,Z):org.jetbrains.builtInWebServer.PathQuery
-- bs:copy$default(org.jetbrains.builtInWebServer.PathQuery,Z,Z,Z,Z,I,java.lang.Object):org.jetbrains.builtInWebServer.PathQuery
 - equals(java.lang.Object):Z
 - f:getSearchInArtifacts():Z
 - f:getSearchInLibs():Z
@@ -33,16 +23,15 @@ f:org.jetbrains.builtInWebServer.PathQuery
 - f:getUseVfs():Z
 - hashCode():I
 a:org.jetbrains.builtInWebServer.WebServerRootsProvider
-- sf:Companion:org.jetbrains.builtInWebServer.WebServerRootsProvider$Companion
 - <init>():V
 - a:getPathInfo(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):org.jetbrains.builtInWebServer.PathInfo
 - isClearCacheOnFileContentChanged(com.intellij.openapi.vfs.VirtualFile):Z
 - a:resolve(java.lang.String,com.intellij.openapi.project.Project,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
-f:org.jetbrains.builtInWebServer.WebServerRootsProvider$Companion
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:org.jetbrains.ide.BuiltInServerBundle
-- s:message(java.lang.String,java.lang.Object[]):java.lang.String
-- s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
+- s:getReloadOnSaveGotItContent():java.lang.String
+- s:getReloadOnSaveGotItTitle():java.lang.String
+- s:getReloadOnSavePreviewGotItContent():java.lang.String
+- s:getReloadOnSavePreviewGotItTitle():java.lang.String
 a:org.jetbrains.ide.BuiltInServerManager
 - sf:Companion:org.jetbrains.ide.BuiltInServerManager$Companion
 - <init>():V
@@ -57,14 +46,11 @@ a:org.jetbrains.ide.BuiltInServerManager
 f:org.jetbrains.ide.BuiltInServerManager$Companion
 - f:getInstance():org.jetbrains.ide.BuiltInServerManager
 a:org.jetbrains.ide.CustomPortServerManager
-- sf:Companion:org.jetbrains.ide.CustomPortServerManager$Companion
-- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:cannotBind(java.lang.Exception,I):V
 - a:getPort():I
 - a:isAvailableExternally():Z
 - a:setManager(org.jetbrains.ide.CustomPortServerManager$CustomPortService):V
-f:org.jetbrains.ide.CustomPortServerManager$Companion
 org.jetbrains.ide.CustomPortServerManager$CustomPortService
 - a:isBound():Z
 - a:rebind():Z
