@@ -2,14 +2,11 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptModel
 import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
@@ -22,13 +19,16 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import java.nio.file.Paths
 
-class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListener {
+class ProjectGradleSettingsListener(
+    private val project: Project,
+    private val coroutineScope: CoroutineScope
+) : GradleSettingsListener {
 
     private val buildRootsManager: GradleBuildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
 
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
-            CoroutineScopeService.getCoroutineScope(project).launchTracked(Dispatchers.IO) {
+            coroutineScope.launchTracked(Dispatchers.IO) {
                 writeAction {
                     val newRoot = buildRootsManager.loadLinkedRoot(it)
                     buildRootsManager.add(newRoot)
@@ -40,7 +40,7 @@ class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListen
     override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
         if (KotlinPluginModeProvider.isK2Mode()) {
             settings.forEach {
-                CoroutineScopeService.getCoroutineScope(project).launchTracked(Dispatchers.IO) {
+                coroutineScope.launchTracked(Dispatchers.IO) {
                     val newRoot = writeAction {
                         buildRootsManager.loadLinkedRoot(it)
                     }
@@ -87,15 +87,5 @@ class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListen
         }.toSet()
 
         configureGradleScriptsK2(project, scripts, root.data.javaHome, storage = null)
-    }
-
-    @ApiStatus.Internal
-    @Service(Service.Level.PROJECT)
-    class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-        companion object {
-            fun getCoroutineScope(project: Project): CoroutineScope {
-                return project.service<CoroutineScopeService>().coroutineScope
-            }
-        }
     }
 }
