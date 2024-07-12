@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.importSettings.chooser.ui
 
+import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.importProgress.ImportProgressPage
 import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductChooserPage
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserPage
@@ -27,7 +28,8 @@ interface ImportSettingsController : BaseController {
   fun goToProductChooserPage()
 
   /**
-   * Whether we can show the page in the current configuration at all. E.g., in Rider we can, in others we can't.
+   * Whether we can show the page in the current configuration at all. E.g., in Rider we can (but only if there are plugins to install),
+   * in others we can't.
    */
   fun canShowFeaturedPluginsPage(origin: SettingsImportOrigin): Boolean
 
@@ -47,7 +49,7 @@ interface ImportSettingsController : BaseController {
     product: Product,
     dataForSave: List<DataForSave>
   )
-  fun goToProgressPage(importFromProduct: DialogImportData)
+  fun goToProgressPage(importFromProduct: DialogImportData, dataToApply: DataToApply)
 
   fun skipImport()
 
@@ -124,15 +126,20 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
       goToSettingsPage(provider, product)
     },
     goForwardAction = { featuredPluginIds ->
-      val importSettings = productService.importSettings(product.id, DataToApply(dataForSave, featuredPluginIds))
-      goToProgressPage(importSettings)
-    })
+      val dataToApply = DataToApply(dataForSave, featuredPluginIds)
+      val importSettings = productService.importSettings(product.id, dataToApply)
+      goToProgressPage(importSettings, dataToApply)
+    },
+    continueButtonTextOverride = ImportSettingsBundle.message("onboarding.wizard.finish-button"))
     ImportSettingsEventsCollector.featuredPluginsPageShown()
     dialog.changePage(page)
   }
 
-  override fun goToProgressPage(importFromProduct: DialogImportData) {
-    val page = ImportProgressPage(importFromProduct, this)
+  override fun goToProgressPage(importFromProduct: DialogImportData, dataToApply: DataToApply) {
+    val dialogTitleOverride = if (dataToApply.featuredPluginIds.isNotEmpty())
+      ImportSettingsBundle.message("onboarding.wizard.getting-ready")
+    else null
+    val page = ImportProgressPage(importFromProduct, this, dialogTitleOverride)
     Disposer.tryRegister(dialog.disposable, page)
     ImportSettingsEventsCollector.importProgressPageShown()
     dialog.changePage(page)
