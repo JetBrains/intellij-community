@@ -1,5 +1,4 @@
 // WITH_STDLIB
-// IGNORE_K1
 // COMPILER_ARGUMENTS: -XXLanguage:+BreakContinueInInlineLambdas
 // DISABLE-ERRORS
 fun foo() {
