@@ -6,7 +6,6 @@ import com.intellij.ide.startup.importSettings.chooser.productChooser.ProductCho
 import com.intellij.ide.startup.importSettings.chooser.settingChooser.SettingChooserPage
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
-import com.intellij.ide.startup.importSettings.transfer.SettingTransferProductService
 import com.intellij.ide.startup.importSettings.transfer.TransferableSetting
 import com.intellij.ide.startup.importSettings.wizard.pluginChooser.WizardPluginsPage
 import com.intellij.ide.ui.LafManager
@@ -39,7 +38,7 @@ interface ImportSettingsController : BaseController {
   fun shouldShowFeaturedPluginsPage(
     productId: String,
     dataForSave: List<DataForSave>,
-    productService: SettingTransferProductService,
+    productService: BaseService,
   ): Boolean
 
   fun goToFeaturedPluginsPage(
@@ -89,22 +88,21 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
   }
 
   override fun canShowFeaturedPluginsPage(origin: SettingsImportOrigin): Boolean = when (origin) {
-    SettingsImportOrigin.ThirdPartyProduct -> StartupWizardService.getInstance() != null
-    SettingsImportOrigin.JetBrainsProduct -> false
+    SettingsImportOrigin.ThirdPartyProduct, SettingsImportOrigin.JetBrainsProduct -> StartupWizardService.getInstance() != null
     SettingsImportOrigin.Sync -> false
   }
 
   override fun shouldShowFeaturedPluginsPage(
     productId: String,
     dataForSave: List<DataForSave>,
-    productService: SettingTransferProductService
+    productService: BaseService
   ): Boolean {
     val pluginService = StartupWizardService.getInstance()?.getPluginService() ?: run {
       logger.info("No wizard service registered, not going to show the featured plugins page.")
       return false
     }
     val installPlugins = dataForSave.any { it.id == TransferableSetting.PLUGINS_ID }
-    val pluginIdsMarkedForInstallation = if (installPlugins) productService.getPlugins(productId) else emptyList()
+    val pluginIdsMarkedForInstallation = if (installPlugins) productService.getImportablePluginIds(productId) else emptyList()
     logger.info("${pluginIdsMarkedForInstallation.size} plugins marked for installation so far.")
     if (!pluginService.shouldShowPage(pluginIdsMarkedForInstallation)) {
       logger.info("Plugin service reported that showing the featured plugin page is unnecessary.")

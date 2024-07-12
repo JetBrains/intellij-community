@@ -21,7 +21,6 @@ import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.UserDataHolder
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.PlatformUtils
 import com.intellij.util.SystemProperties
@@ -210,6 +209,7 @@ interface BaseService {
 
   fun products(): List<Product>
   fun getSettings(itemId: String): List<BaseSetting>
+  fun getImportablePluginIds(itemId: String): List<String>
 
   fun getProductIcon(itemId: String, size: IconProductSize = IconProductSize.SMALL): Icon?
 
