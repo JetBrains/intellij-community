@@ -48,6 +48,8 @@
     <extensionPoint name="ift.learning.commonCourse" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="training.learn.course.LearningCourse"/>
     </extensionPoint>
+
+    <extensionPoint name="ift.newUsersOnboardingExperimentAccessor" interface="training.learn.NewUsersOnboardingExperimentAccessor" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
