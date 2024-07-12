@@ -7,34 +7,26 @@ import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.MethodVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
 
-fun Method.isSimpleGetter(): Boolean {
+fun Method.isGetterVisibleInVariablesView(): Boolean {
     if (DexDebugFacility.isDex(virtualMachine())) {
-        // TODO(KTIJ-23684): Add support for DEX
-        return false
+        return DexBytecodeInspector.EP.extensions.single().isGetterVisibleInVariablesView(this)
     }
+    return !isSimpleGetter() && !isLateinitVariableGetter()
+}
 
+private fun Method.isSimpleGetter(): Boolean {
     return isSimpleMemberVariableGetter()
             || isSimpleStaticVariableGetter()
             || isJVMStaticVariableGetter()
 }
 
-fun Method.isLateinitVariableGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
-        // TODO(KTIJ-23684): Add support for DEX
-        return false
-    }
-
+private fun Method.isLateinitVariableGetter(): Boolean {
     return isOldBackendLateinitVariableGetter()
             || isIRBackendLateinitVariableGetter()
             || isIRBackendLateinitVariableGetterReturningAny()
 }
 
-fun Method.isOldBackendLateinitVariableGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
-        // TODO(KTIJ-23684): Add support for DEX
-        return false
-    }
-
+private fun Method.isOldBackendLateinitVariableGetter(): Boolean {
     return verifyMethod(
         14,
         intArrayOf(
@@ -48,24 +40,14 @@ fun Method.isOldBackendLateinitVariableGetter(): Boolean {
     )
 }
 
-fun Method.isIRBackendLateinitVariableGetterReturningAny(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
-        // TODO(KTIJ-23684): Add support for DEX
-        return false
-    }
-
+private fun Method.isIRBackendLateinitVariableGetterReturningAny(): Boolean {
     return verifyMethod(
         expectedNumOfBytecodes = 19,
         MethodBytecodeVerifierFromArray(lateinitVarReturningAnyBytecodes)
     )
 }
 
-fun Method.isIRBackendLateinitVariableGetter(): Boolean {
-    if (DexDebugFacility.isDex(virtualMachine())) {
-        // TODO(KTIJ-23684): Add support for DEX
-        return false
-    }
-
+private fun Method.isIRBackendLateinitVariableGetter(): Boolean {
     return verifyMethod(
         expectedNumOfBytecodes = 17,
         MethodBytecodeVerifierFromArray(lateinitVarPropertyBytecodes)

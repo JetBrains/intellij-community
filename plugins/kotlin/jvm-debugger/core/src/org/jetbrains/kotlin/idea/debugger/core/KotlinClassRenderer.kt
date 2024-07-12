@@ -19,10 +19,7 @@ import com.intellij.debugger.ui.tree.render.ClassRenderer
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.openapi.project.Project
 import com.sun.jdi.*
-import org.jetbrains.kotlin.idea.debugger.base.util.safeFields
-import org.jetbrains.kotlin.idea.debugger.base.util.safeType
-import org.jetbrains.kotlin.idea.debugger.base.util.isLateinitVariableGetter
-import org.jetbrains.kotlin.idea.debugger.base.util.isSimpleGetter
+import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.GetterDescriptor
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.isInKotlinSources
@@ -123,8 +120,7 @@ class KotlinClassRenderer : ClassRenderer() {
             method.name() != "getClass" &&
             !method.name().endsWith("\$annotations") &&
             method.declaringType().isInKotlinSources() &&
-            !method.isSimpleGetter() &&
-            !method.isLateinitVariableGetter()
+            method.isGetterVisibleInVariablesView()
         }
         .distinctBy { it.name() }
         .toList()
