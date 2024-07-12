@@ -593,7 +593,7 @@ object CommunityLibraryLicenses {
       .suppliedByOrganizations("Thai Open Source Software Center Ltd"),
     LibraryLicense(name = "JNA", libraryName = "jna", license = "LGPL 2.1",
                    url = "https://github.com/java-native-access/jna",
-                   licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1.php"),
+                   licenseUrl = "https://github.com/java-native-access/jna/blob/master/LICENSE"),
     LibraryLicense(name = "Joni", libraryName = "joni", url = "https://github.com/jruby/joni")
       .mit("https://github.com/jruby/joni/blob/master/LICENSE"),
     LibraryLicense(name = "jps-javac-extension", libraryName = "jps-javac-extension",
@@ -618,8 +618,8 @@ object CommunityLibraryLicenses {
     LibraryLicense(name = "JSON Schema (schema07.json)", attachedTo = "intellij.json", version = "draft-07",
                    url = "https://json-schema.org/draft-07/schema#").simplifiedBsd(),
     LibraryLicense(libraryName = "jsoup", url = "https://jsoup.org").mit("https://jsoup.org/license"),
-    LibraryLicense(libraryName = "jsr305", url = "https://code.google.com/p/jsr-305/")
-      .newBsd("https://opensource.org/license/bsd-3-clause/")
+    LibraryLicense(libraryName = "jsr305", url = "https://github.com/amaembo/jsr-305")
+      .newBsd("https://github.com/amaembo/jsr-305/blob/master/ri/LICENSE")
       .suppliedByOrganizations("JSR305 expert group"),
     LibraryLicense(libraryName = "jsvg", url = "https://github.com/weisJ/jsvg").mit("https://github.com/weisJ/jsvg/blob/master/LICENSE")
       .suppliedByPersons("Jannis Weis"),
@@ -698,6 +698,7 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/EsotericSoftware/kryo")
       .newBsd("https://github.com/EsotericSoftware/kryo/blob/master/LICENSE.md")
       .suppliedByPersons("Nathan Sweet"),
+
     LibraryLicense(libraryName = "ktor-client-auth",
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
@@ -732,10 +733,22 @@ object CommunityLibraryLicenses {
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense(name = "ktor.io TLS", libraryName = "ktor-network-tls",
                    url = "https://github.com/ktorio/ktor")
       .apache("https://github.com/ktorio/ktor/blob/main/LICENSE")
       .suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense(name = "Ktor Client Core",
+                   libraryName = "ktor-client-core",
+                   url = "https://github.com/ktorio/ktor/tree/main/ktor-client/ktor-client-core")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE").suppliedByOrganizations(Suppliers.JETBRAINS),
+
+    LibraryLicense(name = "Ktor Client OkHttp",
+                   libraryName = "ktor-client-okhttp",
+                   url = "https://github.com/ktorio/ktor/tree/main/ktor-client/ktor-client-okhttp")
+      .apache("https://github.com/ktorio/ktor/blob/main/LICENSE").suppliedByOrganizations(Suppliers.JETBRAINS),
+
     LibraryLicense(name = "kXML2", libraryName = "kxml2", url = "https://sourceforge.net/projects/kxml/").simplifiedBsd(),
     LibraryLicense(name = "Language Tool", libraryName = "org.languagetool:languagetool-core",
                    url = "https://github.com/languagetool-org/languagetool",
@@ -1008,7 +1021,7 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/amaembo/streamex/blob/master/LICENSE"),
     LibraryLicense(name = "swingx", libraryName = "swingx", license = "LGPL 2.1",
                    url = "https://central.sonatype.com/artifact/org.swinglabs/swingx-core/1.6.2-2",
-                   licenseUrl = "https://www.opensource.org/licenses/lgpl-2.1.php")
+                   licenseUrl = "https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html")
       .suppliedByOrganizations("Sun Microsystems, Inc."),
     LibraryLicense(libraryName = "TestNG", url = "https://testng.org/")
       .apache("https://github.com/cbeust/testng/blob/master/LICENSE.txt"),

@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" exported="" name="ktor-client-core" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-java" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-encoding" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-content-negotiation" level="project" />

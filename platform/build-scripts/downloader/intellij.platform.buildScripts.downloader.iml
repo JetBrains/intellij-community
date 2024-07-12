@@ -36,6 +36,8 @@
     <orderEntry type="library" name="opentelemetry" level="project" />
     <orderEntry type="library" name="opentelemetry-semconv" level="project" />
     <orderEntry type="library" name="opentelemetry-extension-kotlin" level="project" />
-    <orderEntry type="library" name="ktor-client-java" level="project" />
+    <orderEntry type="library" name="ktor-client-okhttp" level="project" />
+    <orderEntry type="library" name="okhttp" level="project" />
+    <orderEntry type="library" name="ktor-client-core" level="project" />
   </component>
 </module>

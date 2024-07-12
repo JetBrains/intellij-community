@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "RedundantSuppression")
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -295,7 +295,7 @@ internal suspend fun createPlatformLayout(projectLibrariesUsedByPlugins: SortedS
   )
 
   // sqlite - used by DB and "import settings" (temporarily)
-  layout.alwaysPackToPlugin(listOf("flexmark", "okhttp", "sqlite"))
+  layout.alwaysPackToPlugin(listOf("flexmark", "sqlite"))
   for (item in projectLibrariesUsedByPlugins) {
     if (!layout.isProjectLibraryExcluded(item.libraryName) && !layout.isLibraryAlwaysPackedIntoPlugin(item.libraryName)) {
       layout.includedProjectLibraries.add(item)
