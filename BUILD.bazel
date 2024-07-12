@@ -14,7 +14,8 @@ idea_source(
     ],
     target_compatible_with = select({
         "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//tools/base/bazel/ci/conditions:studio-linux": ["@platforms//:incompatible"],
+        "//tools/base/bazel/ci/conditions:studio-linux_large": [],
+        "//tools/base/bazel/ci/conditions:ci": ["@platforms//:incompatible"],
         "//conditions:default": [],
     }),
     target_dir = "tools/idea",
