@@ -22,40 +22,56 @@ import java.util.Map;
 public class ArrayValidation implements JsonSchemaValidation {
   public static final ArrayValidation INSTANCE = new ArrayValidation();
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
-    checkArray(propValue, schema, consumer, options);
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
+    return checkArray(propValue, schema, consumer, options);
   }
 
-  private static void checkArray(JsonValueAdapter value,
+  private boolean checkArray(JsonValueAdapter value,
                                  JsonSchemaObject schema,
                                  JsonValidationHost consumer,
                                  JsonComplianceCheckerOptions options) {
     final JsonArrayValueAdapter asArray = value.getAsArray();
-    if (asArray == null) return;
+    if (asArray == null) return true;
     final List<JsonValueAdapter> elements = asArray.getElements();
-    checkArrayItems(value, elements, schema, consumer, options);
+    return checkArrayItems(value, elements, schema, consumer, options);
   }
 
-  private static void checkArrayItems(@NotNull JsonValueAdapter array,
-                                      final @NotNull List<JsonValueAdapter> list,
-                                      final JsonSchemaObject schema,
-                                      JsonValidationHost consumer,
-                                      JsonComplianceCheckerOptions options) {
-    validateUniqueItems(array, list, schema, consumer);
-    validateAgainstContainsSchema(array, list, schema, consumer, options);
-    validateIndividualItems(list, schema, consumer);
-    validateArrayLength(array, list, schema, consumer);
-    validateArrayLengthHeuristically(array, list, schema, consumer);
+  protected boolean checkArrayItems(@NotNull JsonValueAdapter array,
+                                         final @NotNull List<JsonValueAdapter> list,
+                                         final JsonSchemaObject schema,
+                                         JsonValidationHost consumer,
+                                         JsonComplianceCheckerOptions options) {
+    if (options.shouldStopValidationAfterAnyErrorFound()) {
+      return validateUniqueItems(array, list, schema, consumer, options) &&
+             validateAgainstContainsSchema(array, list, schema, consumer, options) &&
+             validateIndividualItems(list, schema, consumer, options) &&
+             validateArrayLength(array, list, schema, consumer, options) &&
+             validateArrayLengthHeuristically(array, list, schema, consumer, options);
+    }
+    else {
+      return validateUniqueItems(array, list, schema, consumer, options) &
+             validateAgainstContainsSchema(array, list, schema, consumer, options) &
+             validateIndividualItems(list, schema, consumer, options) &
+             validateArrayLength(array, list, schema, consumer, options) &
+             validateArrayLengthHeuristically(array, list, schema, consumer, options);
+    }
   }
 
-  private static void validateIndividualItems(@NotNull List<JsonValueAdapter> list, JsonSchemaObject schema, JsonValidationHost consumer) {
+  protected boolean validateIndividualItems(@NotNull List<JsonValueAdapter> list,
+                                                 JsonSchemaObject schema,
+                                                 JsonValidationHost consumer,
+                                                 JsonComplianceCheckerOptions options) {
+    var isValid = true;
+
     if (schema.getItemsSchema() != null) {
       for (JsonValueAdapter item : list) {
         consumer.checkObjectBySchemaRecordErrors(schema.getItemsSchema(), item);
+        isValid &= consumer.getErrors().isEmpty();
+        if (!isValid && options.shouldStopValidationAfterAnyErrorFound()) return false;
       }
     }
     else if (schema.getItemsSchemaList() != null) {
@@ -63,45 +79,60 @@ public class ArrayValidation implements JsonSchemaValidation {
       for (JsonValueAdapter arrayValue : list) {
         if (iterator.hasNext()) {
           consumer.checkObjectBySchemaRecordErrors(iterator.next(), arrayValue);
+          isValid &= consumer.getErrors().isEmpty();
+          if (!isValid && options.shouldStopValidationAfterAnyErrorFound()) return false;
         }
         else {
           if (!Boolean.TRUE.equals(schema.getAdditionalItemsAllowed())) {
             consumer.error(JsonBundle.message("schema.validation.array.no.extra"), arrayValue.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+            isValid = false;
+            if (options.shouldStopValidationAfterAnyErrorFound()) return false;
           }
           else if (schema.getAdditionalItemsSchema() != null) {
             consumer.checkObjectBySchemaRecordErrors(schema.getAdditionalItemsSchema(), arrayValue);
+            isValid &= consumer.getErrors().isEmpty();
+            if (!isValid && options.shouldStopValidationAfterAnyErrorFound()) return false;
           }
         }
       }
     }
+
+    return isValid;
   }
 
-  protected static void validateArrayLengthHeuristically(@NotNull JsonValueAdapter array,
-                                @NotNull List<JsonValueAdapter> list,
-                                JsonSchemaObject schema,
-                                JsonValidationHost consumer) {
+  protected static boolean validateArrayLengthHeuristically(@NotNull JsonValueAdapter array,
+                                                         @NotNull List<JsonValueAdapter> list,
+                                                         JsonSchemaObject schema,
+                                                         JsonValidationHost consumer,
+                                                         JsonComplianceCheckerOptions options) {
     // these two are not correct by the schema spec, but are used in some schemas
     if (schema.getMinLength() != null && list.size() < schema.getMinLength()) {
       consumer.error(JsonBundle.message("schema.validation.array.shorter.than", schema.getMinLength()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+      return false;
     }
     if (schema.getMaxLength() != null && list.size() > schema.getMaxLength()) {
       consumer.error(JsonBundle.message("schema.validation.array.longer.than", schema.getMaxLength()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+      return false;
     }
+    return true;
   }
 
-  protected static void validateArrayLength(@NotNull JsonValueAdapter array,
-                                @NotNull List<JsonValueAdapter> list,
-                                JsonSchemaObject schema,
-                                JsonValidationHost consumer) {
+  protected static boolean validateArrayLength(@NotNull JsonValueAdapter array,
+                                            @NotNull List<JsonValueAdapter> list,
+                                            JsonSchemaObject schema,
+                                            JsonValidationHost consumer, JsonComplianceCheckerOptions options) {
     if (schema.getMinItems() != null && list.size() < schema.getMinItems()) {
       consumer.error(JsonBundle.message("schema.validation.array.shorter.than", schema.getMinItems()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+      return false;
     }
     if (schema.getMaxItems() != null && list.size() > schema.getMaxItems()) {
       consumer.error(JsonBundle.message("schema.validation.array.longer.than", schema.getMaxItems()), array.getDelegate(), JsonErrorPriority.LOW_PRIORITY);
+      return false;
     }
+    return true;
   }
 
-  protected static void validateAgainstContainsSchema(@NotNull JsonValueAdapter array,
+  protected static boolean validateAgainstContainsSchema(@NotNull JsonValueAdapter array,
                                 @NotNull List<JsonValueAdapter> list,
                                 JsonSchemaObject schema,
                                 JsonValidationHost consumer,
@@ -117,14 +148,17 @@ public class ArrayValidation implements JsonSchemaValidation {
       }
       if (!match) {
         consumer.error(JsonBundle.message("schema.validation.array.not.contains"), array.getDelegate(), JsonErrorPriority.MEDIUM_PRIORITY);
+        return false;
       }
     }
+    return true;
   }
 
-  protected static void validateUniqueItems(@NotNull JsonValueAdapter array,
+  protected static boolean validateUniqueItems(@NotNull JsonValueAdapter array,
                                 @NotNull List<JsonValueAdapter> list,
                                 JsonSchemaObject schema,
-                                JsonValidationHost consumer) {
+                                JsonValidationHost consumer,
+                                @NotNull JsonComplianceCheckerOptions options) {
     if (schema.isUniqueItems()) {
       final MultiMap<String, JsonValueAdapter> valueTexts = new MultiMap<>();
       final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(array.getDelegate(), schema);
@@ -138,9 +172,11 @@ public class ArrayValidation implements JsonSchemaValidation {
           for (JsonValueAdapter item: entry.getValue()) {
             if (!item.shouldCheckAsValue()) continue;
             consumer.error(JsonBundle.message("schema.validation.not.unique"), item.getDelegate(), JsonErrorPriority.TYPE_MISMATCH);
+            if (options.shouldStopValidationAfterAnyErrorFound()) return false;
           }
         }
       }
     }
+    return true;
   }
 }

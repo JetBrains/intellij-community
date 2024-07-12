@@ -42,7 +42,8 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
     myErrors = new HashMap<>();
   }
 
-  public Map<PsiElement, JsonValidationError> getErrors() {
+  @Override
+  public @NotNull Map<PsiElement, JsonValidationError> getErrors() {
     return myErrors;
   }
 
@@ -165,14 +166,18 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
   @Override
   public boolean isValid() {
-    return myErrors.size() == 0 && !myHadTypeError;
+    return myErrors.isEmpty() && !myHadTypeError;
   }
 
-  public void checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
+  public boolean checkByScheme(@NotNull JsonValueAdapter value, @NotNull JsonSchemaObject schema) {
     final JsonSchemaType instanceFieldType = JsonSchemaType.getType(value);
+
+    var isValid = true;
     for (JsonSchemaValidation validation : schema.getValidations(instanceFieldType, value)) {
-      validation.validate(value, schema, instanceFieldType, this, myOptions);
+      isValid = validation.validate(value, schema, instanceFieldType, this, myOptions);
+      if (!isValid && myOptions.shouldStopValidationAfterAnyErrorFound()) return false;
     }
+    return isValid;
   }
 
   @Override
