@@ -1,6 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.intentions
+package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModCommandAction<KtBinaryExpression, Unit>(
+internal class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModCommandAction<KtBinaryExpression, Unit>(
     KtBinaryExpression::class,
 ), LowPriorityAction {
 

@@ -6335,6 +6335,65 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment")
+    public static class ReplaceWithOrdinaryAssignment extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("complexRightExpression.kt")
+        public void testComplexRightExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/complexRightExpression.kt");
+        }
+
+        @TestMetadata("doubleQualifiedExpressionIsntAllowed.kt")
+        public void testDoubleQualifiedExpressionIsntAllowed() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/doubleQualifiedExpressionIsntAllowed.kt");
+        }
+
+        @TestMetadata("minusAssignOperatorFun.kt")
+        public void testMinusAssignOperatorFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/minusAssignOperatorFun.kt");
+        }
+
+        @TestMetadata("mutableList.kt")
+        public void testMutableList() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/mutableList.kt");
+        }
+
+        @TestMetadata("nonAssignmentExpression.kt")
+        public void testNonAssignmentExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/nonAssignmentExpression.kt");
+        }
+
+        @TestMetadata("nonAugmentedAssign.kt")
+        public void testNonAugmentedAssign() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/nonAugmentedAssign.kt");
+        }
+
+        @TestMetadata("plusAssignOperatorFun.kt")
+        public void testPlusAssignOperatorFun() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/plusAssignOperatorFun.kt");
+        }
+
+        @TestMetadata("qualifiedExpression.kt")
+        public void testQualifiedExpression() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/qualifiedExpression.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/replaceWithOrdinaryAssignment/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/intentions/specifyExplicitLambdaSignature")
     public static class SpecifyExplicitLambdaSignature extends AbstractK2IntentionTest {
         @java.lang.Override
