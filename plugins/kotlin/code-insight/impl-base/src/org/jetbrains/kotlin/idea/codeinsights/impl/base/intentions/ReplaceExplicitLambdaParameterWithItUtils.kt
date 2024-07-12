@@ -11,15 +11,7 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtContainerNodeForControlStructureBody
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 
 object ReplaceExplicitLambdaParameterWithItUtils {
@@ -27,7 +19,7 @@ object ReplaceExplicitLambdaParameterWithItUtils {
     class ParamRenamingProcessor(
         val editor: Editor,
         val functionLiteral: KtFunctionLiteral,
-        val cursorWasInParameterList: Boolean,
+        private val cursorWasInParameterList: Boolean,
     ) : RenameProcessor(
         editor.project!!,
         functionLiteral.valueParameters.single(),
@@ -51,7 +43,7 @@ object ReplaceExplicitLambdaParameterWithItUtils {
         }
     }
 
-    fun KtFunctionLiteral.usesName(name: String): Boolean = anyDescendantOfType<KtSimpleNameExpression> { nameExpr ->
+    private fun KtFunctionLiteral.usesName(name: String): Boolean = anyDescendantOfType<KtSimpleNameExpression> { nameExpr ->
         nameExpr.getReferencedName() == name
     }
 
