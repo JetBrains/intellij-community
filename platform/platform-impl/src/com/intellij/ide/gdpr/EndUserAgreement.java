@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.gdpr;
 
 import com.intellij.ide.Prefs;
@@ -15,18 +15,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-
-/**
- * @author Eugene Zhuravlev
- *         Date: 09-Mar-16
- */
 public final class EndUserAgreement {
   private static final Logger LOG = Logger.getInstance(EndUserAgreement.class);
   private static final String POLICY_TEXT_PROPERTY = "jb.privacy.policy.text"; // to be used in tests to pass arbitrary policy text
@@ -61,12 +54,11 @@ public final class EndUserAgreement {
   }
 
   private static @NotNull Path getDocumentNameFile() {
-    boolean isEAP = isEAP() && !Agreements.isReleaseAgreementsEnabled();
-    return getDataRoot().resolve(isEAP ? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
+    return getDataRoot().resolve(shouldUseEAPAgreement()? ACTIVE_DOC_EAP_FILE_NAME : ACTIVE_DOC_FILE_NAME);
   }
 
-  private static boolean isEAP() {
-    return ApplicationInfoImpl.getShadowInstance().isEAP();
+  private static boolean shouldUseEAPAgreement() {
+    return ApplicationInfoImpl.getShadowInstance().isEAP() && !Agreements.isReleaseAgreementsEnabled();
   }
 
   private static @NotNull Path getDataRoot() {
@@ -204,25 +196,38 @@ public final class EndUserAgreement {
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
       if (PlatformUtils.isCommunityEdition()) {
-        return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+        return shouldUseEAPAgreement()? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
       }
       if (PlatformUtils.isJetBrainsClient()) {
         return CWM_GUEST_EULA_NAME;
       }
       if (PlatformUtils.isGateway()) {
-        return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+        return shouldUseEAPAgreement()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
       }
-      return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
+      return shouldUseEAPAgreement()? PRIVACY_POLICY_EAP_DOCUMENT_NAME : PRIVACY_POLICY_DOCUMENT_NAME;
     }
 
     try {
       String docName = Files.readString(getDocumentNameFile());
-      if (docName != null && !docName.isBlank()) {
+      if (isValidFileName(docName)) {
         return docName;
       }
     }
-    catch (IOException ignored) { }
-    return isEAP() && !Agreements.isReleaseAgreementsEnabled() ? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+    catch (IOException ignored) {
+    }
+    return shouldUseEAPAgreement()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
+  }
+
+  private static boolean isValidFileName(String docName) {
+    if (docName != null && !docName.isBlank()) {
+      try {
+        Paths.get(docName);
+        return true;
+      }
+      catch (InvalidPathException ignored) {
+      }
+    }
+    return false;
   }
 
   private static @NotNull String getAcceptedVersionKey(@NotNull String docName) {
