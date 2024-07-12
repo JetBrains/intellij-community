@@ -99,16 +99,16 @@ object LocalizationUtil {
       defaultLoader?.getResourceAsStream(pathString)?.let { return it }
     }
     return getPluginClassLoader()?.getResourceAsStream(path.pathString) ?:
-    defaultLoader?.getResourceAsStream(path.pathString)?.let { return it }
+    defaultLoader?.getResourceAsStream(path.pathString)
   }
 
   @Internal
   @JvmOverloads
   fun getLocalizedPathsWithDefault(path: Path, specialLocale: Locale? = null): List<Path> {
     val locale = specialLocale ?: getLocale()
-    return getLocalizedPaths(path, locale).toMutableList().apply {
-      add(path)
-      toList().distinct()
+    return getLocalizedPaths(path, locale).toMutableList().let {
+      it.add(path)
+      it.distinct()
     }
   }
 
