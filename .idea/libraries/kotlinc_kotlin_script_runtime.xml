@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-script-runtime" type="repository">
-    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.0.20-ij242-8">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.0.20-ij242-13">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.20-ij242-8/kotlin-script-runtime-2.0.20-ij242-8.jar">
-          <sha256sum>7b0adf1c0071a28f7f46d1045b7c3b4b8afb159942a6a079a42df213e2e2ae65</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.20-ij242-13/kotlin-script-runtime-2.0.20-ij242-13.jar">
+          <sha256sum>c555796dbfdae1df20591f0ec3e94ed17004aba0211fb04a709755adf427fcc8</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.20-ij242-8/kotlin-script-runtime-2.0.20-ij242-8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.20-ij242-13/kotlin-script-runtime-2.0.20-ij242-13.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.20-ij242-8/kotlin-script-runtime-2.0.20-ij242-8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.0.20-ij242-13/kotlin-script-runtime-2.0.20-ij242-13-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
