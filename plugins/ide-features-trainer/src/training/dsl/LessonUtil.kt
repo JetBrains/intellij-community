@@ -13,7 +13,10 @@ import com.intellij.execution.ui.layout.impl.RunnerLayoutSettings
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.DataManagerImpl
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -446,8 +449,7 @@ fun LessonContext.highlightRunToolbar(highlightInside: Boolean = true, usePulsat
       this.highlightInside = highlightInside
       this.usePulsation = usePulsation
     }.component { toolbar: ActionToolbarImpl ->
-      val actionId = ActionManager.getInstance().getId(toolbar.actionGroup)
-      actionId == "RunToolbarMainActionGroup"
+      toolbar.place == ActionPlaces.NEW_UI_RUN_TOOLBAR
     }
   }
 }
