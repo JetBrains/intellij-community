@@ -6,19 +6,17 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.ApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -41,8 +39,10 @@ class ReplaceWithOrdinaryAssignmentIntention : KotlinApplicableModCommandAction<
         if (left.safeAs<KtQualifiedExpression>()?.receiverExpression is KtQualifiedExpression) return false
         if (element.right == null) return false
 
-        val resultingDescriptor = operationReference.resolveToCall(BodyResolveMode.PARTIAL)?.resultingDescriptor ?: return false
-        return resultingDescriptor.name !in OperatorNameConventions.ASSIGNMENT_OPERATIONS
+        analyze(element) {
+            val resultingSymbol = operationReference.mainReference.resolveToSymbol() as? KaFunctionSymbol ?: return false
+            return resultingSymbol.callableId?.callableName !in OperatorNameConventions.ASSIGNMENT_OPERATIONS
+        }
     }
 
     override fun invoke(actionContext: ActionContext, element: KtBinaryExpression, elementContext: Unit, updater: ModPsiUpdater) {
