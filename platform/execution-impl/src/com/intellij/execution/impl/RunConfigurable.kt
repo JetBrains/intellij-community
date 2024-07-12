@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -40,7 +40,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.TreeTraversal
@@ -231,7 +230,6 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
       task = ::selectRunConfiguration,
       delay = 300,
       parentDisposable = parentDisposable,
-      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
       modalityState = modalityState
     )
 

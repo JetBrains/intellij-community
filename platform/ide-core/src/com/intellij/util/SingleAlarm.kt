@@ -37,7 +37,7 @@ class SingleAlarm @Internal constructor(
   private val task: Runnable,
   private val delay: Int,
   parentDisposable: Disposable?,
-  threadToUse: ThreadToUse = ThreadToUse.SWING_THREAD,
+  threadToUse: ThreadToUse,
   modalityState: ModalityState? = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
   coroutineScope: CoroutineScope? = null,
 ) : Disposable {
@@ -45,23 +45,22 @@ class SingleAlarm @Internal constructor(
   private val taskCoroutineScope: CoroutineScope
   private val taskContext: CoroutineContext
 
-  private val isScopeShared: Boolean
-
   private val LOCK = Any()
 
   // guarded by LOCK
   private var currentJob: Job? = null
 
-  private val inEdt: Boolean = threadToUse == ThreadToUse.SWING_THREAD
-
+  @Deprecated("Please use flow instead of SingleAlarm")
   constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable) : this(
     task = task,
     delay = delay,
     parentDisposable = parentDisposable,
     threadToUse = threadToUse,
     modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
+    coroutineScope = null,
   )
 
+  @Deprecated("Please use flow instead of SingleAlarm")
   constructor(
     task: Runnable,
     delay: Int,
@@ -73,6 +72,21 @@ class SingleAlarm @Internal constructor(
     delay = delay,
     parentDisposable = parentDisposable,
     threadToUse = threadToUse,
+    modalityState = modalityState,
+    coroutineScope = null,
+  )
+
+  @Internal
+  constructor(
+    task: Runnable,
+    delay: Int,
+    parentDisposable: Disposable,
+    modalityState: ModalityState,
+  ) : this(
+    task = task,
+    delay = delay,
+    parentDisposable = parentDisposable,
+    threadToUse = ThreadToUse.SWING_THREAD,
     modalityState = modalityState,
     coroutineScope = null,
   )
@@ -109,13 +123,14 @@ class SingleAlarm @Internal constructor(
     task = task,
     delay = delay,
     parentDisposable = null,
+    coroutineScope = null,
     threadToUse = ThreadToUse.SWING_THREAD,
     modalityState = ModalityState.nonModal(),
   )
 
   init {
     var context = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
-    if (inEdt) {
+    if (threadToUse == ThreadToUse.SWING_THREAD) {
       if (modalityState == null) {
         throw IllegalArgumentException("modalityState must be not null if threadToUse == ThreadToUse.SWING_THREAD")
       }
@@ -136,14 +151,12 @@ class SingleAlarm @Internal constructor(
       else {
         taskCoroutineScope = service<SingleAlarmSharedCoroutineScopeHolder>().coroutineScope
       }
-      isScopeShared = true
 
       parentDisposable?.let {
         Disposer.register(it, this)
       }
     }
     else {
-      isScopeShared = false
       taskCoroutineScope = coroutineScope
     }
   }

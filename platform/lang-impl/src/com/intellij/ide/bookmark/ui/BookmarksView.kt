@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.execution.Location
@@ -36,7 +36,6 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
@@ -64,7 +63,12 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, project.currentSession)
 
-  private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
+  private val selectionAlarm = SingleAlarm(
+    task = this::selectionChanged,
+    delay = 50,
+    parentDisposable = this,
+    modalityState = stateForComponent(this),
+  )
 
   private val structure = BookmarksTreeStructure(this)
   val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)

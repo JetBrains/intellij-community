@@ -160,7 +160,14 @@ class AlarmTest {
   @Test
   fun singleAlarmMustRefuseToInstantiateWithWrongModality() {
     assertThatExceptionOfType(IllegalArgumentException::class.java).isThrownBy {
-      SingleAlarm(task = {}, delay = 1, parentDisposable = null, threadToUse = Alarm.ThreadToUse.SWING_THREAD, modalityState = null)
+      SingleAlarm(
+        task = {},
+        delay = 1,
+        parentDisposable = null,
+        threadToUse = Alarm.ThreadToUse.SWING_THREAD,
+        coroutineScope = null,
+        modalityState = null,
+      )
     }
   }
 }

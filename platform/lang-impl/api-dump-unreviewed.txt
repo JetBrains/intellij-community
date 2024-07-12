@@ -14646,7 +14646,7 @@ f:com.intellij.ide.bookmark.providers.LineBookmarkProvider
 - com.intellij.openapi.editor.event.EditorMouseListener
 - com.intellij.openapi.vfs.AsyncFileListener
 - sf:Companion:com.intellij.ide.bookmark.providers.LineBookmarkProvider$Companion
-- <init>(com.intellij.openapi.project.Project):V
+- <init>(com.intellij.openapi.project.Project,kotlinx.coroutines.CoroutineScope):V
 - afterDocumentChange(com.intellij.openapi.editor.Document):V
 - compare(com.intellij.ide.bookmark.Bookmark,com.intellij.ide.bookmark.Bookmark):I
 - f:createBookmark(com.intellij.openapi.editor.Editor,java.lang.Integer):com.intellij.ide.bookmark.FileBookmark

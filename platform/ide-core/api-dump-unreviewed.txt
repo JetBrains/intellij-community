@@ -2984,6 +2984,7 @@ f:com.intellij.util.SingleAlarm
 - sf:Companion:com.intellij.util.SingleAlarm$Companion
 - <init>(java.lang.Runnable,I):V
 - <init>(java.lang.Runnable,I,com.intellij.openapi.Disposable):V
+- <init>(java.lang.Runnable,I,com.intellij.openapi.Disposable,com.intellij.util.Alarm$ThreadToUse):V
 - <init>(java.lang.Runnable,I,com.intellij.openapi.Disposable,com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.application.ModalityState):V
 - <init>(java.lang.Runnable,I,com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
 - f:cancel():V
@@ -3002,6 +3003,7 @@ f:com.intellij.util.SingleAlarm
 - f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
 f:com.intellij.util.SingleAlarm$Companion
 - f:pooledThreadSingleAlarm(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):com.intellij.util.SingleAlarm
+- f:pooledThreadSingleAlarm(I,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function0):com.intellij.util.SingleAlarm
 - f:singleAlarm(I,kotlinx.coroutines.CoroutineScope,java.lang.Runnable):com.intellij.util.SingleAlarm
 f:com.intellij.util.WaitForProgressToShow
 - s:execute(com.intellij.openapi.progress.ProgressIndicator):V

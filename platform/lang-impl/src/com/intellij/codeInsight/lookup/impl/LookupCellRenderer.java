@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -27,7 +27,6 @@ import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
@@ -147,9 +146,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // Avoid delay in unit tests
       myLookupWidthUpdater = () -> ApplicationManager.getApplication().invokeLater(this::updateLookupWidthFromVisibleItems);
-    } else {
-      SingleAlarm alarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
-                                          ModalityState.stateForComponent(editorComponent));
+    }
+    else {
+      SingleAlarm alarm =
+        new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, ModalityState.stateForComponent(editorComponent));
       myLookupWidthUpdater = () -> {
         synchronized (alarm) {
           if (!alarm.isDisposed()) {

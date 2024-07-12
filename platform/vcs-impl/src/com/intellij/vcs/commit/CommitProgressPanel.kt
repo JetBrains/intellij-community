@@ -241,7 +241,7 @@ open class CommitProgressPanel : CommitProgressUi, InclusionListener, DocumentLi
           // it may get interrupted to read the newly focused component.
           if (announceCommitErrorAlarm == null) {
             announceCommitErrorAlarm =
-              SingleAlarm(
+              SingleAlarm.singleEdtAlarm(
                 task = { AccessibleAnnouncerUtil.announce(label, label.text, false) },
                 delay = 500,
                 parentDisposable = this,

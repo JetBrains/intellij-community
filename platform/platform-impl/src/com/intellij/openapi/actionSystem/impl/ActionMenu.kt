@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.diagnostic.UILatencyLogger
@@ -16,9 +16,12 @@ import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decora
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.ui.JBPopupMenu
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader.getDarkIcon
 import com.intellij.openapi.util.IconLoader.getDisabledIcon
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
@@ -32,7 +35,6 @@ import com.intellij.ui.icons.getMenuBarIcon
 import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.plaf.beg.BegMenuItemUI
 import com.intellij.ui.plaf.beg.IdeaMenuUI
-import com.intellij.util.Alarm
 import com.intellij.util.FontUtil
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SingleAlarm
@@ -433,13 +435,18 @@ private class UsabilityHelper(component: Component) : IdeEventQueue.EventDispatc
   private var eventToRedispatch: MouseEvent? = null
 
   init {
-    callbackAlarm = SingleAlarm({
-                                  Disposer.dispose(callbackAlarm!!)
-                                  callbackAlarm = null
-                                  if (eventToRedispatch != null) {
-                                    getInstance().dispatchEvent(eventToRedispatch!!)
-                                  }
-                                }, 50, this, Alarm.ThreadToUse.SWING_THREAD, ModalityState.any())
+    callbackAlarm = SingleAlarm(
+      task = {
+        Disposer.dispose(callbackAlarm!!)
+        callbackAlarm = null
+        if (eventToRedispatch != null) {
+          getInstance().dispatchEvent(eventToRedispatch!!)
+        }
+      },
+      delay = 50,
+      parentDisposable = this,
+      modalityState = ModalityState.any(),
+    )
     this.component = component
     val info = MouseInfo.getPointerInfo()
     startMousePoint = info?.location
