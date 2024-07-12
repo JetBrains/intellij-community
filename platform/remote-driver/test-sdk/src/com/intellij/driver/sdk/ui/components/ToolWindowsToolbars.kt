@@ -25,6 +25,7 @@ class ToolWindowRightToolbarUi(data: ComponentData) : UiComponent(data) {
   val mavenButton = stripeButton { byAccessibleName("Maven") }
   val databaseButton = stripeButton { byAccessibleName("Database") }
   val aiAssistantButton = stripeButton { byAccessibleName("AI Assistant") }
+  val mesonButton = stripeButton { byAccessibleName("Meson") }
 }
 
 class StripeButtonUi(data: ComponentData) : UiComponent(data) {
