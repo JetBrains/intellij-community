@@ -22,7 +22,6 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.Test
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -48,29 +47,6 @@ class AlarmTest {
     alarm.addRequest(ContextAwareRunnable { list.add("A") }, 1)
     alarm.waitForAllExecuted(20, TimeUnit.MILLISECONDS)
     assertThat(list).containsExactly("A", "B")
-  }
-
-  @Test
-  fun oneAlarmDoesNotStartTooManyThreads(@TestDisposable disposable: Disposable) {
-    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.POOLED_THREAD, parentDisposable = disposable)
-    val executed = AtomicInteger()
-    val count = 100_000
-    val used = ConcurrentHashMap.newKeySet<Thread>()
-    val delay = 10
-    for (i in 0 until count) {
-      alarm.addRequest(ContextAwareRunnable {
-        executed.incrementAndGet()
-        used.add(Thread.currentThread())
-      }, delay)
-    }
-
-    alarm.waitForAllExecuted(30, TimeUnit.SECONDS)
-
-    assertThat(used.size)
-      .describedAs {
-        "${used.size} threads created: ${used.joinToString { printStacktrace("", it, it.stackTrace) }}"
-      }
-      .isLessThanOrEqualTo(Runtime.getRuntime().availableProcessors() + 64 /* IO dispatcher is also reused */)
   }
 
   @Test

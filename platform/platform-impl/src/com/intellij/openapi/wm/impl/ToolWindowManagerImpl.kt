@@ -147,14 +147,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       waiterForSecondPress = null
     }
     else {
-      waiterForSecondPress = SingleAlarm(
+      waiterForSecondPress = SingleAlarm.singleEdtAlarm(
         task = {
           if (currentState != KeyState.HOLD) {
             resetHoldState()
           }
         },
         delay = SystemProperties.getIntProperty("actionSystem.keyGestureDblClickTime", 300),
-        parentDisposable = null,
         coroutineScope = coroutineScope,
       )
       if (state.noStateLoaded) {

@@ -1,6 +1,4 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package com.intellij.util
 
 import com.intellij.codeWithMe.ClientId
@@ -10,11 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.Alarm.ThreadToUse
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -45,6 +43,9 @@ class SingleAlarm @Internal constructor(
 ) : Disposable {
   // it is a supervisor coroutine scope
   private val taskCoroutineScope: CoroutineScope
+  private val taskContext: CoroutineContext
+
+  private val isScopeShared: Boolean
 
   private val LOCK = Any()
 
@@ -113,34 +114,37 @@ class SingleAlarm @Internal constructor(
   )
 
   init {
-    if (inEdt && modalityState == null) {
-      throw IllegalArgumentException("modalityState must be not null if threadToUse == ThreadToUse.SWING_THREAD")
-    }
+    var context = ClientId.currentOrNull?.asContextElement() ?: EmptyCoroutineContext
+    if (inEdt) {
+      if (modalityState == null) {
+        throw IllegalArgumentException("modalityState must be not null if threadToUse == ThreadToUse.SWING_THREAD")
+      }
 
-    var context = modalityState?.asContextElement() ?: EmptyCoroutineContext
-    ClientId.currentOrNull?.let {
-      context += it.asContextElement()
+      // maybe not defined in tests
+      context += Dispatchers.EDT + modalityState.asContextElement()
     }
+    // todo fix clients and remove NonCancellable
+    taskContext = context + NonCancellable
 
-    val coroutineContext = Dispatchers.Default.limitedParallelism(1) + context
     if (coroutineScope == null) {
       val app = ApplicationManager.getApplication()
       if (app == null) {
         LOG.error("Do not use an alarm in an early executing code")
-        @Suppress("SSBasedInspection")
-        taskCoroutineScope = CoroutineScope(SupervisorJob() + coroutineContext)
+        @file:OptIn(DelicateCoroutinesApi::class)
+        taskCoroutineScope = GlobalScope
       }
       else {
-        @Suppress("UsagesOfObsoleteApi")
-        taskCoroutineScope = (app as ComponentManagerEx).getCoroutineScope().childScope("SingleAlarm (task=$task)", coroutineContext)
+        taskCoroutineScope = service<SingleAlarmSharedCoroutineScopeHolder>().coroutineScope
       }
+      isScopeShared = true
 
       parentDisposable?.let {
         Disposer.register(it, this)
       }
     }
     else {
-      taskCoroutineScope = coroutineScope.childScope("SingleAlarm (task=$task)", coroutineContext)
+      isScopeShared = false
+      taskCoroutineScope = coroutineScope
     }
   }
 
@@ -202,7 +206,6 @@ class SingleAlarm @Internal constructor(
 
   override fun dispose() {
     cancel()
-    taskCoroutineScope.cancel()
   }
 
   val isDisposed: Boolean
@@ -240,10 +243,6 @@ class SingleAlarm @Internal constructor(
 
       currentJob = taskCoroutineScope.launch {
         delay(effectiveDelay)
-        var taskContext: CoroutineContext = NonCancellable
-        if (inEdt) {
-          taskContext += Dispatchers.EDT
-        }
         withContext(taskContext) {
           try {
             task.run()
@@ -253,6 +252,14 @@ class SingleAlarm @Internal constructor(
           }
           catch (e: Throwable) {
             LOG.error(e)
+          }
+        }
+      }.also { job ->
+        job.invokeOnCompletion {
+          synchronized(LOCK) {
+            if (currentJob === job) {
+              currentJob = null
+            }
           }
         }
       }
@@ -290,3 +297,7 @@ class SingleAlarm @Internal constructor(
     return 1
   }
 }
+
+@Internal
+@Service
+private class SingleAlarmSharedCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)
