@@ -422,6 +422,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     cloned.IMPORT_LAYOUT_TABLE = new PackageEntryTable();
     cloned.IMPORT_LAYOUT_TABLE.copyFrom(IMPORT_LAYOUT_TABLE);
     cloned.myVersion = myVersion;
+    cloned.myOldVersion = myOldVersion;
     cloned.myIsInitialized = myIsInitialized;
     return cloned;
   }
