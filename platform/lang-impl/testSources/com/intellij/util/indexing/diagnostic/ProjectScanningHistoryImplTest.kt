@@ -175,4 +175,37 @@ class ProjectScanningHistoryImplTest {
     history.scanningFinished()
     return history
   }
+
+  @Test
+  fun `test failure in TC`() { //IJPL-2957
+    /*
+    java.lang.Throwable: Assertion failed: DumbMode is not started, tries to stop.
+    Events
+    [StageEvent(stage=DelayedPushProperties, started=true, instant=2024-02-03T06:07:00.949673Z),
+     StageEvent(stage=DelayedPushProperties, started=false, instant=2024-02-03T06:07:00.949679Z),
+     StageEvent(stage=CreatingIterators, started=true, instant=2024-02-03T06:07:00.950195Z),
+     StageEvent(stage=CreatingIterators, started=false, instant=2024-02-03T06:07:00.950198Z),
+     StageEvent(stage=CollectingIndexableFiles, started=true, instant=2024-02-03T06:07:00.950199Z),
+     StageEvent(stage=CollectingIndexableFiles, started=false, instant=2024-02-03T06:07:00.955398Z),
+     StageEvent(stage=DumbMode, started=false, instant=2024-02-03T06:07:00.955651Z)]
+   */
+    val history = withHistory { history, instant ->
+      history.startStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, instant)
+      history.stopStage(ProjectScanningHistoryImpl.Stage.DelayedPushProperties, instant.plusNanos(1))
+      history.startStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, instant.plusNanos(2))
+      history.stopStage(ProjectScanningHistoryImpl.Stage.CreatingIterators, instant.plusNanos(4))
+      history.startStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, instant.plusNanos(6))
+      history.stopStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles, instant.plusNanos(10))
+      history.stopStage(ProjectScanningHistoryImpl.Stage.DumbMode, instant.plusSeconds(12))
+    }
+
+    assertEquals(Duration.ofNanos(1), history.times.delayedPushPropertiesStageDuration)
+    assertEquals(Duration.ofNanos(2), history.times.creatingIteratorsDuration)
+    assertEquals(Duration.ZERO, history.times.pausedDuration)
+    assertEquals(Duration.ofNanos(4), history.times.concurrentHandlingWallTimeWithoutPauses)
+    assertEquals(12, history.times.dumbModeWithoutPausesDuration.toSeconds())
+    //these values are controlled by other means
+    assertEquals(Duration.ZERO, history.times.dumbModeWithPausesDuration)
+    assertEquals(null, history.times.dumbModeStart)
+  }
 }
