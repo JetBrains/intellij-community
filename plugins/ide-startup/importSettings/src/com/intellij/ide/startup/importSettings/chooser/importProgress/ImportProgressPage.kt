@@ -12,6 +12,7 @@ import com.intellij.ide.startup.importSettings.data.DialogImportData
 import com.intellij.ide.startup.importSettings.data.ImportFromProduct
 import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.ui.MessageDialogBuilder
+import com.intellij.openapi.util.NlsContexts.DialogTitle
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
@@ -22,7 +23,11 @@ import com.jetbrains.rd.util.lifetime.intersect
 import java.awt.*
 import javax.swing.*
 
-class ImportProgressPage(importFromProduct: DialogImportData, controller: ImportSettingsController) : OnboardingPage {
+class ImportProgressPage(
+  importFromProduct: DialogImportData,
+  controller: ImportSettingsController,
+  importTitleOverride:  @DialogTitle String?
+) : OnboardingPage {
 
   override val stage = StartupWizardStage.ImportProgressPage
 
@@ -40,7 +45,7 @@ class ImportProgressPage(importFromProduct: DialogImportData, controller: Import
 
   private val panel = JPanel(VerticalLayout(JBUI.scale(8))).apply {
     add(JPanel(VerticalLayout(JBUI.scale(8))).apply {
-      add(JLabel(ImportSettingsBundle.message("import.settings.title")).apply {
+      add(JLabel(importTitleOverride ?: ImportSettingsBundle.message("import.settings.title")).apply {
         font = JBFont.h1()
         horizontalAlignment = SwingConstants.CENTER
       })
