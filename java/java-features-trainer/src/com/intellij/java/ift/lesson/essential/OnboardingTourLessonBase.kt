@@ -16,6 +16,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModified
 import training.learn.LearnBundle
+import training.learn.NewUsersOnboardingExperimentAccessor
 import training.learn.course.LessonType
 import training.learn.lesson.general.run.clearBreakpoints
 import training.project.ProjectUtils
@@ -68,10 +69,12 @@ abstract class OnboardingTourLessonBase(id: String) : CommonLogicForOnboardingTo
     commonTasks()
 
     task {
-      text(JavaLessonsBundle.message("java.onboarding.epilog",
-                                     getCallBackActionId("CloseProject"),
-                                     LessonUtil.returnToWelcomeScreenRemark(),
-                                     LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
+      if (!NewUsersOnboardingExperimentAccessor.isExperimentEnabled()) {
+        text(JavaLessonsBundle.message("java.onboarding.epilog",
+                                       getCallBackActionId("CloseProject"),
+                                       LessonUtil.returnToWelcomeScreenRemark(),
+                                       LearningUiManager.addCallback { LearningUiManager.resetModulesView() }))
+      }
     }
   }
 
@@ -177,6 +180,8 @@ abstract class OnboardingTourLessonBase(id: String) : CommonLogicForOnboardingTo
 
   override fun onLessonEnd(project: Project, lessonEndInfo: LessonEndInfo) {
     super.onLessonEnd(project, lessonEndInfo)
-    showEndOfLessonDialogAndFeedbackForm(this, lessonEndInfo, project)
+    if (!NewUsersOnboardingExperimentAccessor.isExperimentEnabled()) {
+      showEndOfLessonDialogAndFeedbackForm(this, lessonEndInfo, project)
+    }
   }
 }
