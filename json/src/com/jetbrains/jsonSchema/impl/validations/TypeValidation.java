@@ -16,14 +16,16 @@ import java.util.Collections;
 public final class TypeValidation implements JsonSchemaValidation {
   public static final TypeValidation INSTANCE = new TypeValidation();
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
     JsonSchemaType otherType = JsonSchemaAnnotatorChecker.getMatchingSchemaType(schema, schemaType);
     if (otherType != null && !otherType.equals(schemaType) && !otherType.equals(propValue.getAlternateType(schemaType))) {
       consumer.typeError(propValue.getDelegate(), propValue.getAlternateType(schemaType), JsonSchemaAnnotatorChecker.getExpectedTypes(Collections.singleton(schema)));
+      return false;
     }
+    return true;
   }
 }

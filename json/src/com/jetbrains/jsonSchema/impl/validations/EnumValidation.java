@@ -24,25 +24,26 @@ import static com.jetbrains.jsonSchema.impl.light.SchemaKeywordsKt.X_INTELLIJ_CA
 public final class EnumValidation implements JsonSchemaValidation {
   public static final EnumValidation INSTANCE = new EnumValidation();
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
     List<Object> enumItems = schema.getEnum();
-    if (enumItems == null) return;
+    if (enumItems == null) return true;
     final JsonLikePsiWalker walker = JsonLikePsiWalker.getWalker(propValue.getDelegate(), schema);
-    if (walker == null) return;
+    if (walker == null) return true;
     final String text = StringUtil.notNullize(walker.getNodeTextForValidation(propValue.getDelegate()));
     boolean caseInsensitive = Boolean.parseBoolean(schema.readChildNodeValue(X_INTELLIJ_CASE_INSENSITIVE)) || schema.isForceCaseInsensitive();
     BiFunction<String, String, Boolean> eq = options.isCaseInsensitiveEnumCheck() || caseInsensitive
                                              ? String::equalsIgnoreCase
                                              : String::equals;
     for (Object object : enumItems) {
-      if (checkEnumValue(object, walker, propValue, text, eq)) return;
+      if (checkEnumValue(object, walker, propValue, text, eq)) return true;
     }
     consumer.error(JsonBundle.message("schema.validation.enum.mismatch", StringUtil.join(enumItems, o -> o.toString(), ", ")), propValue.getDelegate(),
                    JsonValidationError.FixableIssueKind.NonEnumValue, null, JsonErrorPriority.MEDIUM_PRIORITY);
+    return false;
   }
 
   private static boolean checkEnumValue(@NotNull Object object,

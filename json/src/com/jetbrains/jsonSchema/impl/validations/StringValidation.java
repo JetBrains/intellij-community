@@ -19,45 +19,44 @@ import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.getValue;
 public final class StringValidation implements JsonSchemaValidation {
   public static final StringValidation INSTANCE = new StringValidation();
   @Override
-  public void validate(@NotNull JsonValueAdapter propValue,
-                       @NotNull JsonSchemaObject schema,
-                       @Nullable JsonSchemaType schemaType,
-                       @NotNull JsonValidationHost consumer,
-                       @NotNull JsonComplianceCheckerOptions options) {
-    checkString(propValue.getDelegate(), schema, consumer);
+  public boolean validate(@NotNull JsonValueAdapter propValue,
+                          @NotNull JsonSchemaObject schema,
+                          @Nullable JsonSchemaType schemaType,
+                          @NotNull JsonValidationHost consumer,
+                          @NotNull JsonComplianceCheckerOptions options) {
+    return checkString(propValue.getDelegate(), schema, consumer, options);
   }
 
-  private static void checkString(PsiElement propValue,
+  private static boolean checkString(PsiElement propValue,
                                   JsonSchemaObject schema,
-                                  JsonValidationHost consumer) {
+                                  JsonValidationHost consumer,
+                                  @NotNull JsonComplianceCheckerOptions options) {
     String v = getValue(propValue, schema);
-    if (v == null) return;
+    if (v == null) return true;
     final String value = StringUtil.unquoteString(v);
     if (schema.getMinLength() != null) {
       if (value.length() < schema.getMinLength()) {
         consumer.error(JsonBundle.message("schema.validation.string.shorter.than", schema.getMinLength()), propValue, JsonErrorPriority.LOW_PRIORITY);
-        return;
+        return false;
       }
     }
     if (schema.getMaxLength() != null) {
       if (value.length() > schema.getMaxLength()) {
         consumer.error(JsonBundle.message("schema.validation.string.longer.than", schema.getMaxLength()), propValue, JsonErrorPriority.LOW_PRIORITY);
-        return;
+        return false;
       }
     }
     if (schema.getPattern() != null) {
       if (schema.getPatternError() != null) {
         consumer.error(JsonBundle.message("schema.validation.invalid.string.pattern", StringUtil.convertLineSeparators(schema.getPatternError())),
               propValue, JsonErrorPriority.LOW_PRIORITY);
+        return false;
       }
       if (!schema.checkByPattern(value)) {
         consumer.error(JsonBundle.message("schema.validation.string.violates.pattern", StringUtil.convertLineSeparators(schema.getPattern())), propValue, JsonErrorPriority.LOW_PRIORITY);
+        return false;
       }
     }
-    // I think we are not gonna to support format, there are a couple of RFCs there to check upon..
-    /*
-    if (schema.getFormat() != null) {
-      LOG.info("Unsupported property used: 'format'");
-    }*/
+    return true;
   }
 }
