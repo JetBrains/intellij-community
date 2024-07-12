@@ -287,6 +287,10 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
 
                         val navigationElement = caretElement.navigationElement
                         if (navigationElement !== originalElement) {
+                            if (navigationElement.originalElement != originalElement) {
+                               println(originalElement.text)
+                               println(navigationElement.text)
+                            }
                             findUsagesAndCheckResults(
                                 mainFileText,
                                 prefixForCheck,
