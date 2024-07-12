@@ -50,6 +50,11 @@ object CoroutineBreakpointFacility {
         val useCoroutineIdFiltering = Registry.`is`("debugger.filter.breakpoints.by.coroutine.id")
         val method = resumedLocation.safeMethod() ?: return false
 
+        if (debugProcess.requestsManager.filterThread == null) {
+            thisLogger().error("Coroutine filter should be calculated and set before breakpoint request created. " +
+                "In other case, this breakpoint may be hit while intermediate evaluations on other threads before the filter will be set.")
+        }
+
         val breakpoint = object : StepIntoMethodBreakpoint(method.declaringType().name(), method.name(), method.signature(), project),
                                   CustomProcessingLocatableEventRequestor {
             override fun stopOnlyInBaseClass() = true

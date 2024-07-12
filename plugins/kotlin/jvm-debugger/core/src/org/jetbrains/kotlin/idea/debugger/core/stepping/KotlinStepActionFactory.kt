@@ -35,8 +35,8 @@ object KotlinStepActionFactory {
 
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        CoroutineBreakpointFacility.installResumeBreakpointInCurrentMethod(suspendContext)
                         applyThreadFilter(getThreadFilterFromContext(suspendContext))
+                        CoroutineBreakpointFacility.installResumeBreakpointInCurrentMethod(suspendContext)
                     }
                     super.contextAction(suspendContext)
                 }
@@ -123,8 +123,8 @@ object KotlinStepActionFactory {
             object : DebugProcessImpl.StepOutCommand(suspendContext, StepRequest.STEP_LINE, filter) {
                 override fun contextAction(suspendContext: SuspendContextImpl) {
                     if (suspendContext.location?.let { isInSuspendMethod(it) } == true) {
-                        CoroutineBreakpointFacility.installResumeBreakpointInCallerMethod(suspendContext)
                         applyThreadFilter(getThreadFilterFromContext(suspendContext))
+                        CoroutineBreakpointFacility.installResumeBreakpointInCallerMethod(suspendContext)
                     }
                     super.contextAction(suspendContext)
                 }
