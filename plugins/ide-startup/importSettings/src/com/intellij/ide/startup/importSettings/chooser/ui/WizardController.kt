@@ -68,7 +68,7 @@ class WizardControllerImpl(dialog: OnboardingDialog,
       goToKeymapPage(isForwardDirection = false)
     }, goForwardAction = { ids ->
       goToInstallPluginPage(ids)
-    })
+    }, continueButtonTextOverride = null)
     dialog.changePage(page)
     page.onEnter()
   }

@@ -4,6 +4,7 @@ package com.intellij.ide.startup.importSettings.wizard.pluginChooser
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
 import com.intellij.ide.startup.importSettings.chooser.ui.*
 import com.intellij.ide.startup.importSettings.data.PluginService
+import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.ide.bootstrap.StartupWizardStage
 import com.intellij.ui.JBColor
@@ -16,12 +17,13 @@ import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
 
-
 class WizardPluginsPage(
   val controller: BaseController,
   private val pluginService: PluginService,
   goBackAction: () -> Unit,
-  goForwardAction: (List<String>) -> Unit) : OnboardingPage {
+  goForwardAction: (List<String>) -> Unit,
+  private val continueButtonTextOverride: @ActionText String?
+) : OnboardingPage {
 
   override val stage: StartupWizardStage = StartupWizardStage.WizardPluginPage
 
@@ -43,15 +45,15 @@ class WizardPluginsPage(
     when(selected.size) {
       0 -> {
         leftLabel.text = ImportSettingsBundle.message("plugins.page.choose.counter.no")
-        continueAction.text = ImportSettingsBundle.message("plugins.page.ok.button.continue.without")
+        continueAction.text = continueButtonTextOverride ?: ImportSettingsBundle.message("plugins.page.ok.button.continue.without")
       }
       1 -> {
         leftLabel.text = ImportSettingsBundle.message("plugins.page.choose.counter.one")
-        continueAction.text = ImportSettingsBundle.message("plugins.page.ok.button.install")
+        continueAction.text = continueButtonTextOverride ?: ImportSettingsBundle.message("plugins.page.ok.button.install")
       }
       else -> {
         leftLabel.text = ImportSettingsBundle.message("plugins.page.choose.counter.multiple", selected.size)
-        continueAction.text = ImportSettingsBundle.message("plugins.page.ok.button.install")
+        continueAction.text = continueButtonTextOverride ?: ImportSettingsBundle.message("plugins.page.ok.button.install")
       }
     }
   }
@@ -93,7 +95,7 @@ class WizardPluginsPage(
 
   private val backAction = controller.createButton(ImportSettingsBundle.message("import.settings.back"), goBackAction)
 
-  private val continueAction = controller.createDefaultButton(ImportSettingsBundle.message("plugins.page.ok.button.continue.without")) {
+  private val continueAction = controller.createDefaultButton(continueButtonTextOverride ?: ImportSettingsBundle.message("plugins.page.ok.button.continue.without")) {
     val ids = getSelected().map { it.plugin.id }.toList()
     goForwardAction(ids)
   }

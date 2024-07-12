@@ -157,8 +157,9 @@ class ConfigurableSettingChooserPage<T : BaseService>(
         && controller.shouldShowFeaturedPluginsPage(product.id, dataForSaves, productService)) {
       controller.goToFeaturedPluginsPage(provider, productService, product, dataForSaves)
     } else {
-      val importSettings = productService.importSettings(product.id, DataToApply(dataForSaves, emptyList()))
-      controller.goToProgressPage(importSettings)
+      val dataToApply = DataToApply(dataForSaves, emptyList())
+      val importSettings = productService.importSettings(product.id, dataToApply)
+      controller.goToProgressPage(importSettings, dataToApply)
     }
   }
 
@@ -205,10 +206,10 @@ class SyncSettingChooserPage(val provider: SyncActionsDataProvider,
 
   private val importOnceButton = controller.createButton(ImportSettingsBundle.message("import.settings.sync.import.once")) {
     val syncSettings = provider.productService.importSyncSettings()
-    controller.goToProgressPage(syncSettings)
+    controller.goToProgressPage(syncSettings, DataToApply(emptyList(), emptyList()))
   }
   private val syncButton = controller.createDefaultButton(ImportSettingsBundle.message("import.settings.sync.ok")) {
-    controller.goToProgressPage(provider.productService.syncSettings())
+    controller.goToProgressPage(provider.productService.syncSettings(), DataToApply(emptyList(), emptyList()))
   }
 
   override val buttons: List<JButton>
