@@ -2,27 +2,33 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
-class AddDefaultConstructorFix(expectClass: KtClass) : KotlinQuickFixAction<KtClass>(expectClass) {
+class AddDefaultConstructorFix(
+    element: KtClass,
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtClass, Unit>(element, Unit) {
 
-    override fun getText() = KotlinBundle.message("fix.add.default.constructor")
+    override fun getFamilyName() = KotlinBundle.message("fix.add.default.constructor")
 
-    override fun getFamilyName() = text
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        element?.createPrimaryConstructorIfAbsent()
+    override fun invoke(
+        actionContext: ActionContext,
+        element: KtClass,
+        elementContext: Unit,
+        updater: ModPsiUpdater,
+    ) {
+        element.createPrimaryConstructorIfAbsent()
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
@@ -41,7 +47,7 @@ class AddDefaultConstructorFix(expectClass: KtClass) : KotlinQuickFixAction<KtCl
             return DescriptorToSourceUtils.descriptorToDeclaration(descriptor) as? KtClass
         }
 
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtClass>? {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val element = diagnostic.psiElement
             if (element is KtValueArgumentList && element.arguments.isNotEmpty()) return null
             val parent = element.getParentOfTypes(true, KtClassOrObject::class.java, KtAnnotationEntry::class.java) ?: return null
@@ -53,7 +59,7 @@ class AddDefaultConstructorFix(expectClass: KtClass) : KotlinQuickFixAction<KtCl
                 is KtAnnotationEntry -> annotationEntryToClass(parent, context)
                 else -> null
             } ?: return null
-            return AddDefaultConstructorFix(baseClass)
+            return AddDefaultConstructorFix(baseClass).asIntention()
         }
     }
 }
