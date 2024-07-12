@@ -2,8 +2,8 @@
 package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -111,7 +111,7 @@ class MarkdownJCEFHtmlPanel(
     if (_virtualFile != null && _project != null) {
       // Will be fixed in IDEA-340851
       SlowOperations.allowSlowOperations<Throwable> {
-        projectRoot = ProjectFileIndex.getInstance(_project).getContentRootForFile(_virtualFile)
+        projectRoot = BaseProjectDirectories.getInstance(_project).getBaseDirectoryFor(_virtualFile)
       }
     }
     fileSchemeResourcesProcessor = FileSchemeResourcesProcessor(_virtualFile, projectRoot)
