@@ -7,14 +7,18 @@ import org.jetbrains.annotations.ApiStatus
 import org.opentest4j.AssertionFailedError
 
 
-fun <T> assertEqualsUnordered(expected: Collection<T>, actual: Collection<T>) {
+fun <T> assertEqualsUnordered(
+  expected: Collection<T>,
+  actual: Collection<T>,
+  messageSupplier: (() -> String)? = null,
+) {
   val expectedSet = expected.toSet()
   val actualSet = actual.toSet()
   val notFound = expectedSet.minus(actualSet)
   val notExpected = actualSet.minus(expectedSet)
 
   if (notExpected.isNotEmpty() && notFound.isNotEmpty()) {
-    val message = """|
+    val message = (messageSupplier?.invoke() ?: "") + """|
       |Expecting actual:
       |  $actual
       |to contain exactly in any order:
@@ -27,7 +31,7 @@ fun <T> assertEqualsUnordered(expected: Collection<T>, actual: Collection<T>) {
     throw AssertionFailedError(message, expected, actual)
   }
   if (notFound.isNotEmpty()) {
-    val message = """|
+    val message = (messageSupplier?.invoke() ?: "") + """|
       |Expecting actual:
       |  $actual
       |to contain exactly in any order:
@@ -38,7 +42,7 @@ fun <T> assertEqualsUnordered(expected: Collection<T>, actual: Collection<T>) {
     throw AssertionFailedError(message, expected, actual)
   }
   if (notExpected.isNotEmpty()) {
-    val message = """|
+    val message = (messageSupplier?.invoke() ?: "") + """|
       |Expecting actual:
       |  $actual
       |to contain exactly in any order:
@@ -50,13 +54,17 @@ fun <T> assertEqualsUnordered(expected: Collection<T>, actual: Collection<T>) {
   }
 }
 
-fun <T> assertContains(expected: Collection<T>, actual: Collection<T>) {
+fun <T> assertContains(
+  expected: Collection<T>,
+  actual: Collection<T>,
+  messageSupplier: (() -> String)? = null,
+) {
   val expectedSet = expected.toSet()
   val actualSet = actual.toSet()
   val notFound = expectedSet.minus(actualSet)
 
   if (notFound.isNotEmpty()) {
-    val message = """|
+    val message = (messageSupplier?.invoke() ?: "") + """|
       |Expecting actual:
       |  $actual
       |to contain in any order:
