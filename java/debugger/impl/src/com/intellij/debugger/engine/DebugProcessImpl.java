@@ -1339,6 +1339,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                                                                                       InvalidTypeException {
       Ref<Exception> exception = Ref.create();
       Ref<E> result = Ref.create();
+      Ref<ThreadBlockedMonitor.InvocationWatcher> invocationWatcherRef = Ref.create();
       if (LOG.isDebugEnabled()) {
         LOG.debug("Invoke in " + context);
         assertThreadSuspended(thread, context);
@@ -1388,7 +1389,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
             }
 
             int invokePolicy = getInvokePolicy(context);
-            invokeWithThreadBlockedMonitor(context, invokePolicy, thread, result);
+            invocationWatcherRef.set(myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context));
+            result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
           }
           finally {
             if (Patches.JDK_BUG_WITH_TRACE_SEND && (getTraceMask() & VirtualMachine.TRACE_SENDS) != 0) {
@@ -1406,44 +1408,32 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         }
       });
 
-      Exception ex = exception.get();
-      if (ex != null) {
-        if (ex instanceof InvocationException) {
-          throw (InvocationException)ex;
-        }
-        else if (ex instanceof ClassNotLoadedException) {
-          throw (ClassNotLoadedException)ex;
-        }
-        else if (ex instanceof IncompatibleThreadStateException) {
-          throw (IncompatibleThreadStateException)ex;
-        }
-        else if (ex instanceof InvalidTypeException) {
-          throw (InvalidTypeException)ex;
-        }
-        else if (ex instanceof RuntimeException) {
-          throw (RuntimeException)ex;
-        }
-        else {
-          logError("Unexpected exception", new Throwable(ex));
-        }
-      }
-
-      return result.get();
-    }
-
-    private void invokeWithThreadBlockedMonitor(
-      @NotNull SuspendContextImpl context,
-      int invokePolicy,
-      @NotNull ThreadReferenceProxyImpl thread,
-      @NotNull Ref<E> result
-    ) throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
-
-      ThreadBlockedMonitor.InvocationWatcher invocationWatcher = null;
       try {
-        invocationWatcher = myThreadBlockedMonitor.startInvokeWatching(invokePolicy, thread, context);
-        result.set(invokeMethod(thread.getThreadReference(), invokePolicy, myMethod, myArgs));
-      }
-      finally {
+        Exception ex = exception.get();
+        if (ex != null) {
+          if (ex instanceof InvocationException) {
+            throw (InvocationException)ex;
+          }
+          else if (ex instanceof ClassNotLoadedException) {
+            throw (ClassNotLoadedException)ex;
+          }
+          else if (ex instanceof IncompatibleThreadStateException) {
+            throw (IncompatibleThreadStateException)ex;
+          }
+          else if (ex instanceof InvalidTypeException) {
+            throw (InvalidTypeException)ex;
+          }
+          else if (ex instanceof RuntimeException) {
+            throw (RuntimeException)ex;
+          }
+          else {
+            logError("Unexpected exception", new Throwable(ex));
+          }
+        }
+
+        return result.get();
+      } finally {
+        ThreadBlockedMonitor.InvocationWatcher invocationWatcher = invocationWatcherRef.get();
         if (invocationWatcher != null) {
           invocationWatcher.invocationFinished();
         }

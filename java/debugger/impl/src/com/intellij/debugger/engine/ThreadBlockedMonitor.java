@@ -5,7 +5,6 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
-import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
@@ -204,19 +203,17 @@ public class ThreadBlockedMonitor {
     public void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
-        myProcess.getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> {
-          // suspend all threads but the current one (which should be suspended already)
-          myThread.getVirtualMachine().suspend();
-          LOG.warn("Long invocation on " + myThread + " has been finished");
-          myThreadBlockedMonitor.myInvocationWatching = null;
-          myThread.resumeImpl();
-          Set<ThreadReferenceProxyImpl> resumedThreads = mySuspendAllContext.myResumedThreads;
-          if (resumedThreads != null) {
-            for (ThreadReferenceProxyImpl thread : resumedThreads) {
-              thread.resumeImpl();
-            }
+        // suspend all threads but the current one (which should be suspended already)
+        myThread.getVirtualMachine().suspend();
+        LOG.warn("Long invocation on " + myThread + " has been finished");
+        myThreadBlockedMonitor.myInvocationWatching = null;
+        myThread.resumeImpl();
+        Set<ThreadReferenceProxyImpl> resumedThreads = mySuspendAllContext.myResumedThreads;
+        if (resumedThreads != null) {
+          for (ThreadReferenceProxyImpl thread : resumedThreads) {
+            thread.resumeImpl();
           }
-        });
+        }
         if (myDiagnosticsTask != null) {
           myDiagnosticsTask.cancel(false);
         }
@@ -307,13 +304,11 @@ public class ThreadBlockedMonitor {
     public void invocationFinished() {
       myObsolete.set(true);
       if (myTask.isDone() && myAllResumed.get()) {
-        myProcess.getManagerThread().invoke(PrioritizedTask.Priority.HIGH, () -> {
-          // suspend all threads but the current one (which should be suspended already
-          myThread.getVirtualMachine().suspend();
-          LOG.warn("Long invocation on " + myThread + " has been finished");
-          myThreadBlockedMonitor.myIsInResumeAllMode = false;
-          myThread.resumeImpl();
-        });
+        // suspend all threads but the current one (which should be suspended already
+        myThread.getVirtualMachine().suspend();
+        LOG.warn("Long invocation on " + myThread + " has been finished");
+        myThreadBlockedMonitor.myIsInResumeAllMode = false;
+        myThread.resumeImpl();
       }
       else {
         myTask.cancel(true);
