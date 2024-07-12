@@ -483,6 +483,12 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
               if (importer.importOptions(progressIndicator, filteredCategories)) {
                 restartRequired = true
               }
+              else if (!restartRequired) {
+                val localizationService = LocalizationStateService.getInstance()
+                if (localizationService != null && localizationService.getLastSelectedLocale() != localizationService.getSelectedLocale()) {
+                  restartRequired = true
+                }
+              }
               (System.currentTimeMillis() - optionsStartTime).let {
                 logger.info("Options migrated in $it ms.")
                 ImportSettingsEventsCollector.jbOptionsImportTimeSpent(it)
