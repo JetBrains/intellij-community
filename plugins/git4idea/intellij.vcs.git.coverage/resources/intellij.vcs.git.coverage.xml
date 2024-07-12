@@ -7,5 +7,8 @@
     <registryKey key="coverage.filter.based.on.feature.branch"
                  defaultValue="true"
                  description="Show only files modified in the current feature branch in the coverage view"/>
+    <registryKey key="coverage.git.log.commit.search.depth"
+                 defaultValue="100"
+                 description="Coverage filter's maximum search depth in git log"/>
   </extensions>
 </idea-plugin>
