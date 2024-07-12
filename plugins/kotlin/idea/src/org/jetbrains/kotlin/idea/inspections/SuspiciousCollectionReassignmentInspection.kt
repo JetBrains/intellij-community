@@ -4,17 +4,19 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -32,9 +34,6 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.SimpleType
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.codeinsight.utils.findExistingEditor
 
 class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
@@ -75,19 +74,19 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             )
         })
 
-    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: KotlinType) : LocalQuickFix {
+    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: KotlinType) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
         override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val operationReference = descriptor.psiElement as? KtOperationReferenceExpression ?: return
+        override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
+            val operationReference = element
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return
             ChangeToMutableCollectionFix.applyFix(property, type)
             property.valOrVarKeyword.replace(KtPsiFactory(project).createValKeyword())
-            binaryExpression.findExistingEditor()?.caretModel?.moveToOffset(property.endOffset)
+            updater.moveCaretTo(property.endOffset)
         }
 
         companion object {
@@ -97,13 +96,13 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class ReplaceWithFilterFix : LocalQuickFix {
+    private class ReplaceWithFilterFix : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
         override fun getName() = KotlinBundle.message("replace.with.filter.fix.text")
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val operationReference = descriptor.psiElement as? KtOperationReferenceExpression ?: return
+        override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
+            val operationReference = element
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val right = binaryExpression.right ?: return
@@ -121,13 +120,13 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class ReplaceWithAssignmentFix : LocalQuickFix {
+    private class ReplaceWithAssignmentFix : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
         override fun getName() = KotlinBundle.message("replace.with.assignment.fix.text")
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val operationReference = descriptor.psiElement as? KtOperationReferenceExpression ?: return
+        override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
+            val operationReference = element
             val psiFactory = KtPsiFactory(project)
             operationReference.replace(psiFactory.createOperationName(KtTokens.EQ.value))
         }
@@ -161,13 +160,13 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
     }
 
-    private class JoinWithInitializerFix(@SafeFieldForPreview private val op: KtSingleValueToken) : LocalQuickFix {
+    private class JoinWithInitializerFix(@SafeFieldForPreview private val op: KtSingleValueToken) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
         override fun getName() = KotlinBundle.message("join.with.initializer.fix.text")
 
         override fun getFamilyName() = name
 
-        override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-            val operationReference = descriptor.psiElement as? KtOperationReferenceExpression ?: return
+        override fun applyFix(project: Project, element: KtOperationReferenceExpression, updater: ModPsiUpdater) {
+            val operationReference = element
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val right = binaryExpression.right ?: return
@@ -178,7 +177,7 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val newOp = if (op == KtTokens.PLUSEQ) KtTokens.PLUS else KtTokens.MINUS
             val replaced = initializer.replaced(psiFactory.createExpressionByPattern("$0 $1 $2", initializer, newOp.value, right))
             binaryExpression.delete()
-            property.findExistingEditor()?.caretModel?.moveToOffset(replaced.endOffset)
+            updater.moveCaretTo(replaced.endOffset)
         }
 
         companion object {
