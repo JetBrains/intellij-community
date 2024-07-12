@@ -143,11 +143,16 @@ class SettingTransferProductService(
     val selectedIds = toApply.importSettings.asSequence().map { it.id }.toSet()
     val settings = product.settingsCache
     val preferences = settings.preferences
+    val pluginImportRequestedByUser = selectedIds.contains(TransferableSetting.PLUGINS_ID)
     preferences[SettingsPreferencesKind.Laf] = selectedIds.contains(TransferableSetting.UI_ID)
     preferences[SettingsPreferencesKind.SyntaxScheme] = selectedIds.contains(TransferableSetting.UI_ID)
     preferences[SettingsPreferencesKind.Keymap] = selectedIds.contains(TransferableSetting.KEYMAP_ID)
-    preferences[SettingsPreferencesKind.Plugins] = selectedIds.contains(TransferableSetting.PLUGINS_ID)
+    preferences[SettingsPreferencesKind.Plugins] = pluginImportRequestedByUser || toApply.featuredPluginIds.isNotEmpty()
     preferences[SettingsPreferencesKind.RecentProjects] = selectedIds.contains(TransferableSetting.RECENT_PROJECTS_ID)
+
+    if (!pluginImportRequestedByUser) {
+      settings.plugins.clear()
+    }
 
     val featuredPluginsToAdd = toApply.featuredPluginIds.asSequence().map { it to PluginFeature(null, it, it) }
     settings.plugins.putAll(featuredPluginsToAdd)
