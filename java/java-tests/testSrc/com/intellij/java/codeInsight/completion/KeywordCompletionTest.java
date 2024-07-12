@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion;
 
 import com.intellij.JavaTestUtil;
@@ -177,6 +177,11 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }
 
   public void testImportStatic() { doTest(1, "static"); }
+
+  public void testImportModule() {
+    setLanguageLevel(JavaFeature.MODULE_IMPORTS.getMinimumLevel());
+    doTest(2, "static", "module");
+  }
   public void testAbstractInInterface() { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() { doTest(1, "char"); }
   public void testReturnInTernary() { doTest(1, "return"); }
