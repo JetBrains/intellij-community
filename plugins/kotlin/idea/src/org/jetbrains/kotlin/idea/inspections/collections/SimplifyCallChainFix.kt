@@ -6,12 +6,14 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.getCallExpression
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -41,7 +43,7 @@ class SimplifyCallChainFix(
 
         val receiverExpressionOrEmptyString = if (firstExpression is KtQualifiedExpression) firstExpression.receiverExpression.text else ""
 
-        val firstCallExpression = AbstractCallChainChecker.getCallExpression(firstExpression) ?: return
+        val firstCallExpression = getCallExpression(firstExpression) ?: return
         psiFactory.modifyArguments(firstCallExpression)
         val firstCallArgumentList = firstCallExpression.valueArgumentList
 
@@ -96,7 +98,8 @@ class SimplifyCallChainFix(
         }
 
         result.containingKtFile.commitAndUnblockDocument()
-        if (result.isValid) ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
+        @OptIn(KaIdeApi::class)
+        if (result.isValid) shortenReferences(result.reformatted() as KtElement)
     }
 
     override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {

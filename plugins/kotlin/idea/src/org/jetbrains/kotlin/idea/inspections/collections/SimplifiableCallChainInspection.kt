@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCall
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.TO_MAP
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.group
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.firstCalleeExpression
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.isLiteralValue
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionInspection
@@ -88,11 +89,9 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         !KotlinBuiltIns.isUInt(type) && !KotlinBuiltIns.isULong(type) &&
                         !KotlinBuiltIns.isDouble(type)
                     ) return@check false
-                    with(CallChainConversions) {
-                        if (isInt && lastFunctionalArgument.isLambda && lastFunctionalArgument.lastStatement.isLiteralValue()) {
-                            // 'sumOf' call with integer literals leads to an overload resolution ambiguity: KT-46360
-                            return@check false
-                        }
+                    if (isInt && lastFunctionalArgument.isLambda && lastFunctionalArgument.lastStatement.isLiteralValue()) {
+                        // 'sumOf' call with integer literals leads to an overload resolution ambiguity: KT-46360
+                        return@check false
                     }
                 }
                 if (conversion.firstName == MAP && conversion.secondName == TO_MAP) {

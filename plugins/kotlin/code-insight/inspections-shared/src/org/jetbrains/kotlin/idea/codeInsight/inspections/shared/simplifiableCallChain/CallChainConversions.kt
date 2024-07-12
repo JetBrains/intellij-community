@@ -5,10 +5,12 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtTryExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
@@ -247,4 +249,14 @@ object CallChainConversions {
             else -> expr is KtConstantExpression
         }
     }
+
+    fun KtQualifiedExpression.firstCalleeExpression(): KtExpression? {
+        val firstExpression = receiverExpression
+        val firstCallExpression = getCallExpression(firstExpression) ?: return null
+        return firstCallExpression.calleeExpression
+    }
+
+    fun getCallExpression(firstExpression: KtExpression) =
+        (firstExpression as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
+            ?: firstExpression as? KtCallExpression
 }

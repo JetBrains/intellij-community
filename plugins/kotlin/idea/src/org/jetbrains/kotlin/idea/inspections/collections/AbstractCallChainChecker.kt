@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.inspections.collections
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.getCallExpression
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.ConversionId
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -59,14 +60,6 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
     }
 
     companion object {
-        fun KtQualifiedExpression.firstCalleeExpression(): KtExpression? {
-            val firstExpression = receiverExpression
-            val firstCallExpression = getCallExpression(firstExpression) ?: return null
-            return firstCallExpression.calleeExpression
-        }
 
-        fun getCallExpression(firstExpression: KtExpression) =
-            (firstExpression as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
-                ?: firstExpression as? KtCallExpression
     }
 }
