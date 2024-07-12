@@ -11,7 +11,7 @@ import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 
-class GradleSourceRootContributorTest : GradlePhasedSyncTestCase() {
+class GradleSourceRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test source root creation in the multi-module Gradle project`() {
