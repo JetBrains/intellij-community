@@ -468,15 +468,6 @@ private fun KtDeclaration.predictImplicitModality(): KtModifierKeywordToken {
     return KtTokens.FINAL_KEYWORD
 }
 
-fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
-    bodyExpression?.let { return it }
-
-    val delegationCall = getDelegationCall()
-    val anchor = if (delegationCall.isImplicit) valueParameterList else delegationCall
-    val newBody = KtPsiFactory(project).createEmptyBody()
-    return addAfter(newBody, anchor) as KtBlockExpression
-}
-
 fun KtParameter.dropDefaultValue() {
     val from = equalsToken ?: return
     val to = defaultValue ?: from

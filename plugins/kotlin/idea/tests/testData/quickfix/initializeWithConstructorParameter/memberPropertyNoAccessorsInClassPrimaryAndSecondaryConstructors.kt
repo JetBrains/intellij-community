@@ -1,4 +1,4 @@
-// "class org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter" "false"
+// "Initialize with constructor parameter" "false"
 // ERROR: Property must be initialized or be abstract
 open class A(s: String) {
     <caret>val n: Int

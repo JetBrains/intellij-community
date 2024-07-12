@@ -185,3 +185,12 @@ fun KtExpression.appendDotQualifiedSelector(selector: KtExpression, factory: KtP
     val dotQualified = factory.createExpressionByPattern("$0.$1", this, selector)
     return this.replaced(dotQualified)
 }
+
+fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
+    bodyExpression?.let { return it }
+
+    val delegationCall = getDelegationCall()
+    val anchor = if (delegationCall.isImplicit) valueParameterList else delegationCall
+    val newBody = KtPsiFactory(project).createEmptyBody()
+    return addAfter(newBody, anchor) as KtBlockExpression
+}

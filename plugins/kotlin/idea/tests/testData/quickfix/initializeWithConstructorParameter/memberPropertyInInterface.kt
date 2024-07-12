@@ -1,7 +1,4 @@
-// "class org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter" "false"
-// ACTION: Make internal
-// ACTION: Make private
-// ACTION: Make protected
+// "Initialize with constructor parameter" "false"
 interface A {
     <caret>val n: Int
 }

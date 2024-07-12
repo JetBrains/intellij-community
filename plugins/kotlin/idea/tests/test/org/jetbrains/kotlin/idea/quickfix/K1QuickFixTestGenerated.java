@@ -10117,6 +10117,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/initializeWithConstructorParameter/memberPropertyInClassNameClashInPrimaryConstructor.kt");
         }
 
+        @TestMetadata("memberPropertyInClassNameClashInPrimaryConstructor2.kt")
+        public void testMemberPropertyInClassNameClashInPrimaryConstructor2() throws Exception {
+            runTest("testData/quickfix/initializeWithConstructorParameter/memberPropertyInClassNameClashInPrimaryConstructor2.kt");
+        }
+
         @TestMetadata("memberPropertyInClassNameClashInSecondaryConstructor.kt")
         public void testMemberPropertyInClassNameClashInSecondaryConstructor() throws Exception {
             runTest("testData/quickfix/initializeWithConstructorParameter/memberPropertyInClassNameClashInSecondaryConstructor.kt");
@@ -10175,6 +10180,21 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
         @TestMetadata("multipleConstructors.kt")
         public void testMultipleConstructors() throws Exception {
             runTest("testData/quickfix/initializeWithConstructorParameter/multipleConstructors.kt");
+        }
+
+        @TestMetadata("multipleConstructorsClash.kt")
+        public void testMultipleConstructorsClash() throws Exception {
+            runTest("testData/quickfix/initializeWithConstructorParameter/multipleConstructorsClash.kt");
+        }
+
+        @TestMetadata("multipleConstructorsClash2.kt")
+        public void testMultipleConstructorsClash2() throws Exception {
+            runTest("testData/quickfix/initializeWithConstructorParameter/multipleConstructorsClash2.kt");
+        }
+
+        @TestMetadata("namelessProperty.kt")
+        public void testNamelessProperty() throws Exception {
+            runTest("testData/quickfix/initializeWithConstructorParameter/namelessProperty.kt");
         }
 
         @TestMetadata("topLevelProperty.kt")

@@ -1,24 +1,10 @@
+// IGNORE_K1
 // "Initialize with constructor parameter" "true"
-open class A {
-    val n: Int
+val n: Int = 1
 
-    constructor(s: String, n: Int) {
-        this.n = n
-    }
-
-    constructor(a: Int, n: Int) {
-        val t = 1
-        this.n = n
-    }
-}
-
-class B : A("", 0)
-
-class C : A(1, 0)
-
-fun test() {
-    val a = A("", 0)
-    val aa = A(1, 0)
+class A(m: Int = n) {
+    <caret>var n: Int
+        get() = 1
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.InitializePropertyQuickFixFactory$InitializeWithConstructorParameter
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.InitializePropertyQuickFixFactories$InitializeWithConstructorParameterFix

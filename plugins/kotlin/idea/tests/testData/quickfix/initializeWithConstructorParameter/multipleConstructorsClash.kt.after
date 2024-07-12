@@ -1,11 +1,17 @@
+// IGNORE_K1
 // "Initialize with constructor parameter" "true"
-
 class User {
     constructor(userName: String) {
         this.userName = userName
     }
 
-    constructor(blah: String, userName: String) {
+    constructor(blah: String, userName: String): this(userName)
+    constructor(blah: String, n: Int, default: Int = 2, userName: String) {
+        this.userName = userName
+    }
+
+    constructor(d: Double, userName: String): this("", 1, userName = userName)
+    constructor(n: Int, userName: String) {
         this.userName = userName
     }
 
