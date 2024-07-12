@@ -81,7 +81,7 @@ class SettingTransferProductService(
       buildList {
         settings.laf?.let(TransferableSetting::uiTheme)?.let(::add)
         settings.keymap?.let(TransferableSetting::keymap)?.let(::add)
-        settings.plugins.values.let {
+        settings.plugins.values.filter { !it.isHidden }.let {
           if (it.isNotEmpty()) {
             add(TransferableSetting.plugins(it))
           }
