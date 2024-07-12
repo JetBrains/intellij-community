@@ -21,7 +21,7 @@ object ReplaceExplicitLambdaParameterWithItUtils {
         val functionLiteral: KtFunctionLiteral,
         private val cursorWasInParameterList: Boolean,
     ) : RenameProcessor(
-        editor.project!!,
+        functionLiteral.project,
         functionLiteral.valueParameters.single(),
         StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME.identifier,
         false,
