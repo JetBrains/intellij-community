@@ -19,6 +19,7 @@ import training.dsl.dropMnemonic
 import training.lang.LangManager
 import training.learn.CourseManager
 import training.learn.LearnBundle
+import training.learn.NewUsersOnboardingExperimentAccessor
 import training.learn.OpenLessonActivities
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
@@ -46,7 +47,8 @@ open class OnboardingLessonPromoter(@NonNls protected val lessonId: String,
            !notificationScheduled &&
            !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
            RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5 &&
-           LessonStateManager.getStateFromBase(lessonId) == LessonState.NOT_PASSED
+           LessonStateManager.getStateFromBase(lessonId) == LessonState.NOT_PASSED &&
+           !NewUsersOnboardingExperimentAccessor.isExperimentEnabled()
   }
 
   override val headerLabel: String
