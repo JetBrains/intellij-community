@@ -19,6 +19,7 @@ import com.intellij.util.PlatformUtils
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
+import training.learn.NewUsersOnboardingExperimentAccessor
 import training.learn.course.IftModule
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
@@ -36,7 +37,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
   override fun modules(): List<IftModule> = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
   private val isOnboardingLessonEnabled: Boolean
-    get() = PlatformUtils.isIntelliJ() && !useShortOnboardingLesson
+    get() = PlatformUtils.isIntelliJ() && !useShortOnboardingLesson && !NewUsersOnboardingExperimentAccessor.isExperimentEnabled()
 
   private fun onboardingTour() = if (isOnboardingLessonEnabled) listOf(
     LearningModule(id = "Java.Onboarding",
@@ -56,8 +57,13 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
                    primaryLanguage = langSupport,
                    moduleType = LessonType.SCRATCH) {
       fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
-      val adjust = if (useShortOnboardingLesson) listOf(JavaReworkedOnboardingTourLesson()) else emptyList()
-      adjust + listOf(
+
+      val onboarding = when {
+        !NewUsersOnboardingExperimentAccessor.isExperimentEnabled() -> emptyList()
+        useShortOnboardingLesson -> listOf(JavaReworkedOnboardingTourLesson())
+        else -> listOf(JavaOnboardingTourLesson())
+      }
+      onboarding + listOf(
         JavaContextActionsLesson(),
         GotoActionLesson(ls("00.Actions.java.sample"), firstLesson = false),
         JavaSearchEverywhereLesson(),
