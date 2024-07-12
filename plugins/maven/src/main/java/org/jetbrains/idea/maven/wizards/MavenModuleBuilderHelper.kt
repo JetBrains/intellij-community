@@ -153,7 +153,7 @@ open class MavenModuleBuilderHelper(protected val myProjectId: MavenId,
 
       if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.file.name)) {
         pomFiles.add(myParentProject.file)
-        MavenProjectsManager.getInstance(project).scheduleForceUpdateMavenProject(myParentProject)
+        //MavenProjectsManager.getInstance(project).scheduleForceUpdateMavenProject(myParentProject)
       }
       unblockAndSaveDocuments(project, *pomFiles.toTypedArray())
     }
