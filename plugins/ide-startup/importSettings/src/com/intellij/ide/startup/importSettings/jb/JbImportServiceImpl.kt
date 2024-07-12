@@ -585,6 +585,9 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
 
 }
 
+/**
+ * Returns whether we want the IDE restart after all the plugins are installed.
+ */
 private suspend fun installPlugins(
   alreadyInstalled: Set<PluginId>,
   toInstall: List<String>,
@@ -655,6 +658,9 @@ private suspend fun calculatePluginsToInstall(alreadyInstalled: Set<PluginId>, t
   }
 }
 
+/**
+ * Returns whether we want the IDE restart after all the plugins are installed.
+ */
 private suspend fun installPlugin(plugin: IdeaPluginDescriptor): Boolean {
   val downloader = PluginDownloader.createDownloader(plugin).withErrorsConsumer { problem ->
     logger.warn("Error while downloading plugin ${plugin.pluginId}: $problem")
@@ -663,9 +669,11 @@ private suspend fun installPlugin(plugin: IdeaPluginDescriptor): Boolean {
     withContext(Dispatchers.IO) {
       downloader.prepareToInstall(reporter.toBridgeIndicator())
     }
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    val appliedWithoutRestart = withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       downloader.installDynamically(null)
     }
+
+    !appliedWithoutRestart
   }
 }
 
