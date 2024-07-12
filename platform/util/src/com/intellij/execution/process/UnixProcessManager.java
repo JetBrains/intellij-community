@@ -120,6 +120,9 @@ public final class UnixProcessManager {
   }
 
   public static int sendSignal(int pid, int signal) {
+    if (pid <= 0) {
+      throw new IllegalArgumentException("Invalid PID: " + pid + " (killing all user processes in one shot is prohibited here)");
+    }
     checkCLib();
     return Java8Helper.C_LIB.kill(pid, signal);
   }
