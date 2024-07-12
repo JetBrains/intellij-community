@@ -964,6 +964,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:EDITOR_HINT:java.lang.String
 - sf:EDITOR_INLAY:java.lang.String
 - sf:EDITOR_INSPECTIONS_TOOLBAR:java.lang.String
+- sf:EDITOR_NOTIFICATION_POPUP:java.lang.String
 - sf:EDITOR_POPUP:java.lang.String
 - sf:EDITOR_TAB:java.lang.String
 - sf:EDITOR_TAB_POPUP:java.lang.String

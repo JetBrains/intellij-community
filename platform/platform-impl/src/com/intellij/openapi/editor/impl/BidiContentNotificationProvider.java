@@ -59,18 +59,18 @@ final class BidiContentNotificationProvider implements EditorNotificationProvide
     };
   }
 
-  private static void showChooserPopup(Editor editor) {
+  private static void showChooserPopup(@NotNull Editor editor) {
     ActionManager actionManager = ActionManager.getInstance();
     AnAction group = actionManager.getAction(IdeActions.GROUP_EDITOR_BIDI_TEXT_DIRECTION);
-    if (group instanceof ActionGroup) {
-      JPopupMenu popupMenu = actionManager.createActionPopupMenu(ActionPlaces.MAIN_MENU, (ActionGroup)group).getComponent();
-      AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
-      if (event instanceof MouseEvent && ((MouseEvent)event).getComponent().isShowing()) {
-        JBPopupMenu.showByEvent((MouseEvent)event, popupMenu);
-      }
-      else {
-        JBPopupMenu.showByEditor(editor, popupMenu);
-      }
+    if (!(group instanceof ActionGroup)) return;
+    JPopupMenu popupMenu = actionManager.createActionPopupMenu(
+      ActionPlaces.EDITOR_NOTIFICATION_POPUP, (ActionGroup)group).getComponent();
+    AWTEvent event = IdeEventQueue.getInstance().getTrueCurrentEvent();
+    if (event instanceof MouseEvent && ((MouseEvent)event).getComponent().isShowing()) {
+      JBPopupMenu.showByEvent((MouseEvent)event, popupMenu);
+    }
+    else {
+      JBPopupMenu.showByEditor(editor, popupMenu);
     }
   }
 }
