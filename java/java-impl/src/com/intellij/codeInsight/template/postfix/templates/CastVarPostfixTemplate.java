@@ -13,6 +13,7 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
@@ -48,8 +49,10 @@ public class CastVarPostfixTemplate extends StringBasedPostfixTemplate implement
   @Override
   public void setVariables(@NotNull Template template, @NotNull PsiElement element) {
     super.setVariables(template, element);
-    if (element instanceof PsiExpression) {
-      PsiType[] types = GuessManager.getInstance(element.getProject()).guessTypeToCast((PsiExpression)element);
+    if (element instanceof PsiExpression expression) {
+      Project project = element.getProject();
+      PsiType[] types = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(
+        () -> GuessManager.getInstance(project).guessTypeToCast(expression));
       fill(template, types, element);
     }
     else {
