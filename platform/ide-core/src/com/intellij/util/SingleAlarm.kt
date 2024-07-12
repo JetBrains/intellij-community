@@ -5,11 +5,12 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.CoroutineSupport
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
@@ -17,6 +18,7 @@ import com.intellij.util.Alarm.ThreadToUse
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.awt.EventQueue
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -136,7 +138,7 @@ class SingleAlarm @Internal constructor(
       }
 
       // maybe not defined in tests
-      context += Dispatchers.EDT + modalityState.asContextElement()
+      context += getEdtDispatcher() + modalityState.asContextElement()
     }
     // todo fix clients and remove NonCancellable
     taskContext = context + NonCancellable
@@ -214,6 +216,25 @@ class SingleAlarm @Internal constructor(
         threadToUse = ThreadToUse.SWING_THREAD,
         coroutineScope = null,
       )
+    }
+
+    @Internal
+    fun getEdtDispatcher(): CoroutineContext {
+      val edtDispatcher = ApplicationManager.getApplication()?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
+      if (edtDispatcher == null) {
+        // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
+        LOG.warn("Do not use an alarm in an early executing code")
+        return object : CoroutineDispatcher() {
+          override fun dispatch(context: CoroutineContext, block: Runnable) {
+            EventQueue.invokeLater(block)
+          }
+
+          override fun toString() = "Swing"
+        }
+      }
+      else {
+        return edtDispatcher
+      }
     }
   }
 

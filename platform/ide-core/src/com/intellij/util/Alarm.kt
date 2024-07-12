@@ -9,8 +9,7 @@ import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
-import com.intellij.openapi.components.ComponentManagerEx
-import com.intellij.openapi.components.serviceOrNull
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
@@ -24,11 +23,9 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.TestOnly
-import java.awt.EventQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 private val LOG: Logger = logger<Alarm>()
@@ -114,7 +111,11 @@ open class Alarm @Internal constructor(
       PluginException.reportDeprecatedUsage("Alarm.ThreadToUse#SHARED_THREAD", "Please use `POOLED_THREAD` instead")
     }
 
-    taskCoroutineScope = createCoroutineScope(inEdt = threadToUse == ThreadToUse.SWING_THREAD, coroutineScope)
+    @Suppress("OPT_IN_USAGE")
+    taskCoroutineScope = (coroutineScope
+                          ?: (ApplicationManager.getApplication()?.getService(AlarmSharedCoroutineScopeHolder::class.java)?.coroutineScope)
+                          ?: GlobalScope)
+      .childScope("Alarm", Dispatchers.Default.limitedParallelism(1))
 
     if (parentDisposable == null) {
       if (threadToUse != ThreadToUse.SWING_THREAD && coroutineScope == null) {
@@ -191,11 +192,7 @@ open class Alarm @Internal constructor(
   }
 
   private fun doAddRequest(request: Runnable, delayMillis: Long, modalityState: ModalityState?) {
-    val requestToSchedule = Request(
-      task = request,
-      modalityState = modalityState,
-      delayMillis = delayMillis,
-    )
+    val requestToSchedule = Request(task = request, modalityState = modalityState, delayMillis = delayMillis)
     synchronized(LOCK) {
       LOG.assertTrue(!isDisposed, "Already disposed")
 
@@ -322,31 +319,32 @@ open class Alarm @Internal constructor(
   ) {
     @JvmField
     var job: Job? = null // guarded by LOCK
-    private val clientId = ClientId.currentOrNull
+    private val clientIdContext = ClientId.currentOrNull?.asContextElement()
 
     fun schedule(owner: Alarm) {
       assert(job == null)
 
       job = owner.taskCoroutineScope.launch {
         delay(delayMillis)
-        val task = synchronized(owner.LOCK) {
-          task?.also { task = null }
-        } ?: return@launch
 
-        var context = modalityState?.asContextElement() ?: EmptyCoroutineContext
-        if (clientId != null) {
-          context += clientId.asContextElement()
+        var taskContext = clientIdContext ?: EmptyCoroutineContext
+        if (owner.threadToUse == ThreadToUse.SWING_THREAD) {
+          taskContext += SingleAlarm.getEdtDispatcher() + (modalityState ?: ModalityState.nonModal()).asContextElement()
         }
+        // todo fix clients and remove NonCancellable
+        taskContext += NonCancellable
 
-        // historically, it was non-cancellable
-        withContext(NonCancellable + context) {
+        withContext(taskContext) {
+          val task = synchronized(owner.LOCK) {
+            task?.also { task = null }
+          } ?: return@withContext
+
           runSafely(task)
         }
       }.also {
         it.invokeOnCompletion {
           synchronized(owner.LOCK) {
             owner.requests.remove(this@Request)
-            task = null
             job = null
           }
         }
@@ -358,54 +356,20 @@ open class Alarm @Internal constructor(
      * Returns a task, if not yet executed.
      */
     fun cancel(): Runnable? {
+      // before cancel, as cancel can nullize it
+      val task = task?.also {
+        this.task = null
+      }
+
       job?.let {
         it.cancel(null)
         job = null
       }
 
-      return task?.let {
-        task = null
-        it
-      }
+      return task
     }
 
     override fun toString(): String = "${super.toString()} $task; delay=${delayMillis}ms"
-  }
-}
-
-private fun createCoroutineScope(inEdt: Boolean, coroutineScope: CoroutineScope?): CoroutineScope {
-  val app = ApplicationManager.getApplication()
-  @Suppress("SSBasedInspection")
-  if (inEdt) {
-    // maybe not defined in tests
-    val edtDispatcher = app?.serviceOrNull<CoroutineSupport>()?.edtDispatcher()
-    if (edtDispatcher == null) {
-      assert(coroutineScope == null)
-      // cannot be as error - not clear what to do in case of `RangeTimeScrollBarTest`
-      LOG.warn("Do not use an alarm in an early executing code")
-      return CoroutineScope(object : CoroutineDispatcher() {
-        override fun dispatch(context: CoroutineContext, block: Runnable) {
-          EventQueue.invokeLater(block)
-        }
-
-        override fun toString() = "Swing"
-      } + SupervisorJob())
-    }
-    else {
-      @Suppress("UsagesOfObsoleteApi")
-      return (coroutineScope ?: (app as ComponentManagerEx).getCoroutineScope()).childScope("Alarm", edtDispatcher)
-    }
-  }
-  else {
-    val dispatcher = Dispatchers.Default.limitedParallelism(1)
-    if (app == null) {
-      LOG.error("Do not use an alarm in an early executing code")
-      return CoroutineScope(SupervisorJob() + dispatcher)
-    }
-    else {
-      @Suppress("UsagesOfObsoleteApi")
-      return (coroutineScope ?: (app as ComponentManagerEx).getCoroutineScope()).childScope("Alarm", dispatcher)
-    }
   }
 }
 
@@ -421,3 +385,7 @@ private fun runSafely(task: Runnable) {
     LOG.error(e)
   }
 }
+
+@Internal
+@Service
+private class AlarmSharedCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)

@@ -99,11 +99,11 @@ class AlarmTest {
 
   @Test
   fun flushImmediately(@TestDisposable disposable: Disposable): Unit = runBlocking(Dispatchers.EDT) {
-    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, disposable)
+    val alarm = Alarm(threadToUse = Alarm.ThreadToUse.SWING_THREAD, parentDisposable = disposable)
     val list = ConcurrentLinkedQueue<String>()
 
-    alarm.addRequest(ContextAwareRunnable { list.add("1") }, 0, ModalityState.nonModal())
-    alarm.addRequest(ContextAwareRunnable { list.add("2") }, 5, ModalityState.nonModal())
+    alarm.addRequest(request = { list.add("1") }, delayMillis = 0, modalityState = ModalityState.nonModal())
+    alarm.addRequest(request = { list.add("2") }, delayMillis = 5, modalityState = ModalityState.nonModal())
     assertThat(list).isEmpty()
     alarm.drainRequestsInTest()
     assertThat(list).containsExactly("1", "2")
