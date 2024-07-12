@@ -115,6 +115,8 @@ public enum JavaFeature {
   INHERITED_STATIC_MAIN_METHOD(LanguageLevel.JDK_22_PREVIEW, "feature.inherited.static.main.method"),
   IMPLICIT_IMPORT_IN_IMPLICIT_CLASSES(LanguageLevel.JDK_23_PREVIEW, "feature.implicit.import.in.implicit.classes"),
   PRIMITIVE_TYPES_IN_PATTERNS(LanguageLevel.JDK_23_PREVIEW, "feature.primitive.types.in.patterns"),
+
+  MODULE_IMPORTS(LanguageLevel.JDK_23_PREVIEW, "feature.module.imports"),
   ;
 
   private final @NotNull LanguageLevel myLevel;
