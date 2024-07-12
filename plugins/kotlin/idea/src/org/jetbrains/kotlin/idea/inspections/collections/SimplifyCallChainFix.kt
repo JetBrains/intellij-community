@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.inspections.collections
 
-import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
-import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.reformatted
@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class SimplifyCallChainFix(
-    @SafeFieldForPreview private val conversion: CallChainConversion,
-    @SafeFieldForPreview private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
-) : LocalQuickFix {
+    private val conversion: CallChainConversion,
+    private val modifyArguments: KtPsiFactory.(KtCallExpression) -> Unit = {}
+) : PsiUpdateModCommandQuickFix() {
     private val shortenedText = conversion.replacement.substringAfterLast(".")
 
     override fun getName() = KotlinBundle.message("simplify.call.chain.fix.text", shortenedText)
@@ -99,7 +99,7 @@ class SimplifyCallChainFix(
         if (result.isValid) ShortenReferences.DEFAULT.process(result.reformatted() as KtElement)
     }
 
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        (descriptor.psiElement as? KtQualifiedExpression)?.let(this::apply)
+    override fun applyFix(project: Project, element: PsiElement, updater: ModPsiUpdater) {
+        (element as? KtQualifiedExpression)?.let(this::apply)
     }
 }
