@@ -4,19 +4,18 @@ package org.jetbrains.kotlin.idea.inspections.collections
 
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversion
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.getCallExpression
-import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.ConversionId
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.getCallExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
 
