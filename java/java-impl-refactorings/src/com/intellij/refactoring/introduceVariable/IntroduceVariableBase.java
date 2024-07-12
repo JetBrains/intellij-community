@@ -341,9 +341,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     try {
-      PsiType type = DumbService.getInstance(project)
-        .computeWithAlternativeResolveEnabled(() -> GenericsUtil.getVariableTypeByExpressionType(originalType));
-      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(type.getCanonicalText(), expr);
+      String typeText = DumbService.getInstance(project)
+        .computeWithAlternativeResolveEnabled(() -> GenericsUtil.getVariableTypeByExpressionType(originalType).getCanonicalText());
+      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(typeText, expr);
     }
     catch (IncorrectOperationException ignore) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
