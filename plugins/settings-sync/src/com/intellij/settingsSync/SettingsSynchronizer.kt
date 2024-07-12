@@ -76,7 +76,7 @@ private class SettingsSynchronizerApplicationInitializedListener : ApplicationIn
 }
 
 private suspend fun initializeSyncing(initMode: SettingsSyncBridge.InitMode, settingsSyncEventListener: SettingsSyncEventListener) {
-  LOG.info("Initializing settings sync")
+  LOG.info("Initializing settings sync. Mode: $initMode")
   val settingsSyncMain = serviceAsync<SettingsSyncMain>()
   blockingContext {
     settingsSyncMain.controls.bridge.initialize(initMode)
