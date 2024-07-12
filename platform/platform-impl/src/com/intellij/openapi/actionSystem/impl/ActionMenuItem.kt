@@ -196,7 +196,10 @@ class ActionMenuItem internal constructor(action: AnAction,
       if (ActionPlaces.MAIN_MENU == place && SystemInfo.isMacSystemMenu) {
         state = isToggled
         screenMenuItemPeer?.setState(isToggled)
-        setIcon(wrapNullIcon(icon)!!)
+      }
+      val adjustedIcon = adjustIcon(presentation.icon)
+      if (adjustedIcon != null) {
+        setIcon(adjustedIcon)
       }
       else if (isToggled) {
         setToggledIcon()
@@ -220,21 +223,20 @@ class ActionMenuItem internal constructor(action: AnAction,
       if (selected == null) {
         selected = icon
       }
-      setIcon(wrapNullIcon(if (presentation.isEnabled) icon else disabled))
-      setSelectedIcon(wrapNullIcon(selected))
-      setDisabledIcon(wrapNullIcon(disabled))
+      setIcon(adjustIcon(if (presentation.isEnabled) icon else disabled))
+      setSelectedIcon(adjustIcon(selected))
+      setDisabledIcon(adjustIcon(disabled))
     }
   }
 
-  private fun wrapNullIcon(icon: Icon?): Icon? {
+  private fun adjustIcon(icon: Icon?): Icon? {
     val isMainMenu = ActionPlaces.MAIN_MENU == place
-    if (isMainMenu && isShowNoIcons(actionRef.getAction())) {
-      return null
+    return when {
+      isMainMenu && isShowNoIcons(actionRef.getAction()) -> null
+      !isAligned || !isAlignedInGroup -> return icon
+      isMainMenu && icon == null && SystemInfo.isMacSystemMenu -> EMPTY_MENU_ACTION_ICON
+      else -> icon
     }
-    if (!isAligned || !isAlignedInGroup) {
-      return icon
-    }
-    return if (icon == null && SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) EMPTY_MENU_ACTION_ICON else icon
   }
 
   override fun setIcon(icon: Icon?) {
