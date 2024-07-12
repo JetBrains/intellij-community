@@ -304,10 +304,9 @@ object InitializePropertyQuickFixFactories {
                 val secondaryConstructors = ktClass.secondaryConstructors.filterNot(::hasExplicitDelegationCallToThis)
                 if (property.accessors.isEmpty() && secondaryConstructors.isEmpty()) {
                     add(MoveToConstructorParametersFix(property, propertyContextForNewParameter))
-                } else {
-                    if (secondaryConstructors.none { it.hasActualModifier() }) {
-                        add(InitializeWithConstructorParameterFix(property, propertyContextForNewParameter))
-                    }
+                }
+                if (secondaryConstructors.none { it.hasActualModifier() }) {
+                    add(InitializeWithConstructorParameterFix(property, propertyContextForNewParameter))
                 }
             }
         }

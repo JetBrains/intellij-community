@@ -217,7 +217,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         val property = diagnostic.psiElement as? KtProperty ?: return emptyList()
         if (property.receiverTypeReference != null) return emptyList()
 
-        val actions = ArrayList<IntentionAction>(2)
+        val actions = ArrayList<IntentionAction>(3)
 
         actions.add(AddInitializerFix(property))
 
@@ -226,12 +226,11 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
             if (klass.primaryConstructor?.hasActualModifier() == true) return@let
 
             val secondaryConstructors by lazy { klass.secondaryConstructors.filter { it.getDelegationCallOrNull()?.isCallToThis != true } }
-            if (property.accessors.isNotEmpty() || secondaryConstructors.isNotEmpty()) {
-                if (secondaryConstructors.none { it.hasActualModifier() }) {
-                    actions.add(InitializeWithConstructorParameter(property))
-                }
-            } else {
+            if (property.accessors.isEmpty() && secondaryConstructors.isEmpty()) {
                 actions.add(MoveToConstructorParameters(property))
+            }
+            if (secondaryConstructors.none { it.hasActualModifier() }) {
+                actions.add(InitializeWithConstructorParameter(property))
             }
         }
 
