@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
@@ -46,6 +47,8 @@ fun LexicalScope.getVariableFromImplicitReceivers(name: Name): VariableDescripto
     return null
 }
 
+@Deprecated("Only supported for Kotlin Plugin K1 mode. Use Kotlin Analysis API instead, which works for both K1 and K2 modes. See https://kotl.in/analysis-api and `org.jetbrains.kotlin.analysis.api.analyze` for details.")
+@ApiStatus.ScheduledForRemoval
 fun PsiElement.getResolutionScope(bindingContext: BindingContext): LexicalScope? {
     for (parent in parentsWithSelf) {
         if (parent is KtElement) {
