@@ -10,13 +10,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
 
-    <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUiOnboardingBundle"
-                       key="newUsersOnboarding.notification.group"/>
+    <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
+                       key="notification.group"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics"/>
   </extensions>
 
-  <actions resource-bundle="messages.NewUiOnboardingBundle">
+  <actions resource-bundle="messages.NewUsersOnboardingBundle">
     <action id="StartNewUsersOnboarding" class="com.intellij.platform.ide.newUsersOnboarding.StartNewUsersOnboardingAction">
       <add-to-group group-id="LearnGroup" relative-to-action="ShowLearnPanel" anchor="after"/>
     </action>

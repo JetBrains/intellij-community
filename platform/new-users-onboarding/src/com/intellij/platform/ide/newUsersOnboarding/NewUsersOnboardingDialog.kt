@@ -47,7 +47,7 @@ internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
       }
       panel {
         row {
-          label(NewUiOnboardingBundle.message("newUsersOnboarding.dialog.title", ApplicationNamesInfo.getInstance().fullProductName))
+          label(NewUsersOnboardingBundle.message("dialog.title", ApplicationNamesInfo.getInstance().fullProductName))
             .customize(UnscaledGaps.EMPTY)
             .applyToComponent {
               font = JBFont.label().deriveFont(Font.BOLD, JBUIScale.scale(20f))
@@ -57,7 +57,7 @@ internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
           val maxWidth = popupImage.iconWidth - JBUI.scale(contentGaps.width)
           val charWidth = window.getFontMetrics(JBFont.label()).charWidth('0')
           val maxLineLength = maxWidth / charWidth
-          text(NewUiOnboardingBundle.message("newUsersOnboarding.dialog.text"), maxLineLength)
+          text(NewUsersOnboardingBundle.message("dialog.text"), maxLineLength)
             .customize(UnscaledGaps(top = 8))
         }
         row {
