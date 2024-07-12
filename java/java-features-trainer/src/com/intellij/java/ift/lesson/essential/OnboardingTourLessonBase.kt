@@ -16,6 +16,7 @@ import com.intellij.util.ui.tree.TreeUtil
 import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModified
 import training.learn.LearnBundle
+import training.learn.course.LessonType
 import training.learn.lesson.general.run.clearBreakpoints
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
@@ -25,6 +26,8 @@ import javax.swing.JTree
 import javax.swing.tree.TreePath
 
 abstract class OnboardingTourLessonBase(id: String) : CommonLogicForOnboardingTours(id, JavaLessonsBundle.message("java.onboarding.lesson.name")) {
+  override val lessonType: LessonType = LessonType.PROJECT
+
   private lateinit var openLearnTaskId: TaskContext.TaskId
 
   private val demoFileDirectory: String = "src"

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.training.ift.lesson.refactorings.KotlinRefactoringMe
 import training.dsl.LessonUtil
 import training.learn.CourseManager
 import training.learn.LessonsBundle
+import training.learn.NewUsersOnboardingExperimentAccessor
 import training.learn.course.LearningCourseBase
 import training.learn.course.LearningModule
 import training.learn.course.LessonType
@@ -34,7 +35,7 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
     override fun modules() = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
     private val isOnboardingLessonEnabled: Boolean
-        get() = PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate()
+        get() = (PlatformUtils.isIdeaCommunity() || PlatformUtils.isIdeaUltimate()) && !NewUsersOnboardingExperimentAccessor.isExperimentEnabled()
 
     private fun onboardingTour() = if (isOnboardingLessonEnabled) listOf(
         LearningModule(
@@ -60,7 +61,12 @@ class KotlinLearningCourse : LearningCourseBase(KotlinLanguage.INSTANCE.id) {
             moduleType = LessonType.SINGLE_EDITOR  // todo: change to SCRATCH when KTIJ-20742 will be resolved
         ) {
             fun ls(sampleName: String) = loadSample("EditorBasics/$sampleName")
-            listOf(
+
+            val onboarding = if (NewUsersOnboardingExperimentAccessor.isExperimentEnabled()) {
+                listOf(KotlinOnboardingTourLesson())
+            }
+            else emptyList()
+            onboarding + listOf(
                 KotlinContextActionsLesson(),
                 GotoActionLesson(ls("Actions.kt.sample"), firstLesson = false),
                 KotlinSearchEverywhereLesson(),
