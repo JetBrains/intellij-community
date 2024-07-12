@@ -121,8 +121,10 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     product: Product,
     dataForSave: List<DataForSave>
   ) {
-    val pluginService = StartupWizardService.getInstance()?.getPluginService() ?: error("Cannot find the wizard service.")
+    val wizardService = StartupWizardService.getInstance() ?: error("Cannot find the wizard service.")
+    val pluginService = wizardService.getPluginService()
     val page = WizardPluginsPage(this, pluginService, goBackAction = {
+      wizardService.onExit()
       goToSettingsPage(provider, product)
     },
     goForwardAction = { featuredPluginIds ->
@@ -132,6 +134,7 @@ private class ImportSettingsControllerImpl(dialog: OnboardingDialog, override va
     },
     continueButtonTextOverride = ImportSettingsBundle.message("onboarding.wizard.finish-button"))
     ImportSettingsEventsCollector.featuredPluginsPageShown()
+    wizardService.onEnter()
     dialog.changePage(page)
   }
 
