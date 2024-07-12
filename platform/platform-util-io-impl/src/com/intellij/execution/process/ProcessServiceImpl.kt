@@ -4,18 +4,24 @@ package com.intellij.execution.process
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.ReflectionUtil
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
+import com.pty4j.unix.Pty
+import com.pty4j.unix.UnixPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
 import com.pty4j.windows.winpty.WinPtyProcess
+import com.sun.jna.Platform
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jvnet.winp.WinProcess
 import java.io.File
 import java.io.OutputStream
 
 @ApiStatus.Internal
-class ProcessServiceImpl : ProcessService {
+class ProcessServiceImpl(private val coroutineScope: CoroutineScope) : ProcessService {
   override fun startPtyProcess(command: Array<String>,
                                directory: String?,
                                env: MutableMap<String, String>,
@@ -36,8 +42,14 @@ class ProcessServiceImpl : ProcessService {
       .setRedirectErrorStream(redirectErrorStream)
       .setWindowsAnsiColorEnabled(windowsAnsiColorEnabled)
       .setUnixOpenTtyToPreserveOutputAfterTermination(unixOpenTtyToPreserveOutputAfterTermination)
-      .setSpawnProcessUsingJdkOnMacIntel(false)
-    return builder.start()
+      .setSpawnProcessUsingJdkOnMacIntel(true)
+    val process = builder.start()
+    if (process is UnixPtyProcess && Platform.isMac() && Platform.isIntel()) {
+      coroutineScope.launch(Dispatchers.IO + CoroutineName("Reaper for $process")) {
+        MacIntelPtyProcessReaper(process).run()
+      }
+    }
+    return process
   }
 
   override fun sendWinProcessCtrlC(process: Process): Boolean {
@@ -113,4 +125,47 @@ class ProcessServiceImpl : ProcessService {
       }
     }
   }
+
+  private class MacIntelPtyProcessReaper(private val process: UnixPtyProcess) {
+    suspend fun run() {
+      try {
+        runInterruptible {
+          process.waitFor()
+        }
+      }
+      catch (e: Exception) {
+        if (e is ProcessCanceledException || e is CancellationException) throw e
+        LOG.error("An error occurred while waiting for $process", e)
+      }
+      finally {
+        // We'll get here even if waiting was canceled.
+        // But it's still better to wake up the thread blocked on I/O than to let it block forever.
+        // Assuming cancellation happens for a reason, it's likely that that thread is also
+        // somehow canceled and wants to finish its job ASAP.
+        try {
+          process.errPty?.callBreakRead()
+        }
+        catch (e: Exception) { // These calls aren't cancellable, so no type checks here.
+          LOG.error("An error occurred when trying to wake up stderr of $process", e)
+        }
+        try {
+          process.pty?.callBreakRead()
+        }
+        catch (e: Exception) {
+          LOG.error("An error occurred when trying to wake up stdout of $process", e)
+        }
+      }
+    }
+
+    private val UnixPtyProcess.errPty: Pty?
+      get() = ReflectionUtil.getField(UnixPtyProcess::class.java, this, Pty::class.java, "myErrPty")
+
+    private fun Pty.callBreakRead() {
+      // This is an ugly temporary solution, using a deprecated API is OK here.
+      ReflectionUtil.getDeclaredMethod(Pty::class.java, "breakRead")!!.invoke(this)
+    }
+
+  }
 }
+
+private val LOG = logger<ProcessServiceImpl>()
