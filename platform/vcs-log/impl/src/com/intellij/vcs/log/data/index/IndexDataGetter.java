@@ -23,6 +23,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.ints.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +48,11 @@ public final class IndexDataGetter {
   private final @NotNull VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
   private final boolean myIsProjectLog;
 
-  public IndexDataGetter(@NotNull Project project,
-                         @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                         @NotNull VcsLogStorageBackend indexStorageBackend,
-                         @NotNull VcsLogStorage logStorage,
-                         @NotNull VcsLogErrorHandler errorHandler) {
+  IndexDataGetter(@NotNull Project project,
+                  @NotNull Map<VirtualFile, VcsLogProvider> providers,
+                  @NotNull VcsLogStorageBackend indexStorageBackend,
+                  @NotNull VcsLogStorage logStorage,
+                  @NotNull VcsLogErrorHandler errorHandler) {
     myProject = project;
     myProviders = providers;
     myIndexStorageBackend = indexStorageBackend;
@@ -293,10 +294,12 @@ public final class IndexDataGetter {
     return affectedCommits;
   }
 
+  @ApiStatus.Internal
   public @NotNull FileHistoryData createFileHistoryData(@NotNull FilePath path) {
     return createFileHistoryData(Collections.singletonList(path));
   }
 
+  @ApiStatus.Internal
   public @NotNull FileHistoryData createFileHistoryData(@NotNull Collection<? extends FilePath> paths) {
     if (paths.size() == 1 && ContainerUtil.getFirstItem(paths).isDirectory()) {
       return new DirectoryHistoryData(ContainerUtil.getFirstItem(paths));

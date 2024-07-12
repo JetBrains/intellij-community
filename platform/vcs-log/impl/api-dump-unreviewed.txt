@@ -233,7 +233,6 @@ f:com.intellij.vcs.log.data.VcsLogData
 - getStorage():com.intellij.vcs.log.data.VcsLogStorage
 - getTopCommitsCache():com.intellij.vcs.log.data.TopCommitsCache
 - getUserNameResolver():com.intellij.vcs.log.data.VcsLogUserResolver
-- getUserRegistry():com.intellij.vcs.log.data.VcsUserRegistryImpl
 - initialize():V
 - s:isIndexSwitchedOnInRegistry():Z
 - refresh(java.util.Collection):V
@@ -262,16 +261,6 @@ com.intellij.vcs.log.data.VcsLogRefresher
 - a:getCurrentDataPack():com.intellij.vcs.log.data.DataPack
 - a:initialize():V
 - a:refresh(java.util.Collection,Z):V
-c:com.intellij.vcs.log.data.VcsLogRefresherImpl
-- com.intellij.openapi.Disposable
-- com.intellij.vcs.log.data.VcsLogRefresher
-- <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.data.VcsLogStorage,java.util.Map,com.intellij.vcs.log.data.VcsUserRegistryImpl,com.intellij.vcs.log.data.index.VcsLogModifiableIndex,com.intellij.vcs.log.data.VcsLogProgress,com.intellij.vcs.log.data.TopCommitsCache,java.util.function.Consumer,I):V
-- dispose():V
-- getCurrentDataPack():com.intellij.vcs.log.data.DataPack
-- getProgress():com.intellij.vcs.log.data.VcsLogProgress
-- initialize():V
-- refresh(java.util.Collection,Z):V
-- p:startNewBackgroundTask(com.intellij.openapi.progress.Task$Backgroundable):com.intellij.vcs.log.data.SingleTaskController$SingleTask
 f:com.intellij.vcs.log.data.VcsLogSorter
 - <init>():V
 - s:sortByDateTopoOrder(java.util.Collection):java.util.List
@@ -298,10 +287,7 @@ a:com.intellij.vcs.log.data.VcsLogUserResolverBase
 - resolveCurrentUser(com.intellij.openapi.vfs.VirtualFile):java.util.Set
 - resolveUserName(java.lang.String):java.util.Set
 f:com.intellij.vcs.log.data.index.IndexDataGetter
-- <init>(com.intellij.openapi.project.Project,java.util.Map,com.intellij.vcs.log.data.index.VcsLogStorageBackend,com.intellij.vcs.log.data.VcsLogStorage,com.intellij.vcs.log.impl.VcsLogErrorHandler):V
 - canFilter(java.util.List):Z
-- createFileHistoryData(com.intellij.openapi.vcs.FilePath):com.intellij.vcs.log.history.FileHistoryData
-- createFileHistoryData(java.util.Collection):com.intellij.vcs.log.history.FileHistoryData
 - filter(java.util.List):it.unimi.dsi.fastutil.ints.IntSet
 - filter(java.util.List,it.unimi.dsi.fastutil.ints.IntSet):it.unimi.dsi.fastutil.ints.IntSet
 - filterMessages(com.intellij.vcs.log.VcsLogTextFilter,java.util.function.IntConsumer):V
@@ -384,24 +370,9 @@ f:com.intellij.vcs.log.history.EdgeData
 - bs:copy$default(com.intellij.vcs.log.history.EdgeData,java.lang.Object,java.lang.Object,I,java.lang.Object):com.intellij.vcs.log.history.EdgeData
 - equals(java.lang.Object):Z
 - hashCode():I
-a:com.intellij.vcs.log.history.FileHistoryData
-- <init>(com.intellij.openapi.vcs.FilePath):V
-- <init>(java.util.Collection):V
-- f:affects(I,com.intellij.vcs.log.history.CommitFileState,Z):Z
-- bs:affects$default(com.intellij.vcs.log.history.FileHistoryData,I,com.intellij.vcs.log.history.CommitFileState,Z,I,java.lang.Object):Z
-- f:build():com.intellij.vcs.log.history.FileHistoryData
-- f:buildFileStatesMap():java.util.Map
-- a:findRename(I,I,com.intellij.openapi.vcs.FilePath,Z):com.intellij.vcs.log.history.EdgeData
-- f:forEach(kotlin.jvm.functions.Function3):V
-- a:getAffectedCommits(com.intellij.openapi.vcs.FilePath):it.unimi.dsi.fastutil.ints.Int2ObjectMap
-- f:getCommits():it.unimi.dsi.fastutil.ints.IntSet
-- f:getCommitsWithRenames():java.util.Set
-- f:getFileStateInChildRevision(I,I,com.intellij.vcs.log.history.CommitFileState):com.intellij.vcs.log.history.CommitFileState
-- f:getFileStateInParentRevision(I,I,com.intellij.vcs.log.history.CommitFileState):com.intellij.vcs.log.history.CommitFileState
-- f:getFiles():java.util.Set
-- f:getHasRenames():Z
-- f:isEmpty():Z
-- f:removeAll(java.util.List):V
+f:com.intellij.vcs.log.history.FileHistory
+- sf:Companion:com.intellij.vcs.log.history.FileHistory$Companion
+f:com.intellij.vcs.log.history.FileHistory$Companion
 f:com.intellij.vcs.log.history.FileHistoryFilterUi
 - com.intellij.vcs.log.VcsLogFilterUi
 - <init>(com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.history.FileHistoryUiProperties,com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.VcsLogFilterCollection,java.util.function.Consumer):V
@@ -428,7 +399,6 @@ f:com.intellij.vcs.log.history.FileHistoryPaths
 - f:getFileHistory(com.intellij.vcs.log.VcsLogDataPack):com.intellij.vcs.log.history.FileHistory
 - sf:hasPathsInformation(com.intellij.vcs.log.VcsLogDataPack):Z
 - sf:isDeletedInCommit(com.intellij.vcs.log.VcsLogDataPack,I):Z
-- f:withFileHistory(com.intellij.vcs.log.visible.VisiblePack,com.intellij.vcs.log.history.FileHistory):com.intellij.vcs.log.visible.VisiblePack
 c:com.intellij.vcs.log.history.FileHistoryUi
 - com.intellij.vcs.log.ui.AbstractVcsLogUi
 - <init>(com.intellij.vcs.log.data.VcsLogData,com.intellij.vcs.log.history.FileHistoryUiProperties,com.intellij.vcs.log.visible.VisiblePackRefresher,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.openapi.vfs.VirtualFile,java.lang.String,com.intellij.vcs.log.VcsLogFilterCollection,com.intellij.vcs.log.VcsLogDiffHandler):V
@@ -1441,7 +1411,6 @@ c:com.intellij.vcs.log.ui.filter.UserFilterPopupComponent
 - p:createSpeedSearchActionGroup():com.intellij.openapi.actionSystem.ActionGroup
 - p:getActionName(java.util.List):java.lang.String
 - p:getAllValues():java.util.List
-- p:getCompletionPrefixProvider():com.intellij.vcs.log.ui.filter.MultilinePopupBuilder$CompletionPrefixProvider
 - getCurrentText():java.lang.String
 - getEmptyFilterValue():java.lang.String
 - p:getFilterValues(com.intellij.vcs.log.VcsLogUserFilter):java.util.List

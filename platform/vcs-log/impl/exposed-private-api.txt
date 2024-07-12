@@ -1,6 +1,0 @@
-com/intellij/vcs/log/data/VcsUserRegistryImpl
-com/intellij/vcs/log/data/index/VcsLogModifiableIndex
-com/intellij/vcs/log/data/index/VcsLogStorageBackend
-com/intellij/vcs/log/history/CommitFileState
-com/intellij/vcs/log/history/FileHistory
-com/intellij/vcs/log/ui/filter/MultilinePopupBuilder$CompletionPrefixProvider

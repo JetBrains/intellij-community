@@ -28,6 +28,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import io.opentelemetry.api.trace.Span;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -382,6 +383,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     return myLogProviders.get(root);
   }
 
+  @ApiStatus.Internal
   public @NotNull VcsUserRegistryImpl getUserRegistry() {
     return myUserRegistry;
   }
