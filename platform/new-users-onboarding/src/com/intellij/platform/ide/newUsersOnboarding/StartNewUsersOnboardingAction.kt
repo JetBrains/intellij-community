@@ -15,7 +15,7 @@ internal class StartNewUsersOnboardingAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    e.presentation.isEnabledAndVisible = project != null && NewUsersOnboardingService.getInstance(project).isOnboardingEnabled()
+    e.presentation.isEnabledAndVisible = project != null && NewUsersOnboardingExperiment.getInstance().isEnabled()
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
