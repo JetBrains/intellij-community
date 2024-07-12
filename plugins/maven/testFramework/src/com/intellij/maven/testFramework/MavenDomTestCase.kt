@@ -568,6 +568,9 @@ abstract class MavenDomTestCase : MavenMultiVersionImportingTestCase() {
 
   protected suspend fun checkHighlighting(file: VirtualFile, vararg expectedHighlights: Highlight) {
     withContext(Dispatchers.EDT) {
+      LocalFileSystem.getInstance().refreshFiles(listOf(file))
+      val content = String(file.contentsToByteArray())
+      MavenLog.LOG.warn("Checking highlighting in file $file:\n$content")
       fixture.openFileInEditor(file)
       val highlightingInfos = fixture.doHighlighting();
       assertHighlighting(highlightingInfos, *expectedHighlights)
