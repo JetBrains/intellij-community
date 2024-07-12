@@ -128,6 +128,10 @@ internal class SyncServiceImpl(private val coroutineScope: CoroutineScope) : Syn
     TODO("Not yet implemented")
   }
 
+  override fun getImportablePluginIds(itemId: String): List<String> {
+    TODO("Not yet implemented")
+  }
+
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon? {
     TODO("Not yet implemented")
   }

@@ -3,10 +3,12 @@ package com.intellij.ide.startup.importSettings.chooser.settingChooser
 
 import com.intellij.CommonBundle
 import com.intellij.ide.startup.importSettings.ImportSettingsBundle
-import com.intellij.ide.startup.importSettings.chooser.ui.*
+import com.intellij.ide.startup.importSettings.chooser.ui.ImportSettingsController
+import com.intellij.ide.startup.importSettings.chooser.ui.OnboardingPage
+import com.intellij.ide.startup.importSettings.chooser.ui.ScrollSnapToFocused
+import com.intellij.ide.startup.importSettings.chooser.ui.WizardPagePane
 import com.intellij.ide.startup.importSettings.data.*
 import com.intellij.ide.startup.importSettings.statistics.ImportSettingsEventsCollector
-import com.intellij.ide.startup.importSettings.transfer.SettingTransferProductService
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.SystemInfo
@@ -152,7 +154,6 @@ class ConfigurableSettingChooserPage<T : BaseService>(
     val dataForSaves = prepareDataForSave()
     ImportSettingsEventsCollector.configurePageImportSettingsClicked()
     if (controller.canShowFeaturedPluginsPage(product.origin)
-        && productService is SettingTransferProductService
         && controller.shouldShowFeaturedPluginsPage(product.id, dataForSaves, productService)) {
       controller.goToFeaturedPluginsPage(provider, productService, product, dataForSaves)
     } else {

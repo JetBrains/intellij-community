@@ -241,6 +241,8 @@ class TestJbService private constructor(): JbService {
     return if (itemId == main.id) settings1 else settings
   }
 
+  override fun getImportablePluginIds(itemId: String) = emptyList<String>()
+
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return TestJbService.getProductIcon(itemId, size)
   }
@@ -285,6 +287,8 @@ class TestExternalProductService : ExternalProductService {
   override fun getSettings(itemId: String): List<BaseSetting> {
     return TestJbService.settings
   }
+
+  override fun getImportablePluginIds(itemId: String) = emptyList<String>()
 
   override fun importSettings(productId: String, data: DataToApply): DialogImportData {
     LOG.info("${IMPORT_SERVICE} importSettings product: $productId data: ${data.importSettings.size}")
@@ -367,6 +371,8 @@ class TestSyncService : SyncService {
   override fun getSettings(itemId: String): List<BaseSetting> {
     return TestJbService.settings
   }
+
+  override fun getImportablePluginIds(itemId: String) = emptyList<String>()
 
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon {
     return AllIcons.Actions.Refresh
