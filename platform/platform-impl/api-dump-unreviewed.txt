@@ -10697,23 +10697,6 @@ a:com.intellij.internal.ml.Feature
 - a:createMapper(java.lang.String):com.intellij.internal.ml.FeatureMapper
 - a:getName():java.lang.String
 f:com.intellij.internal.ml.Feature$Companion
-f:com.intellij.internal.ml.FeaturesInfo
-- com.intellij.internal.ml.ModelMetadata
-- sf:Companion:com.intellij.internal.ml.FeaturesInfo$Companion
-- <init>(java.util.Set,java.util.List,java.util.List,java.util.List,com.intellij.internal.ml.FeatureMapper[],java.lang.String):V
-- getBinaryFeatures():java.util.List
-- getCategoricalFeatures():java.util.List
-- getFeaturesOrder():com.intellij.internal.ml.FeatureMapper[]
-- getFloatFeatures():java.util.List
-- getKnownFeatures():java.util.Set
-- getVersion():java.lang.String
-f:com.intellij.internal.ml.FeaturesInfo$Companion
-- f:binary(java.lang.String,java.util.Map):com.intellij.internal.ml.BinaryFeature
-- f:buildFeaturesIndex(java.util.List[]):java.util.Map
-- f:buildInfo(com.intellij.internal.ml.ModelMetadataReader):com.intellij.internal.ml.FeaturesInfo
-- f:buildMappers(java.util.Map,java.util.List):com.intellij.internal.ml.FeatureMapper[]
-- f:categorical(java.lang.String,java.util.List):com.intellij.internal.ml.CategoricalFeature
-- f:float(java.lang.String,java.util.Map):com.intellij.internal.ml.FloatFeature
 f:com.intellij.internal.ml.FloatFeature
 - com.intellij.internal.ml.Feature
 - <init>(java.lang.String,D,Z):V

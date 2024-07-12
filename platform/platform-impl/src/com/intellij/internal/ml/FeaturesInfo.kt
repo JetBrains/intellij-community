@@ -1,17 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.internal.ml
 
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.double
+import kotlinx.serialization.json.jsonPrimitive
+import org.jetbrains.annotations.ApiStatus.Internal
 
-class FeaturesInfo(override val knownFeatures: Set<String>,
-                   override val binaryFeatures: List<BinaryFeature>,
-                   override val floatFeatures: List<FloatFeature>,
-                   override val categoricalFeatures: List<CategoricalFeature>,
-                   override val featuresOrder: Array<FeatureMapper>,
-                   override val version: String?) : ModelMetadata {
+@Internal
+class FeaturesInfo(
+  override val knownFeatures: Set<String>,
+  override val binaryFeatures: List<BinaryFeature>,
+  override val floatFeatures: List<FloatFeature>,
+  override val categoricalFeatures: List<CategoricalFeature>,
+  override val featuresOrder: Array<FeatureMapper>,
+  override val version: String?,
+) : ModelMetadata {
   companion object {
-    private val gson = Gson()
     private const val DEFAULT: String = "default"
     private const val USE_UNDEFINED: String = "use_undefined"
 
@@ -24,13 +31,13 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
     }
 
     fun buildInfo(reader: ModelMetadataReader): FeaturesInfo {
-      val knownFeatures = reader.allKnown().fromJson<List<String>>().withSafeWeighers()
+      val knownFeatures = Json.decodeFromString<List<String>>(reader.allKnown()).withSafeWeighers()
 
-      val binaryFactors: List<BinaryFeature> = reader.binaryFeatures().fromJson<Map<String, Map<String, Any>>>()
+      val binaryFactors: List<BinaryFeature> = Json.decodeFromString<Map<String, Map<String, JsonElement>>>(reader.binaryFeatures())
         .map { binary(it.key, it.value) }
-      val doubleFactors = reader.floatFeatures().fromJson<Map<String, Map<String, Any>>>()
+      val doubleFactors = Json.decodeFromString<Map<String, Map<String, JsonElement>>>(reader.floatFeatures())
         .map { float(it.key, it.value) }
-      val categoricalFactors = reader.categoricalFeatures().fromJson<Map<String, List<String>>>()
+      val categoricalFactors = Json.decodeFromString<Map<String, List<String>>>(reader.categoricalFeatures())
         .map { categorical(it.key, it.value) }
 
       val order = reader.featureOrderDirect()
@@ -40,24 +47,19 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
                           reader.extractVersion())
     }
 
-    fun binary(name: String, description: Map<String, Any>): BinaryFeature {
+    fun binary(name: String, description: Map<String, JsonElement>): BinaryFeature {
       val (first, second) = extractBinaryValuesMappings(description)
       val default = extractDefaultValue(name, description)
       return BinaryFeature(name, first, second, default, allowUndefined(description))
     }
 
-    fun float(name: String, description: Map<String, Any>): FloatFeature {
+    fun float(name: String, description: Map<String, JsonElement>): FloatFeature {
       val default = extractDefaultValue(name, description)
       return FloatFeature(name, default, allowUndefined(description))
     }
 
     fun categorical(name: String, categories: List<String>): CategoricalFeature {
       return CategoricalFeature(name, categories.toSet())
-    }
-
-    private fun <T> String.fromJson(): T {
-      val typeToken = object : TypeToken<T>() {}
-      return gson.fromJson(this, typeToken.type)
     }
 
     fun buildFeaturesIndex(vararg featureGroups: List<Feature>): Map<String, Feature> {
@@ -86,19 +88,29 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
       return true
     }
 
-    private fun extractDefaultValue(name: String, description: Map<String, Any>): Double {
-      return description[DEFAULT].toString().toDoubleOrNull()
-             ?: throw InconsistentMetadataException("Default value not found. Feature name: $name")
+    private fun extractDefaultValue(name: String, description: Map<String, JsonElement>): Double {
+      val value = description.get(DEFAULT) ?: throw InconsistentMetadataException("Default value not found. Feature name: $name")
+      try {
+        return value.jsonPrimitive.double
+      }
+      catch (_: IllegalArgumentException) {
+        throw InconsistentMetadataException("Default value must be double(name=$name, value=$value")
+      }
     }
 
-    private fun extractBinaryValuesMappings(description: Map<String, Any>)
-      : Pair<ValueMapping, ValueMapping> {
+    private fun extractBinaryValuesMappings(description: Map<String, JsonElement>): Pair<ValueMapping, ValueMapping> {
       val result = mutableListOf<ValueMapping>()
       for ((name, value) in description) {
-        if (name == DEFAULT || name == USE_UNDEFINED) continue
-        val mappedValue = value.toString().toDoubleOrNull()
-        if (mappedValue == null) throw InconsistentMetadataException("Mapped value for binary feature should be double")
-        result += name to mappedValue
+        if (name == DEFAULT || name == USE_UNDEFINED) {
+          continue
+        }
+        val mappedValue = try {
+          value.jsonPrimitive.double
+        }
+        catch (e: IllegalArgumentException) {
+          throw InconsistentMetadataException("Mapped value for binary feature should be double (value=$value)")
+        }
+        result.add(name to mappedValue)
       }
 
       assert(result.size == 2) { "Binary feature must contains 2 values, but found $result" }
@@ -106,8 +118,7 @@ class FeaturesInfo(override val knownFeatures: Set<String>,
       return Pair(result[0], result[1])
     }
 
-    fun buildMappers(features: Map<String, Feature>,
-                             order: List<String>): Array<FeatureMapper> {
+    fun buildMappers(features: Map<String, Feature>, order: List<String>): Array<FeatureMapper> {
       val mappers = mutableListOf<FeatureMapper>()
       for (arrayFeatureName in order) {
         val name = arrayFeatureName.substringBefore('=')
