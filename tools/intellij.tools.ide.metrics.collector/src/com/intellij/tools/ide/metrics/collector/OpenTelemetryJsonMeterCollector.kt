@@ -7,6 +7,7 @@ import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.util.common.logError
 import io.opentelemetry.sdk.common.InstrumentationScopeInfo
 import io.opentelemetry.sdk.metrics.data.Data
+import io.opentelemetry.sdk.metrics.data.LongPointData
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.data.MetricDataType
 import io.opentelemetry.sdk.resources.Resource
@@ -22,7 +23,7 @@ import kotlin.io.path.name
 open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
                                            val meterFilter: (MetricData) -> Boolean) : TelemetryMetricsCollector {
 
-  override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
+  fun collect(logsDirPath: Path, transform: (Map. Entry<String, LongPointData>) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
     val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
 
     // fallback to the collecting meters from the .csv files for older IDEs versions (where meters aren't exported to JSON files)
@@ -43,9 +44,8 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
         }
 
         meterFilter(metricData)
-      }.collect(logsDirPath)
+      }.collect(logsDirPath, transform)
     }
-
     val telemetryMetrics: List<MetricData> = metricsFiles.flatMap { OpenTelemetryMetersJsonImporter.fromJsonFile(it) }
       .filter(meterFilter)
 
@@ -62,5 +62,10 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
         else -> TODO("Type ${it.type} isn't supported yet")
       }.convert(it)
     }
+  }
+
+
+  override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
+    return collect(logsDirPath)  { it.key to it.value.value.toInt() }
   }
 }
