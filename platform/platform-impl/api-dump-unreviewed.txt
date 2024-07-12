@@ -10882,6 +10882,7 @@ f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowC
 - s:getInstance():com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector
 - recordActivation(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.wm.impl.WindowInfoImpl,com.intellij.toolWindow.ToolWindowEventSource):V
 - recordHidden(com.intellij.openapi.project.Project,com.intellij.openapi.wm.impl.WindowInfoImpl,com.intellij.toolWindow.ToolWindowEventSource):V
+- recordResized(com.intellij.openapi.project.Project,com.intellij.openapi.wm.impl.WindowInfoImpl,java.lang.Boolean):V
 - recordShown(com.intellij.openapi.project.Project,com.intellij.toolWindow.ToolWindowEventSource,com.intellij.openapi.wm.impl.WindowInfoImpl):V
 f:com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector$ToolWindowUtilValidator
 - com.intellij.internal.statistic.eventLog.validator.rules.FUSRule
@@ -22097,6 +22098,10 @@ f:com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantStat
 f:com.intellij.platform.ide.impl.presentationAssistant.WinKeyStrokePresentationKt
 - sf:getWinKeyText(I):java.lang.String
 - sf:getWinModifiersText(I):java.lang.String
+f:com.intellij.platform.ide.impl.statistic.ToolWindowStateListener
+- com.intellij.openapi.wm.ex.ToolWindowManagerListener
+- <init>(com.intellij.openapi.project.Project):V
+- stateChanged(com.intellij.openapi.wm.ToolWindowManager,com.intellij.openapi.wm.ToolWindow,com.intellij.openapi.wm.ex.ToolWindowManagerListener$ToolWindowManagerEventType):V
 c:com.intellij.platform.ide.menu.IdeJMenuBar
 - javax.swing.JMenuBar
 - add(javax.swing.JMenu):javax.swing.JMenu
