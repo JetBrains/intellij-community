@@ -327,6 +327,13 @@ class IdeaPluginDescriptorImpl(
         continue
       }
 
+      if (isKotlinPlugin(dependency.pluginId) && isIncompatibleWithKotlinPlugin(descriptor)) {
+        LOG.warn("Plugin ${descriptor} depends on Kotlin plugin via `${configFile}` " +
+                 "but the plugin is not compatible with the Kotlin plugin in the  ${if (isKotlinPluginK1Mode()) "K1" else "K2"} mode. " +
+                 "So, the `${configFile}` was not loaded")
+        continue
+      }
+
       var resolveError: Exception? = null
       val raw: RawPluginDescriptor? = try {
         pathResolver.resolvePath(readContext = context, dataLoader = dataLoader, relativePath = configFile, readInto = null)
