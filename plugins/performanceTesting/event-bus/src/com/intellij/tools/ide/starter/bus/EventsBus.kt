@@ -37,9 +37,13 @@ object EventsBus {
     }
   }
 
-  /** Can have only one subscription by pair subscriber + event
+  /**
+   * Can have only one subscription by pair subscriber + event
    * Subscriber might be invoked multiple times on different events since unsubscription happens only after end of test.
-   *  */
+   *
+   * Be very careful providing a string as a subscriber since we don't unsubscribe until the test is finished and subscription with the same
+   * string will be ignored.
+   */
   inline fun <reified EventType : Event> subscribe(
     subscriber: Any,
     timeout: Duration = 2.minutes,
