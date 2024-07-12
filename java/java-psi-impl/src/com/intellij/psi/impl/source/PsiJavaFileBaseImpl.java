@@ -51,6 +51,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   private final CachedValue<MostlySingularMultiMap<String, ResultWithContext>> myResolveCache;
   private final CachedValue<Map<String, Iterable<ResultWithContext>>> myCachedDeclarations;
   private final CachedValue<List<PsiImportStaticStatement>> myCachedImplicitImportStaticStatements;
+  private final CachedValue<List<PsiImportModuleStatement>> myCachedImplicitImportModuleStatements;
   private volatile String myPackageName;
 
   protected PsiJavaFileBaseImpl(@NotNull IElementType elementType, @NotNull IElementType contentElementType, @NotNull FileViewProvider viewProvider) {
@@ -67,6 +68,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     }, false);
     myCachedImplicitImportStaticStatements = cachedValuesManager.createCachedValue(() -> {
       List<PsiImportStaticStatement> statements = createImplicitImportStaticStatements();
+      return Result.create(statements, this.getContainingFile());
+    }, false);
+    myCachedImplicitImportModuleStatements = cachedValuesManager.createCachedValue(() -> {
+      List<PsiImportModuleStatement> statements = createImplicitImportModuleStatements();
       return Result.create(statements, this.getContainingFile());
     }, false);
   }
@@ -405,7 +410,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processModules(@NotNull ResolveState state, @NotNull PsiElement place, @NotNull PsiScopeProcessor processor) {
-    for (PsiImportModuleStatement statement : getImportModuleStatements()) {
+    for (PsiImportModuleStatement statement : ContainerUtil.append(getImplicitImportModuleStatements(), getImportModuleStatements())) {
       PsiElement resolved = statement.resolve();
       if (resolved != null) {
         processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, statement);
@@ -573,6 +578,11 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @Override
+  public @NotNull ImplicitlyImportedModule @NotNull [] getImplicitlyImportedModules() {
+    return PsiImplUtil.getImplicitlyImportedModules(this);
+  }
+
+  @Override
   public void clearCaches() {
     super.clearCaches();
     putUserData(LANGUAGE_LEVEL_KEY, null);
@@ -590,10 +600,21 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   @NotNull
+  private List<PsiImportModuleStatement> getImplicitImportModuleStatements() {
+    return myCachedImplicitImportModuleStatements.getValue();
+  }
+
+  @NotNull
   private List<PsiImportStaticStatement> createImplicitImportStaticStatements() {
     PsiElementFactory factory = PsiElementFactory.getInstance(getProject());
     return ContainerUtil.map(getImplicitlyImportedStaticMembers(),
                              member -> factory.createImportStaticStatementFromText(member.getContainingClass(), member.getMemberName()));
+  }
+
+  private List<PsiImportModuleStatement> createImplicitImportModuleStatements() {
+    PsiElementFactory factory = PsiElementFactory.getInstance(getProject());
+    return ContainerUtil.map(getImplicitlyImportedModules(),
+                             mod -> factory.createImportModuleStatementFromText(mod.getModuleName()));
   }
 
   private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");

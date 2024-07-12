@@ -450,6 +450,17 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
   }
 
   @Override
+  public @NotNull PsiImportModuleStatement createImportModuleStatementFromText(@NotNull String moduleName)
+    throws IncorrectOperationException {
+    PsiJavaFile aFile = createDummyJavaFile("import module " + moduleName + ";");
+    PsiImportList importList = aFile.getImportList();
+    if (importList == null) throw new IncorrectOperationException("Can't create module with name: " + moduleName);
+    PsiImportModuleStatement[] statements = importList.getImportModuleStatements();
+    if (statements.length != 1) throw new IncorrectOperationException("Created more than one module with name: " + moduleName);
+    return (PsiImportModuleStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statements[0]);
+  }
+
+  @Override
   public @NotNull PsiParameterList createParameterList(String @NotNull [] names, PsiType @NotNull [] types) throws IncorrectOperationException {
     StringBuilder builder = new StringBuilder();
     builder.append("void method(");
