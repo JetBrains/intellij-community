@@ -450,7 +450,7 @@ class MavenPropertyCompletionAndResolutionTest : MavenDomTestCase() {
                        <name>${'$'}{<caret>project.build.finalName}</name>
                        """.trimIndent())
 
-    val effectiveSuperPom = MavenUtil.getEffectiveSuperPom(project, projectRoot.toNioPath().toString())
+    val effectiveSuperPom = MavenUtil.resolveSuperPomFile(project, projectPom)
     assertNotNull(effectiveSuperPom)
     withContext(Dispatchers.EDT) {
       assertResolved(projectPom, findTag(effectiveSuperPom, "project.build.finalName"))
