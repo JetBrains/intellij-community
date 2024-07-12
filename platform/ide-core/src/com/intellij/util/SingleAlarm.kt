@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DeprecatedCallableAddReplaceWith")
+
 package com.intellij.util
 
 import com.intellij.codeWithMe.ClientId
@@ -164,6 +166,7 @@ class SingleAlarm @Internal constructor(
   }
 
   companion object {
+    @Deprecated("Please use flow instead of SingleAlarm")
     fun pooledThreadSingleAlarm(delay: Int, parentDisposable: Disposable, task: () -> Unit): SingleAlarm {
       return SingleAlarm(
         task = task,
@@ -174,7 +177,7 @@ class SingleAlarm @Internal constructor(
       )
     }
 
-    fun pooledThreadSingleAlarm(delay: Int, coroutineScope: CoroutineScope, task: () -> Unit): SingleAlarm {
+    fun singleAlarm(delay: Int, coroutineScope: CoroutineScope, task: () -> Unit): SingleAlarm {
       return SingleAlarm(
         task = task,
         delay = delay,

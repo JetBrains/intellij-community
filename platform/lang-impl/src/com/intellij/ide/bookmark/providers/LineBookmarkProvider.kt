@@ -198,7 +198,7 @@ class LineBookmarkProvider(private val project: Project, coroutineScope: Corouti
     return null
   }
 
-  private val validateAlarm = SingleAlarm.pooledThreadSingleAlarm(task = ::validateAndUpdate, delay = 100, coroutineScope = coroutineScope)
+  private val validateAlarm = SingleAlarm.singleAlarm(task = ::validateAndUpdate, delay = 100, coroutineScope = coroutineScope)
 
   private fun validateAndUpdate() {
     val manager = BookmarksManager.getInstance(project) ?: return
