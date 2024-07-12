@@ -358,14 +358,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     importProject();
   }
 
-  protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config, Boolean skipIndexing)
-    throws IOException {
-    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
-    importProject(config, skipIndexing);
-  }
-
   protected void importProjectUsingSingeModulePerGradleProject(@NonNls String config) throws IOException {
-    importProjectUsingSingeModulePerGradleProject(config, null);
+    getCurrentExternalProjectSettings().setResolveModulePerSourceSet(false);
+    importProject(config);
   }
 
   @Override

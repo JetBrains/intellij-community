@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalProjectInfo;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
@@ -39,11 +40,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertion;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.RunAll;
 import com.intellij.testFramework.utils.module.ModuleAssertions;
+import com.intellij.testFramework.utils.module.SourceRootAssertions;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
@@ -58,8 +61,10 @@ import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import static com.intellij.platform.externalSystem.testFramework.utils.module.ExternalSystemSourceRootAssertions.getExType;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 
@@ -116,36 +121,21 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     ModuleAssertions.assertContentRoots(myProject, moduleName, expectedRootPaths);
   }
 
-  protected void assertSources(String moduleName, String... expectedSources) {
-    assertSourceFolders(moduleName, JavaSourceRootType.SOURCE, Arrays.asList(expectedSources));
+  protected void assertNoSourceRoots(String moduleName) {
+    assertSourceRoots(moduleName, it -> {});
   }
 
-  protected void assertResources(String moduleName, String... expectedSources) {
-    assertSourceFolders(moduleName, JavaResourceRootType.RESOURCE, Arrays.asList(expectedSources));
+  protected void assertSourceRoots(String moduleName, Consumer<ExternalSystemSourceRootAssertion<String>> applyAssertion) {
+    ExternalSystemSourceRootAssertion.assertSourceRoots(applyAssertion, (type, expectedRoots) -> {
+      assertSourceRoots(moduleName, type, expectedRoots);
+    });
   }
 
-  protected void assertTestSources(String moduleName, String... expectedSources) {
-    assertSourceFolders(moduleName, JavaSourceRootType.TEST_SOURCE, Arrays.asList(expectedSources));
-  }
-
-  protected void assertTestResources(String moduleName, String... expectedSources) {
-    assertSourceFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, Arrays.asList(expectedSources));
-  }
-
-  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
-    assertGeneratedSourceFolders(moduleName, JavaSourceRootType.SOURCE, Arrays.asList(expectedSources));
-  }
-
-  protected void assertGeneratedTestSources(String moduleName, String... expectedSources) {
-    assertGeneratedSourceFolders(moduleName, JavaSourceRootType.TEST_SOURCE, Arrays.asList(expectedSources));
-  }
-
-  protected void assertGeneratedResources(String moduleName, String... expectedSources) {
-    assertGeneratedResourceFolders(moduleName, JavaResourceRootType.RESOURCE, Arrays.asList(expectedSources));
-  }
-
-  protected void assertGeneratedTestResources(String moduleName, String... expectedSources) {
-    assertGeneratedResourceFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, Arrays.asList(expectedSources));
+  protected void assertSourceRoots(String moduleName, ExternalSystemSourceType type, List<String> expectedRoots) {
+    var expectedRootPaths = ContainerUtil.map(expectedRoots, it -> Path.of(it));
+    SourceRootAssertions.assertSourceRoots(myProject, moduleName, it -> type.equals(getExType(it)), expectedRootPaths, () ->
+      "%s source root of type %s".formatted(moduleName, type)
+    );
   }
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
