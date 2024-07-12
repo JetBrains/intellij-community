@@ -52,6 +52,7 @@ import com.intellij.platform.ide.ideFingerprint
 import com.intellij.platform.settings.SettingsController
 import com.intellij.ui.AppIcon
 import com.intellij.ui.ExperimentalUI
+import com.intellij.util.ArrayUtilRt
 import com.intellij.util.PlatformUtils
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.createDirectories
@@ -91,7 +92,7 @@ internal suspend fun loadApp(
   logDeferred: Deferred<Logger>,
   appRegisteredJob: CompletableDeferred<Unit>,
   args: List<String>,
-  initAwtToolkitAndEventQueueJob: Job
+  initAwtToolkitAndEventQueueJob: Job,
 ): ApplicationStarter {
   return span("app initialization") {
     val initServiceContainerJob = launch {
@@ -204,7 +205,8 @@ internal suspend fun loadApp(
               preloadJob.cancel()
               applicationStarter.cancel()
               ConfigImportHelper.writeOptionsForRestartIfNeeded(logDeferred.await())
-              ApplicationManager.getApplication().restart()
+              logDeferred.await().info("Running application restart")
+              app.restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, ArrayUtilRt.EMPTY_STRING_ARRAY)
             }
           }
         }
