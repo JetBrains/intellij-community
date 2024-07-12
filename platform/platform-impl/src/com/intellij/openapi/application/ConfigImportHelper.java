@@ -927,7 +927,7 @@ public final class ConfigImportHelper {
     updateVMOptions(newConfigDir, log);
   }
   
-  public static Boolean isVersionNewerThan242(Path oldConfigDir) {
+  public static Boolean isVersion242OrNewer(Path oldConfigDir) {
     String version = parseVersionFromConfig(oldConfigDir);
     return version == null || StringUtil.compareVersionNumbers(version, "2024.2") != -1;
   }
@@ -990,7 +990,7 @@ public final class ConfigImportHelper {
     Path disabledPluginsFile = oldConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME);
     Set<PluginId> disabledPlugins =
       Files.exists(disabledPluginsFile) ? DisabledPluginsState.Companion.loadDisabledPlugins(disabledPluginsFile) : Set.of();
-    if (isVersionNewerThan242(oldConfigDir)) {
+    if (isVersion242OrNewer(oldConfigDir)) {
       pluginsToMigrate.removeIf(descriptor -> getBundledLocalizationPluginsIds242().contains(descriptor.getPluginId().getIdString()));
       pluginsToDownload.removeIf(descriptor -> getBundledLocalizationPluginsIds242().contains(descriptor.getPluginId().getIdString()));
     }
