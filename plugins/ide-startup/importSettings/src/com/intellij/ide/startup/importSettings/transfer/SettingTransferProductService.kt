@@ -72,11 +72,11 @@ class SettingTransferProductService(
     } ?: emptyList()
   }
 
-  fun getPlugins(productId: String): List<String> {
+  override fun getImportablePluginIds(itemId: String): List<String> {
     return logger.runAndLogException {
       val versions = loadProductInfos()
-      val product = versions[productId] ?: return emptyList()
-      val settings = product.getSettingsQuickly() ?: error("Cannot load settings for $productId quickly.")
+      val product = versions[itemId] ?: return emptyList()
+      val settings = product.getSettingsQuickly() ?: error("Cannot load settings for $itemId quickly.")
       settings.plugins.values.filterIsInstance<PluginFeature>().map { it.pluginId }
     } ?: emptyList()
   }

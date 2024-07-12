@@ -386,6 +386,14 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     )
   }
 
+  override fun getImportablePluginIds(itemId: String): List<String> {
+    val productInfo = products[itemId] ?: run {
+      logger.error("Can't find product $itemId.")
+      return emptyList()
+    }
+    return productInfo.getPluginsDescriptors().asSequence().map { it.key.idString }.toList()
+  }
+
   override fun getProductIcon(itemId: String, size: IconProductSize): Icon? {
     val productInfo = products[itemId] ?: error("Can't find product")
     return NameMappings.getIcon(productInfo.codeName, size)
