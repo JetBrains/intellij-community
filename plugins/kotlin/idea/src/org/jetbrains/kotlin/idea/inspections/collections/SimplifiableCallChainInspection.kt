@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCall
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.MIN_OR_NULL
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.SUM_OF
+import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.TO_MAP
 import org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCallChain.CallChainConversions.group
 import org.jetbrains.kotlin.idea.inspections.AssociateFunction
 import org.jetbrains.kotlin.idea.inspections.ReplaceAssociateFunctionFix
@@ -87,15 +88,17 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                         !KotlinBuiltIns.isUInt(type) && !KotlinBuiltIns.isULong(type) &&
                         !KotlinBuiltIns.isDouble(type)
                     ) return@check false
-                    if (isInt && lastFunctionalArgument.isLambda && lastFunctionalArgument.lastStatement.isLiteralValue()) {
-                        // 'sumOf' call with integer literals leads to an overload resolution ambiguity: KT-46360
-                        return@check false
+                    with(CallChainConversions) {
+                        if (isInt && lastFunctionalArgument.isLambda && lastFunctionalArgument.lastStatement.isLiteralValue()) {
+                            // 'sumOf' call with integer literals leads to an overload resolution ambiguity: KT-46360
+                            return@check false
+                        }
                     }
                 }
-                if (conversion.firstName == MAP && conversion.secondName == "toMap") {
+                if (conversion.firstName == MAP && conversion.secondName == TO_MAP) {
                     val argumentSize = expression.callExpression?.valueArguments?.size ?: return@check false
-                    if (conversion.replacement == "associate" && argumentSize != 0
-                        || conversion.replacement == "associateTo" && argumentSize != 1
+                    if (conversion.replacement == ASSOCIATE && argumentSize != 0
+                        || conversion.replacement == ASSOCIATE_TO && argumentSize != 1
                     ) return@check false
                 }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
@@ -155,22 +158,6 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
             }
 
             else -> null
-        }
-    }
-
-    private fun KtExpression?.isLiteralValue(): Boolean {
-        return this != null && when (val expr = KtPsiUtil.safeDeparenthesize(this)) {
-            is KtBinaryExpression -> expr.left.isLiteralValue() && expr.right.isLiteralValue()
-
-            is KtIfExpression -> expr.then?.lastBlockStatementOrThis().isLiteralValue() &&
-                    expr.`else`?.lastBlockStatementOrThis().isLiteralValue()
-
-            is KtWhenExpression -> expr.entries.all { it.expression?.lastBlockStatementOrThis().isLiteralValue() }
-
-            is KtTryExpression -> expr.tryBlock.lastBlockStatementOrThis().isLiteralValue() &&
-                    expr.catchClauses.all { c -> c.catchBody?.lastBlockStatementOrThis().isLiteralValue() }
-
-            else -> expr is KtConstantExpression
         }
     }
 

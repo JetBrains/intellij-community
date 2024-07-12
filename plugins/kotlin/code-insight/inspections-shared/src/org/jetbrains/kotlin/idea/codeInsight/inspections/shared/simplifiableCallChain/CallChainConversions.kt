@@ -4,7 +4,14 @@ package org.jetbrains.kotlin.idea.codeInsight.inspections.shared.simplifiableCal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtIfExpression
+import org.jetbrains.kotlin.psi.KtPsiUtil
+import org.jetbrains.kotlin.psi.KtTryExpression
+import org.jetbrains.kotlin.psi.KtWhenExpression
+import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
 data class CallChainConversion(
     val firstFqName: FqName,
@@ -104,6 +111,7 @@ object CallChainConversions {
     const val LIST_OF_NOT_NULL = "listOfNotNull"
     const val MAP = "map"
     const val SUM = "sum"
+    const val TO_MAP = "toMap"
 
     val conversionsList: List<CallChainConversion> by lazy {
         listOf(
@@ -222,5 +230,21 @@ object CallChainConversions {
 
     val conversionGroups: Map<ConversionId, List<CallChainConversion>> by lazy {
         conversionsList.group()
+    }
+
+    fun KtExpression?.isLiteralValue(): Boolean {
+        return this != null && when (val expr = KtPsiUtil.safeDeparenthesize(this)) {
+            is KtBinaryExpression -> expr.left.isLiteralValue() && expr.right.isLiteralValue()
+
+            is KtIfExpression -> expr.then?.lastBlockStatementOrThis().isLiteralValue() &&
+                    expr.`else`?.lastBlockStatementOrThis().isLiteralValue()
+
+            is KtWhenExpression -> expr.entries.all { it.expression?.lastBlockStatementOrThis().isLiteralValue() }
+
+            is KtTryExpression -> expr.tryBlock.lastBlockStatementOrThis().isLiteralValue() &&
+                    expr.catchClauses.all { c -> c.catchBody?.lastBlockStatementOrThis().isLiteralValue() }
+
+            else -> expr is KtConstantExpression
+        }
     }
 }
