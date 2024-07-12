@@ -69,6 +69,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
   private int borderArc = 0;
+  // We cannot use buffered rendering in rem-dev case as the backend might not have the required fonts to render text
+  private static final boolean RENDER_IN_POPUP = AppMode.isRemoteDevHost();
 
   public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
                                        @NotNull Component child, @NotNull Container validationParent) {
@@ -81,8 +83,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected AbstractExpandableItemsHandler(final @NotNull ComponentType component) {
     myComponent = component;
-    myComponent.add(myRendererPane);
-    myComponent.validate();
+    if (RENDER_IN_POPUP) {
+      myTipComponent.add(myRendererPane);
+    }
+    else {
+      myComponent.add(myRendererPane);
+      myComponent.validate();
+    }
     var popup = new MovablePopup(myComponent, myTipComponent);
     // On Wayland, heavyweight popup might get automatically displaced
     // by the server if they appear to cross the screen boundary, which
@@ -285,8 +292,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       Rectangle bounds = details.bounds;
       Shape clip = details.clip;
       myTipComponent.setPreferredSize(bounds.getSize());
-      // We cannot use buffered rendering in rem-dev case, cause backend might not have the required fonts to render text
-      if (!AppMode.isRemoteDevHost()) {
+      if (!RENDER_IN_POPUP) {
         myImage = createPopupContent(bounds, details.painter, clip);
       }
       myPopup.setTransparent(clip != null);
