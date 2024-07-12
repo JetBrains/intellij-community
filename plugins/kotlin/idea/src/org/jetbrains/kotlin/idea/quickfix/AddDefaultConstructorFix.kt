@@ -3,63 +3,43 @@
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.Diagnostic
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypes
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 
-class AddDefaultConstructorFix(
-    element: KtClass,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtClass, Unit>(element, Unit) {
-
-    override fun getFamilyName() = KotlinBundle.message("fix.add.default.constructor")
-
-    override fun invoke(
-        actionContext: ActionContext,
-        element: KtClass,
-        elementContext: Unit,
-        updater: ModPsiUpdater,
-    ) {
-        element.createPrimaryConstructorIfAbsent()
+internal object AddDefaultConstructorFixFactory : KotlinSingleIntentionActionFactory() {
+    fun superTypeEntryToClass(typeEntry: KtSuperTypeListEntry, context: BindingContext): KtClass? {
+        val baseType = context[BindingContext.TYPE, typeEntry.typeReference] ?: return null
+        val baseClassDescriptor = baseType.constructor.declarationDescriptor as? ClassDescriptor ?: return null
+        if (!baseClassDescriptor.isExpect) return null
+        if (baseClassDescriptor.kind != ClassKind.CLASS) return null
+        return DescriptorToSourceUtils.descriptorToDeclaration(baseClassDescriptor) as? KtClass
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
-        fun superTypeEntryToClass(typeEntry: KtSuperTypeListEntry, context: BindingContext): KtClass? {
-            val baseType = context[BindingContext.TYPE, typeEntry.typeReference] ?: return null
-            val baseClassDescriptor = baseType.constructor.declarationDescriptor as? ClassDescriptor ?: return null
-            if (!baseClassDescriptor.isExpect) return null
-            if (baseClassDescriptor.kind != ClassKind.CLASS) return null
-            return DescriptorToSourceUtils.descriptorToDeclaration(baseClassDescriptor) as? KtClass
-        }
+    private fun annotationEntryToClass(entry: KtAnnotationEntry, context: BindingContext): KtClass? {
+        val descriptor =
+            context[BindingContext.ANNOTATION, entry]?.type?.constructor?.declarationDescriptor as? ClassDescriptor ?: return null
+        if (!descriptor.isExpect) return null
+        return DescriptorToSourceUtils.descriptorToDeclaration(descriptor) as? KtClass
+    }
 
-        private fun annotationEntryToClass(entry: KtAnnotationEntry, context: BindingContext): KtClass? {
-            val descriptor =
-                context[BindingContext.ANNOTATION, entry]?.type?.constructor?.declarationDescriptor as? ClassDescriptor ?: return null
-            if (!descriptor.isExpect) return null
-            return DescriptorToSourceUtils.descriptorToDeclaration(descriptor) as? KtClass
-        }
-
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val element = diagnostic.psiElement
-            if (element is KtValueArgumentList && element.arguments.isNotEmpty()) return null
-            val parent = element.getParentOfTypes(true, KtClassOrObject::class.java, KtAnnotationEntry::class.java) ?: return null
-            val context by lazy { parent.analyze() }
-            val baseClass = when (parent) {
-                is KtClassOrObject -> parent.superTypeListEntries.asSequence().filterIsInstance<KtSuperTypeCallEntry>().firstOrNull()?.let {
-                    superTypeEntryToClass(it, context)
-                }
-                is KtAnnotationEntry -> annotationEntryToClass(parent, context)
-                else -> null
-            } ?: return null
-            return AddDefaultConstructorFix(baseClass).asIntention()
-        }
+    override fun createAction(diagnostic: Diagnostic): IntentionAction? {
+        val element = diagnostic.psiElement
+        if (element is KtValueArgumentList && element.arguments.isNotEmpty()) return null
+        val parent = element.getParentOfTypes(true, KtClassOrObject::class.java, KtAnnotationEntry::class.java) ?: return null
+        val context by lazy { parent.analyze() }
+        val baseClass = when (parent) {
+            is KtClassOrObject -> parent.superTypeListEntries.asSequence().filterIsInstance<KtSuperTypeCallEntry>().firstOrNull()?.let {
+                superTypeEntryToClass(it, context)
+            }
+            is KtAnnotationEntry -> annotationEntryToClass(parent, context)
+            else -> null
+        } ?: return null
+        return AddDefaultConstructorFix(baseClass).asIntention()
     }
 }
