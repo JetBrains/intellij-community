@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.git.coverage.CurrentFeatureBranchBaseDetector.Status
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.graph.api.LinearGraph
@@ -150,6 +151,7 @@ internal class CurrentFeatureBranchBaseDetector(private val repository: GitRepos
     data object HeadInProtectedBranch : Status
     data object GitDataNotFound : Status
     data object CommitHasNoProtectedParents : Status
+    data object SearchLimitReached : Status
   }
 
   internal data class BaseCommit(val commitId: Int, val protectedNodeId: Int)
@@ -172,7 +174,14 @@ internal fun findBaseCommit(linearGraph: LinearGraph, headNodeId: Int, protected
 
   val bfsWalk = BfsWalk(headNodeId, graph, visited)
   val foundCommits = mutableListOf<CurrentFeatureBranchBaseDetector.BaseCommit>()
+  val searchLimit = Registry.intValue("coverage.git.log.commit.search.depth", 100)
+  var searchDepth = 0
   while (true) {
+    if (searchDepth++ > searchLimit) {
+      // Return what have found up until now
+      if (foundCommits.isNotEmpty()) break
+      return Status.SearchLimitReached
+    }
     val nextLayer = bfsWalk.step()
     if (nextLayer.isEmpty()) break
     val protectedCommits = hashSetOf<Int>()
