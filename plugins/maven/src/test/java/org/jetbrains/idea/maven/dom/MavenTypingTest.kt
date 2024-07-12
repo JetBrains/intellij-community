@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.utils.MavenLog
 import org.junit.Test
 
 class MavenTypingTest : MavenDomTestCase() {
@@ -306,6 +307,8 @@ class MavenTypingTest : MavenDomTestCase() {
   }
 
   private fun assertTypeResultInRegularFile(f: VirtualFile, c: Char, expected: String) {
+    val content = String(f.contentsToByteArray())
+    MavenLog.LOG.warn("Typing '$c' in file $f:\n$content")
     type(f, c)
     fixture.checkResult(expected)
   }
