@@ -6,13 +6,13 @@ import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupModCommandFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class MissingConstructorKeywordFix(
     element: KtPrimaryConstructor
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtPrimaryConstructor, Unit>(element, Unit), CleanupModCommandFix {
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtPrimaryConstructor, Unit>(element, Unit), CleanupFix.ModCommand {
     override fun getFamilyName(): String = KotlinBundle.message("add.constructor.keyword")
 
     override fun invoke(

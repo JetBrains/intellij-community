@@ -5,14 +5,14 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupModCommandFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
 class MissingConstructorBracketsFix(
     element: KtPrimaryConstructor
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtPrimaryConstructor, Unit>(element, Unit), CleanupModCommandFix {
+) : KotlinPsiUpdateModCommandAction.ElementBased<KtPrimaryConstructor, Unit>(element, Unit), CleanupFix.ModCommand {
     override fun getFamilyName(): String = KotlinBundle.message("add.empty.brackets.after.primary.constructor")
 
     override fun invoke(
