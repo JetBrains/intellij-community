@@ -43,7 +43,7 @@ class MLCompletionLocalModelsLoader(private val registryPathKey: String) {
    */
   private fun scheduleInitModel(): Future<*> = executor.submit { initModelFromPathToZipSynchronously() }
 
-  private fun isPathToTheModelSet() = Registry.get(registryPathKey).isChangedFromDefault
+  private fun isPathToTheModelSet() = Registry.get(registryPathKey).isChangedFromDefault()
 
   private fun isPathToTheModelChanged() = Registry.stringValue(registryPathKey) != localModel?.path
 

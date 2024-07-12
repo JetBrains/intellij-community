@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NonNls;
@@ -45,8 +46,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Kirill Kalishev
@@ -162,7 +165,6 @@ public class RegistryUi implements Disposable {
   }
 
   private final class RevertAction extends AnAction implements DumbAware {
-
     private RevertAction() {
       new ShadowAction(this, "EditorDelete", myTable, RegistryUi.this);
     }
@@ -310,9 +312,8 @@ public class RegistryUi implements Disposable {
 
       private AbstractAction myCloseAction;
 
-      @Nullable
       @Override
-      protected JComponent createNorthPanel() {
+      protected @Nullable JComponent createNorthPanel() {
         if (ApplicationManager.getApplication().isInternal()) {
           return null;
         }
@@ -424,11 +425,9 @@ public class RegistryUi implements Disposable {
   @Override
   public void dispose() { }
 
-  private static String[] getOptions(@NotNull RegistryValue value) {
-    String[] options = value.getOptions();
-    for (int i = 0; i < options.length; i++) {
-      options[i] = Strings.trimEnd(options[i], "*");
-    }
+  private static @NotNull List<String> getOptions(@NotNull RegistryValue value) {
+    List<String> options = new ArrayList<>(value.asOptions());
+    options.replaceAll(s -> Strings.trimEnd(s, "*"));
     return options;
   }
 
@@ -436,14 +435,13 @@ public class RegistryUi implements Disposable {
     private final JLabel myLabel = new JLabel();
     private final SimpleColoredComponent myComponent = new SimpleColoredComponent();
 
-    @NotNull
     @Override
-    public Component getTableCellRendererComponent(@NotNull JTable table,
-                                                   Object value,
-                                                   boolean isSelected,
-                                                   boolean hasFocus,
-                                                   int row,
-                                                   int column) {
+    public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
+                                                            Object value,
+                                                            boolean isSelected,
+                                                            boolean hasFocus,
+                                                            int row,
+                                                            int column) {
       int modelRow = table.convertRowIndexToModel(row);
       RegistryValue v = ((MyTableModel)table.getModel()).getRegistryValue(modelRow);
 
@@ -480,8 +478,8 @@ public class RegistryUi implements Disposable {
               return box;
             }
             else if (v.isMultiValue()) {
-              String[] options = getOptions(v);
-              ComboBox<String> combo = new ComboBox<>(options);
+              List<String> options = getOptions(v);
+              ComboBox<String> combo = new ComboBox<>(ArrayUtil.toStringArray(options));
               combo.setSelectedItem(v.getSelectedOption());
               return combo;
             }
@@ -506,8 +504,7 @@ public class RegistryUi implements Disposable {
       return myLabel;
     }
 
-    @NotNull
-    private static SimpleTextAttributes getAttributes(RegistryValue value, boolean isSelected) {
+    private static @NotNull SimpleTextAttributes getAttributes(RegistryValue value, boolean isSelected) {
       boolean changedFromDefault = value.isChangedFromDefault();
       if (isSelected) {
         return new SimpleTextAttributes(changedFromDefault ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN,
@@ -549,8 +546,7 @@ public class RegistryUi implements Disposable {
     }
 
     @Override
-    @Nullable
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
+    public @Nullable Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
       int modelRow = table.convertRowIndexToModel(row);
       myValue = ((MyTableModel)table.getModel()).getRegistryValue(modelRow);
       if (myValue.asColor(null) != null) {
@@ -567,7 +563,7 @@ public class RegistryUi implements Disposable {
         return myCheckBox;
       }
       else if (myValue.isMultiValue()) {
-        myComboBox = new ComboBox<>(getOptions(myValue));
+        myComboBox = new ComboBox<>(ArrayUtil.toStringArray(getOptions(myValue)));
         myComboBox.setSelectedItem(myValue.getSelectedOption());
         return myComboBox;
       }

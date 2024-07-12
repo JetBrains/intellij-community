@@ -17198,11 +17198,6 @@ f:com.intellij.ide.scratch.ScratchTreeStructureProvider
 - s:createRootNode(com.intellij.openapi.project.Project,com.intellij.ide.projectView.ViewSettings):com.intellij.ide.util.treeView.AbstractTreeNode
 - s:getVirtualFile(com.intellij.ide.scratch.RootType):com.intellij.openapi.vfs.VirtualFile
 - modify(com.intellij.ide.util.treeView.AbstractTreeNode,java.util.Collection,com.intellij.ide.projectView.ViewSettings):java.util.Collection
-f:com.intellij.ide.scratch.ScratchesAndConsolesIndexSetContributor
-- com.intellij.util.indexing.IndexableSetContributor
-- <init>():V
-- getAdditionalRootsToIndex():java.util.Set
-- getDebugName():java.lang.String
 f:com.intellij.ide.scratch.ScratchesNamedScope
 - com.intellij.psi.search.scope.packageSet.NamedScope
 - sf:ID:java.lang.String

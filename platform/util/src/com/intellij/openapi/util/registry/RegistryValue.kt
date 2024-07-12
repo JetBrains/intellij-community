@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColorHexUtil
-import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -54,7 +53,7 @@ open class RegistryValue @Internal constructor(
         resolveRequiredValue(key = key).toInt()
       }
       catch (e: NumberFormatException) {
-        registry.getBundleValue(key).toInt()
+        registry.getBundleValue(key, keyDescriptor).toInt()
       }
       intCachedValue = result!!
     }
@@ -64,8 +63,13 @@ open class RegistryValue @Internal constructor(
   val isMultiValue: Boolean
     get() = selectedOption != null
 
-  val options: Array<String>
-    get() = getOptions(registry.getBundleValue(key))
+  fun asOptions(): List<String> {
+    val value = registry.getBundleValue(key, keyDescriptor)
+    if (value.startsWith('[') && value.endsWith(']')) {
+      return value.substring(1, value.length - 1).split("|").dropLastWhile { it.isEmpty() }
+    }
+    return emptyList()
+  }
 
   var selectedOption: @NlsSafe String?
     get() {
@@ -87,11 +91,12 @@ open class RegistryValue @Internal constructor(
       return null
     }
     set(selected) {
-      val options = options
-      for (i in options.indices) {
-        options[i] = options[i].trimEnd('*')
-        if (options[i] == selected) {
-          options[i] += "*"
+      val options = asOptions().toMutableList()
+      for ((i, option) in options.withIndex()) {
+        val v = option.trimEnd('*')
+        options.set(i, v)
+        if (v == selected) {
+          options.set(i, v.plus("*"))
         }
       }
       setValue("[" + options.joinToString(separator = "|") + "]")
@@ -113,7 +118,7 @@ open class RegistryValue @Internal constructor(
       return get(key = key, defaultValue = "0.0", isValue = true)!!.toDouble()
     }
     catch (e: NumberFormatException) {
-      return registry.getBundleValue(key).toDouble()
+      return registry.getBundleValue(key, keyDescriptor).toDouble()
     }
   }
 
@@ -135,23 +140,16 @@ open class RegistryValue @Internal constructor(
   }
 
   open val description: @NlsSafe String
-    get() {
-      if (keyDescriptor != null) {
-        return keyDescriptor.description
-      }
-      return get("$key.description", "", false)!!
-    }
+    get() = keyDescriptor?.description ?: get(key = "$key.description", defaultValue = "", isValue = false)!!
 
-  open val isRestartRequired: Boolean
-    get() {
-      if (keyDescriptor != null) {
-        return keyDescriptor.isRestartRequired
-      }
-      return get(key = "$key.restartRequired", defaultValue = "false", isValue = false).toBoolean()
+  open fun isRestartRequired(): Boolean {
+    if (keyDescriptor != null) {
+      return keyDescriptor.isRestartRequired
     }
+    return get(key = "$key.restartRequired", defaultValue = "false", isValue = false).toBoolean()
+  }
 
-  open val isChangedFromDefault: Boolean
-    get() = isChangedFromDefault(asString(), registry)
+  open fun isChangedFromDefault(): Boolean = isChangedFromDefault(asString(), registry)
 
   val pluginId: String?
     get() = keyDescriptor?.pluginId
@@ -164,7 +162,7 @@ open class RegistryValue @Internal constructor(
   open fun get(key: @NonNls String, defaultValue: String?, isValue: Boolean): String? {
     if (isValue) {
       if (stringCachedValue == null) {
-        stringCachedValue = resolveRequiredValue(key = key)
+        stringCachedValue = resolveRequiredValue(key)
       }
       return stringCachedValue
     }
@@ -196,7 +194,7 @@ open class RegistryValue @Internal constructor(
     }
 
     checkIsLoaded(key)
-    return registry.getBundleValue(key)
+    return registry.getBundleValue(key, keyDescriptor)
   }
 
   private fun checkIsLoaded(key: @NonNls String) {
@@ -233,11 +231,11 @@ open class RegistryValue @Internal constructor(
     LOG.info("Registry value '$key' has changed to '$value'")
 
     globalValueChangeListener.afterValueChanged(this)
-    for (each in listeners) {
-      each.afterValueChanged(this)
+    for (listener in listeners) {
+      listener.afterValueChanged(this)
     }
 
-    if (!isChangedFromDefault && !isRestartRequired) {
+    if (!isRestartRequired() && resolveNotRequiredValue(key = key, defaultValue = null) == registry.getBundleValueOrNull(key)) {
       registry.getUserProperties().remove(key)
     }
 
@@ -295,13 +293,6 @@ open class RegistryValue @Internal constructor(
     get() = isBoolean(asString())
 
   override fun toString(): String = "$key=${asString()}"
-}
-
-private fun getOptions(value: String?): Array<String> {
-  if (value != null && value.startsWith('[') && value.endsWith(']')) {
-    return value.substring(1, value.length - 1).split("\\|").dropLastWhile { it.isEmpty() }.toTypedArray()
-  }
-  return ArrayUtilRt.EMPTY_STRING_ARRAY
 }
 
 private fun isBoolean(s: String): Boolean {

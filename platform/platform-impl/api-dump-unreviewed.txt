@@ -6900,10 +6900,6 @@ f:com.intellij.ide.lightEdit.statusBar.LightEditStatusBarUI
 f:com.intellij.ide.logsUploader.DefaultLogsProcessor
 - <init>():V
 - getAdditionalLogFiles(com.intellij.openapi.project.Project):java.util.List
-f:com.intellij.ide.minimap.MinimapEditorFactoryListener
-- com.intellij.openapi.editor.event.EditorFactoryListener
-- <init>():V
-- editorCreated(com.intellij.openapi.editor.event.EditorFactoryEvent):V
 f:com.intellij.ide.minimap.MinimapImage
 - sf:Companion:com.intellij.ide.minimap.MinimapImage$Companion
 - <init>():V

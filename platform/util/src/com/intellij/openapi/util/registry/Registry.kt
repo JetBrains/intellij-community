@@ -279,7 +279,7 @@ class Registry {
       val instance = getInstance()
       for (s in map.keys) {
         val eachValue = instance.resolveValue(s)
-        if (eachValue.isRestartRequired && eachValue.isChangedSinceAppStart) {
+        if (eachValue.isRestartRequired() && eachValue.isChangedSinceAppStart) {
           return true
         }
       }
@@ -289,7 +289,7 @@ class Registry {
 
     @Internal
     @Synchronized
-    fun setKeys(descriptors: Map<String, RegistryKeyDescriptor>) {
+    fun setContributedKeys(descriptors: Map<String, RegistryKeyDescriptor>) {
       // getInstance must be not used here - phase COMPONENT_REGISTERED is not yet completed
       registry.contributedKeys = descriptors
     }
@@ -351,28 +351,23 @@ class Registry {
   }
 
   fun getBundleValueOrNull(key: @NonNls String): @NlsSafe String? {
-    contributedKeys.get(key)?.let {
-      return it.defaultValue
-    }
-
-    return loadFromBundledConfig()?.get(key)
+    return contributedKeys.get(key)?.defaultValue ?: loadFromBundledConfig()?.get(key)
   }
 
   @Throws(MissingResourceException::class)
-  internal fun getBundleValue(key: @NonNls String): @NlsSafe String {
-    contributedKeys.get(key)?.let {
-      return it.defaultValue
-    }
-
-    return getBundleValueOrNull(key) ?: throw MissingResourceException("Registry key $key is not defined", REGISTRY_BUNDLE, key)
+  internal fun getBundleValue(key: @NonNls String, keyDescriptor: RegistryKeyDescriptor?): @NlsSafe String {
+    return keyDescriptor?.defaultValue
+           ?: contributedKeys.get(key)?.defaultValue
+           ?: loadFromBundledConfig()?.get(key)
+           ?: throw MissingResourceException("Registry key $key is not defined", REGISTRY_BUNDLE, key)
   }
 
   @Internal
   fun getState(): Element {
     val state = Element("registry")
     for ((key, value) in userProperties) {
-      val registryValue = getInstance().resolveValue(key)
-      if (registryValue.isChangedFromDefault) {
+      val registryValue = registry.resolveValue(key)
+      if (registryValue.isChangedFromDefault()) {
         val entryElement = Element("entry")
         entryElement.setAttribute("key", key)
         entryElement.setAttribute("value", value)

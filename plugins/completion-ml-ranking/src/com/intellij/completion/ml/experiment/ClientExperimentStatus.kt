@@ -79,7 +79,7 @@ internal class ClientExperimentStatus : ExperimentStatus {
     }
     val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(false, experimentConfig.version)
     val experimentGroupRegistry = Registry.get("completion.ml.override.experiment.group.number")
-    if (experimentGroupRegistry.isChangedFromDefault && !experimentGroupRegistry.isChangedSinceAppStart) {
+    if (experimentGroupRegistry.isChangedFromDefault() && !experimentGroupRegistry.isChangedSinceAppStart) {
       experimentGroupRegistryValue = experimentGroupRegistry.asInteger()
     }
     if (experimentGroupRegistryValue != null) {

@@ -445,8 +445,6 @@
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
     <uiDataRule implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider$DataRule"/>
 
-    <registryKey defaultValue="true" key="scratch.files.use.workspace.model" restartRequired="true"
-                 description="Use WorkspaceModel API for scratch files integration"/>
     <postStartupActivity implementation="com.intellij.ide.scratch.workspace.ScratchWorkspaceStartupActivity"/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.scratch.workspace.ScratchRootsEntityWorkspaceFileIndexContributor"/>
     <workspaceModel.entityLifecycleSupporter implementation="com.intellij.ide.scratch.workspace.ScratchEntityLifecycleSupporter"/>

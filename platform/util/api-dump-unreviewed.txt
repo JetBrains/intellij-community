@@ -1683,11 +1683,11 @@ c:com.intellij.openapi.util.registry.RegistryValue
 - f:asColor(java.awt.Color):java.awt.Color
 - f:asDouble():D
 - f:asInteger():I
+- f:asOptions():java.util.List
 - asString():java.lang.String
 - get(java.lang.String,java.lang.String,Z):java.lang.String
 - getDescription():java.lang.String
 - f:getKey():java.lang.String
-- f:getOptions():java.lang.String[]
 - f:getPluginId():java.lang.String
 - f:getSelectedOption():java.lang.String
 - isBoolean():Z

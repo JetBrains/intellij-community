@@ -20,7 +20,7 @@ internal object LocalRankingModelProviderUtil {
     return provider.loadModel(path)
   }
 
-  fun isPathToLocalModelSpecified(tab: SearchEverywhereTabWithMlRanking) = Registry.get(getRegistryKey(tab)).isChangedFromDefault
+  fun isPathToLocalModelSpecified(tab: SearchEverywhereTabWithMlRanking) = Registry.get(getRegistryKey(tab)).isChangedFromDefault()
 
   private fun getRegistryKey(tab: SearchEverywhereTabWithMlRanking) = "search.everywhere.ml.${tab.name.lowercase()}.model.path"
 

@@ -34,11 +34,10 @@ class RegistryKeyBean private constructor() {
     const val KEY_CONFLICT_LOG_CATEGORY: String = "com.intellij.openapi.util.registry.overrides"
 
     @ApiStatus.Internal
-    @JvmStatic
     fun addKeysFromPlugins() {
       val point = (ApplicationManager.getApplication().extensionArea)
         .getExtensionPoint<RegistryKeyBean>("com.intellij.registryKey") as ExtensionPointImpl
-      Registry.setKeys(HashMap<String, RegistryKeyDescriptor>().let { mutator ->
+      Registry.setContributedKeys(HashMap<String, RegistryKeyDescriptor>().let { mutator ->
         point.processUnsortedWithPluginDescriptor { bean, pluginDescriptor ->
           val descriptor = createRegistryKeyDescriptor(bean, pluginDescriptor)
           putNewDescriptorConsideringOverrides(mutator, descriptor, false)

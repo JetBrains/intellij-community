@@ -234,7 +234,7 @@ object DebuggerDiagnosticsUtil {
     val currentSuspendContext = (currentCommand as? SuspendContextCommandImpl)?.suspendContext
     val currentSuspendContextText = "Current Command Suspend context = $currentSuspendContext\n"
     val registryInfo = Registry.getAll()
-      .filter { it.key.startsWith("debugger.") && it.isChangedFromDefault }
+      .filter { it.key.startsWith("debugger.") && it.isChangedFromDefault() }
       .joinToString(separator = "") { "${it.key} = ${it.asString()}\n" }
     val content = registryInfo +
                   currentCommandText +

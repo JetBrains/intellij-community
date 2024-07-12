@@ -12,24 +12,47 @@ import org.junit.Test;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
   private static final String INT_KEY_REQUIRE_RESTART = "editor.caret.width";
-
 
   @After
   public void tearDown(){
     Registry.Companion.setValueChangeListener(null);
   }
 
-
   @Test
   public void testInvalidInteger() {
     int originalValue = Registry.intValue(INTEGER_KEY);
     Registry.get(INTEGER_KEY).setValue("invalidNumber");
-    assertEquals(originalValue, Registry.intValue(INTEGER_KEY));
+    assertThat(Registry.intValue(INTEGER_KEY)).isEqualTo(originalValue);
+  }
+
+  @Test
+  public void booleanValueFalse() {
+    RegistryValue handle = Registry.get("ide.tree.experimental.layout.cache");
+    try {
+      assertThat(handle.asString()).isEqualTo("true");
+      assertThat(handle.asBoolean()).isTrue();
+    }
+    finally {
+      handle.resetToDefault();
+    }
+  }
+
+  @Test
+  public void booleanValueTrue() {
+    RegistryValue handle = Registry.get("ide.tree.painter.classic.compact");
+    try {
+      assertThat(handle.asString()).isEqualTo("false");
+      assertThat(handle.asBoolean()).isFalse();
+    }
+    finally {
+      handle.resetToDefault();
+    }
   }
 
   @Test
@@ -128,7 +151,7 @@ public class RegistryTest {
     RegistryValue newRegistryValue = Registry.get(newKey);
     String loadedNewValue = newRegistryValue.get(newRegistryValue.getKey(), null, false);
     assertNull(loadedNewValue);
-    assertEquals(1, changedPairs.size());
+    assertThat(changedPairs).hasSize(1);
   }
 
   @Test
@@ -155,15 +178,15 @@ public class RegistryTest {
       put(firstKey, firstKeyChangedVal);
       put(secondKey, secondKeyChangedValue);
     }}), null);
-    assertEquals(firstKeyChangedVal, Registry.get(firstKey).asString());
-    assertEquals(secondKeyChangedValue, Registry.get(secondKey).asString());
+    assertThat(Registry.get(firstKey).asString()).isEqualTo(firstKeyChangedVal);
+    assertThat(Registry.get(secondKey).asString()).isEqualTo(secondKeyChangedValue);
 
     // drop key - reset to original
     Registry.Companion.loadState(registryElementFromMap(new LinkedHashMap<>(){{
       put(firstKey, firstKeyChangedVal);
     }}), null);
-    assertEquals(firstKeyChangedVal, Registry.get(firstKey).asString());
-    assertEquals(secondKeyInitValue, Registry.get(secondKey).asString());
+    assertThat(Registry.get(firstKey).asString()).isEqualTo(firstKeyChangedVal);
+    assertThat(Registry.get(secondKey).asString()).isEqualTo(secondKeyInitValue);
   }
 
   @Test
@@ -191,7 +214,7 @@ public class RegistryTest {
       }
     });
     regValue.setValue(true);
-    assertTrue(regValue.asBoolean());
+    assertThat(regValue.asBoolean()).isTrue();
   }
 
   @Test
@@ -209,6 +232,16 @@ public class RegistryTest {
 
     assertEquals(JDOMUtil.writeElement(registryElementFromMap(populateMap(Comparator.naturalOrder(), "AnotherValue1111"))),
                  JDOMUtil.writeElement(Registry.getInstance().getState()));
+  }
+
+  @Test
+  public void checkOptionsUpdatedProperly() {
+    String registryName = "testOptions";
+    String registryValue = "[option1*|option2|option3]";
+    RegistryValue registry = new RegistryValue(Registry.getInstance(), registryName, new RegistryKeyDescriptor(registryName, "", registryValue, false, false, null));
+    assertEquals("option1", registry.getSelectedOption());
+    registry.setSelectedOption("option2");
+    assertThat(registry.getSelectedOption()).isEqualTo("option2");
   }
 
   private static Map<String, String> populateMap(Comparator<String> comparator, String valueBase) {

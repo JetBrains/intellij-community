@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.dialog
 
 import com.intellij.ide.nls.NlsMessages
@@ -97,7 +97,7 @@ data class CommonFeedbackSystemData(
     private fun getRegistryKeys(): List<String> = Registry.getAll().filter { value: RegistryValue ->
       val pluginId: String? = value.pluginId
       val pluginInfo = if (pluginId != null) getPluginInfoById(PluginId.getId(pluginId)) else platformPlugin
-      value.isChangedFromDefault && pluginInfo.isSafeToReport()
+      value.isChangedFromDefault() && pluginInfo.isSafeToReport()
     }.map { v: RegistryValue -> v.key + "=" + v.asString() }.toList()
 
     private fun getDisabledPlugins(): List<String> = getPluginsNamesWithVersion { p: IdeaPluginDescriptor -> !p.isEnabled }
