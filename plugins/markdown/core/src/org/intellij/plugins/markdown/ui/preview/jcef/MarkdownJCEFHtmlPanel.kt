@@ -3,8 +3,8 @@ package org.intellij.plugins.markdown.ui.preview.jcef
 
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
@@ -130,8 +130,9 @@ class MarkdownJCEFHtmlPanel(
 
   private val projectRoot = coroutineScope.async(context = Dispatchers.Default) {
     if (virtualFile != null && project != null) {
-      readAction { ProjectFileIndex.getInstance(project).getContentRootForFile(virtualFile) }
-    } else null
+      BaseProjectDirectories.getInstance(project).getBaseDirectoryFor(virtualFile)
+    }
+    else null
   }
 
   private val panelComponent by lazy { createComponent() }
