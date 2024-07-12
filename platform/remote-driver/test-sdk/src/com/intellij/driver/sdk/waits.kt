@@ -130,6 +130,7 @@ fun <T> waitFor(
     throw WaitForException(timeout,
                            errorMessage = errorMessage?.invoke(result)
                                           ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
+      .also { LOG.warn(it) }
   }
   else {
     if (result !is Boolean) {
@@ -171,6 +172,7 @@ fun <T> waitForOne(
                                               "\n\tExpected one suitable instance, but got: " +
                                               "\n\tReceived list: ${resultList.joinToString("\n\t")}" +
                                               "\n\tSuitable list: ${filteredResultList.joinToString("\n\t")}"))
+      .also { LOG.warn(it) }
   }
   else {
     return filteredResultList.single().also {
@@ -209,6 +211,7 @@ fun <T> waitForOne(
                                           ?: ("Failed: $message. " +
                                               "\n\tExpected one suitable instance, but got:" +
                                               "\n\t$resultListString"))
+      .also { LOG.warn(it) }
   }
   else {
     return resultList.single().also {
@@ -230,7 +233,7 @@ fun <T> withRetries(message: String? = null, times: Int, onError: () -> Unit = {
       lastException = e
     }
   }
-  throw RetryException(lastException!!)
+  throw RetryException(lastException!!).also { LOG.warn(it) }
 }
 
 class WaitForException(val timeout: Duration, val errorMessage: String, cause: Throwable? = null) : IllegalStateException("Timeout($timeout): $errorMessage", cause)
