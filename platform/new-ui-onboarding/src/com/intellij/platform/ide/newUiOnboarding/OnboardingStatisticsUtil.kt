@@ -2,8 +2,10 @@
 package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import org.jetbrains.annotations.ApiStatus
 
-internal object OnboardingStatisticsUtil {
+@ApiStatus.Internal
+object OnboardingStatisticsUtil {
   val stepIdField = EventFields.StringValidatedByCustomRule<NewUiOnboardingStepIdRule>("step_id")
   val durationField = EventFields.DurationMs
   val lastStepDurationField = EventFields.Long("last_step_duration_ms")
