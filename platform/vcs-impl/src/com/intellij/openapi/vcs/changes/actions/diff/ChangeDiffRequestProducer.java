@@ -371,8 +371,13 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
     if (revision == null) {
       return defaultValue;
     }
-    String title = revision.getRevisionNumber().asString();
-    return title.isEmpty() ? defaultValue : title;
+
+    if (revision instanceof CurrentContentRevision) {
+      return DiffBundle.message("merge.version.title.current");
+    } else {
+      String title = revision.getRevisionNumber().asString();
+      return title.isEmpty() ? defaultValue : title;
+    }
   }
 
   public static @NotNull DiffContent createContent(@Nullable Project project,
