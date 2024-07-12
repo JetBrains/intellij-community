@@ -32,13 +32,12 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
     return sendRequest("GET", endpoint, requestBody)
   }
 
-  private fun sendRequest(method: String, endpoint: String, requestBody: String?): String {
+  private fun sendRequest(method: String, endpoint: String, requestBody: String?, retriesOnTheSamePort: Int = 0): String {
     val url = URL("http://localhost:${server.port}/$endpoint")
     val connection = url.openConnection() as HttpURLConnection
     return try {
       connection.requestMethod = method
-      connection.connectTimeout = 3000 // 3 seconds
-      connection.readTimeout = 10000 // 10 seconds
+      connection.connectTimeout = 1000 // 1 seconds
       requestBody?.also { body ->
         connection.doOutput = true
         connection.setRequestProperty("Content-Type", "application/json")
@@ -58,8 +57,12 @@ class LocalEventBusServerClient(val server: LocalEventBusServer) : EventBusServe
       }
     }
     catch (e: ConnectException) {
-      if (!server.updatePort()) throw e
-      sendRequest(method, endpoint, requestBody)
+      if (retriesOnTheSamePort < 3) {
+        sendRequest(method, endpoint, requestBody, retriesOnTheSamePort + 1)
+      } else {
+        if (!server.updatePort()) throw e
+        sendRequest(method, endpoint, requestBody, 0)
+      }
     }
     finally {
       connection.disconnect()
