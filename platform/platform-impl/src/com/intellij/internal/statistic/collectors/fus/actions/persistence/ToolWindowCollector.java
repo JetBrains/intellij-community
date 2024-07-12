@@ -6,6 +6,7 @@ import com.intellij.facet.ui.FacetDependentToolWindow;
 import com.intellij.ide.actions.ToolWindowMoveAction.Anchor;
 import com.intellij.ide.actions.ToolWindowViewModeAction.ViewMode;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
@@ -121,17 +122,24 @@ public final class ToolWindowCollector {
     }
 
     event.log(project, data -> {
-      PluginInfo info = getToolWindowInfo(toolWindowId);
-      data.add(TOOLWINDOW_ID.with(toolWindowId));
-      data.add(EventFields.PluginInfo.with(info));
-      if (windowInfo != null) {
-        data.add(VIEW_MODE.with(ViewMode.fromWindowInfo(windowInfo)));
-        data.add(LOCATION.with(Anchor.fromWindowInfo(windowInfo)));
-      }
-      if (source != null) {
-        data.add(SOURCE.with(source));
-      }
+      addDefaultFields(toolWindowId, windowInfo, source, data);
     });
+  }
+
+  private static void addDefaultFields(@NotNull String toolWindowId,
+                                @Nullable WindowInfoImpl windowInfo,
+                                @Nullable ToolWindowEventSource source,
+                                List<EventPair<?>> data) {
+    PluginInfo info = getToolWindowInfo(toolWindowId);
+    data.add(TOOLWINDOW_ID.with(toolWindowId));
+    data.add(EventFields.PluginInfo.with(info));
+    if (windowInfo != null) {
+      data.add(VIEW_MODE.with(ViewMode.fromWindowInfo(windowInfo)));
+      data.add(LOCATION.with(Anchor.fromWindowInfo(windowInfo)));
+    }
+    if (source != null) {
+      data.add(SOURCE.with(source));
+    }
   }
 
   private static @NotNull PluginInfo getToolWindowInfo(@NotNull String toolWindowId) {
