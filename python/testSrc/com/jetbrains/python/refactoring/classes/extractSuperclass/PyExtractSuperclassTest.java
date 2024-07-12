@@ -141,35 +141,32 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
 
   // PY-44858
   public void testExtractNotCreateInitInAnotherDir() throws IOException {
-    String baseName = "/refactoring/extractsuperclass/extractNotCreateInitInAnotherDir/";
     String pathToSuperclass = "b";
-    doTestNotCreateInitCommon(baseName, pathToSuperclass);
+    doTestNotCreateInitCommon(pathToSuperclass);
   }
 
   // PY-44858
   public void testExtractNotCreateInitInSameDir() throws IOException {
-    String baseName = "/refactoring/extractsuperclass/extractNotCreateInitInSameDir/";
     String pathToSuperclass = "a";
-    doTestNotCreateInitCommon(baseName, pathToSuperclass);
+    doTestNotCreateInitCommon(pathToSuperclass);
   }
 
   // PY-44858
   public void testExtractNotCreateInitInParentDir() throws IOException {
-    String baseName = "/refactoring/extractsuperclass/extractNotCreateInitInParentDir/";
     String pathToSuperclass = "a/b";
-    doTestNotCreateInitCommon(baseName, pathToSuperclass);
+    doTestNotCreateInitCommon(pathToSuperclass);
   }
 
   // PY-44858
   public void testExtractNotCreateInitInChildDir() throws IOException {
-    String baseName = "/refactoring/extractsuperclass/extractNotCreateInitInChildDir/";
     String pathToSuperclass = "b";
-    doTestNotCreateInitCommon(baseName, pathToSuperclass);
+    doTestNotCreateInitCommon(pathToSuperclass);
   }
 
-  private void doTestNotCreateInitCommon(@NotNull String baseName, @NotNull String pathToSuperclass)
+  private void doTestNotCreateInitCommon(@NotNull String pathToSuperclass)
     throws IOException {
-    VirtualFile pkgDir = myFixture.copyDirectoryToProject(baseName + "before", "");
+    String baseName = "/refactoring/extractsuperclass/" + getTestName(true);
+    VirtualFile pkgDir = myFixture.copyDirectoryToProject(baseName + "/before", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
     String className = "Foo";
     String superclassName = "Suppa";
@@ -183,7 +180,7 @@ public final class PyExtractSuperclassTest extends PyClassRefactoringTest {
       PyExtractSuperclassHelper.extractSuperclass(clazz, members, superclassName, path);
     });
 
-    VirtualFile expectedDir = PyTestCase.getVirtualFileByName(PythonTestUtil.getTestDataPath() + baseName + "after");
+    VirtualFile expectedDir = PyTestCase.getVirtualFileByName(PythonTestUtil.getTestDataPath() + baseName + "/after");
     PlatformTestUtil.assertDirectoriesEqual(expectedDir, pkgDir);
   }
 
