@@ -12,10 +12,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.findFile
-import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -28,10 +24,13 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.future.future
 import org.jetbrains.annotations.VisibleForTesting
+import java.nio.file.Path
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import kotlin.io.path.Path
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.readText
 
 internal class GitRecentProjectsBranchesProvider : RecentProjectsBranchesProvider {
   override fun getCurrentBranch(projectPath: String): String? = application.service<GitRecentProjectsBranchesService>().getCurrentBranch(projectPath)
@@ -108,10 +107,7 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
       if (previousValue == GitRecentProjectCachedBranch.Unknown) return previousValue
 
       return try {
-        val headFile = previousValue?.headFilePath?.let { headFile ->
-          LocalFileSystem.getInstance().findFileByPath(headFile)
-        } ?: findGitHead(projectPath)
-
+        val headFile = previousValue?.headFilePath?.let(Path::of) ?: findGitHead(projectPath)
         getBranch(headFile)
       }
       catch (e: Exception) {
@@ -120,25 +116,27 @@ internal class GitRecentProjectsBranchesService(val coroutineScope: CoroutineSco
       }
     }
 
-    private suspend fun getBranch(headFile: VirtualFile?): GitRecentProjectCachedBranch {
+    private suspend fun getBranch(headFile: Path?): GitRecentProjectCachedBranch {
       if (headFile == null) return GitRecentProjectCachedBranch.Unknown
 
       val headFileContent = withContext(Dispatchers.IO) {
-        headFile.readText()
+        headFile.readText().trim()
       }
 
       val targetRef =
         (if (GitRefUtil.parseHash(headFileContent) == null) GitRefUtil.getTarget(headFileContent) else null)
-        ?: return GitRecentProjectCachedBranch.NotOnBranch(headFile.path)
+        ?: return GitRecentProjectCachedBranch.NotOnBranch(headFile.absolutePathString())
 
-      return GitRecentProjectCachedBranch.KnownBranch(branchName = GitBranchUtil.stripRefsPrefix(targetRef), headFilePath = headFile.path)
+      return GitRecentProjectCachedBranch.KnownBranch(branchName = GitBranchUtil.stripRefsPrefix(targetRef), headFilePath = headFile.absolutePathString())
     }
 
-    private fun findGitHead(projectPath: String): VirtualFile? {
-      val gitRoot = GitUtil.findGitRootFor(Path(projectPath)) ?: return null
-      val gitDir = GitUtil.findGitDir(gitRoot) ?: return null
-      return gitDir.findFile("HEAD")
+    private fun findGitHead(projectPath: String): Path? {
+      val gitRoot = findGitRootFor(Path(projectPath)) ?: return null
+      return gitRoot.resolve(GitUtil.DOT_GIT).resolve(GitUtil.HEAD)
     }
+
+    private fun findGitRootFor(path: Path): Path? =
+      generateSequence(path) { it.parent }.find { GitUtil.isGitRoot(it) }
   }
 }
 
