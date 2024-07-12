@@ -20,12 +20,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.ui.PopupBorder
-import com.intellij.util.Alarm
-import com.intellij.util.SingleAlarm
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import java.awt.Component
@@ -49,6 +48,7 @@ class ProgressDialog(
 
   private var lastTimeDrawn: Long = -1
   private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val cancelButtonEnabledRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var wasShown = false
   private val startMillis = System.currentTimeMillis()
 
@@ -58,22 +58,6 @@ class ProgressDialog(
 
   private var repaintedFlag = true // guarded by this
   private var popup: DialogWrapper? = null
-
-  private val disableCancelAlarm = SingleAlarm(
-    task = { this.ui.cancelButton.isEnabled = false },
-    delay = 500,
-    parentDisposable = null,
-    threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-    modalityState = ModalityState.any()
-  )
-
-  private val enableCancelAlarm = SingleAlarm(
-    task = { this.ui.cancelButton.isEnabled = true },
-    delay = 500,
-    parentDisposable = null,
-    threadToUse = Alarm.ThreadToUse.SWING_THREAD,
-    modalityState = ModalityState.any()
-  )
 
   @Suppress("SSBasedInspection")
   private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
@@ -131,6 +115,17 @@ class ProgressDialog(
           }
         }
     }
+
+    coroutineScope.launch {
+      val anyModalityContext = Dispatchers.EDT + ModalityState.any().asContextElement()
+      cancelButtonEnabledRequests
+        .debounce(500)
+        .collectLatest { isEnabled ->
+          withContext(anyModalityContext) {
+            ui.cancelButton.isEnabled = isEnabled
+          }
+        }
+    }
   }
 
   private fun doRepaint() {
@@ -157,8 +152,6 @@ class ProgressDialog(
     coroutineScope.cancel()
 
     Disposer.dispose(ui)
-    enableCancelAlarm.cancelAllRequests()
-    disableCancelAlarm.cancelAllRequests()
   }
 
   val panel: JPanel get() = ui.panel
@@ -172,8 +165,8 @@ class ProgressDialog(
   }
 
   fun enableCancelButtonIfNeeded(enable: Boolean) {
-    if (progressWindow.myShouldShowCancel && coroutineScope.isActive) {
-      (if (enable) enableCancelAlarm else disableCancelAlarm).request()
+    if (progressWindow.myShouldShowCancel) {
+      check(cancelButtonEnabledRequests.tryEmit(enable))
     }
   }
 
