@@ -137,7 +137,13 @@ class K2ScriptDependenciesProvider(project: Project) : ScriptDependenciesProvide
                 classes.addAll(toVfsRoots(configurationWrapper.dependenciesClassPath))
                 sources.addAll(toVfsRoots(configurationWrapper.dependenciesSources))
                 configurationWrapper.javaHome?.toPath()?.let {
-                    sdks[it] = ExternalSystemJdkUtil.lookupJdkByPath(it.pathString)
+                    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
+
+                    if (projectSdk != null && projectSdk.homePath == javaHome) {
+                        sdks[it] = projectSdk
+                    } else {
+                        sdks[it] = ExternalSystemJdkUtil.lookupJdkByPath(it.pathString)
+                    }
                 }
 
                 counter++
