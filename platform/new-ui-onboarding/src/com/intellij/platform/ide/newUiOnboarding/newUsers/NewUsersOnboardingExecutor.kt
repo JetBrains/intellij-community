@@ -7,6 +7,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingBundle
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUiOnboarding.newUsers.NewUsersOnboardingStatistics.OnboardingStopReason
@@ -26,6 +28,8 @@ internal class NewUsersOnboardingExecutor(
   private val disposable = Disposer.newDisposable()
   private val tourStartMillis = System.currentTimeMillis()
 
+  private val initialToolWindowsLayout: DesktopLayout = ToolWindowManagerEx.getInstanceEx(project).getLayout().copy()
+
   private var curStepId: String? = null
   private var curStepStartMillis: Long? = null
 
@@ -33,6 +37,8 @@ internal class NewUsersOnboardingExecutor(
     Disposer.register(parentDisposable, disposable)
     Disposer.register(disposable) {
       coroutineScope.cancel()
+      // Restore initial tool windows layout on the tour end
+      ToolWindowManagerEx.getInstanceEx(project).setLayout(initialToolWindowsLayout)
     }
 
     // log if user aborted the onboarding by closing the project
