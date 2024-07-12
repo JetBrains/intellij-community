@@ -25,17 +25,12 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.util.progress.ProgressPipe
-import com.intellij.platform.util.progress.RawProgressReporter
-import com.intellij.platform.util.progress.createProgressPipe
-import com.intellij.platform.util.progress.reportRawProgress
-import com.intellij.util.containers.mapSmartSet
+import com.intellij.platform.util.progress.*
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import kotlinx.coroutines.*
 import org.jdom.Element
@@ -52,9 +47,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.regex.Pattern
 import javax.swing.Icon
 import kotlin.Result
-import kotlin.coroutines.coroutineContext
 import kotlin.io.path.*
-import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -447,14 +440,13 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
     val startTime = System.currentTimeMillis()
     importStartedDeferred = coroutineScope.async(modalityState.asContextElement()) {
       suspend fun performImport(): Boolean {
-        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName)) {
+        if (importEverything && NameMappings.canImportDirectly(productInfo.codeName) && dataToApply.featuredPluginIds.isEmpty()) {
           logger.info("Started importing all...")
           progressIndicator.text2 = ImportSettingsBundle.message("progress.details.migrating.options")
           //TODO support plugin list customization for raw import
           //storeImportConfig(productInfo.configDirPath, filteredCategories, plugins2Skip)
           ImportSettingsEventsCollector.jbRawSelected(productInfo.codeName)
           importer.importRaw()
-          installPlugins(plugins2import?.keys.orEmpty(), dataToApply.featuredPluginIds, progressIndicator)
           return true
         }
         else {
@@ -605,30 +597,46 @@ private suspend fun installPlugins(
   var shouldRestart = false
   coroutineScope {
     val pipe = createProgressPipe()
-    connect(pipe, progressIndicator)
-
-    val pluginsToInstall = logger.runAndLogException { calculatePluginsToInstall(alreadyInstalled, toInstall) } ?: return@coroutineScope
-    logger.info("Installing ${pluginsToInstall.size} plugins: ${pluginsToInstall.joinToString()}.")
-
-    for (plugin in pluginsToInstall) {
-      if (progressIndicator.isCanceled) return@coroutineScope
-      val restartAfterPlugin = logger.runAndLogException { installPlugin(plugin) } ?: false
-      if (restartAfterPlugin) {
-        logger.info("Plugin ${plugin.pluginId} requested restart after import.")
+    val progressProcessorJob = connect(pipe, progressIndicator)
+    try {
+      pipe.collectProgressUpdates {
+        reportProgress { reporter ->
+          val pluginsToInstall = reporter.sizedStep(10) {
+            logger.runAndLogException {
+              calculatePluginsToInstall(alreadyInstalled, toInstall)
+            }
+          } ?: return@reportProgress
+          logger.info("Installing ${pluginsToInstall.size} plugins: ${pluginsToInstall.joinToString()}.")
+          reporter.sizedStep(90) {
+            reportSequentialProgress(pluginsToInstall.size) { steps ->
+              for (plugin in pluginsToInstall) {
+                if (progressIndicator.isCanceled) break
+                steps.itemStep {
+                  val restartAfterPlugin = logger.runAndLogException { installPlugin(plugin) } ?: false
+                  if (restartAfterPlugin) {
+                    logger.info("Plugin ${plugin.pluginId} requested restart after import.")
+                  }
+                  shouldRestart = shouldRestart || restartAfterPlugin
+                }
+              }
+            }
+          }
+        }
       }
-      shouldRestart = shouldRestart || restartAfterPlugin
+    } finally {
+      progressProcessorJob.cancel()
     }
   }
   return shouldRestart
 }
 
-private fun CoroutineScope.connect(pipe: ProgressPipe, indicator: ProgressIndicator) {
-  launch {
+private fun CoroutineScope.connect(pipe: ProgressPipe, indicator: ProgressIndicator) = launch {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     pipe.progressUpdates().collect { update ->
       indicator.text = update.text
       indicator.text2 = update.details
       indicator.fraction = update.fraction ?: 0.0
-      indicator.isIndeterminate = update.fraction == 0.0
+      indicator.isIndeterminate = update.fraction == null
     }
   }
 }
