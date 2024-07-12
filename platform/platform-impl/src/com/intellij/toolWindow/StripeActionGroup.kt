@@ -199,7 +199,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
   @Service(Service.Level.PROJECT)
   private class ButtonsRepaintService(project: Project): Disposable {
     private val buttons = ContainerUtil.createWeakSet<ActionButton>()
-    private val alarm = SingleAlarm(this::repaintButtons, 0, this, modalityState = ModalityState.any())
+    private val alarm = SingleAlarm(task = this::repaintButtons, delay = 0, parentDisposable = this, modalityState = ModalityState.any())
     init {
       project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
         override fun stateChanged(toolWindowManager: ToolWindowManager) {

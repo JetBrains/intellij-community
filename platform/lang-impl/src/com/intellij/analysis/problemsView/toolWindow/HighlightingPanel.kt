@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.codeWithMe.ClientId
@@ -18,7 +18,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -36,7 +35,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     const val ID: String = "CurrentFile"
   }
 
-  private val statusUpdateAlarm: SingleAlarm = SingleAlarm({ updateStatus() }, 200, this, ThreadToUse.POOLED_THREAD)
+  private val statusUpdateAlarm: SingleAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 200, parentDisposable = this) { updateStatus() }
   @Volatile
   private var previousStatus: Status? = null
 

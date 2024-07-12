@@ -64,7 +64,10 @@ import com.intellij.ui.tabs.TabInfo;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.indexing.DumbModeAccessType;
@@ -181,7 +184,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     myTabs = createTabPanel(project);
     myRefs = new JBList<>(new DefaultListModel<>());
 
-    myPsiUpdateAlarm = new SingleAlarm(() -> doUpdatePsi(), 1500, getDisposable(), Alarm.ThreadToUse.SWING_THREAD);
+    myPsiUpdateAlarm = new SingleAlarm(this::doUpdatePsi, 1500, getDisposable());
 
     myCoroutineScope = CoroutineScopeKt.CoroutineScope(ModalityKt.asContextElement(ModalityState.nonModal()));
     myPsiViewerPropertiesTabViewModel = new PsiViewerPropertiesTabViewModel(myProject, myCoroutineScope, PsiViewerSettings.getSettings(), (psiElement) -> {

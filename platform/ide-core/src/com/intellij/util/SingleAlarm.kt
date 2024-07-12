@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.Alarm.ThreadToUse
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
@@ -34,7 +35,7 @@ private val LOG: Logger = logger<SingleAlarm>()
  * [cancelAndRequest] cancels the current request and schedules a new one instead, i.e., it delays execution of the request
  *
  */
-class SingleAlarm @JvmOverloads constructor(
+class SingleAlarm @Internal constructor(
   private val task: Runnable,
   private val delay: Int,
   parentDisposable: Disposable?,
@@ -52,13 +53,55 @@ class SingleAlarm @JvmOverloads constructor(
 
   private val inEdt: Boolean = threadToUse == ThreadToUse.SWING_THREAD
 
-  constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable)
-    : this(
+  constructor(task: Runnable, delay: Int, threadToUse: ThreadToUse, parentDisposable: Disposable) : this(
     task = task,
     delay = delay,
     parentDisposable = parentDisposable,
     threadToUse = threadToUse,
     modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
+  )
+
+  constructor(
+    task: Runnable,
+    delay: Int,
+    parentDisposable: Disposable?,
+    threadToUse: ThreadToUse,
+    modalityState: ModalityState?,
+  ) : this(
+    task = task,
+    delay = delay,
+    parentDisposable = parentDisposable,
+    threadToUse = threadToUse,
+    modalityState = modalityState,
+    coroutineScope = null,
+  )
+
+  constructor(
+    task: Runnable,
+    delay: Int,
+    parentDisposable: Disposable,
+  ) : this(
+    task = task,
+    delay = delay,
+    parentDisposable = parentDisposable,
+    threadToUse = ThreadToUse.SWING_THREAD,
+    modalityState = ModalityState.nonModal(),
+    coroutineScope = null,
+  )
+
+  @Deprecated("Please use flow instead of SingleAlarm")
+  constructor(
+    task: Runnable,
+    delay: Int,
+    parentDisposable: Disposable,
+    threadToUse: ThreadToUse,
+  ) : this(
+    task = task,
+    delay = delay,
+    parentDisposable = parentDisposable,
+    threadToUse = threadToUse,
+    modalityState = if (threadToUse == ThreadToUse.SWING_THREAD) ModalityState.nonModal() else null,
+    coroutineScope = null,
   )
 
   constructor(task: Runnable, delay: Int) : this(
@@ -108,6 +151,17 @@ class SingleAlarm @JvmOverloads constructor(
         delay = delay,
         threadToUse = ThreadToUse.POOLED_THREAD,
         parentDisposable = parentDisposable,
+        coroutineScope = null,
+      )
+    }
+
+    fun pooledThreadSingleAlarm(delay: Int, coroutineScope: CoroutineScope, task: () -> Unit): SingleAlarm {
+      return SingleAlarm(
+        task = task,
+        delay = delay,
+        threadToUse = ThreadToUse.POOLED_THREAD,
+        parentDisposable = null,
+        coroutineScope = coroutineScope,
       )
     }
 
@@ -119,6 +173,29 @@ class SingleAlarm @JvmOverloads constructor(
         parentDisposable = null,
         threadToUse = ThreadToUse.POOLED_THREAD,
         coroutineScope = coroutineScope,
+      )
+    }
+
+    @Internal
+    @JvmStatic
+    fun singleEdtAlarm(delay: Int, coroutineScope: CoroutineScope, task: Runnable): SingleAlarm {
+      return SingleAlarm(
+        task = task,
+        delay = delay,
+        parentDisposable = null,
+        threadToUse = ThreadToUse.SWING_THREAD,
+        coroutineScope = coroutineScope,
+      )
+    }
+
+    @Internal
+    fun singleEdtAlarm(delay: Int, parentDisposable: Disposable, task: Runnable): SingleAlarm {
+      return SingleAlarm(
+        task = task,
+        delay = delay,
+        parentDisposable = parentDisposable,
+        threadToUse = ThreadToUse.SWING_THREAD,
+        coroutineScope = null,
       )
     }
   }
