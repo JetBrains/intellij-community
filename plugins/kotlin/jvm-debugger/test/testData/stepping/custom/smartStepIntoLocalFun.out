@@ -1,0 +1,51 @@
+LineBreakpoint created at smartStepIntoLocalFun.kt:14
+LineBreakpoint created at smartStepIntoLocalFun.kt:20
+LineBreakpoint created at smartStepIntoLocalFun.kt:30
+LineBreakpoint created at smartStepIntoLocalFun.kt:36
+LineBreakpoint created at smartStepIntoLocalFun.kt:52
+LineBreakpoint created at smartStepIntoLocalFun.kt:58
+LineBreakpoint created at smartStepIntoLocalFun.kt:73
+LineBreakpoint created at smartStepIntoLocalFun.kt:79
+LineBreakpoint created at smartStepIntoLocalFun.kt:94
+LineBreakpoint created at smartStepIntoLocalFun.kt:100
+LineBreakpoint created at smartStepIntoLocalFun.kt:114
+LineBreakpoint created at smartStepIntoLocalFun.kt:119
+Run Java
+Connected to the target VM
+smartStepIntoLocalFun.kt:14
+smartStepIntoLocalFun.kt:7
+smartStepIntoLocalFun.kt:14
+smartStepIntoLocalFun.kt:20
+smartStepIntoLocalFun.kt:4
+smartStepIntoLocalFun.kt:21
+smartStepIntoLocalFun.kt:30
+smartStepIntoLocalFun.kt:24
+smartStepIntoLocalFun.kt:30
+smartStepIntoLocalFun.kt:36
+smartStepIntoLocalFun.kt:24
+smartStepIntoLocalFun.kt:36
+smartStepIntoLocalFun.kt:52
+smartStepIntoLocalFun.kt:45
+smartStepIntoLocalFun.kt:52
+smartStepIntoLocalFun.kt:58
+smartStepIntoLocalFun.kt:42
+smartStepIntoLocalFun.kt:59
+smartStepIntoLocalFun.kt:73
+smartStepIntoLocalFun.kt:66
+smartStepIntoLocalFun.kt:73
+smartStepIntoLocalFun.kt:79
+smartStepIntoLocalFun.kt:63
+smartStepIntoLocalFun.kt:80
+smartStepIntoLocalFun.kt:94
+smartStepIntoLocalFun.kt:87
+smartStepIntoLocalFun.kt:94
+smartStepIntoLocalFun.kt:100
+smartStepIntoLocalFun.kt:84
+smartStepIntoLocalFun.kt:101
+smartStepIntoLocalFun.kt:114
+smartStepIntoLocalFun.kt:108
+smartStepIntoLocalFun.kt:119
+smartStepIntoLocalFun.kt:109
+Disconnected from the target VM
+
+Process finished with exit code 0

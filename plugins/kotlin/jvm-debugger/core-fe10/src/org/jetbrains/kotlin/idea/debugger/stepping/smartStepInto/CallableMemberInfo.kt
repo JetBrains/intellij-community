@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.isLocal
 import org.jetbrains.kotlin.idea.debugger.core.getByteCodeMethodName
 import org.jetbrains.kotlin.idea.debugger.core.getContainingClassOrObjectSymbol
 import org.jetbrains.kotlin.idea.debugger.core.isInlineClass
@@ -19,6 +20,7 @@ data class CallableMemberInfo(
     val isExtension: Boolean,
     val isInline: Boolean,
     val name: String,
+    val isLocal: Boolean,
     var ordinal: Int,
 ) {
     val isNameMangledInBytecode = isInlineClassMember || hasInlineClassInParameters
@@ -42,6 +44,7 @@ internal fun CallableMemberInfo(
         isExtension = symbol.isExtension,
         isInline = symbol is KaNamedFunctionSymbol && symbol.isInline,
         name = effectiveName,
+        isLocal = symbol.isLocal,
         ordinal = ordinal,
     )
 }
@@ -53,6 +56,7 @@ internal fun KaFunctionSymbol.containsInlineClassInParameters(): Boolean =
     valueParameters.any { it.returnType.expandedSymbol?.isInlineClass() == true }
             || receiverParameter?.type?.expandedSymbol?.isInlineClass() == true
 
+context(KaSession)
 private fun KaFunctionSymbol.methodName() = when (this) {
     is KaNamedFunctionSymbol -> getByteCodeMethodName()
     is KaConstructorSymbol -> "<init>"

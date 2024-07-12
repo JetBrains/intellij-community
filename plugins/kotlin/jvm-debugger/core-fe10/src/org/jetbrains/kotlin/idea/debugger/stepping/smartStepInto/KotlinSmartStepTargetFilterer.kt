@@ -72,7 +72,7 @@ class KotlinSmartStepTargetFilterer(
 
     private fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
         if (ordinal != currentCount) return false
-        val nameMatches = if (methodInfo.isInternalMethod) internalNameMatches(name, methodInfo.name) else name == methodInfo.name
+        val nameMatches = methodNameMatches(methodInfo, name)
         if (!nameMatches) return false
         // Declaration may be empty only for invoke functions
         // In this case, there is only one possible signature, so it should match

@@ -1793,6 +1793,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/smartStepIntoLibraryOverridenCall.kt");
         }
 
+        @TestMetadata("smartStepIntoLocalFun.kt")
+        public void testSmartStepIntoLocalFun() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLocalFun.kt");
+        }
+
         @TestMetadata("smartStepIntoMethodReference.kt")
         public void testSmartStepIntoMethodReference() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoMethodReference.kt");

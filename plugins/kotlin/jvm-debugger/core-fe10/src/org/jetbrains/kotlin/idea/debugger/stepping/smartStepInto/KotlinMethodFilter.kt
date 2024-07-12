@@ -110,7 +110,7 @@ open class KotlinMethodFilter(
                 method.getInlineFunctionAndArgumentVariablesToBordersMap()
                     .filter { location in it.value }
                     .any { it.key.isInlinedFromFunction(targetMethodName, isNameMangledInBytecode, methodInfo.isInternalMethod) } ||
-                !isGeneratedLambda && methodInfo.isInternalMethod && internalNameMatches(actualMethodName, targetMethodName)
+                !isGeneratedLambda && methodNameMatches(methodInfo, actualMethodName)
     }
 }
 
@@ -138,8 +138,17 @@ private fun getCurrentDeclaration(positionManager: PositionManager, location: Lo
     return declaration
 }
 
-// Internal methods has a '$<MODULE_NAME>' suffix
-internal fun internalNameMatches(methodName: String, targetMethodName: String): Boolean {
+internal fun methodNameMatches(methodInfo: CallableMemberInfo, name: String): Boolean {
+    if (methodInfo.name == name) return true
+    if (methodInfo.isInternalMethod || methodInfo.isLocal) {
+        return nameMatchesUpToDollar(name, methodInfo.name)
+    }
+    return false
+}
+
+// Internal functions have a '$<MODULE_NAME>' suffix
+// Local functions can be '$1' suffixed
+private fun nameMatchesUpToDollar(methodName: String, targetMethodName: String): Boolean {
     return methodName.startsWith("$targetMethodName\$")
 }
 
@@ -148,7 +157,7 @@ private fun LocalVariable.isInlinedFromFunction(methodName: String, isNameMangle
     if (!variableName.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)) return false
     val inlineMethodName = variableName.substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION)
     return inlineMethodName == methodName ||
-            isInternalMethod && internalNameMatches(inlineMethodName, methodName)
+            isInternalMethod && nameMatchesUpToDollar(inlineMethodName, methodName)
 }
 
 private fun getMethodNameInCallerFrame(frameProxy: StackFrameProxyImpl?): String? {
