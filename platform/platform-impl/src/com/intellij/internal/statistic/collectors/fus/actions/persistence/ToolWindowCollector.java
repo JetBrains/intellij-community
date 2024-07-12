@@ -95,6 +95,18 @@ public final class ToolWindowCollector {
     }
   }
 
+  public void recordResized(@NotNull Project project, @NotNull WindowInfoImpl info, @NotNull Boolean isMaximized) {
+    if (StringUtil.isEmpty(info.getId())) {
+      return;
+    }
+
+    RESIZED.log(project, data -> {
+      addDefaultFields(info.getId(), info, null, data);
+      data.add(WEIGHT.with(info.getWeight()));
+      data.add(IS_MAXIMIZED.with(isMaximized));
+    });
+  }
+
   public void recordActivation(@NotNull Project project,
                                @Nullable String toolWindowId,
                                @Nullable WindowInfoImpl info,
