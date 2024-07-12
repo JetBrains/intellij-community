@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -32,6 +33,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.FlowLayout
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -225,8 +227,21 @@ internal class CombinedSimpleDiffBlock(project: Project,
 
   override val body: Wrapper = if (isCollapsed) Wrapper() else Wrapper(content)
 
-  override val component: CombinedDiffContainerPanel = CombinedDiffContainerPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), true).apply {
-    background = UIUtil.getPanelBackground()
+  override val component: CombinedDiffContainerPanel = object : CombinedDiffContainerPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true), true) {
+    init {
+      background = UIUtil.getPanelBackground()
+    }
+
+    override fun getPreferredSize(): Dimension {
+      val preferredSize = super.getPreferredSize()
+      if (body.isNull || !SystemInfo.isMac) return preferredSize
+
+      // When a horizontal toolbar is displayed in an editor, it eats up part of the viewport's height,
+      // resulting in vertical scrollbars appearing
+      // this hack allows to provide additional space for horizontal scrollbar
+      // FIXME: should be fixed properly on the level of editor
+      return Dimension(preferredSize.width, preferredSize.height + JBUI.scale(14))
+    }
   }
 
   private var blockCollapsed by Delegates.observable(isCollapsed) { _, oldValue, newValue ->
