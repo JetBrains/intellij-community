@@ -981,7 +981,18 @@ object Utils {
   private val cancellationDispatcher = Dispatchers.IO.limitedParallelism(1)
   private var ourCurrentInputEventProcessingJobFlow = MutableStateFlow<Job?>(null)
 
-  // DO NOT USE. RIDER ONLY!
+  /**
+   * DO NOT USE. RIDER ONLY!
+   * Cancels the current input event processing and runs the provided block.
+   *
+   * This method ensures that any ongoing input event processing is canceled before running the block.
+   * Using to prevent deadlock when EDT is blocked by runWithInputEventEdtDispatcher and important sync call from
+   * the backend main thread is requiring to run something on the EDT
+   *
+   * @param block The suspending function to execute after cancelling the current input event processing.
+   * @return The result of the provided block function.
+   */
+  @DelicateCoroutinesApi
   suspend fun <T> cancelCurrentInputEventProcessingAndRun(block: suspend () -> T): T = coroutineScope {
     val cancelJob = launch(cancellationDispatcher) {
       ourCurrentInputEventProcessingJobFlow.collectLatest {
