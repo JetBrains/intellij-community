@@ -4,6 +4,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Alarm
@@ -13,6 +14,9 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
+import java.awt.event.ActionListener
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 import java.time.ZonedDateTime
 
@@ -80,27 +84,46 @@ class NotebookBelowCellDelimiterPanel(
     // ideally, a toolbar with a single action and targetComponent this should've done that
     // however, the toolbar max height must be not greater than 18, which seemed to be untrivial
     val action = ActionManager.getInstance().getAction("JupyterCellAddTagInlayAction") ?: return null
+    val originalIcon = AllIcons.Expui.General.Add
+    val transparentIcon = IconLoader.getTransparentIcon(originalIcon)
 
     return JButton().apply {
-      icon = AllIcons.Expui.General.Add
+      icon = transparentIcon
       preferredSize = Dimension(plusTagButtonSize, plusTagButtonSize)
       isContentAreaFilled = false
       isFocusPainted = false
       isBorderPainted = false
       cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
 
-      addActionListener {
-        val dataContext = DataContext { dataId ->
-          when(dataId) {
-            CommonDataKeys.EDITOR.name -> editor
-            CommonDataKeys.PROJECT.name -> editor.project
-            PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> this@NotebookBelowCellDelimiterPanel
-            else -> null
-          }
-        }
-        val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.EDITOR_INLAY, dataContext)
-        action.actionPerformed(event)
+      addMouseListener(createAddTagButtonHoverListener(originalIcon, transparentIcon))
+      addActionListener(createAddTagButtonActionListener(action))
+    }
+  }
+
+  private fun createAddTagButtonHoverListener(originalIcon: Icon, transparentIcon: Icon): MouseAdapter {
+    return object : MouseAdapter() {
+      override fun mouseEntered(e: MouseEvent) {
+        (e.source as JButton).icon = originalIcon
       }
+
+      override fun mouseExited(e: MouseEvent) {
+        (e.source as JButton).icon = transparentIcon
+      }
+    }
+  }
+
+  private fun createAddTagButtonActionListener(action: AnAction): ActionListener {
+    return ActionListener {
+      val dataContext = DataContext { dataId ->
+        when (dataId) {
+          CommonDataKeys.EDITOR.name -> editor
+          CommonDataKeys.PROJECT.name -> editor.project
+          PlatformCoreDataKeys.CONTEXT_COMPONENT.name -> this@NotebookBelowCellDelimiterPanel
+          else -> null
+        }
+      }
+      val event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.EDITOR_INLAY, dataContext)
+      action.actionPerformed(event)
     }
   }
 
