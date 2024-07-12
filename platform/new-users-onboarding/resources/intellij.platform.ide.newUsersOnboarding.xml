@@ -10,6 +10,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
 
+    <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUiOnboardingBundle"
+                       key="newUsersOnboarding.notification.group"/>
+
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics"/>
   </extensions>
 
