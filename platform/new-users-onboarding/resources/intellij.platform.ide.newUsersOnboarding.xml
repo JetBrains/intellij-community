@@ -1,6 +1,7 @@
 <idea-plugin package="com.intellij.platform.ide.newUsersOnboarding">
   <dependencies>
     <module name="intellij.platform.ide.newUiOnboarding"/>
+    <module name="intellij.platform.experiment"/>
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.ide.newUiOnboarding">
@@ -12,6 +13,8 @@
 
     <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
                        key="notification.group"/>
+
+    <experiment.abExperimentOption implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperimentOption"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics"/>
   </extensions>
