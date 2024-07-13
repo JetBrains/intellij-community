@@ -32,11 +32,19 @@ public class GradleTaskIndexBuilder extends AbstractModelBuilderService {
 
   @Override
   public Object buildAll(@NotNull String modelName, @NotNull Project project, @NotNull ModelBuilderContext context) {
-    Set<Task> projectTasks = collectProjectTasks(project, context);
-
-    GradleTaskIndex.getInstance(context)
-      .setProjectTasks(project, projectTasks);
-
+    // Android Studio (b/243767844, b/235320590): only register test tasks when fetching Gradle task information.
+    // This is tested by TaskConfigurationNotTriggeredDuringSyncTest.testTasksAreNotConfiguredDuringSync().
+    boolean skipTasks;
+    try {
+      skipTasks = Boolean.parseBoolean(String.valueOf(project.getProperties().get("idea.gradle.do.not.build.tasks")).trim());
+    } catch (Throwable ignored) {
+      skipTasks = false;
+    }
+    Set<Task> projectTasks = new java.util.HashSet<>();
+    if (!skipTasks) {
+      projectTasks = collectProjectTasks(project, context);
+    }
+    GradleTaskIndex.getInstance(context).setProjectTasks(project, projectTasks);
     return null;
   }
 
