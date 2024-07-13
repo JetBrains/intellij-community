@@ -71,13 +71,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         if (candidateFiles.isEmpty()) {
             throw AssertionError(
-                ".inspection file is not found for " + testDataFile +
+                "$inspectionFileName file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of inspection class."
             )
         }
         if (candidateFiles.size > 1) {
             throw AssertionError(
-                "Several .inspection files are available for " + testDataFile +
+                "Several $inspectionFileName files are available for " + testDataFile +
                         "\nPlease remove some of them\n" + candidateFiles
             )
         }
