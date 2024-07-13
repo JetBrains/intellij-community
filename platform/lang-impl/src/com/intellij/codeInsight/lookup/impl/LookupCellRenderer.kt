@@ -9,7 +9,9 @@ import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyIns
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.getGrayedForeground
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.IconDecorator
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -23,6 +25,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.*
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
@@ -34,7 +37,6 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.IconUtil.cropIcon
 import com.intellij.util.ObjectUtils
-import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.FList
 import com.intellij.util.ui.EmptyIcon
@@ -43,6 +45,11 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -75,7 +82,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   var lookupTextWidth: Int = 50
     private set
   private val widthLock = ObjectUtils.sentinel("lookup width lock")
-  private val lookupWidthUpdater: Runnable
+  private val lookupWidthUpdater: () -> Unit
   private val shrinkLookup: Boolean
 
   private val asyncRendering: AsyncRendering
@@ -111,23 +118,30 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     panel.add(tailComponent, BorderLayout.CENTER)
     panel.add(typeLabel, BorderLayout.EAST)
 
-    normalMetrics = this.lookup.topLevelEditor.component.getFontMetrics(normalFont)
-    boldMetrics = this.lookup.topLevelEditor.component.getFontMetrics(boldFont)
-    asyncRendering = AsyncRendering(this.lookup)
+    normalMetrics = lookup.topLevelEditor.component.getFontMetrics(normalFont)
+    boldMetrics = lookup.topLevelEditor.component.getFontMetrics(boldFont)
+    asyncRendering = AsyncRendering(lookup)
 
     if (ApplicationManager.getApplication().isUnitTestMode) {
       // avoid delay in unit tests
-      lookupWidthUpdater = Runnable { ApplicationManager.getApplication().invokeLater { this.updateLookupWidthFromVisibleItems() } }
+      lookupWidthUpdater = {
+        ApplicationManager.getApplication().invokeLater({ updateLookupWidthFromVisibleItems() }, lookup.project.disposed)
+      }
     }
     else {
-      val alarm =
-        SingleAlarm({ this.updateLookupWidthFromVisibleItems() }, 50, lookup, ModalityState.stateForComponent(editorComponent))
-      lookupWidthUpdater = Runnable {
-        synchronized(alarm) {
-          if (!alarm.isDisposed) {
-            alarm.request()
+      val lookupWidthUpdateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+      val coroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(editorComponent).asContextElement()
+      lookup.coroutineScope.launch {
+        lookupWidthUpdateRequests
+          .throttle(50)
+          .collect {
+            withContext(coroutineContext) {
+              updateLookupWidthFromVisibleItems()
+            }
           }
-        }
+      }
+      lookupWidthUpdater = {
+        check(lookupWidthUpdateRequests.tryEmit(Unit))
       }
     }
 
@@ -478,7 +492,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   /**
    * Update lookup width due to visible in lookup items
    */
-  fun updateLookupWidthFromVisibleItems() {
+  private fun updateLookupWidthFromVisibleItems() {
     val visibleItems = lookup.visibleItems
 
     var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
@@ -505,7 +519,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
   }
 
   fun scheduleUpdateLookupWidthFromVisibleItems() {
-    lookupWidthUpdater.run()
+    lookupWidthUpdater()
   }
 
   fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {

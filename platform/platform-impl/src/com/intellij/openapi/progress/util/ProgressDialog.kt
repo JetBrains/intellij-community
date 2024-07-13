@@ -60,7 +60,7 @@ class ProgressDialog(
   private var popup: DialogWrapper? = null
 
   @Suppress("SSBasedInspection")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
   init {
     ui.progressBar.isIndeterminate = progressWindow.isIndeterminate

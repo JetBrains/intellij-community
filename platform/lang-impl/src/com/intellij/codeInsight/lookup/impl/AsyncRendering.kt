@@ -7,9 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Key
-import com.intellij.util.cancelOnDispose
 import com.intellij.util.indexing.DumbModeAccessType
 import kotlinx.coroutines.*
 
@@ -38,8 +36,11 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
     synchronized(LAST_COMPUTATION) {
       cancelRendering(element)
 
-      @Suppress("UsagesOfObsoleteApi")
-      val job = (lookup.project as ComponentManagerEx).getCoroutineScope().launch(limitedDispatcher) {
+      if (lookup.isLookupDisposed) {
+        return
+      }
+
+      val job = lookup.coroutineScope.launch(limitedDispatcher) {
         val job = coroutineContext.job
         readAction {
           if (element.isValid) {
@@ -49,7 +50,7 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
         synchronized(LAST_COMPUTATION) {
           element.replace(LAST_COMPUTATION, job, null)
         }
-      }.also { it.cancelOnDispose(lookup) }
+      }
       element.putUserData(LAST_COMPUTATION, job)
     }
   }

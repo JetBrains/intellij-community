@@ -60,7 +60,7 @@ internal class MacScrollBarAnimationBehavior(
 ) : DefaultScrollBarAnimationBehavior(trackAnimator, thumbAnimator) {
   private var isTrackHovered: Boolean = false
   @Suppress("SSBasedInspection")
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
+  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
   private val hideThumbRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {

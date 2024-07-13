@@ -7902,7 +7902,6 @@ f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 - f:refreshUi():V
 - f:scheduleUpdateLookupWidthFromVisibleItems():V
 - f:updateItemPresentation(com.intellij.codeInsight.lookup.LookupElement):V
-- f:updateLookupWidthFromVisibleItems():V
 f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer$Companion
 - f:augmentIcon(com.intellij.openapi.editor.Editor,javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
 - f:bodyInsets():java.awt.Insets

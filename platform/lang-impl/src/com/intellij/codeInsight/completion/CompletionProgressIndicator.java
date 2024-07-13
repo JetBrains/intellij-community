@@ -520,7 +520,7 @@ public final class CompletionProgressIndicator extends ProgressIndicatorBase imp
   private void addItemToLookup(CompletionResult item) {
     Ref<Boolean> stopRef = new Ref<>(Boolean.FALSE);
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      stopRef.set(!lookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
+      stopRef.set(lookup.isLookupDisposed() || !lookup.addItem(item.getLookupElement(), item.getPrefixMatcher()));
     });
 
     if (stopRef.get()) {

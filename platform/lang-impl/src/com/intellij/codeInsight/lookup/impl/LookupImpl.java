@@ -58,6 +58,9 @@ import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.CoroutineScopeKt;
+import kotlinx.coroutines.Dispatchers;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +80,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
+import static kotlinx.coroutines.SupervisorKt.SupervisorJob;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
@@ -115,6 +119,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final AtomicInteger myDummyItemCount = new AtomicInteger();
   private final EmptyLookupItem myDummyItem = new EmptyLookupItem(CommonBundle.message("tree.node.loading"), true);
   private boolean myFirstElementAdded = false;
+
+  final CoroutineScope coroutineScope = CoroutineScopeKt.CoroutineScope(SupervisorJob(null).plus(Dispatchers.getDefault()));
 
   public LookupImpl(Project project, Editor editor, @NotNull LookupArranger arranger) {
     super(new JPanel(new BorderLayout()));
@@ -346,7 +352,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void fireBeforeAppendPrefix(char c) {
-    myPrefixChangeListeners.forEach((listener -> listener.beforeAppend(c)));
+    for (PrefixChangeListener listener : myPrefixChangeListeners) {
+      listener.beforeAppend(c);
+    }
   }
 
   public void appendPrefix(char c) {
@@ -362,7 +370,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       refreshUi(false, true);
       ensureSelectionVisible(true);
     }
-    myPrefixChangeListeners.forEach((listener -> listener.afterAppend(c)));
+    for (PrefixChangeListener listener : myPrefixChangeListeners) {
+      listener.afterAppend(c);
+    }
   }
 
   public void setStartCompletionWhenNothingMatches(boolean startCompletionWhenNothingMatches) {
@@ -419,7 +429,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       ensureSelectionVisible(true);
     }
 
-    myPrefixChangeListeners.forEach((listener -> listener.afterTruncate()));
+    for (PrefixChangeListener listener : myPrefixChangeListeners) {
+      listener.afterTruncate();
+    }
   }
 
   void moveToCaretPosition() {
@@ -449,7 +461,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     if (!myFirstElementAdded && !items.isEmpty()) {
       myFirstElementAdded = true;
-      myListeners.forEach(LookupListener::firstElementShown);
+      for (LookupListener listener : myListeners) {
+        listener.firstElementShown();
+      }
     }
 
     myOffsets.checkMinPrefixLengthChanges(items, this);
@@ -461,7 +475,9 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         model.removeAll();
         if (!finalItems.isEmpty()) {
           Long currentTimeMillis = System.currentTimeMillis();
-          finalItems.forEach(item -> item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis));
+          for (LookupElement item : finalItems) {
+            item.putUserDataIfAbsent(LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS, currentTimeMillis);
+          }
           model.add(finalItems);
           addDummyItems(myDummyItemCount.get());
         }
@@ -1195,6 +1211,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   @Override
   public void dispose() {
+    CoroutineScopeKt.cancel(coroutineScope, null);
     ThreadingAssertions.assertEventDispatchThread();
     assert myHidden;
 
