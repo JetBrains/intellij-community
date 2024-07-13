@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
 import com.intellij.diagnostic.StartUpMeasurer
@@ -31,7 +31,6 @@ import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import javax.swing.JComponent
 import javax.swing.JFrame
-import kotlin.coroutines.EmptyCoroutineContext
 
 internal interface ActionAwareIdeMenuBar {
   fun updateMenuActions(forceRebuild: Boolean = false)
@@ -87,9 +86,11 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
       presentationFactory.reset()
       updateMenuActions(forceRebuild = true)
     })
-    val initJob = coroutineScope.launch(
-      (if (StartUpMeasurer.isEnabled()) rootTask() + CoroutineName("ide menu bar actions init") else EmptyCoroutineContext) +
-      Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    var context = Dispatchers.EDT + ModalityState.any().asContextElement()
+    if (StartUpMeasurer.isEnabled()) {
+      context += rootTask() + CoroutineName("ide menu bar actions init")
+    }
+    val initJob = coroutineScope.launch(context) {
       val actions = expandMainActionGroup(isFirstUpdate = true)
       doUpdateVisibleActions(newVisibleActions = actions, forceRebuild = false)
     }
@@ -123,7 +124,13 @@ internal sealed class IdeMenuBarHelper(@JvmField val flavor: IdeMenuFlavor,
 
   private suspend fun expandMainActionGroup(isFirstUpdate: Boolean): List<ActionGroup> {
     val mainActionGroup = menuBar.getMainMenuActionGroup() ?: return emptyList()
-    return expandMainActionGroup(mainActionGroup, menuBar.component, menuBar.frame, presentationFactory, isFirstUpdate)
+    return expandMainActionGroup(
+      mainActionGroup = mainActionGroup,
+      menuBar = menuBar.component,
+      frame = menuBar.frame,
+      presentationFactory = presentationFactory,
+      isFirstUpdate = isFirstUpdate,
+    )
   }
 
   private fun canUpdate(): Boolean {
@@ -168,19 +175,22 @@ private suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
   return withContext(CoroutineName("expandMainActionGroup")) {
     val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
     val dataContext = dataManager.getDataContext(targetComponent)
-    Utils.expandActionGroupSuspend(group = mainActionGroup,
-                                   presentationFactory = presentationFactory,
-                                   dataContext = dataContext,
-                                   place = ActionPlaces.MAIN_MENU,
-                                   isToolbarAction = false,
-                                   fastTrack = isFirstUpdate)
+    Utils.expandActionGroupSuspend(
+      group = mainActionGroup,
+      presentationFactory = presentationFactory,
+      dataContext = dataContext,
+      place = ActionPlaces.MAIN_MENU,
+      isToolbarAction = false,
+      fastTrack = isFirstUpdate,
+    )
   }.filterIsInstance<ActionGroup>()
 }
 
-@Suppress("FunctionName")
 @ApiStatus.Internal
-suspend fun IdeMainMenuActionGroup(): ActionGroup? {
-  val group = CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU) ?: return null
+suspend fun createIdeMainMenuActionGroup(): ActionGroup? {
+  val group = withContext(Dispatchers.Default) {
+    CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU)
+  } ?: return null
   return object : ActionGroupWrapper(group) {
     override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
                                             updateSession: UpdateSession): List<AnAction?> {

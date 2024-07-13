@@ -803,7 +803,7 @@ open class IdeRootPane internal constructor(
       return createMenuBar(coroutineScope, frame, mainMenuActionGroup)
     }
     else if (Menu.isJbScreenMenuEnabled()) {
-      return createMacMenuBar(coroutineScope, component, frame) { mainMenuActionGroup ?: IdeMainMenuActionGroup() }
+      return createMacMenuBar(coroutineScope, component, frame) { mainMenuActionGroup ?: createIdeMainMenuActionGroup() }
     }
     else {
       val menuBar = IdeJMenuBar(coroutineScope, frame, mainMenuActionGroup)
