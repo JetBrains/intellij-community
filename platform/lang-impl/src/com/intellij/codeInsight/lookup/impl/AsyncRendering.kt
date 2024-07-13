@@ -1,20 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.intellij.codeInsight.lookup.impl
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupElementRenderer
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Key
-import com.intellij.util.concurrency.SequentialTaskExecutor
+import com.intellij.util.cancelOnDispose
 import com.intellij.util.indexing.DumbModeAccessType
-import org.jetbrains.concurrency.CancellablePromise
+import kotlinx.coroutines.*
 
 internal class AsyncRendering(private val lookup: LookupImpl) {
   companion object {
     private val LAST_COMPUTED_PRESENTATION = Key.create<LookupElementPresentation>("LAST_COMPUTED_PRESENTATION")
-    private val LAST_COMPUTATION = Key.create<CancellablePromise<*>>("LAST_COMPUTATION")
-    private val executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ExpensiveRendering")
+    private val LAST_COMPUTATION = Key.create<Job>("LAST_COMPUTATION")
+    private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
 
     fun rememberPresentation(element: LookupElement, presentation: LookupElementPresentation) {
       element.putUserData(LAST_COMPUTED_PRESENTATION, presentation)
@@ -22,8 +25,8 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
 
     fun cancelRendering(item: LookupElement) {
       synchronized(LAST_COMPUTATION) {
-        val promise = item.getUserData(LAST_COMPUTATION) ?: return
-        promise.cancel()
+        val job = item.getUserData(LAST_COMPUTATION) ?: return
+        job.cancel()
         item.putUserData(LAST_COMPUTATION, null)
       }
     }
@@ -34,19 +37,20 @@ internal class AsyncRendering(private val lookup: LookupImpl) {
   fun scheduleRendering(element: LookupElement, renderer: LookupElementRenderer<LookupElement>) {
     synchronized(LAST_COMPUTATION) {
       cancelRendering(element)
-      var promiseRef: CancellablePromise<*>? = null
-      val promise = ReadAction.nonBlocking {
+
+      @Suppress("UsagesOfObsoleteApi")
+      val job = (lookup.project as ComponentManagerEx).getCoroutineScope().launch(limitedDispatcher) {
+        val job = coroutineContext.job
+        readAction {
           if (element.isValid) {
             renderInBackground(element, renderer)
           }
-          synchronized(LAST_COMPUTATION) {
-            element.replace(LAST_COMPUTATION, promiseRef, null)
-          }
         }
-        .expireWith(lookup)
-        .submit(executor)
-      element.putUserData(LAST_COMPUTATION, promise)
-      promiseRef = promise
+        synchronized(LAST_COMPUTATION) {
+          element.replace(LAST_COMPUTATION, job, null)
+        }
+      }.also { it.cancelOnDispose(lookup) }
+      element.putUserData(LAST_COMPUTATION, job)
     }
   }
 
