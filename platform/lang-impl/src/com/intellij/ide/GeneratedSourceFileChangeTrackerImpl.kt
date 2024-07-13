@@ -1,183 +1,177 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.ide.impl.ProjectUtilCore;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.EditorNotifications;
-import com.intellij.util.SingleAlarm;
-import com.intellij.util.messages.MessageBusConnection;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
+import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerListener
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.EditorNotifications
+import com.intellij.util.SingleAlarm
+import com.intellij.util.SingleAlarm.Companion.singleAlarm
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.TestOnly
+import java.util.*
+import java.util.concurrent.TimeUnit
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+class GeneratedSourceFileChangeTrackerImpl(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope
+) : GeneratedSourceFileChangeTracker() {
+  private val checkingQueue: SingleAlarm
+  private val filesToCheck: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
+  private val editedGeneratedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
 
-public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceFileChangeTracker {
-  private final Project myProject;
-  private final SingleAlarm myCheckingQueue;
-  private final Set<VirtualFile> myFilesToCheck = Collections.synchronizedSet(new HashSet<>());
-  private final Set<VirtualFile> myEditedGeneratedFiles = Collections.synchronizedSet(new HashSet<>());
+  init {
+    checkingQueue = singleAlarm(500, coroutineScope, Runnable { this.checkFiles() })
+  }
 
-  @SuppressWarnings("StaticNonFinalField")
-  // static non-final by design
-  public static boolean IN_TRACKER_TEST;
+  companion object {
+    // static non-final by design
+    var IN_TRACKER_TEST: Boolean = false
 
-  public GeneratedSourceFileChangeTrackerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
-    myProject = project;
-    myCheckingQueue = SingleAlarm.singleAlarm(500, coroutineScope, this::checkFiles);
+    private fun isListenerInactive(): Boolean = !IN_TRACKER_TEST && ApplicationManager.getApplication().isUnitTestMode
   }
 
   @TestOnly
-  void waitForAlarm(long timeout, @NotNull TimeUnit timeUnit) {
-    if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
-      throw new IllegalStateException("Must not wait for the alarm under write action");
-    }
-    myCheckingQueue.waitForAllExecuted(timeout, timeUnit);
+  fun waitForAlarm(timeout: Long, timeUnit: TimeUnit) {
+    check(!ApplicationManager.getApplication().isWriteAccessAllowed) { "Must not wait for the alarm under write action" }
+    checkingQueue.waitForAllExecuted(timeout, timeUnit)
   }
 
   @TestOnly
-  public void cancelAllAndWait(long timeout, @NotNull TimeUnit timeUnit) throws Exception {
-    myFilesToCheck.clear();
-    myCheckingQueue.cancel();
-    waitForAlarm(timeout, timeUnit);
+  @Throws(Exception::class)
+  fun cancelAllAndWait(timeout: Long, timeUnit: TimeUnit) {
+    filesToCheck.clear()
+    checkingQueue.cancel()
+    waitForAlarm(timeout, timeUnit)
   }
 
-  @Override
-  public boolean isEditedGeneratedFile(@NotNull VirtualFile file) {
-    return myEditedGeneratedFiles.contains(file);
-  }
+  override fun isEditedGeneratedFile(file: VirtualFile): Boolean = editedGeneratedFiles.contains(file)
 
-  static final class MyDocumentListener implements DocumentListener {
-    @Override
-    public void documentChanged(@NotNull DocumentEvent event) {
+  internal class MyDocumentListener : DocumentListener {
+    override fun documentChanged(event: DocumentEvent) {
       if (isListenerInactive()) {
-        return;
+        return
       }
 
-      Project[] openProjects = ProjectUtilCore.getOpenProjects();
-      if (openProjects.length == 0) {
-        return;
+      val openProjects = ProjectUtilCore.getOpenProjects()
+      if (openProjects.isEmpty()) {
+        return
       }
 
-      VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+      val file = FileDocumentManager.getInstance().getFile(event.document)
       if (file == null || LightVirtualFile.shouldSkipEventSystem(file)) {
-        return;
+        return
       }
 
-      for (Project project : openProjects) {
-        if (project.isDisposed()) {
-          continue;
+      for (project in openProjects) {
+        if (project.isDisposed) {
+          continue
         }
 
         // It's too costly to synchronously check whether the file is under the project, so delegate the check to
         // the background activities of all projects
-
-        GeneratedSourceFileChangeTrackerImpl fileChangeTracker = (GeneratedSourceFileChangeTrackerImpl)getInstance(project);
-        fileChangeTracker.myFilesToCheck.add(file);
-        fileChangeTracker.myCheckingQueue.cancelAndRequest();
+        val fileChangeTracker = getInstance(project) as GeneratedSourceFileChangeTrackerImpl
+        fileChangeTracker.filesToCheck.add(file)
+        fileChangeTracker.checkingQueue.cancelAndRequest()
       }
     }
   }
 
-  private static boolean isListenerInactive() {
-    return !IN_TRACKER_TEST && ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  static final class MyProjectManagerListener implements ProjectManagerListener {
-    @Override
-    public void projectOpened(@NotNull Project project) {
+  internal class MyProjectManagerListener : ProjectManagerListener {
+    @Suppress("removal", "OVERRIDE_DEPRECATION")
+    override fun projectOpened(project: Project) {
       if (isListenerInactive()) {
-        return;
+        return
       }
 
-      ((GeneratedSourceFileChangeTrackerImpl)getInstance(project)).projectOpened();
+      (getInstance(project) as GeneratedSourceFileChangeTrackerImpl).projectOpened()
     }
   }
 
-  private void projectOpened() {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(FileDocumentManagerListener.TOPIC, new FileDocumentManagerListener() {
-      @Override
-      public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-        myFilesToCheck.remove(file);
-        if (myEditedGeneratedFiles.remove(file)) {
-          EditorNotifications.getInstance(myProject).updateNotifications(file);
+  private fun projectOpened() {
+    val connection = project.messageBus.connect(coroutineScope)
+    connection.subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
+      override fun fileContentReloaded(file: VirtualFile, document: Document) {
+        filesToCheck.remove(file)
+        if (editedGeneratedFiles.remove(file)) {
+          EditorNotifications.getInstance(project).updateNotifications(file)
         }
       }
-    });
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        myEditedGeneratedFiles.remove(file);
+    })
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
+      override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+        editedGeneratedFiles.remove(file)
       }
-    });
-    connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
-      @Override
-      public void rootsChanged(@NotNull ModuleRootEvent event) {
-        resetOnRootsChanged();
+    })
+    connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+      override fun rootsChanged(event: ModuleRootEvent) {
+        resetOnRootsChanged()
       }
-    });
+    })
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
-                         (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> resetOnRootsChanged());
+                         AdditionalLibraryRootsListener { _: String?, _: Collection<VirtualFile?>?, _: Collection<VirtualFile?>?, _: String? -> resetOnRootsChanged() })
   }
 
-  private void resetOnRootsChanged() {
-    myFilesToCheck.addAll(myEditedGeneratedFiles);
-    myEditedGeneratedFiles.clear();
-    myCheckingQueue.cancelAndRequest();
+  private fun resetOnRootsChanged() {
+    filesToCheck.addAll(editedGeneratedFiles)
+    editedGeneratedFiles.clear()
+    checkingQueue.cancelAndRequest()
   }
 
-  private void checkFiles() {
-    final VirtualFile[] files;
-    synchronized (myFilesToCheck) {
-      files = myFilesToCheck.toArray(VirtualFile.EMPTY_ARRAY);
-      myFilesToCheck.clear();
+  private fun checkFiles() {
+    val files = synchronized(filesToCheck) {
+      filesToCheck.toList().also {
+        filesToCheck.clear()
+      }
     }
-    if (files.length == 0) return;
-    final int[] i = {0};
+    if (files.isEmpty()) {
+      return
+    }
 
-    ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(myProject);
-    ReadAction.nonBlocking(() -> {
-      if (myProject.isDisposed()) return;
-      final List<VirtualFile> newEditedGeneratedFiles = new ArrayList<>();
+    val i = intArrayOf(0)
+
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    ReadAction.nonBlocking {
+      if (project.isDisposed) {
+        return@nonBlocking
+      }
+
+      val newEditedGeneratedFiles: MutableList<VirtualFile> = ArrayList()
       try {
-        while (i[0] < files.length) {
-          ProgressManager.checkCanceled();
+        while (i[0] < files.size) {
+          ProgressManager.checkCanceled()
 
-          VirtualFile file = files[i[0]];
+          val file = files[i[0]]
           if (fileIndex.isInContent(file) || fileIndex.isInLibrary(file)) {
-            if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, myProject)) {
-              newEditedGeneratedFiles.add(file);
+            if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
+              newEditedGeneratedFiles.add(file)
             }
           }
 
-          i[0]++;
+          i[0]++
         }
       }
       finally {
-        // In case of canceled exception or (really) any other exception
-        // some files could be already processed
-        // let's not wait for the next available read lock slot
+        // In case of canceled exception or (really) any other exception,
+        // some files could be already processed let's not wait for the next available read lock slot
         if (!newEditedGeneratedFiles.isEmpty()) {
-          myEditedGeneratedFiles.addAll(newEditedGeneratedFiles);
-          EditorNotifications.getInstance(myProject).updateAllNotifications();
+          editedGeneratedFiles.addAll(newEditedGeneratedFiles)
+          EditorNotifications.getInstance(project).updateAllNotifications()
         }
       }
-    }).executeSynchronously();
+    }.executeSynchronously()
   }
 }
