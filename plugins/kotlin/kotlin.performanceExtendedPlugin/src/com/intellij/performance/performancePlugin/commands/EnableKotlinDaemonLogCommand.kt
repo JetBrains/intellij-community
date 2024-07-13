@@ -4,8 +4,6 @@ package com.intellij.performance.performancePlugin.commands
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerWorkspaceSettings
 import java.io.File
 import kotlin.io.path.div
@@ -21,10 +19,7 @@ internal class EnableKotlinDaemonLogCommand(text: String, line: Int) : Performan
 
     override suspend fun doExecute(context: PlaybackContext) {
         val project = context.project
-        val kotlinDaemonLog: File = (PathManager.getLogDir() / "kotlin-daemon.log").toFile()
-        withContext(Dispatchers.IO) {
-            kotlinDaemonLog.createNewFile()
-        }
+        val kotlinDaemonLog: File = (PathManager.getLogDir() / "kotlin-daemon.log").toFile().apply { createNewFile() }
         val compilerSettings = KotlinCompilerWorkspaceSettings.getInstance(project)
         val daemonDefaultVmOptions = compilerSettings.daemonVmOptions
         compilerSettings.daemonVmOptions =
