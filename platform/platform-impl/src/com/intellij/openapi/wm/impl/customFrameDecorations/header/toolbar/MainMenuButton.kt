@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.AllIcons
@@ -24,8 +24,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.platform.ide.menu.IdeJMenuBar
-import com.intellij.platform.ide.menu.IdeMainMenuActionGroup
 import com.intellij.platform.ide.menu.collectGlobalMenu
+import com.intellij.platform.ide.menu.createIdeMainMenuActionGroup
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupImpl
@@ -171,7 +171,7 @@ class MainMenuButton(coroutineScope: CoroutineScope) {
 
   fun showPopup(context: DataContext, actionToShow: AnAction? = null) {
     @Suppress("SSBasedInspection")
-    val mainMenu = runBlocking { IdeMainMenuActionGroup() } ?: return
+    val mainMenu = runBlocking { createIdeMainMenuActionGroup() } ?: return
     val popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, mainMenu, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               ActionPlaces.MAIN_MENU)
