@@ -6602,10 +6602,13 @@ f:com.intellij.ide.impl.ProjectUtil
 - f:showYesNoDialog(java.lang.String,java.lang.String):Z
 - sf:updateLastProjectLocation(java.nio.file.Path):V
 c:com.intellij.ide.impl.ProjectUtilService
+- sf:Companion:com.intellij.ide.impl.ProjectUtilService$Companion
 - <init>(com.intellij.openapi.project.Project):V
 - focusProjectWindow(Z):V
 - bs:focusProjectWindow$default(com.intellij.ide.impl.ProjectUtilService,Z,I,java.lang.Object):V
 - pf:getProject():com.intellij.openapi.project.Project
+f:com.intellij.ide.impl.ProjectUtilService$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.impl.ProjectUtilService
 f:com.intellij.ide.impl.SelectInEditorManagerImpl
 - com.intellij.ide.SelectInEditorManager
 - com.intellij.openapi.Disposable
