@@ -113,11 +113,19 @@ public interface JBAccountInfoService {
 
   interface LoginSession extends AutoCloseable {
     /**
-     * The returned CompletableFuture can be used to await the completion of the auth flow,
-     * either successful or erroneous. The future never completes exceptionally,
+     * The returned CompletableFuture can be used to await the completion of the auth flow, either successful or erroneous.
+     * The future never completes exceptionally, other than in case of cancellation,
      * instead, {@link LoginResult.LoginFailed} is used to signal that something went wrong.
-     * {@linkplain CompletableFuture#cancel(boolean) Cancelling} the future does not affect the login session,
-     * or the other futures returned by separate invocations of this method.
+     * <p>
+     * Cancellation:<ul>
+     *  <li> The returned future is canceled if the login session is closed before completing with a result.
+     *  <li> {@linkplain CompletableFuture#cancel(boolean) Cancelling} the future itself does not affect the login session,
+     *       or any other future returned by separate invocations of this method.
+     *  <li> The future may get cancelled as a result of user actions like closing the {@linkplain LoginMode#MANUAL manual}
+     *       login dialog.
+     *  <li> In case of remote dev, the future returned to the caller on the host side is cancelled
+     *       when the controlling client handling the login session is disconnected.
+     * </ul>
      */
     @NotNull CompletableFuture<@NotNull LoginResult> onCompleted();
 
