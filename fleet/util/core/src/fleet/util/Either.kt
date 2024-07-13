@@ -3,10 +3,14 @@
 
 package fleet.util
 
-import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.encoding.decodeStructure
+import kotlinx.serialization.encoding.encodeStructure
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -136,37 +140,35 @@ inline fun <T, E> Either<T, E>.onValue(action: (value: T) -> Unit): Either<T, E>
   return this
 }
 
-
 private class EitherSerializer<T, E>(
-  valueSerializer: KSerializer<T>,
-  errorSerializer: KSerializer<E>,
-) : DataSerializer<Either<T, E>, SerializableEither<T, E>>(SerializableEither.serializer(valueSerializer, errorSerializer)) {
-  override fun fromData(data: SerializableEither<T, E>): Either<T, E> {
-    return when (data) {
-      is SerializableEither.Error -> Either.error(data.error)
-      is SerializableEither.Value -> Either.value(data.value)
+  val valueSerializer: KSerializer<T>,
+  val errorSerializer: KSerializer<E>,
+) : KSerializer<Either<T, E>> {
+
+  override val descriptor: SerialDescriptor
+    get() = buildClassSerialDescriptor("Either", valueSerializer.descriptor, errorSerializer.descriptor) {
+      element("value", valueSerializer.descriptor, isOptional = true)
+      element("error", errorSerializer.descriptor, isOptional = true)
+    }
+
+  override fun deserialize(decoder: Decoder): Either<T, E> {
+    return decoder.decodeStructure(descriptor) {
+      when (val element = decodeElementIndex(descriptor)) {
+        0 -> Either.value(decodeSerializableElement(descriptor, 0, valueSerializer))
+        1 -> Either.error(decodeSerializableElement(descriptor, 1, errorSerializer))
+        else -> error("Unexpected element index: $element")
+      }
     }
   }
 
-  override fun toData(value: Either<T, E>): SerializableEither<T, E> {
-    return if (value.isValue) {
-      SerializableEither.Value(value.valueOrNull!!)
-    }
-    else {
-      SerializableEither.Error(value.errorOrNull!!)
+  override fun serialize(encoder: Encoder, value: Either<T, E>) {
+    encoder.encodeStructure(descriptor) {
+      if (value.isValue) {
+        encodeSerializableElement(descriptor, 0, valueSerializer, value.value)
+      }
+      else {
+        encodeSerializableElement(descriptor, 1, errorSerializer, value.error)
+      }
     }
   }
-}
-
-@Serializable
-private sealed interface SerializableEither<T, E> {
-  @JvmInline
-  @Serializable
-  @SerialName("value")
-  value class Value<T, E>(val value: T) : SerializableEither<T, E>
-
-  @JvmInline
-  @Serializable
-  @SerialName("error")
-  value class Error<T, E>(val error: E) : SerializableEither<T, E>
 }
