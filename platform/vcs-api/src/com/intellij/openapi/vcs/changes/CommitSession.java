@@ -35,6 +35,7 @@ public interface CommitSession {
    * Show dialog with additional options before running pre-commit checks.
    *
    * @see com.intellij.openapi.vcs.changes.ui.SessionDialog
+   * @see com.intellij.openapi.ui.DialogPanel
    */
   @Nullable
   default JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable @NlsSafe String commitMessage) {
