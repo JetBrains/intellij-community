@@ -9,7 +9,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -17,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.collections.isReadOnlyCollectionOrMap
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -192,8 +192,3 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
 private val targetOperations: List<KtSingleValueToken> = listOf(KtTokens.PLUSEQ, KtTokens.MINUSEQ)
 
 private fun KotlinType.classDescriptor() = constructor.declarationDescriptor as? ClassDescriptor
-
-internal fun KotlinType.isReadOnlyCollectionOrMap(builtIns: KotlinBuiltIns): Boolean {
-    val leftDefaultType = constructor.declarationDescriptor?.defaultType ?: return false
-    return leftDefaultType in listOf(builtIns.list.defaultType, builtIns.set.defaultType, builtIns.map.defaultType)
-}

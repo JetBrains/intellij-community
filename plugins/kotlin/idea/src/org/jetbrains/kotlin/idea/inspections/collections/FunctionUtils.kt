@@ -47,6 +47,11 @@ fun KotlinType?.isCollection(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance
     return classDescriptor.isListOrSet(builtIns) || classDescriptor.isSubclassOf(builtIns.collection)
 }
 
+internal fun KotlinType.isReadOnlyCollectionOrMap(builtIns: KotlinBuiltIns): Boolean {
+    val leftDefaultType = constructor.declarationDescriptor?.defaultType ?: return false
+    return leftDefaultType in listOf(builtIns.list.defaultType, builtIns.set.defaultType, builtIns.map.defaultType)
+}
+
 fun KotlinType?.isList(builtIns: KotlinBuiltIns = DefaultBuiltIns.Instance): Boolean =
     classDescriptor()?.isList(builtIns) == true
 
