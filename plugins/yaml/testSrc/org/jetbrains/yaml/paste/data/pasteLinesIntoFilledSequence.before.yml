@@ -1,0 +1,7 @@
+aaa:
+  bbb:
+    ccc:
+      - foo
+      - bar
+      - <caret>
+      - boo
