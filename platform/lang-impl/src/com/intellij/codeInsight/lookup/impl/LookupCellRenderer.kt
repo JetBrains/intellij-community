@@ -1,12 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl
 
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
 import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
-import com.intellij.codeInsight.lookup.LookupFocusDegree
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.MATCHED_FOREGROUND_COLOR
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyInsets
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.getGrayedForeground
@@ -304,6 +301,7 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
     return panel
   }
 
+  @Suppress("unused")
   internal fun addPresentationCustomizer(customizer: ItemPresentationCustomizer) {
     customizers.add(customizer)
     // need to make sure we've got at least enough space for the customizations alone
@@ -520,7 +518,8 @@ class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : List
 
   fun updateItemPresentation(element: LookupElement) {
     element.expensiveRenderer?.let {
-      asyncRendering.scheduleRendering(element, it)
+      @Suppress("UNCHECKED_CAST")
+      asyncRendering.scheduleRendering(element = element, renderer = it as LookupElementRenderer<LookupElement>)
     }
   }
 

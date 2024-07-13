@@ -1,7 +1,6 @@
 com/intellij/codeEditor/printing/LineWrapper$WidthProvider
 com/intellij/codeInsight/actions/onSave/FormatOnSaveOptionsBase$StateBase
 com/intellij/codeInsight/codeVision/CodeVisionPlaceholderCollector
-com/intellij/codeInsight/completion/CompletionProcessEx
 com/intellij/codeInsight/completion/CompletionProgressIndicator
 com/intellij/codeInsight/completion/WeighingDelegate
 com/intellij/codeInsight/daemon/impl/TrafficLightRenderer$DaemonCodeAnalyzerStatus

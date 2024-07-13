@@ -3555,10 +3555,6 @@ f:com.intellij.codeInsight.completion.ComboEditorCompletionContributor$DefaultLo
 com.intellij.codeInsight.completion.ComboEditorCompletionContributor$LookupElementProvider
 - sf:DEFAULT:com.intellij.codeInsight.completion.ComboEditorCompletionContributor$DefaultLookupElementProvider
 - a:createLookupElement(java.lang.String):com.intellij.codeInsight.lookup.LookupElement
-f:com.intellij.codeInsight.completion.CompletionLookupArrangerImpl
-- com.intellij.codeInsight.completion.BaseCompletionLookupArranger
-- <init>(com.intellij.codeInsight.completion.CompletionProcessEx):V
-- addElement(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.LookupElementPresentation):V
 a:com.intellij.codeInsight.completion.CompletionPhase
 - com.intellij.openapi.Disposable
 - sf:AUTO_POPUP_TYPED_EVENT:com.intellij.openapi.util.Key
