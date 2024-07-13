@@ -4,14 +4,19 @@ package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.ide.scratch.ScratchUtil
 import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
+import com.intellij.util.application
+import com.intellij.util.concurrency.ThreadingAssertions.assertNoReadAccess
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.idea.core.script.ClasspathToVfsConverter.classpathEntryToVfs
@@ -174,11 +179,19 @@ object ClasspathToVfsConverter {
         val key = path.pathString
         val newType = path.fileType
 
+        //we cannot use `refreshAndFindFileByPath` under read lock
+        fun VirtualFileSystem.findLocalFileByPath(filePath: String): VirtualFile? =
+            if ((ApplicationManager.getApplication() as? ApplicationEx)?.holdsReadLock() == true) {
+                findFileByPath(filePath)
+            } else {
+                refreshAndFindFileByPath(filePath)
+            }
+
         fun compute(filePath: String): Pair<FileType, VirtualFile?> {
             return newType to when(newType) {
                 FileType.NOT_EXISTS -> null
-                FileType.DIRECTORY -> StandardFileSystems.local()?.refreshAndFindFileByPath(filePath)
-                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.refreshAndFindFileByPath(filePath + URLUtil.JAR_SEPARATOR)
+                FileType.DIRECTORY -> StandardFileSystems.local()?.findLocalFileByPath(filePath)
+                FileType.REGULAR_FILE -> StandardFileSystems.jar()?.findLocalFileByPath(filePath + URLUtil.JAR_SEPARATOR)
                 FileType.UNKNOWN -> null
             }
         }
