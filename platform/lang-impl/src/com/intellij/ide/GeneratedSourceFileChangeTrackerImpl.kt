@@ -1,9 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+@file:Suppress("SSBasedInspection")
+
 package com.intellij.ide
 
 import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -18,27 +22,48 @@ import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.EditorNotifications
-import com.intellij.util.SingleAlarm
-import com.intellij.util.SingleAlarm.Companion.singleAlarm
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.takeWhile
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
+@Internal
 class GeneratedSourceFileChangeTrackerImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope
 ) : GeneratedSourceFileChangeTracker() {
-  private val checkingQueue: SingleAlarm
   private val filesToCheck: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
   private val editedGeneratedFiles: MutableSet<VirtualFile> = Collections.synchronizedSet(HashSet())
 
+  private val checkRequests = MutableSharedFlow<Boolean>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val checkRequestsJob = AtomicReference<Job>()
+
   init {
-    checkingQueue = singleAlarm(500, coroutineScope, Runnable { this.checkFiles() })
+    startHandlingCheckRequests()
+  }
+
+  private fun startHandlingCheckRequests() {
+    checkRequestsJob.getAndSet(coroutineScope.launch {
+      checkRequests
+        .takeWhile { it }
+        .debounce(500)
+        .collectLatest {
+          checkFiles()
+        }
+    })?.cancel()
   }
 
   companion object {
     // static non-final by design
+    @JvmField
     var IN_TRACKER_TEST: Boolean = false
 
     private fun isListenerInactive(): Boolean = !IN_TRACKER_TEST && ApplicationManager.getApplication().isUnitTestMode
@@ -47,15 +72,34 @@ class GeneratedSourceFileChangeTrackerImpl(
   @TestOnly
   fun waitForAlarm(timeout: Long, timeUnit: TimeUnit) {
     check(!ApplicationManager.getApplication().isWriteAccessAllowed) { "Must not wait for the alarm under write action" }
-    checkingQueue.waitForAllExecuted(timeout, timeUnit)
+    try {
+      val job = checkRequestsJob.getAndSet(null) ?: return
+      runBlocking {
+        checkRequests.emit(false)
+        withTimeout(timeUnit.toMillis(timeout)) {
+          job.join()
+        }
+      }
+    }
+    finally {
+      startHandlingCheckRequests()
+    }
   }
 
   @TestOnly
   @Throws(Exception::class)
   fun cancelAllAndWait(timeout: Long, timeUnit: TimeUnit) {
     filesToCheck.clear()
-    checkingQueue.cancel()
-    waitForAlarm(timeout, timeUnit)
+    runBlocking {
+      try {
+        withTimeout(timeUnit.toMillis(timeout)) {
+          checkRequestsJob.get()?.cancelAndJoin()
+        }
+      }
+      finally {
+        startHandlingCheckRequests()
+      }
+    }
   }
 
   override fun isEditedGeneratedFile(file: VirtualFile): Boolean = editedGeneratedFiles.contains(file)
@@ -85,7 +129,7 @@ class GeneratedSourceFileChangeTrackerImpl(
         // the background activities of all projects
         val fileChangeTracker = getInstance(project) as GeneratedSourceFileChangeTrackerImpl
         fileChangeTracker.filesToCheck.add(file)
-        fileChangeTracker.checkingQueue.cancelAndRequest()
+        check(fileChangeTracker.checkRequests.tryEmit(true))
       }
     }
   }
@@ -128,10 +172,10 @@ class GeneratedSourceFileChangeTrackerImpl(
   private fun resetOnRootsChanged() {
     filesToCheck.addAll(editedGeneratedFiles)
     editedGeneratedFiles.clear()
-    checkingQueue.cancelAndRequest()
+    check(checkRequests.tryEmit(true))
   }
 
-  private fun checkFiles() {
+  private suspend fun checkFiles() {
     val files = synchronized(filesToCheck) {
       filesToCheck.toList().also {
         filesToCheck.clear()
@@ -141,27 +185,23 @@ class GeneratedSourceFileChangeTrackerImpl(
       return
     }
 
-    val i = intArrayOf(0)
+    val counter = AtomicInteger()
 
-    val fileIndex = ProjectFileIndex.getInstance(project)
-    ReadAction.nonBlocking {
-      if (project.isDisposed) {
-        return@nonBlocking
-      }
-
-      val newEditedGeneratedFiles: MutableList<VirtualFile> = ArrayList()
+    val fileIndex = project.serviceAsync<ProjectFileIndex>()
+    readAction {
+      val newEditedGeneratedFiles = ArrayList<VirtualFile>()
       try {
-        while (i[0] < files.size) {
+        while (counter.get() < files.size) {
           ProgressManager.checkCanceled()
 
-          val file = files[i[0]]
+          val file = files[counter.get()]
           if (fileIndex.isInContent(file) || fileIndex.isInLibrary(file)) {
             if (GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
               newEditedGeneratedFiles.add(file)
             }
           }
 
-          i[0]++
+          counter.incrementAndGet()
         }
       }
       finally {
@@ -172,6 +212,6 @@ class GeneratedSourceFileChangeTrackerImpl(
           EditorNotifications.getInstance(project).updateAllNotifications()
         }
       }
-    }.executeSynchronously()
+    }
   }
 }
