@@ -4419,12 +4419,6 @@ a:com.intellij.ide.actions.CloseProjectsActionBase
 - pa:canClose(com.intellij.openapi.project.Project,com.intellij.openapi.project.Project):Z
 - pa:shouldShow(com.intellij.openapi.actionSystem.AnActionEvent):Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.actions.CollectTroubleshootingInformationAction
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.ide.actions.CollectZippedLogsAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -22994,10 +22988,6 @@ com.intellij.troubleshooting.GeneralTroubleInfoCollector
 com.intellij.troubleshooting.TroubleInfoCollector
 - sf:EP_SETTINGS:com.intellij.openapi.extensions.ExtensionPointName
 - a:collectInfo(com.intellij.openapi.project.Project):java.lang.String
-f:com.intellij.troubleshooting.ui.CollectTroubleshootingInformationDialog
-- com.intellij.openapi.ui.DialogWrapper
-- b:$$$getRootComponent$$$():javax.swing.JComponent
-- <init>(com.intellij.openapi.project.Project):V
 a:com.intellij.ui.AbstractExpandableItemsHandler
 - com.intellij.ui.ExpandableItemsHandler
 - pf:myComponent:javax.swing.JComponent
