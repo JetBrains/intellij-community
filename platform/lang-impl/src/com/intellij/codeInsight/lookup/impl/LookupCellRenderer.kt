@@ -1,800 +1,860 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.lookup.impl
 
-package com.intellij.codeInsight.lookup.impl;
+import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.codeInsight.lookup.LookupElementPresentation.DecoratedTextRange
+import com.intellij.codeInsight.lookup.LookupElementPresentation.LookupItemDecoration
+import com.intellij.codeInsight.lookup.LookupFocusDegree
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.MATCHED_FOREGROUND_COLOR
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.bodyInsets
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.getGrayedForeground
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.IconDecorator
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsUtil
+import com.intellij.openapi.editor.colors.EditorFontType
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.ui.*
+import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import com.intellij.ui.SimpleTextAttributes.StyleAttributeConstant
+import com.intellij.ui.components.JBList
+import com.intellij.ui.icons.RowIcon
+import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.ui.speedSearch.SpeedSearchUtil
+import com.intellij.util.IconUtil.cropIcon
+import com.intellij.util.ObjectUtils
+import com.intellij.util.SingleAlarm
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.FList
+import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
+import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
+import java.awt.*
+import java.util.function.Supplier
+import javax.swing.*
+import javax.swing.border.EmptyBorder
+import kotlin.concurrent.Volatile
+import kotlin.math.max
 
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
-import com.intellij.codeInsight.lookup.LookupFocusDegree;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.*;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.*;
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.icons.RowIcon;
-import com.intellij.ui.popup.list.SelectablePanel;
-import com.intellij.ui.scale.JBUIScale;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
-import com.intellij.util.IconUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SingleAlarm;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FList;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import it.unimi.dsi.fastutil.ints.Int2BooleanMap;
-import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
-import org.jetbrains.annotations.*;
+class LookupCellRenderer(lookup: LookupImpl, editorComponent: JComponent) : ListCellRenderer<LookupElement> {
+  private var emptyIcon: Icon = EmptyIcon.ICON_0
+  private val normalFont: Font
+  private val boldFont: Font
+  private val normalMetrics: FontMetrics
+  private val boldMetrics: FontMetrics
 
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Stream;
+  private val lookup: LookupImpl
 
-import static com.intellij.codeInsight.lookup.Lookup.LOOKUP_COLOR;
+  private val nameComponent: SimpleColoredComponent
+  private val tailComponent: SimpleColoredComponent
+  private val typeLabel: SimpleColoredComponent
+  private val panel: LookupPanel
+  private val indexToIsSelected = Int2BooleanOpenHashMap()
 
-/**
- * @author Konstantin Bulenkov
- */
-public final class LookupCellRenderer implements ListCellRenderer<LookupElement> {
-  private Icon myEmptyIcon = EmptyIcon.ICON_0;
-  private final Font myNormalFont;
-  private final Font myBoldFont;
-  private final FontMetrics myNormalMetrics;
-  private final FontMetrics myBoldMetrics;
+  private var maxWidth = -1
 
-  private static final Key<Font> CUSTOM_NAME_FONT = Key.create("CustomLookupElementNameFont");
-  private static final Key<Font> CUSTOM_TAIL_FONT = Key.create("CustomLookupElementTailFont");
-  private static final Key<Font> CUSTOM_TYPE_FONT = Key.create("CustomLookupElementTypeFont");
+  @get:VisibleForTesting
+  @Volatile
+  var lookupTextWidth: Int = 50
+    private set
+  private val widthLock = ObjectUtils.sentinel("lookup width lock")
+  private val lookupWidthUpdater: Runnable
+  private val shrinkLookup: Boolean
 
-  public static final Color BACKGROUND_COLOR =
-    JBColor.lazy(() -> Objects.requireNonNullElse(EditorColorsUtil.getGlobalOrDefaultColor(LOOKUP_COLOR),
-                                                 JBColor.namedColor("CompletionPopup.background",
-                                                                    new JBColor(new Color(235, 244, 254), JBColor.background()))));
-  public static final Color MATCHED_FOREGROUND_COLOR = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
-  public static final Color SELECTED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionBackground", new JBColor(0xc5dffc, 0x113a5c));
-  public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
-  private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
+  private val asyncRendering: AsyncRendering
 
-  static Insets bodyInsets() {
-    return JBUI.insets("CompletionPopup.Body.insets", JBUI.insets(4));
-  }
+  private val customizers: MutableList<ItemPresentationCustomizer> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  static Insets bodyInsetsWithAdvertiser() {
-    return JBUI.insets("CompletionPopup.BodyWithAdvertiser.insets", JBUI.insets(4, 4, 3, 4));
-  }
+  private var isSelected = false
 
-  private static Insets selectionInsets() {
-    Insets innerInsets = JBUI.CurrentTheme.CompletionPopup.selectionInnerInsets();
-    Insets bodyInsets = bodyInsets();
-    //noinspection UseDPIAwareInsets
-    return new Insets(innerInsets.top, innerInsets.left + bodyInsets.left, innerInsets.bottom, innerInsets.right + bodyInsets.right);
-  }
+  init {
+    val scheme = lookup.topLevelEditor.colorsScheme
+    normalFont = scheme.getFont(EditorFontType.PLAIN)
+    boldFont = scheme.getFont(EditorFontType.BOLD)
 
-  public static final SimpleTextAttributes REGULAR_MATCHED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MATCHED_FOREGROUND_COLOR);
+    this.lookup = lookup
+    nameComponent = MySimpleColoredComponent()
+    nameComponent.setOpaque(false)
+    nameComponent.setIconTextGap(scale(4))
+    nameComponent.setIpad(JBUI.insetsLeft(1))
+    nameComponent.setMyBorder(null)
 
-  private final LookupImpl myLookup;
+    tailComponent = MySimpleColoredComponent()
+    tailComponent.setOpaque(false)
+    tailComponent.setIpad(JBInsets.emptyInsets())
+    tailComponent.setBorder(JBUI.Borders.emptyRight(10))
 
-  private final SimpleColoredComponent myNameComponent;
-  private final SimpleColoredComponent myTailComponent;
-  private final SimpleColoredComponent myTypeLabel;
-  private final LookupPanel myPanel;
-  private final Int2BooleanMap mySelected = new Int2BooleanOpenHashMap();
+    typeLabel = MySimpleColoredComponent()
+    typeLabel.setOpaque(false)
+    typeLabel.setIpad(JBInsets.emptyInsets())
+    typeLabel.setBorder(JBUI.Borders.emptyRight(10))
 
-  private static final String ELLIPSIS = "\u2026";
-  private int myMaxWidth = -1;
-  private volatile int myLookupTextWidth = 50;
-  private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
-  private final Runnable myLookupWidthUpdater;
-  private final boolean myShrinkLookup;
+    panel = LookupPanel()
+    panel.add(nameComponent, BorderLayout.WEST)
+    panel.add(tailComponent, BorderLayout.CENTER)
+    panel.add(typeLabel, BorderLayout.EAST)
 
-  private final AsyncRendering myAsyncRendering;
+    normalMetrics = this.lookup.topLevelEditor.component.getFontMetrics(normalFont)
+    boldMetrics = this.lookup.topLevelEditor.component.getFontMetrics(boldFont)
+    asyncRendering = AsyncRendering(this.lookup)
 
-  private final List<ItemPresentationCustomizer> myCustomizers = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  public LookupCellRenderer(LookupImpl lookup, @NotNull JComponent editorComponent) {
-    EditorColorsScheme scheme = lookup.getTopLevelEditor().getColorsScheme();
-    myNormalFont = scheme.getFont(EditorFontType.PLAIN);
-    myBoldFont = scheme.getFont(EditorFontType.BOLD);
-
-    myLookup = lookup;
-    myNameComponent = new MySimpleColoredComponent();
-    myNameComponent.setOpaque(false);
-    myNameComponent.setIconTextGap(JBUIScale.scale(4));
-    myNameComponent.setIpad(JBUI.insetsLeft(1));
-    myNameComponent.setMyBorder(null);
-
-    myTailComponent = new MySimpleColoredComponent();
-    myTailComponent.setOpaque(false);
-    myTailComponent.setIpad(JBInsets.emptyInsets());
-    myTailComponent.setBorder(JBUI.Borders.emptyRight(10));
-
-    myTypeLabel = new MySimpleColoredComponent();
-    myTypeLabel.setOpaque(false);
-    myTypeLabel.setIpad(JBInsets.emptyInsets());
-    myTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
-
-    myPanel = new LookupPanel();
-    myPanel.add(myNameComponent, BorderLayout.WEST);
-    myPanel.add(myTailComponent, BorderLayout.CENTER);
-    myPanel.add(myTypeLabel, BorderLayout.EAST);
-
-    myNormalMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myNormalFont);
-    myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
-    myAsyncRendering = new AsyncRendering(myLookup);
-
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // Avoid delay in unit tests
-      myLookupWidthUpdater = () -> ApplicationManager.getApplication().invokeLater(this::updateLookupWidthFromVisibleItems);
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      // avoid delay in unit tests
+      lookupWidthUpdater = Runnable { ApplicationManager.getApplication().invokeLater { this.updateLookupWidthFromVisibleItems() } }
     }
     else {
-      SingleAlarm alarm =
-        new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, ModalityState.stateForComponent(editorComponent));
-      myLookupWidthUpdater = () -> {
-        synchronized (alarm) {
-          if (!alarm.isDisposed()) {
-            alarm.request();
+      val alarm =
+        SingleAlarm({ this.updateLookupWidthFromVisibleItems() }, 50, lookup, ModalityState.stateForComponent(editorComponent))
+      lookupWidthUpdater = Runnable {
+        synchronized(alarm) {
+          if (!alarm.isDisposed) {
+            alarm.request()
           }
         }
-      };
+      }
     }
 
-    myShrinkLookup = Registry.is("ide.lookup.shrink");
+    shrinkLookup = Registry.`is`("ide.lookup.shrink")
   }
 
-  private boolean myIsSelected = false;
-  @Override
-  public Component getListCellRendererComponent(
-      final JList list,
-      LookupElement item,
-      int index,
-      boolean isSelected,
-      boolean hasFocus) {
+  companion object {
+    private val CUSTOM_NAME_FONT = Key.create<Font>("CustomLookupElementNameFont")
+    private val CUSTOM_TAIL_FONT = Key.create<Font>("CustomLookupElementTailFont")
+    private val CUSTOM_TYPE_FONT = Key.create<Font>("CustomLookupElementTypeFont")
 
-    boolean nonFocusedSelection = isSelected && myLookup.getLookupFocusDegree() == LookupFocusDegree.SEMI_FOCUSED;
-    if (!myLookup.isFocused()) {
-      isSelected = false;
+    @JvmField
+    val BACKGROUND_COLOR: Color = JBColor.lazy(
+      Supplier {
+        EditorColorsUtil.getGlobalOrDefaultColor(Lookup.LOOKUP_COLOR)
+        ?: JBColor.namedColor("CompletionPopup.background", JBColor(Color(235, 244, 254), JBColor.background()))
+      })
+
+    @JvmField
+    val MATCHED_FOREGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.matchForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED)
+    @JvmField
+    val SELECTED_BACKGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.selectionBackground", JBColor(0xc5dffc, 0x113a5c))
+    @JvmField
+    val SELECTED_NON_FOCUSED_BACKGROUND_COLOR: Color = JBColor.namedColor("CompletionPopup.selectionInactiveBackground",
+                                                                          JBColor(0xE0E0E0, 0x515457))
+    private val NON_FOCUSED_MASK_COLOR: Color = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0))
+
+    @JvmStatic
+    fun bodyInsets(): Insets {
+      return JBUI.insets("CompletionPopup.Body.insets", JBUI.insets(4))
     }
 
-    myIsSelected = isSelected;
-    myPanel.setSelectionColor(nonFocusedSelection ? SELECTED_NON_FOCUSED_BACKGROUND_COLOR :
-                              isSelected ? SELECTED_BACKGROUND_COLOR : null);
-
-    int allowedWidth = list.getWidth() - calcSpacing(myNameComponent, myEmptyIcon) - calcSpacing(myTailComponent, null) - calcSpacing(myTypeLabel, null);
-
-    LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
-    for (ItemPresentationCustomizer customizer : myCustomizers) {
-      presentation = customizer.customizePresentation(item, presentation);
-    }
-    if (presentation.getIcon() != null) {
-      setIconInsets(myNameComponent);
+    @JvmStatic
+    fun bodyInsetsWithAdvertiser(): Insets {
+      return JBUI.insets("CompletionPopup.BodyWithAdvertiser.insets", JBUI.insets(4, 4, 3, 4))
     }
 
-    myNameComponent.clear();
+    @JvmField
+    val REGULAR_MATCHED_ATTRIBUTES: SimpleTextAttributes = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MATCHED_FOREGROUND_COLOR)
 
-    Color itemColor = presentation.getItemTextForeground();
-    allowedWidth -= setItemTextLabel(item, itemColor, presentation, allowedWidth);
+    @JvmStatic
+    fun getGrayedForeground(@Suppress("UNUSED_PARAMETER") isSelected: Boolean): Color = UIUtil.getContextHelpForeground()
 
-    myTailComponent.setFont(ObjectUtils.notNull(getCustomFont(item, false, CUSTOM_TAIL_FONT), myNormalFont));
-    myTypeLabel.setFont(ObjectUtils.notNull(getCustomFont(item, false, CUSTOM_TYPE_FONT), myNormalFont));
-    myNameComponent.setIcon(augmentIcon(myLookup.getTopLevelEditor(), presentation.getIcon(), myEmptyIcon));
+    @JvmStatic
+    fun getMatchingFragments(prefix: String, name: String): FList<TextRange>? {
+      return NameUtil.buildMatcher("*$prefix").build().matchingFragments(name)
+    }
 
-    final Color grayedForeground = getGrayedForeground(isSelected);
-    myTypeLabel.clear();
+    @JvmStatic
+    fun augmentIcon(editor: Editor?, icon: Icon?, standard: Icon): Icon {
+      @Suppress("NAME_SHADOWING")
+      var icon = icon
+
+      @Suppress("NAME_SHADOWING")
+      var standard = standard
+      if (Registry.`is`("editor.scale.completion.icons")) {
+        standard = EditorUtil.scaleIconAccordingEditorFont(standard, editor)
+        icon = EditorUtil.scaleIconAccordingEditorFont(icon, editor)
+      }
+      if (icon == null) {
+        return standard
+      }
+
+      icon = removeVisibilityIfNeeded(editor, icon, standard)
+
+      if (icon.iconHeight < standard.iconHeight || icon.iconWidth < standard.iconWidth) {
+        val layeredIcon = LayeredIcon(2)
+        layeredIcon.setIcon(icon, 0, 0, (standard.iconHeight - icon.iconHeight) / 2)
+        layeredIcon.setIcon(standard, 1)
+        return layeredIcon
+      }
+
+      return icon
+    }
+  }
+
+  override fun getListCellRendererComponent(
+    list: JList<out LookupElement>,
+    item: LookupElement,
+    index: Int,
+    isSelected: Boolean,
+    cellHasFocus: Boolean,
+  ): Component {
+    @Suppress("NAME_SHADOWING")
+    var isSelected = isSelected
+    val nonFocusedSelection = isSelected && lookup.lookupFocusDegree == LookupFocusDegree.SEMI_FOCUSED
+    if (!lookup.isFocused) {
+      isSelected = false
+    }
+
+    this.isSelected = isSelected
+    panel.selectionColor = when {
+      nonFocusedSelection -> SELECTED_NON_FOCUSED_BACKGROUND_COLOR
+      isSelected -> SELECTED_BACKGROUND_COLOR
+      else -> null
+    }
+
+    var allowedWidth = list.width - calcSpacing(nameComponent, emptyIcon) - calcSpacing(tailComponent, null) - calcSpacing(typeLabel, null)
+
+    var presentation = asyncRendering.getLastComputed(item)
+    for (customizer in customizers) {
+      presentation = customizer.customizePresentation(item, presentation)
+    }
+    if (presentation.icon != null) {
+      setIconInsets(nameComponent)
+    }
+
+    nameComponent.clear()
+
+    val itemColor = presentation.itemTextForeground
+    allowedWidth -= setItemTextLabel(item = item, foreground = itemColor, presentation = presentation, allowedWidth = allowedWidth)
+
+    tailComponent.font = getCustomFont(item = item, bold = false, key = CUSTOM_TAIL_FONT) ?: normalFont
+    typeLabel.font = getCustomFont(item = item, bold = false, key = CUSTOM_TYPE_FONT) ?: normalFont
+    nameComponent.icon = augmentIcon(editor = lookup.topLevelEditor, icon = presentation.icon, standard = emptyIcon)
+
+    val grayedForeground = getGrayedForeground(isSelected)
+    typeLabel.clear()
     if (allowedWidth > 0) {
-      allowedWidth -= setTypeTextLabel(item, grayedForeground, presentation, isSelected ? getMaxWidth() : allowedWidth, isSelected, nonFocusedSelection,
-              getRealFontMetrics(item, false, CUSTOM_TYPE_FONT));
+      allowedWidth -= setTypeTextLabel(
+        item = item,
+        foreground = grayedForeground,
+        presentation = presentation,
+        allowedWidth = if (isSelected) getGetOrComputeMaxWidth() else allowedWidth,
+        selected = isSelected,
+        nonFocusedSelection = nonFocusedSelection,
+        normalMetrics = getRealFontMetrics(item = item, bold = false, key = CUSTOM_TYPE_FONT),
+      )
     }
 
-    myTailComponent.clear();
+    tailComponent.clear()
     if (isSelected || allowedWidth >= 0) {
-      setTailTextLabel(item, isSelected, presentation, grayedForeground, isSelected ? getMaxWidth() : allowedWidth, nonFocusedSelection,
-              getRealFontMetrics(item, false, CUSTOM_TAIL_FONT));
+      setTailTextLabel(
+        isSelected = isSelected,
+        presentation = presentation,
+        foreground = grayedForeground,
+        allowedWidth = if (isSelected) getGetOrComputeMaxWidth() else allowedWidth,
+        nonFocusedSelection = nonFocusedSelection,
+        fontMetrics = getRealFontMetrics(item, false, CUSTOM_TAIL_FONT),
+      )
     }
 
-    if (mySelected.containsKey(index)) {
-      if (!isSelected && mySelected.get(index)) {
-        myPanel.setUpdateExtender(true);
+    if (this.indexToIsSelected.containsKey(index)) {
+      if (!isSelected && this.indexToIsSelected[index]) {
+        panel.setUpdateExtender(true)
       }
     }
-    mySelected.put(index, isSelected);
+    this.indexToIsSelected.put(index, isSelected)
 
-    final double w = myNameComponent.getPreferredSize().getWidth() +
-                     myTailComponent.getPreferredSize().getWidth() +
-                     myTypeLabel.getPreferredSize().getWidth();
+    val w = nameComponent.preferredSize.getWidth() + tailComponent.preferredSize.getWidth() + typeLabel.preferredSize.getWidth()
 
-    boolean useBoxLayout = isSelected && w > list.getWidth() && ((JBList<?>)list).getExpandableItemsHandler().isEnabled();
-    if (useBoxLayout != myPanel.getLayout() instanceof BoxLayout) {
-      myPanel.removeAll();
+    val useBoxLayout = isSelected && w > list.width && (list as JBList<*>).expandableItemsHandler.isEnabled
+    if (useBoxLayout != panel.layout is BoxLayout) {
+      panel.removeAll()
       if (useBoxLayout) {
-        myPanel.setLayout(new BoxLayout(myPanel, BoxLayout.X_AXIS));
-        myPanel.add(myNameComponent);
-        myPanel.add(myTailComponent);
-        myPanel.add(myTypeLabel);
-      } else {
-        myPanel.setLayout(new BorderLayout());
-        myPanel.add(myNameComponent, BorderLayout.WEST);
-        myPanel.add(myTailComponent, BorderLayout.CENTER);
-        myPanel.add(myTypeLabel, BorderLayout.EAST);
+        panel.layout = BoxLayout(panel, BoxLayout.X_AXIS)
+        panel.add(nameComponent)
+        panel.add(tailComponent)
+        panel.add(typeLabel)
+      }
+      else {
+        panel.layout = BorderLayout()
+        panel.add(nameComponent, BorderLayout.WEST)
+        panel.add(tailComponent, BorderLayout.CENTER)
+        panel.add(typeLabel, BorderLayout.EAST)
       }
     }
 
-    AccessibleContextUtil.setCombinedName(myPanel, myNameComponent, "", myTailComponent, " - ", myTypeLabel);
-    AccessibleContextUtil.setCombinedDescription(myPanel, myNameComponent, "", myTailComponent, " - ", myTypeLabel);
-    return myPanel;
+    AccessibleContextUtil.setCombinedName(panel, nameComponent, "", tailComponent, " - ", typeLabel)
+    AccessibleContextUtil.setCombinedDescription(panel, nameComponent, "", tailComponent, " - ", typeLabel)
+    return panel
   }
 
-  @VisibleForTesting
-  public int getLookupTextWidth() {
-    return myLookupTextWidth;
+  internal fun addPresentationCustomizer(customizer: ItemPresentationCustomizer) {
+    customizers.add(customizer)
+    // need to make sure we've got at least enough space for the customizations alone
+    updateIconWidth(EmptyIcon.ICON_0)
   }
 
-  void addPresentationCustomizer(@NotNull ItemPresentationCustomizer customizer) {
-    myCustomizers.add(customizer);
-    updateIconWidth(EmptyIcon.ICON_0); // Need to make sure we've got at least enough space for the customizations alone.
-  }
-
-  private static int calcSpacing(@NotNull SimpleColoredComponent component, @Nullable Icon icon) {
-    Insets iPad = component.getIpad();
-    int width = iPad.left + iPad.right;
-    Border myBorder = component.getMyBorder();
-    if (myBorder != null) {
-      Insets insets = myBorder.getBorderInsets(component);
-      width += insets.left + insets.right;
+  private fun getGetOrComputeMaxWidth(): Int {
+    if (maxWidth < 0) {
+      val p = lookup.component.locationOnScreen
+      val rectangle = ScreenUtil.getScreenRectangle(p)
+      maxWidth = rectangle.x + rectangle.width - p.x - 111
     }
-    Insets insets = component.getInsets();
-    if (insets != null) {
-      width += insets.left + insets.right;
-    }
-    if (icon != null) {
-      width += icon.getIconWidth() + component.getIconTextGap();
-    }
-    return width;
+    return maxWidth
   }
 
-  private int getMaxWidth() {
-    if (myMaxWidth < 0) {
-      final Point p = myLookup.getComponent().getLocationOnScreen();
-      final Rectangle rectangle = ScreenUtil.getScreenRectangle(p);
-      myMaxWidth = rectangle.x + rectangle.width - p.x - 111;
-    }
-    return myMaxWidth;
-  }
+  private fun setTailTextLabel(
+    isSelected: Boolean, presentation: LookupElementPresentation,
+    foreground: Color,
+    allowedWidth: Int,
+    nonFocusedSelection: Boolean,
+    fontMetrics: FontMetrics,
+  ) {
+    @Suppress("NAME_SHADOWING")
+    var allowedWidth = allowedWidth
+    val style = getStyle(presentation.isStrikeout, false, false)
 
-  private void setTailTextLabel(LookupElement item, boolean isSelected,
-                                LookupElementPresentation presentation,
-                                Color foreground,
-                                int allowedWidth,
-                                boolean nonFocusedSelection, FontMetrics fontMetrics) {
-    int style = getStyle(presentation.isStrikeout(), false, false);
-
-    for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
+    for (fragment in presentation.tailFragments) {
       if (allowedWidth < 0) {
-        return;
+        return
       }
 
-      String trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics);
-      @SimpleTextAttributes.StyleAttributeConstant int fragmentStyle = fragment.isItalic() ? style | SimpleTextAttributes.STYLE_ITALIC : style;
-      SimpleTextAttributes baseAttributes = new SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection));
-      myTailComponent.append(trimmed, baseAttributes);
-      allowedWidth -= getStringWidth(trimmed, fontMetrics);
+      val trimmed = trimLabelText(fragment.text, allowedWidth, fontMetrics)
+      @StyleAttributeConstant val fragmentStyle = if (fragment.isItalic) style or SimpleTextAttributes.STYLE_ITALIC else style
+      val baseAttributes = SimpleTextAttributes(fragmentStyle, getTailTextColor(isSelected, fragment, foreground, nonFocusedSelection))
+      tailComponent.append(trimmed, baseAttributes)
+      allowedWidth -= getStringWidth(trimmed, fontMetrics)
     }
-    renderItemNameDecoration(myTailComponent, presentation.getItemTailDecorations(), item);
+    renderItemNameDecoration(tailComponent, presentation.itemTailDecorations)
   }
 
-  @NlsSafe
-  private String trimLabelText(@Nullable String text, int maxWidth, FontMetrics metrics) {
-    if (text == null || StringUtil.isEmpty(text)) {
-      return "";
+  private fun trimLabelText(text: String?, maxWidth: Int, metrics: FontMetrics): @NlsSafe String {
+    if (text.isNullOrEmpty()) {
+      return ""
     }
 
-    final int strWidth = getStringWidth(text, metrics);
-    if (strWidth <= maxWidth || myIsSelected) {
-      return text;
+    val strWidth = getStringWidth(text, metrics)
+    if (strWidth <= maxWidth || isSelected) {
+      return text
     }
 
     if (getStringWidth(ELLIPSIS, metrics) > maxWidth) {
-      return "";
+      return ""
     }
 
-    int insIndex = ObjectUtils.binarySearch(0, text.length(), mid ->{
-      final String candidate = text.substring(0, mid) + ELLIPSIS;
-      final int width = getStringWidth(candidate, metrics);
-      return width <= maxWidth ? -1 : 1;
-    });
-    int i = Math.max(0,-insIndex-2);
-
-    return text.substring(0, i) + ELLIPSIS;
-  }
-
-  private static Color getTypeTextColor(LookupElement item, Color foreground, LookupElementPresentation presentation, boolean selected, boolean nonFocusedSelection) {
-    if (nonFocusedSelection) {
-      return foreground;
+    val insIndex = ObjectUtils.binarySearch(0, text.length) { mid ->
+      val candidate = text.substring(0, mid) + ELLIPSIS
+      val width = getStringWidth(candidate, metrics)
+      if (width <= maxWidth) -1 else 1
     }
+    val i = max(0.0, (-insIndex - 2).toDouble()).toInt()
 
-    return presentation.isTypeGrayed() ? getGrayedForeground(selected) : item instanceof EmptyLookupItem ? JBColor.foreground() : foreground;
+    return text.substring(0, i) + ELLIPSIS
   }
 
-  private static Color getTailTextColor(boolean isSelected, LookupElementPresentation.TextFragment fragment, Color defaultForeground, boolean nonFocusedSelection) {
-    if (nonFocusedSelection) {
-      return defaultForeground;
-    }
+  private fun setItemTextLabel(item: LookupElement, foreground: Color, presentation: LookupElementPresentation, allowedWidth: Int): Int {
+    val bold = presentation.isItemTextBold
 
-    if (fragment.isGrayed()) {
-      return getGrayedForeground(isSelected);
-    }
+    val customItemFont = getCustomFont(item, bold, CUSTOM_NAME_FONT)
+    nameComponent.font = customItemFont ?: if (bold) boldFont else normalFont
+    val style = getStyle(
+      strikeout = presentation.isStrikeout,
+      underlined = presentation.isItemTextUnderlined,
+      italic = presentation.isItemTextItalic,
+    )
 
-    if (!isSelected) {
-      final Color tailForeground = fragment.getForegroundColor();
-      if (tailForeground != null) {
-        return tailForeground;
-      }
-    }
+    val metrics = getRealFontMetrics(item, bold, CUSTOM_NAME_FONT)
+    val name = trimLabelText(presentation.itemText, allowedWidth, metrics)
+    val used = getStringWidth(name, metrics)
 
-    return defaultForeground;
+    renderItemName(
+      item = item,
+      foreground = foreground,
+      style = style,
+      name = name,
+      nameComponent = nameComponent,
+      itemNameDecorations = presentation.itemNameDecorations,
+    )
+    return used
   }
 
-  @SuppressWarnings("unused")
-  public static Color getGrayedForeground(boolean isSelected) {
-    return UIUtil.getContextHelpForeground();
-  }
-
-  private int setItemTextLabel(LookupElement item, final Color foreground, LookupElementPresentation presentation, int allowedWidth) {
-    boolean bold = presentation.isItemTextBold();
-
-    Font customItemFont = getCustomFont(item, bold, CUSTOM_NAME_FONT);
-    myNameComponent.setFont(customItemFont != null ? customItemFont : bold ? myBoldFont : myNormalFont);
-    int style = getStyle(presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
-
-    final FontMetrics metrics = getRealFontMetrics(item, bold, CUSTOM_NAME_FONT);
-    final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
-    int used = getStringWidth(name, metrics);
-
-    renderItemName(item, foreground, style, name, myNameComponent, presentation.getItemNameDecorations());
-    return used;
-  }
-
-  private FontMetrics getRealFontMetrics(LookupElement item, boolean bold, Key<Font> key) {
-    Font customFont = getCustomFont(item, bold, key);
+  private fun getRealFontMetrics(item: LookupElement, bold: Boolean, key: Key<Font>): FontMetrics {
+    val customFont = getCustomFont(item, bold, key)
     if (customFont != null) {
-      return myLookup.getTopLevelEditor().getComponent().getFontMetrics(customFont);
+      return lookup.topLevelEditor.component.getFontMetrics(customFont)
     }
 
-    return bold ? myBoldMetrics : myNormalMetrics;
+    return if (bold) boldMetrics else normalMetrics
   }
 
-  @SimpleTextAttributes.StyleAttributeConstant
-  private static int getStyle(boolean strikeout, boolean underlined, boolean italic) {
-    int style = SimpleTextAttributes.STYLE_PLAIN;
-    if (strikeout) {
-      style |= SimpleTextAttributes.STYLE_STRIKEOUT;
-    }
-    if (underlined) {
-      style |= SimpleTextAttributes.STYLE_UNDERLINE;
-    }
-    if (italic) {
-      style |= SimpleTextAttributes.STYLE_ITALIC;
-    }
-    return style;
-  }
+  private fun renderItemName(
+    item: LookupElement,
+    foreground: Color,
+    @StyleAttributeConstant style: Int,
+    name: @Nls String,
+    nameComponent: SimpleColoredComponent,
+    itemNameDecorations: List<DecoratedTextRange>,
+  ) {
+    val base = SimpleTextAttributes(style, foreground)
 
-  private void renderItemName(LookupElement item,
-                              Color foreground,
-                              @SimpleTextAttributes.StyleAttributeConstant int style,
-                              @Nls String name,
-                              final SimpleColoredComponent nameComponent,
-                              @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations) {
-    final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);
-
-    final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
-    if (prefix.length() > 0) {
-      Iterable<TextRange> ranges = getMatchingFragments(prefix, name);
+    val prefix = if (item is EmptyLookupItem) "" else lookup.itemPattern(item)
+    if (prefix.isNotEmpty()) {
+      val ranges = getMatchingFragments(prefix, name)
       if (ranges != null) {
-        SimpleTextAttributes highlighted = new SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR);
-        SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted);
-        renderItemNameDecoration(nameComponent, itemNameDecorations, item);
-        return;
+        val highlighted = SimpleTextAttributes(style, MATCHED_FOREGROUND_COLOR)
+        SpeedSearchUtil.appendColoredFragments(nameComponent, name, ranges, base, highlighted)
+        renderItemNameDecoration(nameComponent, itemNameDecorations)
+        return
       }
     }
-    nameComponent.append(name, base);
-    renderItemNameDecoration(nameComponent, itemNameDecorations, item);
+    nameComponent.append(name, base)
+    renderItemNameDecoration(nameComponent, itemNameDecorations)
   }
 
-  /**
-   * Splits the nameComponent into fragments based on the offsets of the decorated text ranges,
-   * then applies the appropriate decorations to each fragment.
-   */
-  private static void renderItemNameDecoration(SimpleColoredComponent nameComponent,
-                                               @NotNull List<LookupElementPresentation.DecoratedTextRange> itemNameDecorations,
-                                               @NotNull LookupElement item) {
-    if (nameComponent.getFragmentCount() == 0 || itemNameDecorations.isEmpty()) {
-      return;
+  private fun setTypeTextLabel(
+    item: LookupElement,
+    foreground: Color,
+    presentation: LookupElementPresentation,
+    allowedWidth: Int,
+    selected: Boolean, nonFocusedSelection: Boolean, normalMetrics: FontMetrics,
+  ): Int {
+    val givenText = presentation.typeText
+    val labelText = trimLabelText(if (givenText.isNullOrEmpty()) "" else " $givenText", allowedWidth, normalMetrics)
+
+    var used = getStringWidth(labelText, normalMetrics)
+
+    presentation.typeIcon?.let {
+      typeLabel.icon = it
+      used += it.iconWidth
     }
-    List<Integer> offsetsToSplit = itemNameDecorations.stream()
-      .map(decoratedTextRange -> decoratedTextRange.textRange())
-      .flatMap(textRange -> Stream.of(textRange.getStartOffset(), textRange.getEndOffset()))
-      .sorted()
-      .distinct()
-      .toList();
-    splitSimpleColoredComponentAtLeastByOffsets(nameComponent, offsetsToSplit);
 
-    EditorColorsScheme editorColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-
-    SimpleColoredComponent.ColoredIterator iterator = nameComponent.iterator();
-    while (iterator.hasNext()) {
-      iterator.next();
-      List<LookupElementPresentation.LookupItemDecoration> decorations = itemNameDecorations.stream()
-        .filter(decoratedTextRange -> decoratedTextRange.textRange().intersectsStrict(iterator.getOffset(), iterator.getEndOffset()))
-        .map(LookupElementPresentation.DecoratedTextRange::decoration)
-        .toList();
-      if (decorations.isEmpty()) {
-        continue;
-      }
-      for (LookupElementPresentation.LookupItemDecoration decoration : decorations) {
-        TextAttributes newAttributes = iterator.getTextAttributes().toTextAttributes();
-        if (decoration == LookupElementPresentation.LookupItemDecoration.ERROR) {
-          Color color = editorColorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).getEffectColor();
-          TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, color).applyTo(newAttributes);
-          iterator.setTextAttributes(SimpleTextAttributes.fromTextAttributes(newAttributes));
-        }
-
-        //must be last
-        if (decoration == LookupElementPresentation.LookupItemDecoration.HIGHLIGHT_MATCHED) {
-          SimpleTextAttributes highlighted = new SimpleTextAttributes(iterator.getTextAttributes().getStyle(), MATCHED_FOREGROUND_COLOR);
-          iterator.setTextAttributes(highlighted);
-        }
-      }
-    }
+    typeLabel.append(labelText)
+    typeLabel.foreground = getTypeTextColor(item, foreground, presentation, selected, nonFocusedSelection)
+    typeLabel.isIconOnTheRight = presentation.isTypeIconRightAligned
+    return used
   }
 
-  private static void splitSimpleColoredComponentAtLeastByOffsets(SimpleColoredComponent component, @NotNull List<Integer> offsets) {
-    SimpleColoredComponent.ColoredIterator iterator = component.iterator();
-    iterator.next();
-    for (int offset : offsets) {
-      while (iterator.hasNext() && offset >= iterator.getEndOffset()) {
-        iterator.next();
-      }
-      if (offset > iterator.getOffset() && offset < iterator.getEndOffset()) {
-        iterator.split(offset - iterator.getOffset(), iterator.getTextAttributes());
-      }
+  private fun getFontAbleToDisplay(sampleString: String?): Font? {
+    if (sampleString == null) {
+      return null
     }
-  }
-
-  public static FList<TextRange> getMatchingFragments(String prefix, String name) {
-    return NameUtil.buildMatcher("*" + prefix).build().matchingFragments(name);
-  }
-
-  private int setTypeTextLabel(LookupElement item,
-                               Color foreground,
-                               final LookupElementPresentation presentation,
-                               int allowedWidth,
-                               boolean selected, boolean nonFocusedSelection, FontMetrics normalMetrics) {
-    final String givenText = presentation.getTypeText();
-    final String labelText = trimLabelText(StringUtil.isEmpty(givenText) ? "" : " " + givenText, allowedWidth, normalMetrics);
-
-    int used = getStringWidth(labelText, normalMetrics);
-
-    final Icon icon = presentation.getTypeIcon();
-    if (icon != null) {
-      myTypeLabel.setIcon(icon);
-      used += icon.getIconWidth();
-    }
-
-    myTypeLabel.append(labelText);
-    myTypeLabel.setForeground(getTypeTextColor(item, foreground, presentation, selected, nonFocusedSelection));
-    myTypeLabel.setIconOnTheRight(presentation.isTypeIconRightAligned());
-    return used;
-  }
-
-  @NotNull
-  private static Icon removeVisibilityIfNeeded(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
-    if (!Registry.is("ide.completion.show.visibility.icon")) {
-      return removeVisibility(editor, icon, standard);
-    }
-    return icon;
-  }
-
-  @NotNull
-  private static Icon removeVisibility(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
-    if (icon instanceof IconDecorator decoratorIcon) {
-      Icon delegateIcon = decoratorIcon.getDelegate();
-      if (delegateIcon != null) {
-        return decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
-      }
-    }
-    else if (icon instanceof RowIcon rowIcon) {
-      if (rowIcon.getIconCount() >= 1) {
-        Icon firstIcon = rowIcon.getIcon(0);
-        if (firstIcon != null) {
-          return Registry.is("editor.scale.completion.icons") ?
-                 EditorUtil.scaleIconAccordingEditorFont(firstIcon, editor) : firstIcon;
-        }
-      }
-    }
-    else if (icon.getIconWidth() > standard.getIconWidth() || icon.getIconHeight() > standard.getIconHeight()) {
-      return IconUtil.cropIcon(icon, new Rectangle(standard.getIconWidth(), standard.getIconHeight()));
-    }
-    return icon;
-  }
-
-  public static Icon augmentIcon(@Nullable Editor editor, @Nullable Icon icon, @NotNull Icon standard) {
-    if (Registry.is("editor.scale.completion.icons")) {
-      standard = EditorUtil.scaleIconAccordingEditorFont(standard, editor);
-      icon = EditorUtil.scaleIconAccordingEditorFont(icon, editor);
-    }
-    if (icon == null) {
-      return standard;
-    }
-
-    icon = removeVisibilityIfNeeded(editor, icon, standard);
-
-    if (icon.getIconHeight() < standard.getIconHeight() || icon.getIconWidth() < standard.getIconWidth()) {
-      final LayeredIcon layeredIcon = new LayeredIcon(2);
-      layeredIcon.setIcon(icon, 0, 0, (standard.getIconHeight() - icon.getIconHeight()) / 2);
-      layeredIcon.setIcon(standard, 1);
-      return layeredIcon;
-    }
-
-    return icon;
-  }
-
-  @Nullable
-  private Font getFontAbleToDisplay(@Nullable String sampleString) {
-    if (sampleString == null) return null;
 
     // assume a single font can display all chars
-    Set<Font> fonts = new HashSet<>();
-    FontPreferences fontPreferences = myLookup.getFontPreferences();
-    for (int i = 0; i < sampleString.length(); i++) {
-      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(sampleString.charAt(i), Font.PLAIN, fontPreferences, null).getFont());
+    val fonts = HashSet<Font>()
+    val fontPreferences = lookup.fontPreferences
+    for (element in sampleString) {
+      fonts.add(ComplementaryFontsRegistry.getFontAbleToDisplay(element.code, Font.PLAIN, fontPreferences, null).font)
     }
 
-    eachFont: for (Font font : fonts) {
-      if (font.equals(myNormalFont)) continue;
+    eachFont@ for (font in fonts) {
+      if (font == normalFont) {
+        continue
+      }
 
-      for (int i = 0; i < sampleString.length(); i++) {
-        if (!font.canDisplay(sampleString.charAt(i))) {
-          continue eachFont;
+      for (element in sampleString) {
+        if (!font.canDisplay(element)) {
+          continue@eachFont
         }
       }
-      return font;
+      return font
     }
-    return null;
-  }
-
-  @Nullable
-  private static Font getCustomFont(LookupElement item, boolean bold, Key<Font> key) {
-    Font font = item.getUserData(key);
-    return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
+    return null
   }
 
   /**
    * Update lookup width due to visible in lookup items
    */
-  void updateLookupWidthFromVisibleItems() {
-    List<LookupElement> visibleItems = myLookup.getVisibleItems();
+  fun updateLookupWidthFromVisibleItems() {
+    val visibleItems = lookup.visibleItems
 
-    int maxWidth = myShrinkLookup ? 0 : myLookupTextWidth;
-    for (var item : visibleItems) {
-      LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
+    var maxWidth = if (shrinkLookup) 0 else lookupTextWidth
+    for (item in visibleItems) {
+      val presentation = asyncRendering.getLastComputed(item)
 
-      item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.getItemText()));
-      item.putUserData(CUSTOM_TAIL_FONT, getFontAbleToDisplay(presentation.getTailText()));
-      item.putUserData(CUSTOM_TYPE_FONT, getFontAbleToDisplay(presentation.getTypeText()));
+      item.putUserData(CUSTOM_NAME_FONT, getFontAbleToDisplay(presentation.itemText))
+      item.putUserData(CUSTOM_TAIL_FONT, getFontAbleToDisplay(presentation.tailText))
+      item.putUserData(CUSTOM_TYPE_FONT, getFontAbleToDisplay(presentation.typeText))
 
-      int itemWidth = updateMaximumWidth(presentation, item);
+      val itemWidth = updateMaximumWidth(presentation, item)
       if (itemWidth > maxWidth) {
-        maxWidth = itemWidth;
+        maxWidth = itemWidth
       }
     }
 
-    synchronized (myWidthLock) {
-      if (myShrinkLookup || maxWidth > myLookupTextWidth) {
-        myLookupTextWidth = maxWidth;
-        myLookup.requestResize();
-        myLookup.refreshUi(false, false);
+    synchronized(widthLock) {
+      if (shrinkLookup || maxWidth > lookupTextWidth) {
+        lookupTextWidth = maxWidth
+        lookup.requestResize()
+        lookup.refreshUi(false, false)
       }
     }
   }
 
-  void scheduleUpdateLookupWidthFromVisibleItems(){
-    myLookupWidthUpdater.run();
+  fun scheduleUpdateLookupWidthFromVisibleItems() {
+    lookupWidthUpdater.run()
   }
 
-  void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
-    updateIconWidth(fastPresentation.getIcon());
-    scheduleUpdateLookupWidthFromVisibleItems();
-    AsyncRendering.rememberPresentation(element, fastPresentation);
+  fun itemAdded(element: LookupElement, fastPresentation: LookupElementPresentation) {
+    updateIconWidth(fastPresentation.icon)
+    scheduleUpdateLookupWidthFromVisibleItems()
+    AsyncRendering.rememberPresentation(element, fastPresentation)
 
-    updateItemPresentation(element);
+    updateItemPresentation(element)
   }
 
-  void updateItemPresentation(@NotNull LookupElement element){
-    LookupElementRenderer<? extends LookupElement> renderer = element.getExpensiveRenderer();
-    if (renderer != null) {
-      myAsyncRendering.scheduleRendering(element, renderer);
+  fun updateItemPresentation(element: LookupElement) {
+    element.expensiveRenderer?.let {
+      asyncRendering.scheduleRendering(element, it)
     }
   }
 
-  void refreshUi() {
+  fun refreshUi() {
     // Something has changed, possibly the customizers are affected, make sure the icon area is still large enough.
-    updateIconWidth(EmptyIcon.ICON_0);
+    updateIconWidth(EmptyIcon.ICON_0)
   }
 
-  private void updateIconWidth(@Nullable Icon baseIcon) {
-    Icon icon = baseIcon;
-    if (icon == null) {
-      return;
+  private fun updateIconWidth(baseIcon: Icon?) {
+    var icon = baseIcon ?: return
+    if (icon is DeferredIcon) {
+      icon = icon.baseIcon
     }
-    if (icon instanceof DeferredIcon) {
-      icon = ((DeferredIcon)icon).getBaseIcon();
+    icon = removeVisibilityIfNeeded(lookup.editor, icon, emptyIcon)
+    icon = EmptyIcon.create(icon)
+    for (customizer in customizers) {
+      icon = customizer.customizeEmptyIcon(icon)
     }
-    icon = removeVisibilityIfNeeded(myLookup.getEditor(), icon, myEmptyIcon);
-    icon = EmptyIcon.create(icon);
-    for (ItemPresentationCustomizer customizer : myCustomizers) {
-      icon = customizer.customizeEmptyIcon(icon);
-    }
-    if (icon.getIconWidth() > myEmptyIcon.getIconWidth() || icon.getIconHeight() > myEmptyIcon.getIconHeight()) {
-      myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
-                                     Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
-      setIconInsets(myNameComponent);
+    if (icon.iconWidth > emptyIcon.iconWidth || icon.iconHeight > emptyIcon.iconHeight) {
+      emptyIcon = EmptyIcon.create(
+        max(icon.iconWidth.toDouble(), emptyIcon.iconWidth.toDouble()).toInt(),
+        max(icon.iconHeight.toDouble(), emptyIcon.iconHeight.toDouble()).toInt())
+      setIconInsets(nameComponent)
     }
   }
 
-  private static void setIconInsets(@NotNull SimpleColoredComponent component) {
-    component.setIpad(JBUI.insetsLeft(6));
-  }
-
-  private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {
-    updateIconWidth(p.getIcon());
+  private fun updateMaximumWidth(p: LookupElementPresentation, item: LookupElement): Int {
+    updateIconWidth(p.icon)
     return calculateWidth(p, getRealFontMetrics(item, false, CUSTOM_NAME_FONT), getRealFontMetrics(item, true, CUSTOM_NAME_FONT)) +
-           calcSpacing(myTailComponent, null) + calcSpacing(myTypeLabel, null);
+           calcSpacing(tailComponent, null) + calcSpacing(typeLabel, null)
   }
 
-  int getTextIndent() {
-    return myPanel.getInsets().left + myNameComponent.getIpad().left + myEmptyIcon.getIconWidth() + myNameComponent.getIconTextGap();
+  val textIndent: Int
+    get() = panel.insets.left + nameComponent.ipad.left + emptyIcon.iconWidth + nameComponent.iconTextGap
+
+  private class MySimpleColoredComponent : SimpleColoredComponent() {
+    init {
+      setFocusBorderAroundIcon(true)
+    }
   }
 
-  private static int calculateWidth(LookupElementPresentation presentation, FontMetrics normalMetrics, FontMetrics boldMetrics) {
-    int result;
-    if (ExperimentalUI.isNewUI()) {
-      Insets insets = selectionInsets();
-      result = insets.left + insets.right;
-    }
-    else {
-      result = 0;
-    }
-    result += getStringWidth(presentation.getItemText(), presentation.isItemTextBold() ? boldMetrics : normalMetrics);
-    result += getStringWidth(presentation.getTailText(), normalMetrics);
-    final String typeText = presentation.getTypeText();
-    if (StringUtil.isNotEmpty(typeText)) {
-      result += getStringWidth("W", normalMetrics); // nice tail-type separation
-      result += getStringWidth(typeText, normalMetrics);
-    }
-    result += getStringWidth("W", boldMetrics); //for unforeseen Swing size adjustments
-    final Icon typeIcon = presentation.getTypeIcon();
-    if (typeIcon != null) {
-      result += typeIcon.getIconWidth();
-    }
-    return result;
-  }
+  private inner class LookupPanel : SelectablePanel() {
+    @JvmField
+    var myUpdateExtender: Boolean = false
 
-  private static int getStringWidth(@Nullable final String text, FontMetrics metrics) {
-    if (text != null) {
-      return metrics.stringWidth(text);
-    }
-    return 0;
-  }
-
-  private static final class MySimpleColoredComponent extends SimpleColoredComponent {
-    private MySimpleColoredComponent() {
-      setFocusBorderAroundIcon(true);
-    }
-  }
-  private final class LookupPanel extends SelectablePanel {
-    boolean myUpdateExtender;
-    LookupPanel() {
-      setLayout(new BorderLayout());
-      setBackground(BACKGROUND_COLOR);
-      if (ExperimentalUI.isNewUI()) {
-        Insets bodyInsets = bodyInsets();
-        setBorder(new EmptyBorder(selectionInsets()));
-        //noinspection UseDPIAwareInsets
-        setSelectionInsets(new Insets(0, bodyInsets.left, 0, bodyInsets.right));
-        setSelectionArc(JBUI.CurrentTheme.Popup.Selection.ARC.get());
+    init {
+      layout = BorderLayout()
+      background = BACKGROUND_COLOR
+      if (isNewUI()) {
+        val bodyInsets = bodyInsets()
+        border = EmptyBorder(selectionInsets())
+        @Suppress("UseDPIAwareInsets")
+        selectionInsets = Insets(0, bodyInsets.left, 0, bodyInsets.right)
+        selectionArc = JBUI.CurrentTheme.Popup.Selection.ARC.get()
       }
     }
 
-    public void setUpdateExtender(boolean updateExtender) {
-      myUpdateExtender = updateExtender;
+    fun setUpdateExtender(updateExtender: Boolean) {
+      myUpdateExtender = updateExtender
     }
 
-    @Override
-    public Dimension getPreferredSize() {
-      return UIUtil.updateListRowHeight(super.getPreferredSize());
-    }
+    override fun getPreferredSize(): Dimension = UIUtil.updateListRowHeight(super.getPreferredSize())
 
-    @Override
-    public void paint(Graphics g) {
-      super.paint(g);
-      if (NON_FOCUSED_MASK_COLOR.getAlpha() > 0 && !myLookup.isFocused() && myLookup.isCompletion()) {
-        g = g.create();
+    override fun paint(g: Graphics) {
+      @Suppress("NAME_SHADOWING")
+      var g = g
+      super.paint(g)
+      if (NON_FOCUSED_MASK_COLOR.alpha > 0 && !lookup.isFocused && lookup.isCompletion) {
+        g = g.create()
         try {
-          g.setColor(NON_FOCUSED_MASK_COLOR);
-          g.fillRect(0, 0, getWidth(), getHeight());
+          g.color = NON_FOCUSED_MASK_COLOR
+          g.fillRect(0, 0, width, height)
         }
         finally {
-          g.dispose();
+          g.dispose()
         }
       }
     }
   }
 
   /**
-   * Allows to update element's presentation during completion session.
-   * <p>
-   * Be careful, the lookup won't be resized according to the changes inside {@link #customizePresentation}
+   * Allows updating element's presentation during completion session.
+   *
+   *
+   * Be careful; the lookup won't be resized according to the changes inside [.customizePresentation]
    * except for the customization of the icon size, which needs to be properly implemented in
-   * {@link #customizeEmptyIcon(Icon)} for the completion popup to be aligned properly with
+   * [.customizeEmptyIcon] for the completion popup to be aligned properly with
    * the text in the editor.
    */
   @ApiStatus.Internal
-  public interface ItemPresentationCustomizer {
+  interface ItemPresentationCustomizer {
     /**
      * Invoked from EDT thread every time lookup element is preparing to be shown. Must be very fast.
      *
      * @return presentation to show
      */
-    @NotNull
-    LookupElementPresentation customizePresentation(@NotNull LookupElement item,
-                                                    @NotNull LookupElementPresentation presentation);
+    fun customizePresentation(
+      item: LookupElement,
+      presentation: LookupElementPresentation,
+    ): LookupElementPresentation
 
     /**
      * Invoked to compute the size of the icon area to ensure proper popup alignment.
-     * <p>
-     *   Should mimic what {@link #customizePresentation(LookupElement, LookupElementPresentation)} does
-     *   to the presentation's icon as close as far as the icon size is concerned.
-     * </p>
+     *
+     *
+     * Should mimic what [.customizePresentation] does
+     * to the presentation's icon as close as far as the icon size is concerned.
+     *
      * @param emptyIcon the empty icon, possibly already customized by the previous customizers
-     * @return the modified empty icon, or {@code emptyIcon} if the size doesn't need to be changed
+     * @return the modified empty icon, or `emptyIcon` if the size doesn't need to be changed
      */
-    @NotNull Icon customizeEmptyIcon(@NotNull Icon emptyIcon);
+    fun customizeEmptyIcon(emptyIcon: Icon): Icon
   }
 
   /**
-   * Allows to extend the original icon
+   * Allows extending the original icon
    */
-  public interface IconDecorator extends Icon {
+  interface IconDecorator : Icon {
     /**
      * Returns the original icon
      */
-    @Nullable
-    Icon getDelegate();
+    val delegate: Icon?
 
     /**
-     * Returns a new decorator with {@code icon} instead of the original icon
+     * Returns a new decorator with `icon` instead of the original icon
      */
-    @NotNull
-    IconDecorator withDelegate(@Nullable Icon icon);
+    fun withDelegate(icon: Icon?): IconDecorator
   }
+}
+
+private const val ELLIPSIS = "\u2026"
+
+   private fun calcSpacing(component: SimpleColoredComponent, icon: Icon?): Int {
+     val iPad = component.ipad
+     var width = iPad.left + iPad.right
+     val myBorder = component.myBorder
+     if (myBorder != null) {
+       val insets = myBorder.getBorderInsets(component)
+       width += insets.left + insets.right
+     }
+     val insets = component.insets
+     if (insets != null) {
+       width += insets.left + insets.right
+     }
+     if (icon != null) {
+       width += icon.iconWidth + component.iconTextGap
+     }
+     return width
+   }
+
+   private fun getTypeTextColor(
+     item: LookupElement,
+     foreground: Color,
+     presentation: LookupElementPresentation,
+     selected: Boolean,
+     nonFocusedSelection: Boolean,
+   ): Color {
+     if (nonFocusedSelection) {
+       return foreground
+     }
+
+     return when {
+       presentation.isTypeGrayed -> getGrayedForeground(selected)
+       item is EmptyLookupItem -> JBColor.foreground()
+       else -> foreground
+     }
+   }
+
+   private fun getTailTextColor(
+     isSelected: Boolean,
+     fragment: LookupElementPresentation.TextFragment,
+     defaultForeground: Color,
+     nonFocusedSelection: Boolean,
+   ): Color {
+     if (nonFocusedSelection) {
+       return defaultForeground
+     }
+
+     if (fragment.isGrayed) {
+       return getGrayedForeground(isSelected)
+     }
+
+     if (!isSelected) {
+       fragment.foregroundColor?.let {
+         return it
+       }
+     }
+
+     return defaultForeground
+   }
+
+/**
+ * Splits the nameComponent into fragments based on the offsets of the decorated text ranges,
+ * then applies the appropriate decorations to each fragment.
+ */
+private fun renderItemNameDecoration(
+  nameComponent: SimpleColoredComponent,
+  itemNameDecorations: List<DecoratedTextRange>,
+) {
+  if (nameComponent.fragmentCount == 0 || itemNameDecorations.isEmpty()) {
+    return
+  }
+
+  val offsetsToSplit = itemNameDecorations.asSequence()
+    .map { it.textRange }
+    .flatMap { sequenceOf(it.startOffset, it.endOffset) }
+    .sorted()
+    .distinct()
+    .toList()
+  splitSimpleColoredComponentAtLeastByOffsets(nameComponent, offsetsToSplit)
+
+  val editorColorsScheme = EditorColorsManager.getInstance().globalScheme
+
+  val iterator = nameComponent.iterator()
+  while (iterator.hasNext()) {
+    iterator.next()
+    val decorations = itemNameDecorations.asSequence()
+      .filter { it.textRange.intersectsStrict(iterator.offset, iterator.endOffset) }
+      .map { it.decoration() }
+      .toList()
+
+    if (decorations.isEmpty()) {
+      continue
+    }
+
+    for (decoration in decorations) {
+      val newAttributes = iterator.textAttributes.toTextAttributes()
+      if (decoration == LookupItemDecoration.ERROR) {
+        val color = editorColorsScheme.getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES).effectColor
+        TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, color).applyTo(newAttributes)
+        iterator.textAttributes = SimpleTextAttributes.fromTextAttributes(newAttributes)
+      }
+
+      // must be the last
+      if (decoration == LookupItemDecoration.HIGHLIGHT_MATCHED) {
+        iterator.textAttributes = SimpleTextAttributes(iterator.textAttributes.style, MATCHED_FOREGROUND_COLOR)
+      }
+    }
+  }
+}
+
+private fun splitSimpleColoredComponentAtLeastByOffsets(component: SimpleColoredComponent, offsets: List<Int>) {
+  val iterator = component.iterator()
+  iterator.next()
+  for (offset in offsets) {
+    while (iterator.hasNext() && offset >= iterator.endOffset) {
+      iterator.next()
+    }
+    if (offset > iterator.offset && offset < iterator.endOffset) {
+      iterator.split(offset - iterator.offset, iterator.textAttributes)
+    }
+  }
+}
+
+private fun removeVisibilityIfNeeded(editor: Editor?, icon: Icon, standard: Icon): Icon {
+  return if (Registry.`is`("ide.completion.show.visibility.icon")) icon else removeVisibility(editor, icon, standard)
+}
+
+private fun removeVisibility(editor: Editor?, icon: Icon, standard: Icon): Icon {
+  if (icon is IconDecorator) {
+    val delegateIcon = icon.delegate
+    if (delegateIcon != null) {
+      return icon.withDelegate(removeVisibility(editor, delegateIcon, standard))
+    }
+  }
+  else if (icon is RowIcon) {
+    if (icon.iconCount >= 1) {
+      val firstIcon = icon.getIcon(0)
+      if (firstIcon != null) {
+        return if (Registry.`is`("editor.scale.completion.icons")) EditorUtil.scaleIconAccordingEditorFont(firstIcon, editor) else firstIcon
+      }
+    }
+  }
+  else if (icon.iconWidth > standard.iconWidth || icon.iconHeight > standard.iconHeight) {
+    return cropIcon(icon, Rectangle(standard.iconWidth, standard.iconHeight))
+  }
+  return icon
+}
+
+private fun getCustomFont(item: LookupElement, bold: Boolean, key: Key<Font>): Font? {
+  val font = item.getUserData(key) ?: return null
+  return if (bold) font.deriveFont(Font.BOLD) else font
+}
+
+private fun setIconInsets(component: SimpleColoredComponent) {
+  component.ipad = JBUI.insetsLeft(6)
+}
+
+private fun selectionInsets(): Insets {
+  val innerInsets = JBUI.CurrentTheme.CompletionPopup.selectionInnerInsets()
+  val bodyInsets = bodyInsets()
+  @Suppress("UseDPIAwareInsets")
+  return Insets(innerInsets.top, innerInsets.left + bodyInsets.left, innerInsets.bottom, innerInsets.right + bodyInsets.right)
+}
+
+private fun calculateWidth(presentation: LookupElementPresentation, normalMetrics: FontMetrics, boldMetrics: FontMetrics): Int {
+  var result = if (isNewUI()) {
+    val insets = selectionInsets()
+    insets.left + insets.right
+  }
+  else {
+    0
+  }
+  result += getStringWidth(presentation.itemText, if (presentation.isItemTextBold) boldMetrics else normalMetrics)
+  result += getStringWidth(presentation.tailText, normalMetrics)
+
+  val typeText = presentation.typeText
+  if (!typeText.isNullOrEmpty()) {
+    // nice tail-type separation
+    result += getStringWidth("W", normalMetrics)
+    result += getStringWidth(typeText, normalMetrics)
+  }
+
+  // for unforeseen Swing size adjustments
+  result += getStringWidth("W", boldMetrics)
+  presentation.typeIcon?.let {
+    result += it.iconWidth
+  }
+  return result
+}
+
+private fun getStringWidth(text: String?, metrics: FontMetrics): Int = if (text == null) 0 else metrics.stringWidth(text)
+
+@StyleAttributeConstant
+private fun getStyle(strikeout: Boolean, underlined: Boolean, italic: Boolean): Int {
+  var style = SimpleTextAttributes.STYLE_PLAIN
+  if (strikeout) {
+    style = style or SimpleTextAttributes.STYLE_STRIKEOUT
+  }
+  if (underlined) {
+    style = style or SimpleTextAttributes.STYLE_UNDERLINE
+  }
+  if (italic) {
+    style = style or SimpleTextAttributes.STYLE_ITALIC
+  }
+  return style
 }

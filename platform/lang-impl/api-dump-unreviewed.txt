@@ -7888,16 +7888,31 @@ f:com.intellij.codeInsight.lookup.impl.LookupActionsStep
 f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 - javax.swing.ListCellRenderer
 - sf:BACKGROUND_COLOR:java.awt.Color
+- sf:Companion:com.intellij.codeInsight.lookup.impl.LookupCellRenderer$Companion
 - sf:MATCHED_FOREGROUND_COLOR:java.awt.Color
 - sf:REGULAR_MATCHED_ATTRIBUTES:com.intellij.ui.SimpleTextAttributes
 - sf:SELECTED_BACKGROUND_COLOR:java.awt.Color
 - sf:SELECTED_NON_FOCUSED_BACKGROUND_COLOR:java.awt.Color
 - <init>(com.intellij.codeInsight.lookup.impl.LookupImpl,javax.swing.JComponent):V
-- s:augmentIcon(com.intellij.openapi.editor.Editor,javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
-- s:getGrayedForeground(Z):java.awt.Color
+- sf:augmentIcon(com.intellij.openapi.editor.Editor,javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+- sf:bodyInsets():java.awt.Insets
+- sf:bodyInsetsWithAdvertiser():java.awt.Insets
+- sf:getGrayedForeground(Z):java.awt.Color
 - getListCellRendererComponent(javax.swing.JList,com.intellij.codeInsight.lookup.LookupElement,I,Z,Z):java.awt.Component
-- getLookupTextWidth():I
-- s:getMatchingFragments(java.lang.String,java.lang.String):com.intellij.util.containers.FList
+- f:getLookupTextWidth():I
+- sf:getMatchingFragments(java.lang.String,java.lang.String):com.intellij.util.containers.FList
+- f:getTextIndent():I
+- f:itemAdded(com.intellij.codeInsight.lookup.LookupElement,com.intellij.codeInsight.lookup.LookupElementPresentation):V
+- f:refreshUi():V
+- f:scheduleUpdateLookupWidthFromVisibleItems():V
+- f:updateItemPresentation(com.intellij.codeInsight.lookup.LookupElement):V
+- f:updateLookupWidthFromVisibleItems():V
+f:com.intellij.codeInsight.lookup.impl.LookupCellRenderer$Companion
+- f:augmentIcon(com.intellij.openapi.editor.Editor,javax.swing.Icon,javax.swing.Icon):javax.swing.Icon
+- f:bodyInsets():java.awt.Insets
+- f:bodyInsetsWithAdvertiser():java.awt.Insets
+- f:getGrayedForeground(Z):java.awt.Color
+- f:getMatchingFragments(java.lang.String,java.lang.String):com.intellij.util.containers.FList
 com.intellij.codeInsight.lookup.impl.LookupCellRenderer$IconDecorator
 - javax.swing.Icon
 - a:getDelegate():javax.swing.Icon

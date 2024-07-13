@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.completion
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.BACKGROUND_COLOR
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.SELECTED_BACKGROUND_COLOR
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
@@ -15,20 +14,20 @@ import com.intellij.openapi.ui.removeKeyboardAction
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.popup.list.ListPopupImpl
-import com.intellij.ui.util.height
-import com.intellij.ui.util.width
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.KeyEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JList
+import javax.swing.ListCellRenderer
+import javax.swing.ListSelectionModel
 
-class TextCompletionPopup<T>(
+internal class TextCompletionPopup<T>(
   project: Project?,
   private val textComponent: TextCompletionField<T>,
   private val contributor: Contributor<T>,
   private val renderer: TextCompletionRenderer<T>
 ) : ListPopupImpl(project, null, PopupStep(contributor), null) {
-
   override fun getListElementRenderer(): ListCellRenderer<*> = Renderer()
 
   fun update() {
@@ -55,8 +54,8 @@ class TextCompletionPopup<T>(
     setRequestFocus(false)
 
     list.prototypeCellValue = Item.None
-    list.background = BACKGROUND_COLOR
-    list.selectionBackground = SELECTED_BACKGROUND_COLOR
+    list.background = LookupCellRenderer.BACKGROUND_COLOR
+    list.selectionBackground = LookupCellRenderer.SELECTED_BACKGROUND_COLOR
     list.selectionMode = ListSelectionModel.SINGLE_SELECTION
     list.border = null
     list.isFocusable = false

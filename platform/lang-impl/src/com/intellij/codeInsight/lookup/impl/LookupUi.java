@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.application.options.CodeCompletionConfigurable;
@@ -173,7 +173,7 @@ final class LookupUi {
 
     myScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
       if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
-      myLookup.myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
+      myLookup.cellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
     });
   }
 
@@ -275,7 +275,7 @@ final class LookupUi {
     }
     int lineHeight = editor.getLineHeight();
     location.y += lineHeight;
-    int textIndent = myLookup.myCellRenderer.getTextIndent();
+    int textIndent = myLookup.cellRenderer.getTextIndent();
     location.x -= textIndent;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Location after shifting by line height (" + lineHeight + ") and text indent (" + textIndent + "): " + location);
@@ -402,7 +402,7 @@ final class LookupUi {
       setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(@Nullable Container parent) {
-          int maxCellWidth = myLookup.myCellRenderer.getLookupTextWidth() + myLookup.myCellRenderer.getTextIndent();
+          int maxCellWidth = myLookup.cellRenderer.getLookupTextWidth() + myLookup.cellRenderer.getTextIndent();
           int scrollBarWidth = myScrollPane.getVerticalScrollBar().getWidth();
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().getMaxLookupWidth());
 
