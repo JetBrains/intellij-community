@@ -9,72 +9,79 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.diagnostics.Severity
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
+import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
-import org.jetbrains.kotlin.idea.inspections.collections.isReadOnlyCollectionOrMap
-import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.MutableCollectionsConversionUtils
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.siblings
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
-import org.jetbrains.kotlin.resolve.calls.util.getType
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.Variance
 
 class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor =
         binaryExpressionVisitor(fun(binaryExpression) {
-            if (binaryExpression.right == null) return
-            val operationToken = binaryExpression.operationToken as? KtSingleValueToken ?: return
-            if (operationToken !in targetOperations) return
-            val left = binaryExpression.left ?: return
-            val property = left.mainReference?.resolve() as? KtProperty ?: return
-            if (!property.isVar) return
+            analyze(binaryExpression) {
+                if (binaryExpression.right == null) return
+                val operationToken = binaryExpression.operationToken as? KtSingleValueToken ?: return
+                if (operationToken !in targetOperations) return
+                val left = binaryExpression.left ?: return
+                val property = left.mainReference?.resolve() as? KtProperty ?: return
+                if (!property.isVar) return
 
-            val context = binaryExpression.analyze()
-            val leftType = left.getType(context) ?: return
-            val leftDefaultType = leftType.constructor.declarationDescriptor?.defaultType ?: return
-            if (!leftType.isReadOnlyCollectionOrMap(binaryExpression.builtIns)) return
-            if (context.diagnostics.forElement(binaryExpression).any { it.severity == Severity.ERROR }) return
+                val leftType = left.expressionType as? KaClassType ?: return
+                if (!leftType.isReadOnlyCollectionOrMap()) return
 
-            val fixes = mutableListOf<LocalQuickFix>()
-            if (ChangeTypeToMutableFix.isApplicable(property)) {
-                fixes.add(ChangeTypeToMutableFix(leftType))
-            }
-            if (ReplaceWithFilterFix.isApplicable(binaryExpression, leftDefaultType, context)) {
-                fixes.add(ReplaceWithFilterFix())
-            }
-            when {
-                ReplaceWithAssignmentFix.isApplicable(binaryExpression, property, context) -> fixes.add(ReplaceWithAssignmentFix())
-                JoinWithInitializerFix.isApplicable(binaryExpression, property) -> fixes.add(JoinWithInitializerFix(operationToken))
-            }
-            if (fixes.isEmpty()) return
+                // TODO there are no tests for this check; add the tests or remove it
+                @OptIn(KaExperimentalApi::class)
+                val diagnostics = binaryExpression.diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                if (diagnostics.any { it.severity == KaSeverity.ERROR }) return
 
-            val typeText = leftDefaultType.toString().takeWhile { it != '<' }.lowercase()
-            val operationReference = binaryExpression.operationReference
-            holder.registerProblem(
-                operationReference,
-                KotlinBundle.message("0.on.a.readonly.1.creates.a.new.1.under.the.hood", operationReference.text, typeText),
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                *fixes.toTypedArray()
-            )
+                val fixes = mutableListOf<LocalQuickFix>()
+                if (ChangeTypeToMutableFix.isApplicable(property)) {
+                    fixes.add(ChangeTypeToMutableFix(leftType.classId))
+                }
+                if (ReplaceWithFilterFix.run { isApplicable(binaryExpression, leftType) }) {
+                    fixes.add(ReplaceWithFilterFix())
+                }
+                when {
+                    ReplaceWithAssignmentFix.run { isApplicable(binaryExpression, property) } -> fixes.add(ReplaceWithAssignmentFix())
+                    JoinWithInitializerFix.isApplicable(binaryExpression, property) -> fixes.add(JoinWithInitializerFix(operationToken))
+                }
+                if (fixes.isEmpty()) return
+
+                @OptIn(KaExperimentalApi::class)
+                val typeText = leftType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT).takeWhile { it != '<' }.lowercase()
+                val operationReference = binaryExpression.operationReference
+                holder.registerProblem(
+                    operationReference,
+                    KotlinBundle.message("0.on.a.readonly.1.creates.a.new.1.under.the.hood", operationReference.text, typeText),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                    *fixes.toTypedArray()
+                )
+            }
         })
 
-    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: KotlinType) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
+    private class ChangeTypeToMutableFix(@SafeFieldForPreview private val type: ClassId) : KotlinModCommandQuickFix<KtOperationReferenceExpression>() {
         override fun getName() = KotlinBundle.message("change.type.to.mutable.fix.text")
 
         override fun getFamilyName() = name
@@ -84,14 +91,16 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val binaryExpression = operationReference.parent as? KtBinaryExpression ?: return
             val left = binaryExpression.left ?: return
             val property = left.mainReference?.resolve() as? KtProperty ?: return
-            ChangeToMutableCollectionFix.applyFix(property, type)
+            analyze(property) {
+                MutableCollectionsConversionUtils.run { convertPropertyTypeToMutable(property, type) }
+            }
             property.valOrVarKeyword.replace(KtPsiFactory(project).createValKeyword())
             updater.moveCaretTo(property.endOffset)
         }
 
         companion object {
             fun isApplicable(property: KtProperty): Boolean {
-                return ChangeToMutableCollectionFix.isApplicable(property)
+                return MutableCollectionsConversionUtils.canConvertPropertyType(property)
             }
         }
     }
@@ -112,10 +121,14 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
         }
 
         companion object {
-            fun isApplicable(binaryExpression: KtBinaryExpression, leftType: SimpleType, context: BindingContext): Boolean {
+            fun KaSession.isApplicable(binaryExpression: KtBinaryExpression, leftType: KaClassType): Boolean {
                 if (binaryExpression.operationToken != KtTokens.MINUSEQ) return false
-                if (leftType == binaryExpression.builtIns.map.defaultType) return false
-                return binaryExpression.right?.getType(context)?.classDescriptor()?.isSubclassOf(binaryExpression.builtIns.iterable) == true
+                if (leftType.classId == StandardClassIds.Map) return false
+
+                val binaryExpressionRHSClassSymbol = binaryExpression.right?.expressionType?.symbol as? KaNamedClassSymbol ?: return false
+                val iterableSymbol = findClass(StandardClassIds.Iterable) ?: return false
+
+                return binaryExpressionRHSClassSymbol.isSubClassOf(iterableSymbol)
             }
         }
     }
@@ -135,20 +148,21 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
             val emptyCollectionFactoryMethods =
                 listOf("emptyList", "emptySet", "emptyMap", "listOf", "setOf", "mapOf").map { "kotlin.collections.$it" }
 
-            fun isApplicable(binaryExpression: KtBinaryExpression, property: KtProperty, context: BindingContext): Boolean {
+            fun KaSession.isApplicable(binaryExpression: KtBinaryExpression, property: KtProperty): Boolean {
                 if (binaryExpression.operationToken != KtTokens.PLUSEQ) return false
 
                 if (!property.isLocal) return false
                 val initializer = property.initializer as? KtCallExpression ?: return false
 
                 if (initializer.valueArguments.isNotEmpty()) return false
-                val initializerResultingDescriptor = initializer.getResolvedCall(context)?.resultingDescriptor
-                val fqName = initializerResultingDescriptor?.fqNameOrNull()?.asString()
+                val initializerResultingSymbol = initializer.resolveToCall()?.singleFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol
+                val fqName = initializerResultingSymbol?.callableId?.asSingleFqName()?.asString()
                 if (fqName !in emptyCollectionFactoryMethods) return false
 
-                val rightClassDescriptor = binaryExpression.right?.getType(context)?.classDescriptor() ?: return false
-                val initializerClassDescriptor = initializerResultingDescriptor?.returnType?.classDescriptor() ?: return false
-                if (!rightClassDescriptor.isSubclassOf(initializerClassDescriptor)) return false
+                val binaryExpressionRHSType = binaryExpression.right?.expressionType ?: return false
+                val initializerType = initializer.expressionType ?: return false
+
+                if (!binaryExpressionRHSType.isSubtypeOf(initializerType)) return false
 
                 if (binaryExpression.siblings(forward = false, withItself = false)
                         .filter { it != property }
@@ -191,4 +205,6 @@ class SuspiciousCollectionReassignmentInspection : AbstractKotlinInspection() {
 
 private val targetOperations: List<KtSingleValueToken> = listOf(KtTokens.PLUSEQ, KtTokens.MINUSEQ)
 
-private fun KotlinType.classDescriptor() = constructor.declarationDescriptor as? ClassDescriptor
+private fun KaClassType.isReadOnlyCollectionOrMap(): Boolean {
+    return classId in listOf(StandardClassIds.List, StandardClassIds.Set, StandardClassIds.Map)
+}
