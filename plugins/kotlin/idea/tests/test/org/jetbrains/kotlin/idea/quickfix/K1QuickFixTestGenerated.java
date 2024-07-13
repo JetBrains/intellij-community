@@ -703,9 +703,19 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addDefaultConstructor/expectAnnotation3.kt");
         }
 
+        @TestMetadata("expectAnnotationWithUnresolvedParams.kt")
+        public void testExpectAnnotationWithUnresolvedParams() throws Exception {
+            runTest("testData/quickfix/addDefaultConstructor/expectAnnotationWithUnresolvedParams.kt");
+        }
+
         @TestMetadata("expectInterface.kt")
         public void testExpectInterface() throws Exception {
             runTest("testData/quickfix/addDefaultConstructor/expectInterface.kt");
+        }
+
+        @TestMetadata("expectWithUnresolvedParams.kt")
+        public void testExpectWithUnresolvedParams() throws Exception {
+            runTest("testData/quickfix/addDefaultConstructor/expectWithUnresolvedParams.kt");
         }
 
         @TestMetadata("interface.kt")

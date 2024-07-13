@@ -7,3 +7,4 @@ expect open class A()
 open class C : A()
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDefaultConstructorFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddDefaultConstructorFix

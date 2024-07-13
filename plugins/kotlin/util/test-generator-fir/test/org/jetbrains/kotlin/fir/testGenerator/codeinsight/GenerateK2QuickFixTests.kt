@@ -66,7 +66,7 @@ internal fun MutableTWorkspace.generateK2FixTests() {
             model("$idea/quickfix/addConversionCall", pattern = pattern, isIgnored = true)
             model("$idea/quickfix/addCrossinline", pattern = pattern)
             model("$idea/quickfix/addDataModifier", pattern = pattern)
-            model("$idea/quickfix/addDefaultConstructor", pattern = pattern, isIgnored = true)
+            model("$idea/quickfix/addDefaultConstructor", pattern = pattern)
             model("$idea/quickfix/addElseBranchToIf", pattern = pattern)
             model("$idea/quickfix/addEmptyArgumentList", pattern = pattern)
             model("$idea/quickfix/addEqEqTrue", pattern = pattern)

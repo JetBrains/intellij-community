@@ -5685,7 +5685,59 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addDefaultConstructor")
+    public static class AddDefaultConstructor extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("expect.kt")
+        public void testExpect() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expect.kt");
+        }
+
+        @TestMetadata("expectAnnotation.kt")
+        public void testExpectAnnotation() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expectAnnotation.kt");
+        }
+
+        @TestMetadata("expectAnnotation2.kt")
+        public void testExpectAnnotation2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expectAnnotation2.kt");
+        }
+
+        @TestMetadata("expectAnnotation3.kt")
+        public void testExpectAnnotation3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expectAnnotation3.kt");
+        }
+
+        @TestMetadata("expectAnnotationWithUnresolvedParams.kt")
+        public void testExpectAnnotationWithUnresolvedParams() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expectAnnotationWithUnresolvedParams.kt");
+        }
+
+        @TestMetadata("expectInterface.kt")
+        public void testExpectInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expectInterface.kt");
+        }
+
+        @TestMetadata("expectWithUnresolvedParams.kt")
+        public void testExpectWithUnresolvedParams() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/expectWithUnresolvedParams.kt");
+        }
+
+        @TestMetadata("interface.kt")
+        public void testInterface() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addDefaultConstructor/interface.kt");
+        }
+    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/addElseBranchToIf")
