@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -11,7 +11,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Test
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 class MavenConfigImportingTest : MavenDomTestCase() {
@@ -101,7 +100,7 @@ class MavenConfigImportingTest : MavenDomTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>${'$'}{config.<caret></version>
@@ -138,12 +137,11 @@ class MavenConfigImportingTest : MavenDomTestCase() {
     var mavenProject = projectsManager.findProject(getModule("project"))
     assertEquals("1", mavenProject!!.mavenId.version)
 
-    WriteAction.runAndWait<IOException> {
+    writeAction {
       val content = "-Dver=2".toByteArray(StandardCharsets.UTF_8)
       configFile.setBinaryContent(content, -1, configFile.getTimeStamp() + 1)
     }
-    configConfirmationForYesAnswer()
-    importProjectAsync()
+    updateAllProjects()
 
     mavenProject = projectsManager.findProject(getModule("project"))
     assertEquals("2", mavenProject!!.mavenId.version)
