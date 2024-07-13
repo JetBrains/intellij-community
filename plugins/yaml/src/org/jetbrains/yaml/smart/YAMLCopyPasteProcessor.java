@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.*;
@@ -190,20 +191,24 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     //  there is a high probability that we are inlining them into that sequence, so do that
     String firstLineAdjusted = ContainerUtil.and(lines, s -> s.trim().startsWith("-"))
       ? StringUtil.trimLeading(StringUtil.trimStart(firstLine, "-")) : firstLine;
-    return firstLineAdjusted + "\n" +
-           lines.stream().skip(1).map(line -> {
-             // remove common indent and add needed indent
-             if (isEmptyLine(line)) {
-               // do not indent empty lines at all
-               return "";
-             }
-             else if (line.trim().startsWith("-")) {
-               return StringUtil.repeatSymbol(' ', indent) + StringUtil.trimLeading(line);
-             }
-             else {
-               return StringUtil.repeatSymbol(' ', indent) + "- " + StringUtil.trimLeading(line);
-             }
-           }).reduce((left, right) -> left + "\n" + right).orElse("");
+    return StreamEx.of(lines)
+      .skip(1)
+      .map(line -> {
+        // remove common indent and add needed indent
+        if (isEmptyLine(line)) {
+          // do not indent empty lines at all
+          return "";
+        }
+        else if (line.trim().startsWith("-")) {
+          return StringUtil.repeatSymbol(' ', indent) + StringUtil.trimLeading(line);
+        }
+        else {
+          return StringUtil.repeatSymbol(' ', indent) + "- " + StringUtil.trimLeading(line);
+        }
+      })
+      .prepend(firstLineAdjusted)
+      .reduce((left, right) -> left + "\n" + right)
+      .orElse("");
   }
 
   private static boolean isCommentElement(@Nullable PsiElement element) {
