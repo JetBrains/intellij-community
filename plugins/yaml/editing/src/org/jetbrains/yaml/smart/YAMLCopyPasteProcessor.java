@@ -63,9 +63,13 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     boolean inTheStartOfSubElement =
       isYamlElementType(element) && PsiUtilCore.getElementType(element) == YAMLTokenTypes.INDENT
       ||
-      element.getTextRange().getStartOffset() == caretOffset && isYamlElementType(prevLeaf) && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.INDENT
+      element.getTextRange().getStartOffset() == caretOffset &&
+      isYamlElementType(prevLeaf) &&
+      PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.INDENT
       ||
-      element.getTextRange().getStartOffset() >= caretOffset && isYamlElementType(prevLeaf) && PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.SEQUENCE_MARKER;
+      element.getTextRange().getStartOffset() >= caretOffset &&
+      isYamlElementType(prevLeaf) &&
+      PsiUtilCore.getElementType(prevLeaf) == YAMLTokenTypes.SEQUENCE_MARKER;
 
     if (!inTheStartOfSubElement) {
       return null;
@@ -189,7 +193,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     // if we are pasting a list of sequence items into a sequence,
     //  there is a high probability that we are inlining them into that sequence, so do that
     String firstLineAdjusted = ContainerUtil.and(lines, s -> s.trim().startsWith("-"))
-      ? StringUtil.trimLeading(StringUtil.trimStart(firstLine, "-")) : firstLine;
+                               ? StringUtil.trimLeading(StringUtil.trimStart(firstLine, "-")) : firstLine;
     return firstLineAdjusted + "\n" +
            lines.stream().skip(1).map(line -> {
              // remove common indent and add needed indent
@@ -265,7 +269,7 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
     }
 
     if (PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.SEQUENCE_MARKER ||
-      PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.TEXT && previousElement.textMatches("-")) {
+        PsiUtilCore.getElementType(previousElement) == YAMLTokenTypes.TEXT && previousElement.textMatches("-")) {
       return LineAdjustmentMode.ListItem;
     }
 
@@ -332,17 +336,17 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
 
   /** @return text to be pasted or null if it is not possible to paste text as key sequence */
   private static @Nullable String tryToPasteAsKeySequence(@NotNull String text,
-                                                @NotNull PsiFile file,
-                                                @NotNull Editor editor,
-                                                int caretOffset,
-                                                int indent) {
+                                                          @NotNull PsiFile file,
+                                                          @NotNull Editor editor,
+                                                          int caretOffset,
+                                                          int indent) {
     if (!text.matches(CONFIG_KEY_SEQUENCE_PATTERN)) {
       return null;
     }
     List<String> keys = separateCompositeKey(text);
     assert !keys.isEmpty();
 
-    for (String key: keys) {
+    for (String key : keys) {
       if (!YamlKeyValueRenameInputValidator.IDENTIFIER_PATTERN.matcher(key).matches()) {
         return null;
       }
@@ -409,9 +413,9 @@ public class YAMLCopyPasteProcessor implements CopyPastePreProcessor {
 
   /** @return text to be pasted or null if it is not possible to paste key sequence */
   private static @Nullable String tryToPasteAsKeySequenceAtMapping(@NotNull Editor editor,
-                                                         @NotNull List<String> keys,
-                                                         @NotNull PsiElement element,
-                                                         int caretOffset, int indent) {
+                                                                   @NotNull List<String> keys,
+                                                                   @NotNull PsiElement element,
+                                                                   int caretOffset, int indent) {
     while (true) {
       // TODO: RUBY-22437 support JSON-like mappings
       YAMLBlockMappingImpl blockMapping;
