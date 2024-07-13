@@ -2,9 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.idea.AppMode;
-import com.intellij.openapi.client.ClientAppSession;
-import com.intellij.openapi.client.ClientKind;
-import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.messages.Topic;
@@ -84,16 +82,9 @@ public interface JBAccountInfoService {
   @NotNull CompletableFuture<@NotNull LicenseListResult> issueTrialLicense(@NotNull String productCode, @NotNull List<String> consentOptions);
 
   static @Nullable JBAccountInfoService getInstance() {
-    // see BackendJbaInfoServiceImpl
     if (AppMode.isRemoteDevHost()) {
-      List<ClientAppSession> controllerSessions = ClientSessionsManager.getAppSessions(ClientKind.CONTROLLER);
-      if (controllerSessions.size() != 1) {
-        Logger log = Logger.getInstance(JBAccountInfoService.class);
-        log.debug("No controller session");
-        return null;
-      }
-      ClientAppSession controllerSession = controllerSessions.get(0);
-      return controllerSession.getService(JBAccountInfoService.class);
+      // see BackendJbaInfoServiceImpl
+      return ApplicationManager.getApplication().getService(JBAccountInfoService.class);
     }
     return JBAccountInfoServiceHolder.INSTANCE;
   }
