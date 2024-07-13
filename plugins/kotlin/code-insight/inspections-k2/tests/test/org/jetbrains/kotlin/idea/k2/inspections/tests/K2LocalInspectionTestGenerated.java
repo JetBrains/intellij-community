@@ -6440,6 +6440,75 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment")
+    public static class SuspiciousCollectionReassignment extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hasError.kt")
+        public void testHasError() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/hasError.kt");
+        }
+
+        @TestMetadata("hasError_ni.kt")
+        public void testHasError_ni() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/hasError_ni.kt");
+        }
+
+        @TestMetadata("int.kt")
+        public void testInt() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/int.kt");
+        }
+
+        @TestMetadata("minus.kt")
+        public void testMinus() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/minus.kt");
+        }
+
+        @TestMetadata("mutableList.kt")
+        public void testMutableList() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/mutableList.kt");
+        }
+
+        @TestMetadata("mutableMap.kt")
+        public void testMutableMap() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/mutableMap.kt");
+        }
+
+        @TestMetadata("mutableSet.kt")
+        public void testMutableSet() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/mutableSet.kt");
+        }
+
+        @TestMetadata("notLocal.kt")
+        public void testNotLocal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/notLocal.kt");
+        }
+
+        @TestMetadata("plus.kt")
+        public void testPlus() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/plus.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/simple.kt");
+        }
+
+        @TestMetadata("val.kt")
+        public void testVal() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/suspiciousCollectionReassignment/val.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/inspectionsLocal/canBeParameter")
     public static class CanBeParameter extends AbstractK2LocalInspectionTest {
         @java.lang.Override
