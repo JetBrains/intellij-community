@@ -6,9 +6,13 @@ import com.intellij.psi.impl.light.LightModifierList
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
+import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
+import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -16,7 +20,10 @@ import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
+import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
+import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.internal.analyzeForUast
+import org.jetbrains.uast.kotlin.internal.toPsiType
 
 /**
  * A fake light method from binary, which is not materialized for some reason
@@ -30,6 +37,7 @@ internal class UastFakeDeserializedSymbolLightMethod(
     name: String,
     containingClass: PsiClass,
     private val context: KtElement,
+    private val typeArgumentMapping: Map<KaTypeParameterSymbol, KaType>,
 ) : UastFakeLightMethodBase(
     context.manager,
     context.language,
@@ -38,6 +46,34 @@ internal class UastFakeDeserializedSymbolLightMethod(
     LightModifierList(context.manager),
     containingClass
 ) {
+
+    private val returnTypePart = UastLazyPart<PsiType?>()
+
+    private val _returnType: PsiType?
+        get() = returnTypePart.getOrBuild {
+            analyzeForUast(context) {
+                val functionSymbol = original.restoreSymbol() ?: return@analyzeForUast PsiTypes.nullType()
+                val returnType = functionSymbol.returnType
+                val substitutedType = if (returnType is KaTypeParameterType) {
+                    typeArgumentMapping[returnType.symbol] ?: returnType
+                } else
+                    returnType
+                toPsiType(
+                    substitutedType,
+                    this@UastFakeDeserializedSymbolLightMethod,
+                    context,
+                    PsiTypeConversionConfiguration(
+                        TypeOwnerKind.DECLARATION,
+                        typeMappingMode = KaTypeMappingMode.RETURN_TYPE
+                    )
+                )
+            }
+        }
+
+    override fun getReturnType(): PsiType? {
+        return _returnType
+    }
+
     private val _isSuspend = UastLazyPart<Boolean>()
 
     override fun isSuspendFunction(): Boolean =

@@ -2329,6 +2329,8 @@ interface UastResolveApiFixtureTestBase {
                             resolved.containingClass?.name
                         )
                     }
+                    TestCase.assertNotNull(resolved.returnType)
+                    TestCase.assertEquals("MyClass", resolved.returnType!!.canonicalText)
 
                     return super.visitCallExpression(node)
                 }

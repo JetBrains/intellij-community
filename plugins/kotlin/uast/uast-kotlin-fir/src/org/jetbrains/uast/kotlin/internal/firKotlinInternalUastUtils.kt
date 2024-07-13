@@ -11,7 +11,10 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
+import org.jetbrains.kotlin.analysis.api.resolution.KaCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.successfulCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -83,6 +86,7 @@ context(KaSession)
 internal fun toPsiMethod(
     functionSymbol: KaFunctionSymbol,
     context: KtElement,
+    kaCallInfo: KaCallInfo? = null,
 ): PsiMethod? {
     // `inline` w/ `reified` type param from binary dependency,
     // which we can't find source PSI, so fake it
@@ -98,7 +102,8 @@ internal fun toPsiMethod(
                         functionSymbol.createPointer(),
                         functionSymbol.name.identifier,
                         containingClass,
-                        context
+                        context,
+                        kaCallInfo.typeArgumentsMappingOrEmptyMap()
                     )
                 }
         }
@@ -106,7 +111,7 @@ internal fun toPsiMethod(
     return when (val psi = psiForUast(functionSymbol)) {
         null -> {
             // Lint/UAST CLI: try `fake` creation for a deserialized declaration
-            toPsiMethodForDeserialized(functionSymbol, context, psi)
+            toPsiMethodForDeserialized(functionSymbol, context, psi, kaCallInfo)
         }
         is PsiMethod -> psi
         is KtClassOrObject -> {
@@ -136,7 +141,7 @@ internal fun toPsiMethod(
                 functionSymbol.fakeOverrideOriginal.origin == KaSymbolOrigin.LIBRARY ->
                     // PSI to regular libraries should be handled by [DecompiledPsiDeclarationProvider]
                     // That is, this one is a deserialized declaration (in Lint/UAST IDE).
-                    toPsiMethodForDeserialized(functionSymbol, context, psi)
+                    toPsiMethodForDeserialized(functionSymbol, context, psi, kaCallInfo)
                 else ->
                     psi.getRepresentativeLightMethod()
                         ?: handleLocalOrSynthetic(psi)
@@ -152,6 +157,7 @@ private fun toPsiMethodForDeserialized(
     functionSymbol: KaFunctionSymbol,
     context: KtElement,
     psi: KtFunction?,
+    kaCallInfo: KaCallInfo? = null,
 ): PsiMethod? {
 
     fun equalSignatures(psiMethod: PsiMethod): Boolean {
@@ -219,7 +225,8 @@ private fun toPsiMethodForDeserialized(
                         functionSymbol.createPointer(),
                         functionSymbol.name.identifier,
                         this@lookup,
-                        context
+                        context,
+                        kaCallInfo.typeArgumentsMappingOrEmptyMap()
                     )
                 } else null
             }
@@ -257,6 +264,9 @@ private fun toPsiMethodForDeserialized(
         }
     } else null
 }
+
+private fun KaCallInfo?.typeArgumentsMappingOrEmptyMap(): Map<KaTypeParameterSymbol, KaType> =
+    (this?.successfulCallOrNull<KaCall>() as? KaCallableMemberCall<*, *>)?.typeArgumentsMapping ?: emptyMap()
 
 /**
  * Returns a `JvmName` annotation value.

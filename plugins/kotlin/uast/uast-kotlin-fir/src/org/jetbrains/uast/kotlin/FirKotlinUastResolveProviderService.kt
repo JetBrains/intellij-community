@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
@@ -243,20 +244,20 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveCall(ktElement: KtElement): PsiMethod? {
         analyzeForUast(ktElement) {
-            val ktCallInfo = ktElement.resolveToCall() ?: return null
-            ktCallInfo.singleFunctionCallOrNull()
+            val kaCallInfo = ktElement.resolveToCall() ?: return null
+            kaCallInfo.singleFunctionCallOrNull()
                 ?.symbol
-                ?.let { return toPsiMethod(it, ktElement) }
+                ?.let { return toPsiMethod(it, ktElement, kaCallInfo) }
             return when (ktElement) {
                 is KtBinaryExpression,
                 is KtPrefixExpression,
                 is KtPostfixExpression -> {
-                    ktCallInfo.singleCallOrNull<KaCompoundVariableAccessCall>()
+                    kaCallInfo.singleCallOrNull<KaCompoundVariableAccessCall>()
                         ?.compoundOperation
                         ?.operationPartiallyAppliedSymbol
                         ?.signature
                         ?.symbol
-                        ?.let { toPsiMethod(it, ktElement) }
+                        ?.let { toPsiMethod(it, ktElement, kaCallInfo) }
                 }
 
                 else -> null
@@ -266,14 +267,15 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
     override fun resolveSyntheticJavaPropertyAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         return analyzeForUast(ktSimpleNameExpression) {
-            val variableAccessCall = ktSimpleNameExpression.resolveToCall()?.singleCallOrNull<KaSimpleVariableAccessCall>() ?: return null
+            val kaCallInfo = ktSimpleNameExpression.resolveToCall() ?: return null
+            val variableAccessCall = kaCallInfo.singleCallOrNull<KaSimpleVariableAccessCall>() ?: return null
             val propertySymbol = variableAccessCall.symbol as? KaSyntheticJavaPropertySymbol ?: return null
             when (variableAccessCall.simpleAccess) {
                 is KaSimpleVariableAccess.Read -> {
-                    toPsiMethod(propertySymbol.javaGetterSymbol, ktSimpleNameExpression)
+                    toPsiMethod(propertySymbol.javaGetterSymbol, ktSimpleNameExpression, kaCallInfo)
                 }
                 is KaSimpleVariableAccess.Write -> {
-                    toPsiMethod(propertySymbol.javaSetterSymbol?: return null, ktSimpleNameExpression)
+                    toPsiMethod(propertySymbol.javaSetterSymbol?: return null, ktSimpleNameExpression, kaCallInfo)
                 }
             }
         }
