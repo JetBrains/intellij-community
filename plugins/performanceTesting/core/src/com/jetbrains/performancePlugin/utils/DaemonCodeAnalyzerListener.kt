@@ -28,6 +28,7 @@ internal object DaemonCodeAnalyzerListener {
              spanRef: Ref<Span>,
              timeoutInSeconds: Long = 0,
              expectedOpenedFile: String? = null): DaemonCodeAnalyzerResult {
+    LOG.info("Start listening ${DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC.displayName}")
     val result = DaemonCodeAnalyzerResult(connection, spanRef, timeoutInSeconds)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
       override fun daemonFinished(fileEditors: Collection<FileEditor>) {
