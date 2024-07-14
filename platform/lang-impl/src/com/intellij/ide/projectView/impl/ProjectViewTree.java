@@ -8,7 +8,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.UiDataProvider;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
@@ -38,7 +38,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class ProjectViewTree extends DnDAwareTree implements UiDataProvider, SpeedSearchSupply.SpeedSearchLocator {
+public class ProjectViewTree extends DnDAwareTree implements UiCompatibleDataProvider, SpeedSearchSupply.SpeedSearchLocator {
 
   private @Nullable ProjectViewDirectoryExpandDurationMeasurer expandMeasurer;
 
