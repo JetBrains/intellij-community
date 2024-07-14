@@ -270,8 +270,9 @@ private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: L
   val fixtures: List<PyExpression> = when (assignedValue) {
     is PyListLiteralExpression -> assignedValue.elements.toList()
     is PyStringLiteralExpression -> listOf(assignedValue)
+    is PyQualifiedExpression -> listOf(getFixtureNameFromQualifiedName(assignedValue))
     is PyParenthesizedExpression -> assignedValue.children.find { it is PyTupleExpression }?.let { tuple ->
-      (tuple as PyTupleExpression).elements.filterIsInstance<PyStringLiteralExpression>()
+      (tuple as PyTupleExpression).elements.mapNotNull { resolve(it) }
     } ?: emptyList()
     else -> emptyList()
   }
@@ -290,6 +291,12 @@ private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: L
   } ?: return null
 
   return NamedFixtureLink(candidate, null)
+}
+
+private fun getFixtureNameFromQualifiedName(assignedValue: PyQualifiedExpression): PyStringLiteralExpression {
+  val factory = PyElementGenerator.getInstance(assignedValue.project)
+  val qualifiedName = assignedValue.asQualifiedName().toString().substringBeforeLast(".__name__", "")
+  return factory.createStringLiteralFromString(qualifiedName)
 }
 
 /**
@@ -319,8 +326,13 @@ fun findDecoratorsByName(module: Module, names: Iterable<String>): Iterable<PyDe
                             arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
                           PyDecorator::class.java)
   }
-
-
+internal fun resolve(expr: PyExpression): PyExpression? {
+  when (expr) {
+    is PyStringLiteralExpression -> return expr
+    is PyQualifiedExpression -> return getFixtureNameFromQualifiedName(expr)
+    }
+  return null
+}
 private fun createFixture(decorator: PyDecorator): PyTestFixture? {
   val target = decorator.target ?: return null
   return (decorator.getTestFixtureName() ?: target.name)?.let { name ->
