@@ -844,6 +844,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     myState = TerminatedState.INSTANCE;
     if (!myIsSuite && myStartTime != null) {
       setDuration(endTime - myStartTime);
+    } else if (!myIsSuite) {
+      setDuration(0);
     }
     final List<? extends SMTestProxy> children = getChildren();
     for (SMTestProxy child : children) {
