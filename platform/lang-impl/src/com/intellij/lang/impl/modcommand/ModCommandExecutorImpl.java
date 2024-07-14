@@ -30,9 +30,9 @@ import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -49,7 +49,6 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -63,6 +62,7 @@ import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -397,64 +397,54 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
 
   private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
     record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull Presentation presentation) {}
-    List<ActionAndPresentation> actions = ActionUtil.underModalProgress(
-      context.project(),
-      LangBundle.message("progress.building.chooser"),
-      () -> StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
-        .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList()
-    );
-    if (actions.isEmpty()) return true;
-    
-    String name = chooser.title();
-    if (actions.size() == 1) {
-      ModCommandAction action = actions.get(0).action();
-      executeNextStep(context, name, editor, () -> {
-        if (action.getPresentation(context) == null) return null;
-        return action.perform(context);
-      });
-      return true;
-    }
     VirtualFile file = context.file().getVirtualFile();
     if (file == null) return false;
     Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
     if (finalEditor == null) return false;
-    List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
-      actions, (actionAndPresentation) -> {
-        IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
-        return new IntentionActionWithTextCaching(intention);
-      });
-    IntentionContainer intentions = new IntentionContainer() {
-      @Override
-      public @NotNull String getTitle() {
-        return chooser.title();
-      }
+    ReadAction.nonBlocking(() -> {
+      return StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
+        .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
+    }).finishOnUiThread(ModalityState.defaultModalityState(), actions -> {
+      if (actions.isEmpty()) return;
 
-      @Override
-      public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
-        return actionsWithTextCaching;
+      String name = chooser.title();
+      if (actions.size() == 1) {
+        ModCommandAction action = actions.get(0).action();
+        ModCommandExecutor.executeInteractively(context, name, editor, () -> {
+          if (action.getPresentation(context) == null) return null;
+          return action.perform(context);
+        });
+        return;
       }
+      List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
+        actions, (actionAndPresentation) -> {
+          IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
+          return new IntentionActionWithTextCaching(intention);
+        });
+      IntentionContainer intentions = new IntentionContainer() {
+        @Override
+        public @NotNull String getTitle() {
+          return chooser.title();
+        }
 
-      @Override
-      public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
-        return IntentionGroup.OTHER;
-      }
+        @Override
+        public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
+          return actionsWithTextCaching;
+        }
 
-      @Override
-      public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching action) {
-        return action.getIcon();
-      }
-    };
-    IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
+        @Override
+        public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
+          return IntentionGroup.OTHER;
+        }
+
+        @Override
+        public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching action) {
+          return action.getIcon();
+        }
+      };
+      IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
+    }).submit(AppExecutorUtil.getAppExecutorService());
     return true;
-  }
-
-  private void executeNextStep(@NotNull ActionContext context, @NotNull @NlsContexts.Command String name, @Nullable Editor editor,
-                               Callable<? extends ModCommand> supplier) {
-    ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return ReadAction.nonBlocking(supplier).expireWhen(context.project()::isDisposed).executeSynchronously();
-      }, name, true, context.project());
-    if (next == null) return;
-    executeInteractively(context, next, editor);
   }
 
   private static boolean executeNavigate(@NotNull Project project, ModNavigate nav, @Nullable Editor editor) {
