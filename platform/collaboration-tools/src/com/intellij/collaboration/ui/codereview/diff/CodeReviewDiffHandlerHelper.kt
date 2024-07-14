@@ -25,17 +25,17 @@ import kotlinx.coroutines.flow.collectLatest
  * Can be used as a delegate for a service which is supposed to provide diff UI
  */
 class CodeReviewDiffHandlerHelper(private val project: Project, parentCs: CoroutineScope) {
-  private val cs = parentCs.childScope(Dispatchers.Main.immediate)
+  private val cs = parentCs.childScope(javaClass.name, Dispatchers.Main.immediate)
 
   fun <VM : ComputedDiffViewModel> createDiffRequestProcessor(
     reviewDiffVm: Flow<VM?>, createContext: (VM) -> List<KeyValuePair<*>>
   ): DiffRequestProcessor {
-    val uiCs = cs.childScope()
+    val uiCs = cs.childScope("Code Review Diff UI")
     val vm = object : ComputedDiffViewModel {
       override val diffVm = MutableStateFlow<ComputedResult<DiffProducersViewModel?>>(ComputedResult.loading())
     }
     val processor = ComputingDiffRequestProcessor(project, uiCs, vm)
-    uiCs.launchNow(CoroutineName("Code Review Diff UI")) {
+    uiCs.launchNow {
       reviewDiffVm.collectLatest { computedDiffVm ->
         if (computedDiffVm != null) {
           val context = createContext(computedDiffVm)
