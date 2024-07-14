@@ -106,10 +106,7 @@ object LocalizationUtil {
   @JvmOverloads
   fun getLocalizedPathsWithDefault(path: Path, specialLocale: Locale? = null): List<Path> {
     val locale = specialLocale ?: getLocale()
-    return getLocalizedPaths(path, locale).toMutableList().let {
-      it.add(path)
-      it.distinct()
-    }
+    return getLocalizedPaths(path, locale).toMutableList().plusElement(path).distinct()
   }
 
   @Internal
