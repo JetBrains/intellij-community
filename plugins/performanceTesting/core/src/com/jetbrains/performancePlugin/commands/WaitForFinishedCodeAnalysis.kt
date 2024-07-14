@@ -117,8 +117,10 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       else {
         //Printing additional information to get information why highlighting was stuck
         sessions.forEach {
-          printCodeAnalyzerStatistic(it.key.editor)
-          printFileStatus(it.key.editor)
+          val editor = it.key.editor
+          printCodeAnalyzerStatistic(editor)
+          printFileStatusMapInfo(editor)
+          printEditorInfo(editor)
         }
         LOG.info("Highlighting still in progress: ${sessions.keys.joinToString(separator = ",\n") { it.description }}")
       }
@@ -237,6 +239,12 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
           LOG.info("daemon stopped for ${highlightedEditor.editor.description}, " +
                    "shouldWaitForHighlighting=${shouldWait}, " +
                    "editor.shouldWaitForNextHighlighting=${highlightedEditor.shouldWaitForNextHighlighting}")
+          LOG.info("""daemon stopped for ${highlightedEditor.editor.description}, 
+                   shouldWaitForHighlighting=${shouldWait},
+                   highlightedEditor.shouldWaitForNextHighlighting=${highlightedEditor.shouldWaitForNextHighlighting} 
+                  """
+                     .trimIndent()
+          )
           if (shouldWait) {
             ExceptionWithTime.markAnalysisFinished(exceptionWithTime)
           }
@@ -261,7 +269,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
   }
 
-  internal fun printFileStatus(editor: Editor) {
+  internal fun printFileStatusMapInfo(editor: Editor) {
     try {
       val fileStatus = (DaemonCodeAnalyzerImpl.getInstance(project) as DaemonCodeAnalyzerImpl)
         .fileStatusMap
@@ -270,6 +278,18 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
     }
     catch (_: Throwable) {
       LOG.warn("Print Analyzer status map failed")
+    }
+  }
+
+  internal fun printEditorInfo(editor: Editor) {
+    try {
+      LOG.info("""
+        Editor document ${editor.virtualFile.path}
+            document is in bulkUpdate ${editor.document.isInBulkUpdate}
+      """.trimIndent());
+    }
+    catch (_: Throwable) {
+      LOG.warn("Print editor info failed")
     }
   }
 
