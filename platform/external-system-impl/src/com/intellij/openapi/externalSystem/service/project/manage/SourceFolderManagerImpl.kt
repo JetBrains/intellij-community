@@ -42,6 +42,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import java.util.concurrent.ArrayBlockingQueue
+import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Future
 
 @ApiStatus.Internal
@@ -57,7 +59,7 @@ class SourceFolderManagerImpl(private val project: Project,
   private var sourceFolders = CanonicalPathPrefixTreeFactory.createMap<SourceFolderModel>()
   private var sourceFoldersByModule = HashMap<String, ModuleModel>()
 
-  private val operationsStates = mutableListOf<Future<*>>()
+  private val operationsStates: BlockingQueue<Future<*>> = ArrayBlockingQueue(16)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private val refreshFilesDispatcher = Dispatchers.IO.limitedParallelism(3)
@@ -173,7 +175,7 @@ class SourceFolderManagerImpl(private val project: Project,
     }
 
     val application = ApplicationManager.getApplication()
-    val future = (project as ComponentManagerEx).getCoroutineScope().async {
+    val future = cs.async {
       blockingContext {
         updateSourceFolders(sourceFoldersToChange)
       }
@@ -181,8 +183,8 @@ class SourceFolderManagerImpl(private val project: Project,
 
     if (application.isUnitTestMode) {
       ThreadingAssertions.assertEventDispatchThread()
-      operationsStates.removeIf { it.isDone }
       operationsStates.add(future)
+      future.whenComplete { _, _ -> operationsStates.remove(future) }
     }
   }
 
@@ -326,9 +328,10 @@ class SourceFolderManagerImpl(private val project: Project,
   fun consumeBulkOperationsState(stateConsumer: (Future<*>) -> Unit) {
     ThreadingAssertions.assertEventDispatchThread()
     assert(ApplicationManager.getApplication().isUnitTestMode)
-    for (operationsState in operationsStates) {
-      stateConsumer.invoke(operationsState)
-    }
+    do {
+      val operation = operationsStates.poll() ?: break
+      stateConsumer.invoke(operation)
+    } while (true)
   }
 
   companion object {
