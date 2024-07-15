@@ -150,7 +150,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     myTestModeFlag = false;
     myHeadlessMode = AppMode.isHeadless();
     myCommandLineMode = AppMode.isCommandLine();
-    if (!myHeadlessMode) {
+    if (!myHeadlessMode || SystemProperties.getBooleanProperty("allow.save.application.headless", false)) {
       mySaveAllowed = true;
     }
 
