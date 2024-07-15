@@ -184,7 +184,7 @@ public abstract class DiffRequestProcessor
       myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     }
     myToolbar.setTargetComponent(myContentPanel);
-    myToolbarWrapper = new Wrapper(myContentPanel.getTargetComponent());
+    myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
     myRightToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
