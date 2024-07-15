@@ -90,5 +90,7 @@ internal class NewUsersOnboardingService(private val project: Project, private v
 
   companion object {
     fun getInstance(project: Project): NewUsersOnboardingService = project.service()
+
+    const val NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY: String = "NEW_USERS_ONBOARDING_DIALOG_SHOWN"
   }
 }
