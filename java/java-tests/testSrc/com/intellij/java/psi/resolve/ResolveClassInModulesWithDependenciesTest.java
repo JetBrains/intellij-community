@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -99,6 +100,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
 
       ModuleRootModificationUtil.addDependency(getModule(), module);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   private PsiReference configure() throws Exception {
