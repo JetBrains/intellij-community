@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.highlighters;
 
 import com.intellij.ui.ExperimentalUI;
@@ -21,13 +21,13 @@ import java.util.Collections;
 import java.util.Set;
 
 @ApiStatus.Internal
-public class MyCommitsHighlighter implements VcsLogHighlighter {
+public class VcsLogCommitsHighlighter implements VcsLogHighlighter {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogUi myUi;
   private final @NotNull VcsLogUserResolver myResolver;
   private boolean myShouldHighlightUser = false;
 
-  MyCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
+  VcsLogCommitsHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi, @NotNull VcsLogUserResolver userResolver) {
     myLogData = logData;
     myUi = logUi;
     myResolver = userResolver;
@@ -85,7 +85,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
     @Override
     public @NotNull VcsLogHighlighter createHighlighter(@NotNull VcsLogData logData, @NotNull VcsLogUi logUi) {
-      return new MyCommitsHighlighter(logData, logUi, logData.getUserNameResolver());
+      return new VcsLogCommitsHighlighter(logData, logUi, logData.getUserNameResolver());
     }
 
     @Override

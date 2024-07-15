@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.ide.actions.SplitAction
@@ -89,7 +89,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
   }
 }
 
-class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
+internal class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
   override fun getEditorTabTooltipText(project: Project, file: VirtualFile): String? {
     if (file !is DefaultVcsLogFile) return null
@@ -104,7 +104,7 @@ class DefaultVcsLogFileTabTitleProvider : EditorTabTitleProvider, DumbAware {
 
 @Service(Service.Level.APP)
 @State(name = "Vcs.Log.Editor.Tab.Names", storages = [Storage(StoragePathMacros.CACHE_FILE)])
-class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
+private class VcsLogEditorTabNameCache : SimplePersistentStateComponent<VcsLogEditorTabNameCache.MyState>(MyState()) {
 
   fun getTabName(path: String) = state.pathToTabName[path]
 

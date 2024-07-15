@@ -25,7 +25,6 @@ import com.intellij.vcs.log.history.isNewHistoryEnabled
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.ui.table.column.*
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
@@ -158,8 +157,7 @@ private class VcsLogIndexAvailabilityPredicate(private val project: Project, pri
   override fun invoke() = isVcsLogIndexAvailable
 }
 
-@ApiStatus.Internal
-class VcsLogConfigurableProvider(private val project: Project) : ConfigurableProvider() {
+internal class VcsLogConfigurableProvider(private val project: Project) : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
     if (VcsProjectLog.getLogProviders(project).isEmpty()) return null
     return VcsLogConfigurable(project)

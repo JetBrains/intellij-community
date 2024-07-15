@@ -20,7 +20,7 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
-import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
+import com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUtil;
@@ -77,7 +77,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     });
     myFileHistoryPanel = new FileHistoryPanel(this, myFileHistoryModel, myFilterUi, logData, path, root, myColorManager, this);
 
-    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(MyCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
+    getTable().addHighlighter(LOG_HIGHLIGHTER_FACTORY_EP.findExtensionOrFail(
+      VcsLogCommitsHighlighter.Factory.class).createHighlighter(getLogData(), this));
     if (myRevision != null) {
       getTable().addHighlighter(new RevisionHistoryHighlighter(myLogData.getStorage(), myRevision, root));
     }

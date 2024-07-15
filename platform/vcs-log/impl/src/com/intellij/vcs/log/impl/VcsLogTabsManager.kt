@@ -185,7 +185,7 @@ class VcsLogTabsManager internal constructor(private val project: Project,
   }
 }
 
-class VcsLogToolwindowManagerListener(private val project: Project) : ToolWindowManagerListener {
+internal class VcsLogToolwindowManagerListener(private val project: Project) : ToolWindowManagerListener {
   override fun toolWindowShown(toolWindow: ToolWindow) {
     if (toolWindow.id == ChangesViewContentManager.TOOLWINDOW_ID) {
       val projectLog = VcsProjectLog.getInstance(project)

@@ -52,7 +52,7 @@
 
     <statistics.notificationIdsHolder implementation="com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder"/>
 
-    <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
+    <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.VcsLogCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.IndexHighlighter$Factory"/>

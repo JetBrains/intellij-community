@@ -454,9 +454,6 @@ f:com.intellij.vcs.log.history.ReachableNodesUtilKt
 - sf:findAncestorNode(com.intellij.vcs.log.graph.api.LinearGraph,I,kotlin.jvm.functions.Function1):java.lang.Integer
 - sf:findVisibleAncestorRow(I,com.intellij.vcs.log.graph.api.LinearGraph,com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo,kotlin.jvm.functions.Function1):java.lang.Integer
 - sf:findVisibleAncestorRow(I,com.intellij.vcs.log.visible.VisiblePack):java.lang.Integer
-c:com.intellij.vcs.log.impl.CannotAddVcsLogWindowException
-- java.lang.RuntimeException
-- <init>(java.lang.String,java.lang.Throwable):V
 f:com.intellij.vcs.log.impl.CommonUiProperties
 - sf:COLUMN_ID_ORDER:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
 - sf:COMPACT_REFERENCES_VIEW:com.intellij.vcs.log.impl.VcsLogUiProperties$VcsLogUiProperty
@@ -537,14 +534,6 @@ c:com.intellij.vcs.log.impl.SimpleRefType
 - getBackgroundColor():java.awt.Color
 - hashCode():I
 - isBranch():Z
-c:com.intellij.vcs.log.impl.SingletonRefGroup
-- com.intellij.vcs.log.RefGroup
-- <init>(com.intellij.vcs.log.VcsRef):V
-- getColors():java.util.List
-- getName():java.lang.String
-- getRef():com.intellij.vcs.log.VcsRef
-- getRefs():java.util.List
-- isExpanded():Z
 c:com.intellij.vcs.log.impl.TimedVcsCommitImpl
 - com.intellij.vcs.log.TimedVcsCommit
 - <init>(com.intellij.vcs.log.Hash,java.util.List,J):V
@@ -553,10 +542,6 @@ c:com.intellij.vcs.log.impl.TimedVcsCommitImpl
 - f:getParents():java.util.List
 - f:getTimestamp():J
 - f:hashCode():I
-f:com.intellij.vcs.log.impl.VcsActivityKey
-- com.intellij.platform.backend.observation.ActivityKey
-- sf:INSTANCE:com.intellij.vcs.log.impl.VcsActivityKey
-- getPresentableName():java.lang.String
 *c:com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails
 - com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 - com.intellij.vcs.log.VcsFullCommitDetails
@@ -822,10 +807,6 @@ f:com.intellij.vcs.log.impl.VcsLogTabsManager$Companion
 - f:onDisplayNameChange(com.intellij.vcs.log.ui.MainVcsLogUi,kotlin.jvm.functions.Function0):V
 com.intellij.vcs.log.impl.VcsLogTabsProperties
 - a:createProperties(java.lang.String):com.intellij.vcs.log.impl.MainVcsLogUiProperties
-f:com.intellij.vcs.log.impl.VcsLogToolwindowManagerListener
-- com.intellij.openapi.wm.ex.ToolWindowManagerListener
-- <init>(com.intellij.openapi.project.Project):V
-- toolWindowShown(com.intellij.openapi.wm.ToolWindow):V
 com.intellij.vcs.log.impl.VcsLogUiProperties
 - a:addChangeListener(com.intellij.vcs.log.impl.VcsLogUiProperties$PropertiesChangeListener):V
 - a:addChangeListener(com.intellij.vcs.log.impl.VcsLogUiProperties$PropertiesChangeListener,com.intellij.openapi.Disposable):V
@@ -975,13 +956,6 @@ f:com.intellij.vcs.log.ui.VcsLogColorManagerFactory
 - sf:ROOT_OPENED_STATE:java.lang.String
 - sf:create(java.util.Collection):com.intellij.vcs.log.ui.VcsLogColorManager
 - sf:create(java.util.Set):com.intellij.vcs.log.ui.VcsLogColorManager
-c:com.intellij.vcs.log.ui.VcsLogColorManagerImpl
-- com.intellij.vcs.log.ui.VcsLogColorManager
-- <init>(java.util.Collection,java.util.List,com.intellij.vcs.log.ui.VcsLogColorManagerImpl$AdditionalColorSpace[]):V
-- getPathColor(com.intellij.openapi.vcs.FilePath,java.lang.String):java.awt.Color
-- getPaths():java.util.Collection
-- getRootColor(com.intellij.openapi.vfs.VirtualFile,java.lang.String):java.awt.Color
-c:com.intellij.vcs.log.ui.VcsLogColorManagerImpl$AdditionalColorSpace
 f:com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 - sf:FILE_HISTORY_MODEL:com.intellij.openapi.actionSystem.DataKey
 - sf:FILE_HISTORY_UI:com.intellij.openapi.actionSystem.DataKey
@@ -994,16 +968,6 @@ f:com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 - sf:VCS_LOG_GRAPH_TABLE:com.intellij.openapi.actionSystem.DataKey
 - sf:VCS_LOG_VISIBLE_ROOTS:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
-f:com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder
-- sf:COMMIT_NOT_FOUND:java.lang.String
-- sf:Companion:com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder$Companion
-- sf:FATAL_ERROR:java.lang.String
-- sf:FILE_HISTORY_ACTION_LOAD_DETAILS_ERROR:java.lang.String
-- sf:LOG_NOT_AVAILABLE:java.lang.String
-- sf:NAVIGATION_ERROR:java.lang.String
-- <init>():V
-- getNotificationIds():java.util.List
-f:com.intellij.vcs.log.ui.VcsLogNotificationIdsHolder$Companion
 f:com.intellij.vcs.log.ui.VcsLogPanel
 - com.intellij.ui.components.JBPanel
 - com.intellij.openapi.actionSystem.DataProvider
@@ -1211,12 +1175,6 @@ c:com.intellij.vcs.log.ui.details.commit.ReferencesPanel
 - setReferences(java.util.List):V
 - setReferences(java.util.List,java.util.List):V
 - update():V
-f:com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider
-- com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- getEditorTabTitle(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
-- getEditorTabTooltipText(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):java.lang.String
 f:com.intellij.vcs.log.ui.editor.VcsLogEditor
 - com.intellij.diff.util.FileEditorBase
 - <init>(com.intellij.openapi.project.Project,com.intellij.vcs.log.ui.editor.VcsLogFile):V
@@ -1224,15 +1182,6 @@ f:com.intellij.vcs.log.ui.editor.VcsLogEditor
 - getFile():com.intellij.vcs.log.ui.editor.VcsLogFile
 - getName():java.lang.String
 - getPreferredFocusedComponent():javax.swing.JComponent
-f:com.intellij.vcs.log.ui.editor.VcsLogEditorTabNameCache
-- com.intellij.openapi.components.SimplePersistentStateComponent
-- <init>():V
-- f:getTabName(java.lang.String):java.lang.String
-- f:putTabName(java.lang.String,java.lang.String):V
-f:com.intellij.vcs.log.ui.editor.VcsLogEditorTabNameCache$MyState
-- com.intellij.openapi.components.BaseState
-- <init>():V
-- f:getPathToTabName():java.util.Map
 a:com.intellij.vcs.log.ui.editor.VcsLogFile
 - com.intellij.testFramework.LightVirtualFile
 - <init>(java.lang.String):V
@@ -1248,10 +1197,6 @@ f:com.intellij.vcs.log.ui.editor.VcsLogFileType
 - isReadOnly():Z
 f:com.intellij.vcs.log.ui.editor.VcsLogFileType$Companion
 - f:getINSTANCE():com.intellij.vcs.log.ui.editor.VcsLogFileType
-f:com.intellij.vcs.log.ui.editor.VcsLogIconProvider
-- com.intellij.ide.FileIconProvider
-- <init>():V
-- getIcon(com.intellij.openapi.vfs.VirtualFile,I,com.intellij.openapi.project.Project):javax.swing.Icon
 f:com.intellij.vcs.log.ui.filter.BranchFilterModel
 - com.intellij.vcs.log.ui.filter.FilterModel$MultipleFilterModel
 - sf:Companion:com.intellij.vcs.log.ui.filter.BranchFilterModel$Companion
@@ -1495,12 +1440,6 @@ c:com.intellij.vcs.log.ui.frame.CommitPresentationUtil$CommitPresentation
 - isResolved():Z
 - parseTargetCommit(javax.swing.event.HyperlinkEvent):com.intellij.vcs.log.CommitId
 - resolve(com.intellij.util.containers.MultiMap):com.intellij.vcs.log.ui.frame.CommitPresentationUtil$CommitPresentation
-f:com.intellij.vcs.log.ui.frame.ComponentQuickActionProvider
-- com.intellij.ui.switcher.QuickActionProvider
-- <init>(javax.swing.JComponent):V
-- getActions(Z):java.util.List
-- getComponent():javax.swing.JComponent
-- getName():java.lang.Void
 c:com.intellij.vcs.log.ui.frame.MainFrame
 - javax.swing.JPanel
 - com.intellij.openapi.Disposable
@@ -1613,9 +1552,6 @@ c:com.intellij.vcs.log.ui.render.LabelIcon
 - s:getWidth(I,I):I
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 - paintTag(java.awt.Graphics2D,F,F,F):V
-f:com.intellij.vcs.log.ui.render.LabelIconCache
-- <init>():V
-- f:getIcon(javax.swing.JComponent,I,java.awt.Color,java.util.List):com.intellij.vcs.log.ui.render.LabelIcon
 c:com.intellij.vcs.log.ui.render.LabelPainter
 - sf:BOTTOM_TEXT_PADDING:com.intellij.util.ui.JBValue
 - sf:COMPACT_MIDDLE_PADDING:com.intellij.util.ui.JBValue
@@ -1627,7 +1563,6 @@ c:com.intellij.vcs.log.ui.render.LabelPainter
 - sf:TOP_TEXT_PADDING:com.intellij.util.ui.JBValue
 - p:myBackground:java.awt.Color
 - p:myLabels:java.util.List
-- <init>(javax.swing.JComponent,com.intellij.vcs.log.ui.render.LabelIconCache):V
 - clear():V
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List):V
 - customizePainter(java.awt.Color,java.awt.Color,Z,I,java.util.List,java.util.List):V
@@ -1650,14 +1585,6 @@ a:com.intellij.vcs.log.ui.render.TypeSafeTableCellRenderer
 - getTableCellRendererComponent(javax.swing.JTable,java.lang.Object,Z,Z,I,I):java.awt.Component
 - pa:getTableCellRendererComponentImpl(javax.swing.JTable,java.lang.Object,Z,Z,I,I):java.awt.Component
 - p:getValue(java.lang.Object):java.lang.Object
-f:com.intellij.vcs.log.ui.render.VcsLogLabelPainter
-- com.intellij.vcs.log.ui.render.LabelPainter
-- sf:Companion:com.intellij.vcs.log.ui.render.VcsLogLabelPainter$Companion
-- <init>(com.intellij.vcs.log.data.VcsLogData,javax.swing.JComponent,com.intellij.vcs.log.ui.render.LabelIconCache):V
-- f:customizePainter(java.util.Collection,java.util.Collection,java.awt.Color,java.awt.Color,Z,I):V
-- f:getShowTagNames():Z
-- f:setShowTagNames(Z):V
-f:com.intellij.vcs.log.ui.render.VcsLogLabelPainter$Companion
 f:com.intellij.vcs.log.ui.table.GraphTableModel
 - javax.swing.table.AbstractTableModel
 - com.intellij.vcs.log.ui.table.VcsLogCommitListModel
