@@ -3,13 +3,14 @@ package org.jetbrains.plugins.terminal.block.prompt
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
 import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils
 
 internal class BuiltInPromptRenderer(
-  private val sessionInfo: TerminalSessionInfo,
+  private val colorPalette: TerminalColorPalette,
   private val isSingleLine: Boolean,
 ) : TerminalPromptRenderer {
   override fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo {
@@ -56,6 +57,6 @@ internal class BuiltInPromptRenderer(
   }
 
   private fun plainAttributes(colorIndex: Int): TextAttributesProvider {
-    return TerminalUiUtils.plainAttributesProvider(colorIndex, sessionInfo.colorPalette)
+    return TerminalUiUtils.plainAttributesProvider(colorIndex, colorPalette)
   }
 }

@@ -44,11 +44,6 @@ interface TerminalPromptModel : Disposable {
   @RequiresEdt
   fun resetUndoRedoStack()
 
-  /**
-   * Updates the prompt string, leaving the command untouched.
-   */
-  fun updatePrompt(state: TerminalPromptState)
-
   @RequiresEdt
   fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?)
 

@@ -6,16 +6,12 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.jediterm.core.util.TermSize
+import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
-import org.jetbrains.plugins.terminal.block.TerminalCommandExecutor
 import org.jetbrains.plugins.terminal.block.history.CommandHistoryManager
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
-import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
@@ -30,7 +26,7 @@ internal class TerminalPromptController(
   private val commandHistoryManager: CommandHistoryManager
   private val listeners: MutableList<PromptStateListener> = CopyOnWriteArrayList()
 
-  val model: TerminalPromptModel = TerminalPromptModelImpl(editor, TerminalSessionInfoImpl(session))
+  val model: TerminalPromptModel = TerminalPromptModelImpl(editor, session)
 
   val commandHistory: List<String>
     get() = commandHistoryManager.getHistory()
@@ -56,11 +52,6 @@ internal class TerminalPromptController(
     commandHistoryManager = CommandHistoryManager(session, model)
 
     Disposer.register(session, model)
-    session.addCommandListener(object : ShellCommandListener {
-      override fun promptStateUpdated(newState: TerminalPromptState) {
-        model.updatePrompt(newState)
-      }
-    })
 
     session.addCommandListener(ShellEditorBufferReportShellCommandListener(session, model, editor), session)
   }
@@ -105,13 +96,6 @@ internal class TerminalPromptController(
     fun commandSearchRequested() {}
     @RequiresEdt
     fun promptVisibilityChanged(visible: Boolean) {}
-  }
-
-  private class TerminalSessionInfoImpl(private val session: BlockTerminalSession) : TerminalSessionInfo {
-    override val settings: JBTerminalSystemSettingsProviderBase = session.settings
-    override val colorPalette: TerminalColorPalette = session.colorPalette
-    override val terminalSize: TermSize
-      get() = session.model.withContentLock { TermSize(session.model.width, session.model.height) }
   }
 
   companion object {

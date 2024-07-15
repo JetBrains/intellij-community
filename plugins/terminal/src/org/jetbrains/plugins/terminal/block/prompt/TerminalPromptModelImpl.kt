@@ -17,8 +17,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.terminal.TerminalColorPalette
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jediterm.core.util.TermSize
@@ -26,15 +24,13 @@ import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
+import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
+import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
 import java.util.concurrent.CopyOnWriteArrayList
 
-/**
- * Shell session agnostic prompt model that is managing the prompt and input command positions in the Prompt editor.
- * Should know nothing about shell session except the things provided in [sessionInfo].
- */
 internal class TerminalPromptModelImpl(
   override val editor: EditorEx,
-  private val sessionInfo: TerminalSessionInfo,
+  private val session: BlockTerminalSession,
 ) : TerminalPromptModel, Disposable {
   private val document: DocumentEx
     get() = editor.document
@@ -66,6 +62,12 @@ internal class TerminalPromptModelImpl(
     editor.caretModel.addCaretListener(PreventMoveToPromptListener(), this)
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(document) { /* do nothing */ }
 
+    session.addCommandListener(object : ShellCommandListener {
+      override fun promptStateUpdated(newState: TerminalPromptState) {
+        updatePrompt(newState)
+      }
+    })
+
     editor.project!!.messageBus.connect(this).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       doUpdatePrompt(renderingInfo)
     })
@@ -81,7 +83,7 @@ internal class TerminalPromptModelImpl(
     undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
   }
 
-  override fun updatePrompt(state: TerminalPromptState) {
+  private fun updatePrompt(state: TerminalPromptState) {
     val updatedInfo = renderer.calculateRenderingInfo(state)
     runInEdt {
       doUpdatePrompt(updatedInfo)
@@ -116,7 +118,7 @@ internal class TerminalPromptModelImpl(
 
   private fun getOrCreateRightPromptManager(): RightPromptManager {
     rightPromptManager?.let { return it }
-    val manager = RightPromptManager(editor, sessionInfo.settings)
+    val manager = RightPromptManager(editor, session.settings)
     Disposer.register(this, manager)
     rightPromptManager = manager
     return manager
@@ -124,9 +126,12 @@ internal class TerminalPromptModelImpl(
 
   private fun createPromptRenderer(): TerminalPromptRenderer {
     return when (BlockTerminalOptions.getInstance().promptStyle) {
-      TerminalPromptStyle.SINGLE_LINE -> BuiltInPromptRenderer(sessionInfo, isSingleLine = true)
-      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(sessionInfo, isSingleLine = false)
-      TerminalPromptStyle.SHELL -> ShellPromptRenderer(sessionInfo)
+      TerminalPromptStyle.SINGLE_LINE -> BuiltInPromptRenderer(session.colorPalette, isSingleLine = true)
+      TerminalPromptStyle.DOUBLE_LINE -> BuiltInPromptRenderer(session.colorPalette, isSingleLine = false)
+      TerminalPromptStyle.SHELL -> {
+        val sizeProvider = { session.model.withContentLock { TermSize(session.model.width, session.model.height) } }
+        ShellPromptRenderer(session.colorPalette, session.settings, sizeProvider)
+      }
     }
   }
 
@@ -163,11 +168,4 @@ internal class TerminalPromptModelImpl(
       }
     }
   }
-}
-
-/** The information about the terminal session required for [TerminalPromptModel] */
-internal interface TerminalSessionInfo {
-  val settings: JBTerminalSystemSettingsProviderBase
-  val colorPalette: TerminalColorPalette
-  val terminalSize: TermSize
 }

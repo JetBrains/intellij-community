@@ -5,22 +5,25 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalColorPalette
+import com.jediterm.core.util.TermSize
 import com.jediterm.terminal.*
 import com.jediterm.terminal.emulator.JediEmulator
 import com.jediterm.terminal.emulator.mouse.MouseFormat
 import com.jediterm.terminal.emulator.mouse.MouseMode
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.block.output.*
-import org.jetbrains.plugins.terminal.block.output.EmptyTextAttributesProvider
-import org.jetbrains.plugins.terminal.block.output.TextStyleAdapter
-import org.jetbrains.plugins.terminal.block.output.TextWithHighlightings
 import org.jetbrains.plugins.terminal.block.session.ShellCommandOutputScraper
 import org.jetbrains.plugins.terminal.block.session.StyleRange
 import org.jetbrains.plugins.terminal.block.session.StyledCommandOutput
 import org.jetbrains.plugins.terminal.block.ui.normalize
 
-internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo) : TerminalPromptRenderer {
-  private val fallbackRenderer: TerminalPromptRenderer = BuiltInPromptRenderer(sessionInfo, isSingleLine = false)
+internal class ShellPromptRenderer(
+  private val colorPalette: TerminalColorPalette,
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  private val terminalSizeProvider: () -> TermSize,
+) : TerminalPromptRenderer {
+  private val fallbackRenderer: TerminalPromptRenderer = BuiltInPromptRenderer(colorPalette, isSingleLine = false)
 
   override fun calculateRenderingInfo(state: TerminalPromptState): TerminalPromptRenderingInfo {
     val escapedPrompt = state.originalPrompt
@@ -58,12 +61,12 @@ internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo)
 
   private fun expandPrompt(escapedPrompt: String): ExpandedPromptInfo {
     val styleState = StyleState()
-    val defaultStyle = TextStyle(TerminalColor { sessionInfo.colorPalette.defaultForeground },
-                                 TerminalColor { sessionInfo.colorPalette.defaultBackground })
+    val defaultStyle = TextStyle(TerminalColor { colorPalette.defaultForeground },
+                                 TerminalColor { colorPalette.defaultBackground })
     styleState.setDefaultStyle(defaultStyle)
-    val terminalSize = sessionInfo.terminalSize
+    val terminalSize = terminalSizeProvider()
     val textBuffer = TerminalTextBuffer(terminalSize.columns, terminalSize.rows, styleState, 0, null)
-    val terminal = JediTerminal(FakeDisplay(sessionInfo.settings), textBuffer, styleState)
+    val terminal = JediTerminal(FakeDisplay(settings), textBuffer, styleState)
     terminal.setModeEnabled(TerminalMode.AutoNewLine, true)
     val dataStream = ArrayTerminalDataStream(escapedPrompt.toCharArray())
     val emulator = JediEmulator(dataStream, terminal)
@@ -85,7 +88,7 @@ internal class ShellPromptRenderer(private val sessionInfo: TerminalSessionInfo)
       if (curOffset < range.startOffset) {
         highlightings.add(HighlightingInfo(curOffset, range.startOffset, EmptyTextAttributesProvider))
       }
-      highlightings.add(HighlightingInfo(range.startOffset, range.endOffset, TextStyleAdapter(range.style, sessionInfo.colorPalette)))
+      highlightings.add(HighlightingInfo(range.startOffset, range.endOffset, TextStyleAdapter(range.style, colorPalette)))
       curOffset = range.endOffset
     }
     if (curOffset < totalTextLength) {
