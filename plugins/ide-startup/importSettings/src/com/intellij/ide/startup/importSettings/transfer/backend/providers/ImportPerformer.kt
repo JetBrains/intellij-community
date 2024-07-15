@@ -97,7 +97,9 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
   override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {
     onlyRequiredPartials(settings).forEach {
       logger.info("perform: ${it.javaClass.simpleName}")
-      it.perform(project, settings, pi)
+      logger.runAndLogException {
+        it.perform(project, settings, pi)
+      }
     }
   }
 
