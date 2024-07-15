@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
+import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import kotlin.collections.flatMap
 
 internal val KaSymbol.isExtension: Boolean get() = this is KaCallableSymbol && isExtension
@@ -39,3 +41,13 @@ internal fun KtReference.getResolvedSymbolsGroupedByImportableFqName(): Map<FqNa
 context(KaSession)
 private fun KtReference.resolveToImportableSymbols(): Collection<KaSymbol> =
     resolveCompanionObjectShortReferenceToContainingClassSymbol()?.let { listOf(it) } ?: resolveToSymbols()
+
+internal fun checkRangeIsProper(startOffset: Int, endOffset: Int, file: KtFile) {
+    if (!TextRange.isProperRange(startOffset, endOffset)) {
+        errorWithAttachment("Incorrect range") {
+            withPsiEntry("file", file)
+            withEntry("startOffset", startOffset.toString())
+            withEntry("endOffset", endOffset.toString())
+        }
+    }
+}

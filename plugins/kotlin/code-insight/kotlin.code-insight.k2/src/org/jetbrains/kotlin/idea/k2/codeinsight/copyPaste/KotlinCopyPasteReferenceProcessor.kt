@@ -63,7 +63,10 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         }
 
         val sourceLocation = getFqNameAtOffset(file, startOffsets.min())?.takeIf { it == getFqNameAtOffset(file, endOffsets.max()) }
-        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset -> TextRange(startOffset, endOffset) }
+        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset ->
+            checkRangeIsProper(startOffset, endOffset, file)
+            TextRange(startOffset, endOffset)
+        }
         val sourceReferenceInfos = Helper.collectSourceReferenceInfos(file, startOffsets, endOffsets)
 
         // we need to store text of the file at the moment of CUT/COPY because references are resolved during PASTE
