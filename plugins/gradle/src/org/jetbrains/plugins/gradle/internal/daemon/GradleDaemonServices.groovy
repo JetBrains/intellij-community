@@ -5,6 +5,7 @@ import com.intellij.AbstractBundle
 import com.intellij.DynamicBundle
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
 import com.intellij.gradle.toolingExtension.impl.GradleToolingExtensionImplClass
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.ProjectManager
@@ -169,7 +170,12 @@ class GradleDaemonServices {
     }
     def loader = registry.get(ToolingImplementationLoader.class) as SynchronizedToolingImplementationLoader
     def delegate = loader.delegate as CachingToolingImplementationLoader
-    return delegate.connections
+    if (GradleVersionUtil.isCurrentGradleOlderThan("8.9")) {
+      return delegate.connections
+    }
+    else {
+      return delegate.connections.asMap()
+    }
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
