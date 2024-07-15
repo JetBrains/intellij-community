@@ -14,6 +14,7 @@ import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.context.WorkingContextManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.FileEditorManagerTestCase;
 import com.intellij.testFramework.RunAll;
 import com.intellij.util.ui.EDT;
@@ -44,6 +45,7 @@ public class VcsContextTest extends FileEditorManagerTestCase {
       () -> ChangeListManagerImpl.getInstanceImpl(getProject()).forceStopInTestMode(),
       () -> ChangeListManagerImpl.getInstanceImpl(getProject()).waitEverythingDoneInTestMode(),
       () -> ProjectLevelVcsManager.getInstance(getProject()).setDirectoryMappings(Collections.emptyList()),
+      () -> EditorTestUtil.releaseAllEditors(),
       () -> super.tearDown()
     );
   }
