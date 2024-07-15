@@ -89,8 +89,6 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        KotlinJpsPluginSettings.getInstance(module.project).dropExplicitVersion()
-
         module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, null)
         module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
     }
@@ -130,7 +128,8 @@ open class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PL
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
                 project,
                 version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
+                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven,
+                externalSystemId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
             )
 
             project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)

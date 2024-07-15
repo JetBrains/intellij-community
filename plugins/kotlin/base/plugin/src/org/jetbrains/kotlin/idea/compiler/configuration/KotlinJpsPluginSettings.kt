@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.XmlSerializer
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
@@ -31,9 +32,12 @@ import java.nio.file.Path
 class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<JpsPluginSettings>(project) {
     override fun createSettings() = JpsPluginSettings()
 
-    fun setVersion(jpsVersion: String) {
+    fun setVersion(jpsVersion: String, externalSystemId: String = "") {
         if (jpsVersion == settings.version) return
-        update { version = jpsVersion }
+        update {
+            version = jpsVersion
+            this.externalSystemId = externalSystemId
+        }
     }
 
     fun dropExplicitVersion(): Unit = setVersion("")
@@ -162,12 +166,18 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         /**
          * @param isDelegatedToExtBuild `true` if compiled with Gradle/Maven. `false` if compiled with JPS
          */
-        fun importKotlinJpsVersionFromExternalBuildSystem(project: Project, rawVersion: String, isDelegatedToExtBuild: Boolean) {
+        fun importKotlinJpsVersionFromExternalBuildSystem(
+            project: Project,
+            rawVersion: String,
+            isDelegatedToExtBuild: Boolean,
+            externalSystemId: String
+        ) {
             val instance = getInstance(project)
+            val externalSystemIdValidated = validateExternalSystemId(externalSystemId)
             if (rawVersion == rawBundledVersion) {
                 runInEdt {
                     runWriteAction {
-                        instance.setVersion(rawVersion)
+                        instance.setVersion(rawVersion, externalSystemIdValidated)
                     }
                 }
                 return
@@ -205,12 +215,19 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
                 return
             }
 
+            if (instance.settings.externalSystemId.isNotEmpty() && externalSystemIdValidated != instance.settings.externalSystemId) {
+                if (IdeKotlinVersion.get(version).compare(instance.settings.version) < 0) {
+                    return
+                }
+            }
+
             if (!isDelegatedToExtBuild) {
                 downloadKotlinJpsInBackground(project, version)
             }
+
             runInEdt {
                 runWriteAction {
-                    instance.setVersion(version)
+                    instance.setVersion(version, externalSystemIdValidated)
                 }
             }
         }
@@ -254,6 +271,9 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
             // In range [1.6.0, 1.7.0] unbundled Kotlin JPS artifacts were published only for release Kotlin versions.
             return version > kt170 || version >= kt160 && version.isRelease && version.buildNumber == null
         }
+
+        private fun validateExternalSystemId(externalSystemId: String): String =
+            if (Registry.getInstance().isLoaded && Registry.`is`("kotlin.jps.cache.external.system.id")) externalSystemId else ""
     }
 }
 

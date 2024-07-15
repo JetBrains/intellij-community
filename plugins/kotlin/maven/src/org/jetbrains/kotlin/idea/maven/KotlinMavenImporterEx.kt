@@ -12,6 +12,7 @@ import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
 import org.jetbrains.idea.maven.importing.MavenWorkspaceFacetConfigurator
 import org.jetbrains.idea.maven.importing.workspaceModel.getSourceRootUrls
 import org.jetbrains.idea.maven.project.MavenProject
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.base.platforms.IdePlatformKindProjectStructure
@@ -100,7 +101,8 @@ class KotlinMavenImporterEx : KotlinMavenImporter(), MavenWorkspaceFacetConfigur
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
                 project,
                 version.rawVersion,
-                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven
+                isDelegatedToExtBuild = MavenRunner.getInstance(project).settings.isDelegateBuildToMaven,
+                externalSystemId = SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID
             )
 
             project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
