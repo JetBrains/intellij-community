@@ -1462,6 +1462,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @TestOnly
   public void waitUntilRefreshed() {
+    LOG.debug("waitUntilRefreshed");
     assert ApplicationManager.getApplication().isUnitTestMode();
     VcsDirtyScopeVfsListener.getInstance(myProject).waitForAsyncTaskCompletion();
     myUpdater.waitUntilRefreshed();
@@ -1482,6 +1483,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
     else {
       semaphore.waitFor();
     }
+    LOG.debug("waitUpdateAlarm - finished");
   }
 
   @TestOnly
@@ -1501,6 +1503,7 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
   public void waitEverythingDoneInTestMode() {
     assert ApplicationManager.getApplication().isUnitTestMode();
     myScheduler.awaitAll();
+    LOG.debug("waitEverythingDoneInTestMode - finished");
   }
 
   @TestOnly

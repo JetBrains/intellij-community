@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -55,6 +56,7 @@ public class VcsDirtyScopeVfsListener implements AsyncVfsEventsListener, Disposa
 
   @TestOnly
   public void waitForAsyncTaskCompletion() {
+    Logger.getInstance(VcsDirtyScopeVfsListener.class).debug("waitForAsyncTaskCompletion");
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed();
   }
 

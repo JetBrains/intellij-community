@@ -11,10 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -36,6 +33,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -79,7 +77,7 @@ public abstract class AbstractVcsTestCase {
 
     projectCreated();
 
-    myWorkingCopyDir = VfsUtil.createDirectories(clientRoot.getPath());
+    myWorkingCopyDir = Objects.requireNonNull(VfsUtil.createDirectories(clientRoot.getPath()));
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).waitForInitialized();
   }
 

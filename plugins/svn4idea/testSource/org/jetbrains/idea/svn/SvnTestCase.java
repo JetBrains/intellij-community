@@ -17,6 +17,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.RunAll;
@@ -140,6 +141,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     vcs = SvnVcs.getInstance(myProject);
     myGate = new MockChangeListManagerGate(changeListManager);
 
+    VfsUtil.markDirtyAndRefresh(false, true, true, myRepoRoot);
     refreshSvnMappingsSynchronously();
     refreshChanges();
   }
@@ -355,7 +357,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     String branchUrl = myRepoUrl + "/branches/b1";
 
     withDisabledChangeListManager(() -> {
-      assertTrue(delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
+      deleteRecursively(new File(myWorkingCopyDir.getPath() + File.separator + ".svn").toPath());
       refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());
