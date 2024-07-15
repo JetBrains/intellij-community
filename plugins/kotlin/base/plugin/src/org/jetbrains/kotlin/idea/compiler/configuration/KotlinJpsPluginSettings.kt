@@ -18,6 +18,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.XmlSerializer
+import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.config.JpsPluginSettings
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -37,6 +38,25 @@ class KotlinJpsPluginSettings(project: Project) : BaseKotlinCompilerSettings<Jps
         update {
             version = jpsVersion
             this.externalSystemId = externalSystemId
+        }
+    }
+
+    override fun getState(): Element {
+        // We never want to save the bundled JPS version in the kotlinc.xml, so we filter it out here.
+        if (settings.version.contains("-release")) {
+            update {
+                version = ""
+            }
+        }
+        return super.getState()
+    }
+
+    override fun onStateDeserialized(state: JpsPluginSettings) {
+        // Internal JPS versions are not published to Maven central, so we do not want to load them here as they
+        // cannot be downloaded.
+        // The empty string defaults to use the bundled JPS version, which is what the user likely expects in this case.
+        if (state.version.contains("-release")) {
+            state.version = ""
         }
     }
 
