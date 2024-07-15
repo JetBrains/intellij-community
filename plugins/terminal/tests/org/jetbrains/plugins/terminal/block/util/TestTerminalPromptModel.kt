@@ -38,7 +38,7 @@ internal class TestTerminalPromptModel(override val editor: EditorEx, promptText
       }
     }
 
-  override fun resetUndoRedoStack() {
+  override fun resetChangesHistory() {
     val undoManager = UndoManager.getInstance(editor.project!!) as UndoManagerImpl
     undoManager.invalidateActionsFor(DocumentReferenceManager.getInstance().create(document))
   }

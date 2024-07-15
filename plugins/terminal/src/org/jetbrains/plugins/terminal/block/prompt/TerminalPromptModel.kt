@@ -42,7 +42,7 @@ interface TerminalPromptModel : Disposable {
    * Clears the document modifications history, so it is no more possible to Undo/Redo the changes made before this call.
    */
   @RequiresEdt
-  fun resetUndoRedoStack()
+  fun resetChangesHistory()
 
   @RequiresEdt
   fun setErrorDescription(errorDescription: TerminalPromptErrorDescription?)
@@ -54,8 +54,8 @@ interface TerminalPromptModel : Disposable {
   }
 }
 
-internal fun TerminalPromptModel.clearCommandAndResetUndoRedoStack() {
+internal fun TerminalPromptModel.clearCommandAndResetChangesHistory() {
   commandText = ""
   editor.caretModel.moveToOffset(editor.document.textLength)
-  resetUndoRedoStack()
+  resetChangesHistory()
 }
