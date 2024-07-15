@@ -1,9 +1,10 @@
 #  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-from _pydevd_bundle.pydevd_constants import IS_PY3K
-from _pydev_bundle import pydev_log
-from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements
 from array import array
 from collections import deque
+
+from _pydev_bundle import pydev_log
+from _pydevd_bundle.pydevd_constants import IS_PY3K
+from _pydevd_bundle.pydevd_utils import take_first_n_coll_elements
 
 # Maximum final result string length
 MAX_REPR_LENGTH = 1000
@@ -14,7 +15,10 @@ DEFAULT_FORMAT = '%s'
 
 def _get_ndarray_variable_repr(num_array, max_items=MAX_REPR_ITEM_SIZE):
     # ndarray.__str__() is already optimised and works fast enough
-    return str(num_array[:max_items]).replace('\n', ',').strip()
+    if num_array.ndim == 0:
+        return str(num_array).replace('\n', ',').strip()
+    else:
+        return str(num_array[:max_items]).replace('\n', ',').strip()
 
 
 def _get_series_variable_repr(series, max_items=MAX_REPR_ITEM_SIZE):
@@ -59,6 +63,8 @@ def _trim_string_repr_if_needed(value, do_trim=True, max_length=MAX_REPR_LENGTH)
 
 def _get_external_collection_repr(collection, raise_exception=False):
     typename = type(collection).__name__
+    typename_with_package = type(collection)
+
     # pandas var
     try:
         if typename == "Series":
@@ -69,9 +75,9 @@ def _get_external_collection_repr(collection, raise_exception=False):
         pydev_log.warn("Failed to format pandas variable: " + str(e))
         if raise_exception:
             raise e
-    # ndarray
+    # ndarray and other numpy types
     try:
-        if typename == 'ndarray':
+        if typename == 'ndarray' or "numpy" in str(typename_with_package):
             return _get_ndarray_variable_repr(collection)
     except Exception as e:
         pydev_log.warn("Failed to format numpy ndarray: " + str(e))
