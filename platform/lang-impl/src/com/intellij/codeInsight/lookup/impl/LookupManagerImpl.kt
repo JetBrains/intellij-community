@@ -5,7 +5,8 @@ import com.intellij.codeInsight.hint.EditorHintListener
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.lookup.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.client.ClientProjectSession
+import com.intellij.openapi.client.ClientKind
+import com.intellij.openapi.client.sessions
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.editor.Editor
@@ -20,7 +21,6 @@ import com.intellij.ui.HintHint
 import com.intellij.ui.LightweightHint
 import com.intellij.util.BitUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -68,8 +68,10 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
-        if (event.editor == ClientLookupManager.getCurrentInstance(myProject).getActiveLookup()?.editor) {
-          hideActiveLookup()
+        for (session in myProject.sessions(ClientKind.ALL)) {
+          if (event.editor == ClientLookupManager.getInstance(session).getActiveLookup()?.editor) {
+            hideActiveLookup()
+          }
         }
       }
     }, myProject)
