@@ -68,9 +68,12 @@ open class LookupManagerImpl(private val myProject: Project) : LookupManager() {
 
     EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
       override fun editorReleased(event: EditorFactoryEvent) {
-        for (session in myProject.sessions(ClientKind.ALL)) {
-          if (event.editor == ClientLookupManager.getInstance(session).getActiveLookup()?.editor) {
-            hideActiveLookup()
+        // Do not use ClientKind.ALL because it provides FRONTEND type of session that should be removed
+        // and the container fails to resolve even nullable service of such kind of a session
+        for (session in myProject.sessions(ClientKind.LOCAL) + myProject.sessions(ClientKind.REMOTE)) {
+          val clientLookupManager = ClientLookupManager.getInstance(session) ?: continue
+          if (event.editor == clientLookupManager.getActiveLookup()?.editor) {
+            clientLookupManager.hideActiveLookup()
           }
         }
       }

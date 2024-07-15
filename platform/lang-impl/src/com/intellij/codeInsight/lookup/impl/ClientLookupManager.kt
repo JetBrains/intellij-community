@@ -8,7 +8,7 @@ import com.intellij.codeInsight.lookup.LookupEx
 import com.intellij.openapi.client.ClientProjectSession
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -28,7 +28,7 @@ private val logger = fileLogger()
 interface ClientLookupManager {
   companion object {
     @RequiresBlockingContext
-    fun getInstance(session: ClientProjectSession): ClientLookupManager = session.service()
+    fun getInstance(session: ClientProjectSession): ClientLookupManager? = session.serviceOrNull()
 
     @RequiresBlockingContext
     fun getCurrentInstance(project: Project): ClientLookupManager = project.currentSession.service()
