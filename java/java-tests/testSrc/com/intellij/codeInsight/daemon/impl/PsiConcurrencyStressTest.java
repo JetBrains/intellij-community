@@ -1,9 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.java.psi;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
-import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -145,18 +143,20 @@ public class PsiConcurrencyStressTest extends DaemonAnalyzerTestCase {
       }
       case 2 -> {
         mark("h");
-        aClass.accept(new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitElement(@NotNull final PsiElement element) {
-            super.visitElement(element);
-
-            final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
-            for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(getProject())) {
-              HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
-              v.analyze(myFile, true, infoHolder, () -> v.visit(element));
-            }
-          }
-        });
+        for (HighlightVisitor visitor : HighlightVisitor.EP_HIGHLIGHT_VISITOR.getExtensionList(getProject())) {
+          HighlightVisitor v = visitor.clone(); // to avoid race for com.intellij.codeInsight.daemon.impl.DefaultHighlightVisitor.myAnnotationHolder
+          final HighlightInfoHolder infoHolder = new HighlightInfoHolder(myFile);
+          GeneralHighlightingPass.setupAnnotationSession(infoHolder.getAnnotationSession(), myFile.getTextRange(), aClass.getTextRange(), null);
+          v.analyze(myFile, true, infoHolder, () -> {
+            aClass.accept(new PsiRecursiveElementVisitor() {
+              @Override
+              public void visitElement(@NotNull final PsiElement element) {
+                super.visitElement(element);
+                v.visit(element);
+              }
+            });
+          });
+        }
       }
       case 3 -> {
         mark("u");
