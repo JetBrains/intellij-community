@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUsersOnboarding
 
+import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -19,14 +24,28 @@ class NewUsersOnboardingExperiment {
     getABExperimentInstance().isExperimentOptionEnabled(NewUsersOnboardingExperimentOption::class.java)
   }
 
-  /**
-   * Should not be executed on EDT or with read lock because it can run the external process to calculate the machine ID.
-   * Machine ID is needed to determine the experiment group.
-   */
-  @RequiresBackgroundThread
-  @RequiresReadLockAbsence
   fun isEnabled(): Boolean {
     return isExperimentEnabled
+  }
+
+  /**
+   * To determine the experiment state, we need to calculate the machine ID.
+   * It requires reading the file or running an external process: should be executed in the background.
+   * Since some clients require knowing the state in EDT quite early (especially on the Welcome Screen),
+   * better to calculate it safely and eagerly before instead of EDT.
+   */
+  private class Initializer : ApplicationInitializedListener {
+    init {
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        throw ExtensionNotApplicableException.create()
+      }
+    }
+
+    override suspend fun execute(asyncScope: CoroutineScope) {
+      asyncScope.launch(Dispatchers.IO) {
+        serviceAsync<NewUsersOnboardingExperiment>().isEnabled()
+      }
+    }
   }
 
   companion object {
