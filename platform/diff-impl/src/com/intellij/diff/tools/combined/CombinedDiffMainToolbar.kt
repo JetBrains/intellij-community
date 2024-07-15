@@ -221,12 +221,22 @@ private class MainToolbarLayout(
     left.bounds = Rectangle(bounds.x, bounds.y, leftSize.width, h)
 
     val rightSize = right.preferredSize
-    right.bounds = Rectangle(bounds.x + w - rightSize.width, bounds.y, rightSize.width, h)
+    val rightX = bounds.x + w - rightSize.width
+
+    right.bounds = Rectangle(rightX, bounds.y, rightSize.width, h)
 
     val centerSize: Dimension = diffInfo.panel.preferredSize
 
-    val centerX = w / 2 - diffInfo.getCenterX()
-    diffInfo.panel.bounds = Rectangle(bounds.x + centerX, bounds.y, centerSize.width, h)
+    var infoX = bounds.x + (w / 2 - diffInfo.getCenterX())
+
+    val gap = JBUIScale.scale(2)
+    if (infoX + centerSize.width >= rightX - gap) {
+      infoX = rightX - centerSize.width - gap
+    }
+    if (infoX <= bounds.x + left.width + gap) {
+      infoX = bounds.x + left.width + gap
+    }
+    diffInfo.panel.bounds = Rectangle(infoX, bounds.y, centerSize.width, h)
   }
 
   override fun getLayoutAlignmentX(target: Container?): Float = Component.LEFT_ALIGNMENT
