@@ -542,138 +542,150 @@ internal class MutableEntityStorageImpl(
     parent: WorkspaceEntity.Builder<out WorkspaceEntity>,
     newChildren: List<WorkspaceEntity.Builder<out WorkspaceEntity>>
   ) {
-    when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_ONE -> {
-        val parentId = parent.asBase().id
-        check(newChildren.size <= 1) { "ONE_TO_ONE connection may have only one child" }
-        val childId = newChildren.singleOrNull()?.asBase()?.id?.asChild()
-        val existingChildId = refs.getChildrenByParent(connectionId, parentId.asParent()).singleOrNull()?.id
-        if (!connectionId.isParentNullable && existingChildId != null && (childId == null || childId.id != existingChildId)) {
-          removeEntityByEntityId(existingChildId)
-        }
-        if (childId != null) {
-          checkCircularDependency(connectionId, childId.id.arrayId, parentId.arrayId, this)
-          val modifications = refs.replaceOneToOneChildOfParent(connectionId, parentId, childId)
-          this.createReplaceEventsForUpdates(modifications, connectionId)
-        }
-        else {
-          val modifications = refs.removeRefsByParent(connectionId, parentId.asParent())
-          this.createReplaceEventsForUpdates(modifications, connectionId)
-        }
-      }
-      ConnectionId.ConnectionType.ONE_TO_MANY -> {
-        val parentId = parent.asBase().id
-        val childrenIds = newChildren.map { it.asBase().id.asChild() }
-        if (!connectionId.isParentNullable) {
-          val existingChildren = refs.getChildrenByParent(connectionId, parentId.asParent()).toMutableSet()
-          childrenIds.forEach {
-            existingChildren.remove(it)
+    try {
+      lockWrite()
+      when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_ONE -> {
+          val parentId = parent.asBase().id
+          check(newChildren.size <= 1) { "ONE_TO_ONE connection may have only one child" }
+          val childId = newChildren.singleOrNull()?.asBase()?.id?.asChild()
+          val existingChildId = refs.getChildrenByParent(connectionId, parentId.asParent()).singleOrNull()?.id
+          if (!connectionId.isParentNullable && existingChildId != null && (childId == null || childId.id != existingChildId)) {
+            removeEntityByEntityId(existingChildId)
           }
-          existingChildren.forEach { removeEntityByEntityId(it.id) }
+          if (childId != null) {
+            checkCircularDependency(connectionId, childId.id.arrayId, parentId.arrayId, this)
+            val modifications = refs.replaceOneToOneChildOfParent(connectionId, parentId, childId)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
+          else {
+            val modifications = refs.removeRefsByParent(connectionId, parentId.asParent())
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
         }
+        ConnectionId.ConnectionType.ONE_TO_MANY -> {
+          val parentId = parent.asBase().id
+          val childrenIds = newChildren.map { it.asBase().id.asChild() }
+          if (!connectionId.isParentNullable) {
+            val existingChildren = refs.getChildrenByParent(connectionId, parentId.asParent()).toMutableSet()
+            childrenIds.forEach {
+              existingChildren.remove(it)
+            }
+            existingChildren.forEach { removeEntityByEntityId(it.id) }
+          }
 
-        childrenIds.forEach { checkCircularDependency(connectionId, it.id.arrayId, parentId.arrayId, this) }
-        val modifications = refs.replaceOneToManyChildrenOfParent(connectionId, parentId, childrenIds)
-        this.createReplaceEventsForUpdates(modifications, connectionId)
-      }
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-        // TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
-        //    This is probably a bug.
-        val parentId = parent.asBase().id.asParent()
-        val childrenIds = newChildren.asSequence().map { it.asBase().id.asChild() }
-        childrenIds.forEach { checkCircularDependency(it.id, parentId.id, this) }
-        val modifications = refs.replaceOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
-        this.createReplaceEventsForUpdates(modifications, connectionId)
-      }
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
-        // TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
-        //    This is probably a bug.
-        val parentId = parent.asBase().id.asParent()
-        check(newChildren.size <= 1) { "ABSTRACT_ONE_TO_ONE connection may have only one child" }
-        val childId = newChildren.singleOrNull()?.asBase()?.id?.asChild()
-        if (childId != null) {
-          val modifications = refs.replaceOneToAbstractOneChildOfParent(connectionId, parentId, childId)
+          childrenIds.forEach { checkCircularDependency(connectionId, it.id.arrayId, parentId.arrayId, this) }
+          val modifications = refs.replaceOneToManyChildrenOfParent(connectionId, parentId, childrenIds)
           this.createReplaceEventsForUpdates(modifications, connectionId)
         }
-        else {
-          val operation = refs.removeRefsByParent(connectionId, parentId)
-          this.createReplaceEventsForUpdates(operation, connectionId)
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+          // TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
+          //    This is probably a bug.
+          val parentId = parent.asBase().id.asParent()
+          val childrenIds = newChildren.asSequence().map { it.asBase().id.asChild() }
+          childrenIds.forEach { checkCircularDependency(it.id, parentId.id, this) }
+          val modifications = refs.replaceOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
+          this.createReplaceEventsForUpdates(modifications, connectionId)
+        }
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+          // TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
+          //    This is probably a bug.
+          val parentId = parent.asBase().id.asParent()
+          check(newChildren.size <= 1) { "ABSTRACT_ONE_TO_ONE connection may have only one child" }
+          val childId = newChildren.singleOrNull()?.asBase()?.id?.asChild()
+          if (childId != null) {
+            val modifications = refs.replaceOneToAbstractOneChildOfParent(connectionId, parentId, childId)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
+          else {
+            val operation = refs.removeRefsByParent(connectionId, parentId)
+            this.createReplaceEventsForUpdates(operation, connectionId)
+          }
         }
       }
+    }
+    finally {
+      unlockWrite()
     }
   }
 
   override fun addChild(connectionId: ConnectionId, parent: WorkspaceEntity.Builder<out WorkspaceEntity>?, child: WorkspaceEntity.Builder<out WorkspaceEntity>) {
-    when (connectionId.connectionType) {
-      ConnectionId.ConnectionType.ONE_TO_ONE -> {
-        val parentId = parent?.asBase()?.id?.asParent()
-        val childId = child.asBase().id
-        if (!connectionId.isParentNullable && parentId != null) {
-          // If we replace a field in one-to-one connection, the previous entity is automatically removed.
-          val existingChild = getOneChildData(connectionId, parent.asBase().id)
-          if (existingChild != null && existingChild.createEntityId() != child.asBase().id) {
-            removeEntityByEntityId(existingChild.createEntityId())
+    try {
+      lockWrite()
+      when (connectionId.connectionType) {
+        ConnectionId.ConnectionType.ONE_TO_ONE -> {
+          val parentId = parent?.asBase()?.id?.asParent()
+          val childId = child.asBase().id
+          if (!connectionId.isParentNullable && parentId != null) {
+            // If we replace a field in one-to-one connection, the previous entity is automatically removed.
+            val existingChild = getOneChildData(connectionId, parent.asBase().id)
+            if (existingChild != null && existingChild.createEntityId() != child.asBase().id) {
+              removeEntityByEntityId(existingChild.createEntityId())
+            }
+          }
+          if (parentId != null) {
+            checkCircularDependency(connectionId, childId.arrayId, parentId.id.arrayId, this)
+            val modifications = refs.replaceOneToOneParentOfChild(connectionId, childId, parentId.id)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
+          else {
+            // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
+            val modifications = refs.removeOneToOneRefByChild(connectionId, childId)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
           }
         }
-        if (parentId != null) {
-          checkCircularDependency(connectionId, childId.arrayId, parentId.id.arrayId, this)
-          val modifications = refs.replaceOneToOneParentOfChild(connectionId, childId, parentId.id)
-          this.createReplaceEventsForUpdates(modifications, connectionId)
-        }
-        else {
-          // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
-          val modifications = refs.removeOneToOneRefByChild(connectionId, childId)
-          this.createReplaceEventsForUpdates(modifications, connectionId)
-        }
-      }
-      ConnectionId.ConnectionType.ONE_TO_MANY -> {
-        val childId = child.asBase().id.asChild()
-        val parentId = parent?.asBase()?.id?.asParent()
-        if (parentId != null) {
-          checkCircularDependency(connectionId, childId.id.arrayId, parentId.id.arrayId, this)
-          val modifications = refs.replaceOneToManyParentOfChild(connectionId, childId.id, parentId)
-          this.createReplaceEventsForUpdates(modifications, connectionId)
-        }
-        else {
-          // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
-          val modification = refs.removeOneToManyRefsByChild(connectionId, childId)
-          if (modification != null) this.createReplaceEventsForUpdates(listOf(modification), connectionId)
-        }
-      }
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
-        val childId = child.asBase().id.asChild()
-        val parentId = parent?.asBase()?.id?.asParent()
-        if (parentId != null) {
-          checkCircularDependency(childId.id, parentId.id, this)
-          val modifications = refs.replaceOneToAbstractManyParentOfChild(connectionId, childId, parentId)
-          this.createReplaceEventsForUpdates(modifications, connectionId)
-        }
-        else {
-          // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
-          val modification = refs.removeOneToAbstractManyRefsByChild(connectionId, childId)
-          if (modification != null) this.createReplaceEventsForUpdates(listOf(modification), connectionId)
-        }
-      }
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
-        val parentId = parent?.asBase()?.id?.asParent()
-        val childId = child.asBase().id.asChild()
-        if (!connectionId.isParentNullable && parentId != null) {
-          // If we replace a field in one-to-one connection, the previous entity is automatically removed.
-          val existingChild = getOneChildData(connectionId, parent.asBase().id)
-          if (existingChild != null && existingChild.createEntityId() != child.asBase().id) {
-            removeEntityByEntityId(existingChild.createEntityId())
+        ConnectionId.ConnectionType.ONE_TO_MANY -> {
+          val childId = child.asBase().id.asChild()
+          val parentId = parent?.asBase()?.id?.asParent()
+          if (parentId != null) {
+            checkCircularDependency(connectionId, childId.id.arrayId, parentId.id.arrayId, this)
+            val modifications = refs.replaceOneToManyParentOfChild(connectionId, childId.id, parentId)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
+          else {
+            // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
+            val modification = refs.removeOneToManyRefsByChild(connectionId, childId)
+            if (modification != null) this.createReplaceEventsForUpdates(listOf(modification), connectionId)
           }
         }
-        if (parentId != null) {
-          val modifications = refs.replaceOneToAbstractOneParentOfChild(connectionId, childId, parentId)
-          this.createReplaceEventsForUpdates(modifications, connectionId)
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+          val childId = child.asBase().id.asChild()
+          val parentId = parent?.asBase()?.id?.asParent()
+          if (parentId != null) {
+            checkCircularDependency(childId.id, parentId.id, this)
+            val modifications = refs.replaceOneToAbstractManyParentOfChild(connectionId, childId, parentId)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
+          else {
+            // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
+            val modification = refs.removeOneToAbstractManyRefsByChild(connectionId, childId)
+            if (modification != null) this.createReplaceEventsForUpdates(listOf(modification), connectionId)
+          }
         }
-        else {
-          // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
-          val modification = refs.removeOneToAbstractOneRefByChild(connectionId, childId)
-          if (modification != null) this.createReplaceEventsForUpdates(listOf(modification), connectionId)
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+          val parentId = parent?.asBase()?.id?.asParent()
+          val childId = child.asBase().id.asChild()
+          if (!connectionId.isParentNullable && parentId != null) {
+            // If we replace a field in one-to-one connection, the previous entity is automatically removed.
+            val existingChild = getOneChildData(connectionId, parent.asBase().id)
+            if (existingChild != null && existingChild.createEntityId() != child.asBase().id) {
+              removeEntityByEntityId(existingChild.createEntityId())
+            }
+          }
+          if (parentId != null) {
+            val modifications = refs.replaceOneToAbstractOneParentOfChild(connectionId, childId, parentId)
+            this.createReplaceEventsForUpdates(modifications, connectionId)
+          }
+          else {
+            // TODO: Why don't we check if the reference to parent is not null? See IDEA-327863
+            val modification = refs.removeOneToAbstractOneRefByChild(connectionId, childId)
+            if (modification != null) this.createReplaceEventsForUpdates(listOf(modification), connectionId)
+          }
         }
       }
+    }
+    finally {
+      unlockWrite()
     }
   }
 
