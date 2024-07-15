@@ -483,6 +483,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     return visible;
   }
 
+  @ApiStatus.Internal
   public List<String> getDisabledStickyLines() {
     return myOptions.mapLanguageStickyLines.entrySet().stream()
       .filter(entry -> !entry.getValue())
