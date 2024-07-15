@@ -303,13 +303,6 @@ com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerProjec
 - com.intellij.openapi.util.UserDataHolder
 - a:getModule():com.intellij.openapi.module.Module
 - a:getTitle():java.lang.String
-f:com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerUtilKt
-- sf:setSelectedDependency(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView,com.intellij.openapi.module.Module,com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String):V
-- sf:setSelectedDependency(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView,com.intellij.openapi.module.Module,com.intellij.buildsystem.model.unified.UnifiedDependency):V
-- sf:setSelectedDependency(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView,com.intellij.openapi.module.Module,com.intellij.buildsystem.model.unified.UnifiedDependency,java.util.List):V
-- sf:setSelectedDependency(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView,com.intellij.openapi.module.Module,java.util.List,java.lang.String):V
-- bs:setSelectedDependency$default(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView,com.intellij.openapi.module.Module,com.intellij.buildsystem.model.unified.UnifiedCoordinates,java.lang.String,I,java.lang.Object):V
-- bs:setSelectedDependency$default(com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView,com.intellij.openapi.module.Module,java.util.List,java.lang.String,I,java.lang.Object):V
 com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 - com.intellij.openapi.actionSystem.DataProvider
 - sf:ACTION_PLACE:java.lang.String
@@ -1344,8 +1337,6 @@ com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx
 - onProjectsLoaded(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.ExternalSystemManager,java.util.Collection):V
 - onProjectsUnlinked(com.intellij.openapi.project.Project,com.intellij.openapi.externalSystem.ExternalSystemManager,java.util.Set):V
 f:com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerEx$Companion
-f:com.intellij.openapi.externalSystem.settings.workspaceModel.EntitiesKt
-- sf:modifyExternalProjectsBuildClasspathEntity(com.intellij.platform.workspace.storage.MutableEntityStorage,com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity,kotlin.jvm.functions.Function1):com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalProjectsBuildClasspathEntity
 f:com.intellij.openapi.externalSystem.settings.workspaceModel.ExternalModuleBuildClasspathEntity
 - <init>(java.lang.String,java.util.List):V
 - f:component1():java.lang.String
