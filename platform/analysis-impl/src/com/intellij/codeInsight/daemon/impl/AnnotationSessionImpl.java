@@ -18,6 +18,7 @@ import java.util.function.Function;
 public final class AnnotationSessionImpl extends AnnotationSession {
   private final UserDataHolder myDataHolder = new UserDataHolderBase();
   private volatile TextRange myPriorityRange;
+  private volatile TextRange myHighlightRange;
   private volatile HighlightSeverity myMinimumSeverity;
 
   private AnnotationSessionImpl(@NotNull PsiFile file) {
@@ -38,9 +39,15 @@ public final class AnnotationSessionImpl extends AnnotationSession {
     return Objects.requireNonNullElseGet(myPriorityRange, ()->getFile().getTextRange());
   }
 
+  @Override
+  public @NotNull TextRange getHighlightRange() {
+    return Objects.requireNonNullElseGet(myHighlightRange, ()->getFile().getTextRange());
+  }
+
   @ApiStatus.Internal
-  void setVR(@NotNull TextRange range) {
-    myPriorityRange = range;
+  void setVR(@NotNull TextRange priorityRange, @NotNull TextRange highlightRange) {
+    myPriorityRange = priorityRange;
+    myHighlightRange = highlightRange;
   }
 
   @Override

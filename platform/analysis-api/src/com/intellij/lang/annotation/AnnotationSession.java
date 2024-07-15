@@ -45,6 +45,15 @@ public /*abstract*/ class AnnotationSession implements UserDataHolder {
     return getFile().getTextRange();
   }
 
+  /**
+   * @return text range (inside the {@link #getFile()}) for which annotators should be calculated.
+   * It is guaranteed that no PSI elements outside this range are going to be analyzed in this session.
+   * This method could be used as an optimization to reduce the analysis range.
+   */
+  public @NotNull TextRange getHighlightRange() {
+    return getFile().getTextRange();
+  }
+
   @Override
   public /*abstract*/ <T> @Nullable T getUserData(@NotNull Key<T> key) {
     return null;
