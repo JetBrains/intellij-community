@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingService.Companion.NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 internal class NewUsersOnboardingStartupActivity : ProjectActivity {
@@ -26,6 +27,10 @@ internal class NewUsersOnboardingStartupActivity : ProjectActivity {
         !propertiesComponent.getBoolean(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY) &&
         ConfigImportHelper.isNewUser()) {
       propertiesComponent.setValue(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY, true)
+
+      // Show dialog a little bit later, because IDE Frame appeared quite recently.
+      delay(1500)
+
       withContext(Dispatchers.EDT) {
         project.serviceAsync<NewUsersOnboardingService>().showOnboardingDialog()
       }
