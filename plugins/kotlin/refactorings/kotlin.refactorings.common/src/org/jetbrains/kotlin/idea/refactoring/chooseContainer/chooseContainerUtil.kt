@@ -62,7 +62,7 @@ private fun <T> chooseContainerElementIfNecessaryImpl(
 ) {
     when {
         containers.isEmpty() -> return
-        containers.size == 1 || isUnitTestMode() -> onSelect(containers.first())
+        containers.size == 1 -> onSelect(containers.first())
         toPsi != null -> chooseContainerElement(containers, editor, title, highlightSelection, toPsi, onSelect)
         else -> {
             @Suppress("UNCHECKED_CAST")

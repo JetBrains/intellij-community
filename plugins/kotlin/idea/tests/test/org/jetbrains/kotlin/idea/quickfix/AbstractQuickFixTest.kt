@@ -29,6 +29,7 @@ import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -111,6 +112,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                     val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
 
                     try {
+                        KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable)
                         myFixture.enableInspections(*inspections)
 
                         doKotlinQuickFixTest(beforeFileName)

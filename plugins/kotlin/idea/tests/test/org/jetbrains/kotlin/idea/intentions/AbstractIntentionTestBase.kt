@@ -9,6 +9,7 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -22,12 +23,14 @@ import com.intellij.refactoring.BaseRefactoringProcessor
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.ThrowableRunnable
+import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.formatter.FormatSettingsUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinAbstractHintsProvider
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.test.*
@@ -222,6 +225,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
 
         try {
             if (isApplicableExpected) {
+                KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
+
                 val action = { intentionAction.invoke(project, editor, file) }
                 if (intentionAction.startInWriteAction()) {
                     project.executeWriteCommand(intentionAction.text, action)
@@ -240,6 +245,7 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                         }
                     }
                 }
+                UIUtil.dispatchAllInvocationEvents()
 
                 // Don't bother checking if it should have failed.
                 if (shouldFailString.isEmpty()) {

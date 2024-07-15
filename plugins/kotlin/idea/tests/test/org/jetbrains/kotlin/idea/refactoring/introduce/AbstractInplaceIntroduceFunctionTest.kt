@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.AbstractExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKotlinFunctionHandler
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
@@ -30,6 +31,7 @@ abstract class AbstractInplaceIntroduceFunctionTest : KotlinLightCodeInsightFixt
         myFixture.testDataPath = mainFile.parent
         val file = myFixture.configureByFile(mainFile.name)
         getExtractFunctionHandler(getTestName(true).contains("Local")).invoke(myFixture.project, myFixture.editor, myFixture.file, null)
+        KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable)
         NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
         val template = getActiveTemplate()
         require(template != null) { "Failed to start refactoring" }

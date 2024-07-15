@@ -189,8 +189,6 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
         } else if (editor == null) {
             doRefactoring(candidateContainers.first())
-        } else if (isUnitTestMode()) {
-            doRefactoring(candidateContainers.last())
         } else {
             chooseContainerElementIfNecessary(
                 candidateContainers, editor,
