@@ -1219,6 +1219,13 @@ public final class org/jetbrains/jewel/ui/component/styling/HorizontalProgressBa
 	public static final fun getLocalHorizontalProgressBarStyle ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
+public final class org/jetbrains/jewel/ui/component/styling/IconActionButtonKt {
+	public static final fun IconActionButton (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Landroidx/compose/runtime/Composer;II)V
+	public static final fun IconActionButton (Landroidx/compose/ui/graphics/painter/Painter;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+	public static final fun IconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Landroidx/compose/runtime/Composer;II)V
+	public static final fun IconActionButton (Lorg/jetbrains/jewel/ui/icon/IconKey;Ljava/lang/String;Lkotlin/jvm/functions/Function0;Landroidx/compose/ui/Modifier;ZZLorg/jetbrains/jewel/ui/component/styling/IconButtonStyle;Lorg/jetbrains/jewel/ui/component/styling/TooltipStyle;Landroidx/compose/foundation/TooltipPlacement;Landroidx/compose/foundation/interaction/MutableInteractionSource;Ljava/lang/Class;Lkotlin/jvm/functions/Function2;Landroidx/compose/runtime/Composer;III)V
+}
+
 public final class org/jetbrains/jewel/ui/component/styling/IconButtonColors {
 	public static final field $stable I
 	public static final field Companion Lorg/jetbrains/jewel/ui/component/styling/IconButtonColors$Companion;

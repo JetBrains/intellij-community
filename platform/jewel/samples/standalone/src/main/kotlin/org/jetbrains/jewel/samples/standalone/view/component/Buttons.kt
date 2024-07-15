@@ -19,6 +19,8 @@ import org.jetbrains.jewel.ui.component.OutlinedButton
 import org.jetbrains.jewel.ui.component.PlatformIcon
 import org.jetbrains.jewel.ui.component.SelectableIconButton
 import org.jetbrains.jewel.ui.component.Text
+import org.jetbrains.jewel.ui.component.Typography
+import org.jetbrains.jewel.ui.component.styling.IconActionButton
 import org.jetbrains.jewel.ui.component.styling.LocalIconButtonStyle
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.hints.Selected
@@ -32,6 +34,7 @@ fun Buttons() {
     ) {
         NormalButtons()
         IconButtons()
+        IconActionButtons()
     }
 }
 
@@ -67,6 +70,8 @@ private fun IconButtons() {
         horizontalArrangement = Arrangement.spacedBy(16.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        Text("IconButton", style = Typography.h4TextStyle())
+
         Text("Focusable:")
 
         IconButton(onClick = {}) {
@@ -90,5 +95,26 @@ private fun IconButtons() {
                 hints = arrayOf(Selected(selected), Stroke(tint)),
             )
         }
+    }
+}
+
+@Composable
+private fun IconActionButtons() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("IconActionButton", style = Typography.h4TextStyle())
+
+        Text("With tooltip:")
+
+        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconButton", onClick = {}) {
+            Text("I am a tooltip")
+        }
+
+        Text("Without tooltip:")
+
+        IconActionButton(key = AllIconsKeys.Actions.Copy, contentDescription = "IconButton", onClick = {})
     }
 }
