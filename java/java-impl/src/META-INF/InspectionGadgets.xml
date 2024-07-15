@@ -217,7 +217,8 @@
                      implementationClass="com.siyeh.ig.bugs.EqualsUsesNonFinalVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsWhichDoesntCheckParameterClass" bundle="messages.InspectionGadgetsBundle"
                      key="equals.doesnt.check.class.parameter.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING" 
+                     suppressId="EqualsDoesntCheckParameterClass" alternativeId="EqualsWhichDoesntCheckParameterClass"
                      implementationClass="com.siyeh.ig.bugs.EqualsWhichDoesntCheckParameterClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonFinalFieldReferencedInHashCode" shortName="HashCodeUsesNonFinalVariable"
                      bundle="messages.InspectionGadgetsBundle" key="non.final.field.in.hashcode.display.name"

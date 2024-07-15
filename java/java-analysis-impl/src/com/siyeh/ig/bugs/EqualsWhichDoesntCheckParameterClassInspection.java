@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,10 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "isInstance").parameterCount(1);
   private static final CallMatcher OBJECT_GET_CLASS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
+  private static final CallMatcher HIBERNATE_GET_CLASS =
+    CallMatcher.staticCall("org.hibernate.Hibernate", "getClass").parameterCount(1);
+  private static final CallMatcher SPRING_GET_CLASS =
+    CallMatcher.staticCall("org.springframework.data.util.ProxyUtils", "getUserClass").parameterCount(1);
 
   @Override
   @NotNull
@@ -158,6 +162,12 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
       final PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       return isParameterReference(qualifier);
     }
+    
+    private boolean isSpringOrHibernateGetClass(PsiMethodCallExpression call) {
+      if (!SPRING_GET_CLASS.test(call) && !HIBERNATE_GET_CLASS.test(call)) return false;
+      final PsiExpression arg = call.getArgumentList().getExpressions()[0];
+      return isParameterReference(arg);
+    }
 
     private boolean isCallToSuperEquals(PsiMethodCallExpression call) {
       final PsiReferenceExpression methodExpression = call.getMethodExpression();
@@ -173,7 +183,10 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (isGetClassCall(expression) || isGetInstanceCall(expression) || isCallToSuperEquals(expression)) {
+      if (isGetClassCall(expression) || 
+          isGetInstanceCall(expression) || 
+          isCallToSuperEquals(expression) || 
+          isSpringOrHibernateGetClass(expression)) {
         makeChecked();
       }
     }
