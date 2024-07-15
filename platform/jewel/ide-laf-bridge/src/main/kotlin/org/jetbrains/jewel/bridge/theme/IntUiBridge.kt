@@ -1145,7 +1145,7 @@ private fun readIconButtonStyle(): IconButtonStyle =
                 cornerSize = CornerSize(DarculaUIUtil.BUTTON_ARC.dp / 2),
                 borderWidth = 1.dp,
                 padding = PaddingValues(0.dp),
-                minSize = DpSize(16.dp, 16.dp),
+                minSize = DpSize(24.dp, 24.dp),
             ),
         colors =
             IconButtonColors(
@@ -1154,9 +1154,9 @@ private fun readIconButtonStyle(): IconButtonStyle =
                 backgroundDisabled = Color.Unspecified,
                 backgroundSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
                 backgroundSelectedActivated = retrieveColorOrUnspecified("ToolWindow.Button.selectedBackground"),
-                backgroundFocused = Color.Unspecified,
                 backgroundPressed = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
                 backgroundHovered = retrieveColorOrUnspecified("ActionButton.hoverBackground"),
+                backgroundFocused = retrieveColorOrUnspecified("ActionButton.hoverBackground"),
                 border = Color.Unspecified,
                 borderDisabled = Color.Unspecified,
                 borderSelected = retrieveColorOrUnspecified("ActionButton.pressedBackground"),
