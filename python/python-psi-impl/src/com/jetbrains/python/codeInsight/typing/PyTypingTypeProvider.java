@@ -19,6 +19,7 @@ import com.jetbrains.python.PyCustomType;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.ast.PyAstFunction;
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -392,6 +393,20 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         .filter(args -> args.length > 0)
         .map(args -> getType(args[0], context))
         .orElse(null);
+    }
+
+    if (callSite instanceof PyCallExpression callExpression && isTypeGuard(function, context.myContext)) {
+      var arguments = callSite.getArguments(function);
+      if (!arguments.isEmpty() && arguments.get(0) instanceof PyReferenceExpression refExpr) {
+        var qname = PyPsiUtilsCore.asQualifiedName(refExpr);
+        if (qname != null) {
+          var narrowedType = getTypeFromTypeGuardLikeType(function, context.myContext);
+          if (narrowedType != null) {
+            return Ref.create(PyNarrowedType.Companion.create(callSite, qname.toString(), narrowedType, callExpression, false));
+          }
+        }
+      }
+      return Ref.create(PyBuiltinCache.getInstance(function).getBoolType());
     }
 
     if (callSite instanceof PyCallExpression) {
@@ -1212,6 +1227,22 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   public static boolean isTypeGuard(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(function, context, p ->
       typeHintedWithName(function, context, TYPE_GUARD, TYPE_GUARD_EXT));
+  }
+
+  @Nullable
+  public static PyType getTypeFromTypeGuardLikeType(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    var returnType = getReturnTypeAnnotation(function, context);
+    if (returnType instanceof PyStringLiteralExpression stringLiteralExpression) {
+      returnType = PyUtil.createExpressionFromFragment(stringLiteralExpression.getStringValue(),
+                                                       function.getContainingFile());
+    }
+    if (returnType instanceof PySubscriptionExpression subscriptionExpression) {
+      var indexExpression = subscriptionExpression.getIndexExpression();
+      if (indexExpression != null) {
+        return Ref.deref(getType(indexExpression, context));
+      }
+    }
+    return null;
   }
 
   private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context, String... names) {

@@ -1845,6 +1845,63 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  public void testTypeGuardResultIsAssigned()  {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                                                    
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 if x and b:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardResultIsAssignedButValIsReassigned() {
+    doTest("int",
+           """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 val = 1
+                 if x and b:
+                     expr = val
+             """);
+  }
+
+
+  public void testTypeGuardResultIsAssignedButValIsReassignedSometimes() {
+    doTest("int | list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+             
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+             
+             
+             def func1(x, val: List[object]):
+                 b = is_str_list(val)
+                 if x:
+                     val = 1
+                 if b:
+                     expr = val
+             """);
+  }
+
+
+
   public void testTypeGuardBool() {
     doTest("bool",
            """
