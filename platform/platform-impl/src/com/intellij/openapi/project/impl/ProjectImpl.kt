@@ -65,6 +65,8 @@ internal val projectAndScopeMethodType: MethodType = MethodType.methodType(Void.
 
 private val LOG = logger<ProjectImpl>()
 
+private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
+
 @Internal
 open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName: String?)
   : ClientAwareComponentManager(parent), ProjectEx, ProjectStoreOwner {
@@ -282,8 +284,6 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
     }
     return earlyDisposable.get() ?: throw createEarlyDisposableError("earlyDisposable is null for")
   }
-
-  private val DISPOSE_EARLY_DISPOSABLE_TRACE = Key.create<String>("ProjectImpl.DISPOSE_EARLY_DISPOSABLE_TRACE")
 
   fun disposeEarlyDisposable() {
     if (LOG.isDebugEnabled || ApplicationManager.getApplication().isUnitTestMode) {
