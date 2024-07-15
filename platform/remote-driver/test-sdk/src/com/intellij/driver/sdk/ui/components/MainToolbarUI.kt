@@ -30,5 +30,5 @@ class MainToolbarUI(data: ComponentData) : UiComponent(data) {
   val cwmButton get() = x { byTooltip("Code With Me") }
 
   fun projectWidget(projectName: String): UiComponent =
-    x("//div[@class='ToolbarComboButton' and @visible_text='$projectName' and contains(@lefticons_delegate, '20x20])')]")
+    x("//div[@class='ToolbarComboButton' and @visible_text='$projectName']")
 }
