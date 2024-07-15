@@ -50,6 +50,10 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
       latencyRecorder.update(latencyMs.toInt())
     })
 
+    withContext(Dispatchers.EDT) {
+      ProjectUtil.focusProjectWindow(context.project, true)
+    }
+
     runBlocking {
       withTimeout(10.seconds) {
         while (findTypingTarget(context.project) == null) {
@@ -60,10 +64,6 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
 
     val job = Ref<DaemonCodeAnalyzerResult>()
     val projectConnection = context.project.messageBus.simpleConnect()
-
-    ApplicationManager.getApplication().invokeAndWait {
-      ProjectUtil.focusProjectWindow(context.project, true)
-    }
 
     PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext()).useWithScope { span ->
       coroutineScope {
