@@ -522,6 +522,7 @@ class IdeaPluginDescriptorImpl(
   }
 
   private fun fromPluginBundle(key: String, @Nls defaultValue: String?): String? {
+    if (!isEnabled) return defaultValue //if plugin is disabled, its classLoader == null, and the resource bundle cannot be found
     return (resourceBundleBaseName?.let { baseName ->
       try {
         AbstractBundle.messageOrDefault(DynamicBundle.getResourceBundle(classLoader, baseName), key, defaultValue ?: "")
