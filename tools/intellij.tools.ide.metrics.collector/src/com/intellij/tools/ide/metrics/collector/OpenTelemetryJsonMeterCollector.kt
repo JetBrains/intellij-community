@@ -23,7 +23,7 @@ import kotlin.io.path.name
 open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: MetricsSelectionStrategy,
                                            val meterFilter: (MetricData) -> Boolean) : TelemetryMetricsCollector {
 
-  fun collect(logsDirPath: Path, transform: (Map. Entry<String, LongPointData>) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
+  fun collect(logsDirPath: Path, transform: (String, Long) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
     val metricsFiles = logsDirPath.listDirectoryEntries("*.json").filter { it.name.startsWith("open-telemetry-meter") }
 
     // fallback to the collecting meters from the .csv files for older IDEs versions (where meters aren't exported to JSON files)
@@ -60,12 +60,12 @@ open class OpenTelemetryJsonMeterCollector(val metricsSelectionStrategy: Metrics
         MetricDataType.DOUBLE_GAUGE -> DoubleGaugeToMetricConverter()
         MetricDataType.HISTOGRAM -> DoubleHistogramMeterToMetricConverter()
         else -> TODO("Type ${it.type} isn't supported yet")
-      }.convert(it)
+      }.convert(it, transform)
     }
   }
 
 
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
-    return collect(logsDirPath)  { it.key to it.value.value.toInt() }
+    return collect(logsDirPath)  { name, value -> name to value.toInt() }
   }
 }

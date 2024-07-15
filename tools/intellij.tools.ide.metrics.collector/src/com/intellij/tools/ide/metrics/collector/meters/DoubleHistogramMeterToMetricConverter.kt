@@ -13,7 +13,7 @@ class DoubleHistogramMeterToMetricConverter : MeterToMetricConverter {
       .removeSuffix(".")
   }
 
-  override fun convert(metricData: MetricData): List<PerformanceMetrics.Metric> {
+  override fun convert(metricData: MetricData, transform: (String, Long) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
     val dataPoint: HistogramPointData = metricData.histogramData.points.first()
 
     val minMetric = PerformanceMetrics.newDuration(metricData.getMetricName("min"),

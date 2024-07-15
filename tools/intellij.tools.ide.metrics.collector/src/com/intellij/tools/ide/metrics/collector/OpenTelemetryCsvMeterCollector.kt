@@ -26,16 +26,16 @@ open class OpenTelemetryCsvMeterCollector(
     return metricsCsvFiles
   }
 
-  fun collect(logsDirPath: Path, transform: (Map.Entry<String, LongPointData>) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
+  fun collect(logsDirPath: Path, transform: (String, Long) -> Pair<String, Int>): List<PerformanceMetrics.Metric> {
     val telemetryMetrics: Map<String, LongPointData> =
       MetricsImporterUtils.fromCsvFile(getOpenTelemetryCsvReportFiles(logsDirPath))
         .filter(metersFilter)
         .map { it.key to metricsSelectionStrategy.selectMetric(it.value) }.toMap()
 
-    return telemetryMetrics.map { transform(it) }.map { PerformanceMetrics.newDuration(name = it.first, durationMillis = it.second) }
+    return telemetryMetrics.map { transform(it.key, it.value.value) }.map { PerformanceMetrics.newDuration(name = it.first, durationMillis = it.second) }
   }
 
   override fun collect(logsDirPath: Path): List<PerformanceMetrics.Metric> {
-    return collect(logsDirPath) { it.key to it.value.value.toInt() }
+    return collect(logsDirPath) { name, value -> name to value.toInt() }
   }
 }
