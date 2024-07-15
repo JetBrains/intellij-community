@@ -155,7 +155,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       return;
     }
 
-    Cancellation.checkCancelled();
+    Cancellation.ensureActive();
 
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
     if (behavior == CheckCanceledBehavior.NONE) return;

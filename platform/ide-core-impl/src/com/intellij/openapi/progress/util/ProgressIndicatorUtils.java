@@ -435,7 +435,7 @@ public final class ProgressIndicatorUtils {
       ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(indicator);
     }
     if (isNonCancelable) return;
-    Cancellation.checkCancelled();
+    Cancellation.ensureActive();
     if (indicator == null) return;
     indicator.checkCanceled();              // check for cancellation as usual and run the hooks
     if (indicator.isCanceled()) {           // if a just-canceled indicator or PCE is disabled

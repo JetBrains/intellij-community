@@ -5,6 +5,7 @@ import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
 import kotlinx.coroutines.Job;
+import kotlinx.coroutines.JobKt;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,7 +14,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
-import static kotlinx.coroutines.JobKt.ensureActive;
 
 @Internal
 public final class Cancellation {
@@ -26,11 +26,28 @@ public final class Cancellation {
   }
 
   public static void checkCancelled() {
+    if (isInNonCancelableSection()) {
+      return;
+    }
+
+    ensureActive();
+  }
+
+  /**
+   * Ensures current {@link Job} (if any) is active, and transforms possible {@link CancellationException} thrown
+   * into {@link ProcessCanceledException} -- which old java code is more ready to deal with then {@link CancellationException}
+   * <br/>
+   * It is <b>internal method</b>, it is made public to be called from different legacy variants of checkCancelled()
+   * (from ProgressIndicator, etc.) without duplicating isInNonCancelableSection() call.
+   */
+  @Internal
+  public static void ensureActive() {
     ThreadContext.warnAccidentalCancellation();
+
     Job currentJob = currentJob();
     if (currentJob != null) {
       try {
-        ensureActive(currentJob);
+        JobKt.ensureActive(currentJob);
       }
       catch (ProcessCanceledException pce) {
         throw pce;
@@ -52,24 +69,45 @@ public final class Cancellation {
     return isInNonCancelableSection.get() != null;
   }
 
+  /**
+   * <b>BEWARE:</b> non-cancellable sections still _could_ throw {@link ProcessCanceledException}/{@link CancellationException}
+   * <br/>
+   * 'Non-cancellable section' means that the computation should not react to cancellation request. But still the
+   * computation can cancel itself by internal reasons -- i.e. because it meets the condition that makes it impossible
+   * or useless to continue.
+   * <br/>
+   * Most frequent example of this: waiting for an async task. If the waiting is done in a non-cancellable section,
+   * the waiting itself can't be cancelled -- but the task we're waiting for doesn't necessarily inherit non-cancellability
+   * (btw, it could be started outside the non-cancellable section), so it could be cancelled, and its cancellation
+   * should propagate to the waiting code -- i.e. (P)CE should be thrown from the waiting code, even if it is in a
+   * non-cancellable section:
+   * <pre>
+   * Cancellation.computeInNonCancellableSection {
+   *   ProgressManager.checkCancelled()     // Never throws (P)CE
+   *   someFuture.get()                     // Can throw (P)CE, e.g. if the async task gets cancelled
+   *                                        // (the lifetime of this future is not bound to the context of the current computation)
+   * }
+   * </pre>
+   */
   public static <T, E extends Exception> T computeInNonCancelableSection(@NotNull ThrowableComputable<T, E> computable) throws E {
-    try {
-      if (isInNonCancelableSection()) {
-        return computable.compute();
-      }
-      try {
-        isInNonCancelableSection.set(Boolean.TRUE);
-        return computable.compute();
-      }
-      finally {
-        isInNonCancelableSection.remove();
-      }
+    if (isInNonCancelableSection()) {
+      return computable.compute();
     }
-    catch (ProcessCanceledException e) {
-      throw new RuntimeException("PCE is not expected in non-cancellable section execution", e);
+    try {
+      isInNonCancelableSection.set(Boolean.TRUE);
+      return computable.compute();
+    }
+    finally {
+      isInNonCancelableSection.remove();
     }
   }
 
+  /**
+   * <b>BEWARE:</b> non-cancellable sections still _could_ throw {@link ProcessCanceledException}/{@link CancellationException}
+   * -- see {@link #computeInNonCancelableSection(ThrowableComputable)} docs for details
+   *
+   * @see #computeInNonCancelableSection(ThrowableComputable)
+   */
   public static void executeInNonCancelableSection(@NotNull Runnable runnable) {
     computeInNonCancelableSection(() -> {
       runnable.run();
