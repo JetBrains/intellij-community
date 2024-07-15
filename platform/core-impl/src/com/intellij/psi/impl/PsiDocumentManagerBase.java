@@ -224,7 +224,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
         }
         LOG.error("Committed document in uncommitted set: " + document);
       }
-      else if (!doCommit(document)) {
+      if (!doCommit(document) && isEventSystemEnabled(document)) {
         LOG.error("Couldn't commit " + document);
       }
     }
@@ -481,7 +481,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     assert !isCommitInProgress() : "Do not call commitDocument() from inside PSI change listener";
 
     // otherwise there are many clients calling commitAllDocs() on PSI childrenChanged()
-    if (getSynchronizer().isDocumentAffectedByTransactions(document)) return false;
+    if (getSynchronizer().isDocumentAffectedByTransactions(document)) {
+      return false;
+    }
 
     PsiFile psiFile = getPsiFile(document);
     if (psiFile == null) {
