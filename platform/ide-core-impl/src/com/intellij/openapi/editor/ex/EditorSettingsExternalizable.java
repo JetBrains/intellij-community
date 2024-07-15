@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"), category = SettingsCategory.CODE, perClient = true)
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
@@ -480,6 +481,13 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
       return true;
     }
     return visible;
+  }
+
+  public List<String> getDisabledStickyLines() {
+    return myOptions.mapLanguageStickyLines.entrySet().stream()
+      .filter(entry -> !entry.getValue())
+      .map(Map.Entry::getKey)
+      .collect(Collectors.toList());
   }
 
   public boolean setStickyLinesShownFor(String languageID, boolean value) {
