@@ -2485,7 +2485,7 @@ public final class JBUI {
 
       public static final class LicenseServer {
         private static final @NotNull Color SEPARATOR_COLOR =
-          JBColor.namedColor("LicenseDialog.LicenseServer.separatorColor", 0xEBECF0, 0x393B40);
+          JBColor.namedColor("LicenseDialog.LicenseServer.separatorColor", 0xD3D5DB, 0x43454A);
 
         public static @NotNull Color getSeparatorColor() {
           return SEPARATOR_COLOR;
