@@ -49,6 +49,7 @@ abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Noth
     if (stamp != null && cached?.modificationStamp == stamp) return CodeVisionState.Ready(cached.codeVisionEntries)
 
     return InlayHintsUtils.computeCodeVisionUnderReadAction {
+      if (DumbService.isDumb(project)) return@computeCodeVisionUnderReadAction CodeVisionState.NotReady
       recomputeLenses(editor, project, stamp, cacheService)
     }
   }
