@@ -395,7 +395,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return true;
   }
 
-  private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
+  private static boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
     record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull Presentation presentation) {}
     VirtualFile file = context.file().getVirtualFile();
     if (file == null) return false;
@@ -411,7 +411,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       if (actions.size() == 1) {
         ModCommandAction action = actions.get(0).action();
         ModCommandExecutor.executeInteractively(context, name, editor, () -> {
-          if (action.getPresentation(context) == null) return null;
+          if (action.getPresentation(context) == null) return ModCommand.nop();
           return action.perform(context);
         });
         return;

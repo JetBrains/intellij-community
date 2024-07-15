@@ -83,7 +83,7 @@ public interface ModCommandExecutor {
   static void executeInteractively(@NotNull ActionContext context,
                                    @Nls String title,
                                    @Nullable Editor editor,
-                                   @NotNull Supplier<@Nullable ModCommand> commandSupplier) {
+                                   @NotNull Supplier<@NotNull ModCommand> commandSupplier) {
     ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.nonBlocking(commandSupplier::get).executeSynchronously(),
       title, true, context.project());
