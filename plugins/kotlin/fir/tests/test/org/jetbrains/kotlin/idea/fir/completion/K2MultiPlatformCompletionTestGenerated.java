@@ -41,6 +41,11 @@ public abstract class K2MultiPlatformCompletionTestGenerated extends AbstractK2M
         public void testActualVal() throws Exception {
             runTest("../../completion/testData/multiPlatform/actualDeclaration/actualVal/");
         }
+
+        @TestMetadata("actualWithSamePackage")
+        public void testActualWithSamePackage() throws Exception {
+            runTest("../../completion/testData/multiPlatform/actualDeclaration/actualWithSamePackage/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)

@@ -41,6 +41,11 @@ public abstract class MultiPlatformCompletionTestGenerated extends AbstractMulti
         public void testActualVal() throws Exception {
             runTest("../testData/multiPlatform/actualDeclaration/actualVal/");
         }
+
+        @TestMetadata("actualWithSamePackage")
+        public void testActualWithSamePackage() throws Exception {
+            runTest("../testData/multiPlatform/actualDeclaration/actualWithSamePackage/");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
