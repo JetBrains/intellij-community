@@ -258,9 +258,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
                @Nullable ProgressIndicator outerIndicator) {
-      myChildContext = Propagation.createChildContext();
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
+      myChildContext = Propagation.createChildContext("NonBlockingReadActionImpl.Submission: " + this);
       if (builder.myCoalesceEquality != null) {
         acquire();
       }

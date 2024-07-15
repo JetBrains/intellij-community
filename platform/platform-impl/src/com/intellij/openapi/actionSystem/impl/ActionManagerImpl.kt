@@ -1398,7 +1398,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
 }
 
 private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
-  val childContext: ChildContext = createChildContext()
+  val childContext: ChildContext = createChildContext("ActionManager: $timerListener")
 
   override fun run() {
     // this is periodic runnable that is invoked on timer; it should not complete a parent job

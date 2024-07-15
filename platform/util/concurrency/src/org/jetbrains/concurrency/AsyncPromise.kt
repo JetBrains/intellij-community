@@ -146,8 +146,8 @@ open class AsyncPromise<T> private constructor(internal val f: CompletableFuture
     }, hasErrorHandler, addExceptionHandler = true)
   }
 
-  private inline fun <T> wrapWithCancellationPropagation(producer: (CoroutineContext) -> CompletableFuture<T>): CompletableFuture<T> {
-    val (childContext, childContinuation) = createChildContext()
+  private fun <T> wrapWithCancellationPropagation(producer: (CoroutineContext) -> CompletableFuture<T>): CompletableFuture<T> {
+    val (childContext, childContinuation) = createChildContext("AsyncPromise: $this, $producer")
     val capturingFuture = producer(childContext)
     return capturingFuture.whenComplete { _, result ->
       when (result) {

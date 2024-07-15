@@ -126,7 +126,7 @@ public class MergingTaskQueue<T extends MergeableQueueTask<T>> {
     T newTask = task;
     SubmissionReceipt receipt;
 
-    var childContext = AppExecutorUtil.propagateContext() ? Propagation.createChildContext() : null;
+    var childContext = AppExecutorUtil.propagateContext() ? Propagation.createChildContext("MergingTaskQueue: " + task) : null;
     CoroutineContext currentContext = childContext == null ? null : childContext.getContext();
     Job job = childContext == null ? null : childContext.getJob();
 

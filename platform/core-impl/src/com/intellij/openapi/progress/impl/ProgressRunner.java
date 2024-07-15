@@ -441,7 +441,7 @@ public final class ProgressRunner<R> {
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
-    ChildContext childContext = Propagation.createChildContext();
+    ChildContext childContext = Propagation.createChildContext("ProgressRunner: " + task);
     CoroutineContext context = childContext.getContext();
     Job job = childContext.getJob();
     if (job != null) {
