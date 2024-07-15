@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColorsUtil
@@ -31,16 +33,21 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.*
 import com.intellij.util.ui.StartupUiUtil.isDarkTheme
 import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.awt.event.MouseEvent
+import java.lang.Runnable
 import javax.swing.*
 import kotlin.concurrent.Volatile
 import kotlin.math.max
+import kotlin.time.Duration.Companion.milliseconds
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
 @Service
@@ -66,7 +73,8 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
 
   private var lastDisposable: Disposable? = null
 
-  private var hideRunnable: Runnable? = null
+  // null is used to cancel
+  private val hideRequests = MutableSharedFlow<Boolean?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private var showDelay = true
 
@@ -96,6 +104,20 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       Toolkit.getDefaultToolkit().addAWTEventListener({ this.eventDispatched(it) }, AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
       isEnabled = registryManager.`is`(IDE_TOOLTIP_CALLOUT_KEY)
       processEnabled(registryManager.`is`(IDE_HELP_TOOLTIP_ENABLED_KEY))
+    }
+
+    coroutineScope.launch {
+      hideRequests.collectLatest { animationEnabled ->
+        if (animationEnabled == null) {
+          return@collectLatest
+        }
+
+        delay(serviceAsync<RegistryManager>().intValue("ide.tooltip.autoDismissDeadZone").milliseconds)
+
+        withContext(Dispatchers.EDT) {
+          hideCurrentNow(animationEnabled = animationEnabled)
+        }
+      }
     }
   }
 
@@ -216,10 +238,10 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
       return
     }
 
-    val me = event as MouseEvent
-    processingComponent = me.component
+    val mouseEvent = event as MouseEvent
+    processingComponent = mouseEvent.component
     try {
-      if (me.id == MouseEvent.MOUSE_ENTERED) {
+      if (mouseEvent.id == MouseEvent.MOUSE_ENTERED) {
         if (processingComponent != null && isWaylandToolkit()) {
           if (helpTooltipManager != null && helpTooltipManager!!.fromSameWindowAs(processingComponent!!)) {
             // Since we don't fully control popups positions in Wayland, they are
@@ -227,18 +249,19 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
             // Don't cancel the popup just because the mouse has left its
             // parent component as it may have entered the popup itself.
             alarm.cancelAllRequests()
+            cancelAutoHide()
             return
           }
         }
         var canShow = true
         if (componentContextHasChanged(processingComponent)) {
-          canShow = hideCurrent(me, null, null)
+          canShow = hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null, action = null)
         }
         if (canShow) {
-          maybeShowFor(processingComponent, me)
+          maybeShowFor(processingComponent, mouseEvent)
         }
       }
-      else if (me.id == MouseEvent.MOUSE_EXITED) {
+      else if (mouseEvent.id == MouseEvent.MOUSE_EXITED) {
         // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
         if (processingComponent === currentComponent && currentTooltip != null &&
             !currentTooltip!!.isHint && balloon != null
@@ -251,51 +274,51 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
             // The mouse pointer has left the tooltip's "parent" component. Don't immediately
             // cancel the popup, wait a moment to see if the mouse entered the popup itself.
             alarm.addRequest({
-                               hideCurrent(me, null, null)
+                               hideCurrent(mouseEvent, null, null)
                              }, 200)
           }
           else {
-            hideCurrent(me, null, null)
+            hideCurrent(mouseEvent, null, null)
           }
         }
       }
-      else if (me.id == MouseEvent.MOUSE_MOVED) {
+      else if (mouseEvent.id == MouseEvent.MOUSE_MOVED) {
         if (processingComponent === currentComponent || processingComponent === queuedComponent) {
           if (balloon != null && balloon!!.wasFadedIn()) {
-            maybeShowFor(processingComponent, me)
+            maybeShowFor(processingComponent, mouseEvent)
           }
           else {
             if (!currentTipIsCentered) {
-              x = me.x
-              y = me.y
+              x = mouseEvent.x
+              y = mouseEvent.y
               if (processingComponent is JComponent &&
-                  !isTooltipDefined(processingComponent as JComponent, me) &&
+                  !isTooltipDefined(processingComponent as JComponent, mouseEvent) &&
                   (queuedTooltip == null || !queuedTooltip!!.isHint)
               ) {
-                hideCurrent(me, null, null) //There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
+                hideCurrent(mouseEvent, null, null) //There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
               }
               else {
-                maybeShowFor(processingComponent, me)
+                maybeShowFor(processingComponent, mouseEvent)
               }
             }
           }
         }
         else if (currentComponent == null && queuedComponent == null) {
-          maybeShowFor(processingComponent, me)
+          maybeShowFor(processingComponent, mouseEvent)
         }
         else if (queuedComponent == null) {
-          hideCurrent(me)
+          hideCurrent(mouseEvent)
         }
       }
-      else if (me.id == MouseEvent.MOUSE_PRESSED) {
+      else if (mouseEvent.id == MouseEvent.MOUSE_PRESSED) {
         val clickOnTooltip = balloon != null &&
                              balloon === JBPopupFactory.getInstance().getParentBalloonFor(processingComponent)
         if (processingComponent === currentComponent || (clickOnTooltip && !isClickProcessor(balloon))) {
-          hideCurrent(me, null, null, null, !clickOnTooltip)
+          hideCurrent(mouseEvent, null, null, null, !clickOnTooltip)
         }
       }
-      else if (me.id == MouseEvent.MOUSE_DRAGGED) {
-        hideCurrent(me, null, null)
+      else if (mouseEvent.id == MouseEvent.MOUSE_DRAGGED) {
+        hideCurrent(mouseEvent, null, null)
       }
     }
     finally {
@@ -700,26 +723,17 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
           || (currentTooltip!!.isExplicitClose && implicitMouseMove)
           || (tooltipToShow != null && !tooltipToShow.isHint && Comparing.equal(currentTooltip, tooltipToShow))
       ) {
-        if (hideRunnable != null) {
-          hideRunnable = null
-        }
+        cancelAutoHide()
         return false
       }
     }
 
-    hideRunnable = Runnable {
-      if (hideRunnable != null) {
-        hideCurrentNow(animationEnabled)
-        hideRunnable = null
-      }
-    }
-
     if (mouseEvent != null && mouseEvent.button == MouseEvent.NOBUTTON) {
-      alarm.addRequest(hideRunnable!!, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"))
+      hideRequests.tryEmit(animationEnabled)
     }
     else {
-      hideRunnable?.run()
-      hideRunnable = null
+      cancelAutoHide()
+      hideCurrentNow(animationEnabled)
     }
 
     return true
@@ -784,7 +798,7 @@ class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   }
 
   fun cancelAutoHide() {
-    hideRunnable = null
+    check(hideRequests.tryEmit(null))
   }
 
   fun isQueuedToShow(tooltip: IdeTooltip?): Boolean = queuedTooltip == tooltip
