@@ -2,9 +2,10 @@
 package com.intellij.java.ift.lesson.essential
 
 import com.intellij.execution.RunManager
+import com.intellij.java.ift.JavaLessonsBundle
 import training.dsl.LessonContext
 
-class JavaReworkedOnboardingTourLesson : CommonLogicForOnboardingTours("idea.onboarding.reworked", "Reworked onboarding tour") {
+class JavaReworkedOnboardingTourLesson : CommonLogicForOnboardingTours("idea.onboarding.reworked", JavaLessonsBundle.message("java.onboarding.lesson.name")) {
   override val sample = javaOnboardingTourSample
 
   override val completionStepExpectedCompletion: String = "length"

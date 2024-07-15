@@ -37,7 +37,7 @@ class JavaLearningCourse : LearningCourseBase(JavaLanguage.INSTANCE.id) {
   override fun modules(): List<IftModule> = onboardingTour() + stableModules() + CourseManager.instance.findCommonModules("Git")
 
   private val isOnboardingLessonEnabled: Boolean
-    get() = PlatformUtils.isIntelliJ() && !useShortOnboardingLesson && !NewUsersOnboardingExperimentAccessor.isExperimentEnabled()
+    get() = PlatformUtils.isIntelliJ() && !NewUsersOnboardingExperimentAccessor.isExperimentEnabled()
 
   private fun onboardingTour() = if (isOnboardingLessonEnabled) listOf(
     LearningModule(id = "Java.Onboarding",
