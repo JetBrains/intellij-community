@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStep
 import com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.platform.util.coroutines.childScope
@@ -15,25 +16,41 @@ import kotlinx.coroutines.CoroutineScope
 internal class NewUsersOnboardingService(private val project: Project, private val coroutineScope: CoroutineScope) {
   // Should be accessed only in EDT
   private var currentExecutor: NewUsersOnboardingExecutor? = null
+  private var currentDialog: DialogWrapper? = null
 
   fun showOnboardingDialog() {
-    val dialog = NewUsersOnboardingDialog(project)
-    NewUsersOnboardingStatistics.logDialogShown(project)
-    val startTour = dialog.showAndGet()
-    if (startTour) {
-      startOnboarding()
-      NewUsersOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.DIALOG)
-    }
-    else {
-      // It triggers on the notification text, while it is expected to have capitalized words because it is the terms.
-      @Suppress("DialogTitleCapitalization")
-      Notification(
-        "newUsersOnboarding",
-        NewUsersOnboardingBundle.message("notification.text"),
-        NotificationType.INFORMATION
-      ).notify(project)
+    // Close with the other exit code to not trigger showing of notification
+    currentDialog?.close(NewUsersOnboardingDialog.CLOSE_EXTERNALLY)
 
-      NewUsersOnboardingStatistics.logDialogSkipPressed(project)
+    val dialog = NewUsersOnboardingDialog(project, this::onDialogClosed)
+    currentDialog = dialog
+    dialog.show()
+
+    NewUsersOnboardingStatistics.logDialogShown(project)
+  }
+
+  private fun onDialogClosed(exitCode: Int) {
+    currentDialog = null
+
+    when (exitCode) {
+      DialogWrapper.OK_EXIT_CODE -> {
+        startOnboarding()
+        NewUsersOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.DIALOG)
+      }
+      DialogWrapper.CLOSE_EXIT_CODE -> {
+        // It triggers on the notification text, while it is expected to have capitalized words because it is the terms.
+        @Suppress("DialogTitleCapitalization")
+        Notification(
+          "newUsersOnboarding",
+          NewUsersOnboardingBundle.message("notification.text"),
+          NotificationType.INFORMATION
+        ).notify(project)
+
+        NewUsersOnboardingStatistics.logDialogSkipPressed(project)
+      }
+      else -> {
+        // do nothing
+      }
     }
   }
 

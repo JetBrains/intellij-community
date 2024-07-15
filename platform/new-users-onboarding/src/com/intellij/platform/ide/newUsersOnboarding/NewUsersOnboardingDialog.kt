@@ -24,9 +24,10 @@ import javax.swing.JComponent
 import javax.swing.JRootPane
 import javax.swing.border.Border
 
-internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
-  project, null, false, IdeModalityType.IDE, false
-) {
+internal class NewUsersOnboardingDialog(
+  project: Project,
+  private val onClose: (exitCode: Int) -> Unit,
+) : DialogWrapper(project, null, false, IdeModalityType.MODELESS, false) {
   private val backgroundColor: Color
     get() = JBColor.namedColor("NewUiOnboarding.Dialog.background", UIUtil.getPanelBackground())
 
@@ -61,7 +62,7 @@ internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
             .customize(UnscaledGaps(top = 8))
         }
         row {
-          button(NewUiOnboardingBundle.message("start.tour")) { close(0) }
+          button(NewUiOnboardingBundle.message("start.tour")) { close(OK_EXIT_CODE) }
             .focused()
             .applyToComponent {
               // make button blue without an outline
@@ -71,7 +72,7 @@ internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
               this@NewUsersOnboardingDialog.rootPane.defaultButton = this
             }
 
-          link(NewUiOnboardingBundle.message("dialog.skip")) { close(1) }
+          link(NewUiOnboardingBundle.message("dialog.skip")) { close(CLOSE_EXIT_CODE) }
 
           customize(UnscaledGapsY(top = 12))
         }
@@ -83,9 +84,16 @@ internal class NewUsersOnboardingDialog(project: Project) : DialogWrapper(
     return panel
   }
 
+  override fun dispose() {
+    super.dispose()
+    onClose(exitCode)
+  }
+
   override fun createContentPaneBorder(): Border? = null
 
   companion object {
     private const val IMAGE_PATH: String = "newUiOnboarding/newUIOnboardingPopup.png"
+
+    const val CLOSE_EXTERNALLY: Int = NEXT_USER_EXIT_CODE
   }
 }
