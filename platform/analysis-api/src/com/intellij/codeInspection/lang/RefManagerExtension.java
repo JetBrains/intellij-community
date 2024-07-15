@@ -37,7 +37,9 @@ public interface RefManagerExtension<T> {
    */
   @Deprecated(forRemoval = true)
   @NotNull
-  Language getLanguage();
+  default Language getLanguage() {
+    throw new UnsupportedOperationException("'getLanguages' method must be overriden in " + getClass());
+  }
 
   void iterate(@NotNull RefVisitor visitor);
 

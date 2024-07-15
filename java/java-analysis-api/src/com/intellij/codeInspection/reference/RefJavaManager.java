@@ -4,7 +4,6 @@ package com.intellij.codeInspection.reference;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.lang.RefManagerExtension;
 import com.intellij.lang.Language;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiClass;
@@ -81,12 +80,6 @@ public abstract class RefJavaManager implements RefManagerExtension<RefJavaManag
   @Override
   public Collection<Language> getLanguages() {
     return myLanguages;
-  }
-
-  @NotNull
-  @Override
-  public Language getLanguage() {
-    return JavaLanguage.INSTANCE;
   }
 
   @NotNull

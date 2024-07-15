@@ -1716,7 +1716,7 @@ com.intellij.codeInspection.lang.RefManagerExtension
 - getElementContainer(com.intellij.psi.PsiElement):com.intellij.psi.PsiNamedElement
 - a:getGroupName(com.intellij.codeInspection.reference.RefEntity):java.lang.String
 - a:getID():com.intellij.openapi.util.Key
-- a:getLanguage():com.intellij.lang.Language
+- getLanguage():com.intellij.lang.Language
 - getLanguages():java.util.Collection
 - a:getReference(java.lang.String,java.lang.String):com.intellij.codeInspection.reference.RefEntity
 - a:getRefinedElement(com.intellij.codeInspection.reference.RefEntity):com.intellij.codeInspection.reference.RefEntity
