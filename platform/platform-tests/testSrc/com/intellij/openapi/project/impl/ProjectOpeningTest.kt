@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,6 +21,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -29,6 +32,15 @@ import kotlin.io.path.invariantSeparatorsPathString
 class ProjectOpeningTest : BareTestFixtureTestCase() {
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
   @Rule @JvmField val tempDir = TempDirectory()
+
+  @After fun cleanup() {
+    val projects = ProjectUtilCore.getOpenProjects()
+    if (projects.isNotEmpty()) {
+      val message = "Leaked projects: ${projects.toList()}"
+      projects.forEach(PlatformTestUtil::forceCloseProjectWithoutSaving)
+      Assert.fail(message)
+    }
+  }
 
   @Test fun cancelOnRunPostStartUpActivities() {
     var job: Job? = null
