@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.WindowManager
@@ -34,7 +35,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
@@ -57,7 +58,11 @@ import kotlin.system.measureTimeMillis
 
 class JavaToKotlinAction : AnAction() {
     object Handler {
-        val title: String = KotlinBundle.message("action.j2k.name")
+        val title: String
+            get() {
+                val messageKey = if (isK2Mode()) "action.j2k.k2.name" else "action.j2k.name"
+                return KotlinBundle.message(messageKey)
+            }
 
         @OptIn(KaAllowAnalysisOnEdt::class)
         fun convertFiles(
@@ -96,10 +101,9 @@ class JavaToKotlinAction : AnAction() {
             }
 
             // Perform user interaction first to avoid interrupting J2K in the middle of conversion and breaking "undo"
-            val question = KotlinBundle.message("action.j2k.correction.required")
             val shouldProcessExternalCode = enableExternalCodeProcessing &&
                     (!askExternalCodeProcessing ||
-                            Messages.showYesNoDialog(project, question, title, Messages.getQuestionIcon()) == Messages.YES)
+                            Messages.showYesNoDialog(project, getQuestionText(), title, Messages.getQuestionIcon()) == Messages.YES)
 
             var newFiles: List<KtFile> = emptyList()
 
@@ -146,6 +150,13 @@ class JavaToKotlinAction : AnAction() {
             }
 
             return newFiles
+        }
+
+        @NlsContexts.DialogMessage
+        private fun getQuestionText(): String {
+            val prefix = if (isK2Mode()) KotlinBundle.message("action.j2k.k2.warning") + "\n\n" else ""
+            val question = KotlinBundle.message("action.j2k.correction.required")
+            return prefix + question
         }
 
         private fun prepareExternalCodeUpdate(project: Project, processing: ExternalCodeProcessing?, isEnabled: Boolean): (() -> Unit)? {
@@ -306,7 +317,7 @@ class JavaToKotlinAction : AnAction() {
     }
 
     private fun isEnabled(e: AnActionEvent): Boolean {
-        if (KotlinPluginModeProvider.isK2Mode() && !K2J2K.isEnabled) return false
+        if (isK2Mode() && !K2J2K.isEnabled) return false
 
         if (KotlinPlatformUtils.isCidr) return false
         val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return false
@@ -337,7 +348,7 @@ class JavaToKotlinAction : AnAction() {
 }
 
 private fun getJ2kKind(forceUsingOldJ2k: Boolean = false): J2kConverterExtension.Kind = when {
-    KotlinPluginModeProvider.isK2Mode() -> K2
+    isK2Mode() -> K2
     forceUsingOldJ2k || !NewJ2k.isEnabled -> K1_OLD
     else -> K1_NEW
 }
