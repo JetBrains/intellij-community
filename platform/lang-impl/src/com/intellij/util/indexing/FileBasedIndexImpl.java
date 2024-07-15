@@ -1252,9 +1252,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static final class MyShutDownTask implements Runnable {
-    private final boolean myTermination;
+    private final boolean calledByShutdownHook;
 
-    MyShutDownTask(boolean termination) { myTermination = termination; }
+    MyShutDownTask(boolean calledByShutdownHook) { this.calledByShutdownHook = calledByShutdownHook; }
 
     @Override
     public void run() {
@@ -1266,11 +1266,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       try {
         FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
         if (fileBasedIndex instanceof FileBasedIndexImpl fileBasedIndexImpl) {
+          if(calledByShutdownHook) {
+            //prevent unregistering the task from ShutDownTracker if we're already called from ShutDownTracker:
+            // (unregister fails if ShutDownTracker's executing is already triggered)
+            fileBasedIndexImpl.myShutDownTask = null;
+          }
           fileBasedIndexImpl.performShutdown(false, "IDE shutdown");
         }
       }
       finally {
-        if (!myTermination && !app.isUnitTestMode()) {
+        if (!calledByShutdownHook && !app.isUnitTestMode()) {
           StorageDiagnosticData.dumpOnShutdown();
         }
       }
