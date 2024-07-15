@@ -238,8 +238,8 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
-                    else if (event instanceof LocatableEvent) {
-                      preloadEventInfo(((LocatableEvent)event));
+                    else if (event instanceof LocatableEvent locEvent) {
+                      preloadEventInfo(locEvent.thread(), locEvent.location());
                       if (eventSet.size() > 1) {
                         // check for more than one different thread
                         if (StreamEx.of(eventSet).select(LocatableEvent.class).map(LocatableEvent::thread).toSet().size() > 1) {
@@ -252,7 +252,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                         processStepEvent(suspendContext, (StepEvent)event);
                       }
                       else {
-                        processLocatableEvent(suspendContext, (LocatableEvent)event);
+                        processLocatableEvent(suspendContext, locEvent);
                       }
                     }
                     else if (event instanceof ClassUnloadEvent) {
@@ -595,14 +595,12 @@ public class DebugProcessEvents extends DebugProcessImpl {
   }
 
   // Preload event info in "parallel" commands, to avoid sync jdwp requests after
-  private static void preloadEventInfo(LocatableEvent event) {
+  static void preloadEventInfo(ThreadReference thread, @Nullable Location location) {
     if (Registry.is("debugger.preload.event.info") && DebuggerUtilsAsync.isAsyncEnabled()) {
       List<CompletableFuture> commands = new ArrayList<>();
-      ThreadReference thread = event.thread();
       if (thread instanceof ThreadReferenceImpl t) {
         commands.addAll(List.of(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)));
       }
-      Location location = event.location();
       if (location instanceof LocationImpl) {
         commands.add(DebuggerUtilsEx.getMethodAsync((LocationImpl)location));
       }
