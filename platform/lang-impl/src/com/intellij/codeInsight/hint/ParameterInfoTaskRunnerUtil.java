@@ -79,10 +79,13 @@ public final class ParameterInfoTaskRunnerUtil {
       nonBlockingReadAction.finishOnUiThread(
         ModalityState.defaultModalityState(),
         continuation -> {
+          CancellablePromise<?> promise = cancellablePromiseRef.get();
+          if (promise != null && promise.isSucceeded()) {
             Component owner = getFocusOwner(project);
             if (Objects.equals(focusOwner, owner) || owner instanceof ParameterInfoController.WrapperPanel) {
               continuationConsumer.accept(continuation);
             }
+          }
         })
         .expireWith(editor instanceof EditorImpl ? ((EditorImpl) editor).getDisposable() : project)
         .submit(AppExecutorUtil.getAppExecutorService())
