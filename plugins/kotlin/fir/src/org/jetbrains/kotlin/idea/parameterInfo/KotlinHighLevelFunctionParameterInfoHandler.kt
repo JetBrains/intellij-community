@@ -377,7 +377,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     "currentArgumentIndex: $currentArgumentIndex has to be not more than number of arguments ${arguments.size}"
                 },
                 attachments = {
-                    it.withAttachment("file.kt", callElement.containingFile.text)
+                    it.withPsiAttachment("file.kt", callElement.containingFile)
                     it.withAttachment("info.txt", itemToShow)
                 }
             )

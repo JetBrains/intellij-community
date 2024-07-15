@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isLambdaOutsideParentheses
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
-import org.jetbrains.kotlin.utils.checkWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
 import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 import org.jetbrains.kotlin.utils.sure
@@ -131,11 +131,11 @@ abstract class KotlinIntroduceVariableContext(
             val propertyText = buildString {
                 append("$varOvVal ")
                 val single = nameSuggestions.single()
-                checkWithAttachment(single.isNotEmpty(), lazyMessage = {
+                checkWithAttachment(single.isNotEmpty(), {
                     "nameSuggestions: $nameSuggestions"
-                }, {
-                    it.withPsiAttachment("expression", expression)
-                })
+                }) {
+                    withPsiEntry("expression.kt", expression)
+                }
                 append(single.first())
                 append(" = ")
                 append(initializerText)

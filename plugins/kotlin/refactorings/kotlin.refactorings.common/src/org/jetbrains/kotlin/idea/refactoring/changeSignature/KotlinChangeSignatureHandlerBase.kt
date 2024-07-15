@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.utils.checkWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.checkWithAttachment
+import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
     protected enum class InapplicabilityKind(val description: String) {
@@ -40,7 +41,7 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
         val element = findTargetMember(file, editor) ?: CommonDataKeys.PSI_ELEMENT.getData(dataContext) ?: return
         val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return
         checkWithAttachment(element is KtElement, {"This handler must be invoked for Kotlin elements only: ${element::class.java}"}) {
-            it.withAttachment("element", element)
+            withPsiEntry("element.kt", element)
         }
 
         if (!KotlinSupportAvailability.isSupported(element)) return
@@ -51,7 +52,7 @@ abstract class KotlinChangeSignatureHandlerBase : ChangeSignatureHandler {
     override fun invoke(project: Project, elements: Array<PsiElement>, dataContext: DataContext?) {
         val element = elements.singleOrNull()?.unwrapped ?: return
         checkWithAttachment(element is KtElement, { "This handler must be invoked for Kotlin elements only: ${element::class.java}" }) {
-            it.withAttachment("element", element)
+            withPsiEntry("element", element)
         }
 
         if (!KotlinSupportAvailability.isSupported(element)) return
