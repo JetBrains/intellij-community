@@ -83,7 +83,7 @@ public fun TabContentScope.SimpleTabContent(
     SimpleTabContent(
         state = state,
         modifier = modifier,
-        icon = iconKey?.let { { Icon(key = iconKey, contentDescription = null, hints = *painterHints) } },
+        icon = iconKey?.let { { Icon(key = iconKey, contentDescription = null, hints = painterHints) } },
         label = { Text(label) },
     )
 }

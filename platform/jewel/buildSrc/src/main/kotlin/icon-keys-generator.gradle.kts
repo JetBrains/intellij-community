@@ -5,12 +5,6 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
 import io.gitlab.arturbosch.detekt.Detekt
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonNull
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.dokka.gradle.DokkaTask
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmProjectExtension
 import org.jetbrains.kotlin.gradle.tasks.BaseKotlinCompile
@@ -103,27 +97,15 @@ open class IconKeysGeneratorTask : DefaultTask() {
                     "Is the correct dependency declared on the iconGeneration configuration?"
             )
 
-        // Step 1) load icon mappings from JSON
-        val mappingsJsonBytes =
-            classLoader.getResourceAsStream("PlatformIconMappings.json")
-                ?.use { it.readAllBytes() }
-                ?: error("Icon mapping JSON not found")
-
-        val iconMappingJson =
-            json.parseToJsonElement(mappingsJsonBytes.decodeToString())
-
-        // Step 2) Transform mappings to a map oldPath -> newPath
-        val iconMapping = readIconMappingJson(iconMappingJson)
-        logger.lifecycle("Icon mapping JSON read. It has ${iconMapping.size} entries")
-
-        // Step 3) Traverse sourceClass by using reflection, collecting all members
+        // Traverse sourceClass by using reflection, collecting all members
         // This step uses the mappings to add the new paths where available.
         val dummyIconClass = classLoader.loadClass("com.intellij.ui.DummyIconImpl")
-        val pathField = dummyIconClass.getPathField()
+        val oldUiPathField = dummyIconClass.getOriginalPathField()
+        val newUiPathField = dummyIconClass.getNewUiPathField()
 
         val rootHolder = IconKeyHolder(sourceClass.simpleName)
-        pathField.whileForcingAccessible {
-            visitSourceClass(sourceClass, iconMapping, rootHolder, pathField, classLoader)
+        whileForcingAccessible(oldUiPathField, newUiPathField) {
+            visitSourceClass(sourceClass, rootHolder, oldUiPathField, newUiPathField, classLoader)
         }
         logger.lifecycle("Read icon keys from ${sourceClass.name}")
 
@@ -146,71 +128,35 @@ open class IconKeysGeneratorTask : DefaultTask() {
         )
     }
 
-    private fun readIconMappingJson(rawMapping: JsonElement): Map<String, String> {
-        val flattenedMappings = mutableMapOf<String, Set<String>>()
-
-        visitMapping(oldUiPath = "", node = rawMapping, map = flattenedMappings)
-
-        return flattenedMappings
-            .flatMap { (newPath, oldPaths) ->
-                oldPaths.map { oldPath -> oldPath to newPath }
-            }.toMap()
-    }
-
-    private fun visitMapping(
-        oldUiPath: String,
-        node: JsonElement,
-        map: MutableMap<String, Set<String>>,
-    ) {
-        when (node) {
-            is JsonPrimitive -> {
-                if (!node.isString) return
-                map[oldUiPath] = setOf(node.content)
-            }
-
-            is JsonArray -> {
-                map[oldUiPath] =
-                    node
-                        .filterIsInstance<JsonPrimitive>()
-                        .filter { child -> child.isString }
-                        .map { it.content }
-                        .toSet()
-            }
-
-            is JsonObject -> {
-                for ((key, value) in node.entries) {
-                    val childOldPath = if (oldUiPath.isNotEmpty()) "$oldUiPath/$key" else key
-                    visitMapping(oldUiPath = childOldPath, node = value, map = map)
-                }
-            }
-
-            JsonNull -> error("Null nodes not supported")
+    private fun whileForcingAccessible(vararg fields: Field, action: () -> Unit) {
+        val wasAccessibles = mutableListOf<Boolean>()
+        for (field in fields) {
+            @Suppress("DEPRECATION")
+            wasAccessibles += field.isAccessible
+            field.isAccessible = true
         }
-    }
 
-    private fun Field.whileForcingAccessible(action: () -> Unit) {
-        @Suppress("DEPRECATION")
-        val wasAccessible = isAccessible
-        isAccessible = true
         try {
             action()
         } finally {
-            isAccessible = wasAccessible
+            for ((index, field) in fields.withIndex()) {
+                field.isAccessible = wasAccessibles[index]
+            }
         }
     }
 
     private fun visitSourceClass(
         sourceClass: Class<*>,
-        iconMappings: Map<String, String>,
         parentHolder: IconKeyHolder,
-        pathField: Field,
+        oldUiPathField: Field,
+        newUiPathField: Field,
         classLoader: ClassLoader,
     ) {
         for (child in sourceClass.declaredClasses) {
             val childName = "${parentHolder.name}.${child.simpleName}"
             val childHolder = IconKeyHolder(childName)
             parentHolder.holders += childHolder
-            visitSourceClass(child, iconMappings, childHolder, pathField, classLoader)
+            visitSourceClass(child, childHolder, oldUiPathField, newUiPathField, classLoader)
         }
         parentHolder.holders.sortBy { it.name }
 
@@ -225,12 +171,18 @@ open class IconKeysGeneratorTask : DefaultTask() {
                 }
 
                 val icon = field.get(sourceClass)
-                val oldPath = pathField.get(icon) as String
+                val oldUiPath = oldUiPathField.get(icon) as String?
+                    ?: throw GradleException("Found null path in icon $fieldName")
+                validatePath(oldUiPath, fieldName, classLoader)
 
-                val newPath = iconMappings[oldPath]
-                validatePath(oldPath, fieldName, classLoader)
-                newPath?.let { validatePath(it, fieldName, classLoader) }
-                parentHolder.keys += IconKey(fieldName, oldPath, newPath)
+                // New UI paths may be "partial", meaning they end with a / character.
+                // In this case, we're supposed to append the old UI path to the new UI
+                // path, because that's just how they decided to encode things in IJP.
+                val newUiPath = (newUiPathField.get(icon) as String?)
+                    ?.let { if (it.endsWith("/")) it + oldUiPath else it }
+                    ?: oldUiPath
+                validatePath(newUiPath, fieldName, classLoader)
+                parentHolder.keys += IconKey(fieldName, oldUiPath, newUiPath)
             }
         parentHolder.keys.sortBy { it.name }
     }
@@ -309,11 +261,10 @@ open class IconKeysGeneratorTask : DefaultTask() {
 
     companion object {
 
-        private fun Class<*>.getPathField(): Field = declaredFields.first { it.name == "path" }
+        private fun Class<*>.getOriginalPathField(): Field = declaredFields.first { it.name == "originalPath" }
+        private fun Class<*>.getNewUiPathField(): Field = declaredFields.first { it.name == "expUIPath" }
 
         private val keyClassName = ClassName("org.jetbrains.jewel.ui.icon", "IntelliJIconKey")
-
-        private val json = Json { isLenient = true }
     }
 }
 

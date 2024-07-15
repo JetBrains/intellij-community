@@ -3438,31 +3438,24 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$ToolbarDecorator {
 	public final fun getImport ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 }
 
-public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindow {
-	public static final field $stable I
-	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindow;
-	public final fun getChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getDependencies ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getMeetNewUi ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getRepositories ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getTask ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getToolWindowDuplicates ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-	public final fun getToolWindowInternal ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
-}
-
 public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public static final field $stable I
 	public static final field INSTANCE Lorg/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows;
+	public final fun getChanges ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getDependencies ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getDocumentation ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getErrorEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getInfoEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getMeetNewUi ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNoEvents ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNotifications ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNotificationsNew ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getNotificationsNewImportant ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getProblems ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getProblemsEmpty ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getRepositories ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getSettingSync ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getTask ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowAnalyzeDataflow ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowAnt ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowBookmarks ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
@@ -3473,6 +3466,7 @@ public final class org/jetbrains/jewel/ui/icons/AllIconsKeys$Toolwindows {
 	public final fun getToolWindowCoverage ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDataView ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowDebugger ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
+	public final fun getToolWindowDuplicates ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowFavorites ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowFind ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
 	public final fun getToolWindowHierarchy ()Lorg/jetbrains/jewel/ui/icon/IntelliJIconKey;
