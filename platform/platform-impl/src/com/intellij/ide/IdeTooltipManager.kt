@@ -1,331 +1,442 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide;
+package com.intellij.ide
 
-import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
-import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.BalloonBuilder;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.*;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBHtmlPane;
-import com.intellij.ui.components.JBHtmlPaneConfiguration;
-import com.intellij.ui.components.JBHtmlPaneStyleConfiguration;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.Alarm;
-import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.util.ui.*;
-import kotlin.Unit;
-import kotlinx.coroutines.CoroutineScope;
-import org.jetbrains.annotations.*;
-
-import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.MouseEvent;
+import com.intellij.codeInsight.hint.HintUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.colors.ColorKey
+import com.intellij.openapi.editor.colors.EditorColorsUtil
+import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.*
+import com.intellij.ui.*
+import com.intellij.ui.AppUIUtil.targetToDevice
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.JBHtmlPane
+import com.intellij.ui.components.JBHtmlPaneConfiguration
+import com.intellij.ui.components.JBHtmlPaneConfiguration.Companion.builder
+import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.util.Alarm
+import com.intellij.util.ui.*
+import com.intellij.util.ui.StartupUiUtil.isDarkTheme
+import com.intellij.util.ui.StartupUiUtil.isWaylandToolkit
+import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Contract
+import org.jetbrains.annotations.NonNls
+import java.awt.*
+import java.awt.event.MouseEvent
+import javax.swing.*
+import kotlin.concurrent.Volatile
+import kotlin.math.max
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
-public class IdeTooltipManager implements Disposable {
-  public static final ColorKey TOOLTIP_COLOR_KEY = ColorKey.createColorKey("TOOLTIP", null);
+class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
+  private var isEnabled = false
 
-  private static final Key<IdeTooltip> CUSTOM_TOOLTIP = Key.create("custom.tooltip");
-  private static final MouseEventAdapter<Void> DUMMY_LISTENER = new MouseEventAdapter<>(null);
+  private var helpTooltipManager: HelpTooltipManager? = null
+  private var hideHelpTooltip = false
 
-  public static final Color GRAPHITE_COLOR = new Color(100, 100, 100, 230);
-  private static final String IDE_TOOLTIP_CALLOUT_KEY = "ide.tooltip.callout";
-  private static final String IDE_HELPTOOLTIP_ENABLED_KEY = "ide.helptooltip.enabled";
-  private static final Logger LOG = Logger.getInstance(IdeTooltipManager.class);
-  private boolean isEnabled;
+  @Volatile
+  private var currentComponent: Component? = null
 
-  private HelpTooltipManager helpTooltipManager;
-  private boolean myHideHelpTooltip;
+  @Volatile
+  private var queuedComponent: Component? = null
 
-  private volatile Component currentComponent;
-  private volatile Component queuedComponent;
-  private volatile Component processingComponent;
+  @Volatile
+  private var processingComponent: Component? = null
 
-  private Balloon balloon;
+  private var balloon: Balloon? = null
 
-  private MouseEvent currentEvent;
-  private boolean myCurrentTipIsCentered;
+  private var currentEvent: MouseEvent? = null
+  private var currentTipIsCentered = false
 
-  private Disposable lastDisposable;
+  private var lastDisposable: Disposable? = null
 
-  private Runnable hideRunnable;
+  private var hideRunnable: Runnable? = null
 
-  private boolean myShowDelay = true;
+  private var showDelay = true
 
-  private final Alarm alarm;
-  @NotNull private final CoroutineScope coroutineScope;
+  private val alarm = Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD)
 
-  private int myX;
-  private int myY;
+  private var x = 0
+  private var y = 0
 
-  private IdeTooltip currentTooltip;
-  private Runnable showRequest;
-  private IdeTooltip queuedTooltip;
+  private var currentTooltip: IdeTooltip? = null
+  private var showRequest: Runnable? = null
+  private var queuedTooltip: IdeTooltip? = null
 
-  public IdeTooltipManager(@NotNull CoroutineScope coroutineScope) {
-    alarm = new Alarm(coroutineScope, Alarm.ThreadToUse.SWING_THREAD);
-    this.coroutineScope = coroutineScope;
-
-    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope);
-    connection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        hideCurrent(null, action, event);
+  init {
+    val connection = ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+    connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
+      override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+        hideCurrent(mouseEvent = null, action = action, event = event)
       }
-    });
-    connection.subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
-      @Override
-      public void projectClosing(@NotNull Project project) {
-        hideCurrentNow(false);
+    })
+    connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosing(project: Project) {
+        hideCurrentNow(animationEnabled = false)
       }
-    });
+    })
 
-    RegistryManagerKt.useRegistryManagerWhenReadyJavaAdapter(coroutineScope, registryManager -> {
-      Toolkit.getDefaultToolkit().addAWTEventListener(this::eventDispatched, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
-
-      isEnabled = registryManager.is(IDE_TOOLTIP_CALLOUT_KEY);
-      processEnabled(registryManager.is(IDE_HELPTOOLTIP_ENABLED_KEY));
-      return Unit.INSTANCE;
-    });
+    coroutineScope.useRegistryManagerWhenReadyJavaAdapter { registryManager ->
+      Toolkit.getDefaultToolkit().addAWTEventListener({ this.eventDispatched(it) }, AWTEvent.MOUSE_EVENT_MASK or AWTEvent.MOUSE_MOTION_EVENT_MASK)
+      isEnabled = registryManager.`is`(IDE_TOOLTIP_CALLOUT_KEY)
+      processEnabled(registryManager.`is`(IDE_HELP_TOOLTIP_ENABLED_KEY))
+    }
   }
 
-  static final class MyRegistryListener implements RegistryValueListener {
-    @Override
-    public void afterValueChanged(@NotNull RegistryValue value) {
-      String key = value.getKey();
-      if (key.equals(IDE_TOOLTIP_CALLOUT_KEY)) {
-        IdeTooltipManager instance = getInstance();
-        instance.isEnabled = value.asBoolean();
-        instance.processEnabled(Registry.is(IDE_HELPTOOLTIP_ENABLED_KEY));
+  companion object {
+    @JvmField
+    internal val TOOLTIP_COLOR_KEY: ColorKey = ColorKey.createColorKey("TOOLTIP", null)
+
+    private val CUSTOM_TOOLTIP = Key.create<IdeTooltip>("custom.tooltip")
+    private val DUMMY_LISTENER = MouseEventAdapter<Void?>(null)
+
+    @Suppress("UseJBColor")
+    @JvmField
+    @Internal
+    val GRAPHITE_COLOR: Color = Color(100, 100, 100, 230)
+
+    private const val IDE_TOOLTIP_CALLOUT_KEY = "ide.tooltip.callout"
+    @Suppress("SpellCheckingInspection")
+    private const val IDE_HELP_TOOLTIP_ENABLED_KEY = "ide.helptooltip.enabled"
+    private val LOG = logger<IdeTooltipManager>()
+
+    @JvmStatic
+    fun getInstance(): IdeTooltipManager = service()
+
+    @JvmStatic
+    fun initPane(text: @NlsContexts.Tooltip String?, hintHint: HintHint, layeredPane: JLayeredPane?): JEditorPane {
+      return initPane(html = Html(text), hintHint = hintHint, layeredPane = layeredPane, limitWidthToScreen = true)
+    }
+
+    @JvmStatic
+    fun initPane(
+      html: @NlsContexts.Tooltip Html,
+      hintHint: HintHint,
+      layeredPane: JLayeredPane?,
+      limitWidthToScreen: Boolean,
+    ): JEditorPane {
+      val styleConfiguration = JBHtmlPaneStyleConfiguration()
+      val paneConfiguration = builder()
+        .customStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")
+        .build()
+
+      val prefSizeWasComputed = Ref(false)
+      val pane = if (!limitWidthToScreen) {
+        JBHtmlPane(styleConfiguration, paneConfiguration)
       }
-      if (key.equals(IDE_HELPTOOLTIP_ENABLED_KEY)) {
-        getInstance().processEnabled(value.asBoolean());
+      else {
+        LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane)
+      }
+
+      var text: @NonNls String = HintUtil.prepareHintText(html, hintHint)
+      // Remove <style> rule for <code> added by prepareHintText() call
+      text = text.replaceFirst("code \\{font-size:[0-9.]*pt;}".toRegex(), "")
+
+      if (hintHint.isOwnBorderAllowed) {
+        setBorder(pane)
+        setColors(pane)
+      }
+      else {
+        pane.border = null
+      }
+
+      if (!hintHint.isAwtTooltip) {
+        prefSizeWasComputed.set(true)
+      }
+
+      pane.isOpaque = hintHint.isOpaqueAllowed
+      pane.background = hintHint.textBackground
+
+      pane.text = text
+
+      if (!limitWidthToScreen) {
+        targetToDevice(pane, layeredPane)
+      }
+
+      return pane
+    }
+
+    @JvmStatic
+    fun setColors(pane: JComponent) {
+      pane.foreground = JBColor.foreground()
+      pane.background = HintUtil.getInformationColor()
+      pane.isOpaque = true
+    }
+
+    fun setBorder(pane: JComponent) {
+      @Suppress("UseJBColor")
+      pane.border = BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.black), JBUI.Borders.empty(0, 5))
+    }
+
+    private fun isClickProcessor(balloon: Balloon?): Boolean = balloon is BalloonImpl && balloon.isClickProcessor
+
+    private fun isAnimationEnabled(balloon: Balloon?): Boolean = balloon is BalloonImpl && balloon.isAnimationEnabled
+
+    private fun isBlockClicks(balloon: Balloon): Boolean = balloon is BalloonImpl && balloon.isBlockClicks
+
+    private fun isMovingForward(balloon: Balloon, target: RelativePoint): Boolean {
+      return balloon is BalloonImpl && balloon.isMovingForward(target)
+    }
+
+    private fun isInside(balloon: Balloon, target: RelativePoint): Boolean = balloon is IdeTooltip.Ui && balloon.isInside(target)
+  }
+
+  internal class MyRegistryListener : RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) {
+      val key = value.key
+      if (key == IDE_TOOLTIP_CALLOUT_KEY) {
+        val instance = getInstance()
+        instance.isEnabled = value.asBoolean()
+        instance.processEnabled(Registry.`is`(IDE_HELP_TOOLTIP_ENABLED_KEY))
+      }
+      if (key == IDE_HELP_TOOLTIP_ENABLED_KEY) {
+        getInstance().processEnabled(value.asBoolean())
       }
     }
   }
 
-  private void eventDispatched(AWTEvent event) {
+  private fun eventDispatched(event: AWTEvent) {
     if (!isEnabled) {
-      return;
+      return
     }
 
-    MouseEvent me = (MouseEvent)event;
-    processingComponent = me.getComponent();
+    val me = event as MouseEvent
+    processingComponent = me.component
     try {
-      if (me.getID() == MouseEvent.MOUSE_ENTERED) {
-        if (processingComponent != null && StartupUiUtil.isWaylandToolkit()) {
-          if (helpTooltipManager != null && helpTooltipManager.fromSameWindowAs(processingComponent)) {
+      if (me.id == MouseEvent.MOUSE_ENTERED) {
+        if (processingComponent != null && isWaylandToolkit()) {
+          if (helpTooltipManager != null && helpTooltipManager!!.fromSameWindowAs(processingComponent!!)) {
             // Since we don't fully control popups positions in Wayland, they are
             // a lot more likely to appear right under the mouse pointer.
             // Don't cancel the popup just because the mouse has left its
             // parent component as it may have entered the popup itself.
-            alarm.cancelAllRequests();
-            return;
+            alarm.cancelAllRequests()
+            return
           }
         }
-        boolean canShow = true;
+        var canShow = true
         if (componentContextHasChanged(processingComponent)) {
-          canShow = hideCurrent(me, null, null);
+          canShow = hideCurrent(me, null, null)
         }
         if (canShow) {
-          maybeShowFor(processingComponent, me);
+          maybeShowFor(processingComponent, me)
         }
       }
-      else if (me.getID() == MouseEvent.MOUSE_EXITED) {
+      else if (me.id == MouseEvent.MOUSE_EXITED) {
         // we hide tooltip (but not hint!) when it's shown over myComponent and mouse exits this component
-        if (processingComponent == currentComponent &&
-            currentTooltip != null &&
-            !currentTooltip.isHint() &&
-            balloon != null) {
-          balloon.setAnimationEnabled(false);
-          hideCurrent(null, null, null, null, false);
+        if (processingComponent === currentComponent && currentTooltip != null &&
+            !currentTooltip!!.isHint && balloon != null
+        ) {
+          balloon!!.setAnimationEnabled(false)
+          hideCurrent(null, null, null, null, false)
         }
-        else if (processingComponent == currentComponent || processingComponent == queuedComponent) {
-          if (StartupUiUtil.isWaylandToolkit()) {
+        else if (processingComponent === currentComponent || processingComponent === queuedComponent) {
+          if (isWaylandToolkit()) {
             // The mouse pointer has left the tooltip's "parent" component. Don't immediately
             // cancel the popup, wait a moment to see if the mouse entered the popup itself.
-            alarm.addRequest(() -> {
-              hideCurrent(me, null, null);
-            }, 200);
-          } else {
-            hideCurrent(me, null, null);
+            alarm.addRequest({
+                               hideCurrent(me, null, null)
+                             }, 200)
+          }
+          else {
+            hideCurrent(me, null, null)
           }
         }
       }
-      else if (me.getID() == MouseEvent.MOUSE_MOVED) {
-        if (processingComponent == currentComponent || processingComponent == queuedComponent) {
-          if (balloon != null && balloon.wasFadedIn()) {
-            maybeShowFor(processingComponent, me);
+      else if (me.id == MouseEvent.MOUSE_MOVED) {
+        if (processingComponent === currentComponent || processingComponent === queuedComponent) {
+          if (balloon != null && balloon!!.wasFadedIn()) {
+            maybeShowFor(processingComponent, me)
           }
           else {
-            if (!myCurrentTipIsCentered) {
-              myX = me.getX();
-              myY = me.getY();
-              if (processingComponent instanceof JComponent &&
-                  !isTooltipDefined((JComponent)processingComponent, me) &&
-                  (queuedTooltip == null || !queuedTooltip.isHint())) {
-                hideCurrent(me, null, null);//There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
+            if (!currentTipIsCentered) {
+              x = me.x
+              y = me.y
+              if (processingComponent is JComponent &&
+                  !isTooltipDefined(processingComponent as JComponent, me) &&
+                  (queuedTooltip == null || !queuedTooltip!!.isHint)
+              ) {
+                hideCurrent(me, null, null) //There is no tooltip or hint here, let's proceed it as MOUSE_EXITED
               }
               else {
-                maybeShowFor(processingComponent, me);
+                maybeShowFor(processingComponent, me)
               }
             }
           }
         }
         else if (currentComponent == null && queuedComponent == null) {
-          maybeShowFor(processingComponent, me);
+          maybeShowFor(processingComponent, me)
         }
         else if (queuedComponent == null) {
-          hideCurrent(me);
+          hideCurrent(me)
         }
       }
-      else if (me.getID() == MouseEvent.MOUSE_PRESSED) {
-        boolean clickOnTooltip = balloon != null &&
-                                 balloon == JBPopupFactory.getInstance().getParentBalloonFor(processingComponent);
-        if (processingComponent == currentComponent || (clickOnTooltip && !isClickProcessor(balloon))) {
-          hideCurrent(me, null, null, null, !clickOnTooltip);
+      else if (me.id == MouseEvent.MOUSE_PRESSED) {
+        val clickOnTooltip = balloon != null &&
+                             balloon === JBPopupFactory.getInstance().getParentBalloonFor(processingComponent)
+        if (processingComponent === currentComponent || (clickOnTooltip && !isClickProcessor(balloon))) {
+          hideCurrent(me, null, null, null, !clickOnTooltip)
         }
       }
-      else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
-        hideCurrent(me, null, null);
+      else if (me.id == MouseEvent.MOUSE_DRAGGED) {
+        hideCurrent(me, null, null)
       }
     }
     finally {
-      processingComponent = null;
+      processingComponent = null
     }
   }
 
-  private boolean componentContextHasChanged(Component eventComponent) {
-    if (eventComponent == currentComponent) return false;
+  private fun componentContextHasChanged(eventComponent: Component?): Boolean {
+    if (eventComponent === currentComponent) return false
 
     if (queuedTooltip != null) {
       // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
-      // we dont want to hide the tooltip in that case (IDEA-194208)
-      Point tooltipPoint = queuedTooltip.getPoint();
+      // we don't want to hide the tooltip in that case (IDEA-194208)
+      val tooltipPoint = queuedTooltip!!.point
       if (tooltipPoint != null) {
-        Component realQueuedComponent =
-          SwingUtilities.getDeepestComponentAt(queuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
-        return eventComponent != realQueuedComponent;
+        val realQueuedComponent =
+          SwingUtilities.getDeepestComponentAt(queuedTooltip!!.component, tooltipPoint.x, tooltipPoint.y)
+        return eventComponent !== realQueuedComponent
       }
     }
 
-    return true;
+    return true
   }
 
-  private void maybeShowFor(Component c, MouseEvent me) {
-    showForComponent(c, me, false);
+  private fun maybeShowFor(c: Component?, me: MouseEvent) {
+    showForComponent(c, me, false)
   }
 
-  private void showForComponent(Component c, MouseEvent me, boolean now) {
-    if (!(c instanceof JComponent comp)) return;
+  private fun showForComponent(c: Component?, me: MouseEvent, now: Boolean) {
+    if (c !is JComponent) return
 
-    Window wnd = SwingUtilities.getWindowAncestor(comp);
-    if (wnd == null) return;
+    val wnd = SwingUtilities.getWindowAncestor(c)
+    if (wnd == null) return
 
-    if (!wnd.isActive()) {
-      if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return;
+    if (!wnd.isActive) {
+      if (JBPopupFactory.getInstance().isChildPopupFocused(wnd)) return
     }
 
-    if (!isTooltipDefined(comp, me)) {
-      hideCurrent(null);
-      return;
+    if (!isTooltipDefined(c, me)) {
+      hideCurrent(null)
+      return
     }
 
-    boolean centerDefault = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT));
-    boolean centerStrict = Boolean.TRUE.equals(comp.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT));
-    int shift = centerStrict ? 0 : centerDefault ? 4 : 0;
+    val centerDefault = c.getClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT) == true
+    val centerStrict = c.getClientProperty(UIUtil.CENTER_TOOLTIP_STRICT) == true
+    var shift = if (centerStrict) 0 else if (centerDefault) 4 else 0
 
     // Balloon may appear exactly above useful content, such behavior is rather annoying.
-    Rectangle rowBounds = null;
-    if (c instanceof JTree) {
-      TreePath path = ((JTree)c).getClosestPathForLocation(me.getX(), me.getY());
+    var rowBounds: Rectangle? = null
+    if (c is JTree) {
+      val path = c.getClosestPathForLocation(me.x, me.y)
       if (path != null) {
-        rowBounds = ((JTree)c).getPathBounds(path);
+        rowBounds = c.getPathBounds(path)
       }
     }
-    else if (c instanceof JList) {
-      int row = ((JList<?>)c).locationToIndex(me.getPoint());
+    else if (c is JList<*>) {
+      val row = c.locationToIndex(me.point)
       if (row > -1) {
-        rowBounds = ((JList<?>)c).getCellBounds(row, row);
+        rowBounds = c.getCellBounds(row, row)
       }
     }
-    if (rowBounds != null && rowBounds.y + 4 < me.getY()) {
-      shift += me.getY() - rowBounds.y - 4;
+    if (rowBounds != null && rowBounds.y + 4 < me.y) {
+      shift += me.y - rowBounds.y - 4
     }
 
-    showTooltipForEvent(comp, me, centerStrict || centerDefault, shift, -shift, -shift, now);
+    showTooltipForEvent(
+      c = c,
+      me = me,
+      toCenter = centerStrict || centerDefault,
+      shift = shift,
+      posChangeX = -shift,
+      posChangeY = -shift,
+      now = now,
+    )
   }
 
-  private boolean isTooltipDefined(JComponent component, MouseEvent event) {
-    return !StringUtil.isEmpty(component.getToolTipText(event)) || getCustomTooltip(component) != null;
+  private fun isTooltipDefined(component: JComponent, event: MouseEvent): Boolean {
+    return !component.getToolTipText(event).isNullOrEmpty() || getCustomTooltip(component) != null
   }
 
-  private void showTooltipForEvent(final JComponent c,
-                                   final MouseEvent me,
-                                   final boolean toCenter,
-                                   final int shift,
-                                   final int posChangeX,
-                                   final int posChangeY,
-                                   final boolean now) {
-    IdeTooltip tooltip = getCustomTooltip(c);
+  private fun showTooltipForEvent(
+    c: JComponent,
+    me: MouseEvent,
+    toCenter: Boolean,
+    shift: Int,
+    posChangeX: Int,
+    posChangeY: Int,
+    now: Boolean,
+  ) {
+    var tooltip = getCustomTooltip(c)
     if (tooltip == null) {
       if (helpTooltipManager != null) {
-        currentComponent = c;
-        myHideHelpTooltip = true;
-        helpTooltipManager.showTooltip(c, me);
-        return;
+        currentComponent = c
+        hideHelpTooltip = true
+        helpTooltipManager!!.showTooltip(c, me)
+        return
       }
 
-      String aText = String.valueOf(c.getToolTipText(me));
-      tooltip = new IdeTooltip(c, me.getPoint(), null, /*new Object()*/c, aText) {
-        @Override
-        protected boolean beforeShow() {
-          currentEvent = me;
+      val aText = c.getToolTipText(me).toString()
+      tooltip = object : IdeTooltip(c, me.point, null,  /*new Object()*/c, aText) {
+        override fun beforeShow(): Boolean {
+          currentEvent = me
 
-          if (!c.isShowing()) return false;
+          if (!c.isShowing) {
+            return false
+          }
 
-          String text = c.getToolTipText(currentEvent);
-          if (text == null || text.trim().isEmpty()) return false;
+          val text = c.getToolTipText(currentEvent)
+          if (text.isNullOrBlank()) {
+            return false
+          }
 
-          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() :
-                                  IdeMouseEventDispatcher.isDiagramViewComponent(c) ? c.getBounds() : c.getVisibleRect();
-          if (!visibleRect.contains(getPoint())) return false;
+          val visibleRect = if (c.parent is JViewport) {
+            (c.parent as JViewport).viewRect
+          }
+          else if (IdeMouseEventDispatcher.isDiagramViewComponent(c)) {
+            c.bounds
+          }
+          else {
+            c.visibleRect
+          }
+          if (!visibleRect.contains(point)) {
+            return false
+          }
 
-          JLayeredPane layeredPane = ComponentUtil.getParentOfType((Class<? extends JLayeredPane>)JLayeredPane.class, (Component)c);
-
-          final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);
-          final Wrapper wrapper = new Wrapper(pane);
-          setTipComponent(wrapper);
-          return true;
+          val layeredPane = ComponentUtil.getParentOfType(JLayeredPane::class.java, c as Component)
+          val pane = initPane(text = text, hintHint = HintHint(me).setAwtTooltip(true), layeredPane = layeredPane)
+          val wrapper = Wrapper(pane)
+          tipComponent = wrapper
+          return true
         }
-      }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
+      }
+        .setToCenter(toCenter)
+        .setCalloutShift(shift)
+        .setPositionChangeShift(posChangeX, posChangeY)
+        .setLayer(Balloon.Layer.top)
     }
-    else if (currentTooltip == tooltip) {
-      return;//Don't re-show the same custom tooltip on every mouse movement
+    else if (currentTooltip === tooltip) {
+      // don't re-show the same custom tooltip on every mouse movement
+      return
     }
 
-    show(tooltip, now);
+    show(tooltip!!, now)
   }
 
   /**
@@ -336,10 +447,9 @@ public class IdeTooltipManager implements Disposable {
    */
   @ApiStatus.Experimental
   @Contract(value = "null -> false", pure = true)
-  public boolean isProcessing(@Nullable Component tooltipOwner) {
-    return tooltipOwner != null && (tooltipOwner == currentComponent
-                                    || tooltipOwner == queuedComponent
-                                    || tooltipOwner == processingComponent);
+  fun isProcessing(tooltipOwner: Component?): Boolean {
+    return tooltipOwner != null &&
+           (tooltipOwner === currentComponent || tooltipOwner === queuedComponent || tooltipOwner === processingComponent)
   }
 
   /**
@@ -350,527 +460,384 @@ public class IdeTooltipManager implements Disposable {
    * @param tooltipOwner for which the tooltip is updating
    */
   @ApiStatus.Experimental
-  public void updateShownTooltip(@Nullable Component tooltipOwner) {
-    if (!hasCurrent() || currentComponent == null || currentComponent != tooltipOwner) {
-      return;
+  fun updateShownTooltip(tooltipOwner: Component?) {
+    if (!hasCurrent() || currentComponent == null || currentComponent !== tooltipOwner) {
+      return
     }
 
     try {
-      MouseEvent reposition;
+      val reposition: MouseEvent
+      val currentEvent = currentEvent!!
       if (GraphicsEnvironment.isHeadless()) {
-        reposition = currentEvent;
+        reposition = currentEvent
       }
       else {
-        Point topLeftComponent = currentComponent.getLocationOnScreen();
-        Point screenLocation = MouseInfo.getPointerInfo().getLocation();
-        reposition = new MouseEvent(
-          currentEvent.getComponent(),
-          currentEvent.getID(),
+        val topLeftComponent = currentComponent!!.locationOnScreen
+        val screenLocation = MouseInfo.getPointerInfo().location
+        @Suppress("DEPRECATION")
+        reposition = MouseEvent(
+          currentEvent.component,
+          currentEvent.id,
           currentEvent.getWhen(),
-          currentEvent.getModifiers(),
+          currentEvent.modifiers,
           screenLocation.x - topLeftComponent.x,
           screenLocation.y - topLeftComponent.y,
           screenLocation.x,
           screenLocation.y,
-          currentEvent.getClickCount(),
-          currentEvent.isPopupTrigger(),
-          currentEvent.getButton());
+          currentEvent.clickCount,
+          currentEvent.isPopupTrigger,
+          currentEvent.button)
       }
-      showForComponent(currentComponent, reposition, true);
+      showForComponent(c = currentComponent, me = reposition, now = true)
     }
-    catch (IllegalComponentStateException ignore) {
+    catch (ignore: IllegalComponentStateException) {
     }
   }
 
-  public void setCustomTooltip(JComponent component, IdeTooltip tooltip) {
-    component.putClientProperty(CUSTOM_TOOLTIP, tooltip);
+  fun setCustomTooltip(component: JComponent, tooltip: IdeTooltip?) {
+    component.putClientProperty(CUSTOM_TOOLTIP, tooltip)
     // We need to register a dummy mouse listener to make sure events will be generated for this specific component, not its parent
-    component.removeMouseListener(DUMMY_LISTENER);
-    component.removeMouseMotionListener(DUMMY_LISTENER);
+    component.removeMouseListener(DUMMY_LISTENER)
+    component.removeMouseMotionListener(DUMMY_LISTENER)
     if (tooltip != null) {
-      component.addMouseListener(DUMMY_LISTENER);
-      component.addMouseMotionListener(DUMMY_LISTENER);
+      component.addMouseListener(DUMMY_LISTENER)
+      component.addMouseMotionListener(DUMMY_LISTENER)
     }
   }
 
-  public IdeTooltip getCustomTooltip(JComponent component) {
-    return ClientProperty.get(component, CUSTOM_TOOLTIP);
-  }
+  fun getCustomTooltip(component: JComponent?): IdeTooltip? = ClientProperty.get(component, CUSTOM_TOOLTIP)
 
-  public IdeTooltip show(final IdeTooltip tooltip, boolean now) {
-    return show(tooltip, now, true);
-  }
+  fun show(tooltip: IdeTooltip, now: Boolean): IdeTooltip = show(tooltip = tooltip, now = now, animationEnabled = true)
 
-  public IdeTooltip show(final IdeTooltip tooltip, boolean now, final boolean animationEnabled) {
-    alarm.cancelAllRequests();
+  fun show(tooltip: IdeTooltip, now: Boolean, animationEnabled: Boolean): IdeTooltip {
+    alarm.cancelAllRequests()
 
-    hideCurrent(null, tooltip);
+    hideCurrent(null, tooltip)
 
-    queuedComponent = tooltip.getComponent();
-    queuedTooltip = tooltip;
+    queuedComponent = tooltip.component
+    queuedTooltip = tooltip
 
-    showRequest = () -> {
+    showRequest = Runnable {
       if (showRequest == null) {
-        return;
+        return@Runnable
       }
-
-      if (queuedComponent != tooltip.getComponent() || !tooltip.getComponent().isShowing()) {
-        hideCurrent(null, tooltip, null, null, animationEnabled);
-        return;
+      if (queuedComponent !== tooltip.component || !tooltip.component.isShowing) {
+        hideCurrent(null, tooltip, null, null, animationEnabled)
+        return@Runnable
       }
-
       if (tooltip.beforeShow()) {
-        doShow(tooltip, animationEnabled);
+        doShow(tooltip, animationEnabled)
       }
       else {
-        hideCurrent(null, tooltip, null, null, animationEnabled);
+        hideCurrent(null, tooltip, null, null, animationEnabled)
       }
-    };
+    }
 
     if (now) {
-      showRequest.run();
+      showRequest!!.run()
     }
     else {
-      alarm.addRequest(showRequest, myShowDelay ? tooltip.getShowDelay() : tooltip.getInitialReshowDelay());
+      alarm.addRequest(showRequest!!, if (showDelay) tooltip.showDelay else tooltip.initialReshowDelay)
     }
 
-    return tooltip;
+    return tooltip
   }
 
-  private void doShow(final IdeTooltip tooltip, boolean animationEnabled) {
-    boolean toCenterX;
-    boolean toCenterY;
+  private fun doShow(tooltip: IdeTooltip, animationEnabled: Boolean) {
+    val toCenterX: Boolean
+    val toCenterY: Boolean
 
-    boolean toCenter = tooltip.isToCenter();
-    boolean small = false;
-    if (!toCenter && tooltip.isToCenterIfSmall()) {
-      Dimension size = tooltip.getComponent().getSize();
-      toCenterX = size.width < 64;
-      toCenterY = size.height < 64;
-      toCenter = toCenterX || toCenterY;
-      small = true;
+    var toCenter = tooltip.isToCenter
+    var small = false
+    if (!toCenter && tooltip.isToCenterIfSmall) {
+      val size = tooltip.component.size
+      toCenterX = size.width < 64
+      toCenterY = size.height < 64
+      toCenter = toCenterX || toCenterY
+      small = true
     }
     else {
-      toCenterX = true;
-      toCenterY = true;
+      toCenterX = true
+      toCenterY = true
     }
 
-    Point effectivePoint = tooltip.getPoint();
+    var effectivePoint = tooltip.point
     if (effectivePoint == null) {
-      LOG.warn("No point specified for a tooltip for the component " + tooltip.getComponent());
-      effectivePoint = new Point();
-      toCenter = true; // Might as well just center it, since we're not given a point.
+      LOG.warn("No point specified for a tooltip for the component " + tooltip.component)
+      effectivePoint = Point()
+      // might as well just center it, since we're not given a point
+      toCenter = true
     }
     if (toCenter) {
-      Rectangle bounds = tooltip.getComponent().getBounds();
-      effectivePoint.x = toCenterX ? bounds.width / 2 : effectivePoint.x;
-      effectivePoint.y = toCenterY ? bounds.height / 2 : effectivePoint.y;
+      val bounds = tooltip.component.bounds
+      effectivePoint.x = if (toCenterX) bounds.width / 2 else effectivePoint.x
+      effectivePoint.y = if (toCenterY) bounds.height / 2 else effectivePoint.y
     }
 
-    if (currentComponent == tooltip.getComponent() && balloon != null && !balloon.isDisposed()) {
-      balloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
-      return;
+    if (currentComponent === tooltip.component && balloon != null && !balloon!!.isDisposed) {
+      balloon!!.show(RelativePoint(tooltip.component, effectivePoint), tooltip.preferredPosition)
+      return
     }
 
-    if (currentComponent == tooltip.getComponent() && effectivePoint.equals(new Point(myX, myY))) {
-      return;
+    if (currentComponent === tooltip.component && effectivePoint == Point(x, y)) {
+      return
     }
 
-    Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
-    Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
-    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : JBUI.CurrentTheme.Tooltip.borderColor();
+    val bg = if (tooltip.textBackground != null) tooltip.textBackground else getTextBackground(true)
+    val fg = if (tooltip.textForeground != null) tooltip.textForeground else getTextForeground(true)
+    val borderColor = if (tooltip.borderColor != null) tooltip.borderColor else JBUI.CurrentTheme.Tooltip.borderColor()
 
-    BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(tooltip.getTipComponent())
+    val builder = JBPopupFactory.getInstance().createBalloonBuilder(tooltip.tipComponent)
       .setFillColor(bg)
       .setBorderColor(borderColor)
-      .setBorderInsets(tooltip.getBorderInsets())
-      .setAnimationCycle(animationEnabled ? RegistryManager.getInstance().intValue("ide.tooltip.animationCycle") : 0)
+      .setBorderInsets(tooltip.borderInsets)
+      .setAnimationCycle(if (animationEnabled) RegistryManager.getInstance().intValue("ide.tooltip.animationCycle") else 0)
       .setShowCallout(true)
-      .setPointerSize(tooltip.getPointerSize())
-      .setCalloutShift(small && tooltip.getCalloutShift() == 0 ? 2 : tooltip.getCalloutShift())
-      .setPositionChangeXShift(tooltip.getPositionChangeX())
-      .setPositionChangeYShift(tooltip.getPositionChangeY())
-      .setHideOnKeyOutside(!tooltip.isExplicitClose())
-      .setHideOnAction(!tooltip.isExplicitClose())
-      .setRequestFocus(tooltip.isRequestFocus())
-      .setLayer(tooltip.getLayer());
-    tooltip.getTipComponent().setForeground(fg);
-    tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
-    tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
+      .setPointerSize(tooltip.pointerSize)
+      .setCalloutShift(if (small && tooltip.calloutShift == 0) 2 else tooltip.calloutShift)
+      .setPositionChangeXShift(tooltip.positionChangeX)
+      .setPositionChangeYShift(tooltip.positionChangeY)
+      .setHideOnKeyOutside(!tooltip.isExplicitClose)
+      .setHideOnAction(!tooltip.isExplicitClose)
+      .setRequestFocus(tooltip.isRequestFocus)
+      .setLayer(tooltip.layer)
+    tooltip.tipComponent.foreground = fg
+    tooltip.tipComponent.border = tooltip.componentBorder
+    tooltip.tipComponent.font = if (tooltip.font != null) tooltip.font else getTextFont(true)
 
-    if (tooltip.isPointerShiftedToStart()) {
-      builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8));
+    if (tooltip.isPointerShiftedToStart) {
+      builder.setPointerShiftedToStart(true).setCornerRadius(JBUI.scale(8))
     }
 
-    balloon = builder.createBalloon();
+    balloon = builder.createBalloon()
 
-    balloon.setAnimationEnabled(animationEnabled);
-    tooltip.setUi(balloon instanceof IdeTooltip.Ui ? (IdeTooltip.Ui)balloon : null);
-    currentComponent = tooltip.getComponent();
-    myX = effectivePoint.x;
-    myY = effectivePoint.y;
-    myCurrentTipIsCentered = toCenter;
-    currentTooltip = tooltip;
-    showRequest = null;
-    queuedComponent = null;
-    queuedTooltip = null;
+    balloon!!.setAnimationEnabled(animationEnabled)
+    tooltip.setUi(if (balloon is IdeTooltip.Ui) balloon as IdeTooltip.Ui else null)
+    currentComponent = tooltip.component
+    x = effectivePoint.x
+    y = effectivePoint.y
+    currentTipIsCentered = toCenter
+    currentTooltip = tooltip
+    showRequest = null
+    queuedComponent = null
+    queuedTooltip = null
 
-    lastDisposable = balloon;
-    Disposer.register(lastDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        lastDisposable = null;
-      }
-    });
+    lastDisposable = balloon
+    Disposer.register(lastDisposable!!) { lastDisposable = null }
 
-    balloon.show(new RelativePoint(tooltip.getComponent(), effectivePoint), tooltip.getPreferredPosition());
-    alarm.addRequest(() -> {
-      if (currentTooltip == tooltip && tooltip.canBeDismissedOnTimeout()) {
-        hideCurrent(null, null, null);
-      }
-    }, tooltip.getDismissDelay());
+    balloon!!.show(RelativePoint(tooltip.component, effectivePoint), tooltip.preferredPosition)
+    alarm.addRequest({
+                       if (currentTooltip === tooltip && tooltip.canBeDismissedOnTimeout()) {
+                         hideCurrent(null, null, null)
+                       }
+                     }, tooltip.dismissDelay)
   }
 
-  @SuppressWarnings("UnusedParameters")
-  public Color getTextForeground(boolean awtTooltip) {
-    return UIUtil.getToolTipForeground();
+  fun getTextForeground(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color = UIUtil.getToolTipForeground()
+
+  fun getLinkForeground(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Link.Foreground.ENABLED
+
+  fun getTextBackground(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color {
+    val color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY)
+    return color ?: UIUtil.getToolTipBackground()
   }
 
-  @SuppressWarnings("UnusedParameters")
-  public Color getLinkForeground(boolean awtTooltip) {
-    return JBUI.CurrentTheme.Link.Foreground.ENABLED;
+  @Suppress("SpellCheckingInspection")
+  fun getUlImg(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): String {
+    return if (isDarkTheme) "/general/mdot-white.png" else "/general/mdot.png"
   }
 
-  @SuppressWarnings("UnusedParameters")
-  public Color getTextBackground(boolean awtTooltip) {
-    Color color = EditorColorsUtil.getGlobalOrDefaultColor(TOOLTIP_COLOR_KEY);
-    return color != null ? color : UIUtil.getToolTipBackground();
-  }
+  @Suppress("DeprecatedCallableAddReplaceWith")
+  @Deprecated("use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.")
+  fun getBorderColor(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Color = JBUI.CurrentTheme.Tooltip.borderColor()
 
-  @SuppressWarnings("UnusedParameters")
-  public String getUlImg(boolean awtTooltip) {
-    return StartupUiUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
-  }
+  fun isOwnBorderAllowed(awtTooltip: Boolean): Boolean = !awtTooltip
 
+  fun isOpaqueAllowed(awtTooltip: Boolean): Boolean = !awtTooltip
 
-  /**
-   * @deprecated use {@link JBUI.CurrentTheme.Tooltip#borderColor()} instead.
-   */
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated(forRemoval = true)
-  public Color getBorderColor(boolean awtTooltip) {
-    return JBUI.CurrentTheme.Tooltip.borderColor();
-  }
+  fun getTextFont(@Suppress("UNUSED_PARAMETER") awtTooltip: Boolean): Font = UIManager.getFont("ToolTip.font")
 
-  @SuppressWarnings("UnusedParameters")
-  public boolean isOwnBorderAllowed(boolean awtTooltip) {
-    return !awtTooltip;
-  }
+  fun hasCurrent(): Boolean = currentTooltip != null
 
-  @SuppressWarnings("UnusedParameters")
-  public boolean isOpaqueAllowed(boolean awtTooltip) {
-    return !awtTooltip;
-  }
+  fun hideCurrent(mouseEvent: MouseEvent?): Boolean = hideCurrent(mouseEvent = mouseEvent, tooltipToShow = null)
 
-  @SuppressWarnings("UnusedParameters")
-  public Font getTextFont(boolean awtTooltip) {
-    return UIManager.getFont("ToolTip.font");
-  }
-
-  public boolean hasCurrent() {
-    return currentTooltip != null;
-  }
-
-  public boolean hideCurrent(@Nullable MouseEvent me) {
-    return hideCurrent(me, null);
-  }
-
-  private boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    return hideCurrent(me, null, action, event, isAnimationEnabled(balloon));
-  }
-
-  private boolean hideCurrent(@Nullable MouseEvent me,
-                              @Nullable IdeTooltip tooltipToShow) {
-    return hideCurrent(me, tooltipToShow, null, null, isAnimationEnabled(balloon));
-  }
-
-  private boolean hideCurrent(@Nullable MouseEvent me,
-                              @Nullable IdeTooltip tooltipToShow,
-                              @Nullable AnAction action,
-                              @Nullable AnActionEvent event,
-                              final boolean animationEnabled) {
-    if (helpTooltipManager != null && myHideHelpTooltip) {
-      hideCurrentNow(false);
-      return true;
+  private fun hideCurrent(
+    mouseEvent: MouseEvent?,
+    tooltipToShow: IdeTooltip? = null,
+    action: AnAction? = null,
+    event: AnActionEvent? = null,
+    animationEnabled: Boolean = isAnimationEnabled(balloon),
+  ): Boolean {
+    if (helpTooltipManager != null && hideHelpTooltip) {
+      hideCurrentNow(false)
+      return true
     }
 
-    if (currentTooltip != null && me != null && currentTooltip.isInside(new RelativePoint(me))) {
-      if (me.getButton() == MouseEvent.NOBUTTON || balloon == null || isBlockClicks(balloon)) {
-        return false;
+    if (currentTooltip != null && mouseEvent != null && currentTooltip!!.isInside(RelativePoint(mouseEvent))) {
+      if (mouseEvent.button == MouseEvent.NOBUTTON || balloon == null || isBlockClicks(balloon!!)) {
+        return false
       }
     }
 
-    showRequest = null;
-    queuedComponent = null;
-    queuedTooltip = null;
+    showRequest = null
+    queuedComponent = null
+    queuedTooltip = null
 
-    if (currentTooltip == null) return true;
+    if (currentTooltip == null) {
+      return true
+    }
 
     if (balloon != null) {
-      RelativePoint target = me != null ? new RelativePoint(me) : null;
-      boolean isInsideOrMovingForward = target != null &&
-                                        (isInside(balloon, target) || isMovingForward(balloon, target));
-      boolean canAutoHide = currentTooltip.canAutohideOn(new TooltipEvent(me, isInsideOrMovingForward, action, event));
-      boolean implicitMouseMove = me != null &&
-                                  (me.getID() == MouseEvent.MOUSE_MOVED ||
-                                   me.getID() == MouseEvent.MOUSE_EXITED ||
-                                   me.getID() == MouseEvent.MOUSE_ENTERED);
+      val target = if (mouseEvent != null) RelativePoint(mouseEvent) else null
+      val isInsideOrMovingForward = target != null && (isInside(balloon!!, target) || isMovingForward(balloon!!, target))
+      val canAutoHide = currentTooltip!!.canAutohideOn(TooltipEvent(mouseEvent, isInsideOrMovingForward, action, event))
+      val implicitMouseMove = mouseEvent != null &&
+                              (mouseEvent.id == MouseEvent.MOUSE_MOVED || mouseEvent.id == MouseEvent.MOUSE_EXITED || mouseEvent.id == MouseEvent.MOUSE_ENTERED)
       if (!canAutoHide
           || (isInsideOrMovingForward && implicitMouseMove)
-          || (currentTooltip.isExplicitClose() && implicitMouseMove)
-          || (tooltipToShow != null && !tooltipToShow.isHint() && Comparing.equal(currentTooltip, tooltipToShow))) {
+          || (currentTooltip!!.isExplicitClose && implicitMouseMove)
+          || (tooltipToShow != null && !tooltipToShow.isHint && Comparing.equal(currentTooltip, tooltipToShow))
+      ) {
         if (hideRunnable != null) {
-          hideRunnable = null;
+          hideRunnable = null
         }
-        return false;
+        return false
       }
     }
 
-    hideRunnable = () -> {
+    hideRunnable = Runnable {
       if (hideRunnable != null) {
-        hideCurrentNow(animationEnabled);
-        hideRunnable = null;
+        hideCurrentNow(animationEnabled)
+        hideRunnable = null
       }
-    };
+    }
 
-    if (me != null && me.getButton() == MouseEvent.NOBUTTON) {
-      alarm.addRequest(hideRunnable, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"));
+    if (mouseEvent != null && mouseEvent.button == MouseEvent.NOBUTTON) {
+      alarm.addRequest(hideRunnable!!, RegistryManager.getInstance().intValue("ide.tooltip.autoDismissDeadZone"))
     }
     else {
-      hideRunnable.run();
-      hideRunnable = null;
+      hideRunnable?.run()
+      hideRunnable = null
     }
 
-    return true;
+    return true
   }
 
-  public void hideCurrentNow(boolean animationEnabled) {
-    if (helpTooltipManager != null) {
-      helpTooltipManager.hideTooltip();
+  fun hideCurrentNow(animationEnabled: Boolean) {
+    helpTooltipManager?.hideTooltip()
+
+    balloon?.let { balloon ->
+      balloon.setAnimationEnabled(animationEnabled)
+      balloon.hide()
+      currentTooltip!!.onHidden()
+      showDelay = false
+      alarm.addRequest({ showDelay = true }, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"))
     }
 
-    if (balloon != null) {
-      balloon.setAnimationEnabled(animationEnabled);
-      balloon.hide();
-      currentTooltip.onHidden();
-      myShowDelay = false;
-      alarm.addRequest(() -> myShowDelay = true, RegistryManager.getInstance().intValue("ide.tooltip.reshowDelay"));
-    }
+    hideHelpTooltip = false
+    showRequest = null
+    currentTooltip = null
 
-    myHideHelpTooltip = false;
-    showRequest = null;
-    currentTooltip = null;
+    balloon = null
 
-    balloon = null;
-
-    currentComponent = null;
-    queuedComponent = null;
-    queuedTooltip = null;
-    currentEvent = null;
-    myCurrentTipIsCentered = false;
-    myX = -1;
-    myY = -1;
+    currentComponent = null
+    queuedComponent = null
+    queuedTooltip = null
+    currentEvent = null
+    currentTipIsCentered = false
+    x = -1
+    y = -1
   }
 
-  private void processEnabled(boolean isHelpTooltipEnabled) {
+  private fun processEnabled(isHelpTooltipEnabled: Boolean) {
     if (isEnabled) {
-      ToolTipManager.sharedInstance().setEnabled(false);
+      ToolTipManager.sharedInstance().isEnabled = false
       if (isHelpTooltipEnabled) {
         if (helpTooltipManager == null) {
-          helpTooltipManager = new HelpTooltipManager();
+          helpTooltipManager = HelpTooltipManager()
         }
-        return;
+        return
       }
     }
     else {
-      ToolTipManager.sharedInstance().setEnabled(true);
+      ToolTipManager.sharedInstance().isEnabled = true
     }
-    if (helpTooltipManager != null) {
-      helpTooltipManager.hideTooltip();
-      helpTooltipManager = null;
+    helpTooltipManager?.let {
+      it.hideTooltip()
+      helpTooltipManager = null
     }
   }
 
-  @Override
-  public void dispose() {
-    hideCurrentNow(false);
+  override fun dispose() {
+    hideCurrentNow(false)
     if (lastDisposable != null) {
-      Disposer.dispose(lastDisposable);
+      Disposer.dispose(lastDisposable!!)
     }
   }
 
-  public static IdeTooltipManager getInstance() {
-    return ApplicationManager.getApplication().getService(IdeTooltipManager.class);
-  }
-
-  public void hide(@Nullable IdeTooltip tooltip) {
-    if (currentTooltip == tooltip || tooltip == null || tooltip == queuedTooltip) {
-      hideCurrent(null, null, null);
+  fun hide(tooltip: IdeTooltip?) {
+    if (currentTooltip === tooltip || tooltip == null || tooltip === queuedTooltip) {
+      hideCurrent(mouseEvent = null, tooltipToShow = null, action = null)
     }
   }
 
-  public void cancelAutoHide() {
-    hideRunnable = null;
+  fun cancelAutoHide() {
+    hideRunnable = null
   }
 
-  public static JEditorPane initPane(@Tooltip String text, HintHint hintHint, @Nullable JLayeredPane layeredPane) {
-    return initPane(new Html(text), hintHint, layeredPane, true);
-  }
+  fun isQueuedToShow(tooltip: IdeTooltip?): Boolean = queuedTooltip == tooltip
+}
 
-  public static JEditorPane initPane(@Tooltip Html html,
-                                     HintHint hintHint,
-                                     @Nullable JLayeredPane layeredPane,
-                                     boolean limitWidthToScreen) {
+private class LimitedWidthJBHtmlPane(
+  styleConfiguration: JBHtmlPaneStyleConfiguration,
+  paneConfiguration: JBHtmlPaneConfiguration,
+  private val prefSizeWasComputed: Ref<Boolean>,
+  private val hintHint: HintHint,
+  private val layeredPane: JLayeredPane?,
+) : JBHtmlPane(styleConfiguration, paneConfiguration) {
+  private var prefSize: Dimension? = null
 
-    JBHtmlPaneStyleConfiguration styleConfiguration = new JBHtmlPaneStyleConfiguration();
-    JBHtmlPaneConfiguration paneConfiguration = JBHtmlPaneConfiguration.builder()
-      .customStyleSheet("pre {white-space: pre-wrap;} code, pre {overflow-wrap: anywhere;}")
-      .build();
-
-
-    Ref<Boolean> prefSizeWasComputed = new Ref<>(false);
-    JBHtmlPane pane = !limitWidthToScreen
-                      ? new JBHtmlPane(styleConfiguration, paneConfiguration)
-                      : new LimitedWidthJBHtmlPane(styleConfiguration, paneConfiguration, prefSizeWasComputed, hintHint, layeredPane);
-
-    @NonNls String text = HintUtil.prepareHintText(html, hintHint);
-    // Remove <style> rule for <code> added by prepareHintText() call
-    text = text.replaceFirst("code \\{font-size:[0-9.]*pt;}", "");
-
-    if (hintHint.isOwnBorderAllowed()) {
-      setBorder(pane);
-      setColors(pane);
-    }
-    else {
-      pane.setBorder(null);
-    }
-
-    if (!hintHint.isAwtTooltip()) {
-      prefSizeWasComputed.set(true);
-    }
-
-    pane.setOpaque(hintHint.isOpaqueAllowed());
-    pane.setBackground(hintHint.getTextBackground());
-
-    pane.setText(text);
-
-    if (!limitWidthToScreen) {
-      AppUIUtil.targetToDevice(pane, layeredPane);
-    }
-
-    return pane;
-  }
-
-  public static void setColors(JComponent pane) {
-    pane.setForeground(JBColor.foreground());
-    pane.setBackground(HintUtil.getInformationColor());
-    pane.setOpaque(true);
-  }
-
-  public static void setBorder(JComponent pane) {
-    //noinspection UseJBColor
-    pane.setBorder(BorderFactory.createCompoundBorder(
-      BorderFactory.createLineBorder(Color.black),
-      JBUI.Borders.empty(0, 5)));
-  }
-
-  public boolean isQueuedToShow(IdeTooltip tooltip) {
-    return Comparing.equal(queuedTooltip, tooltip);
-  }
-
-  private static boolean isClickProcessor(Balloon balloon) {
-    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isClickProcessor();
-  }
-
-  private static boolean isAnimationEnabled(Balloon balloon) {
-    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isAnimationEnabled();
-  }
-
-  private static boolean isBlockClicks(Balloon balloon) {
-    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isBlockClicks();
-  }
-
-  private static boolean isMovingForward(Balloon balloon, @NotNull RelativePoint target) {
-    return balloon instanceof BalloonImpl && ((BalloonImpl)balloon).isMovingForward(target);
-  }
-
-  private static boolean isInside(Balloon balloon, RelativePoint target) {
-    return balloon instanceof IdeTooltip.Ui && ((IdeTooltip.Ui)balloon).isInside(target);
-  }
-
-  private static class LimitedWidthJBHtmlPane extends JBHtmlPane {
-    private final Ref<Boolean> myPrefSizeWasComputed;
-    private final HintHint myHintHint;
-    private final @Nullable JLayeredPane myLayeredPane;
-    private Dimension prefSize;
-
-    private LimitedWidthJBHtmlPane(JBHtmlPaneStyleConfiguration styleConfiguration,
-                                   JBHtmlPaneConfiguration paneConfiguration,
-                                   Ref<Boolean> prefSizeWasComputed,
-                                   HintHint hintHint,
-                                   @Nullable JLayeredPane layeredPane) {
-      super(styleConfiguration, paneConfiguration);
-      myPrefSizeWasComputed = prefSizeWasComputed;
-      myHintHint = hintHint;
-      myLayeredPane = layeredPane;
-      prefSize = null;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      if (!myPrefSizeWasComputed.get() && myHintHint.isAwtTooltip()) {
-        JLayeredPane lp = myLayeredPane;
-        if (lp == null) {
-          JRootPane rootPane = UIUtil.getRootPane(this);
-          if (rootPane != null && rootPane.getSize().width > 0) {
-            lp = rootPane.getLayeredPane();
-          }
-        }
-
-        Dimension size;
-        if (lp != null) {
-          AppUIUtil.targetToDevice(this, lp);
-          size = lp.getSize();
-          myPrefSizeWasComputed.set(true);
-        }
-        else {
-          size = ScreenUtil.getScreenRectangle(0, 0).getSize();
-        }
-        int fitWidth = (int)(size.width * 0.8);
-        Dimension prefSizeOriginal = super.getPreferredSize();
-        if (prefSizeOriginal.width > fitWidth) {
-          setSize(new Dimension(fitWidth, Integer.MAX_VALUE));
-          Dimension fixedWidthSize = super.getPreferredSize();
-          Dimension minSize = super.getMinimumSize();
-          prefSize = new Dimension(Math.max(fitWidth, minSize.width), fixedWidthSize.height);
-        }
-        else {
-          prefSize = new Dimension(prefSizeOriginal);
+  override fun getPreferredSize(): Dimension {
+    if (!prefSizeWasComputed.get() && hintHint.isAwtTooltip) {
+      var lp = layeredPane
+      if (lp == null) {
+        val rootPane = UIUtil.getRootPane(this)
+        if (rootPane != null && rootPane.size.width > 0) {
+          lp = rootPane.layeredPane
         }
       }
 
-      Dimension s = prefSize != null ? new Dimension(prefSize) : super.getPreferredSize();
-      Border b = getBorder();
-      if (b != null) {
-        JBInsets.addTo(s, b.getBorderInsets(this));
+      val size: Dimension
+      if (lp != null) {
+        targetToDevice(this, lp)
+        size = lp.size
+        prefSizeWasComputed.set(true)
       }
-      return s;
+      else {
+        size = ScreenUtil.getScreenRectangle(0, 0).size
+      }
+      val fitWidth = (size.width * 0.8).toInt()
+      val prefSizeOriginal = super.getPreferredSize()
+      if (prefSizeOriginal.width > fitWidth) {
+        setSize(Dimension(fitWidth, Int.MAX_VALUE))
+        val fixedWidthSize = super.getPreferredSize()
+        val minSize = super.getMinimumSize()
+        prefSize = Dimension(max(fitWidth.toDouble(), minSize.width.toDouble()).toInt(), fixedWidthSize.height)
+      }
+      else {
+        prefSize = Dimension(prefSizeOriginal)
+      }
     }
 
-    @Override
-    public void setPreferredSize(Dimension preferredSize) {
-      super.setPreferredSize(preferredSize);
-      prefSize = preferredSize;
+    val s = if (prefSize == null) super.getPreferredSize() else Dimension(prefSize)
+    border?.let {
+      JBInsets.addTo(s, it.getBorderInsets(this))
     }
+    return s
+  }
+
+  override fun setPreferredSize(preferredSize: Dimension) {
+    super.setPreferredSize(preferredSize)
+    prefSize = preferredSize
   }
 }
