@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.ColorKey
@@ -42,6 +43,7 @@ import kotlin.concurrent.Volatile
 import kotlin.math.max
 
 // Android team doesn't want to use new mockito for now, so, class cannot be final
+@Service
 class IdeTooltipManager(coroutineScope: CoroutineScope) : Disposable {
   private var isEnabled = false
 
