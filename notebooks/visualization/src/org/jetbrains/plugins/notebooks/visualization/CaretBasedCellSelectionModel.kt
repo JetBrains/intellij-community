@@ -64,7 +64,7 @@ class CaretBasedCellSelectionModel(private val editor: Editor) : NotebookCellSel
   }
 }
 
-private fun Document.getSelectionLines(caret: Caret): IntRange {
+internal fun Document.getSelectionLines(caret: Caret): IntRange {
   val selectionStart = caret.selectionStart
   val selectionEnd = caret.selectionEnd
   val lastLine = getLineNumber(selectionEnd)
