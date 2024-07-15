@@ -6,9 +6,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.getCallExpression
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
-import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -24,28 +23,26 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         conversionGroups: Map<ConversionId, List<CallChainConversion>>,
         additionalCallCheck: (CallChainConversion, ResolvedCall<*>, ResolvedCall<*>, BindingContext) -> Boolean
     ): CallChainConversion? {
-        val firstExpression = expression.receiverExpression
-        val firstCallExpression = getCallExpression(firstExpression) ?: return null
-        val firstCalleeExpression = firstCallExpression.calleeExpression ?: return null
+        val callChainExpressions = CallChainExpressions.from(expression) ?: return null
 
-        val secondCallExpression = expression.selectorExpression as? KtCallExpression ?: return null
-
-        val secondCalleeExpression = secondCallExpression.calleeExpression ?: return null
         val apiVersion by lazy { expression.languageVersionSettings.apiVersion }
-        val actualConversions = conversionGroups[ConversionId(firstCalleeExpression, secondCalleeExpression)]?.filter {
+        val actualConversions = conversionGroups[ConversionId(
+            callChainExpressions.firstCalleeExpression,
+            callChainExpressions.secondCalleeExpression,
+        )]?.filter {
             val replaceableApiVersion = it.replaceableApiVersion
             replaceableApiVersion == null || apiVersion >= replaceableApiVersion
         }?.sortedByDescending { it.removeNotNullAssertion } ?: return null
 
         val context = expression.analyze()
-        val firstResolvedCall = firstExpression.getResolvedCall(context) ?: return null
-        val secondResolvedCall = expression.getResolvedCall(context) ?: return null
+        val firstResolvedCall = callChainExpressions.firstExpression.getResolvedCall(context) ?: return null
+        val secondResolvedCall = callChainExpressions.secondExpression.getResolvedCall(context) ?: return null
         val conversion = actualConversions.firstOrNull {
             firstResolvedCall.isCalling(it.firstFqName) && additionalCallCheck(it, firstResolvedCall, secondResolvedCall, context)
         } ?: return null
 
         // Do not apply for lambdas with return inside
-        val lambdaArgument = firstCallExpression.lambdaArguments.firstOrNull()
+        val lambdaArgument = callChainExpressions.firstCallExpression.lambdaArguments.firstOrNull()
         if (lambdaArgument?.anyDescendantOfType<KtReturnExpression>() == true) return null
 
         if (!secondResolvedCall.isCalling(conversion.secondFqName)) return null
@@ -56,9 +53,5 @@ abstract class AbstractCallChainChecker : AbstractKotlinInspection() {
         ) return null
 
         return conversion
-    }
-
-    companion object {
-
     }
 }

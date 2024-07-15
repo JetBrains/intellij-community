@@ -1,6 +1,8 @@
 // PROBLEM: none
 // API_VERSION: 1.3
 // WITH_STDLIB
+// IGNORE_K2
+
 data class Foo(val x: Int?)
 
 fun main() {

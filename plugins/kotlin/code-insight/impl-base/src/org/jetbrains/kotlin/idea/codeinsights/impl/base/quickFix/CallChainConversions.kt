@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix
 
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.getCallExpression
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -31,6 +32,34 @@ data class CallChainConversion(
     val secondName = secondFqName.shortName().asString()
 
     fun withArgument(argument: String) = CallChainConversion(firstFqName, secondFqName, replacement, argument)
+}
+
+class CallChainExpressions private constructor(
+    val firstExpression: KtExpression,
+    val secondExpression: KtExpression,
+    val firstCallExpression: KtCallExpression,
+    val secondCallExpression: KtCallExpression,
+    val firstCalleeExpression: KtExpression,
+    val secondCalleeExpression: KtExpression,
+) {
+    companion object {
+        fun from(expression: KtQualifiedExpression): CallChainExpressions? {
+            val firstExpression = expression.receiverExpression
+            val secondExpression = expression
+            val firstCallExpression = getCallExpression(firstExpression) ?: return null
+            val secondCallExpression = expression.selectorExpression as? KtCallExpression ?: return null
+            val firstCalleeExpression = firstCallExpression.calleeExpression ?: return null
+            val secondCalleeExpression = secondCallExpression.calleeExpression ?: return null
+            return CallChainExpressions(
+                firstExpression,
+                secondExpression,
+                firstCallExpression,
+                secondCallExpression,
+                firstCalleeExpression,
+                secondCalleeExpression,
+            )
+        }
+    }
 }
 
 data class ConversionId(val firstFqName: String, val secondFqName: String) {
@@ -256,7 +285,7 @@ object CallChainConversions {
         return firstCallExpression.calleeExpression
     }
 
-    fun getCallExpression(firstExpression: KtExpression) =
+    fun getCallExpression(firstExpression: KtExpression): KtCallExpression? =
         (firstExpression as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
             ?: firstExpression as? KtCallExpression
 }

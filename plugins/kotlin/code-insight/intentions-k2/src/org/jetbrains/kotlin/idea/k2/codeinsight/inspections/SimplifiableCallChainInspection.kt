@@ -3,8 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallInfo
@@ -22,6 +20,9 @@ import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversion
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.ASSOCIATE
@@ -39,18 +40,23 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConver
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.SUM_OF
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.TO_MAP
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainConversions.isLiteralValue
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.CallChainExpressions
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.ConversionId
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.SimplifyCallChainFix
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, SimplifiableCallChainInspection.Context>() {
+class SimplifiableCallChainInspection :
+    KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, SimplifiableCallChainInspection.Context>() {
+
     class Context(
+        val conversion: CallChainConversion,
     )
 
     override fun getProblemDescription(element: KtQualifiedExpression, context: Context): String {
@@ -58,15 +64,19 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     }
 
     override fun createQuickFix(element: KtQualifiedExpression, context: Context): KotlinModCommandQuickFix<KtQualifiedExpression> {
-        return object : KotlinModCommandQuickFix<KtQualifiedExpression>() {
-            override fun getFamilyName(): String {
-                return KotlinBundle.message("call.chain.on.collection.type.may.be.simplified")
+        val conversion = context.conversion
+        return SimplifyCallChainFix(
+            conversion,
+            modifyArguments = { callExpression ->
+                if (conversion.replacement.startsWith(JOIN_TO)) {
+                    val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
+                    val argumentExpression = lastArgument?.getArgumentExpression()
+                    if (argumentExpression != null) {
+                        lastArgument.replace(createArgument(argumentExpression, Name.identifier("transform")))
+                    }
+                }
             }
-
-            override fun applyFix(project: Project, element: KtQualifiedExpression, updater: ModPsiUpdater) {
-
-            }
-        }
+        )
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): KtVisitor<*, *> {
@@ -76,21 +86,23 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     }
 
     override fun isApplicableByPsi(element: KtQualifiedExpression): Boolean {
-        val firstCallExpression = getCallExpression(element.receiverExpression) ?: return false
+        val callChainExpressions = CallChainExpressions.from(element)
+        if (callChainExpressions == null) return false
         // Do not apply for lambdas with return inside
-        if (firstCallExpression.lambdaArguments.singleOrNull()?.anyDescendantOfType<KtReturnExpression>() == true) return false
-        if (getConversionId(element) == null) return false
+        if (callChainExpressions.firstCallExpression.lambdaArguments.singleOrNull()?.anyDescendantOfType<KtReturnExpression>() == true)
+            return false
 
         return true
     }
 
     context(KaSession)
     override fun prepareContext(element: KtQualifiedExpression): Context? {
-        val conversionId = getConversionId(element) ?: return null
+        val callChainExpressions = CallChainExpressions.from(element) ?: return null
+        val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }
 
-        val firstCall = element.receiverExpression.resolveToCall() ?: return null
-        val secondCall = element.resolveToCall() ?: return null
+        val firstCall = callChainExpressions.firstCalleeExpression.resolveToCall() ?: return null
+        val secondCall = callChainExpressions.secondCalleeExpression.resolveToCall() ?: return null
 
         if (secondCall.containsFunctionalArgumentsOfAnyKind()) return null
 
@@ -100,21 +112,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
                     && isConversionApplicable(element, conversion, firstCall, secondCall)
         } ?: return null
 
-        return Context()
-    }
-
-    private fun getCallExpression(firstExpression: KtExpression): KtCallExpression? =
-        (firstExpression as? KtQualifiedExpression)?.selectorExpression as? KtCallExpression
-            ?: firstExpression as? KtCallExpression
-
-    private fun getConversionId(expression: KtQualifiedExpression): ConversionId? {
-        val firstExpression = expression.receiverExpression
-        val firstCallExpression = getCallExpression(firstExpression) ?: return null
-        val firstCalleeExpression = firstCallExpression.calleeExpression ?: return null
-        val secondCallExpression = expression.selectorExpression as? KtCallExpression ?: return null
-        val secondCalleeExpression = secondCallExpression.calleeExpression ?: return null
-
-        return ConversionId(firstCalleeExpression, secondCalleeExpression)
+        return Context(matchingConversion)
     }
 
     private fun getPotentialConversions(expression: KtQualifiedExpression, conversionId: ConversionId): List<CallChainConversion> {
@@ -138,7 +136,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         if (isAppliedOnMapReceiver(firstCall)) return false
         if (isJoinToConversionWithNonMatchingFirstLambda(conversion, firstCall)) return false
         if (isMaxMinByConversionWithNullableFirstLambda(conversion, firstCall)) return false
-        if (isSumOfConversionWithAmbiguousIlt(conversion, firstCall)) return false
+        if (isInapplicableSumOfConversion(conversion, firstCall)) return false
         if (isAssociateConversionWithWrongArgumentCount(conversion, secondCall)) return false
         if (isSuspendForbiddenButFound(conversion, firstCall)) return false
 
@@ -151,7 +149,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     ): Boolean {
         if (!conversion.removeNotNullAssertion) return false
         if (conversion.firstName != MAP || conversion.secondName !in listOf(MAX, MAX_OR_NULL, MIN, MIN_OR_NULL)) return false
-        val parentPostfixExpression = expression.parent as? KtPostfixExpression ?: return false
+        val parentPostfixExpression = expression.parent as? KtPostfixExpression ?: return true
         return parentPostfixExpression.operationToken != KtTokens.EXCLEXCL
     }
 
@@ -173,16 +171,21 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     context(KaSession)
     private fun isJoinToConversionWithNonMatchingFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (!conversion.replacement.startsWith(JOIN_TO)) return false
-        val lambdaArgSignature = firstCall.lastLambdaArgumentSignatureOrNull() ?: return false
+        val lambdaArgSignature = firstCall.lastFunctionalArgumentSignatureOrNull() ?: return false
         val lambdaType = lambdaArgSignature.returnType as? KaFunctionType ?: return false
         return !lambdaType.returnType.isSubTypeOfClassId(ClassId.topLevel(StandardNames.FqNames.charSequence.toSafe()))
     }
 
+    /**
+     * Lambda argument type is not precise enough: for most of the cases it will be locked before lambda analysis.
+     * Which means that the actual type of the expression returned by the lambda can be not nullable with a nullable lambda return type.
+     * Since the inspection ignores lambdas with returns, it's safe to check only the last expression's type.
+     */
     context(KaSession)
     private fun isMaxMinByConversionWithNullableFirstLambda(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (conversion.replacement !in listOf(MAX_BY, MIN_BY, MAX_BY_OR_NULL, MIN_BY_OR_NULL)) return false
-        val lambdaArgSignature = firstCall.lastLambdaArgumentSignatureOrNull() ?: return false
-        return lambdaArgSignature.returnType.lambdaReturnTypeOrNull()?.isMarkedNullable == true
+        val lastLambdaArgumentExpression = firstCall.lastLambdaArgumentExpressionOrNull() ?: return false
+        return lastLambdaArgumentExpression.bodyExpression?.lastBlockStatementOrThis()?.expressionType?.isMarkedNullable == true
     }
 
     context(KaSession)
@@ -201,17 +204,17 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
         }
     }
 
-    // Integer Literal Type overload resolution ambiguity, see KT-46360
     context(KaSession)
-    private fun isSumOfConversionWithAmbiguousIlt(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
+    private fun isInapplicableSumOfConversion(conversion: CallChainConversion, firstCall: KaCallInfo): Boolean {
         if (conversion.firstName != MAP || conversion.secondName != SUM || conversion.replacement != SUM_OF) return false
-        val lambdaArgSignature = firstCall.lastLambdaArgumentSignatureOrNull() ?: return false
-        val lambdaReturnType = lambdaArgSignature.returnType.lambdaReturnTypeOrNull() ?: return false
-        if (!lambdaReturnType.isSignedOrUnsignedIntegerType()) return false
-        val lastArgExpression = firstCall.successfulFunctionCallOrNull()?.argumentMapping?.keys?.lastOrNull() ?: return false
-        val lastStatement = (lastArgExpression as? KtLambdaExpression)?.bodyExpression?.lastBlockStatementOrThis() ?: return false
-        with (CallChainConversions) { if (lastStatement.isLiteralValue()) return true }
-        return false
+        val (functionalArgumentExpr, signature) = firstCall.lastFunctionalArgumentWithSignatureOrNull() ?: return false
+        val lambdaReturnType = signature.returnType.lambdaReturnTypeOrNull() ?: return false
+        if (!lambdaReturnType.isApplicableTypeForSumOf()) return true
+
+        // Extra check for Integer Literal Type overload resolution ambiguity, see KT-46360
+        if (functionalArgumentExpr !is KtLambdaExpression) return false
+        val lastStatement = functionalArgumentExpr.bodyExpression?.lastBlockStatementOrThis() ?: return false
+        return lambdaReturnType.isIntType && lastStatement.isLiteralValue()
     }
     // endregion
 
@@ -223,7 +226,7 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
 
     context(KaSession)
     private fun KaCallInfo.isCalling(fqName: FqName): Boolean =
-        successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.importableFqName == fqName
+        successfulFunctionCallOrNull()?.partiallyAppliedSymbol?.symbol?.getFqNameIfPackageOrNonLocal() == fqName
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -239,18 +242,26 @@ class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<Kt
     }
 
     context(KaSession)
-    private fun KaCallInfo.lastLambdaArgumentSignatureOrNull(): KaVariableSignature<KaValueParameterSymbol>? {
-        return successfulFunctionCallOrNull()?.argumentMapping?.values?.lastOrNull()?.takeIf { it.isFunctionalTypeOfAnyKind() }
+    private fun KaCallInfo.lastFunctionalArgumentWithSignatureOrNull(): Pair<KtExpression, KaVariableSignature<KaValueParameterSymbol>>? {
+        val (argument, signature) = successfulFunctionCallOrNull()?.argumentMapping?.entries?.lastOrNull() ?: return null
+        if (!signature.isFunctionalTypeOfAnyKind()) return null
+        return argument to signature
     }
+
+    context(KaSession)
+    private fun KaCallInfo.lastFunctionalArgumentSignatureOrNull(): KaVariableSignature<KaValueParameterSymbol>? =
+        lastFunctionalArgumentWithSignatureOrNull()?.second
+
+    context(KaSession)
+    private fun KaCallInfo.lastLambdaArgumentExpressionOrNull(): KtLambdaExpression? =
+        lastFunctionalArgumentWithSignatureOrNull()?.first as? KtLambdaExpression
 
     context(KaSession)
     private fun KaType.lambdaReturnTypeOrNull(): KaType? = (this as? KaFunctionType)?.returnType
 
     context(KaSession)
-    private fun KaType.isSignedOrUnsignedIntegerType(): Boolean {
-        return isByteType || isShortType || isIntType || isLongType
-                || isUByteType || isUShortType || isUIntType || isULongType
-    }
+    private fun KaType.isApplicableTypeForSumOf(): Boolean =
+        isIntType || isUIntType || isLongType || isULongType || isDoubleType
 
     context(KaSession)
     private fun KtCallExpression.isSuspendCall(): Boolean {
