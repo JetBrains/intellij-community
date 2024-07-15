@@ -6,13 +6,12 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,29 +44,6 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     }
     else {
       super.visitPyPrefixExpression(node);
-    }
-  }
-
-  public void handleTypeGuardCall(@NotNull PyCallExpression call, @NotNull PyFunction function) {
-    if (call.getArguments().length == 0) return;
-    final var firstArgument = call.getArguments()[0];
-    final var annotation = function.getAnnotationValue();
-    if (annotation == null) return;
-    if (firstArgument instanceof PyReferenceExpression referenceExpression) {
-      pushAssertion(referenceExpression, myPositive, false, (context) -> {
-        var returnType = PyTypingTypeProvider.getReturnTypeAnnotation(function, context);
-        if (returnType instanceof PyStringLiteralExpression stringLiteralExpression) {
-          returnType = PyUtil.createExpressionFromFragment(stringLiteralExpression.getStringValue(),
-                                                           function.getContainingFile());
-        }
-        if (returnType instanceof PySubscriptionExpression subscriptionExpression) {
-          var indexExpression = subscriptionExpression.getIndexExpression();
-          if (indexExpression != null) {
-            return Ref.deref(PyTypingTypeProvider.getType(indexExpression, context));
-          }
-        }
-        return null;
-      }, null);
     }
   }
 
@@ -155,7 +131,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   }
 
   @Nullable
-  private static Ref<PyType> createAssertionType(@Nullable PyType initial,
+  @ApiStatus.Internal
+  public static Ref<PyType> createAssertionType(@Nullable PyType initial,
                                                  @Nullable PyType suggested,
                                                  boolean positive,
                                                  boolean transformToDefinition,

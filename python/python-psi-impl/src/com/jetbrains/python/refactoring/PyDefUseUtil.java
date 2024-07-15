@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.refactoring;
 
+import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -29,6 +30,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.types.PyNarrowedType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,17 +73,41 @@ public final class PyDefUseUtil {
     return new ArrayList<>(result);
   }
 
-  private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int instr,
+  private static Collection<Instruction> getLatestDefs(final String varName, final Instruction[] instructions, final int startNum,
                                                        final boolean acceptTypeAssertions, final boolean acceptImplicitImports,
                                                        @NotNull final TypeEvalContext context) {
     final Collection<Instruction> result = new LinkedHashSet<>();
-    ControlFlowUtil.iteratePrev(instr, instructions,
+    final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
+    ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
-                                  if (instruction.num() < instructions[instr].num() && instruction instanceof CallInstruction callInstruction) {
-                                    if (callInstruction.isNoReturnCall(context)) return ControlFlowUtil.Operation.CONTINUE;
+                                  if (instruction instanceof CallInstruction callInstruction) {
+                                    var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
+                                    if (acceptTypeAssertions && typeGuardInstruction != null) {
+                                      result.add(typeGuardInstruction);
+                                      return ControlFlowUtil.Operation.CONTINUE;
+                                    }
+                                    // not a back edge
+                                    if (instruction.num() < startNum && context.getOrigin() != null) {
+                                      // switch back to code analysis, since all other analyses are too aggressive
+                                      var newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin());
+                                      if (callInstruction.isNoReturnCall(newContext)) return ControlFlowUtil.Operation.CONTINUE;
+                                    }
                                   }
                                   final PsiElement element = instruction.getElement();
                                   final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
+                                  if (acceptTypeAssertions
+                                      && instruction instanceof ConditionalInstruction conditionalInstruction
+                                      && instruction.num() < startNum) {
+                                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement && context.getOrigin() != null) {
+                                      // switch back to code analysis, since all other analyses are too aggressive
+                                      TypeEvalContext newContext = TypeEvalContext.codeAnalysis(context.getOrigin().getProject(), context.getOrigin());
+                                      if (newContext.getType(typedElement) instanceof PyNarrowedType narrowedType) {
+                                        if (narrowedType.getQname().equals(varName)) {
+                                          pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
+                                        }
+                                      }
+                                    }
+                                  }
                                   if (instruction instanceof ReadWriteInstruction rwInstruction) {
                                     final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
                                     if (access.isWriteAccess() || acceptTypeAssertions && access.isAssertTypeAccess()) {

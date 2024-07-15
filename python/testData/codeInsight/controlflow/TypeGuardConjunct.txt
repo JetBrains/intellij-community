@@ -23,13 +23,12 @@
 22(23) element: PyBinaryExpression
 23(24) READ ACCESS: checkit
 24(25) READ ACCESS: foo
-25(26,28) element: PyCallExpression: checkit
-26(33) element: null. Condition: checkit(foo):false
-28(27) ASSERTTYPE ACCESS: foo
-27(29) element: null. Condition: checkit(foo):true
-29(30) element: PySubscriptionExpression
-30(31,32) READ ACCESS: foo
-31(33) element: null. Condition: foo[123]:false
-32(33) element: null. Condition: foo[123]:true
-33(34) WRITE ACCESS: y
-34() element: null
+25(26,27) element: PyCallExpression: checkit
+26(32) element: null. Condition: checkit(foo):false
+27(28) element: null. Condition: checkit(foo):true
+28(29) element: PySubscriptionExpression
+29(30,31) READ ACCESS: foo
+30(32) element: null. Condition: foo[123]:false
+31(32) element: null. Condition: foo[123]:true
+32(33) WRITE ACCESS: y
+33() element: null

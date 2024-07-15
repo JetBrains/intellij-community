@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.codeInsight.controlflow.ConditionalInstruction;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
@@ -13,6 +14,7 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
+import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -415,7 +417,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final String name = ((PyElement)target).getName();
       if (scopeOwner != null &&
           name != null &&
-          !ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()) {
+          (!ScopeUtil.getElementsOfAccessType(name, scopeOwner, ReadWriteInstruction.ACCESS.ASSERTTYPE).isEmpty()
+            || target instanceof PyTargetExpression || target instanceof PyNamedParameter)) {
         final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
         if (type != null) {
           return type;
@@ -480,8 +483,30 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       final List<Instruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
       // null means empty set of possible types, Ref(null) means Any
       final @Nullable Ref<PyType> combinedType = StreamEx.of(defs)
-        .select(ReadWriteInstruction.class)
-        .map(instr -> instr.getType(context, anchor))
+        .map(instr -> {
+          if (instr instanceof ReadWriteInstruction readWriteInstruction) {
+            return readWriteInstruction.getType(context, anchor);
+          }
+          if (instr instanceof ConditionalInstruction conditionalInstruction) {
+             if (context.getType((PyTypedElement)conditionalInstruction.getCondition()) instanceof PyNarrowedType narrowedType) {
+               PyExpression[] arguments = narrowedType.getOriginal().getArguments();
+               if (arguments.length > 0) {
+                 var firstArgument = arguments[0];
+                 if (firstArgument instanceof PyReferenceExpression) {
+                   return PyTypeAssertionEvaluator.createAssertionType(
+                     context.getType(firstArgument),
+                     narrowedType.getNarrowedType(),
+                     conditionalInstruction.getResult() ^ narrowedType.getNegated(),
+                     false,
+                     context,
+                     null);
+                 }
+               }
+             }
+          }
+          return null;
+        })
+        .nonNull()
         .collect(PyTypeUtil.toUnionFromRef());
       return Ref.deref(combinedType);
     }
