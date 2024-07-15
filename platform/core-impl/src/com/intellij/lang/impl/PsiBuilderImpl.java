@@ -1394,7 +1394,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     public @NotNull ThreeState deepEqual(@NotNull ASTNode oldNode, @NotNull LighterASTNode newNode) {
       ProgressIndicatorProvider.checkCanceled();
 
-      boolean oldIsErrorElement = oldNode instanceof PsiErrorElement;
+      boolean oldIsErrorElement = oldNode instanceof PsiErrorElement && oldNode.getElementType() == TokenType.ERROR_ELEMENT;
       boolean newIsErrorElement = newNode.getTokenType() == TokenType.ERROR_ELEMENT;
       if (oldIsErrorElement != newIsErrorElement) return ThreeState.NO;
       if (oldIsErrorElement) {
