@@ -177,7 +177,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     if (myIsShuttingDown) {
       return;
     }
-    if (ShutDownTracker.isShutdownHookRunning()) {
+    if (ShutDownTracker.isShutdownStarted()) {
       myIsShuttingDown = true;
       return;
     }

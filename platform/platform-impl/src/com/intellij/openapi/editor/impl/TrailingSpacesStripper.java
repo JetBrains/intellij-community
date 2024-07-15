@@ -229,7 +229,7 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     boolean markAsNeedsStrippingLater = ((DocumentImpl)document)
       .stripTrailingSpaces(getProject(document, activeEditors), inChangedLinesOnly, skipCaretLines ? caretOffsets : null);
 
-    if (!activeEditors.isEmpty() && !ShutDownTracker.isShutdownHookRunning()) {
+    if (!activeEditors.isEmpty() && !ShutDownTracker.isShutdownStarted()) {
       runBatchCaretOperation(activeEditors, () -> {
         for (int i = 0; i < carets.size(); i++) {
           Caret caret = carets.get(i);

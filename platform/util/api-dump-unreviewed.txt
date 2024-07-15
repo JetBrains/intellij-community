@@ -1087,12 +1087,6 @@ com.intellij.openapi.util.ScalableIcon
 - javax.swing.Icon
 - a:getScale():F
 - a:scale(F):javax.swing.Icon
-f:com.intellij.openapi.util.ShutDownTracker
-- s:getInstance():com.intellij.openapi.util.ShutDownTracker
-- s:isShutdownHookRunning():Z
-- registerShutdownTask(java.lang.Runnable):V
-- unregisterShutdownTask(java.lang.Runnable):V
-- waitFor(J,java.util.concurrent.TimeUnit):Z
 a:com.intellij.openapi.util.SimpleFieldCache
 - com.intellij.openapi.util.FieldCache
 - <init>():V

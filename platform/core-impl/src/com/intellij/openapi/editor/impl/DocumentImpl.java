@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.core.CoreBundle;
@@ -875,7 +875,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
 
     getLineSet(); // initialize line set to track changed lines
 
-    if (!ShutDownTracker.isShutdownHookRunning()) {
+    if (!ShutDownTracker.isShutdownStarted()) {
       DocumentListener[] listeners = getListeners();
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         for (int i = listeners.length - 1; i >= 0; i--) {
@@ -916,7 +916,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       myFrozen = null;
       setModificationStamp(newModificationStamp);
 
-      if (!ShutDownTracker.isShutdownHookRunning()) {
+      if (!ShutDownTracker.isShutdownStarted()) {
         DocumentListener[] listeners = getListeners();
         ProgressManager.getInstance().executeNonCancelableSection(() -> {
           for (DocumentListener listener : listeners) {

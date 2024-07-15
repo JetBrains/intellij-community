@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
  * regular ways of resource management there possible.
  * </p>
  */
+@ApiStatus.Internal
 public final class ShutDownTracker {
   private final Deque<Runnable> myShutdownTasks = new ConcurrentLinkedDeque<>();
   private final Deque<Runnable> myCachesShutdownTasks = new ConcurrentLinkedDeque<>();
@@ -50,12 +51,15 @@ public final class ShutDownTracker {
     return ShutDownTrackerHolder.ourInstance;
   }
 
-  //FIXME RC: many clients use that method, even though it is unreliable: thread.isAlive is true only while
-  // hook thread is running, it becomes false as soon as the thread finishes -- but clients use this method
-  // to ask 'is shutdown _initiated_' so they expect it to return true from that moment and until app actually
-  // terminates. shutdownSequenceIsStarted fits better for that goal
+  /** @deprecated use {@link #isShutdownStarted()} -- more correct and explicit */
+  @Deprecated
   public static boolean isShutdownHookRunning() {
-    return getInstance().myThread.isAlive();
+    return isShutdownStarted();
+  }
+
+  /** @return true if shutdown hook is started -- no more tasks could be added after that */
+  public static boolean isShutdownStarted() {
+    return getInstance().shutdownSequenceIsStarted;
   }
 
   /** true if shutdown thread is started: no shutdown tasks could be added after that */
@@ -91,16 +95,16 @@ public final class ShutDownTracker {
   }
 
   /**
-   * FIXME RC: method terminates immediately if shutdown thread is not started yet (!isAlive) -- which makes
-   * its use unreliable, since you can't be sure the thread is already started, and without it the method
-   * could terminate immediately while hook is not even started
-   *
-   * Waits for shutdown tasks termination up to specified amount of time.
+   * If shutdown is started -- waits for shutdown tasks termination, up to specified amount of time.
+   * <p>
+   * <b>BEWARE</b>: method terminates immediately if shutdown thread is not started yet (!isAlive) -- which
+   * makes its use unreliable, since you can't be sure the thread is already started, and without that the
+   * method could terminate immediately while hook is not even started.
    *
    * @return true if terminated inside given timeout
    */
   public boolean waitFor(long timeout, @NotNull TimeUnit unit) {
-    if (isShutdownHookRunning()) {
+    if (myThread.isAlive()) {
       try {
         myThread.join(unit.toMillis(timeout));
       }
