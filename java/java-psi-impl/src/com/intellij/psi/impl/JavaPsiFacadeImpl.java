@@ -7,6 +7,7 @@ import com.intellij.lang.jvm.facade.JvmFacadeImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.DumbUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
@@ -225,6 +226,12 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   @Override
   public @NotNull Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
     JavaFileManager javaFileManager = JavaFileManager.getInstance(myProject);
+    //it can be called in dumb mode
+    //see com.intellij.psi.impl.JavaPlatformModuleSystem.accessibleFromLoadedModules
+    //but in this case it must not be cached!
+    if (DumbService.isDumb(myProject) && DumbUtil.getInstance(myProject).mayUseIndices()) {
+      return javaFileManager.findModules(moduleName, scope);
+    }
     return CachedValuesManager.getManager(myProject)
       .getCachedValue(myProject, () -> {
         Map<GlobalSearchScope, Map<String, Collection<PsiJavaModule>>> scope2ModulesMap =
