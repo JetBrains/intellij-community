@@ -23,10 +23,8 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
-import io.ktor.util.read
-import io.ktor.utils.io.*
 import io.ktor.utils.io.core.use
-import io.ktor.utils.io.jvm.nio.copyTo
+import io.ktor.utils.io.nio.writePacket
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
@@ -34,7 +32,9 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.StatusCode
 import io.opentelemetry.context.Context
 import io.opentelemetry.extension.kotlin.asContextElement
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.Credentials
@@ -287,7 +287,7 @@ private suspend fun downloadFileToCacheLocation(url: String,
           }
 
           val response = effectiveClient.use { client ->
-            doDownloadFileWithoutCaching(client = client, url = url, tempFile = tempFile)
+            doDownloadFileWithoutCaching(client = client, url = url, file = tempFile)
           }
 
           val statusCode = response.status.value
@@ -344,45 +344,16 @@ suspend fun downloadFileWithoutCaching(url: String, tempFile: Path) {
   doDownloadFileWithoutCaching(httpClient.get(), url, tempFile)
 }
 
-private suspend fun doDownloadFileWithoutCaching(client: HttpClient, url: String, tempFile: Path): HttpResponse {
-  return client.prepareGet(url).execute {
-    coroutineScope {
-      it.bodyAsChannel().copyAndClose(writeChannel(tempFile))
+private suspend fun doDownloadFileWithoutCaching(client: HttpClient, url: String, file: Path): HttpResponse {
+  return client.prepareGet(url).execute { httpResponse ->
+    val channel = httpResponse.bodyAsChannel()
+    FileChannel.open(file, WRITE_OPERATION).use { fileChannel ->
+      while (!channel.isClosedForRead) {
+        check(fileChannel.writePacket(channel.readRemaining(DEFAULT_BUFFER_SIZE.toLong())))
+      }
     }
-    it
+    httpResponse
   }
 }
 
-fun CoroutineScope.readChannel(file: Path): ByteReadChannel {
-  return writer(CoroutineName("file-reader") + Dispatchers.IO, autoFlush = false) {
-    FileChannel.open(file, StandardOpenOption.READ).use { fileChannel ->
-      @Suppress("DEPRECATION")
-      channel.writeSuspendSession {
-        while (true) {
-          val buffer = request(1)
-          if (buffer == null) {
-            channel.flush()
-            tryAwait(1)
-            continue
-          }
-
-          val rc = fileChannel.read(buffer)
-          if (rc == -1) {
-            break
-          }
-          written(rc)
-        }
-      }
-    }
-  }.channel
-}
-
-private val WRITE_NEW_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)
-
-private fun CoroutineScope.writeChannel(file: Path): ByteWriteChannel {
-  return reader(CoroutineName("file-writer") + Dispatchers.IO, autoFlush = true) {
-    FileChannel.open(file, WRITE_NEW_OPERATION).use { fileChannel ->
-      channel.copyTo(fileChannel)
-    }
-  }.channel
-}
+private val WRITE_OPERATION = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE)
