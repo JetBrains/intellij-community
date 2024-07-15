@@ -44,7 +44,7 @@ public fun IconActionButton(
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     iconClass: Class<*> = key::class.java,
 ) {
-    CoreIconButton(
+    CoreIconActionButton(
         key,
         contentDescription,
         iconClass,
@@ -78,7 +78,7 @@ public fun IconActionButton(
         tooltipPlacement = tooltipPlacement,
         modifier = modifier,
     ) {
-        CoreIconButton(
+        CoreIconActionButton(
             key = key,
             contentDescription = contentDescription,
             iconClass = iconClass,
@@ -92,7 +92,7 @@ public fun IconActionButton(
 }
 
 @Composable
-private fun CoreIconButton(
+private fun CoreIconActionButton(
     key: IconKey,
     contentDescription: String?,
     iconClass: Class<*>,
@@ -119,7 +119,7 @@ public fun IconActionButton(
     style: IconButtonStyle = JewelTheme.iconButtonStyle,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    CoreIconButton(
+    CoreIconActionButton(
         painter,
         contentDescription,
         enabled,
@@ -151,7 +151,7 @@ public fun IconActionButton(
         tooltipPlacement = tooltipPlacement,
         modifier = modifier,
     ) {
-        CoreIconButton(
+        CoreIconActionButton(
             painter = painter,
             contentDescription = contentDescription,
             enabled = enabled,
@@ -164,7 +164,7 @@ public fun IconActionButton(
 }
 
 @Composable
-private fun CoreIconButton(
+private fun CoreIconActionButton(
     painter: Painter,
     contentDescription: String?,
     enabled: Boolean,
