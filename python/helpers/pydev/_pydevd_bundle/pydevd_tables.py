@@ -72,13 +72,13 @@ def __get_table_provider(output):
                                'pandera.typing.pandas.DataFrame']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
-    elif type_qualified_name in ['numpy.ndarray',
-                                 'tensorflow.python.framework.ops.EagerTensor',
+    elif type_qualified_name in ['numpy.ndarray', 'builtins.dict']:
+        import _pydevd_bundle.tables.pydevd_numpy as table_provider
+    elif type_qualified_name in ['tensorflow.python.framework.ops.EagerTensor',
                                  'tensorflow.python.ops.resource_variable_ops.ResourceVariable',
                                  'tensorflow.python.framework.sparse_tensor.SparseTensor',
-                                 'torch.Tensor',
-                                 'builtins.dict']:
-        import _pydevd_bundle.tables.pydevd_numpy as table_provider
+                                 'torch.Tensor']:
+        import _pydevd_bundle.tables.pydevd_numpy_based as table_provider
     elif type_qualified_name.startswith('polars') and (
             type_qualified_name.endswith('DataFrame')
             or type_qualified_name.endswith('Series')):

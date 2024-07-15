@@ -1,4 +1,4 @@
-#  Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+#  Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
@@ -26,20 +26,17 @@ def get_type(arr):
 
 def get_shape(arr):
     # type: (np.ndarray) -> str
-    if arr.ndim == 1:
-        return str((arr.shape[0], 1))
-    else:
-        return str((arr.shape[0], arr.shape[1]))
+    return str(arr.shape[0])
 
 
 def get_head(arr):
     # type: (np.ndarray) -> str
-    return "None"
+    return repr(_create_table(arr).head().to_html(notebook=True, max_cols=None))
 
 
 def get_column_types(arr):
     # type: (np.ndarray) -> str
-    table = _create_table(arr[:1])
+    table = _create_table(arr)
     cols_types = [str(t) for t in table.dtypes] if is_pd else table.get_cols_types()
 
     return NP_ROWS_TYPE + TABLE_TYPE_NEXT_VALUE_SEPARATOR + \
@@ -223,7 +220,14 @@ def _create_table(command, start_index=None, end_index=None):
         np_array = command['data']
         sort_keys = command['sort_keys']
     else:
-        np_array = command
+        try:
+            import tensorflow as tf
+            if isinstance(command, tf.SparseTensor):
+                command = tf.sparse.to_dense(tf.sparse.reorder(command))
+        except ImportError:
+            pass
+        finally:
+            np_array = command
 
     if is_pd:
         sorting_arr = _sort_df(pd.DataFrame(np_array), sort_keys)
