@@ -3,6 +3,6 @@
   "type": "MOVE_PACKAGES",
   "sourcePackage": "test2.pack",
   "targetPackage": "test",
-  "enabledInK1": "true",
+  "enabledInK1": "false",
   "enabledInK2": "false"
 }
