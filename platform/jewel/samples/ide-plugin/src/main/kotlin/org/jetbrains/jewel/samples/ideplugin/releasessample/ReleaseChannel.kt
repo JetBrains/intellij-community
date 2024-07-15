@@ -60,16 +60,16 @@ enum class ReleaseChannel(
         background =
             JBColor(
                 // regular =
-                JBColor.namedColor("ColorPalette.Grey12", 0xEBECF0),
+                JBColor.namedColor("ColorPalette.Gray12", 0xEBECF0),
                 // dark  =
-                JBColor.namedColor("ColorPalette.Grey5", 0x4E5157),
+                JBColor.namedColor("ColorPalette.Gray5", 0x4E5157),
             ),
         foreground =
             JBColor(
                 // regular =
-                JBColor.namedColor("ColorPalette.Grey6", 0x6C707E),
+                JBColor.namedColor("ColorPalette.Gray6", 0x6C707E),
                 // dark  =
-                JBColor.namedColor("ColorPalette.Grey10", 0xB4B8BF),
+                JBColor.namedColor("ColorPalette.Gray10", 0xB4B8BF),
             ),
     ),
 }
