@@ -41,7 +41,7 @@ class StripeButtonUi(data: ComponentData) : UiComponent(data) {
 
   fun open() {
     val toolWindow = button.getToolWindow()
-    if (!toolWindow.isActive()) {
+    if (!toolWindow.isVisible()) {
       val activateToolWindowAction = driver.utility(ActivateToolWindowActionManager::class)
         .getActionIdForToolWindow(toolWindow.getId())
       driver.invokeAction(activateToolWindowAction)
