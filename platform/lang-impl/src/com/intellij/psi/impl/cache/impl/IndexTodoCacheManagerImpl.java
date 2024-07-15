@@ -131,6 +131,6 @@ public final class IndexTodoCacheManagerImpl implements TodoCacheManager {
 
   private static @Nullable Map<TodoIndexEntry, Integer> getTodoMapFromIndex(@NotNull Project project, @NotNull VirtualFile file) {
     Map<Integer, Map<TodoIndexEntry, Integer>> map = FileBasedIndexScanUtil.getIndexData(TodoIndex.NAME, project, file);
-    return map == null ? null : ContainerUtil.getFirstItem(map.values());
+    return map == null || map.isEmpty() ? null : ContainerUtil.getFirstItem(map.values());
   }
 }
