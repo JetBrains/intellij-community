@@ -21,14 +21,10 @@ dependencies {
     implementation(libs.intellijPlatform.icons)
 }
 
-java {
-    toolchain {
-        vendor = JvmVendorSpec.JETBRAINS
-    }
-}
-
+val jdkLevel = project.property("jdk.level") as String
 kotlin {
     jvmToolchain {
+        languageVersion = JavaLanguageVersion.of(jdkLevel)
         vendor = JvmVendorSpec.JETBRAINS
     }
 }
@@ -56,7 +52,6 @@ compose.desktop {
     }
 }
 
-val jdkLevel = project.property("jdk.level") as String
 tasks {
     withType<JavaExec> {
         // afterEvaluate is needed because the Compose Gradle Plugin

@@ -19,13 +19,6 @@ version = when {
 }
 
 val jdkLevel = project.property("jdk.level") as String
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(jdkLevel)
-    }
-
-}
-
 kotlin {
     jvmToolchain {
         languageVersion = JavaLanguageVersion.of(jdkLevel)
@@ -86,15 +79,4 @@ configurations.named("sarif") {
         artifact(tasks.detektMain.flatMap { it.sarifReportFile }) { builtBy(tasks.detektMain) }
         artifact(sarifReport) { builtBy(tasks.lintKotlinMain) }
     }
-}
-
-fun Task.removeAssembleDependency() {
-    setDependsOn(
-        dependsOn.filter {
-            when {
-                it is Task && it.name == "assemble" -> false
-                else -> true
-            }
-        }
-    )
 }
