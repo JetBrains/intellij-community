@@ -282,6 +282,12 @@ public final class MethodParameterInfoHandler
 
   @Override
   public void updateParameterInfo(final @NotNull PsiExpressionList o, final @NotNull UpdateParameterInfoContext context) {
+    DumbService.getInstance(o.getProject()).withAlternativeResolveEnabled(() -> {
+      updateParameterInfoInternal(o, context);
+    });
+  }
+
+  private static void updateParameterInfoInternal(@NotNull PsiExpressionList o, @NotNull UpdateParameterInfoContext context) {
     int offset = context.getOffset();
     TextRange elRange = o.getTextRange();
     int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()

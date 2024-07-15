@@ -112,7 +112,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testOverloadWithVarargsSingleArg() {
     doTest2CandidatesWithPreselection();
   }
- 
+
+  @NeedsIndex.ForStandardLibrary
   public void testOverloadWithOneIncompatibleVarargs() {
     assertNotNull(doTest2CandidatesWithPreselection().getHighlightedParameter());
   }
