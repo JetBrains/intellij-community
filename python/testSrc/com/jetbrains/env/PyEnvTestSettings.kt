@@ -4,7 +4,9 @@ package com.jetbrains.env
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.File
+import java.nio.file.Path
 
 
 //TODO: Use Konfig instead?
@@ -13,13 +15,15 @@ import java.io.File
  * Configures env test environment using env vars and properties.
  * Environment variables are also used in gradle script (setup-test-environment)
  */
-internal data class PyEnvTestSettings(private val folderWithCPythons: String?,
-                                      private val folderWithCondas: String?,
-                                      private val additionalInterpreters: List<File>,
-                                      @get:JvmName("useRemoteSdk")
-                                      val useRemoteSdk: Boolean,
-                                      val isEnvConfiguration: Boolean,
-                                      val isUnderTeamCity: Boolean) {
+internal data class PyEnvTestSettings(
+  private val folderWithCPythons: String?,
+  private val folderWithCondas: String?,
+  private val additionalInterpreters: List<File>,
+  @get:JvmName("useRemoteSdk")
+  val useRemoteSdk: Boolean,
+  val isEnvConfiguration: Boolean,
+  val isUnderTeamCity: Boolean,
+) {
   private val foldersWithPythons: List<File> = listOfNotNull(folderWithCPythons, folderWithCondas).map { File(it) }
 
   /**
@@ -71,7 +75,8 @@ internal data class PyEnvTestSettings(private val folderWithCPythons: String?,
                                    ?.toList()
                                  ?: if (isUnderTeamCity) {
                                    emptyList()
-                                 } else {
+                                 }
+                                 else {
                                    detectDefaultPyInterpretersFolders()
                                  },
       )
@@ -121,3 +126,10 @@ enum class PyTestEnvVars(private val getVarName: (PyTestEnvVars) -> String = { i
 
   fun isSet() = getValue() != null
 }
+
+/**
+ * Returns first python installed with gradle script to the dir with env variable (see [PyEnvTestSettings])
+ */
+@TestOnly
+fun getPython(): Result<Path> = PyEnvTestSettings.fromEnvVariables().pythons.firstOrNull()?.toPath()?.let { Result.success(it) }
+                                ?: Result.failure(Throwable("No python found. See ${PyEnvTestSettings::class} class for more info"))
