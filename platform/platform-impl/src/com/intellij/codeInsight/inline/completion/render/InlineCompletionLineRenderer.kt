@@ -8,11 +8,13 @@ import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.ui.paint.RectanglePainter2D
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.RenderingHints
+import java.awt.font.TextLayout
 
 /**
  * Should not be used outside rendering the default inline completion elements.
@@ -24,7 +26,7 @@ import java.awt.RenderingHints
 @ApiStatus.Internal
 class InlineCompletionLineRenderer(
   private val editor: Editor,
-  blocks: List<InlineCompletionRenderTextBlock>
+  initialBlocks: List<InlineCompletionRenderTextBlock>
 ) : EditorCustomElementRenderer {
 
   constructor(editor: Editor, text: String, attributes: TextAttributes = InlineCompletionFontUtils.attributes(editor)) : this(
@@ -39,17 +41,17 @@ class InlineCompletionLineRenderer(
 
   val blocks: List<InlineCompletionRenderTextBlock> = run {
     val tabSize = editor.settings.getTabSize(editor.project)
-    blocks.map { InlineCompletionRenderTextBlock(it.text.formatTabs(tabSize), it.attributes) }
+    initialBlocks.filter { it.text.isNotEmpty() }.map { InlineCompletionRenderTextBlock(it.text.formatTabs(tabSize), it.attributes) }
   }
 
-  private val widths: List<Int>
-    get() = this.blocks.map {
-      val font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(it.attributes.fontType))
+  override fun calcWidthInPixels(inlay: Inlay<*>): Int {
+    val result = blocks.sumOf { block ->
+      val font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(block.attributes.fontType))
       val fontMetrics = editor.contentComponent.getFontMetrics(font)
-      fontMetrics.stringWidth(it.text)
+      fontMetrics.stringWidth(block.text)
     }
-
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int = maxOf(1, widths.sum())
+    return maxOf(1, result)
+  }
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (blocks.isEmpty()) {
@@ -59,16 +61,24 @@ class InlineCompletionLineRenderer(
     val previousRenderingHint = (g as Graphics2D).getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
 
-    var x = targetRegion.x
-    for ((block, width) in blocks.zip(widths)) {
+    // We need to use doubles instead of integers because a width of a single block can be non-integer.
+    // If a line has lots of blocks, we round up integers too much, so line looks wider than it should be.
+
+    var x = targetRegion.x.toDouble()
+    for (block in blocks) {
+      if (block.text.isEmpty()) {
+        continue
+      }
+      g.font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(block.attributes.fontType))
+      val textLayout = TextLayout(block.text, g.font, g.fontRenderContext)
+      val textWidth = textLayout.advance.toDouble()
       block.attributes.backgroundColor?.let {
         g.color = it
-        g.fillRect(x, targetRegion.y, width, targetRegion.height)
+        RectanglePainter2D.FILL.paint(g, x, targetRegion.y.toDouble(), textWidth, targetRegion.height.toDouble())
       }
       g.color = block.attributes.foregroundColor
-      g.font = editor.colorsScheme.getFont(EditorFontType.forJavaStyle(block.attributes.fontType))
-      g.drawString(block.text, x, targetRegion.y + editor.ascent)
-      x += width
+      textLayout.draw(g, x.toFloat(), (targetRegion.y + editor.ascent).toFloat())
+      x += textWidth
     }
 
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, previousRenderingHint)
