@@ -10,6 +10,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
+    <applicationInitializedListener implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
 
     <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
                        key="notification.group"/>
