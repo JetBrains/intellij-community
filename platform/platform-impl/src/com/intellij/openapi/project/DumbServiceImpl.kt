@@ -70,6 +70,11 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   private inner class DumbTaskLauncher(private val modality: ModalityState) {
     private var launched = false
 
+    private val closed = AtomicBoolean(false)
+
+    @Volatile
+    private var closeTrace: Throwable? = null // for diagnostics
+
     fun cancel() {
       // only not launched tasks can be canceled
       if (!launched) {
@@ -79,18 +84,24 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
     }
 
     private fun close() {
-      if (application.isDispatchThread) {
-        dumbTaskLaunchers.remove(this)
-        // without redispatching, because it can be invoked from completeJustSubmittedTasks
-        decrementDumbCounter()
-      }
-      else {
-        scope.launch(modality.asContextElement() + Dispatchers.EDT) {
-          blockingContext {
-            dumbTaskLaunchers.remove(this@DumbTaskLauncher)
-            decrementDumbCounter()
+      if (closed.compareAndSet(false, true)) {
+        closeTrace = Throwable("Close trace")
+        if (application.isDispatchThread) {
+          dumbTaskLaunchers.remove(this)
+          // without redispatching, because it can be invoked from completeJustSubmittedTasks
+          decrementDumbCounter()
+        }
+        else {
+          scope.launch(modality.asContextElement() + Dispatchers.EDT) {
+            blockingContext {
+              dumbTaskLaunchers.remove(this@DumbTaskLauncher)
+              decrementDumbCounter()
+            }
           }
         }
+      }
+      else {
+        LOG.error("The task is already closed", Throwable("Current trace", closeTrace))
       }
     }
 
