@@ -6,6 +6,7 @@ import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -54,7 +55,7 @@ public final class PackagePanel {
         public void run(AnActionButton button) {
           removeEntryFromPackages(packageTable, packageList);
         }
-      }).disableUpDownActions().setPreferredSize(new Dimension(-1, 100)).createPanel();
+      }).disableUpDownActions().setPreferredSize(new Dimension(-1, JBUI.scale(180))).createPanel();
 
     UIUtil.addBorder(panel, IdeBorderFactory.createTitledBorder(JavaBundle.message("title.packages.to.use.import.with"), false));
 
