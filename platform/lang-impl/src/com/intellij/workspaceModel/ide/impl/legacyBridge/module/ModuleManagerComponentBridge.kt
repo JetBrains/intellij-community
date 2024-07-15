@@ -5,6 +5,8 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.NonPersistentModuleStore
 import com.intellij.openapi.progress.blockingContext
@@ -93,12 +95,14 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     val moduleChanges = (event[ModuleEntity::class.java] as? List<EntityChange<ModuleEntity>>) ?: emptyList()
     // `runBlocking` usage approved: https://jetbrains.team/im/thread/2dJ00M3nYBxT/DA2Jg0U6sRs?message=D9Bh40U795a&channel=1Dx4720YRoCU
     runBlocking {
+      LOG.debug { "Starting initialize bridges for ${moduleChanges.size} modules" }
       /// Loading similar to ModuleManagerBridgeImpl.loadModules
       val moduleData = moduleChanges.mapNotNull {
         if (it !is EntityChange.Added<ModuleEntity>) return@mapNotNull null
         if (it.newEntity.findModule(builder) != null) return@mapNotNull null
 
         async(Dispatchers.Default) {
+          LOG.debug { "Creating module instance for ${it.newEntity.name}" }
           val plugins = PluginManagerCore.getPluginSet().getEnabledModules()
           val bridge = blockingContext {
             createModuleInstanceWithoutCreatingComponents(
@@ -111,11 +115,14 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
               corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID },
             )
           }
+          LOG.debug { "Creating components ${it.newEntity.name}" }
           bridge.callCreateComponentsNonBlocking()
+          LOG.debug { "${it.newEntity.name} module initialized" }
           bridge to it.newEntity
         }
       }.map { it.await() }
 
+      LOG.debug("All modules initialized, adding to the builder mappings")
       for ((bridge, entity) in moduleData) {
         builder.mutableModuleMap.addMapping(entity, bridge)
       }
@@ -176,6 +183,10 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
                             virtualFileUrl = virtualFileUrl,
                             entityStorage = entityStorage,
                             diff = diff)
+  }
+
+  companion object {
+    val LOG = logger<ModuleManagerComponentBridge>()
   }
 }
 
