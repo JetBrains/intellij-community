@@ -183,6 +183,9 @@
     <keyboard-shortcut first-keystroke="control BACK_QUOTE"/>
   </action>
   <action id="ShowTypeBookmarks"/>
+  <action id="ToggleRenderedDocPresentation">
+    <keyboard-shortcut first-keystroke="control alt Q"/>
+  </action>
 
   <!--  Rider-specific actions-->
 
