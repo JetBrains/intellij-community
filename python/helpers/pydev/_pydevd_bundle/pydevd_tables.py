@@ -72,7 +72,13 @@ def __get_table_provider(output):
                                'pandera.typing.pandas.DataFrame']:
         import _pydevd_bundle.tables.pydevd_pandas as table_provider
     # dict is needed for sort commands
-    elif type_qualified_name in ['numpy.ndarray', 'builtins.dict']:
+    elif type_qualified_name == 'builtins.dict':
+        table_type = '{}.{}'.format(type(output['data']).__module__, type(output['data']).__name__)
+        if table_type in ['tensorflow.python.framework.sparse_tensor.SparseTensor', 'torch.Tensor']:
+            import _pydevd_bundle.tables.pydevd_numpy_based as table_provider
+        else:
+            import _pydevd_bundle.tables.pydevd_numpy as table_provider
+    elif type_qualified_name == 'numpy.ndarray':
         import _pydevd_bundle.tables.pydevd_numpy as table_provider
     elif type_qualified_name in ['tensorflow.python.framework.ops.EagerTensor',
                                  'tensorflow.python.ops.resource_variable_ops.ResourceVariable',

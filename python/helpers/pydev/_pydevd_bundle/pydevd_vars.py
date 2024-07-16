@@ -583,7 +583,10 @@ def array_to_xml(array, name, roffset, coffset, rows, cols, format):
 
 
 def tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
-    return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    try:
+        return array_to_xml(tensor.numpy(), name, roffset, coffset, rows, cols, format)
+    except TypeError:
+        return array_to_xml(tensor.to_dense().numpy(), name, roffset, coffset, rows, cols, format)
 
 
 def sparse_tensor_to_xml(tensor, name, roffset, coffset, rows, cols, format):
