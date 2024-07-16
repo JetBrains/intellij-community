@@ -25,6 +25,7 @@ public abstract class ProgressIndicatorProvider {
    * <p>
    * See {@link ProgressManager#getProgressIndicator} notice.
    * </p>
+   * <hr>
    *
    * @return progress indicator under which this method is executing (see {@link ProgressManager} on how to run a process under a progress indicator)
    * or null if this code is running outside any progress.

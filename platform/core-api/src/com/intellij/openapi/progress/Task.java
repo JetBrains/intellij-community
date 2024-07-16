@@ -35,6 +35,7 @@ import javax.swing.*;
  *   <li>{@link com.intellij.platform.ide.progress.TasksKt#runWithModalProgressBlocking}</li>
  * </ul>
  * </p>
+ * <hr>
  *
  * Intended to run tasks, both modal and non-modal (backgroundable).
  * Example of use:
