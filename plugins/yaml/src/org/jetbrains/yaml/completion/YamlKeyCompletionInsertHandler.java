@@ -4,6 +4,7 @@ package org.jetbrains.yaml.completion;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -12,6 +13,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -117,9 +119,14 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
                                              null,
                                              () -> {
                                                PsiElement parent = keyValue.getParent();
+                                               PsiElement substitute = null;
                                                boolean delete = parent.getNode().getChildren(null).length == 1;
                                                if (parent instanceof YAMLMapping parentMapping) {
                                                  parentMapping.deleteKeyValue(keyValue);
+                                                 ASTNode[] children = parent.getNode().getChildren(null);
+                                                 if (children.length == 1 && children[0] instanceof LeafPsiElement) {
+                                                   substitute = children[0].getPsi();
+                                                 }
                                                }
                                                else {
                                                  YAMLUtil.deleteSurroundingWhitespace(keyValue);
@@ -127,6 +134,9 @@ public abstract class YamlKeyCompletionInsertHandler<T extends LookupElement> im
                                                }
                                                if (delete) {
                                                  parent.delete();
+                                               }
+                                               else if (substitute != null) {
+                                                 parent.replace(substitute);
                                                }
                                              });
     return oldValue;
