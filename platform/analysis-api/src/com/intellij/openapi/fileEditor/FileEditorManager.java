@@ -92,6 +92,11 @@ public abstract class FileEditorManager {
   @RequiresEdt
   public abstract @Nullable Editor getSelectedTextEditor();
 
+  @ApiStatus.Experimental
+  public @Nullable Editor getSelectedTextEditor(boolean lockFree) {
+    return getSelectedTextEditor();
+  }
+
   /**
    * @return currently selected TEXT editors including ones which were opened by guests during a collaborative development session
    * The method returns an empty array in case there are no selected editors or none of them is a text one.

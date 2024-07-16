@@ -3156,6 +3156,7 @@ a:com.intellij.openapi.fileEditor.FileEditorManager
 - a:getSelectedEditors():com.intellij.openapi.fileEditor.FileEditor[]
 - a:getSelectedFiles():com.intellij.openapi.vfs.VirtualFile[]
 - a:getSelectedTextEditor():com.intellij.openapi.editor.Editor
+- *:getSelectedTextEditor(Z):com.intellij.openapi.editor.Editor
 - *:getSelectedTextEditorWithRemotes():com.intellij.openapi.editor.Editor[]
 - hasOpenFiles():Z
 - a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
