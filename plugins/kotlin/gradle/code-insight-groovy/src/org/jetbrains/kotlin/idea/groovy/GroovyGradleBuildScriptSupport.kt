@@ -285,10 +285,10 @@ class GroovyBuildScriptManipulator(
     }
 
     override fun changeLanguageVersion(version: String, forTests: Boolean): PsiElement? =
-        changeKotlinTaskParameter("languageVersion", version, forTests)
+        changeKotlinLanguageParameter("languageVersion", version, forTests)
 
     override fun changeApiVersion(version: String, forTests: Boolean): PsiElement? =
-        changeKotlinTaskParameter("apiVersion", version, forTests)
+        changeKotlinLanguageParameter("apiVersion", version, forTests)
 
     override fun addKotlinLibraryToModuleBuildScript(
         targetModule: Module?,
@@ -420,6 +420,27 @@ class GroovyBuildScriptManipulator(
         } else withoutParens
     }
 
+    private fun addOrReplaceLanguageSettingParameter(
+        gradleFile: GroovyFile,
+        parameterName: String,
+        defaultValue: String,
+        forTests: Boolean,
+        replaceIt: GrStatement.(Boolean) -> GrStatement
+    ): PsiElement? {
+        return if (usesNewMultiplatform()) {
+            // For multiplatform projects, we configure the language level for all sourceSets
+            // Note: It does not allow only targeting test sourceSets
+            val kotlinBlock = gradleFile.getKotlinBlock()
+            val sourceSetsBlock = kotlinBlock.getBlockOrCreate("sourceSets")
+            val allBlock = sourceSetsBlock.getBlockOrCreate("all")
+            val languageSettingsBlock = allBlock.getBlockOrCreate("languageSettings")
+            languageSettingsBlock.addParameterAssignment(parameterName, defaultValue, replaceIt)
+            languageSettingsBlock
+        } else {
+            addOrReplaceKotlinTaskParameter(gradleFile, parameterName, defaultValue, forTests, replaceIt)
+        }
+    }
+
     private fun addOrReplaceKotlinTaskParameter(
         gradleFile: GroovyFile,
         parameterName: String,
@@ -484,6 +505,22 @@ class GroovyBuildScriptManipulator(
         forTests: Boolean
     ): PsiElement? {
         return addOrReplaceKotlinTaskParameter(
+            scriptFile, parameterName, "\"$parameterValue\"", forTests
+        ) { insideKotlinOptions ->
+            if (insideKotlinOptions) {
+                replaceWithStatementFromText("kotlinOptions.$parameterName = \"$parameterValue\"")
+            } else {
+                replaceWithStatementFromText("$parameterName = \"$parameterValue\"")
+            }
+        }
+    }
+
+    private fun changeKotlinLanguageParameter(
+        parameterName: String,
+        parameterValue: String,
+        forTests: Boolean
+    ): PsiElement? {
+        return addOrReplaceLanguageSettingParameter(
             scriptFile, parameterName, "\"$parameterValue\"", forTests
         ) { insideKotlinOptions ->
             if (insideKotlinOptions) {

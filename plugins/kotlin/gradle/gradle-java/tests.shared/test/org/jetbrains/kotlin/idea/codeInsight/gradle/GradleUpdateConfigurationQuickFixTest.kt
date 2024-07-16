@@ -45,7 +45,6 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
     }
 
     @Test
-    @Ignore // Import failed: A problem occurred evaluating root project 'project'
     @TargetVersions("4.7 <=> 6.0")
     fun testUpdateLanguageVersion() {
         doTest("Set module language version to 1.1")

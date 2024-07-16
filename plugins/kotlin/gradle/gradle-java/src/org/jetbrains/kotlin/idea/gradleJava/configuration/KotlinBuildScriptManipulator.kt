@@ -184,11 +184,27 @@ class KotlinBuildScriptManipulator(
         forTests: Boolean
     ): PsiElement? = scriptFile.changeLanguageFeatureConfiguration(feature, state, forTests)
 
+    private fun changeKotlinLanguageParameter(parameterName: String, value: String, forTests: Boolean): PsiElement? {
+        return if (usesNewMultiplatform()) {
+            // For multiplatform projects, we configure the language level for all sourceSets
+            // Note: It does not allow only targeting test sourceSets
+            val kotlinBlock = scriptFile.getKotlinBlock() ?: return null
+            val sourceSetsBlock = kotlinBlock.findOrCreateBlock("sourceSets") ?: return null
+            val allBlock = sourceSetsBlock.findOrCreateBlock("all") ?: return null
+            val languageSettingsBlock = allBlock.findOrCreateBlock("languageSettings") ?: return null
+            languageSettingsBlock.addParameterAssignment(parameterName, value) {
+                replace(psiFactory.createExpression("$parameterName = \"$value\""))
+            }
+        } else {
+            scriptFile.changeKotlinTaskParameter(parameterName, value, forTests)
+        }
+    }
+
     override fun changeLanguageVersion(version: String, forTests: Boolean): PsiElement? =
-        scriptFile.changeKotlinTaskParameter("languageVersion", version, forTests)
+        changeKotlinLanguageParameter("languageVersion", version, forTests)
 
     override fun changeApiVersion(version: String, forTests: Boolean): PsiElement? =
-        scriptFile.changeKotlinTaskParameter("apiVersion", version, forTests)
+        changeKotlinLanguageParameter("apiVersion", version, forTests)
 
     override fun addKotlinLibraryToModuleBuildScript(
         targetModule: Module?,
@@ -639,6 +655,16 @@ class KotlinBuildScriptManipulator(
             ?: findScriptInitializer("buildscript")?.getBlock()?.findBlock("dependencies")
                 ?.findClassPathDependencyVersion("org.jetbrains.kotlin:kotlin-gradle-plugin")
         return rawKotlinVersion?.let(IdeKotlinVersion::opt)
+    }
+
+    private fun KtBlockExpression.addParameterAssignment(
+        parameterName: String,
+        defaultValue: String,
+        replaceIt: KtExpression.() -> PsiElement
+    ) : PsiElement {
+        return statements.filterIsInstance<KtBinaryExpression>().firstOrNull { stmt ->
+            stmt.left?.text == parameterName
+        }?.replaceIt() ?: addExpressionIfMissing("$parameterName = \"$defaultValue\"")
     }
 
     private fun KtFile.addOrReplaceKotlinTaskParameter(
