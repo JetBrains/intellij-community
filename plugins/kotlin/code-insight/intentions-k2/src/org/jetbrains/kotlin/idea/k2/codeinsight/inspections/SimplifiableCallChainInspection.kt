@@ -52,23 +52,19 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 
-class SimplifiableCallChainInspection :
-    KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, SimplifiableCallChainInspection.Context>() {
-
-    class Context(
-        val conversion: CallChainConversion,
-    )
-
-    override fun getProblemDescription(element: KtQualifiedExpression, context: Context): String {
+class SimplifiableCallChainInspection : KotlinApplicableInspectionBase.Simple<KtQualifiedExpression, CallChainConversion>() {
+    override fun getProblemDescription(element: KtQualifiedExpression, context: CallChainConversion): String {
         return KotlinBundle.message("call.chain.on.collection.type.may.be.simplified")
     }
 
-    override fun createQuickFix(element: KtQualifiedExpression, context: Context): KotlinModCommandQuickFix<KtQualifiedExpression> {
-        val conversion = context.conversion
+    override fun createQuickFix(
+        element: KtQualifiedExpression,
+        context: CallChainConversion,
+    ): KotlinModCommandQuickFix<KtQualifiedExpression> {
         return SimplifyCallChainFix(
-            conversion,
+            context,
             modifyArguments = { callExpression ->
-                if (conversion.replacement.startsWith(JOIN_TO)) {
+                if (context.replacement.startsWith(JOIN_TO)) {
                     val lastArgument = callExpression.valueArgumentList?.arguments?.singleOrNull()
                     val argumentExpression = lastArgument?.getArgumentExpression()
                     if (argumentExpression != null) {
@@ -96,7 +92,7 @@ class SimplifiableCallChainInspection :
     }
 
     context(KaSession)
-    override fun prepareContext(element: KtQualifiedExpression): Context? {
+    override fun prepareContext(element: KtQualifiedExpression): CallChainConversion? {
         val callChainExpressions = CallChainExpressions.from(element) ?: return null
         val conversionId = ConversionId(callChainExpressions.firstCalleeExpression, callChainExpressions.secondCalleeExpression)
         val candidateConversions = getPotentialConversions(element, conversionId).ifEmpty { return null }
@@ -112,7 +108,7 @@ class SimplifiableCallChainInspection :
                     && isConversionApplicable(element, conversion, firstCall, secondCall)
         } ?: return null
 
-        return Context(matchingConversion)
+        return matchingConversion
     }
 
     private fun getPotentialConversions(expression: KtQualifiedExpression, conversionId: ConversionId): List<CallChainConversion> {
