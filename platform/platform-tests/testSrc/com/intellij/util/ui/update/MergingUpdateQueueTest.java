@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
@@ -41,7 +41,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   public void testPriority() {
-    final boolean[] attemps = new boolean[3];
+    final boolean[] attempts = new boolean[3];
 
     final MyQueue queue = new MyQueue();
 
@@ -49,9 +49,9 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       @Override
       public void run() {
         super.run();
-        attemps[0] = true;
-        assertTrue(attemps[1]);
-        assertTrue(attemps[2]);
+        attempts[0] = true;
+        assertTrue(attempts[1]);
+        assertTrue(attempts[2]);
       }
     };
 
@@ -59,9 +59,9 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       @Override
       public void run() {
         super.run();
-        assertFalse(attemps[0]);
-        attemps[1] = true;
-        assertFalse(attemps[2]);
+        assertFalse(attempts[0]);
+        attempts[1] = true;
+        assertFalse(attempts[2]);
       }
     };
 
@@ -69,9 +69,9 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       @Override
       public void run() {
         super.run();
-        assertFalse(attemps[0]);
-        assertTrue(attemps[1]);
-        attemps[2] = true;
+        assertFalse(attempts[0]);
+        assertTrue(attempts[1]);
+        attempts[2] = true;
       }
     };
 
